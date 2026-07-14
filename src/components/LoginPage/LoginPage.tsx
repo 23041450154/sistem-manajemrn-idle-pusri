@@ -26,8 +26,8 @@ export default function LoginPage() {
           <Image
             src="/images (2) 1.png"
             alt="Logo PUSRI"
-            width={80}
-            height={80}
+            width={150}
+            height={150}
             priority
             style={{ objectFit: 'contain' }}
           />
