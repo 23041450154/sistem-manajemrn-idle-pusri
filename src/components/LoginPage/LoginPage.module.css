@@ -1,0 +1,353 @@
+.container {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  background-color: #ffffff;
+}
+
+.leftPanel {
+  flex: 1;
+  position: relative;
+  background-color: #557c93; /* Fallback */
+  background-image: linear-gradient(rgba(85, 124, 147, 0.7), rgba(85, 124, 147, 0.7)), url('/backgroundLeftPanel.webp'); /* Placeholder industrial image */
+  background-size: cover;
+  background-position: center;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 2rem 2rem 2rem;
+  color: white;
+  text-align: center;
+}
+
+.logoContainer {
+  position: absolute;
+  top: 2rem;
+  left: 2rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logoPlaceholder {
+  width: 60px;
+  height: 80px;
+  background-color: rgba(255, 255, 255, 0.2);
+  border: 2px solid white;
+  border-radius: 4px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 10px;
+}
+
+.leftPanelTitle {
+  font-size: 2rem;
+  font-weight: 800;
+  line-height: 1;
+  max-width: 800px;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  text-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+}
+
+.infoBox {
+  margin-top: 1.5rem;
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 1.5rem;
+  max-width: 550px;
+  text-align: center;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+  transition: transform 0.3s ease;
+}
+
+.infoBox:hover {
+  transform: translateY(-5px);
+}
+
+.infoBoxTitle {
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin: 0 0 0.75rem 0;
+  color: #ffffff;
+  letter-spacing: 0.5px;
+}
+
+.infoBoxText {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #e5e7eb;
+  margin: 0;
+}
+
+.rightPanel {
+  width: 100%;
+  max-width: 500px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  overflow-y: auto;
+}
+
+.formContainer {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  padding: 2rem 3rem;
+}
+
+.header {
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.title {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #111827;
+  margin: 0 0 0.5rem 0;
+}
+
+.subtitle {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.formGroup {
+  margin-bottom: 1.25rem;
+}
+
+.label {
+  display: block;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #4b5563;
+  margin-bottom: 0.5rem;
+}
+
+.inputWrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.inputIcon {
+  position: absolute;
+  left: 1rem;
+  color: #9ca3af;
+  width: 1.25rem;
+  height: 1.25rem;
+}
+
+.input {
+  width: 100%;
+  padding: 0.75rem 1rem 0.75rem 2.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  color: #111827;
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none;
+}
+
+.input:focus {
+  border-color: #003c73;
+  box-shadow: 0 0 0 3px rgba(0, 60, 115, 0.1);
+}
+
+.passwordToggle {
+  position: absolute;
+  right: 1rem;
+  background: none;
+  border: none;
+  color: #9ca3af;
+  cursor: pointer;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.passwordToggle:hover {
+  color: #4b5563;
+}
+
+.formActions {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.rememberMe {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  cursor: pointer;
+}
+
+.checkbox {
+  width: 1rem;
+  height: 1rem;
+  border-radius: 0.25rem;
+  border: 1px solid #d1d5db;
+  cursor: pointer;
+}
+
+.rememberText {
+  font-size: 0.875rem;
+  color: #4b5563;
+}
+
+.forgotPassword {
+  font-size: 0.875rem;
+  color: #003c73;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.forgotPassword:hover {
+  text-decoration: underline;
+}
+
+.submitButton {
+  width: 100%;
+  padding: 0.875rem;
+  background-color: #003c73;
+  color: white;
+  border: none;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s;
+}
+
+.submitButton:hover {
+  background-color: #002b54;
+}
+
+.helpText {
+  text-align: center;
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 1.5rem;
+}
+
+.helpLink {
+  color: #003c73;
+  text-decoration: none;
+}
+
+.helpLink:hover {
+  text-decoration: underline;
+}
+
+.footer {
+  padding: 1rem 3rem;
+  border-top: 1px solid #e5e7eb;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.75rem;
+  color: #6b7280;
+}
+
+.supportInfo {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  margin: 1rem 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.divider::before,
+.divider::after {
+  content: '';
+  flex: 1;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.divider::before {
+  margin-right: 0.75rem;
+}
+
+.divider::after {
+  margin-left: 0.75rem;
+}
+
+.ssoButton {
+  width: 100%;
+  padding: 0.875rem;
+  background-color: #ffffff;
+  color: #374151;
+  border: 1px solid #d1d5db;
+  border-radius: 0.375rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 0.5rem;
+  transition: background-color 0.2s, box-shadow 0.2s;
+}
+
+.ssoButton:hover {
+  background-color: #f9fafb;
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+}
+
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+  }
+  .leftPanel {
+    flex: none;
+    min-height: 300px;
+    padding: 4rem 1.5rem 3rem 1.5rem;
+    justify-content: center;
+  }
+  .leftPanelTitle {
+    font-size: 1.5rem;
+  }
+  .logoContainer {
+    top: 1rem;
+    left: 1rem;
+  }
+  .rightPanel {
+    max-width: 100%;
+    border-radius: 24px 24px 0 0;
+    margin-top: -30px;
+    box-shadow: 0 -4px 10px rgba(0, 0, 0, 0.1);
+  }
+  .formContainer {
+    padding: 2.5rem 1.5rem;
+  }
+  .footer {
+    padding: 1.5rem;
+    flex-direction: column;
+    gap: 1rem;
+    text-align: center;
+  }
+}
