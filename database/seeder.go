@@ -41,11 +41,11 @@ func seedUsers(db *gorm.DB, now time.Time) {
 	hash, _ := bcrypt.GenerateFromPassword([]byte("password123"), bcrypt.DefaultCost)
 
 	users := []models.User{
-		{Name: "Admin Pusri", Email: "admin@pusri.co.id", Password: string(hash), Role: "ADMIN", CreatedAt: now, UpdatedAt: now},
-		{Name: "Budi Santoso", Email: "budi.santoso@pusri.co.id", Password: string(hash), Role: "USER", CreatedAt: now, UpdatedAt: now},
-		{Name: "Siti Rahayu", Email: "siti.rahayu@pusri.co.id", Password: string(hash), Role: "USER", CreatedAt: now, UpdatedAt: now},
-		{Name: "Ahmad Fauzi", Email: "ahmad.fauzi@pusri.co.id", Password: string(hash), Role: "APPROVER", CreatedAt: now, UpdatedAt: now},
-		{Name: "Dewi Lestari", Email: "dewi.lestari@pusri.co.id", Password: string(hash), Role: "INSPECTOR", CreatedAt: now, UpdatedAt: now},
+		{Name: "Admin Pusri", NPP: "100001", Email: "admin@pusri.co.id", Password: string(hash), Role: "ADMIN", CreatedAt: now, UpdatedAt: now},
+		{Name: "Budi Santoso", NPP: "100002", Email: "budi.santoso@pusri.co.id", Password: string(hash), Role: "USER", CreatedAt: now, UpdatedAt: now},
+		{Name: "Siti Rahayu", NPP: "100003", Email: "siti.rahayu@pusri.co.id", Password: string(hash), Role: "USER", CreatedAt: now, UpdatedAt: now},
+		{Name: "Ahmad Fauzi", NPP: "100004", Email: "ahmad.fauzi@pusri.co.id", Password: string(hash), Role: "APPROVER", CreatedAt: now, UpdatedAt: now},
+		{Name: "Dewi Lestari", NPP: "100005", Email: "dewi.lestari@pusri.co.id", Password: string(hash), Role: "INSPECTOR", CreatedAt: now, UpdatedAt: now},
 	}
 	db.Create(&users)
 	log.Println("Seeded: users")

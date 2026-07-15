@@ -1,9 +1,10 @@
 package main
 
 import (
-	"fmt"
+	"log"
 	"os"
 
+	"github.com/Ucokgreget/backend-idle/controllers"
 	"github.com/Ucokgreget/backend-idle/database"
 	"github.com/Ucokgreget/backend-idle/models"
 	"github.com/gin-gonic/gin"
@@ -42,7 +43,9 @@ func main() {
 		c.String(200, "hello")
 	})
 
+	router.POST("/login", controllers.Login(db))
+
 	if err := router.Run(":8080"); err != nil {
-		fmt.Println("failed to start server", err.Error())
+		log.Fatalf("failed to start server", err.Error())
 	}
 }
