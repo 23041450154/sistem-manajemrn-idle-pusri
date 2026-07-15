@@ -1,21 +1,24 @@
 "use client";
 
-import React, { useState } from 'react';
+import { loginAction } from '@/action/auth';
+
+import React, { useState, useActionState } from 'react';
 import Image from 'next/image';
 import styles from './LoginPage.module.css';
+import type { LoginResponse } from '@/types/Auth';
 
-export default function LoginPage() {
+const initialState: LoginResponse = {
+  status: false,
+  message: '',
+  token: null,
+};
+
+export default function LoginForm() {
+  const [state, formAction, pending] = useActionState(loginAction, initialState);
   const [showPassword, setShowPassword] = useState(false);
-  const [nik, setNik] = useState('');
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
-  };
-
-  const handleLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempt");
   };
 
   return (
@@ -54,9 +57,15 @@ export default function LoginPage() {
             <p className={styles.subtitle}>Silakan masuk menggunakan akun Anda atau menggunakan SSO.</p>
           </div>
 
-          <form onSubmit={handleLogin}>
+          <form action={formAction}>
+            {state.message && !state.status && (
+              <div className={styles.errorMessage} role="alert">
+                {state.message}
+              </div>
+            )}
+
             <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="nik">
+              <label className={styles.label} htmlFor="npp">
                 Nomor Pokok Pegawai (NPP)
               </label>
               <div className={styles.inputWrapper}>
@@ -69,12 +78,11 @@ export default function LoginPage() {
                   <path d="M16 14h4"></path>
                 </svg>
                 <input
-                  id="nik"
+                  id="npp"
+                  name="npp"
                   type="text"
                   className={styles.input}
                   placeholder="Masukan NPP"
-                  value={nik}
-                  onChange={(e) => setNik(e.target.value)}
                   required
                 />
               </div>
@@ -92,6 +100,7 @@ export default function LoginPage() {
                 </svg>
                 <input
                   id="password"
+                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   className={styles.input}
                   placeholder="••••••••"
@@ -122,7 +131,7 @@ export default function LoginPage() {
 
             <div className={styles.formActions}>
               <label className={styles.rememberMe}>
-                <input type="checkbox" className={styles.checkbox} />
+                <input type="checkbox" name="rememberMe" className={styles.checkbox} />
                 <span className={styles.rememberText}>Ingat Saya</span>
               </label>
               <a href="#" className={styles.forgotPassword}>
@@ -130,8 +139,8 @@ export default function LoginPage() {
               </a>
             </div>
 
-            <button type="submit" className={styles.submitButton} disabled={nik.length < 5} onClick={() => alert("Api belum belum di hubungkan bro ...")}>
-              MASUK
+            <button type="submit" className={styles.submitButton} disabled={pending}>
+              {pending ? 'MEMPROSES...' : 'MASUK'}
               {/* Log In Icon */}
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" >
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
@@ -142,7 +151,7 @@ export default function LoginPage() {
           </form>
 
           <div className={styles.divider}>ATAU</div>
-          <button type="button" className={styles.ssoButton} onClick={() => alert("login dengan sso sedang dalam pengembangan. terimakasyi")}>
+          <button type="button" className={styles.ssoButton} disabled>
             {/* Shield/Security Icon for SSO */}
             <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
@@ -161,7 +170,7 @@ export default function LoginPage() {
             <span>&copy; DEPARTEMEN TI</span>
           </div>
           <div>
-            Versi Aplikasi 1.0 Build 1.0 
+            Versi Aplikasi 1.0 Build 1.0
           </div>
         </div>
       </div>
