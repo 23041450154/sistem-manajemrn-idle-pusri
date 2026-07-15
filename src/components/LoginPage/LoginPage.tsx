@@ -2,20 +2,79 @@
 
 import React, { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import styles from './LoginPage.module.css';
 
 export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [nik, setNik] = useState('');
+  const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
   };
 
-  const handleLogin = (e: React.FormEvent) => {
+  const decodeJWT = (token: string) => {
+    try {
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log("Login attempt");
+    setIsLoading(true);
+
+    try {
+      // --- ALTERNATIF SEMENTARA (MOCK LOGIN) ---
+      let userRole = "";
+
+      // Karena menggunakan NIK, kita gunakan teks NIK untuk dummy
+      if (nik === "rendal" && password === "123") {
+        userRole = "admin_rendal";
+      } else if (nik === "inspeksi" && password === "123") {
+        userRole = "inspeksi";
+      } else if (nik === "unit" && password === "123") {
+        userRole = "unit_kerja";
+      } else {
+        alert("Login gagal! Coba NIK: admin / inspeksi / unit dengan password '123'");
+        setIsLoading(false);
+        return;
+      }
+
+      const dummyPayload = { role: userRole };
+      const base64Payload = btoa(JSON.stringify(dummyPayload));
+      const fakeToken = `dummyHeader.${base64Payload}.dummySignature`;
+
+      document.cookie = `session_token=${fakeToken}; path=/; max-age=86400; Secure; SameSite=Lax`;
+
+      const payload = decodeJWT(fakeToken);
+      
+      if (!payload || !payload.role) {
+        alert("Gagal membaca token JWT dummy. Payload: " + JSON.stringify(payload));
+        setIsLoading(false);
+        return;
+      }
+
+      // Karena rute /dashboard sekarang mendeteksi role secara otomatis,
+      // kita arahkan semua user yang berhasil login ke /dashboard
+      router.push("/dashboard");
+
+    } catch (err) {
+      console.error(err);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -95,6 +154,8 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   className={styles.input}
                   placeholder="••••••••"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
                   required
                 />
                 <button
@@ -130,8 +191,8 @@ export default function LoginPage() {
               </a>
             </div>
 
-            <button type="submit" className={styles.submitButton} disabled={nik.length < 5} onClick={() => alert("Api belum belum di hubungkan bro ...")}>
-              MASUK
+            <button type="submit" className={styles.submitButton} disabled={nik.length < 4 || isLoading}>
+              {isLoading ? "MEMPROSES..." : "MASUK"}
               {/* Log In Icon */}
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" >
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
