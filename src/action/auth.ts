@@ -88,7 +88,7 @@ export async function loginAction(
   });
 
   if (result.status && result.user) {
-    redirect(result.user.role === "ADMIN" ? "/admin" : "/user");
+    redirect("/dashboard");
   }
 
   return result;
@@ -138,3 +138,11 @@ export async function getCurrentUserAction() {
     user: null,
   }
 }
+
+export async function logoutAction() {
+  const cookieStorage = await cookies()
+  cookieStorage.delete("token")
+  cookieStorage.delete("user")
+  redirect("/login")
+}
+
