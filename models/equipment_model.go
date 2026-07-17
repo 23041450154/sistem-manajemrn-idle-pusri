@@ -19,7 +19,8 @@ type Equipment struct {
 	EstimatedReuseValue float64   `json:"estimated_reuse_value"`
 	StatusID            int       `json:"status_id"`
 	ConditionID         int       `json:"condition_id"`
-	IdleSince           time.Time `json:"idle_since"`
+	IdleSince           *time.Time `json:"idle_since"`
+	CreatedByNPP        string     `json:"created_by_npp"`
 	Notes               string    `json:"notes"`
 	CreatedAt           time.Time `json:"created_at"`
 	UpdatedAt           time.Time `json:"updated_at"`

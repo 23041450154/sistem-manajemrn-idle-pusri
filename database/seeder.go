@@ -42,10 +42,10 @@ func seedUsers(db *gorm.DB, now time.Time) {
 
 	users := []models.User{
 		{Name: "Admin Pusri", NPP: "100001", Email: "admin@pusri.co.id", Password: string(hash), Role: "ADMIN", CreatedAt: now, UpdatedAt: now},
-		{Name: "Budi Santoso", NPP: "100002", Email: "budi.santoso@pusri.co.id", Password: string(hash), Role: "USER", CreatedAt: now, UpdatedAt: now},
-		{Name: "Siti Rahayu", NPP: "100003", Email: "siti.rahayu@pusri.co.id", Password: string(hash), Role: "USER", CreatedAt: now, UpdatedAt: now},
-		{Name: "Ahmad Fauzi", NPP: "100004", Email: "ahmad.fauzi@pusri.co.id", Password: string(hash), Role: "APPROVER", CreatedAt: now, UpdatedAt: now},
-		{Name: "Dewi Lestari", NPP: "100005", Email: "dewi.lestari@pusri.co.id", Password: string(hash), Role: "INSPECTOR", CreatedAt: now, UpdatedAt: now},
+		{Name: "Budi Santoso", NPP: "100002", Email: "budi.santoso@pusri.co.id", Password: string(hash), Role: "RENDAL_PEMELIHARAAN", CreatedAt: now, UpdatedAt: now},
+		{Name: "Siti Rahayu", NPP: "100003", Email: "siti.rahayu@pusri.co.id", Password: string(hash), Role: "INSPEKSI_TEKNIK", CreatedAt: now, UpdatedAt: now},
+		{Name: "Ahmad Fauzi", NPP: "100004", Email: "ahmad.fauzi@pusri.co.id", Password: string(hash), Role: "MANAJER_RENDAL", CreatedAt: now, UpdatedAt: now},
+		{Name: "Dewi Lestari", NPP: "100005", Email: "dewi.lestari@pusri.co.id", Password: string(hash), Role: "UNIT_KERJA_OPERASI", CreatedAt: now, UpdatedAt: now},
 	}
 	db.Create(&users)
 	log.Println("Seeded: users")
@@ -59,6 +59,7 @@ func seedStatuses(db *gorm.DB, now time.Time) {
 	}
 
 	statuses := []models.Status{
+		{Name: "REGISTERED", Description: "Aset baru didaftarkan ke sistem", CreatedAt: now, UpdatedAt: now},
 		{Name: "Aktif", Description: "Peralatan sedang digunakan dalam operasional", CreatedAt: now, UpdatedAt: now},
 		{Name: "Idle", Description: "Peralatan tidak digunakan / menganggur", CreatedAt: now, UpdatedAt: now},
 		{Name: "Dalam Perbaikan", Description: "Peralatan sedang dalam proses perbaikan", CreatedAt: now, UpdatedAt: now},
@@ -181,6 +182,12 @@ func seedEquipments(db *gorm.DB, now time.Time) {
 		return
 	}
 
+	idle1 := now.AddDate(-1, 0, 0)
+	idle2 := now.AddDate(-2, 0, 0)
+	idle3 := now.AddDate(0, -6, 0)
+	idle4 := now.AddDate(0, -3, 0)
+	idle5 := now.AddDate(-3, 0, 0)
+
 	equipments := []models.Equipment{
 		{
 			UUID: "eq-001-pump-centrifugal", EquipmentCode: "P-IIB-PMP-001",
@@ -188,7 +195,7 @@ func seedEquipments(db *gorm.DB, now time.Time) {
 			PlantDescription: "Pabrik Pusri IIB", StorageLocationID: 1,
 			FuncLoc: "P-IIB-SYNTH-001", Vendor: "KSB Indonesia", Year: 2015,
 			OriginalValue: 450000000, BookValue: 180000000, EstimatedReuseValue: 250000000,
-			StatusID: 2, ConditionID: 1, IdleSince: now.AddDate(-1, 0, 0),
+			StatusID: 2, ConditionID: 1, IdleSince: &idle1,
 			Notes: "Idle sejak upgrade pompa unit sintesa", CreatedAt: now, UpdatedAt: now, CreatedBy: 1, UpdatedBy: 1,
 		},
 		{
@@ -197,7 +204,7 @@ func seedEquipments(db *gorm.DB, now time.Time) {
 			PlantDescription: "Pabrik Pusri IIB", StorageLocationID: 3,
 			FuncLoc: "P-IIB-UTIL-003", Vendor: "PT Bromo Steel", Year: 2012,
 			OriginalValue: 800000000, BookValue: 320000000, EstimatedReuseValue: 400000000,
-			StatusID: 2, ConditionID: 2, IdleSince: now.AddDate(-2, 0, 0),
+			StatusID: 2, ConditionID: 2, IdleSince: &idle2,
 			Notes: "Diganti karena perubahan kapasitas produksi", CreatedAt: now, UpdatedAt: now, CreatedBy: 1, UpdatedBy: 1,
 		},
 		{
@@ -206,7 +213,7 @@ func seedEquipments(db *gorm.DB, now time.Time) {
 			PlantDescription: "Pabrik Pusri III", StorageLocationID: 2,
 			FuncLoc: "P-III-COMP-010", Vendor: "ABB Indonesia", Year: 2018,
 			OriginalValue: 350000000, BookValue: 245000000, EstimatedReuseValue: 280000000,
-			StatusID: 2, ConditionID: 1, IdleSince: now.AddDate(0, -6, 0),
+			StatusID: 2, ConditionID: 1, IdleSince: &idle3,
 			Notes: "Spare motor dari kompresor yang di-upgrade", CreatedAt: now, UpdatedAt: now, CreatedBy: 2, UpdatedBy: 2,
 		},
 		{
@@ -215,7 +222,7 @@ func seedEquipments(db *gorm.DB, now time.Time) {
 			PlantDescription: "Pabrik Pusri IV", StorageLocationID: 4,
 			FuncLoc: "P-IV-AMMON-022", Vendor: "Fisher Emerson", Year: 2016,
 			OriginalValue: 120000000, BookValue: 48000000, EstimatedReuseValue: 75000000,
-			StatusID: 2, ConditionID: 1, IdleSince: now.AddDate(0, -3, 0),
+			StatusID: 2, ConditionID: 1, IdleSince: &idle4,
 			Notes: "Diganti dengan model terbaru", CreatedAt: now, UpdatedAt: now, CreatedBy: 2, UpdatedBy: 2,
 		},
 		{
@@ -224,7 +231,7 @@ func seedEquipments(db *gorm.DB, now time.Time) {
 			PlantDescription: "Pabrik Pusri IIB", StorageLocationID: 1,
 			FuncLoc: "P-IIB-SYNTH-005", Vendor: "Atlas Copco", Year: 2010,
 			OriginalValue: 2500000000, BookValue: 500000000, EstimatedReuseValue: 800000000,
-			StatusID: 2, ConditionID: 3, IdleSince: now.AddDate(-3, 0, 0),
+			StatusID: 2, ConditionID: 3, IdleSince: &idle5,
 			Notes: "Rusak berat, perlu evaluasi kelayakan rekondisi", CreatedAt: now, UpdatedAt: now, CreatedBy: 1, UpdatedBy: 1,
 		},
 	}

@@ -4,9 +4,9 @@ import (
 	"log"
 	"os"
 
-	"github.com/Ucokgreget/backend-idle/controllers"
 	"github.com/Ucokgreget/backend-idle/database"
 	"github.com/Ucokgreget/backend-idle/models"
+	"github.com/Ucokgreget/backend-idle/routes"
 	"github.com/gin-gonic/gin"
 )
 
@@ -32,20 +32,24 @@ func main() {
 		&models.EquipmentAttachment{},
 	)
 
-	if len(os.Args) > 1 && os.Args[1] == "seed" {
-		database.Seed(db)
-		return
+	if len(os.Args) > 1 {
+		switch os.Args[1] {
+		case "seed":
+			database.Seed(db)
+			return
+		case "migrate-fresh":
+			database.MigrateFresh(db)
+			return
+		}
 	}
 
 	router := gin.Default()
 
-	router.GET("/hello", func(c *gin.Context) {
-		c.String(200, "hello")
-	})
+	router.Static("/uploads", "./uploads")
 
-	router.POST("/login", controllers.Login(db))
+	routes.SetupRoutes(router, db)
 
 	if err := router.Run(":8080"); err != nil {
-		log.Fatalf("failed to start server", err.Error())
+		log.Fatalf("failed to start server: %s", err.Error())
 	}
 }
