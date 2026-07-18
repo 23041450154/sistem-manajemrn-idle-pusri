@@ -1,5 +1,5 @@
-import InspeksiDashboard from "@/components/Dashboards/InspeksiDashboard";
+import ManajemenInspeksi from "@/components/ManajemenInspeksi";
 
 export default function InspeksiPage() {
-  return <InspeksiDashboard />;
+  return <ManajemenInspeksi />;
 }
