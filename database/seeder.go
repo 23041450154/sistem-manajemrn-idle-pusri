@@ -96,11 +96,12 @@ func seedObjectTypes(db *gorm.DB, now time.Time) {
 	}
 
 	objectTypes := []models.ObjectType{
-		{Name: "Piping", Description: "Sistem perpipaan", CreatedAt: now, UpdatedAt: now},
-		{Name: "Valve", Description: "Katup dan aksesoris perpipaan", CreatedAt: now, UpdatedAt: now},
-		{Name: "Machinery", Description: "Peralatan mesin berputar dan statis", CreatedAt: now, UpdatedAt: now},
-		{Name: "Electrical Component", Description: "Komponen kelistrikan", CreatedAt: now, UpdatedAt: now},
-		{Name: "Instrument", Description: "Peralatan instrumentasi dan kontrol", CreatedAt: now, UpdatedAt: now},
+		{Name: "Piping", Description: "Sistem perpipaan dan fitting", CreatedAt: now, UpdatedAt: now},
+		{Name: "Valve", Description: "Katup dan aksesoris aliran", CreatedAt: now, UpdatedAt: now},
+		{Name: "Rotating Equipment", Description: "Pompa, kompresor, blower", CreatedAt: now, UpdatedAt: now},
+		{Name: "Static Equipment", Description: "Vessel, heat exchanger, tangki", CreatedAt: now, UpdatedAt: now},
+		{Name: "Electrical Equipment", Description: "Motor listrik, transformer", CreatedAt: now, UpdatedAt: now},
+		{Name: "Instrument", Description: "Peralatan kontrol & instrumen", CreatedAt: now, UpdatedAt: now},
 	}
 	db.Create(&objectTypes)
 	log.Println("Seeded: object_types")
@@ -191,7 +192,7 @@ func seedEquipments(db *gorm.DB, now time.Time) {
 	equipments := []models.Equipment{
 		{
 			UUID: "eq-001-pump-centrifugal", EquipmentCode: "P-IIB-PMP-001",
-			Name: "Centrifugal Pump 150HP", ObjectTypeID: 1, Plant: "P-IIB",
+			Name: "Centrifugal Pump 150HP", ObjectTypeID: 3, Plant: "P-IIB",
 			PlantDescription: "Pabrik Pusri IIB", StorageLocationID: 1,
 			FuncLoc: "P-IIB-SYNTH-001", Vendor: "KSB Indonesia", Year: 2015,
 			OriginalValue: 450000000, BookValue: 180000000, EstimatedReuseValue: 250000000,
@@ -200,7 +201,7 @@ func seedEquipments(db *gorm.DB, now time.Time) {
 		},
 		{
 			UUID: "eq-002-heat-exchanger", EquipmentCode: "P-IIB-HEX-003",
-			Name: "Shell & Tube Heat Exchanger", ObjectTypeID: 2, Plant: "P-IIB",
+			Name: "Shell & Tube Heat Exchanger", ObjectTypeID: 4, Plant: "P-IIB",
 			PlantDescription: "Pabrik Pusri IIB", StorageLocationID: 3,
 			FuncLoc: "P-IIB-UTIL-003", Vendor: "PT Bromo Steel", Year: 2012,
 			OriginalValue: 800000000, BookValue: 320000000, EstimatedReuseValue: 400000000,
@@ -209,7 +210,7 @@ func seedEquipments(db *gorm.DB, now time.Time) {
 		},
 		{
 			UUID: "eq-003-motor-electric", EquipmentCode: "P-III-MOT-010",
-			Name: "Electric Motor 200kW", ObjectTypeID: 3, Plant: "P-III",
+			Name: "Electric Motor 200kW", ObjectTypeID: 5, Plant: "P-III",
 			PlantDescription: "Pabrik Pusri III", StorageLocationID: 2,
 			FuncLoc: "P-III-COMP-010", Vendor: "ABB Indonesia", Year: 2018,
 			OriginalValue: 350000000, BookValue: 245000000, EstimatedReuseValue: 280000000,
@@ -218,7 +219,7 @@ func seedEquipments(db *gorm.DB, now time.Time) {
 		},
 		{
 			UUID: "eq-004-control-valve", EquipmentCode: "P-IV-CVL-022",
-			Name: "Control Valve 6 inch", ObjectTypeID: 4, Plant: "P-IV",
+			Name: "Control Valve 6 inch", ObjectTypeID: 2, Plant: "P-IV",
 			PlantDescription: "Pabrik Pusri IV", StorageLocationID: 4,
 			FuncLoc: "P-IV-AMMON-022", Vendor: "Fisher Emerson", Year: 2016,
 			OriginalValue: 120000000, BookValue: 48000000, EstimatedReuseValue: 75000000,
@@ -227,7 +228,7 @@ func seedEquipments(db *gorm.DB, now time.Time) {
 		},
 		{
 			UUID: "eq-005-compressor", EquipmentCode: "P-IIB-CMP-005",
-			Name: "Reciprocating Compressor", ObjectTypeID: 1, Plant: "P-IIB",
+			Name: "Reciprocating Compressor", ObjectTypeID: 3, Plant: "P-IIB",
 			PlantDescription: "Pabrik Pusri IIB", StorageLocationID: 1,
 			FuncLoc: "P-IIB-SYNTH-005", Vendor: "Atlas Copco", Year: 2010,
 			OriginalValue: 2500000000, BookValue: 500000000, EstimatedReuseValue: 800000000,
@@ -283,7 +284,7 @@ func seedDisposalRequests(db *gorm.DB, now time.Time) {
 
 	disposalDate := now.AddDate(0, -2, 0)
 	disposals := []models.DisposalRequest{
-		{DisposalNumber: "DSP-2026-001", EquipmentID: 5, DisposalMethodID: 2, ScrapValue: 150000000, DisposalDate: &disposalDate, ApprovedBy: 4, Justification: "Biaya rekondisi melebihi nilai buku, tidak ekonomis untuk diperbaiki", ApprovalStatus: "Approved", CreatedAt: now, UpdatedAt: now, CreatedBy: 2},
+		{DisposalNumber: "DSP-2026-001", EquipmentID: 5, DisposalMethodID: 2, ScrapValue: 150000000, DisposalDate: &disposalDate, ApprovedBy: 4, Justification: "Biaya rekondisi melebihi nilai buku, tidak ekonomis untuk diperbaiki", ApprovalStatus: "APPROVED", CreatedAt: now, UpdatedAt: now, CreatedBy: 2},
 	}
 	db.Create(&disposals)
 	log.Println("Seeded: disposal_requests")
@@ -299,8 +300,8 @@ func seedReuseRequests(db *gorm.DB, now time.Time) {
 	reuseDate1 := now.AddDate(0, 1, 0)
 	reuseDate2 := now.AddDate(0, 2, 0)
 	reuses := []models.ReuseRequest{
-		{RequestNumber: "REU-2026-001", EquipmentID: 1, RequestingProject: "Revamp Unit Utilitas P-III", RequestingPlant: "P-III", InstallationLocation: "Cooling Water System", ReuseDate: &reuseDate1, EstimatedNewPurchaseCost: 500000000, RefurbishmentCost: 25000000, EstimatedCostAvoidance: 475000000, ApprovalStatus: "Pending", Justification: "Spesifikasi pompa sesuai kebutuhan proyek revamp", Notes: "Pompa dalam kondisi baik berdasarkan hasil inspeksi", RequestedBy: 3, RequestedAt: now, CreatedAt: now, UpdatedAt: now},
-		{RequestNumber: "REU-2026-002", EquipmentID: 3, RequestingProject: "Penambahan Kapasitas Kompresor P-IV", RequestingPlant: "P-IV", InstallationLocation: "Compressor House", ReuseDate: &reuseDate2, EstimatedNewPurchaseCost: 400000000, RefurbishmentCost: 0, EstimatedCostAvoidance: 400000000, ApprovalStatus: "Pending", Justification: "Motor 200kW sesuai kebutuhan penggerak kompresor baru", Notes: "Motor siap pakai tanpa perlu refurbishment", RequestedBy: 2, RequestedAt: now, CreatedAt: now, UpdatedAt: now},
+		{RequestNumber: "REU-2026-001", EquipmentID: 1, RequestingProject: "Revamp Unit Utilitas P-III", RequestingPlant: "P-III", InstallationLocation: "Cooling Water System", ReuseDate: &reuseDate1, EstimatedNewPurchaseCost: 500000000, RefurbishmentCost: 25000000, EstimatedCostAvoidance: 475000000, ApprovalStatus: "PENDING", Justification: "Spesifikasi pompa sesuai kebutuhan proyek revamp", Notes: "Pompa dalam kondisi baik berdasarkan hasil inspeksi", RequestedBy: 3, RequestedAt: now, CreatedAt: now, UpdatedAt: now},
+		{RequestNumber: "REU-2026-002", EquipmentID: 3, RequestingProject: "Penambahan Kapasitas Kompresor P-IV", RequestingPlant: "P-IV", InstallationLocation: "Compressor House", ReuseDate: &reuseDate2, EstimatedNewPurchaseCost: 400000000, RefurbishmentCost: 0, EstimatedCostAvoidance: 400000000, ApprovalStatus: "PENDING", Justification: "Motor 200kW sesuai kebutuhan penggerak kompresor baru", Notes: "Motor siap pakai tanpa perlu refurbishment", RequestedBy: 2, RequestedAt: now, CreatedAt: now, UpdatedAt: now},
 	}
 	db.Create(&reuses)
 	log.Println("Seeded: reuse_requests")
