@@ -251,7 +251,7 @@ func seedIdleDeclarations(db *gorm.DB, now time.Time) {
 		{EquipmentID: 2, IdleDate: now.AddDate(-2, 0, 0), IdleReasonID: 3, ConditionID: 2, PreservationStatus: "Partially Preserved", StorageLocationID: 3, Notes: "Disimpan di yard terbuka dengan penutup", DeclaredBy: 2, CreatedAt: now, UpdatedAt: now},
 		{EquipmentID: 3, IdleDate: now.AddDate(0, -6, 0), IdleReasonID: 2, ConditionID: 1, PreservationStatus: "Preserved", StorageLocationID: 2, Notes: "Motor disimpan dalam gudang tertutup", DeclaredBy: 3, CreatedAt: now, UpdatedAt: now},
 		{EquipmentID: 4, IdleDate: now.AddDate(0, -3, 0), IdleReasonID: 2, ConditionID: 1, PreservationStatus: "Preserved", StorageLocationID: 4, Notes: "Control valve dalam kemasan asli", DeclaredBy: 3, CreatedAt: now, UpdatedAt: now},
-		{EquipmentID: 5, IdleDate: now.AddDate(-3, 0, 0), IdleReasonID: 5, ConditionID: 3, PreservationStatus: "Not Preserved", StorageLocationID: 1, Notes: "Kompresor rusak berat sejak shutdown pabrik", DeclaredBy: 2, CreatedAt: now, UpdatedAt: now},
+		{EquipmentID: 5, IdleDate: now.AddDate(-3, 0, 0), IdleReasonID: 4, ConditionID: 3, PreservationStatus: "Not Preserved", StorageLocationID: 1, Notes: "Kompresor rusak berat sejak shutdown pabrik", DeclaredBy: 2, CreatedAt: now, UpdatedAt: now},
 	}
 	db.Create(&declarations)
 	log.Println("Seeded: idle_declarations")
