@@ -94,7 +94,7 @@ export default function LoginPage() {
         <h1 className={styles.leftPanelTitle}>
           Selamat Datang Di<br />
           Manajemen Idle Equipment<br />
-          PT PUSRI
+          PT PUPUK SRIWIDJAJA PALEMBANG 
         </h1>
 
         <div className={styles.infoBox}>

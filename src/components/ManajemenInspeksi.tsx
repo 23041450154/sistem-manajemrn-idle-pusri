@@ -1,9 +1,10 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { 
   Search, Eye, Edit, AlertCircle, FileText, X, Check, Save, Clock,
-  UploadCloud, Paperclip, RefreshCw, XCircle, CheckCircle2, ChevronRight
+  UploadCloud, Paperclip, RefreshCw, XCircle, CheckCircle2, ChevronRight,
+  ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 
 // Tipe Data
@@ -236,6 +237,13 @@ export default function ManajemenInspeksi() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 7;
+
+  // Sorting State
+  const [sortConfig, setSortConfig] = useState<{key: keyof Asset, direction: 'asc' | 'desc'} | null>({ key: 'tanggalRegistrasi', direction: 'desc' });
+
   // Handler Buka Modal
   const openModal = (asset: Asset) => {
     setSelectedAsset(asset);
@@ -329,9 +337,9 @@ export default function ManajemenInspeksi() {
     setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
-  // Filter Data
+  // Filter & Sort Data
   const filteredAssets = useMemo(() => {
-    return assets.filter(a => {
+    let filtered = assets.filter(a => {
       const matchSearch = a.kodeAlat.toLowerCase().includes(search.toLowerCase()) || 
                           a.namaAlat.toLowerCase().includes(search.toLowerCase());
       const matchPlant = plantFilter === "Semua" || a.plant === plantFilter;
@@ -346,14 +354,43 @@ export default function ManajemenInspeksi() {
       
       return matchSearch && matchPlant && matchStatus && matchDate;
     });
-  }, [assets, search, plantFilter, statusFilter, dateFilter]);
+
+    if (sortConfig !== null) {
+      filtered.sort((a, b) => {
+        const valA = String(a[sortConfig!.key]).toLowerCase();
+        const valB = String(b[sortConfig!.key]).toLowerCase();
+        if (valA < valB) {
+          return sortConfig!.direction === 'asc' ? -1 : 1;
+        }
+        if (valA > valB) {
+          return sortConfig!.direction === 'asc' ? 1 : -1;
+        }
+        return 0;
+      });
+    }
+
+    return filtered;
+  }, [assets, search, plantFilter, statusFilter, dateFilter, sortConfig]);
+
+  const paginatedAssets = useMemo(() => {
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredAssets.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+  }, [filteredAssets, currentPage]);
+
+  const totalPages = Math.ceil(filteredAssets.length / ITEMS_PER_PAGE);
 
   const resetFilter = () => {
     setSearch("");
     setPlantFilter("Semua");
     setStatusFilter("Semua");
     setDateFilter("");
+    setCurrentPage(1);
+    setSortConfig({ key: 'tanggalRegistrasi', direction: 'desc' });
   };
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, plantFilter, statusFilter, dateFilter]);
 
   // UI Helpers
   const getStatusAsetBadge = (status: AssetState) => {
@@ -424,6 +461,23 @@ export default function ManajemenInspeksi() {
   const isReadOnly = selectedAsset?.statusPersetujuan === "IN_REVIEW" || selectedAsset?.statusPersetujuan === "APPROVED";
 
   const pendingCount = assets.filter(a => a.statusPersetujuan === "PENDING" || a.statusPersetujuan === "NEED_REVISION").length;
+
+  const handleSort = (key: keyof Asset) => {
+    let direction: 'asc' | 'desc' = 'asc';
+    if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+      direction = 'desc';
+    }
+    setSortConfig({ key, direction });
+  };
+
+  const getSortIcon = (key: keyof Asset) => {
+    if (!sortConfig || sortConfig.key !== key) {
+      return <ArrowUpDown className="w-3 h-3 text-gray-400 ml-1.5 opacity-40 group-hover:opacity-100 group-hover:text-[#0A356A] transition-all" />;
+    }
+    return sortConfig.direction === 'asc' ? 
+      <ArrowUp className="w-3.5 h-3.5 text-[#0A356A] ml-1.5" /> : 
+      <ArrowDown className="w-3.5 h-3.5 text-[#0A356A] ml-1.5" />;
+  };
 
   return (
     <div className="max-w-7xl mx-auto pt-2 pb-8">
@@ -513,18 +567,30 @@ export default function ManajemenInspeksi() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50/95 backdrop-blur-sm">
-              <tr className="border-b border-gray-200">
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[12%]">Kode Alat</th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[23%]">Nama Alat & Jenis</th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[10%]">Plant</th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[15%]">Tgl Registrasi</th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[15%]">Status Aset</th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[15%]">Persetujuan</th>
+              <tr className="border-b-2 border-gray-300">
+                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[12%] cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('kodeAlat')}>
+                  <div className="flex items-center">Kode Alat {getSortIcon('kodeAlat')}</div>
+                </th>
+                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[23%] cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
+                  <div className="flex items-center">Nama Alat & Jenis {getSortIcon('namaAlat')}</div>
+                </th>
+                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[10%] cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
+                  <div className="flex items-center">Plant {getSortIcon('plant')}</div>
+                </th>
+                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[15%] cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('tanggalRegistrasi')}>
+                  <div className="flex items-center">Tgl Registrasi {getSortIcon('tanggalRegistrasi')}</div>
+                </th>
+                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[15%] cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
+                  <div className="flex items-center">Status Aset {getSortIcon('statusAset')}</div>
+                </th>
+                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[15%] cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
+                  <div className="flex items-center">Persetujuan {getSortIcon('statusPersetujuan')}</div>
+                </th>
                 <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[10%] text-right">Aksi</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100 bg-white">
-              {filteredAssets.length === 0 ? (
+            <tbody className="bg-white">
+              {paginatedAssets.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center">
@@ -535,8 +601,8 @@ export default function ManajemenInspeksi() {
                   </td>
                 </tr>
               ) : (
-                filteredAssets.map((asset) => (
-                  <tr key={asset.id} className="hover:bg-blue-50/30 transition-colors group">
+                paginatedAssets.map((asset) => (
+                  <tr key={asset.id} className="border-b-2 border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
                     <td className="px-5 py-3 whitespace-nowrap text-[13px] font-semibold text-gray-900 relative">
                       {(asset.statusPersetujuan === "PENDING" || asset.statusPersetujuan === "NEED_REVISION") && (
                         <span className="absolute left-1.5 top-1/2 -translate-y-1/2 flex h-1.5 w-1.5" title={asset.statusPersetujuan === "PENDING" ? "Perlu Validasi" : "Perlu Revisi"}>
@@ -576,8 +642,31 @@ export default function ManajemenInspeksi() {
           </table>
         </div>
         
-        <div className="px-5 py-3 border-t border-gray-200 bg-white text-[11px] font-medium text-gray-500 flex justify-between items-center">
-          <span>Menampilkan {filteredAssets.length} hasil pencarian</span>
+        <div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
+          <span className="text-[11px] font-medium text-gray-500">
+            Menampilkan {paginatedAssets.length} dari {filteredAssets.length} data
+          </span>
+          {totalPages > 1 && (
+            <div className="flex items-center gap-1.5">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-2.5 py-1 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              >
+                Prev
+              </button>
+              <span className="text-[11px] font-medium text-gray-700 px-2">
+                Hal {currentPage} / {totalPages}
+              </span>
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                disabled={currentPage === totalPages}
+                className="px-2.5 py-1 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              >
+                Next
+              </button>
+            </div>
+          )}
         </div>
 
       </div>

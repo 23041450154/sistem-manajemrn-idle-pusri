@@ -40,18 +40,7 @@ const pieData = [
   { name: 'Rusak', value: 4, color: '#EF4444' },
 ];
 
-const permintaanTerbaru = [
-  { id: 'REQ-2023-1042', name: 'Heat Exchanger E-101', type: 'Peminjaman', date: '24 Okt 2023', status: 'Pending' },
-  { id: 'REQ-2023-1045', name: 'Genset Cummins 500kVA', type: 'Pengembalian', date: '25 Okt 2023', status: 'Approved' },
-  { id: 'REQ-2023-1048', name: 'Scaffolding Set (50 pcs)', type: 'Peminjaman', date: '26 Okt 2023', status: 'Pending' },
-  { id: 'REQ-2023-1051', name: 'Welding Machine Miller', type: 'Peminjaman', date: '26 Okt 2023', status: 'Approved' },
-];
 
-const maintenanceJadwal = [
-  { title: 'Inspeksi Rutin Pompa P-201', time: 'Besok, 09:00 WIB', icon: ShieldAlert, color: 'bg-blue-100 text-blue-600' },
-  { title: 'Kalibrasi Sensor Suhu T-105', time: '28 Okt 2023', icon: Wrench, color: 'bg-orange-100 text-orange-500' },
-  { title: 'Penggantian Pelumas Kompresor', time: '30 Okt 2023', icon: Cog, color: 'bg-gray-100 text-gray-500' },
-];
 
 export default function UnitKerjaDashboard() {
   return (
@@ -204,86 +193,10 @@ export default function UnitKerjaDashboard() {
 
       </div>
 
-      {/* Bottom Lists Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        
-        {/* Table Permintaan */}
-        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-            <h2 className="text-lg font-bold text-gray-900">Permintaan Terbaru</h2>
-            <button className="text-sm font-semibold text-[#0A356A] hover:text-blue-800 transition-colors">
-              Lihat Semua
-            </button>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm text-left">
-              <thead className="bg-gray-50/50 text-gray-500 font-bold text-xs uppercase tracking-wider border-b border-gray-100">
-                <tr>
-                  <th className="px-6 py-4 whitespace-nowrap">Asset ID</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Equipment Name</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Request Type</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Date</th>
-                  <th className="px-6 py-4 whitespace-nowrap">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {permintaanTerbaru.map((req, idx) => (
-                  <tr key={idx} className="hover:bg-blue-50/30 transition-colors">
-                    <td className="px-6 py-4 font-bold text-[#0A356A] whitespace-nowrap">{req.id}</td>
-                    <td className="px-6 py-4 font-medium text-gray-800">{req.name}</td>
-                    <td className="px-6 py-4 text-gray-600 whitespace-nowrap">{req.type}</td>
-                    <td className="px-6 py-4 text-gray-600 whitespace-nowrap">{req.date}</td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`px-3 py-1 text-[11px] font-bold rounded-full ${
-                        req.status === 'Approved' 
-                          ? 'bg-emerald-100 text-emerald-700' 
-                          : 'bg-orange-100 text-orange-700'
-                      }`}>
-                        {req.status}
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
 
-        {/* Timeline Jadwal Maintenance */}
-        <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm">
-          <h2 className="text-lg font-bold text-gray-900 mb-6">Jadwal Maintenance Unit</h2>
-          <div className="relative border-l border-gray-100 ml-4 space-y-8 pb-4">
-            {maintenanceJadwal.map((item, idx) => (
-              <div key={idx} className="relative pl-6">
-                <div className={`absolute -left-4 top-0 w-8 h-8 rounded-full border-4 border-white flex items-center justify-center shadow-sm ${item.color}`}>
-                  <item.icon className="w-3.5 h-3.5" />
-                </div>
-                <h3 className="font-semibold text-gray-800 text-sm pt-1">{item.title}</h3>
-                <p className="text-xs text-gray-500 mt-1 flex items-center gap-1">
-                  <CalendarIcon className="w-3 h-3" />
-                  {item.time}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-
-      </div>
 
     </div>
   );
 }
 
-// Helper icon component
-function CalendarIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg 
-      {...props}
-      xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-      <rect width="18" height="18" x="3" y="4" rx="2" ry="2" />
-      <line x1="16" x2="16" y1="2" y2="6" />
-      <line x1="8" x2="8" y1="2" y2="6" />
-      <line x1="3" x2="21" y1="10" y2="10" />
-    </svg>
-  );
-}
+
