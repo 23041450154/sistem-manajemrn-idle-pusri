@@ -60,11 +60,13 @@ func seedStatuses(db *gorm.DB, now time.Time) {
 
 	statuses := []models.Status{
 		{Name: "REGISTERED", Description: "Aset baru didaftarkan ke sistem", CreatedAt: now, UpdatedAt: now},
-		{Name: "Aktif", Description: "Peralatan sedang digunakan dalam operasional", CreatedAt: now, UpdatedAt: now},
-		{Name: "Idle", Description: "Peralatan tidak digunakan / menganggur", CreatedAt: now, UpdatedAt: now},
-		{Name: "Dalam Perbaikan", Description: "Peralatan sedang dalam proses perbaikan", CreatedAt: now, UpdatedAt: now},
-		{Name: "Digunakan Kembali", Description: "Peralatan idle yang sudah dialokasikan untuk reuse", CreatedAt: now, UpdatedAt: now},
-		{Name: "Disposed", Description: "Peralatan sudah dihapusbukukan / dibuang", CreatedAt: now, UpdatedAt: now},
+		{Name: "VALIDATED", Description: "Peralatan telah diinspeksi oleh tim teknisi dan berhasil lewat uji", CreatedAt: now, UpdatedAt: now},
+		{Name: "REJECTED", Description: "Peralatan telah diinspeksi oleh tim teknisi dan gagal lewat uji", CreatedAt: now, UpdatedAt: now},
+		{Name: "IDLE", Description: "Peralatan tidak digunakan / menganggur", CreatedAt: now, UpdatedAt: now},
+		{Name: "READY_TO_USE", Description: "Peralatan idle yang sudah dialokasikan untuk reuse", CreatedAt: now, UpdatedAt: now},
+		{Name: "MAINTENANCE", Description: "Peralatan sedang dalam perawatan", CreatedAt: now, UpdatedAt: now},
+		{Name: "REUSED", Description: "Peralatan sudah digunakan kembali", CreatedAt: now, UpdatedAt: now},
+		{Name: "DISPOSED", Description: "Peralatan sudah dihapusbukukan / dibuang", CreatedAt: now, UpdatedAt: now},
 	}
 	db.Create(&statuses)
 	log.Println("Seeded: statuses")
@@ -78,10 +80,9 @@ func seedConditions(db *gorm.DB, now time.Time) {
 	}
 
 	conditions := []models.Condition{
-		{Name: "Baik", Description: "Kondisi peralatan baik, siap digunakan", CreatedAt: now, UpdatedAt: now},
-		{Name: "Rusak Ringan", Description: "Kerusakan minor, masih bisa diperbaiki", CreatedAt: now, UpdatedAt: now},
-		{Name: "Rusak Berat", Description: "Kerusakan major, perlu evaluasi kelayakan", CreatedAt: now, UpdatedAt: now},
-		{Name: "Tidak Layak", Description: "Peralatan sudah tidak layak pakai", CreatedAt: now, UpdatedAt: now},
+		{Name: "BAGUS", Description: "Kondisi peralatan baik, siap digunakan", CreatedAt: now, UpdatedAt: now},
+		{Name: "RUSAK_RINGAN", Description: "Kerusakan minor, masih bisa diperbaiki", CreatedAt: now, UpdatedAt: now},
+		{Name: "RUSAK_BERAT", Description: "Kerusakan major, perlu evaluasi kelayakan", CreatedAt: now, UpdatedAt: now},
 	}
 	db.Create(&conditions)
 	log.Println("Seeded: conditions")
@@ -95,11 +96,11 @@ func seedObjectTypes(db *gorm.DB, now time.Time) {
 	}
 
 	objectTypes := []models.ObjectType{
-		{Name: "Rotating Equipment", Description: "Pompa, kompresor, turbin, dan peralatan berputar lainnya", CreatedAt: now, UpdatedAt: now},
-		{Name: "Static Equipment", Description: "Vessel, heat exchanger, kolom, dan peralatan statis lainnya", CreatedAt: now, UpdatedAt: now},
-		{Name: "Electrical Equipment", Description: "Motor listrik, transformer, switchgear", CreatedAt: now, UpdatedAt: now},
-		{Name: "Instrument", Description: "Alat ukur, sensor, control valve", CreatedAt: now, UpdatedAt: now},
-		{Name: "Piping", Description: "Pipa, fitting, valve manual", CreatedAt: now, UpdatedAt: now},
+		{Name: "Piping", Description: "Sistem perpipaan", CreatedAt: now, UpdatedAt: now},
+		{Name: "Valve", Description: "Katup dan aksesoris perpipaan", CreatedAt: now, UpdatedAt: now},
+		{Name: "Machinery", Description: "Peralatan mesin berputar dan statis", CreatedAt: now, UpdatedAt: now},
+		{Name: "Electrical Component", Description: "Komponen kelistrikan", CreatedAt: now, UpdatedAt: now},
+		{Name: "Instrument", Description: "Peralatan instrumentasi dan kontrol", CreatedAt: now, UpdatedAt: now},
 	}
 	db.Create(&objectTypes)
 	log.Println("Seeded: object_types")
@@ -113,11 +114,11 @@ func seedStorageLocations(db *gorm.DB, now time.Time) {
 	}
 
 	locations := []models.StorageLocation{
-		{Name: "Gudang Utama P-IIB", Plant: "P-IIB", Description: "Gudang penyimpanan utama pabrik IIB", CreatedAt: now, UpdatedAt: now},
-		{Name: "Gudang Utama P-III", Plant: "P-III", Description: "Gudang penyimpanan utama pabrik III", CreatedAt: now, UpdatedAt: now},
-		{Name: "Yard Terbuka P-IIB", Plant: "P-IIB", Description: "Area penyimpanan terbuka pabrik IIB", CreatedAt: now, UpdatedAt: now},
-		{Name: "Gudang Utama P-IV", Plant: "P-IV", Description: "Gudang penyimpanan utama pabrik IV", CreatedAt: now, UpdatedAt: now},
-		{Name: "Workshop Mekanik", Plant: "UTILITY", Description: "Area workshop untuk perbaikan peralatan", CreatedAt: now, UpdatedAt: now},
+		{Name: "Pabrik III", Plant: "P-III", Description: "Area penyimpanan Pabrik III", CreatedAt: now, UpdatedAt: now},
+		{Name: "Pabrik IV", Plant: "P-IV", Description: "Area penyimpanan Pabrik IV", CreatedAt: now, UpdatedAt: now},
+		{Name: "Gudang Utama", Plant: "UTILITY", Description: "Gudang penyimpanan utama", CreatedAt: now, UpdatedAt: now},
+		{Name: "Storage Area A", Plant: "UTILITY", Description: "Area penyimpanan A", CreatedAt: now, UpdatedAt: now},
+		{Name: "Storage Area B", Plant: "UTILITY", Description: "Area penyimpanan B", CreatedAt: now, UpdatedAt: now},
 	}
 	db.Create(&locations)
 	log.Println("Seeded: storage_locations")
@@ -131,11 +132,10 @@ func seedIdleReasons(db *gorm.DB, now time.Time) {
 	}
 
 	reasons := []models.IdleReason{
-		{ReasonName: "Proyek Selesai", Description: "Peralatan dari proyek yang sudah selesai", CreatedAt: now, UpdatedAt: now},
-		{ReasonName: "Upgrade Teknologi", Description: "Digantikan oleh peralatan dengan teknologi lebih baru", CreatedAt: now, UpdatedAt: now},
-		{ReasonName: "Perubahan Proses", Description: "Tidak diperlukan karena perubahan proses produksi", CreatedAt: now, UpdatedAt: now},
-		{ReasonName: "Surplus Kapasitas", Description: "Kapasitas melebihi kebutuhan operasional saat ini", CreatedAt: now, UpdatedAt: now},
+		{ReasonName: "Sisa Proyek", Description: "Peralatan sisa dari proyek yang sudah selesai", CreatedAt: now, UpdatedAt: now},
 		{ReasonName: "Pabrik Shutdown", Description: "Pabrik atau unit dihentikan operasinya", CreatedAt: now, UpdatedAt: now},
+		{ReasonName: "Modifikasi Desain", Description: "Tidak diperlukan karena perubahan desain sistem", CreatedAt: now, UpdatedAt: now},
+		{ReasonName: "Decommissioning", Description: "Peralatan dari unit yang di-decommission", CreatedAt: now, UpdatedAt: now},
 	}
 	db.Create(&reasons)
 	log.Println("Seeded: idle_reasons")
@@ -281,8 +281,9 @@ func seedDisposalRequests(db *gorm.DB, now time.Time) {
 		return
 	}
 
+	disposalDate := now.AddDate(0, -2, 0)
 	disposals := []models.DisposalRequest{
-		{DisposalNumber: "DSP-2026-001", EquipmentID: 5, DisposalMethodID: 2, ScrapValue: 150000000, DisposalDate: now.AddDate(0, -2, 0), ApprovedBy: 4, Justification: "Biaya rekondisi melebihi nilai buku, tidak ekonomis untuk diperbaiki", ApprovalStatus: "Approved", CreatedAt: now, UpdatedAt: now, CreatedBy: 2},
+		{DisposalNumber: "DSP-2026-001", EquipmentID: 5, DisposalMethodID: 2, ScrapValue: 150000000, DisposalDate: &disposalDate, ApprovedBy: 4, Justification: "Biaya rekondisi melebihi nilai buku, tidak ekonomis untuk diperbaiki", ApprovalStatus: "Approved", CreatedAt: now, UpdatedAt: now, CreatedBy: 2},
 	}
 	db.Create(&disposals)
 	log.Println("Seeded: disposal_requests")
@@ -295,9 +296,11 @@ func seedReuseRequests(db *gorm.DB, now time.Time) {
 		return
 	}
 
+	reuseDate1 := now.AddDate(0, 1, 0)
+	reuseDate2 := now.AddDate(0, 2, 0)
 	reuses := []models.ReuseRequest{
-		{RequestNumber: "REU-2026-001", EquipmentID: 1, RequestingProject: "Revamp Unit Utilitas P-III", RequestingPlant: "P-III", InstallationLocation: "Cooling Water System", ReuseDate: now.AddDate(0, 1, 0), EstimatedNewPurchaseCost: 500000000, RefurbishmentCost: 25000000, EstimatedCostAvoidance: 475000000, ApprovalStatus: "Pending", Justification: "Spesifikasi pompa sesuai kebutuhan proyek revamp", Notes: "Pompa dalam kondisi baik berdasarkan hasil inspeksi", RequestedBy: 3, RequestedAt: now, CreatedAt: now, UpdatedAt: now},
-		{RequestNumber: "REU-2026-002", EquipmentID: 3, RequestingProject: "Penambahan Kapasitas Kompresor P-IV", RequestingPlant: "P-IV", InstallationLocation: "Compressor House", ReuseDate: now.AddDate(0, 2, 0), EstimatedNewPurchaseCost: 400000000, RefurbishmentCost: 0, EstimatedCostAvoidance: 400000000, ApprovalStatus: "Pending", Justification: "Motor 200kW sesuai kebutuhan penggerak kompresor baru", Notes: "Motor siap pakai tanpa perlu refurbishment", RequestedBy: 2, RequestedAt: now, CreatedAt: now, UpdatedAt: now},
+		{RequestNumber: "REU-2026-001", EquipmentID: 1, RequestingProject: "Revamp Unit Utilitas P-III", RequestingPlant: "P-III", InstallationLocation: "Cooling Water System", ReuseDate: &reuseDate1, EstimatedNewPurchaseCost: 500000000, RefurbishmentCost: 25000000, EstimatedCostAvoidance: 475000000, ApprovalStatus: "Pending", Justification: "Spesifikasi pompa sesuai kebutuhan proyek revamp", Notes: "Pompa dalam kondisi baik berdasarkan hasil inspeksi", RequestedBy: 3, RequestedAt: now, CreatedAt: now, UpdatedAt: now},
+		{RequestNumber: "REU-2026-002", EquipmentID: 3, RequestingProject: "Penambahan Kapasitas Kompresor P-IV", RequestingPlant: "P-IV", InstallationLocation: "Compressor House", ReuseDate: &reuseDate2, EstimatedNewPurchaseCost: 400000000, RefurbishmentCost: 0, EstimatedCostAvoidance: 400000000, ApprovalStatus: "Pending", Justification: "Motor 200kW sesuai kebutuhan penggerak kompresor baru", Notes: "Motor siap pakai tanpa perlu refurbishment", RequestedBy: 2, RequestedAt: now, CreatedAt: now, UpdatedAt: now},
 	}
 	db.Create(&reuses)
 	log.Println("Seeded: reuse_requests")
@@ -311,8 +314,8 @@ func seedApprovalRequests(db *gorm.DB, now time.Time) {
 	}
 
 	approvals := []models.ApprovalRequest{
-		{RequestNumber: "APR-2026-001", RequestType: "Reuse", ReferenceID: 1, EquipmentID: 1, Requester: 3, RequestDate: now, Justification: "Penggunaan kembali pompa idle untuk proyek revamp P-III", CurrentStep: "Manager Teknik", ApprovalStatus: "In Review", CreatedAt: now, UpdatedAt: now, CreatedBy: 3, UpdatedBy: 3},
-		{RequestNumber: "APR-2026-002", RequestType: "Disposal", ReferenceID: 1, EquipmentID: 5, Requester: 2, RequestDate: now.AddDate(0, -2, 0), Justification: "Disposal kompresor rusak berat via scrap", CurrentStep: "Completed", ApprovalStatus: "Approved", CreatedAt: now, UpdatedAt: now, CreatedBy: 2, UpdatedBy: 4},
+		{RequestNumber: "APR-2026-001", RequestType: "REUSE", ReferenceID: 1, EquipmentID: 1, Requester: 3, RequestDate: now, Justification: "Penggunaan kembali pompa idle untuk proyek revamp P-III", CurrentStep: "Manajer Rendal", ApprovalStatus: "IN_REVIEW", CreatedAt: now, UpdatedAt: now, CreatedBy: 3, UpdatedBy: 3},
+		{RequestNumber: "APR-2026-002", RequestType: "DISPOSAL", ReferenceID: 1, EquipmentID: 5, Requester: 2, RequestDate: now.AddDate(0, -2, 0), Justification: "Disposal kompresor rusak berat via scrap", CurrentStep: "Completed", ApprovalStatus: "APPROVED", CreatedAt: now, UpdatedAt: now, CreatedBy: 2, UpdatedBy: 4},
 	}
 	db.Create(&approvals)
 	log.Println("Seeded: approval_requests")
@@ -325,12 +328,17 @@ func seedApprovalSteps(db *gorm.DB, now time.Time) {
 		return
 	}
 
+	approvalDate1 := now.AddDate(0, 0, -2)
+	approvalDate2 := now.AddDate(0, -2, -5)
+	approvalDate3 := now.AddDate(0, -2, -3)
+	approvalDate4 := now.AddDate(0, -2, 0)
+
 	steps := []models.ApprovalStep{
-		{ApprovalRequestId: 1, StepOrder: 1, ApprovalRole: "Kepala Seksi", ApprovalName: "Budi Santoso", ApprovalStatus: "Approved", ApprovalDate: now.AddDate(0, 0, -2), ApprovalNotes: "Setuju, spesifikasi sesuai", CreatedBy: 3, UpdatedBy: 2},
-		{ApprovalRequestId: 1, StepOrder: 2, ApprovalRole: "Manager Teknik", ApprovalName: "Ahmad Fauzi", ApprovalStatus: "Pending", ApprovalDate: time.Time{}, ApprovalNotes: "", CreatedBy: 3, UpdatedBy: 3},
-		{ApprovalRequestId: 2, StepOrder: 1, ApprovalRole: "Kepala Seksi", ApprovalName: "Budi Santoso", ApprovalStatus: "Approved", ApprovalDate: now.AddDate(0, -2, -5), ApprovalNotes: "Setuju disposal", CreatedBy: 2, UpdatedBy: 2},
-		{ApprovalRequestId: 2, StepOrder: 2, ApprovalRole: "Manager Teknik", ApprovalName: "Ahmad Fauzi", ApprovalStatus: "Approved", ApprovalDate: now.AddDate(0, -2, -3), ApprovalNotes: "Approved, biaya rekondisi tidak ekonomis", CreatedBy: 2, UpdatedBy: 4},
-		{ApprovalRequestId: 2, StepOrder: 3, ApprovalRole: "GM Operasi", ApprovalName: "Direktur Operasi", ApprovalStatus: "Approved", ApprovalDate: now.AddDate(0, -2, 0), ApprovalNotes: "Approved", CreatedBy: 2, UpdatedBy: 4},
+		{ApprovalRequestId: 1, StepOrder: 1, ApprovalRole: "MANAJER_RENDAL", ApprovalName: "Ahmad Fauzi", ApprovalStatus: "APPROVED", ApprovalDate: &approvalDate1, ApprovalNotes: "Setuju, spesifikasi sesuai", CreatedBy: 3, UpdatedBy: 2},
+		{ApprovalRequestId: 1, StepOrder: 2, ApprovalRole: "MANAJER_RENDAL", ApprovalName: "Ahmad Fauzi", ApprovalStatus: "PENDING", ApprovalDate: nil, ApprovalNotes: "", CreatedBy: 3, UpdatedBy: 3},
+		{ApprovalRequestId: 2, StepOrder: 1, ApprovalRole: "MANAJER_RENDAL", ApprovalName: "Ahmad Fauzi", ApprovalStatus: "APPROVED", ApprovalDate: &approvalDate2, ApprovalNotes: "Setuju disposal", CreatedBy: 2, UpdatedBy: 2},
+		{ApprovalRequestId: 2, StepOrder: 2, ApprovalRole: "MANAJER_RENDAL", ApprovalName: "Ahmad Fauzi", ApprovalStatus: "APPROVED", ApprovalDate: &approvalDate3, ApprovalNotes: "Approved, biaya rekondisi tidak ekonomis", CreatedBy: 2, UpdatedBy: 4},
+		{ApprovalRequestId: 2, StepOrder: 3, ApprovalRole: "MANAJER_OPERASI", ApprovalName: "Ahmad Fauzi", ApprovalStatus: "APPROVED", ApprovalDate: &approvalDate4, ApprovalNotes: "Approved", CreatedBy: 2, UpdatedBy: 4},
 	}
 	db.Create(&steps)
 	log.Println("Seeded: approval_steps")

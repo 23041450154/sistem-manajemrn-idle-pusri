@@ -62,3 +62,19 @@ func AuthMiddleware(db *gorm.DB) gin.HandlerFunc {
 		c.Next()
 	}
 }
+
+func RequireRole(allowedRoles ...string) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		userRole := c.GetString("user_role")
+		for _, role := range allowedRoles {
+			if userRole == role {
+				c.Next()
+				return
+			}
+		}
+		c.AbortWithStatusJSON(http.StatusForbidden, gin.H{
+			"status":  "error",
+			"message": "Anda tidak memiliki akses untuk melakukan aksi ini",
+		})
+	}
+}

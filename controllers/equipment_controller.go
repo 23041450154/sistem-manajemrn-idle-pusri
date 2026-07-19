@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Ucokgreget/backend-idle/constants"
 	"github.com/Ucokgreget/backend-idle/models"
 	"github.com/Ucokgreget/backend-idle/request"
 	"github.com/gin-gonic/gin"
@@ -12,15 +13,47 @@ import (
 	"gorm.io/gorm"
 )
 
+func GetAllEquipment(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		var equipments []models.Equipment
+
+		if err := db.Find(&equipments).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "ada yang salah dengan server",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "Data berhasil diambil",
+			"data":    equipments,
+		})
+	}
+}
+
 func GetEquipment(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		
+		id := c.Param("id")
+
+		var equipment models.Equipment
+		if err := db.Preload("Condition").Preload("Status").Preload("StorageLocation").Preload("ObjectType").First(&equipment, id).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"status":  "error",
+				"message": "Aset tidak ditemukan",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"message": "berhasil mengambil data equipment",
+			"data":    equipment,
+		})
 	}
 }
 
 func CreateEquipment(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		var input request.CreateEquipmentRequest
+		var input request.EquipmentRequest
 
 		if err := c.ShouldBindJSON(&input); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -121,9 +154,326 @@ func CreateEquipment(db *gorm.DB) gin.HandlerFunc {
 				"id":             equipment.ID,
 				"uuid":           equipment.UUID,
 				"equipment_code": equipment.EquipmentCode,
-				"status_name":    "REGISTERED",
+				"id_status":      1,
 				"created_by":     userNPP,
 				"created_at":     equipment.CreatedAt.Format(time.RFC3339),
+			},
+		})
+	}
+}
+
+func UpdateEquipment(db *gorm.DB) gin.HandlerFunc {
+	allowedFields := map[string]string{
+		"equipment_code":      "equipment_code",
+		"name":                "name",
+		"id_object_type":      "object_type_id",
+		"plant":               "plant",
+		"plant_description":   "plant_description",
+		"id_storage_location": "storage_location_id",
+		"func_loc":            "func_loc",
+		"vendor":              "vendor",
+		"year":                "year",
+		"original_value":      "original_value",
+		"book_value":          "book_value",
+		"id_condition":        "condition_id",
+		"notes":               "notes",
+	}
+
+	return func(c *gin.Context) {
+		var body map[string]interface{}
+		if err := c.ShouldBindJSON(&body); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": "Format request tidak valid",
+			})
+			return
+		}
+
+		updates := map[string]interface{}{}
+		for jsonKey, dbColumn := range allowedFields {
+			if val, exists := body[jsonKey]; exists {
+				updates[dbColumn] = val
+			}
+		}
+
+		if len(updates) == 0 {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": "Tidak ada data yang diubah",
+			})
+			return
+		}
+
+		equipmentID := c.Param("id")
+		var equipment models.Equipment
+		if err := db.First(&equipment, equipmentID).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"status":  "error",
+				"message": "Aset tidak ditemukan",
+			})
+			return
+		}
+
+		userID := c.GetUint("user_id")
+		userNPP := c.GetString("user_npp")
+		now := time.Now()
+		updates["updated_by"] = userID
+		updates["updated_by_npp"] = userNPP
+		updates["updated_at"] = now
+
+		// Cek apakah equipment ini punya approval yang sedang REVISION_REQUIRED.
+		// Jika ya, perbaikan data oleh Rendal otomatis mengembalikan approval ke PENDING.
+		var approval models.ApprovalRequest
+		hasRevision := db.Where("equipment_id = ? AND request_type = ? AND approval_status = ?",
+			equipment.ID, constants.RequestTypeEquipmentRegistration, constants.ApprovalStatusRevisionRequired).
+			First(&approval).Error == nil
+
+		err := db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Model(&equipment).Updates(updates).Error; err != nil {
+				return err
+			}
+
+			if hasRevision {
+				approval.ApprovalStatus = constants.ApprovalStatusPending
+				approval.UpdatedBy = userID
+				approval.UpdatedAt = now
+				if err := tx.Save(&approval).Error; err != nil {
+					return err
+				}
+
+				if err := tx.Model(&models.ApprovalStep{}).
+					Where("approval_request_id = ?", approval.ID).
+					Updates(map[string]interface{}{
+						"approval_status": constants.ApprovalStatusPending,
+						"approval_notes":  "",
+						"approval_date":   nil,
+						"updated_by":      userID,
+					}).Error; err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status":  "error",
+				"message": "Gagal memperbarui data aset",
+			})
+			return
+		}
+
+		message := "Aset berhasil diperbarui"
+		if hasRevision {
+			message = "Aset berhasil diperbarui, approval dikembalikan ke status menunggu review"
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "success",
+			"message": message,
+			"data": gin.H{
+				"id":             equipment.ID,
+				"uuid":           equipment.UUID,
+				"equipment_code": equipment.EquipmentCode,
+				"updated_by":     userNPP,
+				"updated_at":     now.Format(time.RFC3339),
+			},
+		})
+	}
+}
+
+func DeleteEquipment(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		equipmentID := c.Param("id")
+		var equipment models.Equipment
+
+		if err := db.Where("id = ?", equipmentID).First(&equipment).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"status":  "error",
+				"message": "Aset tidak ditemukan",
+			})
+			return
+		}
+
+		if err := db.Delete(&equipment).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status":  "error",
+				"message": "Gagal menghapus data aset",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "success",
+			"message": "Aset berhasil dihapus",
+		})
+	}
+}
+
+func ValidateEquipment(db *gorm.DB) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+
+		var input request.ValidateEquipmentRequest
+		if err := c.ShouldBindJSON(&input); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": "Format request tidak valid",
+			})
+			return
+		}
+
+		if input.IsUtilizable == nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": "Field is_utilizable wajib diisi",
+			})
+			return
+		}
+
+		if !*input.IsUtilizable && input.Notes == "" {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"status":  "error",
+				"message": "Alasan penolakan (notes) wajib diisi jika aset dinilai tidak layak",
+			})
+			return
+		}
+
+		var equipment models.Equipment
+		if err := db.First(&equipment, id).Error; err != nil {
+			c.JSON(http.StatusNotFound, gin.H{
+				"status":  "error",
+				"message": "Aset dengan ID tersebut tidak ditemukan",
+			})
+			return
+		}
+
+		userID := c.GetUint("user_id")
+		userNPP := c.GetString("user_npp")
+		now := time.Now()
+
+		equipment.IsUtilizable = *input.IsUtilizable
+		equipment.Notes = input.Notes
+		equipment.UpdatedBy = userID
+		equipment.UpdatedByNPP = userNPP
+		equipment.UpdatedAt = now
+
+		// Equipment tidak layak: cukup set REJECTED, tidak ada approval.
+		if !*input.IsUtilizable {
+			var rejectedStatus models.Status
+			if err := db.Where("name = ?", "REJECTED").First(&rejectedStatus).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"status":  "error",
+					"message": "Status REJECTED tidak ditemukan di database",
+				})
+				return
+			}
+			equipment.StatusID = rejectedStatus.ID
+
+			if err := db.Save(&equipment).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"status":  "error",
+					"message": "Gagal menyimpan penilaian",
+				})
+				return
+			}
+
+			c.JSON(http.StatusOK, gin.H{
+				"status":  "success",
+				"message": "Penilaian kelayakan berhasil disimpan",
+				"data": gin.H{
+					"id":             equipment.ID,
+					"equipment_code": equipment.EquipmentCode,
+					"is_utilizable":  equipment.IsUtilizable,
+					"status":         equipment.StatusID,
+					"notes":          equipment.Notes,
+					"updated_by":     userNPP,
+					"updated_at":     equipment.UpdatedAt,
+				},
+			})
+			return
+		}
+
+		// Equipment layak: set VALIDATED lalu buat approval untuk Manajer Rendal.
+		var validatedStatus models.Status
+		if err := db.Where("name = ?", "VALIDATED").First(&validatedStatus).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status":  "error",
+				"message": "Status VALIDATED tidak ditemukan di database",
+			})
+			return
+		}
+		equipment.StatusID = validatedStatus.ID
+
+		var approval models.ApprovalRequest
+		err := db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Save(&equipment).Error; err != nil {
+				return err
+			}
+
+			// Hindari duplikasi approval jika equipment ini sudah pernah dibuatkan.
+			var existing models.ApprovalRequest
+			err := tx.Where("equipment_id = ? AND request_type = ?",
+				equipment.ID, constants.RequestTypeEquipmentRegistration).First(&existing).Error
+			if err == nil {
+				approval = existing
+				return nil
+			}
+
+			approval = models.ApprovalRequest{
+				RequestNumber:  generateApprovalNumber(tx, now),
+				RequestType:    constants.RequestTypeEquipmentRegistration,
+				ReferenceID:    equipment.ID,
+				EquipmentID:    equipment.ID,
+				Requester:      equipment.CreatedBy,
+				RequestDate:    now,
+				Justification:  "Registrasi equipment idle: " + equipment.Name,
+				CurrentStep:    "Manajer Rendal",
+				ApprovalStatus: constants.ApprovalStatusPending,
+				CreatedAt:      now,
+				UpdatedAt:      now,
+				CreatedBy:      userID,
+				UpdatedBy:      userID,
+			}
+			if err := tx.Create(&approval).Error; err != nil {
+				return err
+			}
+
+			step := models.ApprovalStep{
+				ApprovalRequestId: approval.ID,
+				StepOrder:         1,
+				ApprovalRole:      "MANAJER_RENDAL",
+				ApprovalName:      "Manajer Rendal",
+				ApprovalStatus:    constants.ApprovalStatusPending,
+				ApprovalDate:      nil,
+				CreatedBy:         userID,
+				UpdatedBy:         userID,
+			}
+			return tx.Create(&step).Error
+		})
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"status":  "error",
+				"message": "Gagal menyimpan penilaian dan membuat approval",
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "success",
+			"message": "Penilaian kelayakan berhasil disimpan dan approval dibuat",
+			"data": gin.H{
+				"id":              equipment.ID,
+				"equipment_code":  equipment.EquipmentCode,
+				"is_utilizable":   equipment.IsUtilizable,
+				"status":          equipment.StatusID,
+				"notes":           equipment.Notes,
+				"updated_by":      userNPP,
+				"updated_at":      equipment.UpdatedAt,
+				"approval_id":     approval.ID,
+				"approval_number": approval.RequestNumber,
+				"approval_status": approval.ApprovalStatus,
 			},
 		})
 	}

@@ -3,29 +3,31 @@ package models
 import "time"
 
 type Equipment struct {
-	ID                  uint   `json:"id" gorm:"primaryKey"`
-	UUID                string `json:"uuid" gorm:"unique"`
-	EquipmentCode       string `json:"equipment_code" gorm:"unique"`
-	Name                string `json:"name"`
-	ObjectTypeID        int
-	Plant               string `json:"plant"`
-	PlantDescription    string `json:"plant_description"`
-	StorageLocationID   int
-	FuncLoc             string
-	Vendor              string    `json:"vendor"`
-	Year                int       `json:"year"`
-	OriginalValue       float64   `json:"original_value"`
-	BookValue           float64   `json:"book_value"`
-	EstimatedReuseValue float64   `json:"estimated_reuse_value"`
-	StatusID            int       `json:"status_id"`
-	ConditionID         int       `json:"condition_id"`
+	ID                  uint       `json:"id" gorm:"primaryKey"`
+	UUID                string     `json:"uuid" gorm:"unique"`
+	EquipmentCode       string     `json:"equipment_code" gorm:"unique"`
+	Name                string     `json:"name"`
+	ObjectTypeID        int        `json:"object_type_id"`
+	Plant               string     `json:"plant"`
+	PlantDescription    string     `json:"plant_description"`
+	StorageLocationID   int        `json:"storage_location_id"`
+	FuncLoc             string     `json:"func_loc"`
+	Vendor              string     `json:"vendor"`
+	Year                int        `json:"year"`
+	OriginalValue       float64    `json:"original_value"`
+	BookValue           float64    `json:"book_value"`
+	EstimatedReuseValue float64    `json:"estimated_reuse_value"`
+	StatusID            int        `json:"status_id"`
+	ConditionID         int        `json:"condition_id"`
+	IsUtilizable        bool       `json:"is_utilizable"`
 	IdleSince           *time.Time `json:"idle_since"`
 	CreatedByNPP        string     `json:"created_by_npp"`
-	Notes               string    `json:"notes"`
-	CreatedAt           time.Time `json:"created_at"`
-	UpdatedAt           time.Time `json:"updated_at"`
-	CreatedBy           uint      `json:"created_by"`
-	UpdatedBy           uint      `json:"updated_by"`
+	UpdatedByNPP        string     `json:"updated_by_npp"`
+	Notes               string     `json:"notes"`
+	CreatedAt           time.Time  `json:"created_at"`
+	UpdatedAt           time.Time  `json:"updated_at"`
+	CreatedBy           uint       `json:"created_by"`
+	UpdatedBy           uint       `json:"updated_by"`
 
 	Condition       Condition       `json:"condition" gorm:"foreignKey:ConditionID"`
 	Status          Status          `json:"status" gorm:"foreignKey:StatusID"`
@@ -60,8 +62,8 @@ type ApprovalRequest struct {
 	Requester      uint      `json:"requester"`
 	RequestDate    time.Time `json:"request_date"`
 	Justification  string    `json:"justification"`
-	CurrentStep    string    `json:"current_step"`    //ini perlu point out lebih lanjut, apakah step ini harus di tabel terpisah?
-	ApprovalStatus string    `json:"approval_status"` //ini juga, biasanya ada
+	CurrentStep    string    `json:"current_step"`
+	ApprovalStatus string    `json:"approval_status"`
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 	CreatedBy      uint      `json:"created_by"`
@@ -71,38 +73,38 @@ type ApprovalRequest struct {
 }
 
 type ApprovalStep struct {
-	ID                uint      `json:"id" gorm:"primaryKey"`
-	ApprovalRequestId uint      `json:"approval_request_id"`
-	StepOrder         int       `json:"step_order"`
-	ApprovalRole      string    `json:"approval_role"`
-	ApprovalName      string    `json:"approval_name"`
-	ApprovalStatus    string    `json:"approval_status"`
-	ApprovalDate      time.Time `json:"approval_date"`
-	ApprovalNotes     string    `json:"approval_notes"`
-	CreatedBy         uint      `json:"created_by"`
-	UpdatedBy         uint      `json:"updated_by"`
+	ID                uint       `json:"id" gorm:"primaryKey"`
+	ApprovalRequestId uint       `json:"approval_request_id"`
+	StepOrder         int        `json:"step_order"`
+	ApprovalRole      string     `json:"approval_role"`
+	ApprovalName      string     `json:"approval_name"`
+	ApprovalStatus    string     `json:"approval_status"`
+	ApprovalDate      *time.Time `json:"approval_date"`
+	ApprovalNotes     string     `json:"approval_notes"`
+	CreatedBy         uint       `json:"created_by"`
+	UpdatedBy         uint       `json:"updated_by"`
 
 	ApprovalRequest ApprovalRequest `json:"approval_request" gorm:"foreignKey:ApprovalRequestId"`
 }
 
 type ReuseRequest struct {
-	ID                       uint      `json:"id" gorm:"primaryKey"`
-	RequestNumber            string    `json:"request_number"`
-	EquipmentID              uint      `json:"equipment_id"`
-	RequestingProject        string    `json:"requesting_project"`
-	RequestingPlant          string    `json:"requesting_plant"`
-	InstallationLocation     string    `json:"installation_location"`
-	ReuseDate                time.Time `json:"reuse_date"`
-	EstimatedNewPurchaseCost float64   `json:"estimated_new_purchase_cost"`
-	RefurbishmentCost        float64   `json:"refurbishment_cost"`
-	EstimatedCostAvoidance   float64   `json:"estimated_cost_avoidance"`
-	ApprovalStatus           string    `json:"approval_status"`
-	Justification            string    `json:"justification"`
-	Notes                    string    `json:"notes"`
-	RequestedBy              uint      `json:"requested_by"`
-	RequestedAt              time.Time `json:"requested_at"`
-	CreatedAt                time.Time `json:"created_at"`
-	UpdatedAt                time.Time `json:"updated_at"`
+	ID                       uint       `json:"id" gorm:"primaryKey"`
+	RequestNumber            string     `json:"request_number"`
+	EquipmentID              uint       `json:"equipment_id"`
+	RequestingProject        string     `json:"requesting_project"`
+	RequestingPlant          string     `json:"requesting_plant"`
+	InstallationLocation     string     `json:"installation_location"`
+	ReuseDate                *time.Time `json:"reuse_date"`
+	EstimatedNewPurchaseCost float64    `json:"estimated_new_purchase_cost"`
+	RefurbishmentCost        float64    `json:"refurbishment_cost"`
+	EstimatedCostAvoidance   float64    `json:"estimated_cost_avoidance"`
+	ApprovalStatus           string     `json:"approval_status"`
+	Justification            string     `json:"justification"`
+	Notes                    string     `json:"notes"`
+	RequestedBy              uint       `json:"requested_by"`
+	RequestedAt              time.Time  `json:"requested_at"`
+	CreatedAt                time.Time  `json:"created_at"`
+	UpdatedAt                time.Time  `json:"updated_at"`
 
 	Equipment Equipment `json:"equipment" gorm:"foreignKey:EquipmentID"`
 }
@@ -122,18 +124,18 @@ type EquipmentAttachment struct {
 }
 
 type DisposalRequest struct {
-	ID               int       `json:"id" gorm:"primaryKey"`
-	DisposalNumber   string    `json:"disposal_number"`
-	EquipmentID      int       `json:"equipment_id"`
-	DisposalMethodID int       `json:"disposal_method_id"`
-	ScrapValue       float64   `json:"scrap_value"`
-	DisposalDate     time.Time `json:"disposal_date"`
-	ApprovedBy       uint      `json:"approved_by"`
-	Justification    string    `json:"justification"`
-	ApprovalStatus   string    `json:"approval_status"`
-	CreatedAt        time.Time `json:"created_at"`
-	UpdatedAt        time.Time `json:"updated_at"`
-	CreatedBy        uint      `json:"created_by"`
+	ID               int        `json:"id" gorm:"primaryKey"`
+	DisposalNumber   string     `json:"disposal_number"`
+	EquipmentID      int        `json:"equipment_id"`
+	DisposalMethodID int        `json:"disposal_method_id"`
+	ScrapValue       float64    `json:"scrap_value"`
+	DisposalDate     *time.Time `json:"disposal_date"`
+	ApprovedBy       uint       `json:"approved_by"`
+	Justification    string     `json:"justification"`
+	ApprovalStatus   string     `json:"approval_status"`
+	CreatedAt        time.Time  `json:"created_at"`
+	UpdatedAt        time.Time  `json:"updated_at"`
+	CreatedBy        uint       `json:"created_by"`
 
 	DisposalMethod DisposalMethod `json:"disposal_method" gorm:"foreignKey:DisposalMethodID"`
 	Equipment      Equipment      `json:"equipment" gorm:"foreignKey:EquipmentID"`

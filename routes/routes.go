@@ -13,7 +13,15 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 	api := router.Group("/api")
 	api.Use(middleware.AuthMiddleware(db))
 	{
+		api.GET("/equipment", controllers.GetAllEquipment(db))
+		api.GET("/equipment/:id", controllers.GetEquipment(db))
 		api.POST("/equipment", controllers.CreateEquipment(db))
+		api.PATCH("/equipment/:id", middleware.RequireRole("RENDAL_PEMELIHARAAN"), controllers.UpdateEquipment(db))
+		api.PATCH("/equipment/:id/validate", middleware.RequireRole("INSPEKSI_TEKNIK"), controllers.ValidateEquipment(db))
 		api.POST("/attachments/upload", controllers.UploadAttachment(db))
+
+		api.GET("/approvals", controllers.GetApprovals(db))
+		api.GET("/approvals/:id", controllers.GetApproval(db))
+		api.PATCH("/approvals/:id/review", middleware.RequireRole("MANAJER_RENDAL"), controllers.ReviewApproval(db))
 	}
 }
