@@ -85,20 +85,20 @@ export default function LoginPage() {
           <Image
             src="/images (2) 1.png"
             alt="Logo PUSRI"
-            width={150}
-            height={150}
+            width={80}
+            height={80}
             priority
             style={{ objectFit: 'contain' }}
           />
         </div>
         <h1 className={styles.leftPanelTitle}>
-          Selamat Datang Di<br />
+          Selamat Datang di<br />
           Manajemen Idle Equipment<br />
-          PT PUPUK SRIWIDJAJA PALEMBANG 
+          PT Pupuk Sriwidjaja Palembang
         </h1>
 
         <div className={styles.infoBox}>
-          <h3 className={styles.infoBoxTitle}>Aplikasi Manejemen Idle Equipment</h3>
+          <h3 className={styles.infoBoxTitle}>Aplikasi Manajemen Idle Equipment</h3>
           <p className={styles.infoBoxText}>
             Aplikasi Manajemen Idle Equipment adalah platform terpusat untuk memonitor, mengelola, dan mengoptimalkan penggunaan peralatan yang sedang tidak beroperasi. Melalui sistem ini, perusahaan dapat meningkatkan efisiensi alokasi aset dan mengurangi biaya pemeliharaan yang tidak perlu.
           </p>

@@ -8,26 +8,31 @@
 .leftPanel {
   flex: 1;
   position: relative;
-  background-color: #557c93; /* Fallback */
-  background-image: linear-gradient(rgba(85, 124, 147, 0.7), rgba(85, 124, 147, 0.7)), url('/backgroundLeftPanel.webp'); /* Placeholder industrial image */
+  background-color: #0b1a30; /* Dark Navy Fallback */
+  background-image: linear-gradient(rgba(11, 26, 48, 0.82), rgba(15, 34, 64, 0.85)), url('/backgroundLeftPanel.webp');
   background-size: cover;
   background-position: center;
   display: flex;
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  padding: 2rem 2rem 2rem 2rem;
+  padding: 2.5rem 2rem;
   color: white;
   text-align: center;
 }
 
 .logoContainer {
-  position: center;
-  top: 1rem;
-  left: 2rem;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  justify-content: center;
+  background: rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 50%;
+  padding: 1.25rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.2);
 }
 
 .logoPlaceholder {
@@ -44,12 +49,11 @@
 }
 
 .leftPanelTitle {
-  font-size: 2rem;
+  font-size: 1.85rem;
   font-weight: 800;
-  line-height: 1;
+  line-height: 1.4;
   max-width: 800px;
-  letter-spacing: 1px;
-  text-transform: uppercase;
+  letter-spacing: 0.5px;
   text-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
 }
 

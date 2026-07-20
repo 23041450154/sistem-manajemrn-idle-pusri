@@ -26,27 +26,29 @@ export default function LoginForm() {
     <div className={styles.container}>
       {/* Left Panel */}
       <div className={styles.leftPanel}>
-        <div className={styles.logoContainer}>
-          <Image
-            src="/logo-background.png"
-            alt="Logo PUSRI"
-            width={150}
-            height={150}
-            priority
-            style={{ objectFit: 'contain' }}
-          />
-        </div>
-        <h1 className={styles.leftPanelTitle}>
-          Selamat Datang Di<br />
-          Manajemen Idle Equipment<br />
-          PT PUPUK SRIWIDJAJA PALEMBANG
-        </h1>
+        <div className={styles.leftPanelContent}>
+          <div className={styles.logoContainer}>
+            <Image
+              src="/logo-white-hd.png"
+              alt="Logo PUSRI"
+              width={160}
+              height={160}
+              priority
+              style={{ objectFit: 'contain' }}
+            />
+          </div>
+          <div className={styles.leftPanelTitleContainer}>
+            <span className={styles.titleSub}>Selamat Datang di</span>
+            <h1 className={styles.titleMain}>Manajemen Idle Equipment</h1>
+            <span className={styles.titleCompany}>PT Pupuk Sriwidjaja Palembang</span>
+          </div>
 
-        <div className={styles.infoBox}>
-          <h3 className={styles.infoBoxTitle}>Sistemx Manejemen Idle Equipment</h3>
-          <p className={styles.infoBoxText}>
-            Platform terpusat untuk memonitor, mengelola, dan mengoptimalkan peralatan yang sedang tidak beroperasi guna meningkatkan efisiensi aset dan menekan biaya pemeliharaan.
-          </p>
+          <div className={styles.infoBox}>
+            <h3 className={styles.infoBoxTitle}>Sistem Manajemen Idle Equipment</h3>
+            <p className={styles.infoBoxText}>
+              Platform terpusat untuk mengelola aset idle secara efisien, mendukung proses registrasi, inspeksi, validasi, dan pemeliharaan di PT Pupuk Sriwidjaja Palembang.
+            </p>
+          </div>
         </div>
       </div>
 
