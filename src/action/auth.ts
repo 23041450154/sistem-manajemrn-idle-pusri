@@ -33,26 +33,29 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
 
     const result = await res.json().catch(() => null)
 
-    if (!res.ok || !result?.token) {
+    const token = result?.data?.token
+    const user = result?.data?.user
+
+    if (!res.ok || !token) {
       return {
         status: false,
-        message: result?.error || "login gagal",
-        token:null
+        message: result?.message || "login gagal",
+        token: null
       }
     }
 
     const cookieStorage = await cookies()
 
-    cookieStorage.set("token", result.token, cookieConfig(60 * 30));
-    if (result.user) {
-      cookieStorage.set("user", JSON.stringify(result.user), cookieConfig(60 * 30))
+    cookieStorage.set("token", token, cookieConfig(60 * 30));
+    if (user) {
+      cookieStorage.set("user", JSON.stringify(user), cookieConfig(60 * 30))
     }
 
     return {
       status: true,
       message: result.message || "login berhasil",
-      token: result.token,
-      user: result.user
+      token: token,
+      user: user
     }
   }
   catch (error) {
