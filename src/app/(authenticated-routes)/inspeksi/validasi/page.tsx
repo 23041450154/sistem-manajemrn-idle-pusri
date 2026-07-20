@@ -2,7 +2,7 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { 
-  Search, Eye, Edit, AlertCircle, FileText, X, Check, Save, Clock,
+  Search, Eye, Edit, AlertCircle, X, Check, Save, Clock,
   UploadCloud, Paperclip, RefreshCw, XCircle, CheckCircle2, ChevronRight,
   ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
@@ -220,6 +220,7 @@ export default function ManajemenInspeksi() {
   // Modal & Form States
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [modalMode, setModalMode] = useState<"VALIDASI" | "DETAIL">("VALIDASI");
   const [isLoading, setIsLoading] = useState(false);
   const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
 
@@ -239,14 +240,15 @@ export default function ManajemenInspeksi() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 7;
+  const ITEMS_PER_PAGE = 25;
 
   // Sorting State
   const [sortConfig, setSortConfig] = useState<{key: keyof Asset, direction: 'asc' | 'desc'} | null>({ key: 'tanggalRegistrasi', direction: 'desc' });
 
   // Handler Buka Modal
-  const openModal = (asset: Asset) => {
+  const openModal = (asset: Asset, mode: "VALIDASI" | "DETAIL" = "VALIDASI") => {
     setSelectedAsset(asset);
+    setModalMode(mode);
     setUploadedFiles([]); // Reset files
     
     // Reset Form jika status belum divalidasi
@@ -339,7 +341,7 @@ export default function ManajemenInspeksi() {
 
   // Filter & Sort Data
   const filteredAssets = useMemo(() => {
-    let filtered = assets.filter(a => {
+    const filtered = assets.filter(a => {
       const matchSearch = a.kodeAlat.toLowerCase().includes(search.toLowerCase()) || 
                           a.namaAlat.toLowerCase().includes(search.toLowerCase());
       const matchPlant = plantFilter === "Semua" || a.plant === plantFilter;
@@ -389,6 +391,7 @@ export default function ManajemenInspeksi() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setCurrentPage(1);
   }, [search, plantFilter, statusFilter, dateFilter]);
 
@@ -423,31 +426,31 @@ export default function ManajemenInspeksi() {
   };
 
   const getActionButton = (asset: Asset) => {
-    if (asset.statusPersetujuan === "PENDING") {
-      return (
-        <button onClick={() => openModal(asset)} className="bg-[#0A356A] text-white px-4 py-1.5 rounded-md text-[11px] font-semibold hover:bg-[#0556B3] transition-colors whitespace-nowrap">
-          Validasi
-        </button>
-      );
-    }
-    if (asset.statusPersetujuan === "IN_REVIEW" && asset.statusAset === "VALIDATED") {
-      return (
-        <button onClick={() => openModal(asset)} className="bg-[#F97316] text-white px-4 py-1.5 rounded-md text-[11px] font-semibold hover:bg-[#EA580C] transition-colors whitespace-nowrap">
-          Ubah Validasi
-        </button>
-      );
-    }
-    if (asset.statusPersetujuan === "NEED_REVISION") {
-      return (
-        <button onClick={() => openModal(asset)} className="bg-[#8B5CF6] text-white px-4 py-1.5 rounded-md text-[11px] font-semibold hover:bg-[#7C3AED] transition-colors whitespace-nowrap">
-          Revisi Validasi
-        </button>
-      );
-    }
     return (
-      <button onClick={() => openModal(asset)} className="border border-gray-300 text-gray-700 px-4 py-1.5 rounded-md text-[11px] font-semibold hover:bg-gray-50 transition-colors whitespace-nowrap">
-        Detail Info
-      </button>
+      <div className="flex flex-wrap items-center gap-1 justify-center w-full max-w-[120px] mx-auto">
+        {asset.statusPersetujuan === "PENDING" && (
+          <button title="Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition-colors flex flex-col items-center">
+            <Check className="w-3.5 h-3.5 mb-0.5" />
+            <span className="text-[9px] font-bold">Validasi</span>
+          </button>
+        )}
+        {asset.statusPersetujuan === "IN_REVIEW" && asset.statusAset === "VALIDATED" && (
+          <button title="Ubah Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-1 rounded transition-colors flex flex-col items-center">
+            <Edit className="w-3.5 h-3.5 mb-0.5" />
+            <span className="text-[9px] font-bold">Ubah</span>
+          </button>
+        )}
+        {asset.statusPersetujuan === "NEED_REVISION" && (
+          <button title="Revisi Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-1 rounded transition-colors flex flex-col items-center">
+            <Edit className="w-3.5 h-3.5 mb-0.5" />
+            <span className="text-[9px] font-bold">Revisi</span>
+          </button>
+        )}
+        <button title="Detail Info" onClick={() => openModal(asset, "DETAIL")} className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1 rounded transition-colors flex flex-col items-center">
+          <Eye className="w-3.5 h-3.5 mb-0.5" />
+          <span className="text-[9px] font-bold">Detail</span>
+        </button>
+      </div>
     );
   };
 
@@ -567,34 +570,34 @@ export default function ManajemenInspeksi() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50/95 backdrop-blur-sm">
               <tr className="border-b-2 border-gray-300">
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[12%] cursor-pointer group hover:bg-gray-100 transition-colors whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('kodeAlat')}>
-                  <div className="flex items-center">Kode Alat {getSortIcon('kodeAlat')}</div>
+                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('kodeAlat')}>
+                  <div className="flex items-center">Kode {getSortIcon('kodeAlat')}</div>
                 </th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[18%] cursor-pointer group hover:bg-gray-100 transition-colors whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
+                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
                   <div className="flex items-center">Nama Alat {getSortIcon('namaAlat')}</div>
                 </th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[8%] cursor-pointer group hover:bg-gray-100 transition-colors whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
+                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
                   <div className="flex items-center">Plant {getSortIcon('plant')}</div>
                 </th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[10%] cursor-pointer group hover:bg-gray-100 transition-colors whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
-                  <div className="flex items-center">Jenis Alat {getSortIcon('jenisAlat')}</div>
+                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
+                  <div className="flex items-center">Jenis {getSortIcon('jenisAlat')}</div>
                 </th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[12%] cursor-pointer group hover:bg-gray-100 transition-colors whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('tanggalRegistrasi')}>
-                  <div className="flex items-center">Tanggal Registrasi {getSortIcon('tanggalRegistrasi')}</div>
+                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('tanggalRegistrasi')}>
+                  <div className="flex items-center">Tanggal {getSortIcon('tanggalRegistrasi')}</div>
                 </th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[10%] whitespace-nowrap">
-                  SLA Target (3 Hari)
+                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                  SLA Target
                 </th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[10%] whitespace-nowrap">
-                  Didaftarkan Oleh
+                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                  Pemohon
                 </th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[10%] cursor-pointer group hover:bg-gray-100 transition-colors whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
-                  <div className="flex items-center">Status Aset {getSortIcon('statusAset')}</div>
+                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
+                  <div className="flex items-center">Aset {getSortIcon('statusAset')}</div>
                 </th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[10%] cursor-pointer group hover:bg-gray-100 transition-colors whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
-                  <div className="flex items-center">Status Persetujuan {getSortIcon('statusPersetujuan')}</div>
+                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
+                  <div className="flex items-center">Persetujuan {getSortIcon('statusPersetujuan')}</div>
                 </th>
-                <th className="px-5 py-3 text-[11px] font-semibold text-gray-500 uppercase tracking-wider w-[8%] text-center whitespace-nowrap">Tindakan</th>
+                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Tindakan</th>
               </tr>
             </thead>
             <tbody className="bg-white">
@@ -610,45 +613,45 @@ export default function ManajemenInspeksi() {
                 </tr>
               ) : (
                 paginatedAssets.map((asset) => (
-                  <tr key={asset.id} className="border-b-2 border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
-                    <td className="px-5 py-3 whitespace-nowrap text-[13px] font-bold text-[#0A356A] relative">
+                  <tr key={asset.id} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
+                    <td className="px-2 py-1.5 whitespace-nowrap text-[11px] font-bold text-[#0A356A] relative">
                       {(asset.statusPersetujuan === "PENDING" || asset.statusPersetujuan === "NEED_REVISION") && (
-                        <span className="absolute left-1.5 top-1/2 -translate-y-1/2 flex h-1.5 w-1.5" title={asset.statusPersetujuan === "PENDING" ? "Perlu Validasi" : "Perlu Revisi"}>
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 flex h-1.5 w-1.5" title={asset.statusPersetujuan === "PENDING" ? "Perlu Validasi" : "Perlu Revisi"}>
                           <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${asset.statusPersetujuan === "PENDING" ? "bg-red-400" : "bg-orange-400"}`}></span>
                           <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${asset.statusPersetujuan === "PENDING" ? "bg-red-500" : "bg-orange-500"}`}></span>
                         </span>
                       )}
-                      {asset.kodeAlat}
+                      <span className="ml-1.5">{asset.kodeAlat}</span>
                     </td>
-                    <td className="px-5 py-3">
-                      <div className="text-[13px] font-medium text-gray-700">{asset.namaAlat}</div>
+                    <td className="px-2 py-1.5">
+                      <div className="text-[11px] font-medium text-gray-700 leading-tight line-clamp-2" title={asset.namaAlat}>{asset.namaAlat}</div>
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-[13px] text-gray-600 font-medium">
+                    <td className="px-2 py-1.5 text-[11px] text-gray-600 font-medium">
                       {asset.plant}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-[13px] text-gray-600 font-medium">
+                    <td className="px-2 py-1.5 text-[11px] text-gray-600 font-medium">
                       {asset.jenisAlat}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-[13px] text-gray-600">
+                    <td className="px-2 py-1.5 text-[11px] text-gray-600">
                       {asset.tanggalRegistrasi}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-[13px]">
+                    <td className="px-2 py-1.5 text-[11px]">
                       {asset.statusPersetujuan === 'PENDING' ? (
-                        <span className="bg-[#DCFCE7] text-[#16A34A] px-2 py-1 rounded-full flex items-center gap-1.5 w-fit font-semibold text-[11px]"><div className="w-1.5 h-1.5 bg-[#16A34A] rounded-full"></div> 1 Hari Tersisa</span>
+                        <span className="bg-[#DCFCE7] text-[#16A34A] px-2 py-0.5 rounded-full flex items-center gap-1 w-fit font-semibold text-[9px]"><div className="w-1.5 h-1.5 bg-[#16A34A] rounded-full"></div> 1 Hari</span>
                       ) : (
-                        <span className="text-gray-400 font-medium text-[12px]">Selesai</span>
+                        <span className="text-gray-400 font-medium text-[10px]">Selesai</span>
                       )}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-[13px] text-gray-600 font-medium">
+                    <td className="px-2 py-1.5 text-[11px] text-gray-600 font-medium">
                       NPP2304145
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap">
+                    <td className="px-2 py-1.5">
                       {getStatusAsetBadge(asset.statusAset)}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap">
+                    <td className="px-2 py-1.5">
                       {getApprovalBadge(asset.statusPersetujuan)}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-center">
+                    <td className="px-2 py-1.5 whitespace-nowrap text-center">
                       <div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
                         {getActionButton(asset)}
                       </div>
@@ -690,7 +693,7 @@ export default function ManajemenInspeksi() {
       </div>
 
       {/* CENTERED MODAL FOR INSPECTION VALIDATION (NO SCROLL DESIGN) */}
-      {isModalOpen && selectedAsset && (
+      {isModalOpen && modalMode === "VALIDASI" && selectedAsset && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           {/* Backdrop */}
           <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onClick={closeModal} />
@@ -921,6 +924,129 @@ export default function ManajemenInspeksi() {
               )}
             </div>
 
+          </div>
+        </div>
+      )}
+      {/* CENTERED MODAL FOR DETAIL ASET */}
+      {isModalOpen && modalMode === "DETAIL" && selectedAsset && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onClick={closeModal} />
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 leading-tight">Detail Informasi Aset</h2>
+                <p className="text-[12px] text-gray-500 mt-0.5">{selectedAsset.kodeAlat}</p>
+              </div>
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-md transition-colors">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            
+            <div className="flex-1 overflow-y-auto px-5 py-4">
+              <h3 className="text-[#0A356A] font-bold text-[13px] mb-2.5 uppercase tracking-wide">Spesifikasi Alat</h3>
+              
+              <div className="grid grid-cols-4 gap-y-3 gap-x-4 mb-4">
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-0.5">Kode Alat:</p>
+                  <p className="text-[12px] font-bold text-gray-900">{selectedAsset.kodeAlat}</p>
+                </div>
+                <div className="col-span-2">
+                  <p className="text-[11px] text-gray-500 mb-0.5">Nama Alat:</p>
+                  <p className="text-[12px] font-bold text-gray-900">{selectedAsset.namaAlat}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-0.5">Kategori / Jenis:</p>
+                  <p className="text-[12px] font-bold text-gray-900">{selectedAsset.jenisAlat}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-0.5">Plant Asal:</p>
+                  <p className="text-[12px] font-bold text-gray-900">{selectedAsset.plant}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-0.5">Lokasi Gudang:</p>
+                  <p className="text-[12px] font-bold text-gray-900">Storage Area B</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-0.5">Pabrikan / Vendor:</p>
+                  <p className="text-[12px] font-bold text-gray-900">Atlas Copco</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-0.5">Tahun Pembuatan:</p>
+                  <p className="text-[12px] font-bold text-gray-900">2015</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-0.5">Nilai Perolehan (IDR):</p>
+                  <p className="text-[12px] font-bold text-gray-900">Rp 300,000,000</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-0.5">Kondisi Fisik:</p>
+                  <p className="text-[12px] font-bold text-gray-900">BAGUS</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-0.5">Didaftarkan Oleh:</p>
+                  <p className="text-[12px] font-bold text-gray-900">NPP2304145</p>
+                </div>
+                <div>
+                  <p className="text-[11px] text-gray-500 mb-0.5">Tanggal Registrasi:</p>
+                  <p className="text-[12px] font-bold text-gray-900">{selectedAsset.tanggalRegistrasi}</p>
+                </div>
+                <div className="col-span-4">
+                  <p className="text-[11px] text-gray-500 mb-1">Catatan Pendaftaran:</p>
+                  <div className="bg-gray-50 p-2 rounded text-[12px] italic text-gray-700 border border-gray-100">
+                    &quot;Kompresor cadangan dari decommission utilitas lama.&quot;
+                  </div>
+                </div>
+              </div>
+
+              <hr className="border-gray-200 my-4" />
+
+              <h3 className="text-[#0A356A] font-bold text-[13px] mb-2.5 uppercase tracking-wide">Lampiran Gambar & Dokumen</h3>
+              <div className="grid grid-cols-3 gap-3 mb-3">
+                {/* Images */}
+                <div className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white">
+                  <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" className="object-cover w-full h-full" alt="Foto Pompa" />
+                  </div>
+                  <div className="p-2 text-center border-t border-gray-200">
+                    <p className="text-[10px] font-bold text-gray-900 mb-1.5">Foto Utama</p>
+                    <button className="text-[10px] w-full py-1 border border-gray-300 font-semibold rounded hover:bg-gray-50 transition-colors">Preview</button>
+                  </div>
+                </div>
+                <div className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white">
+                  <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
+                    <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" className="object-cover w-full h-full" alt="Label Tag" />
+                  </div>
+                  <div className="p-2 text-center border-t border-gray-200">
+                    <p className="text-[10px] font-bold text-gray-900 mb-1.5">Label Tag Plat Aset</p>
+                    <button className="text-[10px] w-full py-1 border border-gray-300 font-semibold rounded hover:bg-gray-50 transition-colors">Preview</button>
+                  </div>
+                </div>
+                {/* PDF Files in same row if width permits */}
+                <div className="border border-gray-200 rounded p-2.5 flex flex-col justify-between bg-white shadow-sm">
+                  <div className="flex items-start gap-2 mb-2">
+                    <div className="w-7 h-7 rounded bg-red-50 text-red-500 border border-red-100 flex items-center justify-center shrink-0">
+                      <span className="font-bold text-[9px]">PDF</span>
+                    </div>
+                    <div className="overflow-hidden">
+                      <p className="text-[11px] font-bold text-gray-900 truncate" title="spesifikasi_teknis_P101.pdf">spesifikasi_teknis_P101.pdf</p>
+                      <p className="text-[10px] text-gray-500 mt-0.5">3.4 MB</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 justify-end mt-auto">
+                    <button className="text-[11px] font-semibold text-[#0A356A] hover:underline">Preview</button>
+                    <span className="text-gray-300">|</span>
+                    <button className="text-[11px] font-semibold text-[#0A356A] hover:underline">Download</button>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+
+            <div className="px-5 py-2.5 border-t border-gray-200 bg-gray-50 flex justify-end shrink-0 rounded-b-xl">
+              <button onClick={closeModal} className="px-4 py-1.5 border border-gray-300 bg-white rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition-all">
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}
