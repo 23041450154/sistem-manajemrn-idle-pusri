@@ -21,7 +21,7 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 		api.POST("/attachments/upload", controllers.UploadAttachment(db))
 
 		api.GET("/approvals", controllers.GetApprovals(db))
-		api.GET("/approvals/:id", controllers.GetApproval(db))
+		api.GET("/approvals/:id", controllers.GetApprovalById(db))
 		api.PATCH("/approvals/:id/review", middleware.RequireRole("MANAJER_RENDAL"), controllers.ReviewApproval(db))
 	}
 }

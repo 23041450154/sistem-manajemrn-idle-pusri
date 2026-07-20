@@ -60,6 +60,13 @@ func Login(db *gorm.DB) gin.HandlerFunc {
 		}
 
 		user.Password = ""
-		c.JSON(http.StatusOK, gin.H{"token": signedToken, "user": user})
+		c.JSON(http.StatusOK, gin.H{
+			"status":  "success",
+			"message": "Login berhasil",
+			"data": gin.H{
+				"token": signedToken,
+				"user":  user,
+			},
+		})
 	}
 }

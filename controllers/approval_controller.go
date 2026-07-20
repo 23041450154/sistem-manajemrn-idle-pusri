@@ -69,7 +69,7 @@ func GetApprovals(db *gorm.DB) gin.HandlerFunc {
 }
 
 // GetApproval mengembalikan detail satu approval request beserta tahapan (steps).
-func GetApproval(db *gorm.DB) gin.HandlerFunc {
+func GetApprovalById(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
 
