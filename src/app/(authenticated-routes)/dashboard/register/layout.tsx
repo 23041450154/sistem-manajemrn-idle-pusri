@@ -1,13 +1,15 @@
 import { getCurrentUserAction } from "@/action/auth";
+import { normalizeRole } from "@/lib/roles";
 import { AlertTriangle } from "lucide-react";
 import Link from "next/link";
 import React from "react";
 
 export default async function RegisterLayout({ children }: { children: React.ReactNode }) {
   const { user } = await getCurrentUserAction();
-  
-  // Gembok: HANYA role ADMIN yang boleh mengakses form registrasi ini
-  if (user?.role !== "ADMIN") {
+
+  // Gembok: ADMIN & RENDAL_PEMELIHARAAN yang boleh mengakses form registrasi ini
+  const role = normalizeRole(user?.role);
+  if (role !== "ADMIN" && role !== "RENDAL_PEMELIHARAAN") {
     return (
       <div className="flex flex-col items-center justify-center h-[70vh] w-full px-4">
         <div className="bg-red-50 text-red-600 p-4 rounded-full mb-6">

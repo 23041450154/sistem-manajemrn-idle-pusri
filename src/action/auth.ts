@@ -7,6 +7,7 @@ import type {
   User,
 } from "../types/Auth"
 import { redirect } from "next/navigation"
+import { homePathForRole } from "../lib/roles"
 
 
 
@@ -91,7 +92,7 @@ export async function loginAction(
   });
 
   if (result.status && result.user) {
-    redirect("/dashboard");
+    redirect(homePathForRole(result.user.role));
   }
 
   return result;
@@ -148,4 +149,3 @@ export async function logoutAction() {
   cookieStorage.delete("user")
   redirect("/login")
 }
-

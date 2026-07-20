@@ -4,11 +4,12 @@ import { Search, Bell, HelpCircle, LogOut } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { logoutAction } from "@/action/auth";
+import { labelForRole } from "@/lib/roles";
 
 export function Header({ user }: { user?: any }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const name = user?.name || "Profil Saya";
-  const role = user?.role === "ADMIN" ? "Admin Rendal" : user?.role === "USER" ? "Unit Kerja" : "Pengaturan Akun";
+  const role = labelForRole(user?.role);
   const initial = name.charAt(0).toUpperCase();
 
   return (

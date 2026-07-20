@@ -3,6 +3,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
+import { normalizeRole } from "@/lib/roles";
 import {
   LayoutDashboard,
   Wrench,
@@ -22,45 +23,77 @@ export function Sidebar({ role }: { role?: string }) {
   const pathname = usePathname();
 
   // --- MENU ITEMS UNTUK MASING-MASING ROLE ---
-  let mainNavItems = [];
+  // Setiap role punya konten sidebar sendiri yang menunjuk ke folder rutenya.
+  // Isi menu masih placeholder — sesuaikan href/label saat halaman siap.
+  const userRole = normalizeRole(role);
+
+  type NavItem = { name: string; href: string; icon: typeof LayoutDashboard };
+  let mainNavItems: NavItem[] = [];
+  let adminNavItems: NavItem[] = [];
   let showAdminNav = false;
-  const userRole = role?.toUpperCase();
+  // Tautan CTA di bawah sidebar (placeholder, null jika role tak punya).
+  let registerCta: { name: string; href: string } | null = null;
 
-  if (userRole === "INSPECTOR") {
-    // Menu khusus Inspeksi (Hanya hak akses yang diizinkan untuk inspektor)
-    mainNavItems = [
-      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Manajemen Inspeksi", href: "/dashboard/inspeksi", icon: ClipboardCheck },
-      { name: "Jadwal Inspeksi", href: "/dashboard/jadwal-inspeksi", icon: ClipboardCheck },
-      { name: "Laporan", href: "/dashboard/laporan", icon: FileText },
-    ];
-  } else if (userRole === "USER") {
-    // Menu khusus Unit Kerja
-    mainNavItems = [
-      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Idle Equipment", href: "/dashboard/idle", icon: PowerOff },
-      { name: "Permintaan", href: "/dashboard/permintaan", icon: FileQuestion },
-      { name: "Laporan", href: "/dashboard/laporan", icon: FileText },
-    ];
-  } else {
-    // Menu Default (Admin Rendal)
-    mainNavItems = [
-      { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
-      { name: "Peralatan", href: "/dashboard/peralatan", icon: Wrench },
-      { name: "Idle Equipment", href: "/dashboard/idle", icon: PowerOff },
-      { name: "Inspeksi", href: "/dashboard/inspeksi", icon: ClipboardCheck },
-      { name: "Permintaan Peralatan", href: "/dashboard/permintaan", icon: FileQuestion },
-      { name: "Persetujuan", href: "/dashboard/persetujuan", icon: CheckSquare },
-      { name: "Laporan", href: "/dashboard/laporan", icon: FileText },
-    ];
-    showAdminNav = true;
+  switch (userRole) {
+    case "ADMIN":
+      // Placeholder: Administrator (akses penuh)
+      mainNavItems = [
+        { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
+        { name: "Peralatan", href: "/admin/peralatan", icon: Wrench },
+        { name: "Idle Equipment", href: "/admin/idle", icon: PowerOff },
+        { name: "Inspeksi", href: "/admin/inspeksi", icon: ClipboardCheck },
+        { name: "Persetujuan", href: "/admin/persetujuan", icon: CheckSquare },
+        { name: "Laporan", href: "/admin/laporan", icon: FileText },
+      ];
+      adminNavItems = [
+        { name: "Master Data", href: "/admin/master", icon: Database },
+        { name: "Pengguna", href: "/admin/pengguna", icon: Users },
+        { name: "Pengaturan", href: "/admin/pengaturan", icon: Settings },
+      ];
+      showAdminNav = true;
+      break;
+
+    case "RENDAL_PEMELIHARAAN":
+      // Placeholder: Rendal Pemeliharaan
+      mainNavItems = [
+        { name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
+        { name: "Peralatan", href: "/rendal/peralatan", icon: Wrench },
+        { name: "Idle Equipment", href: "/rendal/idle", icon: PowerOff },
+        { name: "Laporan", href: "/rendal/laporan", icon: FileText },
+      ];
+      registerCta = { name: "Register Equipment", href: "/rendal/register-equipment" };
+      break;
+
+    case "INSPEKSI_TEKNIK":
+      // Placeholder: Inspeksi Teknik
+      mainNavItems = [
+        { name: "Dashboard", href: "/inspeksi/dashboard", icon: LayoutDashboard },
+        { name: "Validasi Kelayakan", href: "/inspeksi/equipment", icon: Wrench },
+        { name: "Manajemen Inspeksi", href: "/inspeksi/manajemen", icon: ClipboardCheck },
+        { name: "Laporan", href: "/inspeksi/laporan", icon: FileText },
+      ];
+      break;
+
+    case "MANAJER_RENDAL":
+      // Placeholder: Manajer Rendal
+      mainNavItems = [
+        { name: "Dashboard", href: "/manajer/dashboard", icon: LayoutDashboard },
+        { name: "Persetujuan", href: "/manajer/approve", icon: CheckSquare },
+        { name: "Laporan", href: "/manajer/laporan", icon: FileText },
+      ];
+      break;
+
+    case "UNIT_KERJA_OPERASI":
+    default:
+      // Placeholder: Unit Kerja Operasi (role default / user sebenarnya)
+      mainNavItems = [
+        { name: "Dashboard", href: "/unit-kerja/dashboard", icon: LayoutDashboard },
+        { name: "Idle Equipment", href: "/unit-kerja/idle", icon: PowerOff },
+        { name: "Permintaan", href: "/unit-kerja/permintaan", icon: FileQuestion },
+        { name: "Laporan", href: "/unit-kerja/laporan", icon: FileText },
+      ];
+      break;
   }
-
-  const adminNavItems = [
-    { name: "Master Data", href: "/dashboard/master", icon: Database },
-    { name: "Pengguna", href: "/dashboard/pengguna", icon: Users },
-    { name: "Pengaturan", href: "/dashboard/pengaturan", icon: Settings },
-  ];
 
   return (
     <aside className="w-64 bg-[#0A356A] text-white flex flex-col h-screen shrink-0 sticky top-0 overflow-y-auto">
@@ -130,11 +163,11 @@ export function Sidebar({ role }: { role?: string }) {
         )}
       </div>
 
-      {userRole !== "INSPECTOR" && (
+      {registerCta && (
         <div className="p-4 mt-auto">
-          <Link href="/dashboard/register" className="w-full flex items-center justify-center gap-2 bg-[#0556B3] hover:bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium transition-colors shadow-md">
+          <Link href={registerCta.href} className="w-full flex items-center justify-center gap-2 bg-[#0556B3] hover:bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium transition-colors shadow-md">
             <Plus className="w-4 h-4" />
-            Register Equipment
+            {registerCta.name}
           </Link>
         </div>
       )}
