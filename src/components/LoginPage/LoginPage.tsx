@@ -1,25 +1,80 @@
 "use client";
 
-import { loginAction } from '@/action/auth';
-import React, { useState, useActionState } from 'react';
+import React, { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import styles from './LoginPage.module.css';
-import type { LoginResponse } from '@/types/Auth';
 
-const initialState: LoginResponse = {
-  status: false,
-  message: '',
-  token: null,
-};
-
-export default function LoginForm() {
-  const [state, formAction, pending] = useActionState(loginAction, initialState);
+export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [npp, setNpp] = useState('');
+  const [nik, setNik] = useState('');
   const [password, setPassword] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const decodeJWT = (token: string) => {
+    try {
+      const base64Url = token.split(".")[1];
+      const base64 = base64Url.replace(/-/g, "+").replace(/_/, "/");
+      const jsonPayload = decodeURIComponent(
+        atob(base64)
+          .split("")
+          .map((c) => "%" + ("00" + c.charCodeAt(0).toString(16)).slice(-2))
+          .join("")
+      );
+      return JSON.parse(jsonPayload);
+    } catch (e) {
+      return null;
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      // --- ALTERNATIF SEMENTARA (MOCK LOGIN) ---
+      let userRole = "";
+
+      // Karena menggunakan NIK, kita gunakan teks NIK untuk dummy
+      if (nik === "rendal" && password === "123") {
+        userRole = "admin_rendal";
+      } else if (nik === "inspeksi" && password === "123") {
+        userRole = "inspeksi";
+      } else if (nik === "unit" && password === "123") {
+        userRole = "unit_kerja";
+      } else {
+        alert("Login gagal! Coba NIK: admin / inspeksi / unit dengan password '123'");
+        setIsLoading(false);
+        return;
+      }
+
+      const dummyPayload = { role: userRole };
+      const base64Payload = btoa(JSON.stringify(dummyPayload));
+      const fakeToken = `dummyHeader.${base64Payload}.dummySignature`;
+
+      document.cookie = `session_token=${fakeToken}; path=/; max-age=86400; Secure; SameSite=Lax`;
+
+      const payload = decodeJWT(fakeToken);
+      
+      if (!payload || !payload.role) {
+        alert("Gagal membaca token JWT dummy. Payload: " + JSON.stringify(payload));
+        setIsLoading(false);
+        return;
+      }
+
+      // Karena rute /dashboard sekarang mendeteksi role secara otomatis,
+      // kita arahkan semua user yang berhasil login ke /dashboard
+      router.push("/dashboard");
+
+    } catch (err) {
+      console.error(err);
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -28,7 +83,7 @@ export default function LoginForm() {
       <div className={styles.leftPanel}>
         <div className={styles.logoContainer}>
           <Image
-            src="/logo-background.png"
+            src="/images (2) 1.png"
             alt="Logo PUSRI"
             width={150}
             height={150}
@@ -39,13 +94,13 @@ export default function LoginForm() {
         <h1 className={styles.leftPanelTitle}>
           Selamat Datang Di<br />
           Manajemen Idle Equipment<br />
-          PT PUPUK SRIWIDJAJA PALEMBANG
+          PT PUPUK SRIWIDJAJA PALEMBANG 
         </h1>
 
         <div className={styles.infoBox}>
-          <h3 className={styles.infoBoxTitle}>Sistemx Manejemen Idle Equipment</h3>
+          <h3 className={styles.infoBoxTitle}>Aplikasi Manejemen Idle Equipment</h3>
           <p className={styles.infoBoxText}>
-            Platform terpusat untuk memonitor, mengelola, dan mengoptimalkan peralatan yang sedang tidak beroperasi guna meningkatkan efisiensi aset dan menekan biaya pemeliharaan.
+            Aplikasi Manajemen Idle Equipment adalah platform terpusat untuk memonitor, mengelola, dan mengoptimalkan penggunaan peralatan yang sedang tidak beroperasi. Melalui sistem ini, perusahaan dapat meningkatkan efisiensi alokasi aset dan mengurangi biaya pemeliharaan yang tidak perlu.
           </p>
         </div>
       </div>
@@ -58,24 +113,9 @@ export default function LoginForm() {
             <p className={styles.subtitle}>Silakan masuk menggunakan akun Anda atau menggunakan SSO.</p>
           </div>
 
-          <form action={formAction}>
-            {state.message && !state.status && (
-              <div style={{
-                color: '#ef4444',
-                backgroundColor: '#fef2f2',
-                border: '1px solid #fee2e2',
-                borderRadius: '0.375rem',
-                padding: '0.75rem 1rem',
-                marginBottom: '1rem',
-                fontSize: '0.875rem',
-                textAlign: 'center'
-              }} role="alert">
-                {state.message}
-              </div>
-            )}
-
+          <form onSubmit={handleLogin}>
             <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="npp">
+              <label className={styles.label} htmlFor="nik">
                 Nomor Pokok Pegawai (NPP)
               </label>
               <div className={styles.inputWrapper}>
@@ -88,13 +128,12 @@ export default function LoginForm() {
                   <path d="M16 14h4"></path>
                 </svg>
                 <input
-                  id="npp"
-                  name="npp"
+                  id="nik"
                   type="text"
                   className={styles.input}
                   placeholder="Masukan NPP"
-                  value={npp}
-                  onChange={(e) => setNpp(e.target.value)}
+                  value={nik}
+                  onChange={(e) => setNik(e.target.value)}
                   required
                 />
               </div>
@@ -112,7 +151,6 @@ export default function LoginForm() {
                 </svg>
                 <input
                   id="password"
-                  name="password"
                   type={showPassword ? 'text' : 'password'}
                   className={styles.input}
                   placeholder="••••••••"
@@ -145,7 +183,7 @@ export default function LoginForm() {
 
             <div className={styles.formActions}>
               <label className={styles.rememberMe}>
-                <input type="checkbox" name="rememberMe" className={styles.checkbox} />
+                <input type="checkbox" className={styles.checkbox} />
                 <span className={styles.rememberText}>Ingat Saya</span>
               </label>
               <a href="#" className={styles.forgotPassword}>
@@ -153,8 +191,8 @@ export default function LoginForm() {
               </a>
             </div>
 
-            <button type="submit" className={styles.submitButton} disabled={npp.length < 4 || pending}>
-              {pending ? 'MEMPROSES...' : 'MASUK'}
+            <button type="submit" className={styles.submitButton} disabled={nik.length < 4 || isLoading}>
+              {isLoading ? "MEMPROSES..." : "MASUK"}
               {/* Log In Icon */}
               <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" >
                 <path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4"></path>
@@ -181,10 +219,10 @@ export default function LoginForm() {
         {/* Footer */}
         <div className={styles.footer}>
           <div className={styles.supportInfo}>
-            <span>&copy; PT Pupuk Sriwidjaja Palembang</span>
+            <span>&copy; DEPARTEMEN TI</span>
           </div>
           <div>
-            Versi Aplikasi 1.0 Build 1.0
+            Versi Aplikasi 1.0 Build 1.0 
           </div>
         </div>
       </div>
