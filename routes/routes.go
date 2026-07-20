@@ -8,11 +8,12 @@ import (
 )
 
 func SetupRoutes(router *gin.Engine, db *gorm.DB) {
-	router.POST("/login", controllers.Login(db))
 
 	api := router.Group("/api")
+	api.POST("/auth/login", controllers.Login(db))
 	api.Use(middleware.AuthMiddleware(db))
 	{
+
 		api.GET("/equipment", controllers.GetAllEquipment(db))
 		api.GET("/equipment/:id", controllers.GetEquipment(db))
 		api.POST("/equipment", controllers.CreateEquipment(db))
