@@ -578,13 +578,14 @@ export default function ManajemenInspeksi() {
             
             <div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
             
-            {/* Reset Button (Selalu Tampil) */}
+            {/* Reset Button */}
             <button 
               onClick={resetFilter} 
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors whitespace-nowrap shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
+              title="Reset semua filter"
             >
-              <X className="w-3.5 h-3.5" />
-              Reset Filter
+              <RefreshCw className="w-3.5 h-3.5" />
+              Reset
             </button>
           </div>
         </div>

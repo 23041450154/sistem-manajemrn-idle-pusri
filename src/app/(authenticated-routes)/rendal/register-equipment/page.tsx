@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2 } from "lucide-react";
+import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2, ChevronLeft } from "lucide-react";
 import Link from "next/link";
 
 export default function RegisterEquipmentPage() {
@@ -54,12 +54,16 @@ export default function RegisterEquipmentPage() {
     <div className="max-w-[1400px] mx-auto pb-8 pt-2 relative">
 
       {/* Header Title & Import */}
-      <div className="flex flex-col md:flex-row md:items-end justify-between gap-4 mb-5">
+      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-5">
         <div>
+          <Link href="/rendal/idle" className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#0A356A] transition-colors mb-2.5">
+            <ChevronLeft className="w-4 h-4" />
+            Kembali
+          </Link>
           <h1 className="text-2xl font-bold text-[#0A356A] tracking-tight">Registrasi Peralatan Idle</h1>
           <p className="text-gray-500 text-sm mt-0.5">Daftarkan aset atau peralatan yang saat ini tidak digunakan.</p>
         </div>
-        <div className="relative">
+        <div className="relative md:mt-8">
           <button
             type="button"
             onClick={() => setShowImportModal(true)}
@@ -213,7 +217,7 @@ export default function RegisterEquipmentPage() {
 
           {/* Action Buttons (Ditempelkan di bawah Panel Kanan) */}
           <div className="flex items-center justify-end gap-3 mt-1">
-            <Link href="/dashboard" className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-bold hover:bg-gray-50 transition-all shadow-sm">
+            <Link href="/rendal/idle" className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-bold hover:bg-gray-50 transition-all shadow-sm">
               Batal
             </Link>
             <button

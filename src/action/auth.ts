@@ -25,24 +25,30 @@ function cookieConfig(maxAge: number) {
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
   try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
+
     const res = await fetch(`${API_URL}/api/auth/login`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
-      cache: "no-store"
-    })
+      cache: "no-store",
+      signal: controller.signal
+    });
+    
+    clearTimeout(timeoutId);
 
-    const result = await res.json().catch(() => null)
-    const token = result?.data?.token
-    const user = result?.data?.user
+    const result = await res.json().catch(() => null);
+    const token = result?.data?.token;
+    const user = result?.data?.user;
 
     if (!res.ok || !token) {
       return {
         status: false,
-        message: result?.error || "login gagal",
+        message: result?.error || result?.message || "login gagal",
         token: null,
         user: undefined
-      }
+      };
     }
 
     const cookieStorage = await cookies()
@@ -59,11 +65,13 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
       user: user
     }
   }
-  catch (error) {
+  catch (error: any) {
     console.error(error)
     return {
       status: false,
-      message: "terjadi kesalahan",
+      message: error.name === 'AbortError' 
+        ? "Koneksi ke backend lambat atau tidak merespons (Timeout)" 
+        : "Terjadi kesalahan saat terhubung ke backend",
       token: null
     }
   }
