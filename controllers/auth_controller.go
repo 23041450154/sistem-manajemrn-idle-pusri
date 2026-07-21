@@ -20,6 +20,18 @@ type LoginInput struct {
 	Password string `json:"password" validate:"required"`
 }
 
+// Login godoc
+// @Summary      Login user
+// @Description  Login menggunakan NPP dan password, mengembalikan JWT token beserta data user
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Param        request body LoginInput true "Login credentials"
+// @Success      200  {object}  map[string]interface{}
+// @Failure      400  {object}  map[string]interface{}
+// @Failure      401  {object}  map[string]interface{}
+// @Failure      500  {object}  map[string]interface{}
+// @Router       /auth/login [post]
 func Login(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input LoginInput
@@ -68,5 +80,19 @@ func Login(db *gorm.DB) gin.HandlerFunc {
 				"user":  user,
 			},
 		})
+	}
+}
+
+// LogOut godoc
+// @Summary      Logout user
+// @Description  Menghapus cookie token untuk logout
+// @Tags         auth
+// @Produce      json
+// @Success      200  {object}  map[string]interface{}
+// @Router       /auth/logout [post]
+func LogOut() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.SetCookie("token", "", -1, "/", "", false, true)
+		c.JSON(http.StatusOK, gin.H{"status": "success", "message": "Logout berhasil"})
 	}
 }

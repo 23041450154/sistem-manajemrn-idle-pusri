@@ -13,6 +13,16 @@ import (
 	"gorm.io/gorm"
 )
 
+// GetAllEquipment godoc
+// @Summary      Ambil semua equipment
+// @Description  Mengambil daftar seluruh data equipment/aset idle
+// @Tags         Equipment
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200  {object}  map[string]interface{}  "Data berhasil diambil"
+// @Failure      401  {object}  map[string]interface{}  "Unauthorized"
+// @Failure      500  {object}  map[string]interface{}  "Kesalahan server"
+// @Router       /equipment [get]
 func GetAllEquipment(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var equipments []models.Equipment
@@ -31,6 +41,17 @@ func GetAllEquipment(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// GetEquipment godoc
+// @Summary      Ambil detail equipment
+// @Description  Mengambil detail satu equipment berdasarkan ID, termasuk relasi Condition, Status, StorageLocation, dan ObjectType
+// @Tags         Equipment
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      int  true  "ID Equipment"
+// @Success      200  {object}  map[string]interface{}  "Berhasil mengambil data equipment"
+// @Failure      401  {object}  map[string]interface{}  "Unauthorized"
+// @Failure      404  {object}  map[string]interface{}  "Aset tidak ditemukan"
+// @Router       /equipment/{id} [get]
 func GetEquipment(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -51,6 +72,19 @@ func GetEquipment(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// CreateEquipment godoc
+// @Summary      Daftarkan equipment baru
+// @Description  Mendaftarkan aset/equipment idle baru dengan status awal REGISTERED
+// @Tags         Equipment
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        request  body      request.EquipmentRequest  true  "Data equipment baru"
+// @Success      201  {object}  map[string]interface{}  "Aset baru berhasil didaftarkan"
+// @Failure      400  {object}  map[string]interface{}  "Validasi gagal / kode alat sudah terdaftar"
+// @Failure      401  {object}  map[string]interface{}  "Unauthorized"
+// @Failure      500  {object}  map[string]interface{}  "Kesalahan server"
+// @Router       /equipment [post]
 func CreateEquipment(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var input request.EquipmentRequest
@@ -162,6 +196,22 @@ func CreateEquipment(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// UpdateEquipment godoc
+// @Summary      Perbarui data equipment
+// @Description  Memperbarui sebagian field equipment (partial update). Hanya untuk role RENDAL_PEMELIHARAAN. Jika equipment punya approval berstatus REVISION_REQUIRED, approval otomatis dikembalikan ke PENDING.
+// @Tags         Equipment
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id       path      int                             true  "ID Equipment"
+// @Param        request  body      request.UpdateEquipmentRequest  true  "Field equipment yang ingin diubah"
+// @Success      200  {object}  map[string]interface{}  "Aset berhasil diperbarui"
+// @Failure      400  {object}  map[string]interface{}  "Format request tidak valid / tidak ada data yang diubah"
+// @Failure      401  {object}  map[string]interface{}  "Unauthorized"
+// @Failure      403  {object}  map[string]interface{}  "Role tidak diizinkan"
+// @Failure      404  {object}  map[string]interface{}  "Aset tidak ditemukan"
+// @Failure      500  {object}  map[string]interface{}  "Kesalahan server"
+// @Router       /equipment/{id} [patch]
 func UpdateEquipment(db *gorm.DB) gin.HandlerFunc {
 	allowedFields := map[string]string{
 		"equipment_code":      "equipment_code",
@@ -282,6 +332,18 @@ func UpdateEquipment(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// DeleteEquipment godoc
+// @Summary      Hapus equipment
+// @Description  Menghapus data equipment berdasarkan ID
+// @Tags         Equipment
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      int  true  "ID Equipment"
+// @Success      200  {object}  map[string]interface{}  "Aset berhasil dihapus"
+// @Failure      401  {object}  map[string]interface{}  "Unauthorized"
+// @Failure      404  {object}  map[string]interface{}  "Aset tidak ditemukan"
+// @Failure      500  {object}  map[string]interface{}  "Kesalahan server"
+// @Router       /equipment/{id} [delete]
 func DeleteEquipment(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		equipmentID := c.Param("id")
@@ -310,6 +372,22 @@ func DeleteEquipment(db *gorm.DB) gin.HandlerFunc {
 	}
 }
 
+// ValidateEquipment godoc
+// @Summary      Penilaian kelayakan equipment
+// @Description  Menilai kelayakan (utilizable) sebuah equipment. Hanya untuk role INSPEKSI_TEKNIK. Jika tidak layak, status equipment menjadi REJECTED. Jika layak, status menjadi VALIDATED dan dibuatkan approval untuk Manajer Rendal.
+// @Tags         Equipment
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id       path      int                               true  "ID Equipment"
+// @Param        request  body      request.ValidateEquipmentRequest  true  "Hasil penilaian kelayakan"
+// @Success      200  {object}  map[string]interface{}  "Penilaian kelayakan berhasil disimpan"
+// @Failure      400  {object}  map[string]interface{}  "Format request tidak valid / field wajib tidak diisi"
+// @Failure      401  {object}  map[string]interface{}  "Unauthorized"
+// @Failure      403  {object}  map[string]interface{}  "Role tidak diizinkan"
+// @Failure      404  {object}  map[string]interface{}  "Aset tidak ditemukan"
+// @Failure      500  {object}  map[string]interface{}  "Kesalahan server"
+// @Router       /equipment/{id}/validate [patch]
 func ValidateEquipment(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")

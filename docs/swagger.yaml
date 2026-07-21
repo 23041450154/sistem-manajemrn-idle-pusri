@@ -1,0 +1,563 @@
+basePath: /api
+definitions:
+  controllers.LoginInput:
+    properties:
+      npp:
+        type: string
+      password:
+        type: string
+    required:
+    - npp
+    - password
+    type: object
+  request.EquipmentRequest:
+    properties:
+      book_value:
+        type: number
+      equipment_code:
+        type: string
+      func_loc:
+        type: string
+      id_condition:
+        type: integer
+      id_object_type:
+        type: integer
+      id_storage_location:
+        type: integer
+      name:
+        type: string
+      notes:
+        type: string
+      original_value:
+        type: number
+      plant:
+        type: string
+      plant_description:
+        type: string
+      vendor:
+        type: string
+      year:
+        type: integer
+    required:
+    - equipment_code
+    - id_condition
+    - id_object_type
+    - name
+    - plant
+    type: object
+  request.ReviewApprovalRequest:
+    properties:
+      action:
+        description: 'Action: "APPROVE" atau "REVISION"'
+        type: string
+      notes:
+        type: string
+    type: object
+  request.UpdateEquipmentRequest:
+    properties:
+      book_value:
+        type: number
+      equipment_code:
+        type: string
+      func_loc:
+        type: string
+      id_condition:
+        type: integer
+      id_object_type:
+        type: integer
+      id_storage_location:
+        type: integer
+      name:
+        type: string
+      notes:
+        type: string
+      original_value:
+        type: number
+      plant:
+        type: string
+      plant_description:
+        type: string
+      vendor:
+        type: string
+      year:
+        type: integer
+    type: object
+  request.ValidateEquipmentRequest:
+    properties:
+      is_utilizable:
+        type: boolean
+      notes:
+        type: string
+    type: object
+info:
+  contact: {}
+  description: API documentation for Backend Idle (equipment/idle management system)
+  title: Backend Idle API
+  version: "1.0"
+paths:
+  /approvals:
+    get:
+      description: Mengambil daftar approval request, dengan filter opsional status
+        dan request_type
+      parameters:
+      - description: 'Filter status approval, contoh: PENDING'
+        in: query
+        name: status
+        type: string
+      - description: 'Filter tipe request, contoh: EQUIPMENT_REGISTRATION'
+        in: query
+        name: request_type
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: List approval requests
+      tags:
+      - approvals
+  /approvals/{id}:
+    get:
+      description: Mengambil detail satu approval request beserta tahapan (steps)
+      parameters:
+      - description: Approval Request ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Get approval detail
+      tags:
+      - approvals
+  /approvals/{id}/review:
+    patch:
+      consumes:
+      - application/json
+      description: Memproses keputusan Manajer Rendal terhadap approval request (APPROVE
+        atau REVISION). Jika APPROVE, equipment terkait otomatis berubah menjadi IDLE.
+      parameters:
+      - description: Approval Request ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Review decision
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ReviewApprovalRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Not Found
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Review approval request
+      tags:
+      - approvals
+  /attachments/upload:
+    post:
+      consumes:
+      - multipart/form-data
+      description: Mengunggah berkas lampiran (JPG, PNG, atau PDF, maks 5 MB) yang
+        terkait dengan sebuah equipment
+      parameters:
+      - description: ID Equipment
+        in: formData
+        name: equipment_id
+        required: true
+        type: integer
+      - description: Kategori lampiran
+        in: formData
+        name: category
+        type: string
+      - description: Berkas yang diunggah (JPG/PNG/PDF, maks 5 MB)
+        in: formData
+        name: file
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: File berkas berhasil diunggah
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: equipment_id tidak valid / aset tidak ditemukan / file wajib
+            diunggah / ukuran melebihi batas
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "415":
+          description: Format file tidak didukung
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Kesalahan server
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Unggah berkas lampiran equipment
+      tags:
+      - Attachment
+  /auth/login:
+    post:
+      consumes:
+      - application/json
+      description: Login menggunakan NPP dan password, mengembalikan JWT token beserta
+        data user
+      parameters:
+      - description: Login credentials
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/controllers.LoginInput'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Login user
+      tags:
+      - auth
+  /auth/logout:
+    post:
+      description: Menghapus cookie token untuk logout
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: Logout user
+      tags:
+      - auth
+  /equipment:
+    get:
+      description: Mengambil daftar seluruh data equipment/aset idle
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Data berhasil diambil
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Kesalahan server
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Ambil semua equipment
+      tags:
+      - Equipment
+    post:
+      consumes:
+      - application/json
+      description: Mendaftarkan aset/equipment idle baru dengan status awal REGISTERED
+      parameters:
+      - description: Data equipment baru
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.EquipmentRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Aset baru berhasil didaftarkan
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Validasi gagal / kode alat sudah terdaftar
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Kesalahan server
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Daftarkan equipment baru
+      tags:
+      - Equipment
+  /equipment/{id}:
+    delete:
+      description: Menghapus data equipment berdasarkan ID
+      parameters:
+      - description: ID Equipment
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Aset berhasil dihapus
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Aset tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Kesalahan server
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Hapus equipment
+      tags:
+      - Equipment
+    get:
+      description: Mengambil detail satu equipment berdasarkan ID, termasuk relasi
+        Condition, Status, StorageLocation, dan ObjectType
+      parameters:
+      - description: ID Equipment
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Berhasil mengambil data equipment
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Aset tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Ambil detail equipment
+      tags:
+      - Equipment
+    patch:
+      consumes:
+      - application/json
+      description: Memperbarui sebagian field equipment (partial update). Hanya untuk
+        role RENDAL_PEMELIHARAAN. Jika equipment punya approval berstatus REVISION_REQUIRED,
+        approval otomatis dikembalikan ke PENDING.
+      parameters:
+      - description: ID Equipment
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Field equipment yang ingin diubah
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.UpdateEquipmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Aset berhasil diperbarui
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Format request tidak valid / tidak ada data yang diubah
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Role tidak diizinkan
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Aset tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Kesalahan server
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Perbarui data equipment
+      tags:
+      - Equipment
+  /equipment/{id}/validate:
+    patch:
+      consumes:
+      - application/json
+      description: Menilai kelayakan (utilizable) sebuah equipment. Hanya untuk role
+        INSPEKSI_TEKNIK. Jika tidak layak, status equipment menjadi REJECTED. Jika
+        layak, status menjadi VALIDATED dan dibuatkan approval untuk Manajer Rendal.
+      parameters:
+      - description: ID Equipment
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Hasil penilaian kelayakan
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/request.ValidateEquipmentRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Penilaian kelayakan berhasil disimpan
+          schema:
+            additionalProperties: true
+            type: object
+        "400":
+          description: Format request tidak valid / field wajib tidak diisi
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Role tidak diizinkan
+          schema:
+            additionalProperties: true
+            type: object
+        "404":
+          description: Aset tidak ditemukan
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Kesalahan server
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Penilaian kelayakan equipment
+      tags:
+      - Equipment
+securityDefinitions:
+  BearerAuth:
+    description: 'Ketik "Bearer" diikuti spasi dan token JWT. Contoh: "Bearer eyJhbGciOi..."'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"

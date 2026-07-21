@@ -4,13 +4,18 @@ import (
 	"github.com/Ucokgreget/backend-idle/controllers"
 	"github.com/Ucokgreget/backend-idle/middleware"
 	"github.com/gin-gonic/gin"
+	"github.com/swaggo/files"
+	"github.com/swaggo/gin-swagger"
 	"gorm.io/gorm"
 )
 
 func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+
 	api := router.Group("/api")
 	api.POST("/auth/login", controllers.Login(db))
+	api.POST("/auth/logout", controllers.LogOut())
 	api.Use(middleware.AuthMiddleware(db))
 	{
 

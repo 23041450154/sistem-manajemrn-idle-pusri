@@ -25,6 +25,18 @@ func generateApprovalNumber(db *gorm.DB, now time.Time) string {
 
 // GetApprovals mengembalikan daftar approval request, dengan filter opsional
 // via query param: ?status=PENDING&request_type=EQUIPMENT_REGISTRATION
+//
+// GetApprovals godoc
+// @Summary      List approval requests
+// @Description  Mengambil daftar approval request, dengan filter opsional status dan request_type
+// @Tags         approvals
+// @Produce      json
+// @Security     BearerAuth
+// @Param        status        query  string  false  "Filter status approval, contoh: PENDING"
+// @Param        request_type  query  string  false  "Filter tipe request, contoh: EQUIPMENT_REGISTRATION"
+// @Success      200  {object}  map[string]interface{}
+// @Failure      500  {object}  map[string]interface{}
+// @Router       /approvals [get]
 func GetApprovals(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var approvals []models.ApprovalRequest
@@ -69,6 +81,17 @@ func GetApprovals(db *gorm.DB) gin.HandlerFunc {
 }
 
 // GetApproval mengembalikan detail satu approval request beserta tahapan (steps).
+//
+// GetApprovalById godoc
+// @Summary      Get approval detail
+// @Description  Mengambil detail satu approval request beserta tahapan (steps)
+// @Tags         approvals
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id   path      int  true  "Approval Request ID"
+// @Success      200  {object}  map[string]interface{}
+// @Failure      404  {object}  map[string]interface{}
+// @Router       /approvals/{id} [get]
 func GetApprovalById(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")
@@ -122,6 +145,21 @@ func GetApprovalById(db *gorm.DB) gin.HandlerFunc {
 // ReviewApproval memproses keputusan Manajer Rendal terhadap approval request.
 // action=APPROVE  -> step & request APPROVED, equipment jadi IDLE
 // action=REVISION -> step & request REVISION_REQUIRED (notes wajib)
+//
+// ReviewApproval godoc
+// @Summary      Review approval request
+// @Description  Memproses keputusan Manajer Rendal terhadap approval request (APPROVE atau REVISION). Jika APPROVE, equipment terkait otomatis berubah menjadi IDLE.
+// @Tags         approvals
+// @Accept       json
+// @Produce      json
+// @Security     BearerAuth
+// @Param        id       path  int                              true  "Approval Request ID"
+// @Param        request  body  request.ReviewApprovalRequest    true  "Review decision"
+// @Success      200  {object}  map[string]interface{}
+// @Failure      400  {object}  map[string]interface{}
+// @Failure      404  {object}  map[string]interface{}
+// @Failure      500  {object}  map[string]interface{}
+// @Router       /approvals/{id}/review [patch]
 func ReviewApproval(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		id := c.Param("id")

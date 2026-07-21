@@ -5,10 +5,21 @@ import (
 	"os"
 
 	"github.com/Ucokgreget/backend-idle/database"
+	_ "github.com/Ucokgreget/backend-idle/docs"
 	"github.com/Ucokgreget/backend-idle/models"
 	"github.com/Ucokgreget/backend-idle/routes"
 	"github.com/gin-gonic/gin"
 )
+
+// @title           Backend Idle API
+// @version         1.0
+// @description     API documentation for Backend Idle (equipment/idle management system)
+// @BasePath        /api
+
+// @securityDefinitions.apikey  BearerAuth
+// @in                          header
+// @name                        Authorization
+// @description                 Ketik "Bearer" diikuti spasi dan token JWT. Contoh: "Bearer eyJhbGciOi..."
 
 func main() {
 	db := database.Connect()

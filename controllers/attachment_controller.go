@@ -23,6 +23,22 @@ var allowedExtensions = map[string]bool{
 
 const maxFileSize = 5 * 1024 * 1024 // 5 MB
 
+// UploadAttachment godoc
+// @Summary      Unggah berkas lampiran equipment
+// @Description  Mengunggah berkas lampiran (JPG, PNG, atau PDF, maks 5 MB) yang terkait dengan sebuah equipment
+// @Tags         Attachment
+// @Accept       multipart/form-data
+// @Produce      json
+// @Security     BearerAuth
+// @Param        equipment_id  formData  int     true   "ID Equipment"
+// @Param        category      formData  string  false  "Kategori lampiran"
+// @Param        file          formData  file    true   "Berkas yang diunggah (JPG/PNG/PDF, maks 5 MB)"
+// @Success      200  {object}  map[string]interface{}  "File berkas berhasil diunggah"
+// @Failure      400  {object}  map[string]interface{}  "equipment_id tidak valid / aset tidak ditemukan / file wajib diunggah / ukuran melebihi batas"
+// @Failure      401  {object}  map[string]interface{}  "Unauthorized"
+// @Failure      415  {object}  map[string]interface{}  "Format file tidak didukung"
+// @Failure      500  {object}  map[string]interface{}  "Kesalahan server"
+// @Router       /attachments/upload [post]
 func UploadAttachment(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		equipmentIDStr := c.PostForm("equipment_id")
