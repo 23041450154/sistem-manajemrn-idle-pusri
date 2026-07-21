@@ -28,12 +28,12 @@ interface Asset {
 const MOCK_ASSETS: Asset[] = [
   {
     id: "1",
-    kodeAlat: "C-102",
-    namaAlat: "Centrifugal Pump C-102",
-    plant: "P-1",
-    jenisAlat: "Rotating Equipment",
+    kodeAlat: "VLV-202-UR3",
+    namaAlat: "Control Valve V-202 Urea",
+    plant: "Urea III",
+    jenisAlat: "Valve",
     tanggalRegistrasi: "2023-10-24",
-    statusAset: "REGISTERED",
+    statusAset: "VALIDATED",
     statusPersetujuan: "PENDING",
     spesifikasi: "Kapasitas 500m3/h, Head 100m, Motor 55kW",
     lampiran: ["spec_sheet_C102.pdf", "foto_kondisi.jpg"]
@@ -210,6 +210,15 @@ const MOCK_ASSETS: Asset[] = [
 
 export default function ManajemenInspeksi() {
   const [assets, setAssets] = useState<Asset[]>(MOCK_ASSETS);
+  
+  useEffect(() => {
+    const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
+    if (approved.length > 0) {
+      setAssets(prev => prev.map(asset => 
+        approved.includes(asset.kodeAlat) ? { ...asset, statusAset: "IDLE", statusPersetujuan: "APPROVED" } : asset
+      ));
+    }
+  }, []);
   
   // Filter States
   const [search, setSearch] = useState("");
@@ -403,7 +412,7 @@ export default function ManajemenInspeksi() {
       REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
       IDLE: "bg-[#E0E7FF] text-[#4F46E5]"
     };
-    return <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${styles[status]}`}>{status}</span>;
+    return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status]}`}>{status}</span>;
   };
 
   const getApprovalBadge = (status: ApprovalState) => {
@@ -417,38 +426,38 @@ export default function ManajemenInspeksi() {
     };
     const labels = {
       PENDING: "-",
-      IN_REVIEW: "Menunggu Review",
+      IN_REVIEW: "Review",
       APPROVED: "Disetujui",
       REJECTED: "Ditolak",
-      NEED_REVISION: "Perlu Revisi"
+      NEED_REVISION: "Revisi"
     };
-    return <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-full ${styles[status]}`}>{labels[status]}</span>;
+    return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status]}`}>{labels[status]}</span>;
   };
 
   const getActionButton = (asset: Asset) => {
     return (
-      <div className="flex flex-wrap items-center gap-1 justify-center w-full max-w-[120px] mx-auto">
+      <div className="flex flex-wrap items-center gap-1 justify-center w-full max-w-[100px] mx-auto">
         {asset.statusPersetujuan === "PENDING" && (
-          <button title="Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 rounded transition-colors flex flex-col items-center">
-            <Check className="w-3.5 h-3.5 mb-0.5" />
-            <span className="text-[9px] font-bold">Validasi</span>
+          <button title="Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5 rounded transition-colors flex flex-col items-center">
+            <Check className="w-3 h-3 mb-0.5" />
+            <span className="text-[8px] font-bold">Validasi</span>
           </button>
         )}
         {asset.statusPersetujuan === "IN_REVIEW" && asset.statusAset === "VALIDATED" && (
-          <button title="Ubah Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-1 rounded transition-colors flex flex-col items-center">
-            <Edit className="w-3.5 h-3.5 mb-0.5" />
-            <span className="text-[9px] font-bold">Ubah</span>
+          <button title="Ubah Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-0.5 rounded transition-colors flex flex-col items-center">
+            <Edit className="w-3 h-3 mb-0.5" />
+            <span className="text-[8px] font-bold">Ubah</span>
           </button>
         )}
         {asset.statusPersetujuan === "NEED_REVISION" && (
-          <button title="Revisi Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-1 rounded transition-colors flex flex-col items-center">
-            <Edit className="w-3.5 h-3.5 mb-0.5" />
-            <span className="text-[9px] font-bold">Revisi</span>
+          <button title="Revisi Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-0.5 rounded transition-colors flex flex-col items-center">
+            <Edit className="w-3 h-3 mb-0.5" />
+            <span className="text-[8px] font-bold">Revisi</span>
           </button>
         )}
-        <button title="Detail Info" onClick={() => openModal(asset, "DETAIL")} className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1 rounded transition-colors flex flex-col items-center">
-          <Eye className="w-3.5 h-3.5 mb-0.5" />
-          <span className="text-[9px] font-bold">Detail</span>
+        <button title="Detail Info" onClick={() => openModal(asset, "DETAIL")} className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-0.5 rounded transition-colors flex flex-col items-center">
+          <Eye className="w-3 h-3 mb-0.5" />
+          <span className="text-[8px] font-bold">Detail</span>
         </button>
       </div>
     );
@@ -570,34 +579,34 @@ export default function ManajemenInspeksi() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50/95 backdrop-blur-sm">
               <tr className="border-b-2 border-gray-300">
-                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('kodeAlat')}>
+                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('kodeAlat')}>
                   <div className="flex items-center">Kode {getSortIcon('kodeAlat')}</div>
                 </th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
+                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
                   <div className="flex items-center">Nama Alat {getSortIcon('namaAlat')}</div>
                 </th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
+                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
                   <div className="flex items-center">Plant {getSortIcon('plant')}</div>
                 </th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
+                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
                   <div className="flex items-center">Jenis {getSortIcon('jenisAlat')}</div>
                 </th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('tanggalRegistrasi')}>
+                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('tanggalRegistrasi')}>
                   <div className="flex items-center">Tanggal {getSortIcon('tanggalRegistrasi')}</div>
                 </th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider">
                   SLA Target
                 </th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider">
+                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider">
                   Pemohon
                 </th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
+                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
                   <div className="flex items-center">Aset {getSortIcon('statusAset')}</div>
                 </th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
+                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
                   <div className="flex items-center">Persetujuan {getSortIcon('statusPersetujuan')}</div>
                 </th>
-                <th className="px-2 py-2 text-[10px] font-semibold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Tindakan</th>
+                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Tindakan</th>
               </tr>
             </thead>
             <tbody className="bg-white">
@@ -614,7 +623,7 @@ export default function ManajemenInspeksi() {
               ) : (
                 paginatedAssets.map((asset) => (
                   <tr key={asset.id} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
-                    <td className="px-2 py-1.5 whitespace-nowrap text-[11px] font-bold text-[#0A356A] relative">
+                    <td className="px-1.5 py-1 whitespace-nowrap text-[10px] font-bold text-[#0A356A] relative">
                       {(asset.statusPersetujuan === "PENDING" || asset.statusPersetujuan === "NEED_REVISION") && (
                         <span className="absolute left-0 top-1/2 -translate-y-1/2 flex h-1.5 w-1.5" title={asset.statusPersetujuan === "PENDING" ? "Perlu Validasi" : "Perlu Revisi"}>
                           <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${asset.statusPersetujuan === "PENDING" ? "bg-red-400" : "bg-orange-400"}`}></span>
@@ -623,35 +632,35 @@ export default function ManajemenInspeksi() {
                       )}
                       <span className="ml-1.5">{asset.kodeAlat}</span>
                     </td>
-                    <td className="px-2 py-1.5">
-                      <div className="text-[11px] font-medium text-gray-700 leading-tight line-clamp-2" title={asset.namaAlat}>{asset.namaAlat}</div>
+                    <td className="px-1.5 py-1">
+                      <div className="text-[10px] font-medium text-gray-700 leading-tight line-clamp-2" title={asset.namaAlat}>{asset.namaAlat}</div>
                     </td>
-                    <td className="px-2 py-1.5 text-[11px] text-gray-600 font-medium">
+                    <td className="px-1.5 py-1 text-[10px] text-gray-600 font-medium">
                       {asset.plant}
                     </td>
-                    <td className="px-2 py-1.5 text-[11px] text-gray-600 font-medium">
+                    <td className="px-1.5 py-1 text-[10px] text-gray-600 font-medium">
                       {asset.jenisAlat}
                     </td>
-                    <td className="px-2 py-1.5 text-[11px] text-gray-600">
+                    <td className="px-1.5 py-1 text-[10px] text-gray-600">
                       {asset.tanggalRegistrasi}
                     </td>
-                    <td className="px-2 py-1.5 text-[11px]">
+                    <td className="px-1.5 py-1 text-[10px]">
                       {asset.statusPersetujuan === 'PENDING' ? (
-                        <span className="bg-[#DCFCE7] text-[#16A34A] px-2 py-0.5 rounded-full flex items-center gap-1 w-fit font-semibold text-[9px]"><div className="w-1.5 h-1.5 bg-[#16A34A] rounded-full"></div> 1 Hari</span>
+                        <span className="bg-[#DCFCE7] text-[#16A34A] px-1.5 py-0.5 rounded-full flex items-center gap-1 w-fit font-semibold text-[8px]"><div className="w-1.5 h-1.5 bg-[#16A34A] rounded-full"></div> 1 Hari</span>
                       ) : (
-                        <span className="text-gray-400 font-medium text-[10px]">Selesai</span>
+                        <span className="text-gray-400 font-medium text-[9px]">Selesai</span>
                       )}
                     </td>
-                    <td className="px-2 py-1.5 text-[11px] text-gray-600 font-medium">
+                    <td className="px-1.5 py-1 text-[10px] text-gray-600 font-medium">
                       NPP2304145
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td className="px-1.5 py-1">
                       {getStatusAsetBadge(asset.statusAset)}
                     </td>
-                    <td className="px-2 py-1.5">
+                    <td className="px-1.5 py-1">
                       {getApprovalBadge(asset.statusPersetujuan)}
                     </td>
-                    <td className="px-2 py-1.5 whitespace-nowrap text-center">
+                    <td className="px-1.5 py-1 text-center">
                       <div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
                         {getActionButton(asset)}
                       </div>
