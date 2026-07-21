@@ -221,6 +221,7 @@ export default function ManajemenInspeksi() {
   }, []);
   
   // Filter States
+  const [searchInput, setSearchInput] = useState("");
   const [search, setSearch] = useState("");
   const [plantFilter, setPlantFilter] = useState("Semua");
   const [statusFilter, setStatusFilter] = useState("Semua");
@@ -391,6 +392,7 @@ export default function ManajemenInspeksi() {
   const totalPages = Math.ceil(filteredAssets.length / ITEMS_PER_PAGE);
 
   const resetFilter = () => {
+    setSearchInput("");
     setSearch("");
     setPlantFilter("Semua");
     setStatusFilter("Semua");
@@ -532,22 +534,31 @@ export default function ManajemenInspeksi() {
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         
         {/* Toolbar / Filters */}
-        <div className="p-3 border-b border-gray-200 bg-white flex flex-col md:flex-row gap-3 justify-between items-center">
+        <div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
           
           {/* Search */}
-          <div className="relative w-full md:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-            <input 
-              type="text" 
-              placeholder="Cari Kode atau Nama Alat..." 
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400" 
-            />
+          <div className="flex w-full lg:w-auto gap-2">
+            <div className="relative flex-1 lg:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input 
+                type="text" 
+                placeholder="Cari Kode atau Nama Alat..." 
+                value={searchInput}
+                onChange={(e) => setSearchInput(e.target.value)}
+                onKeyDown={(e) => e.key === 'Enter' && setSearch(searchInput)}
+                className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400" 
+              />
+            </div>
+            <button 
+              onClick={() => setSearch(searchInput)}
+              className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
+            >
+              Cari
+            </button>
           </div>
           
           {/* Filter Group */}
-          <div className="flex flex-wrap gap-2 w-full md:w-auto">
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <select value={plantFilter} onChange={(e) => setPlantFilter(e.target.value)} className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer">
               <option value="Semua">Semua Plant</option>
               <option value="P-1">Plant 1</option>
@@ -565,12 +576,16 @@ export default function ManajemenInspeksi() {
             
             <input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer" />
             
-            {/* Reset Button */}
-            {(search || plantFilter !== "Semua" || statusFilter !== "Semua" || dateFilter) && (
-              <button onClick={resetFilter} className="px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-gray-50 border border-gray-200 rounded-lg hover:bg-gray-100 transition-colors">
-                Reset
-              </button>
-            )}
+            <div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
+            
+            {/* Reset Button (Selalu Tampil) */}
+            <button 
+              onClick={resetFilter} 
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-red-600 bg-red-50 border border-red-200 rounded-lg hover:bg-red-100 transition-colors whitespace-nowrap shadow-sm"
+            >
+              <X className="w-3.5 h-3.5" />
+              Reset Filter
+            </button>
           </div>
         </div>
 
