@@ -4,11 +4,11 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { 
   Search, AlertCircle, RefreshCw, Filter, Plus, X,
-  ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download 
+  ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download, Eye, Upload, Wrench, CheckCircle 
 } from "lucide-react";
 
 // Tipe Data menyesuaikan dengan struktur standar Asset/Equipment
-type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE";
+type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE" | "DALAM_PERBAIKAN" | "READY_TO_REUSE";
 type ApprovalState = "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "NEED_REVISION";
 
 interface Equipment {
@@ -29,6 +29,7 @@ const MOCK_EQUIPMENTS: Equipment[] = [
   { id: "4", kodeAlat: "T-552", namaAlat: "Steam Turbine T-552", plant: "P-4", jenisAlat: "Rotating Equipment", tanggalRegistrasi: "2023-11-18", statusAset: "IDLE", statusPersetujuan: "APPROVED" },
   { id: "5", kodeAlat: "K-901", namaAlat: "Gas Compressor K-901", plant: "P-1", jenisAlat: "Rotating Equipment", tanggalRegistrasi: "2023-11-20", statusAset: "REGISTERED", statusPersetujuan: "PENDING" },
   { id: "6", kodeAlat: "P-101A", namaAlat: "Feed Water Pump P-101A", plant: "P-2", jenisAlat: "Rotating Equipment", tanggalRegistrasi: "2023-11-21", statusAset: "VALIDATED", statusPersetujuan: "IN_REVIEW" },
+  { id: "7", kodeAlat: "P-302B", namaAlat: "Reflux Pump P-302B", plant: "P-3", jenisAlat: "Rotating Equipment", tanggalRegistrasi: "2023-11-25", statusAset: "DALAM_PERBAIKAN", statusPersetujuan: "APPROVED" },
 ];
 
 export default function RendalIdlePage() {
@@ -44,8 +45,22 @@ export default function RendalIdlePage() {
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<{key: keyof Equipment, direction: 'asc' | 'desc'} | null>(null);
+
+  // States untuk Modal Perbaikan
+  const [repairModal, setRepairModal] = useState<Equipment | null>(null);
+  const [isSubmittingRepair, setIsSubmittingRepair] = useState(false);
   
   const ITEMS_PER_PAGE = 15;
+
+  const handleSubmitRepair = (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSubmittingRepair(true);
+    setTimeout(() => {
+      setIsSubmittingRepair(false);
+      alert("Berhasil! Hasil perbaikan dan bukti biaya telah disimpan. Status alat berubah menjadi Ready to Reuse.");
+      setRepairModal(null);
+    }, 1500);
+  };
 
   const fetchEquipments = async () => {
     setIsLoading(true);
@@ -121,9 +136,11 @@ export default function RendalIdlePage() {
       VALIDATED: "bg-emerald-100 text-emerald-800 border-emerald-200",
       REJECTED: "bg-red-100 text-red-800 border-red-200",
       IDLE: "bg-purple-100 text-purple-800 border-purple-200",
+      DALAM_PERBAIKAN: "bg-amber-50 text-amber-700 border-amber-200",
+      READY_TO_REUSE: "bg-teal-50 text-teal-700 border-teal-200",
     };
-    const style = styles[status] || "bg-gray-100 text-gray-800 border-gray-200";
-    return <span className={`text-xs font-semibold px-2.5 py-1 rounded-md border ${style}`}>{status}</span>;
+    const style = styles[status] || "bg-gray-50 text-gray-700 border-gray-200";
+    return <span className={`inline-flex items-center justify-center text-[10px] font-extrabold px-2 py-0.5 rounded border tracking-wide whitespace-nowrap shadow-sm ${style}`}>{status.replace(/_/g, ' ')}</span>;
   };
 
   return (
@@ -275,6 +292,9 @@ export default function RendalIdlePage() {
                 <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('statusAset')}>
                   <div className="flex items-center gap-1">STATUS {getSortIcon('statusAset')}</div>
                 </th>
+                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide text-right">
+                  AKSI
+                </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -316,6 +336,24 @@ export default function RendalIdlePage() {
                     <td className="px-5 py-3 whitespace-nowrap">
                       {getStatusBadge(item.statusAset)}
                     </td>
+                    <td className="px-5 py-3 whitespace-nowrap text-right">
+                      {item.statusAset === "DALAM_PERBAIKAN" && (
+                        <button 
+                          onClick={() => setRepairModal(item)}
+                          className="inline-flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 px-2 py-1 rounded text-[10px] font-bold transition-all shadow-sm ml-auto"
+                          title="Catat Hasil Perbaikan"
+                        >
+                          <Wrench className="w-3 h-3" />
+                          <span>Perbaikan</span>
+                        </button>
+                      )}
+                      {item.statusAset !== "DALAM_PERBAIKAN" && (
+                        <button className="inline-flex items-center justify-center gap-1.5 bg-gray-50 text-gray-600 hover:bg-[#0A356A] hover:text-white border border-gray-200 px-2 py-1 rounded text-[10px] font-bold transition-all shadow-sm ml-auto" title="Lihat Detail">
+                          <Eye className="w-3 h-3" />
+                          <span>Detail</span>
+                        </button>
+                      )}
+                    </td>
                   </tr>
                 ))
               )}
@@ -353,6 +391,65 @@ export default function RendalIdlePage() {
           </div>
         )}
       </div>
+
+      {/* Modal Pencatatan Perbaikan */}
+      {repairModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div className="flex items-center gap-2.5">
+                <Wrench className="w-5 h-5 text-emerald-600" />
+                <div>
+                  <h2 className="text-base font-bold text-gray-900 leading-tight">Pencatatan Hasil Perbaikan</h2>
+                  <p className="text-xs text-gray-500 font-medium mt-0.5">{repairModal.kodeAlat} - {repairModal.namaAlat}</p>
+                </div>
+              </div>
+              <button onClick={() => setRepairModal(null)} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmitRepair} className="p-5 overflow-y-auto flex-1 flex flex-col gap-4">
+              <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800 leading-relaxed shadow-sm">
+                Unggah bukti biaya dan deskripsi tindakan perbaikan di bawah ini untuk merubah status peralatan menjadi <strong>Ready to Reuse</strong>.
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Deskripsi Perbaikan <span className="text-red-500">*</span></label>
+                <textarea required rows={3} placeholder="Jelaskan tindakan perbaikan/refurbish yang telah dilakukan secara detail..." className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none shadow-sm"></textarea>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Total Biaya Aktual <span className="text-red-500">*</span></label>
+                <div className="relative shadow-sm rounded-lg">
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <span className="text-gray-500 text-sm font-bold">Rp</span>
+                  </div>
+                  <input required type="number" min="0" placeholder="Contoh: 15000000" className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+                </div>
+              </div>
+
+              <div>
+                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Unggah Bukti Biaya / Nota Perbaikan <span className="text-red-500">*</span></label>
+                <label className="border-2 border-dashed border-gray-300 rounded-lg p-5 flex flex-col items-center justify-center text-center hover:bg-emerald-50/30 hover:border-emerald-400 cursor-pointer transition-colors bg-gray-50/50">
+                  <Upload className="w-6 h-6 text-gray-400 mb-2" />
+                  <span className="text-sm font-bold text-gray-700">Pilih file nota / invoice perbaikan</span>
+                  <span className="text-[10px] text-gray-500 mt-1">Mendukung format PDF, JPG, PNG (Maks. 5MB)</span>
+                  <input required type="file" className="hidden" />
+                </label>
+              </div>
+
+              <div className="mt-2 flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
+                <button type="button" disabled={isSubmittingRepair} onClick={() => setRepairModal(null)} className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm">Batal</button>
+                <button type="submit" disabled={isSubmittingRepair} className="px-5 py-2 rounded-lg bg-[#0A356A] hover:bg-[#0556B3] text-white text-sm font-bold transition-colors shadow-md flex items-center gap-2 disabled:opacity-70">
+                  {isSubmittingRepair ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
+                  {isSubmittingRepair ? "Menyimpan..." : "Simpan & Ubah Status"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
       
     </div>
   );
