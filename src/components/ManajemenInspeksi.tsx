@@ -741,24 +741,24 @@ export default function ManajemenInspeksi() {
               <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                 
                 {/* Row 1: Identifikasi & Waktu */}
-                <div className="grid grid-cols-12 gap-3 mb-3">
-                  <div className="col-span-3">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-3">
+                  <div className="md:col-span-3">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">No. Pemeriksaan</label>
                     <input type="text" value={`INSP-${selectedAsset.kodeAlat}`} disabled className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-1.5 text-[13px] font-medium text-gray-500" />
                   </div>
-                  <div className="col-span-3">
+                  <div className="md:col-span-3">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Tanggal *</label>
                     <input type="date" value={tglPemeriksaan} onChange={e => setTglPemeriksaan(e.target.value)} disabled={isReadOnly} className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] focus:border-[#0A356A] outline-none disabled:bg-gray-50" />
                   </div>
-                  <div className="col-span-2">
+                  <div className="md:col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Mulai *</label>
                     <input type="time" value={jamMulai} onChange={e => setJamMulai(e.target.value)} disabled={isReadOnly} className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] focus:border-[#0A356A] outline-none disabled:bg-gray-50" />
                   </div>
-                  <div className="col-span-2">
+                  <div className="md:col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Selesai *</label>
                     <input type="time" value={jamSelesai} onChange={e => setJamSelesai(e.target.value)} disabled={isReadOnly} className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] focus:border-[#0A356A] outline-none disabled:bg-gray-50" />
                   </div>
-                  <div className="col-span-2">
+                  <div className="md:col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Durasi</label>
                     <div className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 text-[13px] text-gray-600 truncate flex items-center gap-1.5">
                       <Clock className="w-3.5 h-3.5 text-gray-400" />
@@ -768,13 +768,13 @@ export default function ManajemenInspeksi() {
                 </div>
 
                 {/* Row 2: Lokasi & Hasil (Compact) */}
-                <div className="grid grid-cols-12 gap-3 mb-3">
-                  <div className="col-span-5">
+                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 mb-3">
+                  <div className="md:col-span-5">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Lokasi Pengecekan *</label>
                     <input type="text" placeholder="Contoh: Area Unit 1B" value={lokasi} onChange={e => setLokasi(e.target.value)} disabled={isReadOnly} className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] focus:border-[#0A356A] outline-none disabled:bg-gray-50" />
                   </div>
                   
-                  <div className="col-span-7">
+                  <div className="md:col-span-7">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Hasil Evaluasi Kelayakan *</label>
                     <div className="flex gap-2.5">
                       <label className={`flex-1 relative border rounded-md p-1.5 cursor-pointer flex items-center justify-center gap-2 transition-all ${

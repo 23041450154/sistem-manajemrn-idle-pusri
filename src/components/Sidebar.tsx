@@ -16,11 +16,14 @@ import {
   Users,
   Settings,
   Plus,
-  Trash2
+  Trash2,
+  X
 } from "lucide-react";
+import { useSidebar } from "./SidebarProvider";
 
 export function Sidebar({ role }: { role?: string }) {
   const pathname = usePathname();
+  const { isOpen, closeSidebar } = useSidebar();
 
   // --- MENU ITEMS UNTUK MASING-MASING ROLE ---
   // Setiap role punya konten sidebar sendiri yang menunjuk ke folder rutenya.
@@ -96,19 +99,41 @@ export function Sidebar({ role }: { role?: string }) {
   }
 
   return (
-    <aside className="w-64 bg-[#0A356A] text-white flex flex-col h-screen shrink-0 sticky top-0 overflow-y-auto">
-      <div className="p-6 flex items-center gap-3">
-        <Image
-          src="/images (2) 1.png"
-          alt="Logo PUSRI"
-          width={52}
-          height={52}
-          style={{ objectFit: 'contain' }}
+    <>
+      {/* Mobile overlay */}
+      {isOpen && (
+        <div 
+          className="fixed inset-0 bg-black/50 z-40 md:hidden"
+          onClick={closeSidebar}
         />
-        <div>
-          <p className="text-base text-white-300 mt-1 font-semibold">Asset Management</p>
+      )}
+
+      {/* Sidebar */}
+      <aside 
+        className={`fixed md:sticky top-0 left-0 z-50 w-64 bg-[#0A356A] text-white flex flex-col h-screen shrink-0 overflow-y-auto transition-transform duration-300 ease-in-out ${
+          isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
+        }`}
+      >
+        <div className="p-6 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <Image
+              src="/images (2) 1.png"
+              alt="Logo PUSRI"
+              width={52}
+              height={52}
+              style={{ objectFit: 'contain' }}
+            />
+            <div>
+              <p className="text-base text-white-300 mt-1 font-semibold">Asset Management</p>
+            </div>
+          </div>
+          <button 
+            className="md:hidden text-blue-200 hover:text-white focus:outline-none"
+            onClick={closeSidebar}
+          >
+            <X className="w-6 h-6" />
+          </button>
         </div>
-      </div>
 
       <div className="flex-1 px-4 py-2 space-y-8">
         <div>
@@ -171,6 +196,7 @@ export function Sidebar({ role }: { role?: string }) {
           </Link>
         </div>
       )}
-    </aside>
+      </aside>
+    </>
   );
 }

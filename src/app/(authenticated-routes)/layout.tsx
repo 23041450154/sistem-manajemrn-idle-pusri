@@ -1,6 +1,7 @@
 import { getCurrentUserAction } from "@/action/auth";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
+import { SidebarProvider } from "@/components/SidebarProvider";
 import styles from "./dashboard.module.css";
 import { redirect } from "next/navigation";
 import React from "react";
@@ -20,12 +21,14 @@ export default async function AuthenticatedLayout({
   const role = user.role;
 
   return (
-    <div className={styles.layout}>
-      <Sidebar role={role} />
-      <div className={styles.mainContent}>
-        <Header user={user} />
-        <main className={styles.mainArea}>{children}</main>
+    <SidebarProvider>
+      <div className={styles.layout}>
+        <Sidebar role={role} />
+        <div className={styles.mainContent}>
+          <Header user={user} />
+          <main className={styles.mainArea}>{children}</main>
+        </div>
       </div>
-    </div>
+    </SidebarProvider>
   );
 }
