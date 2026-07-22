@@ -222,15 +222,19 @@ export async function deleteEquipment(id: string) {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value
 
+  const baseUrl = API_URL.endsWith('/') ? API_URL.slice(0, -1) : API_URL;
+  const targetUrl = `${baseUrl}/api/equipment/${String(id)}`;
+  console.log("Attempting to delete equipment:", targetUrl);
+  
   try {
-    const res = await fetch(`${API_URL}/api/equipment/${id}`, {
+    const res = await fetch(targetUrl, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     })
     
     if (!res.ok) {
       const errorData = await res.json().catch(() => null);
-      return { success: false, message: errorData?.message || `HTTP Error ${res.status}` }
+      return { success: false, message: errorData?.message || `HTTP Error ${res.status} at ${targetUrl}` }
     }
     return { success: true }
   } catch (error: any) {

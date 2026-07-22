@@ -51,7 +51,15 @@ export default function EquipmentManagementPage() {
     if (!selectedItem) return;
 
     setIsSubmitting(true);
-    const res = await deleteEquipment(selectedItem.id);
+    const targetId = selectedItem.id || selectedItem.ID || selectedItem.equipment_id || selectedItem.equipmentCode;
+    
+    if (!targetId) {
+      setNotification({ type: "error", message: "Gagal menghapus: ID aset tidak dikenali." });
+      setIsSubmitting(false);
+      return;
+    }
+
+    const res = await deleteEquipment(targetId);
     setIsSubmitting(false);
 
     if (res.success) {
@@ -129,8 +137,8 @@ export default function EquipmentManagementPage() {
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-gray-100">
-                {filteredEquipments.map((item) => (
-                  <tr key={item.id} className="hover:bg-blue-50/30 transition-colors">
+                {filteredEquipments.map((item, index) => (
+                  <tr key={item.id || item.ID || item.equipment_id || index} className="hover:bg-blue-50/30 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap text-[13px] font-bold text-[#0A356A]">{item.equipment_code}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-[13px] font-medium text-gray-900">{item.name}</td>
                     <td className="px-6 py-4 whitespace-nowrap text-[13px] font-medium text-gray-600">{item.plant}</td>
