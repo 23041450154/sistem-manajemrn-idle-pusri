@@ -44,7 +44,7 @@ export default function ManajemenInspeksi() {
           plant: item.plant,
           jenisAlat: item.object_type?.name || "Belum Ditentukan",
           tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
-          statusAset: item.status?.name || "REGISTERED",
+          statusAset: (item.status?.name || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "IDLE" : item.status_id === 4 ? "REJECTED" : "REGISTERED")).toUpperCase(),
           statusPersetujuan: "NONE", // Default, will override below
           spesifikasi: item.notes || "Belum ada spesifikasi",
           lampiran: []
