@@ -23,15 +23,7 @@ interface Equipment {
   statusPersetujuan: ApprovalState;
 }
 
-const MOCK_EQUIPMENTS: Equipment[] = [
-  { id: "1", kodeAlat: "VLV-202-UR3", namaAlat: "Control Valve V-202 Urea", plant: "Urea III", jenisAlat: "Valve", tanggalRegistrasi: "2023-10-24", statusAset: "VALIDATED", statusPersetujuan: "PENDING" },
-  { id: "2", kodeAlat: "HE-205", namaAlat: "Heat Exchanger HE-205", plant: "P-3", jenisAlat: "Static Equipment", tanggalRegistrasi: "2023-11-15", statusAset: "VALIDATED", statusPersetujuan: "IN_REVIEW" },
-  { id: "3", kodeAlat: "V-409", namaAlat: "Pressure Vessel V-409", plant: "P-2", jenisAlat: "Static Equipment", tanggalRegistrasi: "2023-11-02", statusAset: "IDLE", statusPersetujuan: "APPROVED" },
-  { id: "4", kodeAlat: "T-552", namaAlat: "Steam Turbine T-552", plant: "P-4", jenisAlat: "Rotating Equipment", tanggalRegistrasi: "2023-11-18", statusAset: "IDLE", statusPersetujuan: "APPROVED" },
-  { id: "5", kodeAlat: "K-901", namaAlat: "Gas Compressor K-901", plant: "P-1", jenisAlat: "Rotating Equipment", tanggalRegistrasi: "2023-11-20", statusAset: "REGISTERED", statusPersetujuan: "PENDING" },
-  { id: "6", kodeAlat: "P-101A", namaAlat: "Feed Water Pump P-101A", plant: "P-2", jenisAlat: "Rotating Equipment", tanggalRegistrasi: "2023-11-21", statusAset: "VALIDATED", statusPersetujuan: "IN_REVIEW" },
-  { id: "7", kodeAlat: "P-302B", namaAlat: "Reflux Pump P-302B", plant: "P-3", jenisAlat: "Rotating Equipment", tanggalRegistrasi: "2023-11-25", statusAset: "DALAM_PERBAIKAN", statusPersetujuan: "APPROVED" },
-];
+
 
 export default function RendalIdlePage() {
   const [equipments, setEquipments] = useState<Equipment[]>([]);
@@ -47,8 +39,9 @@ export default function RendalIdlePage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<{key: keyof Equipment, direction: 'asc' | 'desc'} | null>(null);
 
-  // States untuk Modal Perbaikan
+  // States untuk Modal Perbaikan & Detail
   const [repairModal, setRepairModal] = useState<Equipment | null>(null);
+  const [detailModal, setDetailModal] = useState<Equipment | null>(null);
   const [isSubmittingRepair, setIsSubmittingRepair] = useState(false);
   
   const ITEMS_PER_PAGE = 15;
@@ -68,6 +61,7 @@ export default function RendalIdlePage() {
     setError(null);
     try {
       const data = await getEquipments();
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mappedData = data.map((item: any) => ({
         id: item.id.toString(),
         kodeAlat: item.equipment_code,
@@ -78,8 +72,8 @@ export default function RendalIdlePage() {
         statusAset: item.status?.name || "REGISTERED",
         statusPersetujuan: "PENDING", // TODO: match with approvals later if needed
       }));
-      setEquipments(mappedData);
-    } catch (err: any) {
+      setEquipments(mappedData as Equipment[]);
+    } catch (err: unknown) {
       console.error(err);
       setError("Gagal terhubung ke database. Menampilkan data kosong atau periksa kembali koneksi backend Anda.");
       setEquipments([]);
@@ -89,12 +83,14 @@ export default function RendalIdlePage() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEquipments();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Filter & Sort Logic
   const filteredData = useMemo(() => {
-    let result = equipments.filter(item => {
+    const result = equipments.filter(item => {
       const matchSearch = item.kodeAlat?.toLowerCase().includes(search.toLowerCase()) || 
                           item.namaAlat?.toLowerCase().includes(search.toLowerCase());
       const matchPlant = plantFilter === "Semua" || item.plant === plantFilter;
@@ -354,7 +350,11 @@ export default function RendalIdlePage() {
                         </button>
                       )}
                       {item.statusAset !== "DALAM_PERBAIKAN" && (
-                        <button className="inline-flex items-center justify-center gap-1.5 bg-gray-50 text-gray-600 hover:bg-[#0A356A] hover:text-white border border-gray-200 px-2 py-1 rounded text-[10px] font-bold transition-all shadow-sm ml-auto" title="Lihat Detail">
+                        <button 
+                          onClick={() => setDetailModal(item)}
+                          className="inline-flex items-center justify-center gap-1.5 bg-gray-50 text-gray-600 hover:bg-[#0A356A] hover:text-white border border-gray-200 px-2 py-1 rounded text-[10px] font-bold transition-all shadow-sm ml-auto" 
+                          title="Lihat Detail"
+                        >
                           <Eye className="w-3 h-3" />
                           <span>Detail</span>
                         </button>
@@ -453,6 +453,67 @@ export default function RendalIdlePage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Detail Informasi Aset */}
+      {detailModal && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+            <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
+              <div className="flex items-center gap-2.5">
+                <Eye className="w-5 h-5 text-[#0A356A]" />
+                <div>
+                  <h2 className="text-base font-bold text-gray-900 leading-tight">Detail Aset Idle</h2>
+                  <p className="text-xs text-gray-500 font-medium mt-0.5">{detailModal.kodeAlat}</p>
+                </div>
+              </div>
+              <button onClick={() => setDetailModal(null)} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            
+            <div className="p-5 overflow-y-auto flex-1 flex flex-col gap-5">
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nama Alat</p>
+                  <p className="text-sm font-bold text-gray-900">{detailModal.namaAlat}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Kode Alat</p>
+                  <p className="text-sm font-bold text-gray-900">{detailModal.kodeAlat}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Plant</p>
+                  <p className="text-sm font-medium text-gray-800">{detailModal.plant}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Jenis Alat</p>
+                  <p className="text-sm font-medium text-gray-800">{detailModal.jenisAlat}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Tanggal Registrasi</p>
+                  <p className="text-sm font-medium text-gray-800">{detailModal.tanggalRegistrasi}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Status Aset</p>
+                  <div className="mt-1">{getStatusBadge(detailModal.statusAset)}</div>
+                </div>
+              </div>
+
+              {detailModal.statusAset === "REGISTERED" && (
+                <div className="mt-2 bg-blue-50/50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800 leading-relaxed shadow-sm">
+                  <strong>Catatan:</strong> Aset ini masih berstatus <em>REGISTERED</em>. Ia sedang menunggu tim <strong>Inspeksi Teknik</strong> untuk melakukan validasi teknis. Setelah divalidasi (layak pakai), aset akan diteruskan ke Manajer untuk persetujuan akhir (menjadi <em>IDLE</em>).
+                </div>
+              )}
+            </div>
+
+            <div className="p-4 border-t border-gray-100 flex items-center justify-end bg-gray-50">
+              <button onClick={() => setDetailModal(null)} className="px-5 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 text-sm font-bold hover:bg-gray-100 transition-colors shadow-sm">
+                Tutup
+              </button>
+            </div>
           </div>
         </div>
       )}

@@ -1,8 +1,8 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Eye, X, Shield, FileText, CheckCircle2, RefreshCw } from "lucide-react";
-import { getApprovals } from "@/action/api";
+import { Eye, X, Shield, FileText, CheckCircle2, RefreshCw, XCircle } from "lucide-react";
+import { getApprovals, reviewApproval, getEquipments } from "@/action/api";
 
 interface RequestAsset {
   id: string;
@@ -32,22 +32,38 @@ export default function ManajerApprovePage() {
   const [isRevisiOpen, setIsRevisiOpen] = useState(false);
   const [revisiCatatan, setRevisiCatatan] = useState("");
   const [revisiError, setRevisiError] = useState(false);
+  const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const data = await getApprovals();
-        const mappedData = data.map((item: any) => ({
-          id: item.id.toString(),
-          nomorRequest: item.request_number,
-          kodeAset: item.equipment?.equipment_code || "-",
-          namaAset: item.equipment?.name || "-",
-          plant: item.equipment?.plant || "-",
-          tanggalPengajuan: item.request_date ? new Date(item.request_date).toISOString().split('T')[0] : "-",
-          statusAset: item.equipment?.status?.name || "REGISTERED",
-          statusPersetujuan: item.approval_status === "PENDING" ? "Menunggu Review" : (item.approval_status === "IN_REVIEW" ? "Sedang Direview" : (item.approval_status === "APPROVED" ? "Disetujui" : (item.approval_status === "REVISION_REQUIRED" ? "Perlu Revisi" : item.approval_status)))
-        }));
+        const [approvalsData, equipmentsData] = await Promise.all([
+          getApprovals(),
+          getEquipments()
+        ]);
+        
+        // Buat kamus (map) equipment berdasarkan ID untuk pencarian cepat
+        const equipmentMap = new Map();
+        if (Array.isArray(equipmentsData)) {
+          equipmentsData.forEach((eq: any) => {
+            equipmentMap.set(eq.id, eq);
+          });
+        }
+
+        const mappedData = approvalsData.map((item: any) => {
+          const eq = equipmentMap.get(item.equipment_id);
+          return {
+            id: item.id.toString(),
+            nomorRequest: item.request_number,
+            kodeAset: item.equipment_code || (eq?.equipment_code || "-"),
+            namaAset: item.equipment_name || (eq?.name || "-"),
+            plant: item.plant || (eq?.plant || "-"),
+            tanggalPengajuan: item.request_date ? new Date(item.request_date).toISOString().split('T')[0] : "-",
+            statusAset: item.equipment_status || (eq?.status?.name || "REGISTERED"),
+            statusPersetujuan: item.approval_status === "PENDING" ? "Menunggu Review" : (item.approval_status === "IN_REVIEW" ? "Sedang Direview" : (item.approval_status === "APPROVED" ? "Disetujui" : (item.approval_status === "REVISION_REQUIRED" ? "Perlu Revisi" : item.approval_status)))
+          };
+        });
 
         const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
         const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
@@ -84,46 +100,50 @@ export default function ManajerApprovePage() {
     setTimeout(() => setSelectedAsset(null), 300);
   };
 
-  const handleApprove = () => {
+  const handleApprove = async () => {
     if (selectedAsset) {
-      const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
-      if (!approved.includes(selectedAsset.kodeAset)) {
-        approved.push(selectedAsset.kodeAset);
-        localStorage.setItem('approvedAssets', JSON.stringify(approved));
+      const res = await reviewApproval(selectedAsset.id, "APPROVE", "Disetujui oleh manajer");
+      
+      if (res.success) {
+        setNotification({ type: "success", message: "Berhasil menyetujui aset!" });
+        setRequests(requests.map(req => 
+          req.kodeAset === selectedAsset.kodeAset 
+            ? { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" }
+            : req
+        ));
+        setIsConfirmOpen(false);
+        closeModal();
+        setTimeout(() => setNotification(null), 3000);
+      } else {
+        setNotification({ type: "error", message: "Gagal menyetujui aset: " + (res.message || "Silakan coba lagi.") });
+        setTimeout(() => setNotification(null), 3000);
       }
-      
-      setRequests(requests.map(req => 
-        req.kodeAset === selectedAsset.kodeAset 
-          ? { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" }
-          : req
-      ));
-      
-      setIsConfirmOpen(false);
-      closeModal();
     }
   };
 
-  const handleKirimRevisi = () => {
+  const handleKirimRevisi = async () => {
     if (!revisiCatatan.trim()) {
       setRevisiError(true);
       return;
     }
     
     if (selectedAsset) {
-      const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
-      if (!revised.includes(selectedAsset.kodeAset)) {
-        revised.push(selectedAsset.kodeAset);
-        localStorage.setItem('revisedAssets', JSON.stringify(revised));
+      const res = await reviewApproval(selectedAsset.id, "REVISION", revisiCatatan);
+      
+      if (res.success) {
+        setNotification({ type: "success", message: "Berhasil mengirim permintaan revisi!" });
+        setRequests(requests.map(req => 
+          req.kodeAset === selectedAsset.kodeAset 
+            ? { ...req, statusPersetujuan: "Perlu Revisi" }
+            : req
+        ));
+        setIsRevisiOpen(false);
+        closeModal();
+        setTimeout(() => setNotification(null), 3000);
+      } else {
+        setNotification({ type: "error", message: "Gagal mengirim permintaan revisi: " + (res.message || "Silakan coba lagi.") });
+        setTimeout(() => setNotification(null), 3000);
       }
-      
-      setRequests(requests.map(req => 
-        req.kodeAset === selectedAsset.kodeAset 
-          ? { ...req, statusPersetujuan: "Perlu Revisi" }
-          : req
-      ));
-      
-      setIsRevisiOpen(false);
-      closeModal();
     }
   };
 
@@ -158,6 +178,14 @@ export default function ManajerApprovePage() {
   return (
     <div className="max-w-7xl mx-auto pt-6 pb-8 px-6">
       
+      {/* Toast */}
+      {notification && (
+        <div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          {notification.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
+          <span className="text-[13px] font-medium">{notification.message}</span>
+        </div>
+      )}
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl font-bold text-gray-900 tracking-tight">Pusat Data Aset</h1>
@@ -432,28 +460,39 @@ export default function ManajerApprovePage() {
 
             </div>
 
-            {/* Modal Footer */}
-            <div className="flex items-center justify-center gap-3 px-6 py-4 border-t border-gray-200 bg-white shrink-0">
-              <button onClick={closeModal} className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md text-[13px] font-semibold hover:bg-gray-50 transition-colors">
-                Batal
-              </button>
-              <button 
-                onClick={() => {
-                  setRevisiCatatan("");
-                  setRevisiError(false);
-                  setIsRevisiOpen(true);
-                }}
-                className="px-6 py-2.5 bg-[#f60000] text-white rounded-md text-[13px] font-semibold hover:bg-[#990404] transition-colors"
-              >
-                Minta Revisi
-              </button>
-              <button 
-                onClick={() => setIsConfirmOpen(true)}
-                className="px-6 py-2.5 bg-[#166534] text-white rounded-md text-[13px] font-semibold hover:bg-[#14532d] transition-colors"
-              >
-                Setujui (Approve)
-              </button>
-            </div>
+            {/* Modal Footer (Sembunyikan jika sudah Disetujui / Revisi) */}
+            {selectedAsset.statusPersetujuan !== "Disetujui" && selectedAsset.statusPersetujuan !== "Perlu Revisi" && (
+              <div className="flex items-center justify-center gap-3 px-6 py-4 border-t border-gray-200 bg-white shrink-0">
+                <button onClick={closeModal} className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md text-[13px] font-semibold hover:bg-gray-50 transition-colors">
+                  Batal
+                </button>
+                <button 
+                  onClick={() => {
+                    setRevisiCatatan("");
+                    setRevisiError(false);
+                    setIsRevisiOpen(true);
+                  }}
+                  className="px-6 py-2.5 bg-[#f60000] text-white rounded-md text-[13px] font-semibold hover:bg-[#990404] transition-colors"
+                >
+                  Minta Revisi
+                </button>
+                <button 
+                  onClick={() => setIsConfirmOpen(true)}
+                  className="px-6 py-2.5 bg-[#166534] text-white rounded-md text-[13px] font-semibold hover:bg-[#14532d] transition-colors"
+                >
+                  Setujui (Approve)
+                </button>
+              </div>
+            )}
+            
+            {/* Tampilkan pesan jika sudah diproses */}
+            {(selectedAsset.statusPersetujuan === "Disetujui" || selectedAsset.statusPersetujuan === "Perlu Revisi") && (
+              <div className="flex items-center justify-center px-6 py-4 border-t border-gray-200 bg-gray-50 shrink-0">
+                <p className="text-[13px] text-gray-500 font-medium italic">
+                  Pengajuan ini sudah diproses ({selectedAsset.statusPersetujuan}) dan tidak dapat direview ulang.
+                </p>
+              </div>
+            )}
 
           </div>
         </div>

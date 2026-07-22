@@ -53,15 +53,20 @@ export async function validateEquipment(id: string, isUtilizable: boolean, notes
       },
       body: JSON.stringify({ is_utilizable: isUtilizable, notes }),
     })
-    if (!res.ok) return { success: false }
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return { success: false, message: errorData?.message || `HTTP Error ${res.status}` }
+    }
+    
     return { success: true }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Validate equipment error:", error)
-    return { success: false }
+    return { success: false, message: error.message }
   }
 }
 
-export async function reviewApproval(id: string, approvalStatus: string, approvalNotes: string) {
+export async function reviewApproval(id: string, action: string, notes: string) {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value
 
@@ -72,13 +77,18 @@ export async function reviewApproval(id: string, approvalStatus: string, approva
         "Content-Type": "application/json",
         Authorization: `Bearer ${token}` 
       },
-      body: JSON.stringify({ approval_status: approvalStatus, approval_notes: approvalNotes }),
+      body: JSON.stringify({ action, notes }),
     })
-    if (!res.ok) return { success: false }
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return { success: false, message: errorData?.message || `HTTP Error ${res.status}` }
+    }
+    
     return { success: true }
-  } catch (error) {
+  } catch (error: any) {
     console.error("Review approval error:", error)
-    return { success: false }
+    return { success: false, message: error.message }
   }
 }
 

@@ -5,8 +5,17 @@ import { ChartSection } from "@/components/ChartSection";
 import { UpcomingInspections } from "@/components/UpcomingInspections";
 import { RecentActivities } from "@/components/RecentActivities";
 import styles from "@/app/(authenticated-routes)/dashboard.module.css";
+import { getEquipments } from "@/action/api";
 
-export default function RendalDashboard() {
+export default async function RendalDashboard() {
+  const equipments = await getEquipments() || [];
+  
+  const totalPeralatan = equipments.length;
+  const idleCount = equipments.filter((e: any) => e.status?.name === 'IDLE').length;
+  const readyCount = equipments.filter((e: any) => e.status?.name === 'READY_TO_REUSE').length;
+  const repairCount = equipments.filter((e: any) => e.status?.name === 'DALAM_PERBAIKAN').length;
+  const inspectionCount = equipments.filter((e: any) => e.status?.name === 'REGISTERED').length;
+  
   return (
     <div className={styles.pageContainer}>
       {/* Header Overview */}
@@ -33,7 +42,7 @@ export default function RendalDashboard() {
       <div className={styles.statsGrid}>
         <StatCard
           title="Total Peralatan"
-          value="1,284"
+          value={totalPeralatan.toString()}
           icon={Server}
           trend="12%"
           iconBgColor="bg-blue-50"
@@ -41,35 +50,35 @@ export default function RendalDashboard() {
         />
         <StatCard
           title="Idle Equipment"
-          value="426"
+          value={idleCount.toString()}
           icon={PowerOff}
           iconBgColor="bg-blue-50"
           iconColor="text-blue-600"
         />
         <StatCard
           title="Siap Digunakan"
-          value="782"
+          value={readyCount.toString()}
           icon={CheckCircle}
           iconBgColor="bg-green-50"
           iconColor="text-green-500"
         />
         <StatCard
           title="Butuh Perbaikan"
-          value="54"
+          value={repairCount.toString()}
           icon={Wrench}
           iconBgColor="bg-red-50"
           iconColor="text-red-500"
         />
         <StatCard
           title="Menunggu Inspeksi"
-          value="12"
+          value={inspectionCount.toString()}
           icon={Clock}
           iconBgColor="bg-orange-50"
           iconColor="text-orange-500"
         />
         <StatCard
           title="Permintaan"
-          value="08"
+          value="0"
           icon={FileQuestion}
           iconBgColor="bg-blue-50"
           iconColor="text-[#0556B3]"

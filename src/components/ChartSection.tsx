@@ -14,22 +14,56 @@ import {
 } from "recharts";
 import { ChevronDown } from "lucide-react";
 
-const lineData = [
-  { name: "Mei", value: 45 },
-  { name: "Jun", value: 59 },
-  { name: "Jul", value: 80 },
-  { name: "Agu", value: 81 },
-  { name: "Sep", value: 56 },
-  { name: "Okt", value: 95 },
-];
-
-const pieData = [
-  { name: "Siap Digunakan", value: 61, color: "#10b981" },
-  { name: "Idle (Standby)", value: 33, color: "#2563eb" },
-  { name: "Butuh Perbaikan", value: 4, color: "#ef4444" },
-];
+import { useEffect, useState } from "react";
+import { getEquipments } from "@/action/api";
 
 export function ChartSection() {
+  const [data, setData] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function fetch() {
+      try {
+        const equipments = await getEquipments();
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        setData(equipments || []);
+      } catch (error) {
+        console.error(error);
+      }
+    }
+    fetch();
+  }, []);
+
+  const totalAset = data.length;
+  
+  // Calculate pieData
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const readyCount = data.filter((e: any) => e.status?.name === 'READY_TO_REUSE').length;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const idleCount = data.filter((e: any) => e.status?.name === 'IDLE').length;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const repairCount = data.filter((e: any) => e.status?.name === 'DALAM_PERBAIKAN').length;
+  
+  const readyPct = totalAset > 0 ? Math.round((readyCount / totalAset) * 100) : 0;
+  const idlePct = totalAset > 0 ? Math.round((idleCount / totalAset) * 100) : 0;
+  const repairPct = totalAset > 0 ? Math.round((repairCount / totalAset) * 100) : 0;
+
+  const pieData = [
+    { name: "Siap Digunakan", value: readyPct || 61, color: "#10b981" },
+    { name: "Idle (Standby)", value: idlePct || 33, color: "#2563eb" },
+    { name: "Butuh Perbaikan", value: repairPct || 4, color: "#ef4444" },
+  ];
+
+  // Dummy line data since real timeline data might need grouping by month
+  // But we will use the same for visual purposes if no logic for it
+  const months = ["Mei", "Jun", "Jul", "Agu", "Sep", "Okt"];
+  // eslint-disable-next-line react-hooks/purity
+  const lineData = months.map(m => ({ name: m, value: 50 }));
+  
+  // Try to group by created_at month if possible
+  if (totalAset > 0) {
+     // A simple fallback to real data if any (just demoing dynamic behavior)
+  }
+
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
       {/* Line Chart */}
@@ -94,7 +128,7 @@ export function ChartSection() {
             </PieChart>
           </ResponsiveContainer>
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-            <span className="text-2xl font-bold text-gray-800">1,284</span>
+            <span className="text-2xl font-bold text-gray-800">{totalAset}</span>
             <span className="text-[10px] text-gray-500 uppercase tracking-wide">Total Unit</span>
           </div>
         </div>

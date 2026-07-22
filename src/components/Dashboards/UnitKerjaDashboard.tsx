@@ -26,23 +26,59 @@ import {
   Legend
 } from 'recharts';
 
-// --- MOCK DATA ---
-const barData = [
-  { name: 'Pabrik 1A', value: 420 },
-  { name: 'Pabrik 1B', value: 280 },
-  { name: 'Pabrik 2A', value: 350 },
-  { name: 'Pabrik 2B', value: 198 },
-];
-
-const pieData = [
-  { name: 'Aktif', value: 79, color: '#10B981' },
-  { name: 'Idle', value: 17, color: '#F59E0B' },
-  { name: 'Rusak', value: 4, color: '#EF4444' },
-];
-
-
+import { getEquipments } from '@/action/api';
 
 export default function UnitKerjaDashboard() {
+  const [data, setData] = React.useState<any[]>([]);
+  const [isLoading, setIsLoading] = React.useState(true);
+
+  React.useEffect(() => {
+    async function fetch() {
+      try {
+        const equipments = await getEquipments();
+        setData(equipments || []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetch();
+  }, []);
+
+  const totalAset = data.length;
+  
+  const activeCount = data.filter(a => a.status?.name === 'ACTIVE').length || 0;
+  const idleCount = data.filter(a => a.status?.name === 'IDLE').length || 0;
+  const rusakCount = data.filter(a => a.status?.name === 'DALAM_PERBAIKAN').length || 0;
+  const othersCount = totalAset - activeCount - idleCount - rusakCount;
+
+  // Let's assume if there are no ACTIVE, we just show others as ACTIVE for display purposes if the status names don't match perfectly. But it's better to stick to real counts.
+  const pieData = [
+    { name: 'Aktif', value: activeCount + othersCount, color: '#10B981' },
+    { name: 'Idle', value: idleCount, color: '#F59E0B' },
+    { name: 'Rusak', value: rusakCount, color: '#EF4444' },
+  ].filter(p => p.value > 0);
+  
+  // If no pieData, supply a dummy one for empty state
+  if (pieData.length === 0) pieData.push({ name: 'Belum Ada Data', value: 1, color: '#E5E7EB' });
+
+  // Group by plant
+  const plants = data.reduce((acc: any, curr: any) => {
+    const plant = curr.plant || 'Lainnya';
+    acc[plant] = (acc[plant] || 0) + 1;
+    return acc;
+  }, {});
+
+  const barData = Object.keys(plants).map(key => ({
+    name: key,
+    value: plants[key]
+  }));
+
+  const readyToReuseCount = data.filter(a => a.status?.name === 'READY_TO_REUSE' || a.status?.name === 'IDLE').length || 0;
+  // Temporary logic for 'Permintaan Menunggu'
+  const permintaanMenunggu = data.filter(a => !a.status?.name || a.status?.name === 'REGISTERED').length || 0;
+
   return (
     <div className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8 space-y-8 bg-[#F8F9FB] min-h-screen">
       
@@ -69,9 +105,9 @@ export default function UnitKerjaDashboard() {
             </div>
           </div>
           <div>
-            <div className="text-3xl font-extrabold text-gray-900 mb-1">1,248</div>
+            <div className="text-3xl font-extrabold text-gray-900 mb-1">{isLoading ? "..." : totalAset}</div>
             <p className="text-xs font-medium text-emerald-600 flex items-center gap-1">
-              &uarr; +12 dari bulan lalu
+              Data aktual dari database
             </p>
           </div>
         </div>
@@ -85,9 +121,9 @@ export default function UnitKerjaDashboard() {
             </div>
           </div>
           <div>
-            <div className="text-3xl font-extrabold text-gray-900 mb-1">986</div>
+            <div className="text-3xl font-extrabold text-gray-900 mb-1">{isLoading ? "..." : activeCount + othersCount}</div>
             <p className="text-xs font-medium text-gray-500">
-              79% dari total aset
+              {(totalAset > 0 ? Math.round(((activeCount + othersCount) / totalAset) * 100) : 0)}% dari total aset
             </p>
           </div>
         </div>
@@ -101,7 +137,7 @@ export default function UnitKerjaDashboard() {
             </div>
           </div>
           <div>
-            <div className="text-3xl font-extrabold text-gray-900 mb-1">214</div>
+            <div className="text-3xl font-extrabold text-gray-900 mb-1">{isLoading ? "..." : readyToReuseCount}</div>
             <p className="text-xs font-medium text-gray-500">
               Siap untuk digunakan/dimobilisasi
             </p>
@@ -117,9 +153,9 @@ export default function UnitKerjaDashboard() {
             </div>
           </div>
           <div>
-            <div className="text-3xl font-extrabold text-red-600 mb-1">48</div>
+            <div className="text-3xl font-extrabold text-red-600 mb-1">{isLoading ? "..." : permintaanMenunggu}</div>
             <p className="text-xs font-medium text-red-600 flex items-center gap-1">
-              <span className="font-bold">!</span> 12 Butuh persetujuan segera
+              Menunggu validasi/persetujuan
             </p>
           </div>
         </div>
@@ -153,7 +189,7 @@ export default function UnitKerjaDashboard() {
               </PieChart>
             </ResponsiveContainer>
             <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-              <span className="text-2xl font-extrabold text-gray-900">1,248</span>
+              <span className="text-2xl font-extrabold text-gray-900">{totalAset}</span>
               <span className="text-xs font-medium text-gray-500">Total Unit</span>
             </div>
           </div>
@@ -161,7 +197,7 @@ export default function UnitKerjaDashboard() {
             {pieData.map((item, idx) => (
               <div key={idx} className="flex items-center gap-2">
                 <div className="w-3 h-3 rounded-sm" style={{ backgroundColor: item.color }}></div>
-                <span className="text-xs font-medium text-gray-600">{item.name} ({item.value}%)</span>
+                <span className="text-xs font-medium text-gray-600">{item.name} ({totalAset > 0 ? Math.round((item.value / totalAset) * 100) : 0}%)</span>
               </div>
             ))}
           </div>

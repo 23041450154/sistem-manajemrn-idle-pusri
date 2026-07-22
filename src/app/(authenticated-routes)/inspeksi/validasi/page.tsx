@@ -7,7 +7,7 @@ import {
   ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 
-import { getEquipments } from "@/action/api";
+import { getEquipments, validateEquipment } from "@/action/api";
 
 // Tipe Data
 type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE";
@@ -26,189 +26,7 @@ interface Asset {
   lampiran: string[];
 }
 
-// Mock Data
-const MOCK_ASSETS: Asset[] = [
-  {
-    id: "1",
-    kodeAlat: "VLV-202-UR3",
-    namaAlat: "Control Valve V-202 Urea",
-    plant: "Urea III",
-    jenisAlat: "Valve",
-    tanggalRegistrasi: "2023-10-24",
-    statusAset: "VALIDATED",
-    statusPersetujuan: "PENDING",
-    spesifikasi: "Kapasitas 500m3/h, Head 100m, Motor 55kW",
-    lampiran: ["spec_sheet_C102.pdf", "foto_kondisi.jpg"]
-  },
-  {
-    id: "2",
-    kodeAlat: "HE-205",
-    namaAlat: "Heat Exchanger HE-205",
-    plant: "P-3",
-    jenisAlat: "Static Equipment",
-    tanggalRegistrasi: "2023-11-15",
-    statusAset: "VALIDATED",
-    statusPersetujuan: "IN_REVIEW",
-    spesifikasi: "Area 150m2, Shell & Tube, Material SS304",
-    lampiran: ["inspection_HE205.pdf"]
-  },
-  {
-    id: "3",
-    kodeAlat: "V-409",
-    namaAlat: "Pressure Vessel V-409",
-    plant: "P-2",
-    jenisAlat: "Static Equipment",
-    tanggalRegistrasi: "2023-11-02",
-    statusAset: "VALIDATED",
-    statusPersetujuan: "NEED_REVISION",
-    spesifikasi: "Volume 10m3, Design Pressure 15 barg",
-    lampiran: []
-  },
-  {
-    id: "4",
-    kodeAlat: "T-552",
-    namaAlat: "Steam Turbine T-552",
-    plant: "P-4",
-    jenisAlat: "Rotating Equipment",
-    tanggalRegistrasi: "2023-11-18",
-    statusAset: "IDLE",
-    statusPersetujuan: "APPROVED",
-    spesifikasi: "Power 1.5MW, Inlet Pressure 40 barg",
-    lampiran: ["foto_turbine.jpg"]
-  },
-  {
-    id: "5",
-    kodeAlat: "K-901",
-    namaAlat: "Gas Compressor K-901",
-    plant: "P-1",
-    jenisAlat: "Rotating Equipment",
-    tanggalRegistrasi: "2023-11-20",
-    statusAset: "REGISTERED",
-    statusPersetujuan: "PENDING",
-    spesifikasi: "Motor 120kW, Flow 800Nm3/h",
-    lampiran: []
-  },
-  {
-    id: "6",
-    kodeAlat: "P-101A",
-    namaAlat: "Feed Water Pump P-101A",
-    plant: "P-2",
-    jenisAlat: "Rotating Equipment",
-    tanggalRegistrasi: "2023-11-21",
-    statusAset: "VALIDATED",
-    statusPersetujuan: "IN_REVIEW",
-    spesifikasi: "Kapasitas 200m3/h, Head 50m",
-    lampiran: ["log_maintenance.pdf"]
-  },
-  {
-    id: "7",
-    kodeAlat: "TK-501",
-    namaAlat: "Storage Tank TK-501",
-    plant: "P-3",
-    jenisAlat: "Static Equipment",
-    tanggalRegistrasi: "2023-11-22",
-    statusAset: "REGISTERED",
-    statusPersetujuan: "PENDING",
-    spesifikasi: "Volume 500m3, Material Carbon Steel",
-    lampiran: ["thickness_report.pdf"]
-  },
-  {
-    id: "8",
-    kodeAlat: "E-302",
-    namaAlat: "Condenser E-302",
-    plant: "P-4",
-    jenisAlat: "Static Equipment",
-    tanggalRegistrasi: "2023-11-23",
-    statusAset: "IDLE",
-    statusPersetujuan: "APPROVED",
-    spesifikasi: "Area 80m2, Material Titanium",
-    lampiran: []
-  },
-  {
-    id: "9",
-    kodeAlat: "F-201",
-    namaAlat: "Furnace F-201",
-    plant: "P-1",
-    jenisAlat: "Static Equipment",
-    tanggalRegistrasi: "2023-11-24",
-    statusAset: "IDLE",
-    statusPersetujuan: "APPROVED",
-    spesifikasi: "Kapasitas 50 MMBTU/hr",
-    lampiran: ["burner_inspection.pdf"]
-  },
-  {
-    id: "10",
-    kodeAlat: "B-101",
-    namaAlat: "Package Boiler B-101",
-    plant: "P-2",
-    jenisAlat: "Static Equipment",
-    tanggalRegistrasi: "2023-11-25",
-    statusAset: "REGISTERED",
-    statusPersetujuan: "PENDING",
-    spesifikasi: "Steam 20 Ton/hr, 15 barg",
-    lampiran: []
-  },
-  {
-    id: "11",
-    kodeAlat: "C-103",
-    namaAlat: "Cooling Water Pump C-103",
-    plant: "P-3",
-    jenisAlat: "Rotating Equipment",
-    tanggalRegistrasi: "2023-11-26",
-    statusAset: "VALIDATED",
-    statusPersetujuan: "NEED_REVISION",
-    spesifikasi: "Kapasitas 1000m3/h",
-    lampiran: ["vibration_report.pdf"]
-  },
-  {
-    id: "12",
-    kodeAlat: "AG-401",
-    namaAlat: "Agitator AG-401",
-    plant: "P-4",
-    jenisAlat: "Rotating Equipment",
-    tanggalRegistrasi: "2023-11-27",
-    statusAset: "IDLE",
-    statusPersetujuan: "APPROVED",
-    spesifikasi: "Motor 15kW, 60 RPM",
-    lampiran: []
-  },
-  {
-    id: "13",
-    kodeAlat: "FL-205",
-    namaAlat: "Flare Stack FL-205",
-    plant: "P-1",
-    jenisAlat: "Static Equipment",
-    tanggalRegistrasi: "2023-11-28",
-    statusAset: "REGISTERED",
-    statusPersetujuan: "PENDING",
-    spesifikasi: "Tinggi 50m, Diameter 24 inch",
-    lampiran: ["visual_check.jpg"]
-  },
-  {
-    id: "14",
-    kodeAlat: "RD-301",
-    namaAlat: "Rupture Disk RD-301",
-    plant: "P-2",
-    jenisAlat: "Instrument",
-    tanggalRegistrasi: "2023-11-29",
-    statusAset: "VALIDATED",
-    statusPersetujuan: "IN_REVIEW",
-    spesifikasi: "Set pressure 10 barg",
-    lampiran: []
-  },
-  {
-    id: "15",
-    kodeAlat: "CV-105",
-    namaAlat: "Control Valve CV-105",
-    plant: "P-3",
-    jenisAlat: "Instrument",
-    tanggalRegistrasi: "2023-11-30",
-    statusAset: "REGISTERED",
-    statusPersetujuan: "PENDING",
-    spesifikasi: "Size 4 inch, ANSI 300",
-    lampiran: ["calibration_cert.pdf"]
-  }
-];
+
 
 export default function ManajemenInspeksi() {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -313,25 +131,35 @@ export default function ManajemenInspeksi() {
   };
 
   // Simpan Validasi
-  const handleSave = () => {
+  const handleSave = async () => {
     setIsSubmitting(true);
-    setTimeout(() => {
-      setIsSubmitting(false);
-      setNotification({ type: "success", message: "Data inspeksi berhasil disubmit ke sistem." });
-      
-      if (selectedAsset) {
+    if (!selectedAsset) return;
+
+    try {
+      const isUtilizable = hasilPemeriksaan === "Layak";
+      const notes = catatan || rekomendasi;
+      const res = await validateEquipment(selectedAsset.id, isUtilizable, notes);
+
+      if (res.success) {
+        setNotification({ type: "success", message: "Data inspeksi berhasil disubmit ke sistem." });
+        
         const fileNames = uploadedFiles.map(f => f.name);
         setAssets(assets.map(a => a.id === selectedAsset.id ? {
           ...a, 
-          statusAset: hasilPemeriksaan === "Layak" ? "VALIDATED" : "REJECTED",
+          statusAset: isUtilizable ? "VALIDATED" : "REJECTED",
           statusPersetujuan: "IN_REVIEW",
           lampiran: [...a.lampiran, ...fileNames]
         } : a));
+      } else {
+        setNotification({ type: "error", message: `Gagal memvalidasi: ${res.message || "Kesalahan sistem"}` });
       }
-      
+    } catch (err: any) {
+      setNotification({ type: "error", message: `Terjadi kesalahan: ${err.message}` });
+    } finally {
+      setIsSubmitting(false);
       closeModal();
       setTimeout(() => setNotification(null), 3000);
-    }, 1200);
+    }
   };
 
   // Hitung durasi
