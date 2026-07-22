@@ -128,6 +128,24 @@ export async function getObjectTypes() {
   }
 }
 
+export async function getStorageLocations() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/storage-locations`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    })
+    if (!res.ok) return []
+    const json = await res.json()
+    return json.data || []
+  } catch (error) {
+    console.error("Fetch storage locations error:", error)
+    return []
+  }
+}
+
 export async function createEquipment(payload: any) {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value

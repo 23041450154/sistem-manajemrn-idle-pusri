@@ -21,7 +21,10 @@ export default function FormInspeksiBerkalaPage() {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+    if (name === "equipmentCode" && value.length > 50) {
+      value = value.slice(0, 50);
+    }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
@@ -63,8 +66,11 @@ export default function FormInspeksiBerkalaPage() {
             </div>
             <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">KODE ASET / TAG <span className="text-red-500">*</span></label>
-                <input required type="text" name="equipmentCode" value={formData.equipmentCode} onChange={handleChange} placeholder="Contoh: P-102-MKN" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all" />
+                <div className="flex justify-between items-end">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">KODE ASET / TAG <span className="text-red-500">*</span></label>
+                  <span className="text-[9px] text-gray-400 font-medium">Maks 50 karakter</span>
+                </div>
+                <input required maxLength={50} type="text" name="equipmentCode" value={formData.equipmentCode} onChange={handleChange} placeholder="Contoh: P-102-MKN" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">TANGGAL INSPEKSI <span className="text-red-500">*</span></label>

@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2, ChevronLeft } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2, ChevronLeft, Paperclip } from "lucide-react";
 import Link from "next/link";
-import { getObjectTypes, createEquipment } from "@/action/api";
+import { createEquipment } from "@/action/api";
 import { useRouter } from "next/navigation";
 
 export default function RegisterEquipmentPage() {
@@ -11,22 +11,33 @@ export default function RegisterEquipmentPage() {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
-  // State untuk efek Loading
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isImporting, setIsImporting] = useState(false);
-  const [objectTypes, setObjectTypes] = useState<any[]>([]);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [isDragging, setIsDragging] = useState(false);
 
-  useEffect(() => {
-    async function loadObjectTypes() {
-      try {
-        const data = await getObjectTypes();
-        setObjectTypes(data);
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    loadObjectTypes();
-  }, []);
+  // State untuk efek Loading dan Validasi
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
+  const [touched, setTouched] = useState<Record<string, boolean>>({});
+  const [isImporting, setIsImporting] = useState(false);
+
+  // Hardcode Object Types (Statis sementara)
+  const objectTypes = [
+    { id: 1, name: "Rotary Equipment" },
+    { id: 2, name: "Static Equipment" },
+    { id: 3, name: "Electrical" },
+    { id: 4, name: "Instrument" },
+    { id: 5, name: "Peralatan Umum" },
+    { id: 6, name: "Valve" }
+  ];
+
+  // Hardcode Storage Locations (Statis sementara)
+  const storageLocations = [
+    { id: 1, name: "Gudang Utama P-IIB (Gudang B-12)" },
+    { id: 2, name: "Gudang Utama P-III" },
+    { id: 3, name: "Yard Terbuka P-IIB" },
+    { id: 4, name: "Workshop Mekanik" }
+  ];
 
   // UX Improvement: Semua nilai dropdown & radio di-set kosong ("") di awal
   const [formData, setFormData] = useState({
@@ -44,13 +55,72 @@ export default function RegisterEquipmentPage() {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
+    let { name, value } = e.target;
+    
+    if ((name === "equipmentCode" || name === "name") && value.length > 50) {
+      value = value.slice(0, 50);
+    }
+    
+    if (name === "originalValue") {
+      const rawValue = value.replace(/\D/g, "");
+      value = rawValue ? parseInt(rawValue, 10).toLocaleString('id-ID') : "";
+    }
+    
+    // Jika user mengisi form lain (misal nama), kita anggap equipmentCode otomatis "touched" agar tervalidasi
+    setTouched(prev => ({ 
+      ...prev, 
+      [name]: true,
+      ...(name !== "equipmentCode" && !formData.equipmentCode ? { equipmentCode: true } : {})
+    }));
+    
     setFormData(prev => ({ ...prev, [name]: value }));
+  };
+
+  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
+    setTouched(prev => ({ ...prev, [e.target.name]: true }));
+  };
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files);
+      setUploadedFiles(prev => [...prev, ...files]);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+  };
+
+  const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+    e.preventDefault();
+    setIsDragging(false);
+    if (e.dataTransfer.files) {
+      const files = Array.from(e.dataTransfer.files);
+      setUploadedFiles(prev => [...prev, ...files]);
+    }
+  };
+
+  const removeFile = (index: number) => {
+    setUploadedFiles(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Custom Validation Check
+    if (!formData.equipmentCode || !formData.name || !formData.objectTypeId || !formData.storageLocationId || !formData.plant || !formData.conditionId) {
+      setShowValidationErrors(true);
+      return;
+    }
+
     setIsSubmitting(true);
+    setShowValidationErrors(false);
 
     const payload = {
       book_value: 0, // as requested in swagger
@@ -61,7 +131,7 @@ export default function RegisterEquipmentPage() {
       id_storage_location: Number(formData.storageLocationId),
       name: formData.name,
       notes: formData.notes,
-      original_value: Number(formData.originalValue) || 0,
+      original_value: Number(formData.originalValue.replace(/\./g, "")) || 0,
       plant: formData.plant,
       plant_description: "",
       vendor: formData.vendor,
@@ -127,58 +197,59 @@ export default function RegisterEquipmentPage() {
 
               {/* Baris 1: Peralatan */}
               <div className="space-y-1.5 lg:col-span-1">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">KODE ASET / TAG <span className="text-red-500">*</span></label>
-                <input required maxLength={50} type="text" name="equipmentCode" value={formData.equipmentCode} onChange={handleChange} placeholder="P-102-MKN" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all" />
+                <div className="flex justify-between items-end">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">KODE ASET / TAG <span className="text-red-500">*</span></label>
+                  <span className="text-[9px] text-gray-400 font-medium">Maks 50 karakter</span>
+                </div>
+                <input onBlur={handleBlur} maxLength={50} type="text" name="equipmentCode" value={formData.equipmentCode} onChange={handleChange} placeholder="P-102-MKN" className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${(showValidationErrors || touched.equipmentCode) && !formData.equipmentCode ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`} />
+                {(showValidationErrors || touched.equipmentCode) && !formData.equipmentCode && <p className="text-[10px] text-red-500 mt-1 font-medium">* Kode Aset wajib diisi.</p>}
               </div>
               <div className="space-y-1.5 lg:col-span-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">NAMA PERALATAN <span className="text-red-500">*</span></label>
-                <input required maxLength={150} type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Contoh: Centrifugal Pump P-102" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all" />
+                <div className="flex justify-between items-end">
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">NAMA PERALATAN <span className="text-red-500">*</span></label>
+                  <span className="text-[9px] text-gray-400 font-medium">Maks 50 karakter</span>
+                </div>
+                <input onBlur={handleBlur} maxLength={50} type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Contoh: Centrifugal Pump P-102" className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${(showValidationErrors || touched.name) && !formData.name ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`} />
+                {(showValidationErrors || touched.name) && !formData.name && <p className="text-[10px] text-red-500 mt-1 font-medium">* Nama Peralatan wajib diisi.</p>}
               </div>
 
               {/* Baris 2: Klasifikasi */}
               <div className="space-y-1.5 lg:col-span-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">KATEGORI (TIPE) <span className="text-red-500">*</span></label>
-                <select required name="objectTypeId" value={formData.objectTypeId} onChange={handleChange} className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all bg-white ${!formData.objectTypeId ? 'text-gray-400' : 'text-gray-900'}`}>
+                <select onBlur={handleBlur} name="objectTypeId" value={formData.objectTypeId} onChange={handleChange} className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all bg-white ${(showValidationErrors || touched.objectTypeId) && !formData.objectTypeId ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.objectTypeId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}>
                   <option value="" disabled>Pilih Kategori...</option>
-                  {objectTypes && objectTypes.length > 0 ? (
-                    objectTypes.map((type: any) => (
-                      <option key={type.id} value={type.id} className="text-gray-900">
-                        {type.name}
-                      </option>
-                    ))
-                  ) : (
-                    <>
-                      <option value="1" className="text-gray-900">Rotating Equipment</option>
-                      <option value="2" className="text-gray-900">Static Equipment</option>
-                      <option value="3" className="text-gray-900">Electrical Equipment</option>
-                      <option value="4" className="text-gray-900">Instrument</option>
-                      <option value="5" className="text-gray-900">Piping</option>
-                      <option value="6" className="text-gray-900">Valve</option>
-                    </>
-                  )}
+                  {objectTypes.map((type: any) => (
+                    <option key={type.id} value={type.id} className="text-gray-900">
+                      {type.name}
+                    </option>
+                  ))}
                 </select>
+                {(showValidationErrors || touched.objectTypeId) && !formData.objectTypeId && <p className="text-[10px] text-red-500 mt-1 font-medium">* Kategori wajib dipilih.</p>}
               </div>
               <div className="space-y-1.5 lg:col-span-2">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">LOKASI PENYIMPANAN <span className="text-red-500">*</span></label>
-                <select required name="storageLocationId" value={formData.storageLocationId} onChange={handleChange} className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all bg-white ${!formData.storageLocationId ? 'text-gray-400' : 'text-gray-900'}`}>
+                <select onBlur={handleBlur} name="storageLocationId" value={formData.storageLocationId} onChange={handleChange} className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all bg-white ${(showValidationErrors || touched.storageLocationId) && !formData.storageLocationId ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.storageLocationId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}>
                   <option value="" disabled>Pilih Lokasi Simpan...</option>
-                  <option value="1" className="text-gray-900">Gudang Utama P-IIB (Gudang B-12)</option>
-                  <option value="2" className="text-gray-900">Gudang Utama P-III</option>
-                  <option value="3" className="text-gray-900">Yard Terbuka P-IIB</option>
-                  <option value="4" className="text-gray-900">Workshop Mekanik</option>
+                  {storageLocations.map((loc: any) => (
+                    <option key={loc.id} value={loc.id} className="text-gray-900">
+                      {loc.name}
+                    </option>
+                  ))}
                 </select>
+                {(showValidationErrors || touched.storageLocationId) && !formData.storageLocationId && <p className="text-[10px] text-red-500 mt-1 font-medium">* Lokasi penyimpanan wajib dipilih.</p>}
               </div>
 
               {/* Baris 3: Area */}
               <div className="space-y-1.5 lg:col-span-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">PABRIK / PLANT <span className="text-red-500">*</span></label>
-                <select required name="plant" value={formData.plant} onChange={handleChange} className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all bg-white ${!formData.plant ? 'text-gray-400' : 'text-gray-900'}`}>
+                <select onBlur={handleBlur} name="plant" value={formData.plant} onChange={handleChange} className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all bg-white ${(showValidationErrors || touched.plant) && !formData.plant ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.plant ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}>
                   <option value="" disabled>Pilih Pabrik...</option>
                   <option value="P-IIB" className="text-gray-900">Pusri IIB</option>
                   <option value="P-III" className="text-gray-900">Pusri III</option>
                   <option value="P-IV" className="text-gray-900">Pusri IV</option>
                   <option value="UTILITY" className="text-gray-900">Utility</option>
                 </select>
+                {(showValidationErrors || touched.plant) && !formData.plant && <p className="text-[10px] text-red-500 mt-1 font-medium">* Pabrik / Plant wajib dipilih.</p>}
               </div>
               <div className="space-y-1.5 lg:col-span-2">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">AREA (FUNCLOC)</label>
@@ -198,10 +269,10 @@ export default function RegisterEquipmentPage() {
                 <input type="number" name="year" value={formData.year} onChange={handleChange} min="1950" max="2100" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">NILAI PEROLEHAN</label>
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">NILAI PEROLEHAN <span className="text-gray-400 lowercase font-normal">(Rp)</span></label>
                 <div className="relative">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-500 text-sm font-medium">Rp</span>
-                  <input type="number" name="originalValue" value={formData.originalValue} onChange={handleChange} placeholder="0" className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all" />
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">Rp</span>
+                  <input type="text" name="originalValue" value={formData.originalValue} onChange={handleChange} placeholder="0" className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all" />
                 </div>
               </div>
 
@@ -233,14 +304,15 @@ export default function RegisterEquipmentPage() {
               {/* Alasan Idle (Radio Grid 2x2 yang sangat hemat tempat) */}
               <div>
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">ALASAN IDLE <span className="text-red-500">*</span></label>
-                <div className="grid grid-cols-2 gap-2.5">
+                <div className="grid grid-cols-2 gap-2.5" onBlur={handleBlur}>
                   {["1", "2", "3", "4"].map((id) => (
-                    <label key={id} className={`flex items-start gap-2 p-2.5 border rounded-lg cursor-pointer transition-all ${formData.conditionId === id ? 'border-[#0556B3] bg-blue-50/40 ring-1 ring-[#0556B3]' : 'border-gray-300 hover:border-gray-400'}`}>
-                      <input required type="radio" name="conditionId" value={id} checked={formData.conditionId === id} onChange={handleChange} className="mt-0.5 w-3.5 h-3.5 text-[#0556B3] focus:ring-[#0556B3] cursor-pointer shrink-0" />
+                    <label key={id} className={`flex items-start gap-2 p-2.5 border rounded-lg cursor-pointer transition-all ${formData.conditionId === id ? 'border-[#0556B3] bg-blue-50/40 ring-1 ring-[#0556B3]' : (showValidationErrors || touched.conditionId) && !formData.conditionId ? 'border-red-400 bg-red-50/30 hover:border-red-500' : 'border-gray-300 hover:border-gray-400'}`}>
+                      <input type="radio" name="conditionId" value={id} checked={formData.conditionId === id} onChange={handleChange} onBlur={handleBlur} className="mt-0.5 w-3.5 h-3.5 text-[#0556B3] focus:ring-[#0556B3] cursor-pointer shrink-0" />
                       <span className="text-xs font-semibold text-gray-700 leading-tight">{conditionLabels[id]}</span>
                     </label>
                   ))}
                 </div>
+                {(showValidationErrors || touched.conditionId) && !formData.conditionId && <p className="text-[10px] text-red-500 mt-1.5 font-medium">* Alasan idle wajib dipilih.</p>}
               </div>
 
               {/* Catatan Tambahan (Pendek) */}
@@ -252,10 +324,63 @@ export default function RegisterEquipmentPage() {
               {/* Upload Dropzone (Lebih proporsional) */}
               <div className="flex-1 flex flex-col">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">FOTO PERALATAN</label>
-                <div className="flex-1 border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center hover:bg-blue-50/40 hover:border-[#0556B3] cursor-pointer transition-all min-h-[110px]">
-                  <UploadCloud className="w-7 h-7 text-gray-400 mb-2" />
-                  <span className="text-xs font-bold text-gray-900">Tarik & lepas foto di sini</span>
+                <input 
+                  type="file" 
+                  multiple 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  onChange={handleFileChange} 
+                  accept=".jpg,.jpeg,.png,.pdf"
+                />
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                  className={`flex-1 border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all min-h-[110px] ${
+                    isDragging ? "border-[#0556B3] bg-blue-50/80" : "border-gray-300 hover:bg-blue-50/40 hover:border-[#0556B3]"
+                  }`}
+                >
+                  <UploadCloud className={`w-7 h-7 mb-2 ${isDragging ? "text-[#0556B3] animate-bounce" : "text-gray-400"}`} />
+                  <span className="text-xs font-bold text-gray-900">Klik atau tarik & lepas foto di sini</span>
                   <span className="text-[10px] text-gray-500 mt-1">Maksimal 5MB per file</span>
+                  
+                  {/* Preview Selected Files */}
+                  {uploadedFiles.length > 0 && (
+                    <div className="mt-4 w-full flex flex-wrap justify-center gap-3" onClick={(e) => e.stopPropagation()}>
+                      {uploadedFiles.map((file, i) => {
+                        const isImage = file.type.startsWith('image/');
+                        const previewUrl = isImage ? URL.createObjectURL(file) : null;
+                        return (
+                          <div key={i} className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white w-[100px] shadow-sm hover:shadow-md transition-all hover:border-[#0A356A]">
+                            {isImage ? (
+                              <div className="h-16 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                                <img src={previewUrl!} alt={file.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                              </div>
+                            ) : (
+                              <div className="h-16 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
+                                <Paperclip className="w-5 h-5 mb-1" />
+                                <span className="text-[9px] font-bold">PDF</span>
+                              </div>
+                            )}
+                            <div className="px-1.5 py-1 border-t border-gray-100 bg-white">
+                              <span className="block text-[9px] font-medium text-gray-700 truncate text-center" title={file.name}>{file.name}</span>
+                            </div>
+                            <button 
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                removeFile(i);
+                              }} 
+                              className="absolute top-1 right-1 bg-red-500 rounded-full p-1 text-white hover:bg-red-600 shadow-md transition-colors opacity-0 group-hover:opacity-100"
+                              title="Hapus"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
                 </div>
               </div>
 
