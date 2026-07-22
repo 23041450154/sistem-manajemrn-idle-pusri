@@ -86,7 +86,14 @@ export default function RegisterEquipmentPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      setUploadedFiles(prev => [...prev, ...files]);
+      const validFiles = files.filter(f => {
+        if (f.size > 5 * 1024 * 1024) {
+          alert(`Ukuran file ${f.name} melebihi batas 5MB.`);
+          return false;
+        }
+        return true;
+      });
+      setUploadedFiles(prev => [...prev, ...validFiles]);
     }
   };
 
@@ -105,7 +112,14 @@ export default function RegisterEquipmentPage() {
     setIsDragging(false);
     if (e.dataTransfer.files) {
       const files = Array.from(e.dataTransfer.files);
-      setUploadedFiles(prev => [...prev, ...files]);
+      const validFiles = files.filter(f => {
+        if (f.size > 5 * 1024 * 1024) {
+          alert(`Ukuran file ${f.name} melebihi batas 5MB.`);
+          return false;
+        }
+        return true;
+      });
+      setUploadedFiles(prev => [...prev, ...validFiles]);
     }
   };
 
@@ -210,10 +224,11 @@ export default function RegisterEquipmentPage() {
               <div className="space-y-1.5 lg:col-span-2">
                 <div className="flex justify-between items-end">
                   <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">NAMA PERALATAN <span className="text-red-500">*</span></label>
-                  <span className="text-[9px] text-gray-400 font-medium">Maks 50 karakter</span>
+                  <span className={`text-[9px] font-medium ${formData.name.length >= 150 ? "text-orange-500" : "text-gray-400"}`}>Maks 150 karakter</span>
                 </div>
-                <input onBlur={handleBlur} maxLength={50} type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Contoh: Centrifugal Pump P-102" className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${(showValidationErrors || touched.name) && !formData.name ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`} />
+                <input onBlur={handleBlur} maxLength={150} type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Contoh: Centrifugal Pump P-102" className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${(showValidationErrors || touched.name) && !formData.name ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : formData.name.length >= 150 ? "border-orange-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 bg-orange-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`} />
                 {(showValidationErrors || touched.name) && !formData.name && <p className="text-[10px] text-red-500 mt-1 font-medium">* Nama Peralatan wajib diisi.</p>}
+                {formData.name.length >= 150 && <p className="text-[10px] text-orange-500 mt-1 font-medium">* Batas maksimal karakter (150) telah tercapai.</p>}
               </div>
 
               {/* Baris 2: Klasifikasi */}
