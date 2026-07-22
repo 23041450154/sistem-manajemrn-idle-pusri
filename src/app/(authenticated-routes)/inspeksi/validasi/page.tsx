@@ -4,14 +4,14 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { 
   Search, Eye, Edit, AlertCircle, X, Check, Save, Clock,
   UploadCloud, Paperclip, RefreshCw, XCircle, CheckCircle2, ChevronRight,
-  ArrowUpDown, ArrowUp, ArrowDown
+  ArrowUpDown, ArrowUp, ArrowDown, Download
 } from "lucide-react";
 
 import { getEquipments, validateEquipment } from "@/action/api";
 
 // Tipe Data
 type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE";
-type ApprovalState = "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "NEED_REVISION";
+type ApprovalState = "NONE" | "PENDING_REVIEW" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "NEED_REVISION";
 
 interface Asset {
   id: string;
@@ -42,21 +42,45 @@ export default function ManajemenInspeksi() {
           kodeAlat: item.equipment_code,
           namaAlat: item.name,
           plant: item.plant,
-          jenisAlat: item.object_type?.name || "-",
+          jenisAlat: item.object_type?.name || "Belum Ditentukan",
           tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
           statusAset: item.status?.name || "REGISTERED",
-          statusPersetujuan: "PENDING", // TODO: match with approvals later
+          statusPersetujuan: "NONE", // Default, will override below
           spesifikasi: item.notes || "Belum ada spesifikasi",
           lampiran: []
         }));
         
+        // Correcting status mapping based on API
+        const mappedWithApproval = mappedData.map((item: any) => {
+          let statusAset = item.statusAset?.toUpperCase() || "REGISTERED";
+          let statusPersetujuan: ApprovalState = "NONE";
+
+          if (statusAset === "REGISTERED") {
+            statusPersetujuan = "NONE";
+          } else if (statusAset === "VALIDATED") {
+            statusPersetujuan = "PENDING_REVIEW"; 
+          } else if (statusAset === "IDLE") {
+            statusPersetujuan = "APPROVED";
+          } else if (statusAset === "REJECTED") {
+            statusPersetujuan = "REJECTED";
+          }
+
+          // Simulate some states for testing
+          if (item.kodeAlat.toLowerCase() === "e-302") {
+            statusAset = "IDLE";
+            statusPersetujuan = "APPROVED";
+          }
+
+          return { ...item, statusAset, statusPersetujuan };
+        });
+
         const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
         if (approved.length > 0) {
-          setAssets(mappedData.map((asset: any) => 
+          setAssets(mappedWithApproval.map((asset: any) => 
             approved.includes(asset.kodeAlat) ? { ...asset, statusAset: "IDLE", statusPersetujuan: "APPROVED" } : asset
           ));
         } else {
-          setAssets(mappedData);
+          setAssets(mappedWithApproval);
         }
       } catch (err) {
         console.error(err);
@@ -86,8 +110,30 @@ export default function ManajemenInspeksi() {
   const [catatan, setCatatan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [tglPemeriksaan, setTglPemeriksaan] = useState(new Date().toISOString().split('T')[0]);
-  const [jamMulai, setJamMulai] = useState("08:00");
-  const [jamSelesai, setJamSelesai] = useState("10:00");
+  const [jamMulai, setJamMulai] = useState("");
+  const [jamSelesai, setJamSelesai] = useState("");
+
+  const handleTimeInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
+    const numbers = value.replace(/\D/g, "");
+    if (numbers.length > 4) return;
+    let formatted = numbers;
+    if (numbers.length >= 3) {
+      formatted = `${numbers.slice(0, 2)}:${numbers.slice(2)}`;
+    }
+    
+    // Validasi jam (max 23)
+    if (formatted.length >= 2) {
+      const h = parseInt(formatted.slice(0, 2), 10);
+      if (h > 23) formatted = `23${formatted.slice(2)}`;
+    }
+    // Validasi menit (max 59)
+    if (formatted.length === 5) {
+      const m = parseInt(formatted.slice(3, 5), 10);
+      if (m > 59) formatted = `${formatted.slice(0, 3)}59`;
+    }
+    
+    setter(formatted);
+  };
   const [lokasi, setLokasi] = useState("");
   const [showValidationErrors, setShowValidationErrors] = useState(false);
 
@@ -111,7 +157,7 @@ export default function ManajemenInspeksi() {
     setShowValidationErrors(false);
     
     // Reset Form jika status belum divalidasi
-    if (asset.statusPersetujuan === "PENDING") {
+    if (asset.statusPersetujuan === "NONE" || asset.statusPersetujuan === "PENDING_REVIEW") {
       setHasilPemeriksaan("");
       setCatatan("");
       setRekomendasi("");
@@ -217,7 +263,7 @@ export default function ManajemenInspeksi() {
       
       let matchStatus = false;
       if (statusFilter === "Semua") matchStatus = true;
-      else if (statusFilter === "ACTION_NEEDED") matchStatus = (a.statusPersetujuan === "PENDING" || a.statusPersetujuan === "NEED_REVISION");
+      else if (statusFilter === "ACTION_NEEDED") matchStatus = (a.statusPersetujuan === "NONE" || a.statusPersetujuan === "PENDING_REVIEW" || a.statusPersetujuan === "NEED_REVISION");
       else if (statusFilter === "NEED_REVISION") matchStatus = (a.statusPersetujuan === "NEED_REVISION");
       else matchStatus = (a.statusAset === statusFilter);
 
@@ -277,20 +323,21 @@ export default function ManajemenInspeksi() {
   };
 
   const getApprovalBadge = (status: ApprovalState) => {
-    if (status === "PENDING") return <span className="text-gray-400 font-medium">-</span>;
     const styles = {
-      PENDING: "",
+      NONE: "bg-gray-100 text-gray-500",
+      PENDING_REVIEW: "bg-yellow-100 text-yellow-700",
       IN_REVIEW: "bg-[#E0F2FE] text-[#0284C7]",
       APPROVED: "bg-[#DCFCE7] text-[#16A34A]",
       REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
       NEED_REVISION: "bg-[#F3E8FF] text-[#9333EA]"
     };
     const labels = {
-      PENDING: "-",
+      NONE: "-",
+      PENDING_REVIEW: "Menunggu Review",
       IN_REVIEW: "Review",
       APPROVED: "Disetujui",
       REJECTED: "Ditolak",
-      NEED_REVISION: "Revisi"
+      NEED_REVISION: "Perlu Revisi"
     };
     return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status]}`}>{labels[status]}</span>;
   };
@@ -298,28 +345,30 @@ export default function ManajemenInspeksi() {
   const getActionButton = (asset: Asset) => {
     return (
       <div className="flex flex-wrap items-center gap-1 justify-center w-full max-w-[100px] mx-auto">
-        {asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "PENDING" && (
+        {asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE" && (
           <button title="Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5 rounded transition-colors flex flex-col items-center">
             <Check className="w-3 h-3 mb-0.5" />
             <span className="text-[8px] font-bold">Validasi</span>
           </button>
         )}
-        {asset.statusAset === "VALIDATED" && asset.statusPersetujuan === "PENDING" && (
+        {asset.statusAset === "VALIDATED" && asset.statusPersetujuan === "PENDING_REVIEW" && (
           <button title="Ubah Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-0.5 rounded transition-colors flex flex-col items-center">
             <Edit className="w-3 h-3 mb-0.5" />
             <span className="text-[8px] font-bold">Ubah Validasi</span>
           </button>
         )}
-        {asset.statusPersetujuan === "NEED_REVISION" && (
+        {asset.statusAset === "VALIDATED" && asset.statusPersetujuan === "NEED_REVISION" && (
           <button title="Revisi Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-0.5 rounded transition-colors flex flex-col items-center">
             <Edit className="w-3 h-3 mb-0.5" />
             <span className="text-[8px] font-bold">Revisi Validasi</span>
           </button>
         )}
-        <button title="Detail Info" onClick={() => openModal(asset, "DETAIL")} className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-0.5 rounded transition-colors flex flex-col items-center">
-          <Eye className="w-3 h-3 mb-0.5" />
-          <span className="text-[8px] font-bold">Detail Info</span>
-        </button>
+        {(asset.statusPersetujuan === "IN_REVIEW" || asset.statusAset === "IDLE" || asset.statusAset === "REJECTED") && (
+          <button title="Detail Info" onClick={() => openModal(asset, "DETAIL")} className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-0.5 rounded transition-colors flex flex-col items-center">
+            <Eye className="w-3 h-3 mb-0.5" />
+            <span className="text-[8px] font-bold">Detail Info</span>
+          </button>
+        )}
       </div>
     );
   };
@@ -341,7 +390,7 @@ export default function ManajemenInspeksi() {
   
   const isReadOnly = selectedAsset?.statusPersetujuan === "IN_REVIEW" || selectedAsset?.statusPersetujuan === "APPROVED";
 
-  const pendingCount = assets.filter(a => a.statusPersetujuan === "PENDING" || a.statusPersetujuan === "NEED_REVISION").length;
+  const pendingCount = assets.filter(a => a.statusPersetujuan === "NONE" || a.statusPersetujuan === "PENDING_REVIEW" || a.statusPersetujuan === "NEED_REVISION").length;
 
   const handleSort = (key: keyof Asset) => {
     let direction: 'asc' | 'desc' = 'asc';
@@ -516,10 +565,10 @@ export default function ManajemenInspeksi() {
                 paginatedAssets.map((asset) => (
                   <tr key={asset.id} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
                     <td className="px-1.5 py-1 whitespace-nowrap text-[10px] font-bold text-[#0A356A] relative">
-                      {(asset.statusPersetujuan === "PENDING" || asset.statusPersetujuan === "NEED_REVISION") && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 flex h-1.5 w-1.5" title={asset.statusPersetujuan === "PENDING" ? "Perlu Validasi" : "Perlu Revisi"}>
-                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${asset.statusPersetujuan === "PENDING" ? "bg-red-400" : "bg-orange-400"}`}></span>
-                          <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${asset.statusPersetujuan === "PENDING" ? "bg-red-500" : "bg-orange-500"}`}></span>
+                      {(asset.statusPersetujuan === "NONE" || asset.statusPersetujuan === "PENDING_REVIEW" || asset.statusPersetujuan === "NEED_REVISION") && (
+                        <span className="absolute left-0 top-1/2 -translate-y-1/2 flex h-1.5 w-1.5" title={asset.statusPersetujuan === "NEED_REVISION" ? "Perlu Revisi" : "Perlu Validasi"}>
+                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${(asset.statusPersetujuan === "NONE" || asset.statusPersetujuan === "PENDING_REVIEW") ? "bg-red-400" : "bg-orange-400"}`}></span>
+                          <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${(asset.statusPersetujuan === "NONE" || asset.statusPersetujuan === "PENDING_REVIEW") ? "bg-red-500" : "bg-orange-500"}`}></span>
                         </span>
                       )}
                       <span className="ml-1.5">{asset.kodeAlat}</span>
@@ -537,7 +586,7 @@ export default function ManajemenInspeksi() {
                       {asset.tanggalRegistrasi}
                     </td>
                     <td className="px-1.5 py-1 text-[10px]">
-                      {asset.statusPersetujuan === 'PENDING' ? (
+                      {(asset.statusPersetujuan === 'NONE' || asset.statusPersetujuan === 'PENDING_REVIEW') ? (
                         <span className="bg-[#DCFCE7] text-[#16A34A] px-1.5 py-0.5 rounded-full flex items-center gap-1 w-fit font-semibold text-[8px]"><div className="w-1.5 h-1.5 bg-[#16A34A] rounded-full"></div> 1 Hari</span>
                       ) : (
                         <span className="text-gray-400 font-medium text-[9px]">Selesai</span>
@@ -651,19 +700,34 @@ export default function ManajemenInspeksi() {
                     <input type="text" value={`INSP-${selectedAsset.kodeAlat}`} disabled className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-1.5 text-[13px] font-medium text-gray-500" />
                   </div>
                   <div className="col-span-3">
-                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Tanggal *</label>
+                    <div className="flex justify-between items-end mb-1">
+                      <label className="block text-[11px] font-semibold text-gray-700">Tanggal</label>
+                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
+                    </div>
                     <input type="date" value={tglPemeriksaan} onChange={e => setTglPemeriksaan(e.target.value)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !tglPemeriksaan ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
                     {showValidationErrors && !tglPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Tanggal wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Mulai *</label>
-                    <input type="time" value={jamMulai} onChange={e => setJamMulai(e.target.value)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !jamMulai ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                    {showValidationErrors && !jamMulai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam wajib diisi.</p>}
+                    <div className="flex justify-between items-end mb-1">
+                      <label className="block text-[11px] font-semibold text-gray-700">Mulai</label>
+                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
+                    </div>
+                    <div className="relative">
+                      <input type="text" placeholder="00:00" maxLength={5} value={jamMulai} onChange={e => handleTimeInput(e.target.value, setJamMulai)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && jamMulai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
+                    </div>
+                    {showValidationErrors && jamMulai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Selesai *</label>
-                    <input type="time" value={jamSelesai} onChange={e => setJamSelesai(e.target.value)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !jamSelesai ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                    {showValidationErrors && !jamSelesai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam wajib diisi.</p>}
+                    <div className="flex justify-between items-end mb-1">
+                      <label className="block text-[11px] font-semibold text-gray-700">Selesai</label>
+                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
+                    </div>
+                    <div className="relative">
+                      <input type="text" placeholder="00:00" maxLength={5} value={jamSelesai} onChange={e => handleTimeInput(e.target.value, setJamSelesai)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && jamSelesai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
+                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
+                    </div>
+                    {showValidationErrors && jamSelesai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Durasi</label>
@@ -677,13 +741,33 @@ export default function ManajemenInspeksi() {
                 {/* Row 2: Lokasi & Hasil (Compact) */}
                 <div className="grid grid-cols-12 gap-3 mb-3">
                   <div className="col-span-5">
-                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Lokasi Pengecekan *</label>
-                    <input type="text" placeholder="Contoh: Area Unit 1B" value={lokasi} onChange={e => setLokasi(e.target.value)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !lokasi ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                    {showValidationErrors && !lokasi && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Lokasi wajib diisi.</p>}
+                    <div className="flex justify-between items-end mb-1">
+                      <label className="block text-[11px] font-semibold text-gray-700">Lokasi Pengecekan</label>
+                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
+                    </div>
+                    <select 
+                      value={lokasi} 
+                      onChange={e => setLokasi(e.target.value)} 
+                      disabled={isReadOnly} 
+                      className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !lokasi ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`}
+                    >
+                      <option value="" disabled>Pilih Lokasi...</option>
+                      <option value="Area Unit 1B">Area Unit 1B</option>
+                      <option value="Area Unit P-IB">Area Unit P-IB</option>
+                      <option value="Area Ammonia">Area Ammonia</option>
+                      <option value="Area Urea">Area Urea</option>
+                      <option value="Area Utilitas">Area Utilitas</option>
+                      <option value="Gudang Utama">Gudang Utama</option>
+                      <option value="Bengkel Mekanik">Bengkel Mekanik</option>
+                    </select>
+                    {showValidationErrors && !lokasi && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Lokasi wajib dipilih.</p>}
                   </div>
                   
                   <div className="col-span-7">
-                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Hasil Evaluasi Kelayakan *</label>
+                    <div className="flex justify-between items-end mb-1">
+                      <label className="block text-[11px] font-semibold text-gray-700">Hasil Evaluasi Kelayakan</label>
+                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
+                    </div>
                     <div className="flex gap-2.5">
                       <label className={`flex-1 relative border rounded-md p-1.5 cursor-pointer flex items-center justify-center gap-2 transition-all ${
                         hasilPemeriksaan === "Layak" ? "border-emerald-500 bg-emerald-50/50" : "border-gray-200 bg-white hover:bg-gray-50"
@@ -761,35 +845,61 @@ export default function ManajemenInspeksi() {
                       onDragOver={handleDragOver}
                       onDragLeave={handleDragLeave}
                       onDrop={handleDrop}
-                      className={`border-2 border-dashed rounded-md p-5 flex flex-col items-center justify-center gap-1 cursor-pointer transition-all ${
+                      className={`border-2 border-dashed rounded-md p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
                         isDragging ? "border-[#0A356A] bg-blue-50/80" : "border-gray-300 bg-gray-50 hover:bg-blue-50/50 hover:border-blue-300"
                       }`}
                     >
                       <UploadCloud className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A] animate-bounce" : "text-gray-400"}`} />
-                      <div className="text-[13px]">
+                      <div className="text-[13px] text-center">
                         <span className="font-bold text-[#0A356A]">Klik untuk memilih</span>
                         <span className="text-gray-600 font-medium"> atau drag & drop ke sini</span>
                       </div>
-                      <span className="text-[11px] text-gray-500 font-medium">Format: JPG, PNG, PDF (Max 5MB)</span>
+                      <span className="text-[11px] text-gray-500 font-medium text-center">Format: JPG, PNG, PDF (Max 5MB)</span>
+                      
+                      {uploadedFiles.length === 0 && (
+                        <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1.5 py-0.5 rounded mt-1">Wajib Minimal 2 Foto/File</span>
+                      )}
+
+                      {/* Preview Selected Files (Inside Dropzone) */}
+                      {uploadedFiles.length > 0 && (
+                        <div className="mt-4 w-full flex flex-wrap justify-center gap-4" onClick={(e) => e.stopPropagation()}>
+                          {uploadedFiles.map((file, i) => {
+                            const isImage = file.type.startsWith('image/');
+                            const previewUrl = isImage ? URL.createObjectURL(file) : null;
+                            return (
+                              <div key={i} className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white w-[150px] shadow-sm hover:shadow-md transition-all hover:border-[#0A356A]">
+                                {isImage ? (
+                                  <div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                                    <img src={previewUrl!} alt={file.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                  </div>
+                                ) : (
+                                  <div className="h-28 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
+                                    <Paperclip className="w-8 h-8 mb-2" />
+                                    <span className="text-[10px] font-bold">PDF / DOC</span>
+                                  </div>
+                                )}
+                                <div className="px-2 py-1.5 border-t border-gray-100 bg-white">
+                                  <span className="block text-[10px] font-medium text-gray-700 truncate text-center" title={file.name}>{file.name}</span>
+                                </div>
+                                <button 
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    removeFile(i);
+                                  }} 
+                                  className="absolute top-1.5 right-1.5 bg-red-500 rounded-full p-1 text-white hover:bg-red-600 shadow-md transition-colors opacity-0 group-hover:opacity-100"
+                                  title="Hapus"
+                                >
+                                  <X className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                     
                     {showValidationErrors && uploadedFiles.length < 2 && (
                       <p className="text-[10px] text-red-500 mt-1.5 font-medium">* Wajib mengunggah minimal 2 foto dokumentasi/file referensi.</p>
-                    )}
-
-                    {/* Preview Selected Files */}
-                    {uploadedFiles.length > 0 && (
-                      <div className="mt-3 flex flex-wrap gap-2">
-                        {uploadedFiles.map((file, i) => (
-                          <div key={i} className="flex items-center gap-1.5 px-2.5 py-1 bg-blue-50 border border-blue-100 rounded text-[11px] font-medium text-blue-800">
-                            <Paperclip className="w-3 h-3 text-blue-500" />
-                            <span className="max-w-[120px] truncate">{file.name}</span>
-                            <button onClick={() => removeFile(i)} className="ml-1 text-blue-400 hover:text-red-500 transition-colors">
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        ))}
-                      </div>
                     )}
                   </div>
                 )}
@@ -913,39 +1023,56 @@ export default function ManajemenInspeksi() {
               <h3 className="text-[#0A356A] font-bold text-[13px] mb-2.5 uppercase tracking-wide">Lampiran Gambar & Dokumen</h3>
               <div className="grid grid-cols-3 gap-3 mb-3">
                 {/* Images */}
-                <div className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white">
+                <div 
+                  onClick={() => window.open("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80", "_blank")}
+                  className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white cursor-pointer hover:border-[#0A356A] transition-colors group"
+                >
                   <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" className="object-cover w-full h-full" alt="Foto Pompa" />
+                    <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Foto Pompa" />
                   </div>
-                  <div className="p-2 text-center border-t border-gray-200">
-                    <p className="text-[10px] font-bold text-gray-900 mb-1.5">Foto Utama</p>
-                    <button onClick={() => window.open("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80", "_blank")} className="text-[10px] w-full py-1 border border-gray-300 font-semibold rounded hover:bg-gray-50 transition-colors">Preview</button>
+                  <div className="p-2 text-center border-t border-gray-200 flex flex-col justify-center">
+                    <p className="text-[10px] font-bold text-gray-900 mb-0.5">Foto Utama</p>
                   </div>
                 </div>
-                <div className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white">
+                <div 
+                  onClick={() => window.open("https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80", "_blank")}
+                  className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white cursor-pointer hover:border-[#0A356A] transition-colors group"
+                >
                   <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" className="object-cover w-full h-full" alt="Label Tag" />
+                    <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Label Tag" />
                   </div>
-                  <div className="p-2 text-center border-t border-gray-200">
-                    <p className="text-[10px] font-bold text-gray-900 mb-1.5">Label Tag Plat Aset</p>
-                    <button onClick={() => window.open("https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80", "_blank")} className="text-[10px] w-full py-1 border border-gray-300 font-semibold rounded hover:bg-gray-50 transition-colors">Preview</button>
+                  <div className="p-2 text-center border-t border-gray-200 flex flex-col justify-center">
+                    <p className="text-[10px] font-bold text-gray-900 mb-0.5">Label Tag Plat Aset</p>
                   </div>
                 </div>
                 {/* PDF Files in same row if width permits */}
-                <div className="border border-gray-200 rounded p-2.5 flex flex-col justify-between bg-white shadow-sm">
+                <div 
+                  onClick={() => window.open("/laporan_inspeksi_P101.pdf", "_blank")}
+                  className="border border-gray-200 rounded p-2.5 flex flex-col justify-between bg-white shadow-sm cursor-pointer hover:border-[#0A356A] transition-colors group"
+                >
                   <div className="flex items-start gap-2 mb-2">
-                    <div className="w-7 h-7 rounded bg-red-50 text-red-500 border border-red-100 flex items-center justify-center shrink-0">
+                    <div className="w-7 h-7 rounded bg-red-50 text-red-500 border border-red-100 flex items-center justify-center shrink-0 group-hover:bg-[#0A356A]/10 group-hover:text-[#0A356A] group-hover:border-[#0A356A]/20 transition-colors">
                       <span className="font-bold text-[9px]">PDF</span>
                     </div>
                     <div className="overflow-hidden">
-                      <p className="text-[11px] font-bold text-gray-900 truncate" title="spesifikasi_teknis_P101.pdf">spesifikasi_teknis_P101.pdf</p>
+                      <p className="text-[11px] font-bold text-gray-900 truncate" title="laporan_inspeksi_P101.pdf">laporan_inspeksi_P101.pdf</p>
                       <p className="text-[10px] text-gray-500 mt-0.5">3.4 MB</p>
                     </div>
                   </div>
                   <div className="flex gap-2 justify-end mt-auto">
-                    <button onClick={() => alert("Preview dokumen spesifikasi_teknis_P101.pdf")} className="text-[11px] font-semibold text-[#0A356A] hover:underline">Preview</button>
-                    <span className="text-gray-300">|</span>
-                    <button onClick={() => alert("Mengunduh dokumen spesifikasi_teknis_P101.pdf")} className="text-[11px] font-semibold text-[#0A356A] hover:underline">Download</button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const link = document.createElement("a");
+                        link.href = "/laporan_inspeksi_P101.pdf";
+                        link.download = "laporan_inspeksi_P101.pdf";
+                        link.click();
+                      }} 
+                      className="text-[11px] font-semibold text-[#0A356A] hover:bg-blue-50 p-1.5 rounded transition-colors"
+                      title="Download Laporan"
+                    >
+                      <Download className="w-3.5 h-3.5" />
+                    </button>
                   </div>
                 </div>
               </div>

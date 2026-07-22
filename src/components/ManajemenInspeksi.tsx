@@ -41,7 +41,7 @@ export default function ManajemenInspeksi() {
           kodeAlat: item.equipment_code,
           namaAlat: item.name,
           plant: item.plant,
-          jenisAlat: item.object_type?.name || "-",
+          jenisAlat: item.object_type?.name || "Belum Ditentukan",
           tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
           statusAset: item.status?.name || "REGISTERED",
           statusPersetujuan: "PENDING",
@@ -266,17 +266,16 @@ export default function ManajemenInspeksi() {
   };
 
   const getApprovalBadge = (status: ApprovalState) => {
-    if (status === "PENDING") return <span className="text-gray-400 font-medium">-</span>;
     const styles = {
-      PENDING: "",
+      PENDING: "bg-gray-100 text-gray-500",
       IN_REVIEW: "bg-[#E0F2FE] text-[#0284C7]",
       APPROVED: "bg-[#DCFCE7] text-[#16A34A]",
       REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
       NEED_REVISION: "bg-[#F3E8FF] text-[#9333EA]"
     };
     const labels = {
-      PENDING: "-",
-      IN_REVIEW: "Menunggu Review",
+      PENDING: "Menunggu",
+      IN_REVIEW: "Review",
       APPROVED: "Disetujui",
       REJECTED: "Ditolak",
       NEED_REVISION: "Perlu Revisi"

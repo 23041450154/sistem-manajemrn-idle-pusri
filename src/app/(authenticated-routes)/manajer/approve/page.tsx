@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Eye, X, Shield, FileText, CheckCircle2, RefreshCw, XCircle } from "lucide-react";
+import { Eye, X, Shield, FileText, CheckCircle2, RefreshCw, XCircle, Download } from "lucide-react";
 import { getApprovals, reviewApproval, getEquipments } from "@/action/api";
 
 interface RequestAsset {
@@ -410,49 +410,56 @@ export default function ManajerApprovePage() {
                 <h3 className="text-[14px] font-bold text-[#0f4a8a] border-b border-blue-100 pb-2 mb-4">Lampiran Gambar & Dokumen</h3>
                 
                 <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div className="border border-gray-200 rounded-lg overflow-hidden flex flex-col bg-white shadow-sm">
+                  <div 
+                    onClick={() => window.open("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80", "_blank")}
+                    className="border border-gray-200 rounded-lg overflow-hidden flex flex-col bg-white shadow-sm cursor-pointer hover:border-[#0f4a8a] transition-colors group"
+                  >
                     <div className="h-40 bg-gray-100 w-full relative overflow-hidden flex items-center justify-center">
-                      {/* Placeholder for pump image */}
-                      <div className="w-full h-full bg-[#1e40af]/10 flex flex-col items-center justify-center">
-                         <span className="text-blue-800/40 font-bold text-lg">PUMP IMAGE</span>
-                      </div>
+                      <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Foto Pompa" />
                     </div>
-                    <div className="p-3 text-center flex-1 flex flex-col justify-between border-t border-gray-100">
-                      <p className="text-[12px] font-bold text-gray-800 mb-3">Foto Pompa Utama</p>
-                      <button className="w-full py-1.5 border border-gray-300 rounded-md text-[11px] font-semibold text-gray-700 hover:bg-gray-50">
-                        Preview
-                      </button>
+                    <div className="p-3 text-center flex flex-col justify-center border-t border-gray-100">
+                      <p className="text-[12px] font-bold text-gray-800">Foto Pompa Utama</p>
                     </div>
                   </div>
 
-                  <div className="border border-gray-200 rounded-lg overflow-hidden flex flex-col bg-white shadow-sm">
+                  <div 
+                    onClick={() => window.open("https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80", "_blank")}
+                    className="border border-gray-200 rounded-lg overflow-hidden flex flex-col bg-white shadow-sm cursor-pointer hover:border-[#0f4a8a] transition-colors group"
+                  >
                     <div className="h-40 bg-gray-100 w-full relative overflow-hidden flex items-center justify-center">
-                      {/* Placeholder for tag image */}
-                      <div className="w-full h-full bg-[#475569]/10 flex flex-col items-center justify-center">
-                         <span className="text-slate-800/40 font-bold text-lg">TAG IMAGE</span>
-                      </div>
+                      <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Label Tag" />
                     </div>
-                    <div className="p-3 text-center flex-1 flex flex-col justify-between border-t border-gray-100">
-                      <p className="text-[12px] font-bold text-gray-800 mb-3">Label Tag Plat Aset</p>
-                      <button className="w-full py-1.5 border border-gray-300 rounded-md text-[11px] font-semibold text-gray-700 hover:bg-gray-50">
-                        Preview
-                      </button>
+                    <div className="p-3 text-center flex flex-col justify-center border-t border-gray-100">
+                      <p className="text-[12px] font-bold text-gray-800">Label Tag Plat Aset</p>
                     </div>
                   </div>
                 </div>
 
-                <div className="border border-gray-200 rounded-lg p-3 flex items-center justify-between bg-white shadow-sm">
+                <div 
+                  onClick={() => window.open("/laporan_inspeksi_P101.pdf", "_blank")}
+                  className="border border-gray-200 rounded-lg p-3 flex items-center justify-between bg-white shadow-sm hover:border-[#0f4a8a] transition-colors cursor-pointer group"
+                >
                   <div className="flex items-center gap-3">
-                    <FileText className="w-8 h-8 text-red-500" />
+                    <FileText className="w-8 h-8 text-red-500 group-hover:text-[#0f4a8a] transition-colors" />
                     <div>
-                      <p className="text-[13px] font-bold text-gray-800">spesifikasi_teknis_P101.pdf</p>
+                      <p className="text-[13px] font-bold text-gray-800">laporan_inspeksi_P101.pdf</p>
                       <p className="text-[11px] text-gray-500">3.4 MB</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 text-[12px] font-bold text-[#0f4a8a]">
-                    <button className="hover:underline">Preview</button>
-                    <span className="text-gray-300">|</span>
-                    <button className="hover:underline">Download</button>
+                    <button 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const link = document.createElement("a");
+                        link.href = "/laporan_inspeksi_P101.pdf";
+                        link.download = "laporan_inspeksi_P101.pdf";
+                        link.click();
+                      }} 
+                      className="p-1.5 hover:bg-blue-50 rounded-md transition-colors text-[#0f4a8a]" 
+                      title="Download Laporan"
+                    >
+                      <Download className="w-4 h-4" />
+                    </button>
                   </div>
                 </div>
 

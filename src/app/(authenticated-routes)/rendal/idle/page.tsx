@@ -67,7 +67,7 @@ export default function RendalIdlePage() {
         kodeAlat: item.equipment_code,
         namaAlat: item.name,
         plant: item.plant,
-        jenisAlat: item.object_type?.name || "-",
+        jenisAlat: item.object_type?.name || "Belum Ditentukan",
         tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
         statusAset: item.status?.name || "REGISTERED",
         statusPersetujuan: "PENDING", // TODO: match with approvals later if needed
