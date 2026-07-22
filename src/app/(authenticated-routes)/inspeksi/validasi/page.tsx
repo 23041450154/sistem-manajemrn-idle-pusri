@@ -74,6 +74,9 @@ export default function ManajemenInspeksi() {
           return { ...item, statusAset, statusPersetujuan };
         });
 
+        // Sort data by ID descending (newest first)
+        mappedWithApproval.sort((a: any, b: any) => Number(b.id) - Number(a.id));
+
         const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
         if (approved.length > 0) {
           setAssets(mappedWithApproval.map((asset: any) => 

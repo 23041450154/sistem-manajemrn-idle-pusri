@@ -25,6 +25,7 @@ export default function ManajerApprovePage() {
   const [endDate, setEndDate] = useState("");
   
   const [requests, setRequests] = useState<RequestAsset[]>([]);
+  const [filteredRequests, setFilteredRequests] = useState<RequestAsset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAsset, setSelectedAsset] = useState<RequestAsset | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -60,7 +61,7 @@ export default function ManajerApprovePage() {
             namaAset: item.equipment_name || (eq?.name || "-"),
             plant: item.plant || (eq?.plant || "-"),
             tanggalPengajuan: item.request_date ? new Date(item.request_date).toISOString().split('T')[0] : "-",
-            statusAset: item.equipment_status || (eq?.status?.name || "REGISTERED"),
+            statusAset: (item.equipment_status || eq?.status?.name || "REGISTERED").toUpperCase(),
             statusPersetujuan: item.approval_status === "PENDING" ? "Menunggu Review" : (item.approval_status === "IN_REVIEW" ? "Sedang Direview" : (item.approval_status === "APPROVED" ? "Disetujui" : (item.approval_status === "REVISION_REQUIRED" ? "Perlu Revisi" : item.approval_status)))
           };
         });
@@ -69,7 +70,7 @@ export default function ManajerApprovePage() {
         const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
         
         if (approved.length > 0 || revised.length > 0) {
-          setRequests(mappedData.map((req: any) => {
+          const updated = mappedData.map((req: any) => {
             if (approved.includes(req.kodeAset)) {
               return { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" };
             }
@@ -77,9 +78,12 @@ export default function ManajerApprovePage() {
               return { ...req, statusPersetujuan: "Perlu Revisi" };
             }
             return req;
-          }));
+          });
+          setRequests(updated);
+          setFilteredRequests(updated);
         } else {
           setRequests(mappedData);
+          setFilteredRequests(mappedData);
         }
       } catch (error) {
         console.error(error);
@@ -106,7 +110,13 @@ export default function ManajerApprovePage() {
       
       if (res.success) {
         setNotification({ type: "success", message: "Berhasil menyetujui aset!" });
-        setRequests(requests.map(req => 
+        const updated = requests.map(req => 
+          req.kodeAset === selectedAsset.kodeAset 
+            ? { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" }
+            : req
+        );
+        setRequests(updated);
+        setFilteredRequests(filteredRequests.map(req => 
           req.kodeAset === selectedAsset.kodeAset 
             ? { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" }
             : req
@@ -132,7 +142,13 @@ export default function ManajerApprovePage() {
       
       if (res.success) {
         setNotification({ type: "success", message: "Berhasil mengirim permintaan revisi!" });
-        setRequests(requests.map(req => 
+        const updated = requests.map(req => 
+          req.kodeAset === selectedAsset.kodeAset 
+            ? { ...req, statusPersetujuan: "Perlu Revisi" }
+            : req
+        );
+        setRequests(updated);
+        setFilteredRequests(filteredRequests.map(req => 
           req.kodeAset === selectedAsset.kodeAset 
             ? { ...req, statusPersetujuan: "Perlu Revisi" }
             : req
@@ -147,12 +163,33 @@ export default function ManajerApprovePage() {
     }
   };
 
+  const handleCari = () => {
+    const result = requests.filter(req => {
+      const matchSearch = search 
+        ? req.nomorRequest.toLowerCase().includes(search.toLowerCase()) || 
+          req.kodeAset.toLowerCase().includes(search.toLowerCase()) || 
+          req.namaAset.toLowerCase().includes(search.toLowerCase())
+        : true;
+      const matchPlant = plant !== "Semua Plant" ? req.plant === plant : true;
+      const matchStatus = status !== "Semua Status" ? req.statusPersetujuan === status : true;
+      
+      let matchDate = true;
+      if (startDate && endDate) {
+        const reqDate = new Date(req.tanggalPengajuan);
+        matchDate = reqDate >= new Date(startDate) && reqDate <= new Date(endDate);
+      }
+      return matchSearch && matchPlant && matchStatus && matchDate;
+    });
+    setFilteredRequests(result);
+  };
+
   const handleReset = () => {
     setSearch("");
     setPlant("Semua Plant");
     setStatus("Semua Status");
     setStartDate("");
     setEndDate("");
+    setFilteredRequests(requests);
   };
 
   const getStatusAsetBadge = (status: string) => {
@@ -254,7 +291,7 @@ export default function ManajerApprovePage() {
           </div>
           
           <div className="flex items-center gap-2">
-            <button className="bg-[#0A356A] text-white px-5 py-2 rounded-lg text-[13px] font-semibold hover:bg-[#0556B3] transition-colors whitespace-nowrap h-[38px]">
+            <button onClick={handleCari} className="bg-[#0A356A] text-white px-5 py-2 rounded-lg text-[13px] font-semibold hover:bg-[#0556B3] transition-colors whitespace-nowrap h-[38px]">
               Cari
             </button>
             <button onClick={handleReset} className="bg-white border border-gray-300 text-gray-700 px-5 py-2 rounded-lg text-[13px] font-semibold hover:bg-gray-50 transition-colors whitespace-nowrap h-[38px]">
@@ -271,37 +308,37 @@ export default function ManajerApprovePage() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Nomor Request</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Kode Aset</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Nama Aset</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Plant</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Tanggal Pengajuan</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Status Aset</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Status Persetujuan</th>
-                <th className="px-6 py-4 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Aksi</th>
+                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Nomor Request</th>
+                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Kode Aset</th>
+                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider min-w-[120px]">Nama Aset</th>
+                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Plant</th>
+                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Tanggal Pengajuan</th>
+                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Status Aset</th>
+                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Status Persetujuan</th>
+                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Aksi</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {requests.map((req) => (
+              {filteredRequests.map((req) => (
                 <tr key={req.id} className="hover:bg-blue-50/30 transition-colors">
-                  <td className="px-6 py-4 whitespace-nowrap text-[13px] font-bold text-[#0A356A]">{req.nomorRequest}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-[13px] font-bold text-gray-900">{req.kodeAset}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-[13px] text-gray-600 font-medium">{req.namaAset}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-[13px] text-gray-600 font-medium">{req.plant}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-[13px] text-gray-600 font-medium">{req.tanggalPengajuan}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug">{req.nomorRequest}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900">{req.kodeAset}</td>
+                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug">{req.namaAset}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium">{req.plant}</td>
+                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug">{req.tanggalPengajuan}</td>
+                  <td className="px-2 py-2 whitespace-nowrap">
                     {getStatusAsetBadge(req.statusAset)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
+                  <td className="px-2 py-2">
                     {getApprovalBadge(req.statusPersetujuan)}
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-center">
+                  <td className="px-2 py-2 text-center w-[80px]">
                     <button 
                       onClick={() => openModal(req)}
-                      className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-4 py-2 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors w-full max-w-[120px]"
+                      className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors w-full"
                     >
                       <Eye className="w-3.5 h-3.5" />
-                      Review Aset
+                      Detail
                     </button>
                   </td>
                 </tr>
