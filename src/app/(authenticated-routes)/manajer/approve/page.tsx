@@ -293,8 +293,10 @@ export default function ManajerApprovePage() {
               className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
             >
               <option value="Semua Plant">Semua Plant</option>
-              <option value="Urea III">Urea III</option>
-              <option value="Ammonia IIB">Ammonia IIB</option>
+              <option value="P-1">Plant 1</option>
+              <option value="P-2">Plant 2</option>
+              <option value="P-3">Plant 3</option>
+              <option value="P-4">Plant 4</option>
             </select>
           </div>
           
