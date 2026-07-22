@@ -128,6 +128,52 @@ export async function getObjectTypes() {
   }
 }
 
+export async function createObjectType(name: string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/object-types`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}` 
+      },
+      body: JSON.stringify({ name }),
+    })
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return { success: false, message: errorData?.message || `HTTP Error ${res.status}` }
+    }
+    return { success: true }
+  } catch (error: any) {
+    console.error("Create object type error:", error)
+    return { success: false, message: error.message }
+  }
+}
+
+export async function deleteObjectType(id: string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/object-types/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return { success: false, message: errorData?.message || `HTTP Error ${res.status}` }
+    }
+    return { success: true }
+  } catch (error: any) {
+    console.error("Delete object type error:", error)
+    return { success: false, message: error.message }
+  }
+}
+
 export async function getStorageLocations() {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value
@@ -168,6 +214,27 @@ export async function createEquipment(payload: any) {
     return { success: true }
   } catch (error: any) {
     console.error("Create equipment error:", error)
+    return { success: false, message: error.message }
+  }
+}
+
+export async function deleteEquipment(id: string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/equipment/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return { success: false, message: errorData?.message || `HTTP Error ${res.status}` }
+    }
+    return { success: true }
+  } catch (error: any) {
+    console.error("Delete equipment error:", error)
     return { success: false, message: error.message }
   }
 }
