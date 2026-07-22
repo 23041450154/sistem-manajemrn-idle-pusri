@@ -679,7 +679,7 @@ export default function ManajemenInspeksi() {
                     <span className="font-bold text-[13px] text-blue-900">{selectedAsset.plant}</span>
                   </div>
                   <div className="w-px h-5 bg-blue-200"></div>
-                  <div className="flex-1 min-w-[200px]">
+                  <div className="flex-1 min-w-52">
                     <span className="text-blue-700/60 text-[10px] font-semibold uppercase block leading-none mb-1">Spesifikasi Singkat</span>
                     <span className="text-blue-800 text-[12px] truncate block" title={selectedAsset.spesifikasi}>{selectedAsset.spesifikasi}</span>
                   </div>

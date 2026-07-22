@@ -76,8 +76,11 @@ export default function RegisterEquipmentPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleBlur = (e: React.FocusEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    setTouched(prev => ({ ...prev, [e.target.name]: true }));
+  const handleBlur = (e: React.FocusEvent<HTMLElement>) => {
+    const target = e.target as HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
+    if (target.name) {
+      setTouched(prev => ({ ...prev, [target.name]: true }));
+    }
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -218,7 +221,7 @@ export default function RegisterEquipmentPage() {
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">KATEGORI (TIPE) <span className="text-red-500">*</span></label>
                 <select onBlur={handleBlur} name="objectTypeId" value={formData.objectTypeId} onChange={handleChange} className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all bg-white ${(showValidationErrors || touched.objectTypeId) && !formData.objectTypeId ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.objectTypeId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}>
                   <option value="" disabled>Pilih Kategori...</option>
-                  {objectTypes.map((type: any) => (
+                  {objectTypes.map((type: { id: number, name: string }) => (
                     <option key={type.id} value={type.id} className="text-gray-900">
                       {type.name}
                     </option>
@@ -230,7 +233,7 @@ export default function RegisterEquipmentPage() {
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">LOKASI PENYIMPANAN <span className="text-red-500">*</span></label>
                 <select onBlur={handleBlur} name="storageLocationId" value={formData.storageLocationId} onChange={handleChange} className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all bg-white ${(showValidationErrors || touched.storageLocationId) && !formData.storageLocationId ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.storageLocationId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}>
                   <option value="" disabled>Pilih Lokasi Simpan...</option>
-                  {storageLocations.map((loc: any) => (
+                  {storageLocations.map((loc: { id: number, name: string }) => (
                     <option key={loc.id} value={loc.id} className="text-gray-900">
                       {loc.name}
                     </option>
