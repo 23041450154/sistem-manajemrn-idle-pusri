@@ -386,6 +386,7 @@ func DeleteEquipment(db *gorm.DB) gin.HandlerFunc {
 // @Failure      401  {object}  map[string]interface{}  "Unauthorized"
 // @Failure      403  {object}  map[string]interface{}  "Role tidak diizinkan"
 // @Failure      404  {object}  map[string]interface{}  "Aset tidak ditemukan"
+// @Failure      409  {object}  map[string]interface{}  "Approval aset sedang dalam proses review (IN_REVIEW)"
 // @Failure      500  {object}  map[string]interface{}  "Kesalahan server"
 // @Router       /equipment/{id}/validate [patch]
 func ValidateEquipment(db *gorm.DB) gin.HandlerFunc {
@@ -422,6 +423,39 @@ func ValidateEquipment(db *gorm.DB) gin.HandlerFunc {
 			c.JSON(http.StatusNotFound, gin.H{
 				"status":  "error",
 				"message": "Aset dengan ID tersebut tidak ditemukan",
+			})
+			return
+		}
+
+		// Cegah re-validation pada aset yang statusnya sudah final.
+		// Status di-resolve berdasarkan nama, bukan ID hardcoded, agar tetap
+		// benar meski urutan seeding berubah (IDLE = final/disetujui Manajer,
+		// REJECTED = keputusan penolakan yang sudah final).
+		var currentStatus models.Status
+		if err := db.First(&currentStatus, equipment.StatusID).Error; err == nil {
+			switch currentStatus.Name {
+			case "IDLE":
+				c.JSON(http.StatusBadRequest, gin.H{
+					"status":  "error",
+					"message": "Validasi tidak dapat diubah karena aset sudah disetujui Manajer (berstatus IDLE)",
+				})
+				return
+			case "REJECTED":
+				c.JSON(http.StatusBadRequest, gin.H{
+					"status":  "error",
+					"message": "Validasi tidak dapat diubah karena aset sudah ditolak (berstatus REJECTED)",
+				})
+				return
+			}
+		}
+
+		// Cegah edit validasi saat approval aset sedang direview Manajer (IN_REVIEW).
+		var inReviewApproval models.ApprovalRequest
+		if err := db.Where("equipment_id = ? AND approval_status = ?",
+			equipment.ID, constants.ApprovalStatusInReview).First(&inReviewApproval).Error; err == nil {
+			c.JSON(http.StatusConflict, gin.H{
+				"status":  "error",
+				"message": "Validasi tidak dapat diubah karena approval aset sedang dalam proses review oleh Manajer (IN_REVIEW)",
 			})
 			return
 		}
