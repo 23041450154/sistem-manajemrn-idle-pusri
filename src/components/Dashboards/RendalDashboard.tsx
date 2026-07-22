@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FileText, Plus, Server, PowerOff, CheckCircle, Wrench, Clock, FileQuestion } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { ChartSection } from "@/components/ChartSection";
@@ -21,10 +22,10 @@ export default function RendalDashboard() {
             <FileText className="w-4 h-4" />
             Buat Laporan
           </button>
-          <button className={styles.btnPrimary}>
+          <Link href="/rendal/register-equipment" className={styles.btnPrimary}>
             <Plus className="w-4 h-4" />
             Daftarkan Peralatan
-          </button>
+          </Link>
         </div>
       </div>
 

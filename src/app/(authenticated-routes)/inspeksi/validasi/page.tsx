@@ -7,6 +7,8 @@ import {
   ArrowUpDown, ArrowUp, ArrowDown
 } from "lucide-react";
 
+import { getEquipments } from "@/action/api";
+
 // Tipe Data
 type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE";
 type ApprovalState = "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "NEED_REVISION";
@@ -117,7 +119,7 @@ const MOCK_ASSETS: Asset[] = [
     plant: "P-4",
     jenisAlat: "Static Equipment",
     tanggalRegistrasi: "2023-11-23",
-    statusAset: "VALIDATED",
+    statusAset: "IDLE",
     statusPersetujuan: "APPROVED",
     spesifikasi: "Area 80m2, Material Titanium",
     lampiran: []
@@ -209,15 +211,42 @@ const MOCK_ASSETS: Asset[] = [
 ];
 
 export default function ManajemenInspeksi() {
-  const [assets, setAssets] = useState<Asset[]>(MOCK_ASSETS);
-  
+  const [assets, setAssets] = useState<Asset[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
   useEffect(() => {
-    const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
-    if (approved.length > 0) {
-      setAssets(prev => prev.map(asset => 
-        approved.includes(asset.kodeAlat) ? { ...asset, statusAset: "IDLE", statusPersetujuan: "APPROVED" } : asset
-      ));
-    }
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getEquipments();
+        const mappedData = data.map((item: any) => ({
+          id: item.id.toString(),
+          kodeAlat: item.equipment_code,
+          namaAlat: item.name,
+          plant: item.plant,
+          jenisAlat: item.object_type?.name || "-",
+          tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
+          statusAset: item.status?.name || "REGISTERED",
+          statusPersetujuan: "PENDING", // TODO: match with approvals later
+          spesifikasi: item.notes || "Belum ada spesifikasi",
+          lampiran: []
+        }));
+        
+        const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
+        if (approved.length > 0) {
+          setAssets(mappedData.map((asset: any) => 
+            approved.includes(asset.kodeAlat) ? { ...asset, statusAset: "IDLE", statusPersetujuan: "APPROVED" } : asset
+          ));
+        } else {
+          setAssets(mappedData);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
   }, []);
   
   // Filter States
@@ -231,7 +260,7 @@ export default function ManajemenInspeksi() {
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"VALIDASI" | "DETAIL">("VALIDASI");
-  const [isLoading, setIsLoading] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
 
   // Form Validasi States
@@ -242,6 +271,7 @@ export default function ManajemenInspeksi() {
   const [jamMulai, setJamMulai] = useState("08:00");
   const [jamSelesai, setJamSelesai] = useState("10:00");
   const [lokasi, setLokasi] = useState("");
+  const [showValidationErrors, setShowValidationErrors] = useState(false);
 
   // Upload States
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -260,6 +290,7 @@ export default function ManajemenInspeksi() {
     setSelectedAsset(asset);
     setModalMode(mode);
     setUploadedFiles([]); // Reset files
+    setShowValidationErrors(false);
     
     // Reset Form jika status belum divalidasi
     if (asset.statusPersetujuan === "PENDING") {
@@ -283,9 +314,9 @@ export default function ManajemenInspeksi() {
 
   // Simpan Validasi
   const handleSave = () => {
-    setIsLoading(true);
+    setIsSubmitting(true);
     setTimeout(() => {
-      setIsLoading(false);
+      setIsSubmitting(false);
       setNotification({ type: "success", message: "Data inspeksi berhasil disubmit ke sistem." });
       
       if (selectedAsset) {
@@ -439,36 +470,45 @@ export default function ManajemenInspeksi() {
   const getActionButton = (asset: Asset) => {
     return (
       <div className="flex flex-wrap items-center gap-1 justify-center w-full max-w-[100px] mx-auto">
-        {asset.statusPersetujuan === "PENDING" && (
+        {asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "PENDING" && (
           <button title="Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5 rounded transition-colors flex flex-col items-center">
             <Check className="w-3 h-3 mb-0.5" />
             <span className="text-[8px] font-bold">Validasi</span>
           </button>
         )}
-        {asset.statusPersetujuan === "IN_REVIEW" && asset.statusAset === "VALIDATED" && (
+        {asset.statusAset === "VALIDATED" && asset.statusPersetujuan === "PENDING" && (
           <button title="Ubah Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-0.5 rounded transition-colors flex flex-col items-center">
             <Edit className="w-3 h-3 mb-0.5" />
-            <span className="text-[8px] font-bold">Ubah</span>
+            <span className="text-[8px] font-bold">Ubah Validasi</span>
           </button>
         )}
         {asset.statusPersetujuan === "NEED_REVISION" && (
           <button title="Revisi Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-0.5 rounded transition-colors flex flex-col items-center">
             <Edit className="w-3 h-3 mb-0.5" />
-            <span className="text-[8px] font-bold">Revisi</span>
+            <span className="text-[8px] font-bold">Revisi Validasi</span>
           </button>
         )}
         <button title="Detail Info" onClick={() => openModal(asset, "DETAIL")} className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-0.5 rounded transition-colors flex flex-col items-center">
           <Eye className="w-3 h-3 mb-0.5" />
-          <span className="text-[8px] font-bold">Detail</span>
+          <span className="text-[8px] font-bold">Detail Info</span>
         </button>
       </div>
     );
   };
 
-  const isFormValid = () => {
+  const validateForm = () => {
     if (!hasilPemeriksaan || !lokasi || !tglPemeriksaan || !jamMulai || !jamSelesai) return false;
     if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
+    if (uploadedFiles.length < 2) return false;
     return true;
+  };
+
+  const handleSaveClick = () => {
+    if (!validateForm()) {
+      setShowValidationErrors(true);
+      return;
+    }
+    handleSave();
   };
   
   const isReadOnly = selectedAsset?.statusPersetujuan === "IN_REVIEW" || selectedAsset?.statusPersetujuan === "APPROVED";
@@ -572,6 +612,8 @@ export default function ManajemenInspeksi() {
               <option value="REGISTERED">Registered</option>
               <option value="VALIDATED">Validated</option>
               <option value="NEED_REVISION">Perlu Revisi</option>
+              <option value="IDLE">Idle</option>
+              <option value="REJECTED">Ditolak</option>
             </select>
             
             <input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer" />
@@ -626,7 +668,13 @@ export default function ManajemenInspeksi() {
               </tr>
             </thead>
             <tbody className="bg-white">
-              {paginatedAssets.length === 0 ? (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={10} className="px-5 py-12 text-center text-gray-500">
+                    Memuat data...
+                  </td>
+                </tr>
+              ) : paginatedAssets.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-5 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center">
@@ -776,15 +824,18 @@ export default function ManajemenInspeksi() {
                   </div>
                   <div className="col-span-3">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Tanggal *</label>
-                    <input type="date" value={tglPemeriksaan} onChange={e => setTglPemeriksaan(e.target.value)} disabled={isReadOnly} className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] focus:border-[#0A356A] outline-none disabled:bg-gray-50" />
+                    <input type="date" value={tglPemeriksaan} onChange={e => setTglPemeriksaan(e.target.value)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !tglPemeriksaan ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
+                    {showValidationErrors && !tglPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Tanggal wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Mulai *</label>
-                    <input type="time" value={jamMulai} onChange={e => setJamMulai(e.target.value)} disabled={isReadOnly} className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] focus:border-[#0A356A] outline-none disabled:bg-gray-50" />
+                    <input type="time" value={jamMulai} onChange={e => setJamMulai(e.target.value)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !jamMulai ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
+                    {showValidationErrors && !jamMulai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Selesai *</label>
-                    <input type="time" value={jamSelesai} onChange={e => setJamSelesai(e.target.value)} disabled={isReadOnly} className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] focus:border-[#0A356A] outline-none disabled:bg-gray-50" />
+                    <input type="time" value={jamSelesai} onChange={e => setJamSelesai(e.target.value)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !jamSelesai ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
+                    {showValidationErrors && !jamSelesai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Durasi</label>
@@ -799,7 +850,8 @@ export default function ManajemenInspeksi() {
                 <div className="grid grid-cols-12 gap-3 mb-3">
                   <div className="col-span-5">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Lokasi Pengecekan *</label>
-                    <input type="text" placeholder="Contoh: Area Unit 1B" value={lokasi} onChange={e => setLokasi(e.target.value)} disabled={isReadOnly} className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] focus:border-[#0A356A] outline-none disabled:bg-gray-50" />
+                    <input type="text" placeholder="Contoh: Area Unit 1B" value={lokasi} onChange={e => setLokasi(e.target.value)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !lokasi ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
+                    {showValidationErrors && !lokasi && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Lokasi wajib diisi.</p>}
                   </div>
                   
                   <div className="col-span-7">
@@ -807,8 +859,8 @@ export default function ManajemenInspeksi() {
                     <div className="flex gap-2.5">
                       <label className={`flex-1 relative border rounded-md p-1.5 cursor-pointer flex items-center justify-center gap-2 transition-all ${
                         hasilPemeriksaan === "Layak" ? "border-emerald-500 bg-emerald-50/50" : "border-gray-200 bg-white hover:bg-gray-50"
-                      } ${isReadOnly && hasilPemeriksaan !== "Layak" ? "opacity-50 cursor-not-allowed" : ""}`}>
-                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Layak" ? "border-emerald-500" : "border-gray-300"}`}>
+                      } ${isReadOnly && hasilPemeriksaan !== "Layak" ? "opacity-50 cursor-not-allowed" : ""} ${showValidationErrors && !hasilPemeriksaan ? "border-red-400" : ""}`}>
+                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Layak" ? "border-emerald-500" : (showValidationErrors && !hasilPemeriksaan ? "border-red-400" : "border-gray-300")}`}>
                           {hasilPemeriksaan === "Layak" && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
                         </div>
                         <span className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-emerald-700" : "text-gray-700"}`}>Layak Utilisasi</span>
@@ -817,14 +869,15 @@ export default function ManajemenInspeksi() {
                       
                       <label className={`flex-1 relative border rounded-md p-1.5 cursor-pointer flex items-center justify-center gap-2 transition-all ${
                         hasilPemeriksaan === "Tidak Layak" ? "border-red-500 bg-red-50/50" : "border-gray-200 bg-white hover:bg-gray-50"
-                      } ${isReadOnly && hasilPemeriksaan !== "Tidak Layak" ? "opacity-50 cursor-not-allowed" : ""}`}>
-                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Tidak Layak" ? "border-red-500" : "border-gray-300"}`}>
+                      } ${isReadOnly && hasilPemeriksaan !== "Tidak Layak" ? "opacity-50 cursor-not-allowed" : ""} ${showValidationErrors && !hasilPemeriksaan ? "border-red-400" : ""}`}>
+                        <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Tidak Layak" ? "border-red-500" : (showValidationErrors && !hasilPemeriksaan ? "border-red-400" : "border-gray-300")}`}>
                           {hasilPemeriksaan === "Tidak Layak" && <div className="w-1.5 h-1.5 bg-red-500 rounded-full" />}
                         </div>
                         <span className={`text-[13px] font-semibold ${hasilPemeriksaan === "Tidak Layak" ? "text-red-700" : "text-gray-700"}`}>Tidak Layak</span>
                         <input type="radio" name="hasil" value="Tidak Layak" checked={hasilPemeriksaan === "Tidak Layak"} onChange={e => setHasilPemeriksaan(e.target.value)} disabled={isReadOnly} className="hidden" />
                       </label>
                     </div>
+                    {showValidationErrors && !hasilPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Hasil Evaluasi wajib dipilih.</p>}
                   </div>
                 </div>
 
@@ -891,6 +944,10 @@ export default function ManajemenInspeksi() {
                       </div>
                       <span className="text-[11px] text-gray-500 font-medium">Format: JPG, PNG, PDF (Max 5MB)</span>
                     </div>
+                    
+                    {showValidationErrors && uploadedFiles.length < 2 && (
+                      <p className="text-[10px] text-red-500 mt-1.5 font-medium">* Wajib mengunggah minimal 2 foto dokumentasi/file referensi.</p>
+                    )}
 
                     {/* Preview Selected Files */}
                     {uploadedFiles.length > 0 && (
@@ -928,7 +985,7 @@ export default function ManajemenInspeksi() {
             <div className="px-6 py-3 border-t border-gray-200 bg-gray-50 rounded-b-xl flex justify-end gap-2.5 shrink-0">
               <button 
                 onClick={closeModal} 
-                disabled={isLoading}
+                disabled={isSubmitting}
                 className="px-4 py-1.5 text-[13px] font-semibold text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50"
               >
                 Tutup
@@ -936,11 +993,11 @@ export default function ManajemenInspeksi() {
               
               {!isReadOnly && (
                 <button 
-                  onClick={handleSave}
-                  disabled={!isFormValid() || isLoading}
-                  className="px-5 py-1.5 text-[13px] font-bold text-white bg-[#0A356A] hover:bg-[#062854] rounded-md transition-all shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5"
+                  onClick={handleSaveClick}
+                  disabled={isSubmitting}
+                  className="px-5 py-1.5 text-[13px] font-bold text-white bg-[#0A356A] hover:bg-[#062854] rounded-md transition-all shadow-sm disabled:opacity-50 flex items-center gap-1.5"
                 >
-                  {isLoading ? (
+                  {isSubmitting ? (
                     <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Proses...</>
                   ) : (
                     <><Save className="w-3.5 h-3.5" /> Simpan Hasil</>
@@ -1034,7 +1091,7 @@ export default function ManajemenInspeksi() {
                   </div>
                   <div className="p-2 text-center border-t border-gray-200">
                     <p className="text-[10px] font-bold text-gray-900 mb-1.5">Foto Utama</p>
-                    <button className="text-[10px] w-full py-1 border border-gray-300 font-semibold rounded hover:bg-gray-50 transition-colors">Preview</button>
+                    <button onClick={() => window.open("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80", "_blank")} className="text-[10px] w-full py-1 border border-gray-300 font-semibold rounded hover:bg-gray-50 transition-colors">Preview</button>
                   </div>
                 </div>
                 <div className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white">
@@ -1043,7 +1100,7 @@ export default function ManajemenInspeksi() {
                   </div>
                   <div className="p-2 text-center border-t border-gray-200">
                     <p className="text-[10px] font-bold text-gray-900 mb-1.5">Label Tag Plat Aset</p>
-                    <button className="text-[10px] w-full py-1 border border-gray-300 font-semibold rounded hover:bg-gray-50 transition-colors">Preview</button>
+                    <button onClick={() => window.open("https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80", "_blank")} className="text-[10px] w-full py-1 border border-gray-300 font-semibold rounded hover:bg-gray-50 transition-colors">Preview</button>
                   </div>
                 </div>
                 {/* PDF Files in same row if width permits */}
@@ -1058,9 +1115,9 @@ export default function ManajemenInspeksi() {
                     </div>
                   </div>
                   <div className="flex gap-2 justify-end mt-auto">
-                    <button className="text-[11px] font-semibold text-[#0A356A] hover:underline">Preview</button>
+                    <button onClick={() => alert("Preview dokumen spesifikasi_teknis_P101.pdf")} className="text-[11px] font-semibold text-[#0A356A] hover:underline">Preview</button>
                     <span className="text-gray-300">|</span>
-                    <button className="text-[11px] font-semibold text-[#0A356A] hover:underline">Download</button>
+                    <button onClick={() => alert("Mengunduh dokumen spesifikasi_teknis_P101.pdf")} className="text-[11px] font-semibold text-[#0A356A] hover:underline">Download</button>
                   </div>
                 </div>
               </div>

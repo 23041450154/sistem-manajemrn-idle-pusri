@@ -2,6 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Eye, X, Shield, FileText, CheckCircle2, RefreshCw } from "lucide-react";
+import { getApprovals } from "@/action/api";
 
 interface RequestAsset {
   id: string;
@@ -14,38 +15,7 @@ interface RequestAsset {
   statusPersetujuan: string;
 }
 
-const MOCK_REQUESTS: RequestAsset[] = [
-  {
-    id: "1",
-    nomorRequest: "REQ-2026-002",
-    kodeAset: "VLV-202-UR3",
-    namaAset: "Control Valve V-202 Urea",
-    plant: "Urea III",
-    tanggalPengajuan: "2026-07-14",
-    statusAset: "VALIDATED",
-    statusPersetujuan: "Menunggu Review"
-  },
-  {
-    id: "2",
-    nomorRequest: "REQ-2026-005",
-    kodeAset: "MCH-505-AM2B",
-    namaAset: "Heat Exchanger E-505 Ammonia",
-    plant: "Ammonia IIB",
-    tanggalPengajuan: "2026-07-12",
-    statusAset: "VALIDATED",
-    statusPersetujuan: "Sedang Direview"
-  },
-  {
-    id: "3",
-    nomorRequest: "REQ-2026-006",
-    kodeAset: "VLV-606-UR3",
-    namaAset: "Safety Valve SV-606 Urea",
-    plant: "Urea III",
-    tanggalPengajuan: "2026-07-13",
-    statusAset: "VALIDATED",
-    statusPersetujuan: "Perlu Revisi"
-  }
-];
+// MOCK_REQUESTS removed
 
 export default function ManajerApprovePage() {
   const [search, setSearch] = useState("");
@@ -54,7 +24,8 @@ export default function ManajerApprovePage() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   
-  const [requests, setRequests] = useState<RequestAsset[]>(MOCK_REQUESTS);
+  const [requests, setRequests] = useState<RequestAsset[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
   const [selectedAsset, setSelectedAsset] = useState<RequestAsset | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -63,20 +34,44 @@ export default function ManajerApprovePage() {
   const [revisiError, setRevisiError] = useState(false);
 
   useEffect(() => {
-    const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
-    const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
-    
-    if (approved.length > 0 || revised.length > 0) {
-      setRequests(prev => prev.map(req => {
-        if (approved.includes(req.kodeAset)) {
-          return { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" };
+    const fetchData = async () => {
+      try {
+        setIsLoading(true);
+        const data = await getApprovals();
+        const mappedData = data.map((item: any) => ({
+          id: item.id.toString(),
+          nomorRequest: item.request_number,
+          kodeAset: item.equipment?.equipment_code || "-",
+          namaAset: item.equipment?.name || "-",
+          plant: item.equipment?.plant || "-",
+          tanggalPengajuan: item.request_date ? new Date(item.request_date).toISOString().split('T')[0] : "-",
+          statusAset: item.equipment?.status?.name || "REGISTERED",
+          statusPersetujuan: item.approval_status === "PENDING" ? "Menunggu Review" : (item.approval_status === "IN_REVIEW" ? "Sedang Direview" : (item.approval_status === "APPROVED" ? "Disetujui" : (item.approval_status === "REVISION_REQUIRED" ? "Perlu Revisi" : item.approval_status)))
+        }));
+
+        const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
+        const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
+        
+        if (approved.length > 0 || revised.length > 0) {
+          setRequests(mappedData.map((req: any) => {
+            if (approved.includes(req.kodeAset)) {
+              return { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" };
+            }
+            if (revised.includes(req.kodeAset)) {
+              return { ...req, statusPersetujuan: "Perlu Revisi" };
+            }
+            return req;
+          }));
+        } else {
+          setRequests(mappedData);
         }
-        if (revised.includes(req.kodeAset)) {
-          return { ...req, statusPersetujuan: "Perlu Revisi" };
-        }
-        return req;
-      }));
-    }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    fetchData();
   }, []);
 
   const openModal = (asset: RequestAsset) => {

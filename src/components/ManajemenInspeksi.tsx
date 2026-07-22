@@ -339,7 +339,7 @@ export default function ManajemenInspeksi() {
 
   // Filter & Sort Data
   const filteredAssets = useMemo(() => {
-    let filtered = assets.filter(a => {
+    const filtered = assets.filter(a => {
       const matchSearch = a.kodeAlat.toLowerCase().includes(search.toLowerCase()) || 
                           a.namaAlat.toLowerCase().includes(search.toLowerCase());
       const matchPlant = plantFilter === "Semua" || a.plant === plantFilter;
@@ -388,9 +388,6 @@ export default function ManajemenInspeksi() {
     setSortConfig({ key: 'tanggalRegistrasi', direction: 'desc' });
   };
 
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, plantFilter, statusFilter, dateFilter]);
 
   // UI Helpers
   const getStatusAsetBadge = (status: AssetState) => {

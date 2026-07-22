@@ -1,16 +1,32 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2, ChevronLeft } from "lucide-react";
 import Link from "next/link";
+import { getObjectTypes, createEquipment } from "@/action/api";
+import { useRouter } from "next/navigation";
 
 export default function RegisterEquipmentPage() {
+  const router = useRouter();
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
   // State untuk efek Loading
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [objectTypes, setObjectTypes] = useState<any[]>([]);
+
+  useEffect(() => {
+    async function loadObjectTypes() {
+      try {
+        const data = await getObjectTypes();
+        setObjectTypes(data);
+      } catch (err) {
+        console.error(err);
+      }
+    }
+    loadObjectTypes();
+  }, []);
 
   // UX Improvement: Semua nilai dropdown & radio di-set kosong ("") di awal
   const [formData, setFormData] = useState({
@@ -32,15 +48,35 @@ export default function RegisterEquipmentPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulasi proses pengiriman data ke server selama 2 detik
-    setTimeout(() => {
-      setIsSubmitting(false);
-      alert("Berhasil! Data siap untuk disimpan: " + JSON.stringify(formData));
-    }, 2000);
+    const payload = {
+      book_value: 0, // as requested in swagger
+      equipment_code: formData.equipmentCode,
+      func_loc: formData.funcLoc,
+      id_condition: Number(formData.conditionId),
+      id_object_type: Number(formData.objectTypeId),
+      id_storage_location: Number(formData.storageLocationId),
+      name: formData.name,
+      notes: formData.notes,
+      original_value: Number(formData.originalValue) || 0,
+      plant: formData.plant,
+      plant_description: "",
+      vendor: formData.vendor,
+      year: Number(formData.year) || new Date().getFullYear()
+    };
+
+    const res = await createEquipment(payload);
+    setIsSubmitting(false);
+
+    if (res.success) {
+      alert("Berhasil! Peralatan idle telah didaftarkan.");
+      router.push("/rendal/idle");
+    } else {
+      alert("Gagal menyimpan data: " + (res.message || "Pastikan field sudah sesuai."));
+    }
   };
 
   const conditionLabels: Record<string, string> = {
@@ -92,11 +128,11 @@ export default function RegisterEquipmentPage() {
               {/* Baris 1: Peralatan */}
               <div className="space-y-1.5 lg:col-span-1">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">KODE ASET / TAG <span className="text-red-500">*</span></label>
-                <input required type="text" name="equipmentCode" value={formData.equipmentCode} onChange={handleChange} placeholder="P-102-MKN" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all" />
+                <input required maxLength={50} type="text" name="equipmentCode" value={formData.equipmentCode} onChange={handleChange} placeholder="P-102-MKN" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all" />
               </div>
               <div className="space-y-1.5 lg:col-span-2">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">NAMA PERALATAN <span className="text-red-500">*</span></label>
-                <input required type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Contoh: Centrifugal Pump P-102" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all" />
+                <input required maxLength={150} type="text" name="name" value={formData.name} onChange={handleChange} placeholder="Contoh: Centrifugal Pump P-102" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all" />
               </div>
 
               {/* Baris 2: Klasifikasi */}
@@ -104,11 +140,22 @@ export default function RegisterEquipmentPage() {
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">KATEGORI (TIPE) <span className="text-red-500">*</span></label>
                 <select required name="objectTypeId" value={formData.objectTypeId} onChange={handleChange} className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all bg-white ${!formData.objectTypeId ? 'text-gray-400' : 'text-gray-900'}`}>
                   <option value="" disabled>Pilih Kategori...</option>
-                  <option value="1" className="text-gray-900">Rotating Equipment</option>
-                  <option value="2" className="text-gray-900">Static Equipment</option>
-                  <option value="3" className="text-gray-900">Electrical Equipment</option>
-                  <option value="4" className="text-gray-900">Instrument</option>
-                  <option value="5" className="text-gray-900">Piping</option>
+                  {objectTypes && objectTypes.length > 0 ? (
+                    objectTypes.map((type: any) => (
+                      <option key={type.id} value={type.id} className="text-gray-900">
+                        {type.name}
+                      </option>
+                    ))
+                  ) : (
+                    <>
+                      <option value="1" className="text-gray-900">Rotating Equipment</option>
+                      <option value="2" className="text-gray-900">Static Equipment</option>
+                      <option value="3" className="text-gray-900">Electrical Equipment</option>
+                      <option value="4" className="text-gray-900">Instrument</option>
+                      <option value="5" className="text-gray-900">Piping</option>
+                      <option value="6" className="text-gray-900">Valve</option>
+                    </>
+                  )}
                 </select>
               </div>
               <div className="space-y-1.5 lg:col-span-2">

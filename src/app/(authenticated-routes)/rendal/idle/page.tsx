@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
+import { getEquipments } from "@/action/api";
 import { 
   Search, AlertCircle, RefreshCw, Filter, Plus, X,
   ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download, Eye, Upload, Wrench, CheckCircle 
@@ -66,13 +67,18 @@ export default function RendalIdlePage() {
     setIsLoading(true);
     setError(null);
     try {
-      // TODO: Ganti ke endpoint real Anda jika backend API CRUD sudah siap (misalnya: "/api/equipments")
-      // Karena menurut dokumentasi saat ini API untuk CRUD peralatan belum dibuat di backend Go,
-      // kita gunakan data dummy (Mock Data) sementara agar UI bisa dilihat dan diuji.
-      
-      await new Promise(resolve => setTimeout(resolve, 800)); // Simulasi delay jaringan
-      setEquipments(MOCK_EQUIPMENTS);
-      
+      const data = await getEquipments();
+      const mappedData = data.map((item: any) => ({
+        id: item.id.toString(),
+        kodeAlat: item.equipment_code,
+        namaAlat: item.name,
+        plant: item.plant,
+        jenisAlat: item.object_type?.name || "-",
+        tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
+        statusAset: item.status?.name || "REGISTERED",
+        statusPersetujuan: "PENDING", // TODO: match with approvals later if needed
+      }));
+      setEquipments(mappedData);
     } catch (err: any) {
       console.error(err);
       setError("Gagal terhubung ke database. Menampilkan data kosong atau periksa kembali koneksi backend Anda.");

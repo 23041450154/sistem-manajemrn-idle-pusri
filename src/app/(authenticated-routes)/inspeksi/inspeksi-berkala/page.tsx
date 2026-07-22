@@ -6,6 +6,7 @@ import {
   Download, Printer, Eye, Plus, Info, BarChart2 
 } from "lucide-react";
 import Link from "next/link";
+import { getInspections } from "@/action/api";
 
 interface Inspection {
   id: number;
@@ -39,16 +40,12 @@ export default function InspeksiDashboard() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const res = await fetch(process.env.NEXT_PUBLIC_API_URL + "/api/inspections");
-        if (res.ok) {
-          const json = await res.json();
-          if (json.data && json.data.length > 0) {
-            setData(json.data);
-            setLoading(false);
-            return;
-          }
+        const result = await getInspections();
+        if (result && result.length > 0) {
+          setData(result);
+        } else {
+          setData(fallbackData);
         }
-        setData(fallbackData);
         setLoading(false);
       } catch (err) {
         setData(fallbackData);
