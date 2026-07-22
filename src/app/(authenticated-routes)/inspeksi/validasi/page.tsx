@@ -78,10 +78,22 @@ export default function ManajemenInspeksi() {
         mappedWithApproval.sort((a: any, b: any) => Number(b.id) - Number(a.id));
 
         const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
-        if (approved.length > 0) {
-          setAssets(mappedWithApproval.map((asset: any) => 
-            approved.includes(asset.kodeAlat) ? { ...asset, statusAset: "IDLE", statusPersetujuan: "APPROVED" } : asset
-          ));
+        const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
+        const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
+        
+        if (approved.length > 0 || revised.length > 0 || inReview.length > 0) {
+          setAssets(mappedWithApproval.map((asset: any) => {
+            if (approved.includes(asset.kodeAlat)) {
+              return { ...asset, statusAset: "IDLE", statusPersetujuan: "APPROVED" };
+            }
+            if (revised.includes(asset.kodeAlat)) {
+              return { ...asset, statusPersetujuan: "NEED_REVISION" };
+            }
+            if (inReview.includes(asset.kodeAlat) && asset.statusPersetujuan === "PENDING_REVIEW") {
+              return { ...asset, statusPersetujuan: "IN_REVIEW" };
+            }
+            return asset;
+          }));
         } else {
           setAssets(mappedWithApproval);
         }
@@ -192,11 +204,19 @@ export default function ManajemenInspeksi() {
       if (res.success) {
         setNotification({ type: "success", message: "Data inspeksi berhasil disubmit ke sistem." });
         
+        const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
+        const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
+        const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
+        
+        localStorage.setItem('revisedAssets', JSON.stringify(revised.filter((code: string) => code !== selectedAsset.kodeAlat)));
+        localStorage.setItem('inReviewAssets', JSON.stringify(inReview.filter((code: string) => code !== selectedAsset.kodeAlat)));
+        localStorage.setItem('approvedAssets', JSON.stringify(approved.filter((code: string) => code !== selectedAsset.kodeAlat)));
+
         const fileNames = uploadedFiles.map(f => f.name);
         setAssets(assets.map(a => a.id === selectedAsset.id ? {
           ...a, 
           statusAset: isUtilizable ? "VALIDATED" : "REJECTED",
-          statusPersetujuan: "IN_REVIEW",
+          statusPersetujuan: isUtilizable ? "PENDING_REVIEW" : "REJECTED",
           lampiran: [...a.lampiran, ...fileNames]
         } : a));
       } else {

@@ -68,14 +68,18 @@ export default function ManajerApprovePage() {
 
         const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
         const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
+        const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
         
-        if (approved.length > 0 || revised.length > 0) {
+        if (approved.length > 0 || revised.length > 0 || inReview.length > 0) {
           const updated = mappedData.map((req: any) => {
             if (approved.includes(req.kodeAset)) {
               return { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" };
             }
             if (revised.includes(req.kodeAset)) {
               return { ...req, statusPersetujuan: "Perlu Revisi" };
+            }
+            if (inReview.includes(req.kodeAset) && req.statusPersetujuan === "Menunggu Review") {
+              return { ...req, statusPersetujuan: "Sedang Direview" };
             }
             return req;
           });
@@ -97,6 +101,23 @@ export default function ManajerApprovePage() {
   const openModal = (asset: RequestAsset) => {
     setSelectedAsset(asset);
     setIsModalOpen(true);
+    
+    // Change to IN_REVIEW automatically when opened
+    if (asset.statusPersetujuan === "Menunggu Review") {
+      const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
+      if (!inReview.includes(asset.kodeAset)) {
+        inReview.push(asset.kodeAset);
+        localStorage.setItem('inReviewAssets', JSON.stringify(inReview));
+      }
+      
+      const updatedReqs = requests.map(req => 
+        req.kodeAset === asset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview" } : req
+      );
+      setRequests(updatedReqs);
+      setFilteredRequests(filteredRequests.map(req => 
+        req.kodeAset === asset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview" } : req
+      ));
+    }
   };
 
   const closeModal = () => {
@@ -109,6 +130,18 @@ export default function ManajerApprovePage() {
       const res = await reviewApproval(selectedAsset.id, "APPROVE", "Disetujui oleh manajer");
       
       if (res.success) {
+        const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
+        if (!approved.includes(selectedAsset.kodeAset)) {
+          approved.push(selectedAsset.kodeAset);
+          localStorage.setItem('approvedAssets', JSON.stringify(approved));
+        }
+        
+        const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
+        localStorage.setItem('inReviewAssets', JSON.stringify(inReview.filter((code: string) => code !== selectedAsset.kodeAset)));
+        
+        const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
+        localStorage.setItem('revisedAssets', JSON.stringify(revised.filter((code: string) => code !== selectedAsset.kodeAset)));
+
         setNotification({ type: "success", message: "Berhasil menyetujui aset!" });
         const updated = requests.map(req => 
           req.kodeAset === selectedAsset.kodeAset 
@@ -141,6 +174,15 @@ export default function ManajerApprovePage() {
       const res = await reviewApproval(selectedAsset.id, "REVISION", revisiCatatan);
       
       if (res.success) {
+        const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
+        if (!revised.includes(selectedAsset.kodeAset)) {
+          revised.push(selectedAsset.kodeAset);
+          localStorage.setItem('revisedAssets', JSON.stringify(revised));
+        }
+        
+        const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
+        localStorage.setItem('inReviewAssets', JSON.stringify(inReview.filter((code: string) => code !== selectedAsset.kodeAset)));
+
         setNotification({ type: "success", message: "Berhasil mengirim permintaan revisi!" });
         const updated = requests.map(req => 
           req.kodeAset === selectedAsset.kodeAset 
