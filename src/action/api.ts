@@ -92,6 +92,32 @@ export async function reviewApproval(id: string, action: string, notes: string) 
   }
 }
 
+export async function startReviewApproval(id: string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/approvals/${id}/start-review`, {
+      method: "PATCH",
+      headers: { 
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}` 
+      },
+      body: JSON.stringify({}),
+    })
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return { success: false, message: errorData?.message || `HTTP Error ${res.status}` }
+    }
+    
+    return { success: true }
+  } catch (error: any) {
+    console.error("Start review approval error:", error)
+    return { success: false, message: error.message }
+  }
+}
+
 export async function getInspections() {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value
@@ -111,20 +137,28 @@ export async function getInspections() {
 }
 
 export async function getObjectTypes() {
-  const cookieStore = await cookies()
-  const token = cookieStore.get("token")?.value
+  const hardcoded = [
+    { id: 1, name: "Rotary Equipment" },
+    { id: 2, name: "Static Equipment" },
+    { id: 3, name: "Electrical" },
+    { id: 4, name: "Instrument" },
+    { id: 5, name: "Peralatan Umum" },
+    { id: 6, name: "Valve" }
+  ];
 
   try {
+    const cookieStore = await cookies();
+    const token = cookieStore.get("token")?.value;
     const res = await fetch(`${API_URL}/api/object-types`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
-    })
-    if (!res.ok) return []
-    const json = await res.json()
-    return json.data || []
+    });
+    if (!res.ok) return hardcoded;
+    const json = await res.json();
+    return json.data?.length > 0 ? json.data : hardcoded;
   } catch (error) {
-    console.error("Fetch object types error:", error)
-    return []
+    console.error("Fetch object types error:", error);
+    return hardcoded;
   }
 }
 

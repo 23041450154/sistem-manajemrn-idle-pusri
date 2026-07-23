@@ -193,7 +193,15 @@ export default function ManajemenInspeksi() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
        const files = Array.from(e.target.files);
-       setUploadedFiles(prev => [...prev, ...files]);
+       const validFiles = files.filter(f => {
+         if (f.size > 5 * 1024 * 1024) {
+           alert(`Ukuran file ${f.name} melebihi batas 5MB.`);
+           return false;
+         }
+         return true;
+       });
+       setUploadedFiles(prev => [...prev, ...validFiles]);
+       e.target.value = ''; // Reset input to allow selecting the same file again
     }
   };
 
@@ -212,7 +220,14 @@ export default function ManajemenInspeksi() {
     setIsDragging(false);
     if (e.dataTransfer.files) {
       const files = Array.from(e.dataTransfer.files);
-      setUploadedFiles(prev => [...prev, ...files]);
+      const validFiles = files.filter(f => {
+        if (f.size > 5 * 1024 * 1024) {
+          alert(`Ukuran file ${f.name} melebihi batas 5MB.`);
+          return false;
+        }
+        return true;
+      });
+      setUploadedFiles(prev => [...prev, ...validFiles]);
     }
   };
 

@@ -20,6 +20,7 @@ export default function RegisterEquipmentPage() {
   const [showValidationErrors, setShowValidationErrors] = useState(false);
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isImporting, setIsImporting] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   // Hardcode Object Types (Statis sementara)
   const objectTypes = [
@@ -86,14 +87,17 @@ export default function RegisterEquipmentPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
+      let errorMsg: string | null = null;
       const validFiles = files.filter(f => {
         if (f.size > 5 * 1024 * 1024) {
-          alert(`Ukuran file ${f.name} melebihi batas 5MB.`);
+          errorMsg = `Ukuran file ${f.name} melebihi batas 5MB.`;
           return false;
         }
         return true;
       });
+      setFileError(errorMsg);
       setUploadedFiles(prev => [...prev, ...validFiles]);
+      e.target.value = ''; // Reset input to allow selecting the same file again
     }
   };
 
@@ -112,13 +116,15 @@ export default function RegisterEquipmentPage() {
     setIsDragging(false);
     if (e.dataTransfer.files) {
       const files = Array.from(e.dataTransfer.files);
+      let errorMsg: string | null = null;
       const validFiles = files.filter(f => {
         if (f.size > 5 * 1024 * 1024) {
-          alert(`Ukuran file ${f.name} melebihi batas 5MB.`);
+          errorMsg = `Ukuran file ${f.name} melebihi batas 5MB.`;
           return false;
         }
         return true;
       });
+      setFileError(errorMsg);
       setUploadedFiles(prev => [...prev, ...validFiles]);
     }
   };
@@ -400,6 +406,7 @@ export default function RegisterEquipmentPage() {
                     </div>
                   )}
                 </div>
+                {fileError && <p className="text-[10px] text-red-500 mt-1.5 font-medium">* {fileError}</p>}
               </div>
 
             </div>

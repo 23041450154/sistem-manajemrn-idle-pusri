@@ -4,10 +4,10 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { 
   Search, Eye, Edit, AlertCircle, X, Check, Save, Clock,
   UploadCloud, Paperclip, RefreshCw, XCircle, CheckCircle2, ChevronRight,
-  ArrowUpDown, ArrowUp, ArrowDown, Download
+  ArrowUpDown, ArrowUp, ArrowDown, Download, Info
 } from "lucide-react";
 
-import { getEquipments, validateEquipment, getObjectTypes } from "@/action/api";
+import { getEquipments, validateEquipment, getObjectTypes, getApprovals } from "@/action/api";
 
 // Tipe Data
 type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE";
@@ -36,10 +36,12 @@ export default function ManajemenInspeksi() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [data, objTypes] = await Promise.all([
+        const [data, objTypes, approvalsRes] = await Promise.all([
           getEquipments(),
-          getObjectTypes()
+          getObjectTypes(),
+          getApprovals()
         ]);
+        const approvalsData = approvalsRes?.data || [];
         const mappedData = data.map((item: any) => {
           let objectTypeName = "Belum Ditentukan";
           if (item.object_type?.name) {
@@ -76,7 +78,15 @@ export default function ManajemenInspeksi() {
           if (statusAset === "REGISTERED") {
             statusPersetujuan = "NONE";
           } else if (statusAset === "VALIDATED") {
-            statusPersetujuan = "PENDING_REVIEW"; 
+            // Cek status dari API approvals jika ada
+            const app = approvalsData.find((a: any) => a.equipment_id === Number(item.id) || a.equipment?.id === Number(item.id));
+            if (app) {
+              if (app.approval_status === "REVISION_REQUIRED") statusPersetujuan = "NEED_REVISION";
+              else if (app.approval_status === "IN_REVIEW") statusPersetujuan = "IN_REVIEW";
+              else statusPersetujuan = "PENDING_REVIEW";
+            } else {
+              statusPersetujuan = "PENDING_REVIEW"; 
+            }
           } else if (statusAset === "IDLE") {
             statusPersetujuan = "APPROVED";
           } else if (statusAset === "REJECTED") {
@@ -98,19 +108,33 @@ export default function ManajemenInspeksi() {
         const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
         const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
         const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
+        const reValidated = JSON.parse(localStorage.getItem('reValidatedAssets') || '[]');
+        const validated = JSON.parse(localStorage.getItem('validatedAssets') || '[]');
         
-        if (approved.length > 0 || revised.length > 0 || inReview.length > 0) {
+        if (approved.length > 0 || revised.length > 0 || inReview.length > 0 || reValidated.length > 0 || validated.length > 0) {
           setAssets(mappedWithApproval.map((asset: any) => {
+            let currentStatus = asset.statusPersetujuan;
+            let currentAsetStatus = asset.statusAset;
+            
+            if (validated.includes(asset.kodeAlat) && currentAsetStatus === "REGISTERED") {
+              currentAsetStatus = "VALIDATED";
+              currentStatus = "PENDING_REVIEW";
+            }
+            
             if (approved.includes(asset.kodeAlat)) {
-              return { ...asset, statusAset: "IDLE", statusPersetujuan: "APPROVED" };
+              currentAsetStatus = "IDLE";
+              currentStatus = "APPROVED";
+            } else if (revised.includes(asset.kodeAlat)) {
+              currentStatus = "NEED_REVISION";
+            } else if (reValidated.includes(asset.kodeAlat) && currentStatus === "NEED_REVISION") {
+              currentStatus = "PENDING_REVIEW";
             }
-            if (revised.includes(asset.kodeAlat)) {
-              return { ...asset, statusPersetujuan: "NEED_REVISION" };
+            
+            if (inReview.includes(asset.kodeAlat) && currentStatus === "PENDING_REVIEW") {
+              currentStatus = "IN_REVIEW";
             }
-            if (inReview.includes(asset.kodeAlat) && asset.statusPersetujuan === "PENDING_REVIEW") {
-              return { ...asset, statusPersetujuan: "IN_REVIEW" };
-            }
-            return asset;
+            
+            return { ...asset, statusAset: currentAsetStatus, statusPersetujuan: currentStatus };
           }));
         } else {
           setAssets(mappedWithApproval);
@@ -189,17 +213,24 @@ export default function ManajemenInspeksi() {
     setUploadedFiles([]); // Reset files
     setShowValidationErrors(false);
     
-    // Reset Form jika status belum divalidasi
-    if (asset.statusPersetujuan === "NONE" || asset.statusPersetujuan === "PENDING_REVIEW") {
+    // Reset Form jika status belum divalidasi (baru pertama kali)
+    if (asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE") {
       setHasilPemeriksaan("");
       setCatatan("");
       setRekomendasi("");
       setLokasi("");
+      setJamMulai("");
+      setJamSelesai("");
+      setTglPemeriksaan(new Date().toISOString().split('T')[0]);
     } else {
+      // Jika statusnya Ubah Validasi atau Perlu Revisi, muat data yang sudah pernah diisi
       setHasilPemeriksaan(asset.statusAset === "REJECTED" ? "Tidak Layak" : "Layak");
-      setCatatan(asset.statusPersetujuan === "NEED_REVISION" ? "Revisi: Harap lengkapi catatan kondisi pompa..." : "Visual fisik aman, tidak ada kebocoran.");
-      setRekomendasi("Dapat dimobilisasi segera");
-      setLokasi(asset.plant);
+      setCatatan("Visual fisik aman, tidak ada kebocoran, performa motor stabil.");
+      setRekomendasi("Dapat dimobilisasi segera ke area yang membutuhkan.");
+      setLokasi("Area Unit P-IB"); // Default mock data yang sesuai opsi dropdown
+      setJamMulai("09:00");
+      setJamSelesai("10:30");
+      setTglPemeriksaan(new Date().toISOString().split('T')[0]);
     }
     setIsModalOpen(true);
   };
@@ -226,9 +257,24 @@ export default function ManajemenInspeksi() {
         const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
         const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
         
+        const reValidated = JSON.parse(localStorage.getItem('reValidatedAssets') || '[]');
+        
+        if (revised.includes(selectedAsset.kodeAlat)) {
+          if (!reValidated.includes(selectedAsset.kodeAlat)) {
+             reValidated.push(selectedAsset.kodeAlat);
+             localStorage.setItem('reValidatedAssets', JSON.stringify(reValidated));
+          }
+        }
+
         localStorage.setItem('revisedAssets', JSON.stringify(revised.filter((code: string) => code !== selectedAsset.kodeAlat)));
         localStorage.setItem('inReviewAssets', JSON.stringify(inReview.filter((code: string) => code !== selectedAsset.kodeAlat)));
         localStorage.setItem('approvedAssets', JSON.stringify(approved.filter((code: string) => code !== selectedAsset.kodeAlat)));
+        
+        const validated = JSON.parse(localStorage.getItem('validatedAssets') || '[]');
+        if (isUtilizable && !validated.includes(selectedAsset.kodeAlat)) {
+          validated.push(selectedAsset.kodeAlat);
+          localStorage.setItem('validatedAssets', JSON.stringify(validated));
+        }
 
         const fileNames = uploadedFiles.map(f => f.name);
         setAssets(assets.map(a => a.id === selectedAsset.id ? {
@@ -268,7 +314,15 @@ export default function ManajemenInspeksi() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
        const files = Array.from(e.target.files);
-       setUploadedFiles(prev => [...prev, ...files]);
+       const validFiles = files.filter(f => {
+         if (f.size > 5 * 1024 * 1024) {
+           alert(`Ukuran file ${f.name} melebihi batas 5MB.`);
+           return false;
+         }
+         return true;
+       });
+       setUploadedFiles(prev => [...prev, ...validFiles]);
+       e.target.value = ''; // Reset input to allow selecting the same file again
     }
   };
 
@@ -287,7 +341,14 @@ export default function ManajemenInspeksi() {
     setIsDragging(false);
     if (e.dataTransfer.files) {
       const files = Array.from(e.dataTransfer.files);
-      setUploadedFiles(prev => [...prev, ...files]);
+      const validFiles = files.filter(f => {
+        if (f.size > 5 * 1024 * 1024) {
+          alert(`Ukuran file ${f.name} melebihi batas 5MB.`);
+          return false;
+        }
+        return true;
+      });
+      setUploadedFiles(prev => [...prev, ...validFiles]);
     }
   };
 
@@ -398,7 +459,7 @@ export default function ManajemenInspeksi() {
             <span className="text-[8px] font-bold">Ubah Validasi</span>
           </button>
         )}
-        {asset.statusAset === "VALIDATED" && asset.statusPersetujuan === "NEED_REVISION" && (
+        {asset.statusPersetujuan === "NEED_REVISION" && (
           <button title="Revisi Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-0.5 rounded transition-colors flex flex-col items-center">
             <Edit className="w-3 h-3 mb-0.5" />
             <span className="text-[8px] font-bold">Revisi Validasi</span>
@@ -695,7 +756,10 @@ export default function ManajemenInspeksi() {
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
               <div className="flex items-center gap-3">
-                <h2 className="text-base font-bold text-gray-900">Validasi Inspeksi Teknik</h2>
+                <h2 className="text-base font-bold text-gray-900">
+                  {selectedAsset.statusPersetujuan === "NEED_REVISION" ? "Revisi Validasi Inspeksi" : 
+                   (selectedAsset.statusPersetujuan === "PENDING_REVIEW" ? "Ubah Validasi Inspeksi" : "Validasi Inspeksi Teknik")}
+                </h2>
                 <span className="text-gray-300">|</span>
                 <span className="text-[13px] font-semibold text-[#0A356A]">{selectedAsset.kodeAlat}</span>
               </div>
@@ -730,6 +794,26 @@ export default function ManajemenInspeksi() {
                   {getApprovalBadge(selectedAsset.statusPersetujuan)}
                 </div>
               </div>
+
+              {/* Banners untuk Status Khusus */}
+              {selectedAsset.statusPersetujuan === "NEED_REVISION" && (
+                <div className="bg-orange-50 border-l-4 border-orange-500 p-3 mb-4 rounded-r-lg flex gap-3 shadow-sm">
+                  <AlertCircle className="w-5 h-5 text-orange-600 shrink-0" />
+                  <div>
+                    <h4 className="text-[12px] font-bold text-orange-800">Menunggu Revisi Anda</h4>
+                    <p className="text-[11px] text-orange-700 mt-0.5">Manager meminta revisi: &quot;Mohon lampirkan bukti foto tambahan dan lengkapi detail kondisi pada catatan pemeriksaan.&quot;</p>
+                  </div>
+                </div>
+              )}
+              {selectedAsset.statusPersetujuan === "PENDING_REVIEW" && (
+                <div className="bg-blue-50 border-l-4 border-blue-500 p-3 mb-4 rounded-r-lg flex gap-3 shadow-sm">
+                  <Info className="w-5 h-5 text-blue-600 shrink-0" />
+                  <div>
+                    <h4 className="text-[12px] font-bold text-blue-800">Mode Ubah Data</h4>
+                    <p className="text-[11px] text-blue-700 mt-0.5">Anda sedang mengubah data validasi yang sebelumnya telah dikirimkan, namun belum di-review oleh Manager.</p>
+                  </div>
+                </div>
+              )}
 
               {/* Form Grid (Optimized for minimal scrolling) */}
               <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">

@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Eye, X, Shield, FileText, CheckCircle2, RefreshCw, XCircle, Download } from "lucide-react";
-import { getApprovals, reviewApproval, getEquipments } from "@/action/api";
+import { getApprovals, reviewApproval, getEquipments, startReviewApproval } from "@/action/api";
 
 interface RequestAsset {
   id: string;
@@ -48,20 +48,21 @@ export default function ManajerApprovePage() {
         const equipmentMap = new Map();
         if (Array.isArray(equipmentsData)) {
           equipmentsData.forEach((eq: any) => {
-            equipmentMap.set(eq.id, eq);
+            equipmentMap.set(Number(eq.id), eq);
           });
         }
 
         const mappedData = approvalsData.map((item: any) => {
-          const eq = equipmentMap.get(item.equipment_id);
+          const equipmentId = item.equipment_id || item.equipment?.id;
+          const eq = equipmentMap.get(Number(equipmentId)) || item.equipment;
           return {
             id: item.id.toString(),
             nomorRequest: item.request_number,
-            kodeAset: item.equipment_code || (eq?.equipment_code || "-"),
-            namaAset: item.equipment_name || (eq?.name || "-"),
-            plant: item.plant || (eq?.plant || "-"),
+            kodeAset: item.equipment_code || eq?.equipment_code || "-",
+            namaAset: item.equipment_name || eq?.name || "-",
+            plant: item.plant || eq?.plant || "-",
             tanggalPengajuan: item.request_date ? new Date(item.request_date).toISOString().split('T')[0] : "-",
-            statusAset: (item.equipment_status || eq?.status?.name || "REGISTERED").toUpperCase(),
+            statusAset: (item.equipment_status || eq?.status?.name || "VALIDATED").toUpperCase(),
             statusPersetujuan: item.approval_status === "PENDING" ? "Menunggu Review" : (item.approval_status === "IN_REVIEW" ? "Sedang Direview" : (item.approval_status === "APPROVED" ? "Disetujui" : (item.approval_status === "REVISION_REQUIRED" ? "Perlu Revisi" : item.approval_status)))
           };
         });
@@ -69,8 +70,9 @@ export default function ManajerApprovePage() {
         const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
         const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
         const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
+        const reValidated = JSON.parse(localStorage.getItem('reValidatedAssets') || '[]');
         
-        if (approved.length > 0 || revised.length > 0 || inReview.length > 0) {
+        if (approved.length > 0 || revised.length > 0 || inReview.length > 0 || reValidated.length > 0) {
           const updated = mappedData.map((req: any) => {
             if (approved.includes(req.kodeAset)) {
               return { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" };
@@ -78,7 +80,10 @@ export default function ManajerApprovePage() {
             if (revised.includes(req.kodeAset)) {
               return { ...req, statusPersetujuan: "Perlu Revisi" };
             }
-            if (inReview.includes(req.kodeAset) && req.statusPersetujuan === "Menunggu Review") {
+            if (reValidated.includes(req.kodeAset) && !inReview.includes(req.kodeAset)) {
+              return { ...req, statusPersetujuan: "Menunggu Review" };
+            }
+            if (inReview.includes(req.kodeAset) && (req.statusPersetujuan === "Menunggu Review" || reValidated.includes(req.kodeAset))) {
               return { ...req, statusPersetujuan: "Sedang Direview" };
             }
             return req;
@@ -101,22 +106,36 @@ export default function ManajerApprovePage() {
   const openModal = (asset: RequestAsset) => {
     setSelectedAsset(asset);
     setIsModalOpen(true);
-    
-    // Change to IN_REVIEW automatically when opened
-    if (asset.statusPersetujuan === "Menunggu Review") {
+  };
+
+  const handleMulaiReview = async () => {
+    if (selectedAsset && selectedAsset.statusPersetujuan === "Menunggu Review") {
+      try {
+        const res = await startReviewApproval(selectedAsset.id);
+        if (!res.success) {
+          console.error("Failed to start review on backend:", res.message);
+          alert("Gagal memulai review di backend: " + res.message);
+        }
+      } catch (err) {
+        console.error(err);
+      }
+
       const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
-      if (!inReview.includes(asset.kodeAset)) {
-        inReview.push(asset.kodeAset);
+      if (!inReview.includes(selectedAsset.kodeAset)) {
+        inReview.push(selectedAsset.kodeAset);
         localStorage.setItem('inReviewAssets', JSON.stringify(inReview));
       }
       
       const updatedReqs = requests.map(req => 
-        req.kodeAset === asset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview" } : req
+        req.kodeAset === selectedAsset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview" } : req
       );
       setRequests(updatedReqs);
       setFilteredRequests(filteredRequests.map(req => 
-        req.kodeAset === asset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview" } : req
+        req.kodeAset === selectedAsset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview" } : req
       ));
+      
+      // Update selected asset state so UI re-renders immediately
+      setSelectedAsset({ ...selectedAsset, statusPersetujuan: "Sedang Direview" });
     }
   };
 
@@ -141,6 +160,9 @@ export default function ManajerApprovePage() {
         
         const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
         localStorage.setItem('revisedAssets', JSON.stringify(revised.filter((code: string) => code !== selectedAsset.kodeAset)));
+
+        const reValidated = JSON.parse(localStorage.getItem('reValidatedAssets') || '[]');
+        localStorage.setItem('reValidatedAssets', JSON.stringify(reValidated.filter((code: string) => code !== selectedAsset.kodeAset)));
 
         setNotification({ type: "success", message: "Berhasil menyetujui aset!" });
         const updated = requests.map(req => 
@@ -182,6 +204,9 @@ export default function ManajerApprovePage() {
         
         const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
         localStorage.setItem('inReviewAssets', JSON.stringify(inReview.filter((code: string) => code !== selectedAsset.kodeAset)));
+
+        const reValidated = JSON.parse(localStorage.getItem('reValidatedAssets') || '[]');
+        localStorage.setItem('reValidatedAssets', JSON.stringify(reValidated.filter((code: string) => code !== selectedAsset.kodeAset)));
 
         setNotification({ type: "success", message: "Berhasil mengirim permintaan revisi!" });
         const updated = requests.map(req => 
@@ -397,78 +422,72 @@ export default function ManajerApprovePage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onClick={closeModal} />
           
-          <div className="relative w-full max-w-3xl max-h-[90vh] bg-white shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             
             {/* Modal Header */}
             <div className="flex items-start justify-between px-6 py-4 border-b border-gray-200 bg-white shrink-0">
               <div>
-                <h2 className="text-lg font-bold text-[#1e293b]">Detail Informasi Aset</h2>
+                <h2 className="text-lg font-bold text-[#1e293b]">Detail Review Persetujuan</h2>
                 <p className="text-[13px] text-gray-500 font-medium mt-0.5">{selectedAsset.kodeAset}</p>
               </div>
-              <button onClick={closeModal} className="text-gray-900 hover:bg-gray-100 p-1 rounded-md transition-colors font-bold mt-1">
+              <button onClick={closeModal} className="text-gray-400 hover:text-gray-900 hover:bg-gray-100 p-1 rounded-md transition-colors font-bold mt-1">
                 <X className="w-5 h-5" strokeWidth={3} />
               </button>
             </div>
 
             {/* Modal Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 bg-white">
+            <div className="flex-1 overflow-y-auto px-6 py-5 bg-gray-50">
               
-              {/* Alert Banner */}
-              <div className="bg-[#eff6ff] border border-blue-200 rounded-lg p-3.5 flex items-start gap-3 mb-6">
-                <Shield className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
-                <p className="text-[13px] text-blue-700 font-medium leading-relaxed">
-                  Status: {selectedAsset.statusPersetujuan}. Anda dapat memberikan persetujuan atau meminta revisi teknis.
+              {/* Alert Banner Dinamis */}
+              <div className={`border rounded-lg p-3.5 flex items-start gap-3 mb-6 ${
+                selectedAsset.statusPersetujuan === 'Menunggu Review' ? 'bg-[#FEF9C3] border-yellow-200 text-yellow-800' :
+                selectedAsset.statusPersetujuan === 'Sedang Direview' ? 'bg-[#E0F2FE] border-blue-200 text-blue-800' :
+                selectedAsset.statusPersetujuan === 'Perlu Revisi' ? 'bg-[#F3E8FF] border-purple-200 text-purple-800' :
+                'bg-gray-100 border-gray-200 text-gray-800'
+              }`}>
+                <Shield className="w-5 h-5 shrink-0 mt-0.5" />
+                <p className="text-[13px] font-medium leading-relaxed">
+                  Status: <strong>{selectedAsset.statusPersetujuan}</strong>. 
+                  {selectedAsset.statusPersetujuan === 'Menunggu Review' && " Silakan mulai review untuk melihat detail lebih lanjut."}
+                  {selectedAsset.statusPersetujuan === 'Sedang Direview' && " Anda sedang mereview pengajuan ini. Berikan keputusan setujui atau minta revisi."}
+                  {selectedAsset.statusPersetujuan === 'Perlu Revisi' && " Menunggu perbaikan dari Tim Inspeksi Teknik."}
                 </p>
               </div>
 
               {/* Section 1: Detail Spesifikasi Alat */}
-              <div className="mb-6">
-                <h3 className="text-[14px] font-bold text-[#0f4a8a] border-b border-blue-100 pb-2 mb-4">Detail Spesifikasi Alat</h3>
-                
+              <div className="mb-6 bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                <h3 className="text-[14px] font-bold text-[#0f4a8a] border-b border-blue-100 pb-2 mb-4">1. Detail Spesifikasi Aset</h3>
                 <div className="grid grid-cols-2 gap-x-8 gap-y-4">
                   <div>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Kode Alat:</p>
-                    <p className="text-[13px] font-bold text-gray-900">{selectedAsset.kodeAset}</p>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">Nomor Request:</p>
+                    <p className="text-[13px] font-bold text-gray-900">{selectedAsset.nomorRequest}</p>
                   </div>
                   <div>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Nama Alat:</p>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">Kode Aset:</p>
+                    <p className="text-[13px] font-bold text-gray-900">{selectedAsset.kodeAset}</p>
+                  </div>
+                  
+                  <div className="col-span-2">
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">Nama Aset:</p>
                     <p className="text-[13px] font-bold text-gray-900">{selectedAsset.namaAset}</p>
                   </div>
                   
                   <div>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Kategori / Jenis:</p>
-                    <p className="text-[13px] font-bold text-gray-900">Valve</p>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">Jenis Aset:</p>
+                    <p className="text-[13px] font-bold text-gray-900">Peralatan Rotating</p>
                   </div>
                   <div>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Plant Asal:</p>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">Plant:</p>
                     <p className="text-[13px] font-bold text-gray-900">{selectedAsset.plant}</p>
                   </div>
 
                   <div>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Lokasi Gudang:</p>
-                    <p className="text-[13px] font-bold text-gray-900">Gudang Utama</p>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">Functional Location:</p>
+                    <p className="text-[13px] font-bold text-gray-900">FL-P1-0023</p>
                   </div>
                   <div>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Pabrikan / Vendor:</p>
-                    <p className="text-[13px] font-bold text-gray-900">Fisher Controls</p>
-                  </div>
-
-                  <div>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Tahun Pembuatan:</p>
-                    <p className="text-[13px] font-bold text-gray-900">2020</p>
-                  </div>
-                  <div>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Nilai Perolehan (IDR):</p>
-                    <p className="text-[13px] font-bold text-gray-900">Rp 80,000,000</p>
-                  </div>
-
-                  <div>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Kondisi Fisik:</p>
-                    <p className="text-[13px] font-bold text-gray-900 uppercase">Bagus</p>
-                  </div>
-                  <div>
-                    <p className="text-[12px] text-gray-500 font-medium mb-1">Didaftarkan Oleh:</p>
-                    <p className="text-[13px] font-bold text-gray-900">NPP2304145</p>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">Storage Location:</p>
+                    <p className="text-[13px] font-bold text-gray-900">Gudang Utama B</p>
                   </div>
 
                   <div>
@@ -476,111 +495,152 @@ export default function ManajerApprovePage() {
                     <p className="text-[13px] font-bold text-gray-900">{selectedAsset.tanggalPengajuan}</p>
                   </div>
                   <div className="hidden"></div>
-
-                  <div className="col-span-2">
-                    <p className="text-[12px] text-gray-500 font-medium mb-1.5">Catatan Pendaftaran:</p>
-                    <div className="bg-[#f8fafc] p-3 rounded-md">
-                      <p className="text-[13px] text-gray-700 italic font-medium">"Katup kontrol dilepas karena redundansi kapasitas."</p>
-                    </div>
+                  
+                  <div>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">Status Aset:</p>
+                    {getStatusAsetBadge(selectedAsset.statusAset)}
+                  </div>
+                  <div>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">Status Persetujuan:</p>
+                    {getApprovalBadge(selectedAsset.statusPersetujuan)}
                   </div>
                 </div>
               </div>
 
-              {/* Section 2: Lampiran Gambar & Dokumen */}
-              <div>
-                <h3 className="text-[14px] font-bold text-[#0f4a8a] border-b border-blue-100 pb-2 mb-4">Lampiran Gambar & Dokumen</h3>
+              {/* Section 2: Informasi Finansial */}
+              <div className="mb-6 bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                <h3 className="text-[14px] font-bold text-[#0f4a8a] border-b border-blue-100 pb-2 mb-4">2. Informasi Finansial</h3>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <p className="text-[11px] text-gray-500 font-medium mb-1">Original Value</p>
+                    <p className="text-[14px] font-bold text-gray-900">Rp 120,500,000</p>
+                  </div>
+                  <div className="bg-gray-50 p-3 rounded-lg border border-gray-100">
+                    <p className="text-[11px] text-gray-500 font-medium mb-1">Book Value</p>
+                    <p className="text-[14px] font-bold text-gray-900">Rp 45,200,000</p>
+                  </div>
+                  <div className="bg-blue-50 p-3 rounded-lg border border-blue-100">
+                    <p className="text-[11px] text-blue-700 font-medium mb-1">Estimated Reuse Value</p>
+                    <p className="text-[14px] font-bold text-[#0f4a8a]">Rp 60,000,000</p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Hasil Validasi Inspeksi Teknik */}
+              <div className="mb-6 bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">
+                {selectedAsset.statusPersetujuan === "Menunggu Review" && (
+                  <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex items-center justify-center">
+                    <div className="bg-white px-4 py-2 border border-gray-200 rounded-full shadow-md text-[12px] font-bold text-gray-600 flex items-center gap-2">
+                      <Shield className="w-4 h-4 text-blue-500" />
+                      Mulai review untuk melihat detail inspeksi
+                    </div>
+                  </div>
+                )}
                 
-                <div className="grid grid-cols-2 gap-4 mb-4">
-                  <div 
-                    onClick={() => window.open("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80", "_blank")}
-                    className="border border-gray-200 rounded-lg overflow-hidden flex flex-col bg-white shadow-sm cursor-pointer hover:border-[#0f4a8a] transition-colors group"
-                  >
-                    <div className="h-40 bg-gray-100 w-full relative overflow-hidden flex items-center justify-center">
-                      <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Foto Pompa" />
-                    </div>
-                    <div className="p-3 text-center flex flex-col justify-center border-t border-gray-100">
-                      <p className="text-[12px] font-bold text-gray-800">Foto Pompa Utama</p>
-                    </div>
+                <h3 className="text-[14px] font-bold text-[#0f4a8a] border-b border-blue-100 pb-2 mb-4">3. Hasil Validasi Inspeksi Teknik</h3>
+                
+                <div className="grid grid-cols-2 gap-x-8 gap-y-4 mb-5">
+                  <div>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">Nama Inspektur:</p>
+                    <p className="text-[13px] font-bold text-gray-900">Budi Santoso</p>
                   </div>
-
-                  <div 
-                    onClick={() => window.open("https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80", "_blank")}
-                    className="border border-gray-200 rounded-lg overflow-hidden flex flex-col bg-white shadow-sm cursor-pointer hover:border-[#0f4a8a] transition-colors group"
-                  >
-                    <div className="h-40 bg-gray-100 w-full relative overflow-hidden flex items-center justify-center">
-                      <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Label Tag" />
-                    </div>
-                    <div className="p-3 text-center flex flex-col justify-center border-t border-gray-100">
-                      <p className="text-[12px] font-bold text-gray-800">Label Tag Plat Aset</p>
-                    </div>
+                  <div>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">NPP / Role:</p>
+                    <p className="text-[13px] font-bold text-gray-900">NPP2304145 / Inspektur Mekanik</p>
+                  </div>
+                  
+                  <div>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">Waktu Pemeriksaan:</p>
+                    <p className="text-[13px] font-bold text-gray-900">12 Sep 2023 (09:00 - 11:30)</p>
+                  </div>
+                  <div>
+                    <p className="text-[12px] text-gray-500 font-medium mb-1">Durasi / Lokasi:</p>
+                    <p className="text-[13px] font-bold text-gray-900">2 Jam 30 Menit / Workshop Area 2</p>
                   </div>
                 </div>
 
-                <div 
-                  onClick={() => window.open("/laporan_inspeksi_P101.pdf", "_blank")}
-                  className="border border-gray-200 rounded-lg p-3 flex items-center justify-between bg-white shadow-sm hover:border-[#0f4a8a] transition-colors cursor-pointer group"
-                >
-                  <div className="flex items-center gap-3">
-                    <FileText className="w-8 h-8 text-red-500 group-hover:text-[#0f4a8a] transition-colors" />
-                    <div>
-                      <p className="text-[13px] font-bold text-gray-800">laporan_inspeksi_P101.pdf</p>
-                      <p className="text-[11px] text-gray-500">3.4 MB</p>
-                    </div>
+                <div className="grid grid-cols-2 gap-4 mb-5">
+                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <p className="text-[11px] font-bold text-gray-500 uppercase mb-2">Kondisi Mekanik</p>
+                    <p className="text-[13px] text-gray-800">Seal pompa aus, impeller korosi ringan. Casing luar masih utuh tanpa keretakan.</p>
                   </div>
-                  <div className="flex items-center gap-2 text-[12px] font-bold text-[#0f4a8a]">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const link = document.createElement("a");
-                        link.href = "/laporan_inspeksi_P101.pdf";
-                        link.download = "laporan_inspeksi_P101.pdf";
-                        link.click();
-                      }} 
-                      className="p-1.5 hover:bg-blue-50 rounded-md transition-colors text-[#0f4a8a]" 
-                      title="Download Laporan"
-                    >
-                      <Download className="w-4 h-4" />
-                    </button>
+                  <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
+                    <p className="text-[11px] font-bold text-gray-500 uppercase mb-2">Kondisi Elektrik</p>
+                    <p className="text-[13px] text-gray-800">Motor insulasi normal (resistance &gt; 10MΩ). Kabel koneksi aman.</p>
                   </div>
                 </div>
 
+                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-5">
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <p className="text-[13px] font-bold text-green-800 uppercase tracking-wide">Hasil: Layak Digunakan (Utilizable)</p>
+                  </div>
+                  <div className="pl-4">
+                    <p className="text-[12px] text-gray-500 font-medium mt-2">Catatan Pemeriksaan:</p>
+                    <p className="text-[13px] text-gray-800 italic">"Peralatan masih sangat layak digunakan secara fungsional meskipun ada keausan ringan pada seal."</p>
+                    
+                    <p className="text-[12px] text-gray-500 font-medium mt-3">Rekomendasi Tindakan:</p>
+                    <p className="text-[13px] font-bold text-gray-900">Penggantian seal mekanik sebelum diutilisasi kembali ke plant aktif.</p>
+                  </div>
+                </div>
+
+                {/* Dokumentasi */}
+                <p className="text-[12px] text-gray-500 font-medium mb-2">Dokumentasi Foto & Riwayat Audit:</p>
+                <div className="flex gap-3">
+                  <div className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300">
+                    <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" className="object-cover w-full h-full" alt="Foto Inspeksi 1" />
+                  </div>
+                  <div className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300">
+                    <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" className="object-cover w-full h-full" alt="Foto Inspeksi 2" />
+                  </div>
+                  <div className="flex-1 border border-gray-200 rounded-lg bg-gray-50 p-3 text-[11px] text-gray-500 overflow-y-auto h-24">
+                    <p className="font-bold text-gray-700 mb-1">Riwayat Audit (Log):</p>
+                    <ul className="list-disc pl-4 space-y-1">
+                      <li>12 Sep 2023 11:35 - Validasi disimpan (NPP2304145)</li>
+                      <li>11 Sep 2023 15:20 - Aset diterima di gudang inspeksi</li>
+                    </ul>
+                  </div>
+                </div>
               </div>
 
             </div>
 
-            {/* Modal Footer (Sembunyikan jika sudah Disetujui / Revisi) */}
-            {selectedAsset.statusPersetujuan !== "Disetujui" && selectedAsset.statusPersetujuan !== "Perlu Revisi" && (
-              <div className="flex items-center justify-center gap-3 px-6 py-4 border-t border-gray-200 bg-white shrink-0">
-                <button onClick={closeModal} className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md text-[13px] font-semibold hover:bg-gray-50 transition-colors">
-                  Batal
-                </button>
+            {/* Modal Footer dengan Tombol Aksi Sesuai Status */}
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-gray-200 bg-white shrink-0 shadow-[0_-4px_10px_rgba(0,0,0,0.05)]">
+              <button onClick={closeModal} className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md text-[13px] font-semibold hover:bg-gray-50 transition-colors">
+                Tutup
+              </button>
+              
+              {selectedAsset.statusPersetujuan === "Menunggu Review" && (
                 <button 
-                  onClick={() => {
-                    setRevisiCatatan("");
-                    setRevisiError(false);
-                    setIsRevisiOpen(true);
-                  }}
-                  className="px-6 py-2.5 bg-[#f60000] text-white rounded-md text-[13px] font-semibold hover:bg-[#990404] transition-colors"
+                  onClick={handleMulaiReview}
+                  className="px-6 py-2.5 bg-[#0f4a8a] text-white rounded-md text-[13px] font-semibold hover:bg-[#0b386b] transition-colors shadow-sm"
                 >
-                  Minta Revisi
+                  Mulai Review
                 </button>
-                <button 
-                  onClick={() => setIsConfirmOpen(true)}
-                  className="px-6 py-2.5 bg-[#166534] text-white rounded-md text-[13px] font-semibold hover:bg-[#14532d] transition-colors"
-                >
-                  Setujui (Approve)
-                </button>
-              </div>
-            )}
-            
-            {/* Tampilkan pesan jika sudah diproses */}
-            {(selectedAsset.statusPersetujuan === "Disetujui" || selectedAsset.statusPersetujuan === "Perlu Revisi") && (
-              <div className="flex items-center justify-center px-6 py-4 border-t border-gray-200 bg-gray-50 shrink-0">
-                <p className="text-[13px] text-gray-500 font-medium italic">
-                  Pengajuan ini sudah diproses ({selectedAsset.statusPersetujuan}) dan tidak dapat direview ulang.
-                </p>
-              </div>
-            )}
+              )}
+              
+              {selectedAsset.statusPersetujuan === "Sedang Direview" && (
+                <>
+                  <button 
+                    onClick={() => {
+                      setRevisiCatatan("");
+                      setRevisiError(false);
+                      setIsRevisiOpen(true);
+                    }}
+                    className="px-6 py-2.5 bg-white border border-[#f60000] text-[#f60000] rounded-md text-[13px] font-semibold hover:bg-red-50 transition-colors"
+                  >
+                    Minta Revisi
+                  </button>
+                  <button 
+                    onClick={() => setIsConfirmOpen(true)}
+                    className="px-6 py-2.5 bg-[#166534] text-white rounded-md text-[13px] font-semibold hover:bg-[#14532d] transition-colors shadow-sm"
+                  >
+                    Setujui (Approve)
+                  </button>
+                </>
+              )}
+            </div>
 
           </div>
         </div>
