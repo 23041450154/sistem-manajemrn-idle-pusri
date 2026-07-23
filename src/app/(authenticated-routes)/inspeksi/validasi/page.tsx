@@ -24,6 +24,11 @@ interface Asset {
   statusPersetujuan: ApprovalState;
   spesifikasi: string;
   lampiran: string[];
+  lokasiPenyimpanan: string;
+  area: string;
+  vendor: string;
+  tahunDibuat: string;
+  nilaiPerolehan: string;
 }
 
 
@@ -66,7 +71,12 @@ export default function ManajemenInspeksi() {
             statusAset: (item.status?.name || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "IDLE" : "REGISTERED")).toUpperCase(),
             statusPersetujuan: "NONE", // Default, will override below
             spesifikasi: item.notes || "Belum ada spesifikasi",
-            lampiran: []
+            lampiran: [],
+            lokasiPenyimpanan: item.storage_location?.name || item.storageLocation?.name || "Belum ditentukan",
+            area: item.func_loc || item.funcloc || "-",
+            vendor: item.vendor || "-",
+            tahunDibuat: item.year?.toString() || "-",
+            nilaiPerolehan: item.original_value ? `Rp ${Number(item.original_value).toLocaleString('id-ID')}` : "Rp 0"
           };
         });
         
@@ -198,6 +208,7 @@ export default function ManajemenInspeksi() {
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
+  const [fileError, setFileError] = useState<string | null>(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -212,6 +223,7 @@ export default function ManajemenInspeksi() {
     setModalMode(mode);
     setUploadedFiles([]); // Reset files
     setShowValidationErrors(false);
+    setFileError(null);
     
     // Reset Form jika status belum divalidasi (baru pertama kali)
     if (asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE") {
@@ -313,14 +325,19 @@ export default function ManajemenInspeksi() {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
+       setFileError(null);
        const files = Array.from(e.target.files);
+       let hasError = false;
        const validFiles = files.filter(f => {
          if (f.size > 5 * 1024 * 1024) {
-           alert(`Ukuran file ${f.name} melebihi batas 5MB.`);
+           hasError = true;
            return false;
          }
          return true;
        });
+       if (hasError) {
+         setFileError("file anda lebih dari 5mb");
+       }
        setUploadedFiles(prev => [...prev, ...validFiles]);
        e.target.value = ''; // Reset input to allow selecting the same file again
     }
@@ -340,14 +357,19 @@ export default function ManajemenInspeksi() {
     e.preventDefault();
     setIsDragging(false);
     if (e.dataTransfer.files) {
+      setFileError(null);
       const files = Array.from(e.dataTransfer.files);
+      let hasError = false;
       const validFiles = files.filter(f => {
         if (f.size > 5 * 1024 * 1024) {
-          alert(`Ukuran file ${f.name} melebihi batas 5MB.`);
+          hasError = true;
           return false;
         }
         return true;
       });
+      if (hasError) {
+        setFileError("file anda lebih dari 5mb");
+      }
       setUploadedFiles(prev => [...prev, ...validFiles]);
     }
   };
@@ -815,6 +837,77 @@ export default function ManajemenInspeksi() {
                 </div>
               )}
 
+              {/* Informasi Registrasi (Rendal) */}
+              <div className="bg-white border border-gray-200 rounded-lg p-3 mb-4 shadow-sm">
+                <div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
+                  <Info className="w-4 h-4 text-gray-500" />
+                  <h3 className="text-[12px] font-bold text-gray-800">Informasi Registrasi (Rendal)</h3>
+                </div>
+                
+                <div className="flex flex-col md:flex-row gap-4">
+                  <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-4">
+                    <div>
+                      <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Kode Aset / Tag</span>
+                      <span className="text-[12px] font-bold text-[#0A356A]">{selectedAsset.kodeAlat}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Nama Peralatan</span>
+                      <span className="text-[12px] font-medium text-gray-900">{selectedAsset.namaAlat}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Kategori (Tipe)</span>
+                      <span className="text-[12px] font-medium text-gray-900">{selectedAsset.jenisAlat}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Lokasi Penyimpanan</span>
+                      <span className="text-[12px] font-medium text-gray-900">{selectedAsset.lokasiPenyimpanan}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Pabrik / Plant</span>
+                      <span className="text-[12px] font-medium text-gray-900">{selectedAsset.plant}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Area (FuncLoc)</span>
+                      <span className="text-[12px] font-medium text-gray-900">{selectedAsset.area}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Vendor / Merk</span>
+                      <span className="text-[12px] font-medium text-gray-900">{selectedAsset.vendor}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Tahun Dibuat</span>
+                      <span className="text-[12px] font-medium text-gray-900">{selectedAsset.tahunDibuat}</span>
+                    </div>
+                    <div>
+                      <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Nilai Perolehan (Rp)</span>
+                      <span className="text-[12px] font-medium text-green-700">{selectedAsset.nilaiPerolehan}</span>
+                    </div>
+                  </div>
+                  
+                  {/* Foto Registrasi */}
+                  <div className="w-full md:w-56 shrink-0 flex flex-col gap-2 md:border-l md:border-gray-100 md:pl-4">
+                    <span className="text-[10px] font-semibold text-gray-500 uppercase block">Foto Registrasi</span>
+                    <div className="flex gap-2">
+                      <div 
+                        className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm" 
+                        onClick={() => window.open("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80", "_blank")}
+                        title="Foto Mesin"
+                      >
+                        <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" alt="Foto Aset 1" className="w-full h-full object-cover" />
+                      </div>
+                      <div 
+                        className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm" 
+                        onClick={() => window.open("https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80", "_blank")}
+                        title="Foto Label Plat"
+                      >
+                        <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" alt="Foto Label Aset" className="w-full h-full object-cover" />
+                      </div>
+                    </div>
+                    <span className="text-[9px] text-gray-400 italic text-center md:text-left mt-0.5">Klik foto untuk memperbesar</span>
+                  </div>
+                </div>
+              </div>
+
               {/* Form Grid (Optimized for minimal scrolling) */}
               <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                 
@@ -1025,6 +1118,9 @@ export default function ManajemenInspeksi() {
                     
                     {showValidationErrors && uploadedFiles.length < 2 && (
                       <p className="text-[10px] text-red-500 mt-1.5 font-medium">* Wajib mengunggah minimal 2 foto dokumentasi/file referensi.</p>
+                    )}
+                    {fileError && (
+                      <p className="text-[10px] text-red-500 mt-1.5 font-medium">* {fileError}</p>
                     )}
                   </div>
                 )}
