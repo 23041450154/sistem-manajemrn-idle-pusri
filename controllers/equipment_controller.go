@@ -8,7 +8,6 @@ import (
 	"github.com/Ucokgreget/backend-idle/models"
 	"github.com/Ucokgreget/backend-idle/request"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
@@ -90,109 +89,96 @@ func CreateEquipment(db *gorm.DB) gin.HandlerFunc {
 		var input request.EquipmentRequest
 
 		if err := c.ShouldBindJSON(&input); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"status":  "error",
-				"message": "Format request tidak valid",
-			})
+			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 
-		validate := validator.New()
-		if err := validate.Struct(input); err != nil {
-			validationErrors := err.(validator.ValidationErrors)
-			fields := []string{}
-			fieldLabels := map[string]string{
-				"EquipmentCode": "Kode Alat (equipment_code)",
-				"Name":          "Nama Alat (name)",
-				"ObjectTypeID":  "Jenis Alat (id_object_type)",
-				"Plant":         "Pabrik (plant)",
-				"ConditionID":   "Kondisi Awal (id_condition)",
-			}
-			for _, fe := range validationErrors {
-				if label, ok := fieldLabels[fe.Field()]; ok {
-					fields = append(fields, label)
-				}
-			}
-			message := "Validasi gagal: "
-			for i, f := range fields {
-				if i > 0 {
-					message += " dan "
-				}
-				message += f
-			}
-			message += " wajib diisi"
-
-			c.JSON(http.StatusBadRequest, gin.H{
-				"status":  "error",
-				"message": message,
-			})
+		if err := validate.Struct(&input); err != nil {
+			c.JSON(400, gin.H{"error": err.Error()})
 			return
 		}
 
 		var existing models.Equipment
 		if err := db.Where("equipment_code = ?", input.EquipmentCode).First(&existing).Error; err == nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"status":  "error",
-				"message": "Kode alat sudah terdaftar",
-			})
+			c.JSON(400, gin.H{"error": "Kode alat sudah terdaftar"})
 			return
 		}
 
 		var status models.Status
 		if err := db.Where("name = ?", "REGISTERED").First(&status).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"status":  "error",
-				"message": "Status REGISTERED tidak ditemukan di database",
-			})
+			c.JSON(400, gin.H{"error": "Kode alat tidak ditemukan"})
 			return
 		}
 
 		userID := c.GetUint("user_id")
-		userNPP := c.GetString("user_npp")
+		userNpp := c.GetString("user_npp")
 
 		equipment := models.Equipment{
-			UUID:              uuid.New().String(),
-			EquipmentCode:     input.EquipmentCode,
-			Name:              input.Name,
-			ObjectTypeID:      input.ObjectTypeID,
-			Plant:             input.Plant,
-			PlantDescription:  input.PlantDescription,
-			StorageLocationID: input.StorageLocationID,
-			FuncLoc:           input.FuncLoc,
-			Vendor:            input.Vendor,
-			Year:              input.Year,
-			OriginalValue:     input.OriginalValue,
-			BookValue:         input.BookValue,
-			ConditionID:       input.ConditionID,
-			StatusID:          status.ID,
-			IdleSince:         nil,
-			Notes:             input.Notes,
-			CreatedBy:         userID,
-			CreatedByNPP:      userNPP,
-			CreatedAt:         time.Now(),
-			UpdatedAt:         time.Now(),
+			UUID:                uuid.New().String(),
+			EquipmentCode:       input.EquipmentCode,
+			Name:                input.Name,
+			ObjectTypeID:        input.ObjectTypeID,
+			Plant:               input.Plant,
+			PlantDescription:    input.PlantDescription,
+			StorageLocationID:   input.StorageLocationID,
+			FuncLoc:             input.FuncLoc,
+			Vendor:              input.Vendor,
+			Year:                input.Year,
+			OriginalValue:       input.OriginalValue,
+			BookValue:           input.BookValue,
+			EstimatedReuseValue: input.EstimatedReuseValue,
+			StatusID:            status.ID,
+			ConditionID:         input.ConditionID,
+			Notes:               input.Notes,
+			CreatedBy:           userID,
+			CreatedByNPP:        userNpp,
+			CreatedAt:           time.Now(),
+			UpdatedAt:           time.Now(),
 		}
 
-		if err := db.Create(&equipment).Error; err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"status":  "error",
-				"message": "Gagal menyimpan data aset",
-			})
+		var idleDeclaration models.IdleDeclaration
+
+		err := db.Transaction(func(tx *gorm.DB) error {
+			if err := tx.Create(&equipment).Error; err != nil {
+				return err
+			}
+
+			idleDeclaration = models.IdleDeclaration{
+				EquipmentID:        int(equipment.ID),
+				IdleDate:           time.Time{},
+				IdleReasonID:       input.IdleReasonId,
+				ConditionID:        input.ConditionID,
+				PreservationStatus: "",
+				StorageLocationID:  input.StorageLocationID,
+				Notes:              input.Notes,
+				DeclaredBy:         0,
+				CreatedAt:          time.Now(),
+				UpdatedAt:          time.Now(),
+			}
+
+			if err := tx.Create(&idleDeclaration).Error; err != nil {
+				return err
+			}
+
+			return nil
+		})
+
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 			return
 		}
 
-		c.JSON(http.StatusCreated, gin.H{
+		c.JSON(http.StatusOK, gin.H{
 			"status":  "success",
-			"message": "Aset baru berhasil didaftarkan",
-			"data": gin.H{
-				"id":             equipment.ID,
+			"message": "Idle declaration created successfully",
+			"data": gin.H{"id": equipment.ID,
 				"uuid":           equipment.UUID,
 				"equipment_code": equipment.EquipmentCode,
 				"id_status":      1,
-				"created_by":     userNPP,
-				"created_at":     equipment.CreatedAt.Format(time.RFC3339),
-			},
+				"created_by":     userNpp,
+				"created_at":     equipment.CreatedAt.Format(time.RFC3339)},
 		})
+
 	}
 }
 
