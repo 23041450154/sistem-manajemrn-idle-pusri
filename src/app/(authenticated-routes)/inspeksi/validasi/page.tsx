@@ -7,7 +7,7 @@ import {
   ArrowUpDown, ArrowUp, ArrowDown, Download
 } from "lucide-react";
 
-import { getEquipments, validateEquipment } from "@/action/api";
+import { getEquipments, validateEquipment, getObjectTypes } from "@/action/api";
 
 // Tipe Data
 type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE";
@@ -36,19 +36,37 @@ export default function ManajemenInspeksi() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const data = await getEquipments();
-        const mappedData = data.map((item: any) => ({
-          id: item.id.toString(),
-          kodeAlat: item.equipment_code,
-          namaAlat: item.name,
-          plant: item.plant,
-          jenisAlat: item.object_type?.name || "Belum Ditentukan",
-          tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
-          statusAset: (item.status?.name || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "IDLE" : "REGISTERED")).toUpperCase(),
-          statusPersetujuan: "NONE", // Default, will override below
-          spesifikasi: item.notes || "Belum ada spesifikasi",
-          lampiran: []
-        }));
+        const [data, objTypes] = await Promise.all([
+          getEquipments(),
+          getObjectTypes()
+        ]);
+        const mappedData = data.map((item: any) => {
+          let objectTypeName = "Belum Ditentukan";
+          if (item.object_type?.name) {
+            objectTypeName = item.object_type.name;
+          } else if (item.objectType?.name) {
+            objectTypeName = item.objectType.name;
+          } else {
+            const otId = item.id_object_type || item.object_type_id || item.objectTypeId;
+            if (otId && objTypes) {
+              const found = objTypes.find((o: any) => o.id === otId || o.id === Number(otId));
+              if (found) objectTypeName = found.name;
+            }
+          }
+
+          return {
+            id: item.id?.toString() || "-",
+            kodeAlat: item.equipment_code,
+            namaAlat: item.name,
+            plant: item.plant,
+            jenisAlat: objectTypeName,
+            tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
+            statusAset: (item.status?.name || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "IDLE" : "REGISTERED")).toUpperCase(),
+            statusPersetujuan: "NONE", // Default, will override below
+            spesifikasi: item.notes || "Belum ada spesifikasi",
+            lampiran: []
+          };
+        });
         
         // Correcting status mapping based on API
         const mappedWithApproval = mappedData.map((item: any) => {

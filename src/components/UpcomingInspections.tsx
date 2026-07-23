@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { getInspections } from "@/action/api";
+import { getInspections, getObjectTypes } from "@/action/api";
 
 export function UpcomingInspections() {
   const [inspections, setInspections] = useState<any[]>([]);
@@ -8,18 +8,37 @@ export function UpcomingInspections() {
   useEffect(() => {
     async function fetch() {
       try {
-        const data = await getInspections();
+        const [data, objTypes] = await Promise.all([
+          getInspections(),
+          getObjectTypes()
+        ]);
         if (data) {
           // just taking first 5 if available
-          setInspections(data.slice(0, 5).map((d: any) => ({
-            name: d.equipment?.name || "Peralatan",
-            type: d.equipment?.object_type?.name || "Tipe",
-            id: d.equipment?.equipment_code || "-",
-            dept: d.equipment?.plant || "-",
-            date: d.inspection_date ? new Date(d.inspection_date).toLocaleDateString() : "-",
-            status: d.inspection_status || "MENDATANG",
-            statusColor: "bg-orange-100 text-orange-700",
-          })));
+          setInspections(data.slice(0, 5).map((d: any) => {
+            let typeName = "Tipe";
+            const eq = d.equipment;
+            if (eq) {
+              if (eq.object_type?.name) typeName = eq.object_type.name;
+              else if (eq.objectType?.name) typeName = eq.objectType.name;
+              else {
+                const otId = eq.id_object_type || eq.object_type_id || eq.objectTypeId;
+                if (otId && objTypes) {
+                  const found = objTypes.find((o: any) => o.id === otId || o.id === Number(otId));
+                  if (found) typeName = found.name;
+                }
+              }
+            }
+            
+            return {
+              name: eq?.name || "Peralatan",
+              type: typeName,
+              id: eq?.equipment_code || "-",
+              dept: eq?.plant || "-",
+              date: d.inspection_date ? new Date(d.inspection_date).toLocaleDateString() : "-",
+              status: d.inspection_status || "MENDATANG",
+              statusColor: "bg-orange-100 text-orange-700",
+            };
+          }));
         }
       } catch (err) {
         console.error(err);

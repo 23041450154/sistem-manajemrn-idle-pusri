@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { getEquipments } from "@/action/api";
+import { getEquipments, getObjectTypes } from "@/action/api";
 import { 
   Search, AlertCircle, RefreshCw, Filter, Plus, X,
   ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download, Eye, Upload, Wrench, CheckCircle 
@@ -60,18 +60,36 @@ export default function RendalIdlePage() {
     setIsLoading(true);
     setError(null);
     try {
-      const data = await getEquipments();
+      const [data, objTypes] = await Promise.all([
+        getEquipments(),
+        getObjectTypes()
+      ]);
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const mappedData = data.map((item: any) => ({
-        id: item.id.toString(),
-        kodeAlat: item.equipment_code,
-        namaAlat: item.name,
-        plant: item.plant,
-        jenisAlat: item.object_type?.name || "Belum Ditentukan",
-        tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
-        statusAset: (item.status?.name || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "IDLE" : "REGISTERED")).toUpperCase(),
-        statusPersetujuan: "PENDING", // TODO: match with approvals later if needed
-      }));
+      const mappedData = data.map((item: any) => {
+        let objectTypeName = "Belum Ditentukan";
+        if (item.object_type?.name) {
+          objectTypeName = item.object_type.name;
+        } else if (item.objectType?.name) {
+          objectTypeName = item.objectType.name;
+        } else {
+          const otId = item.id_object_type || item.object_type_id || item.objectTypeId;
+          if (otId && objTypes) {
+            const found = objTypes.find((o: any) => o.id === otId || o.id === Number(otId));
+            if (found) objectTypeName = found.name;
+          }
+        }
+
+        return {
+          id: item.id?.toString() || "-",
+          kodeAlat: item.equipment_code,
+          namaAlat: item.name,
+          plant: item.plant,
+          jenisAlat: objectTypeName,
+          tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
+          statusAset: (item.status?.name || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "IDLE" : "REGISTERED")).toUpperCase(),
+          statusPersetujuan: "PENDING", // TODO: match with approvals later if needed
+        };
+      });
       setEquipments(mappedData as Equipment[]);
     } catch (err: unknown) {
       console.error(err);
