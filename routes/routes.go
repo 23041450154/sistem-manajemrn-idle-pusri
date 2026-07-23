@@ -4,8 +4,8 @@ import (
 	"github.com/Ucokgreget/backend-idle/controllers"
 	"github.com/Ucokgreget/backend-idle/middleware"
 	"github.com/gin-gonic/gin"
-	"github.com/swaggo/files"
-	"github.com/swaggo/gin-swagger"
+	swaggerFiles "github.com/swaggo/files"
+	ginSwagger "github.com/swaggo/gin-swagger"
 	"gorm.io/gorm"
 )
 
@@ -29,5 +29,8 @@ func SetupRoutes(router *gin.Engine, db *gorm.DB) {
 		api.GET("/approvals", controllers.GetApprovals(db))
 		api.GET("/approvals/:id", controllers.GetApprovalById(db))
 		api.PATCH("/approvals/:id/review", middleware.RequireRole("MANAJER_RENDAL"), controllers.ReviewApproval(db))
+
+		api.GET("/inspections", controllers.GetAllInspection(db))
+		api.POST("/inspections", controllers.CreateInspection(db))
 	}
 }

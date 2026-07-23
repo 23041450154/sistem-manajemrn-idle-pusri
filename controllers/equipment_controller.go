@@ -170,13 +170,14 @@ func CreateEquipment(db *gorm.DB) gin.HandlerFunc {
 
 		c.JSON(http.StatusOK, gin.H{
 			"status":  "success",
-			"message": "Idle declaration created successfully",
+			"message": "Equipment berhasil diregistrasi",
 			"data": gin.H{"id": equipment.ID,
-				"uuid":           equipment.UUID,
-				"equipment_code": equipment.EquipmentCode,
-				"id_status":      1,
-				"created_by":     userNpp,
-				"created_at":     equipment.CreatedAt.Format(time.RFC3339)},
+				"uuid":            equipment.UUID,
+				"equipment_code":  equipment.EquipmentCode,
+				"id_status":       1,
+				"idleDeclaration": idleDeclaration.ID,
+				"created_by":      userNpp,
+				"created_at":      equipment.CreatedAt.Format(time.RFC3339)},
 		})
 
 	}

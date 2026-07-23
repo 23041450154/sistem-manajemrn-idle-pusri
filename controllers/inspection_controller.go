@@ -13,9 +13,14 @@ import (
 	"gorm.io/gorm"
 )
 
-func getAllInspection(db *gorm.DB) gin.HandlerFunc {
+func GetAllInspection(db *gorm.DB) gin.HandlerFunc {
 	return func(c *gin.Context) {
-
+		var inspections []models.EquipmentInspection
+		if err := db.Find(&inspections).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"data": inspections})
 	}
 }
 
