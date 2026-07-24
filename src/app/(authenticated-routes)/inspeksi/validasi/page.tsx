@@ -49,7 +49,7 @@ export default function ManajemenInspeksi() {
           getCurrentUserAction()
         ]);
         const approvalsData = approvalsRes?.data || [];
-        const currentUserNPP = user?.npp || "NPP2304145";
+        const currentUserNPP = user?.user?.npp || "NPP2304145";
         const mappedData = data.map((item: any) => {
           let objectTypeName = "Belum Ditentukan";
           if (item.object_type?.name) {

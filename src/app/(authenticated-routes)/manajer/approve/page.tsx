@@ -47,7 +47,7 @@ export default function ManajerApprovePage() {
           getEquipments(),
           getCurrentUserAction()
         ]);
-        const currentUserNPP = user?.npp || "NPP2304145";
+        const currentUserNPP = user?.user?.npp || "NPP2304145";
         
         // Buat kamus (map) equipment berdasarkan ID untuk pencarian cepat
         const equipmentMap = new Map();
