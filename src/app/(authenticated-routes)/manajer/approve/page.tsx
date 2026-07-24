@@ -12,7 +12,6 @@ interface RequestAsset {
   namaAset: string;
   plant: string;
   tanggalPengajuan: string;
-  tanggalPengajuan: string;
   statusAset: string;
   statusPersetujuan: string;
   inspekturNPP: string;

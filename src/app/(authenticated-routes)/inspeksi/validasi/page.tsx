@@ -686,7 +686,7 @@ export default function ManajemenInspeksi() {
                       )}
                     </td>
                     <td className="px-1.5 py-1 text-[10px] text-gray-600 font-medium">
-                      {asset.pemohon}
+                       {asset.pemohon}
                     </td>
                     <td className="px-1.5 py-1">
                       {getStatusAsetBadge(asset.statusAset)}
