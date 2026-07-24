@@ -30,6 +30,7 @@ interface Asset {
   vendor: string;
   tahunDibuat: string;
   nilaiPerolehan: string;
+  pemohon: string;
 }
 
 
