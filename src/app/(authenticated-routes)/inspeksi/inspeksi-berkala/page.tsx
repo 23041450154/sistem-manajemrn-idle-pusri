@@ -229,7 +229,7 @@ export default function InspeksiDashboard() {
                         </td>
                         <td className="px-4 py-2 whitespace-nowrap text-right">
                           {row.status !== "Selesai" ? (
-                            <Link href="/inspeksi/inspeksi-berkala/formInspeksi" className="inline-block bg-blue-50 text-[#0A356A] hover:bg-[#0A356A] hover:text-white border border-blue-200 px-2.5 py-1 rounded text-[10px] font-bold transition-all shadow-sm">
+                            <Link href={`/inspeksi/inspeksi-berkala/formInspeksi?equipmentId=${(row.equipment as any)?.id || row.id}`} className="inline-block bg-blue-50 text-[#0A356A] hover:bg-[#0A356A] hover:text-white border border-blue-200 px-2.5 py-1 rounded text-[10px] font-bold transition-all shadow-sm">
                               Mulai
                             </Link>
                           ) : (

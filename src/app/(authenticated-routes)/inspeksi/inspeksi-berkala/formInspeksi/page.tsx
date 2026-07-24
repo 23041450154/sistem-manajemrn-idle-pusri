@@ -1,42 +1,95 @@
 "use client";
 
-import React, { useState } from "react";
-import { Save, Info, AlertCircle, Camera, CheckCircle2, ChevronLeft, Loader2, Wrench, FileText, DollarSign } from "lucide-react";
+import React, { useState, useRef, useEffect } from "react";
+import { Save, Info, AlertCircle, Camera, CheckCircle2, ChevronLeft, Loader2, Wrench, FileText, DollarSign, X, UploadCloud } from "lucide-react";
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
+import { createInspection } from "@/action/api";
+import { getCurrentUserAction } from "@/action/auth";
 
 export default function FormInspeksiBerkalaPage() {
+  const searchParams = useSearchParams();
+  const eqId = searchParams.get('equipmentId') || "";
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  // Initial Form Data matching EquipmentInspection concept
+  const router = useRouter();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [photo, setPhoto] = useState<File | null>(null);
+  const [fileError, setFileError] = useState<string | null>(null);
+
+  // Initial Form Data matching EquipmentInspection API Payload
   const [formData, setFormData] = useState({
-    equipmentCode: "",
+    equipmentId: eqId,
     inspectionDate: new Date().toISOString().split("T")[0],
-    inspectorName: "",
+    inspectorId: "",
     mechanicalCondition: "",
     electricalCondition: "",
-    physicalCondition: "",
     requireActionId: "",
     refurbishCost: "",
     notes: ""
   });
 
+  useEffect(() => {
+    async function fetchUser() {
+      const res = await getCurrentUserAction();
+      if (res.status && res.user) {
+        setFormData(prev => ({ ...prev, inspectorId: String(res.user.Id || res.user.id || '') }));
+      }
+    }
+    fetchUser();
+    
+    if (eqId) {
+      setFormData(prev => ({ ...prev, equipmentId: eqId }));
+    }
+  }, [eqId]);
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     let { name, value } = e.target;
-    if (name === "equipmentCode" && value.length > 50) {
+    if (name === "equipmentId" && value.length > 50) {
       value = value.slice(0, 50);
     }
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      if (file.size > 5 * 1024 * 1024) {
+        setFileError(`File Anda lebih dari 5MB.`);
+        setPhoto(null);
+        return;
+      }
+      setFileError(null);
+      setPhoto(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulasi proses penyimpanan data ke database
-    setTimeout(() => {
-      setIsSubmitting(false);
-      alert("Berhasil! Laporan inspeksi fisik telah disimpan ke database: \n\n" + JSON.stringify(formData, null, 2));
-    }, 2000);
+    const payload = new FormData();
+    payload.append("equipment_id", formData.equipmentId);
+    payload.append("inspector", formData.inspectorId);
+    payload.append("require_action_id", formData.requireActionId);
+    payload.append("mechanical_condition", formData.mechanicalCondition);
+    payload.append("electrical_condition", formData.electricalCondition);
+    payload.append("estimated_refurbish_cost", formData.refurbishCost || "0");
+    payload.append("notes", formData.notes);
+    
+    if (photo) {
+      payload.append("photo", photo);
+    }
+
+    const res = await createInspection(payload);
+    setIsSubmitting(false);
+
+    if (res.success) {
+      alert("Berhasil! Laporan inspeksi fisik telah disimpan ke database.");
+      router.push("/inspeksi/manajemen");
+    } else {
+      alert("Gagal menyimpan inspeksi: " + (res.message || "Terjadi kesalahan."));
+    }
   };
 
   return (
@@ -67,18 +120,18 @@ export default function FormInspeksiBerkalaPage() {
             <div className="p-5 grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div className="space-y-1.5">
                 <div className="flex justify-between items-end">
-                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">KODE ASET / TAG <span className="text-red-500">*</span></label>
-                  <span className="text-[9px] text-gray-400 font-medium">Maks 50 karakter</span>
+                  <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">ID ASET (EQUIPMENT ID) <span className="text-red-500">*</span></label>
+                  <span className="text-[9px] text-gray-400 font-medium">Contoh: 1</span>
                 </div>
-                <input required maxLength={50} type="text" name="equipmentCode" value={formData.equipmentCode} onChange={handleChange} placeholder="Contoh: P-102-MKN" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all" />
+                <input required readOnly maxLength={50} type="text" name="equipmentId" value={formData.equipmentId} onChange={handleChange} placeholder="Otomatis terisi..." className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">TANGGAL INSPEKSI <span className="text-red-500">*</span></label>
                 <input required type="date" name="inspectionDate" value={formData.inspectionDate} onChange={handleChange} className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all" />
               </div>
               <div className="space-y-1.5">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">NAMA INSPEKTUR <span className="text-red-500">*</span></label>
-                <input required type="text" name="inspectorName" value={formData.inspectorName} onChange={handleChange} placeholder="Nama Anda" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all" />
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">ID INSPEKTUR <span className="text-red-500">*</span></label>
+                <input required readOnly type="text" name="inspectorId" value={formData.inspectorId} onChange={handleChange} placeholder="Otomatis dari user..." className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed outline-none transition-all" />
               </div>
             </div>
           </div>
@@ -100,16 +153,16 @@ export default function FormInspeksiBerkalaPage() {
                 <div className="sm:col-span-3">
                   <select required name="mechanicalCondition" value={formData.mechanicalCondition} onChange={handleChange} className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all bg-white ${!formData.mechanicalCondition ? 'text-gray-400' : 'text-gray-900'}`}>
                     <option value="" disabled>Pilih Kondisi Mekanikal...</option>
-                    <option value="BAIK">Baik (Siap Digunakan)</option>
-                    <option value="RUSAK_RINGAN">Rusak Ringan (Perlu Servis Minor)</option>
-                    <option value="RUSAK_BERAT">Rusak Berat (Perlu Overhaul)</option>
-                    <option value="TIDAK_LAYAK">Tidak Layak (Scrap)</option>
+                    <option value="bagus">Bagus (Siap Digunakan)</option>
+                    <option value="rusak ringan">Rusak Ringan (Perlu Servis Minor)</option>
+                    <option value="rusak berat">Rusak Berat (Perlu Overhaul)</option>
+                    <option value="tidak layak">Tidak Layak (Scrap)</option>
                   </select>
                 </div>
               </div>
 
               {/* Elektrikal & Instrumen */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-start border-b border-gray-100 pb-5">
+              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-start pb-5">
                 <div className="sm:col-span-1">
                   <label className="text-sm font-bold text-gray-800">Kondisi Elektrikal/Instrumen <span className="text-red-500">*</span></label>
                   <p className="text-xs text-gray-500 mt-1">Status kabel, panel, sensor.</p>
@@ -117,27 +170,10 @@ export default function FormInspeksiBerkalaPage() {
                 <div className="sm:col-span-3">
                   <select required name="electricalCondition" value={formData.electricalCondition} onChange={handleChange} className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all bg-white ${!formData.electricalCondition ? 'text-gray-400' : 'text-gray-900'}`}>
                     <option value="" disabled>Pilih Kondisi Elektrikal...</option>
-                    <option value="BAIK">Baik (Berfungsi Normal)</option>
-                    <option value="RUSAK_RINGAN">Rusak Ringan (Perlu Penggantian Part Kecil)</option>
-                    <option value="RUSAK_BERAT">Rusak Berat (Korslet / Terbakar)</option>
-                    <option value="TIDAK_LAYAK">Tidak Layak / Hilang</option>
-                    <option value="TIDAK_ADA">Tidak Ada Komponen Elektrikal</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Fisik Eksternal */}
-              <div className="grid grid-cols-1 sm:grid-cols-4 gap-4 items-start">
-                <div className="sm:col-span-1">
-                  <label className="text-sm font-bold text-gray-800">Fisik Eksternal & Preservasi <span className="text-red-500">*</span></label>
-                  <p className="text-xs text-gray-500 mt-1">Korosi, cat, kebersihan.</p>
-                </div>
-                <div className="sm:col-span-3">
-                  <select required name="physicalCondition" value={formData.physicalCondition} onChange={handleChange} className={`w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all bg-white ${!formData.physicalCondition ? 'text-gray-400' : 'text-gray-900'}`}>
-                    <option value="" disabled>Pilih Kondisi Eksternal...</option>
-                    <option value="BAIK">Sangat Baik (Preservasi Terjaga)</option>
-                    <option value="KOROSI_RINGAN">Korosi Ringan / Cat Mengelupas</option>
-                    <option value="KOROSI_BERAT">Korosi Berat (Perlu Sandblasting)</option>
+                    <option value="bagus">Bagus (Berfungsi Normal)</option>
+                    <option value="rusak ringan">Rusak Ringan (Perlu Penggantian Part Kecil)</option>
+                    <option value="rusak berat">Rusak Berat (Korslet / Terbakar)</option>
+                    <option value="tidak layak">Tidak Layak / Hilang</option>
                   </select>
                 </div>
               </div>
@@ -188,11 +224,41 @@ export default function FormInspeksiBerkalaPage() {
               {/* Upload Foto */}
               <div className="flex-1 flex flex-col">
                 <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">FOTO KONDISI AKTUAL</label>
-                <div className="flex-1 border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center hover:bg-blue-50/40 hover:border-[#0556B3] cursor-pointer transition-all min-h-[120px] bg-gray-50/30">
-                  <Camera className="w-8 h-8 text-gray-400 mb-2" />
-                  <span className="text-xs font-bold text-gray-900">Ambil Foto / Unggah</span>
-                  <span className="text-[10px] text-gray-500 mt-1">Format JPG/PNG maks 5MB</span>
+                <input 
+                  type="file" 
+                  ref={fileInputRef} 
+                  className="hidden" 
+                  onChange={handleFileChange} 
+                  accept=".jpg,.jpeg,.png"
+                />
+                <div 
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex-1 border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center hover:bg-blue-50/40 hover:border-[#0556B3] cursor-pointer transition-all min-h-[120px] bg-gray-50/30 relative overflow-hidden"
+                >
+                  {photo ? (
+                    <div className="absolute inset-0 w-full h-full p-2">
+                      <div className="relative w-full h-full border border-gray-200 rounded-lg overflow-hidden group">
+                        <img src={URL.createObjectURL(photo)} alt="Preview" className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); setPhoto(null); }}
+                            className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow-md"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <>
+                      <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
+                      <span className="text-xs font-bold text-gray-900">Pilih Foto</span>
+                      <span className="text-[10px] text-gray-500 mt-1">Format JPG/PNG maks 5MB</span>
+                    </>
+                  )}
                 </div>
+                {fileError && <p className="text-[10px] text-red-500 mt-1.5 font-medium">* {fileError}</p>}
               </div>
               
             </div>

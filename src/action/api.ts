@@ -136,6 +136,31 @@ export async function getInspections() {
   }
 }
 
+export async function createInspection(formData: FormData) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/inspections`, {
+      method: "POST",
+      headers: { 
+        Authorization: `Bearer ${token}` 
+      },
+      body: formData,
+    })
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return { success: false, message: errorData?.message || `HTTP Error ${res.status}` }
+    }
+    return { success: true }
+  } catch (error: any) {
+    console.error("Create inspection error:", error)
+    return { success: false, message: error.message }
+  }
+}
+
+
 export async function getObjectTypes() {
   const hardcoded = [
     { id: 1, name: "Rotary Equipment" },

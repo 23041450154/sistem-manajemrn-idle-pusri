@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2, ChevronLeft, Paperclip } from "lucide-react";
+import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2, ChevronLeft, Paperclip, XCircle } from "lucide-react";
 import Link from "next/link";
 import { createEquipment } from "@/action/api";
 import { useRouter } from "next/navigation";
@@ -21,6 +21,7 @@ export default function RegisterEquipmentPage() {
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [isImporting, setIsImporting] = useState(false);
   const [fileError, setFileError] = useState<string | null>(null);
+  const [notification, setNotification] = useState<{type: 'success'|'error', message: string} | null>(null);
 
   // Hardcode Object Types (Statis sementara)
   const objectTypes = [
@@ -168,10 +169,13 @@ export default function RegisterEquipmentPage() {
     setIsSubmitting(false);
 
     if (res.success) {
-      alert("Berhasil! Peralatan idle telah didaftarkan.");
-      router.push("/rendal/idle");
+      setNotification({ type: 'success', message: 'Berhasil! Peralatan idle telah didaftarkan.' });
+      setTimeout(() => {
+        router.push("/rendal/idle");
+      }, 1500);
     } else {
-      alert("Gagal menyimpan data: " + (res.message || "Pastikan field sudah sesuai."));
+      setNotification({ type: 'error', message: "Gagal menyimpan data: " + (res.message || "Pastikan field sudah sesuai.") });
+      setTimeout(() => setNotification(null), 3000);
     }
   };
 
@@ -184,6 +188,14 @@ export default function RegisterEquipmentPage() {
 
   return (
     <div className="max-w-[1400px] mx-auto pb-8 pt-2 relative">
+
+      {/* Toast Notification */}
+      {notification && (
+        <div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+          {notification.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
+          <span className="text-[13px] font-medium">{notification.message}</span>
+        </div>
+      )}
 
       {/* Header Title & Import */}
       <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-5">

@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import { getEquipments, validateEquipment, getObjectTypes, getApprovals } from "@/action/api";
+import { getCurrentUserAction } from "@/action/auth";
 
 // Tipe Data
 type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE";
@@ -41,12 +42,14 @@ export default function ManajemenInspeksi() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [data, objTypes, approvalsRes] = await Promise.all([
+        const [data, objTypes, approvalsRes, user] = await Promise.all([
           getEquipments(),
           getObjectTypes(),
-          getApprovals()
+          getApprovals(),
+          getCurrentUserAction()
         ]);
         const approvalsData = approvalsRes?.data || [];
+        const currentUserNPP = user?.npp || "NPP2304145";
         const mappedData = data.map((item: any) => {
           let objectTypeName = "Belum Ditentukan";
           if (item.object_type?.name) {
@@ -76,7 +79,11 @@ export default function ManajemenInspeksi() {
             area: item.func_loc || item.funcloc || "-",
             vendor: item.vendor || "-",
             tahunDibuat: item.year?.toString() || "-",
-            nilaiPerolehan: item.original_value ? `Rp ${Number(item.original_value).toLocaleString('id-ID')}` : "Rp 0"
+            nilaiPerolehan: item.original_value ? `Rp ${Number(item.original_value).toLocaleString('id-ID')}` : "Rp 0",
+            pemohon: (() => {
+              const p = item.created_by_npp || currentUserNPP;
+              return /^\d/.test(p) ? `NPP${p}` : p;
+            })()
           };
         });
         
@@ -103,52 +110,13 @@ export default function ManajemenInspeksi() {
             statusPersetujuan = "REJECTED";
           }
 
-          // Simulate some states for testing
-          if (item.kodeAlat.toLowerCase() === "e-302") {
-            statusAset = "IDLE";
-            statusPersetujuan = "APPROVED";
-          }
-
           return { ...item, statusAset, statusPersetujuan };
         });
 
         // Sort data by ID descending (newest first)
         mappedWithApproval.sort((a: any, b: any) => Number(b.id) - Number(a.id));
 
-        const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
-        const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
-        const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
-        const reValidated = JSON.parse(localStorage.getItem('reValidatedAssets') || '[]');
-        const validated = JSON.parse(localStorage.getItem('validatedAssets') || '[]');
-        
-        if (approved.length > 0 || revised.length > 0 || inReview.length > 0 || reValidated.length > 0 || validated.length > 0) {
-          setAssets(mappedWithApproval.map((asset: any) => {
-            let currentStatus = asset.statusPersetujuan;
-            let currentAsetStatus = asset.statusAset;
-            
-            if (validated.includes(asset.kodeAlat) && currentAsetStatus === "REGISTERED") {
-              currentAsetStatus = "VALIDATED";
-              currentStatus = "PENDING_REVIEW";
-            }
-            
-            if (approved.includes(asset.kodeAlat)) {
-              currentAsetStatus = "IDLE";
-              currentStatus = "APPROVED";
-            } else if (revised.includes(asset.kodeAlat)) {
-              currentStatus = "NEED_REVISION";
-            } else if (reValidated.includes(asset.kodeAlat) && currentStatus === "NEED_REVISION") {
-              currentStatus = "PENDING_REVIEW";
-            }
-            
-            if (inReview.includes(asset.kodeAlat) && currentStatus === "PENDING_REVIEW") {
-              currentStatus = "IN_REVIEW";
-            }
-            
-            return { ...asset, statusAset: currentAsetStatus, statusPersetujuan: currentStatus };
-          }));
-        } else {
-          setAssets(mappedWithApproval);
-        }
+        setAssets(mappedWithApproval);
       } catch (err) {
         console.error(err);
       } finally {
@@ -458,7 +426,7 @@ export default function ManajemenInspeksi() {
     const labels = {
       NONE: "-",
       PENDING_REVIEW: "Menunggu Review",
-      IN_REVIEW: "Review",
+      IN_REVIEW: "Sedang Direview",
       APPROVED: "Disetujui",
       REJECTED: "Ditolak",
       NEED_REVISION: "Perlu Revisi"
@@ -717,7 +685,7 @@ export default function ManajemenInspeksi() {
                       )}
                     </td>
                     <td className="px-1.5 py-1 text-[10px] text-gray-600 font-medium">
-                      NPP2304145
+                      {asset.pemohon}
                     </td>
                     <td className="px-1.5 py-1">
                       {getStatusAsetBadge(asset.statusAset)}

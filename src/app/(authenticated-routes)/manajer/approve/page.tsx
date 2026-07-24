@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from "react";
 import { Eye, X, Shield, FileText, CheckCircle2, RefreshCw, XCircle, Download } from "lucide-react";
 import { getApprovals, reviewApproval, getEquipments, startReviewApproval } from "@/action/api";
+import { getCurrentUserAction } from "@/action/auth";
 
 interface RequestAsset {
   id: string;
@@ -11,8 +12,10 @@ interface RequestAsset {
   namaAset: string;
   plant: string;
   tanggalPengajuan: string;
+  tanggalPengajuan: string;
   statusAset: string;
   statusPersetujuan: string;
+  inspekturNPP: string;
 }
 
 // MOCK_REQUESTS removed
@@ -39,10 +42,12 @@ export default function ManajerApprovePage() {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [approvalsData, equipmentsData] = await Promise.all([
+        const [approvalsData, equipmentsData, user] = await Promise.all([
           getApprovals(),
-          getEquipments()
+          getEquipments(),
+          getCurrentUserAction()
         ]);
+        const currentUserNPP = user?.npp || "NPP2304145";
         
         // Buat kamus (map) equipment berdasarkan ID untuk pencarian cepat
         const equipmentMap = new Map();
@@ -55,6 +60,18 @@ export default function ManajerApprovePage() {
         const mappedData = approvalsData.map((item: any) => {
           const equipmentId = item.equipment_id || item.equipment?.id;
           const eq = equipmentMap.get(Number(equipmentId)) || item.equipment;
+          let statusPersetujuan = item.status_label || item.approval_status;
+          
+          if (item.approval_status === "PENDING") statusPersetujuan = "Menunggu Review (pending)";
+          else if (item.approval_status === "IN_REVIEW") statusPersetujuan = "Sedang Direview (in_review)";
+          else if (item.approval_status === "APPROVED") statusPersetujuan = "Disetujui";
+          else if (item.approval_status === "REVISION_REQUIRED") statusPersetujuan = "Perlu Revisi";
+          
+          let statusAset = (item.equipment_status || eq?.status?.name || "VALIDATED").toUpperCase();
+          if (item.approval_status === "APPROVED") {
+            statusAset = "IDLE";
+          }
+
           return {
             id: item.id.toString(),
             nomorRequest: item.request_number,
@@ -62,38 +79,17 @@ export default function ManajerApprovePage() {
             namaAset: item.equipment_name || eq?.name || "-",
             plant: item.plant || eq?.plant || "-",
             tanggalPengajuan: item.request_date ? new Date(item.request_date).toISOString().split('T')[0] : "-",
-            statusAset: (item.equipment_status || eq?.status?.name || "VALIDATED").toUpperCase(),
-            statusPersetujuan: item.approval_status === "PENDING" ? "Menunggu Review" : (item.approval_status === "IN_REVIEW" ? "Sedang Direview" : (item.approval_status === "APPROVED" ? "Disetujui" : (item.approval_status === "REVISION_REQUIRED" ? "Perlu Revisi" : item.approval_status)))
+            statusAset: statusAset,
+            statusPersetujuan: statusPersetujuan,
+            inspekturNPP: (() => {
+              const p = eq?.updated_by_npp || eq?.created_by_npp || currentUserNPP;
+              return /^\d/.test(p) ? `NPP${p}` : p;
+            })()
           };
         });
 
-        const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
-        const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
-        const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
-        const reValidated = JSON.parse(localStorage.getItem('reValidatedAssets') || '[]');
-        
-        if (approved.length > 0 || revised.length > 0 || inReview.length > 0 || reValidated.length > 0) {
-          const updated = mappedData.map((req: any) => {
-            if (approved.includes(req.kodeAset)) {
-              return { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" };
-            }
-            if (revised.includes(req.kodeAset)) {
-              return { ...req, statusPersetujuan: "Perlu Revisi" };
-            }
-            if (reValidated.includes(req.kodeAset) && !inReview.includes(req.kodeAset)) {
-              return { ...req, statusPersetujuan: "Menunggu Review" };
-            }
-            if (inReview.includes(req.kodeAset) && (req.statusPersetujuan === "Menunggu Review" || reValidated.includes(req.kodeAset))) {
-              return { ...req, statusPersetujuan: "Sedang Direview" };
-            }
-            return req;
-          });
-          setRequests(updated);
-          setFilteredRequests(updated);
-        } else {
-          setRequests(mappedData);
-          setFilteredRequests(mappedData);
-        }
+        setRequests(mappedData);
+        setFilteredRequests(mappedData);
       } catch (error) {
         console.error(error);
       } finally {
@@ -109,33 +105,26 @@ export default function ManajerApprovePage() {
   };
 
   const handleMulaiReview = async () => {
-    if (selectedAsset && selectedAsset.statusPersetujuan === "Menunggu Review") {
+    if (selectedAsset && selectedAsset.statusPersetujuan === "Menunggu Review (pending)") {
       try {
         const res = await startReviewApproval(selectedAsset.id);
         if (!res.success) {
           console.error("Failed to start review on backend:", res.message);
-          alert("Gagal memulai review di backend: " + res.message);
         }
       } catch (err) {
         console.error(err);
       }
 
-      const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
-      if (!inReview.includes(selectedAsset.kodeAset)) {
-        inReview.push(selectedAsset.kodeAset);
-        localStorage.setItem('inReviewAssets', JSON.stringify(inReview));
-      }
-      
       const updatedReqs = requests.map(req => 
-        req.kodeAset === selectedAsset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview" } : req
+        req.kodeAset === selectedAsset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview (in_review)" } : req
       );
       setRequests(updatedReqs);
       setFilteredRequests(filteredRequests.map(req => 
-        req.kodeAset === selectedAsset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview" } : req
+        req.kodeAset === selectedAsset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview (in_review)" } : req
       ));
       
       // Update selected asset state so UI re-renders immediately
-      setSelectedAsset({ ...selectedAsset, statusPersetujuan: "Sedang Direview" });
+      setSelectedAsset({ ...selectedAsset, statusPersetujuan: "Sedang Direview (in_review)" });
     }
   };
 
@@ -149,21 +138,6 @@ export default function ManajerApprovePage() {
       const res = await reviewApproval(selectedAsset.id, "APPROVE", "Disetujui oleh manajer");
       
       if (res.success) {
-        const approved = JSON.parse(localStorage.getItem('approvedAssets') || '[]');
-        if (!approved.includes(selectedAsset.kodeAset)) {
-          approved.push(selectedAsset.kodeAset);
-          localStorage.setItem('approvedAssets', JSON.stringify(approved));
-        }
-        
-        const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
-        localStorage.setItem('inReviewAssets', JSON.stringify(inReview.filter((code: string) => code !== selectedAsset.kodeAset)));
-        
-        const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
-        localStorage.setItem('revisedAssets', JSON.stringify(revised.filter((code: string) => code !== selectedAsset.kodeAset)));
-
-        const reValidated = JSON.parse(localStorage.getItem('reValidatedAssets') || '[]');
-        localStorage.setItem('reValidatedAssets', JSON.stringify(reValidated.filter((code: string) => code !== selectedAsset.kodeAset)));
-
         setNotification({ type: "success", message: "Berhasil menyetujui aset!" });
         const updated = requests.map(req => 
           req.kodeAset === selectedAsset.kodeAset 
@@ -196,18 +170,6 @@ export default function ManajerApprovePage() {
       const res = await reviewApproval(selectedAsset.id, "REVISION", revisiCatatan);
       
       if (res.success) {
-        const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
-        if (!revised.includes(selectedAsset.kodeAset)) {
-          revised.push(selectedAsset.kodeAset);
-          localStorage.setItem('revisedAssets', JSON.stringify(revised));
-        }
-        
-        const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
-        localStorage.setItem('inReviewAssets', JSON.stringify(inReview.filter((code: string) => code !== selectedAsset.kodeAset)));
-
-        const reValidated = JSON.parse(localStorage.getItem('reValidatedAssets') || '[]');
-        localStorage.setItem('reValidatedAssets', JSON.stringify(reValidated.filter((code: string) => code !== selectedAsset.kodeAset)));
-
         setNotification({ type: "success", message: "Berhasil mengirim permintaan revisi!" });
         const updated = requests.map(req => 
           req.kodeAset === selectedAsset.kodeAset 
@@ -267,14 +229,17 @@ export default function ManajerApprovePage() {
   };
 
   const getApprovalBadge = (status: string) => {
-    if (status === "Menunggu Review") {
+    if (status === "Menunggu Review (pending)" || status === "Menunggu Review") {
       return <span className="bg-[#FEF9C3] text-[#CA8A04] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
     }
-    if (status === "Sedang Direview") {
+    if (status === "Sedang Direview (in_review)" || status === "Sedang Direview") {
       return <span className="bg-[#E0F2FE] text-[#0284C7] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
     }
     if (status === "Perlu Revisi") {
       return <span className="bg-[#F3E8FF] text-[#9333EA] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
+    }
+    if (status === "Disetujui") {
+      return <span className="bg-[#DCFCE7] text-[#16A34A] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
     }
     return <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
   };
@@ -333,8 +298,8 @@ export default function ManajerApprovePage() {
               className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
             >
               <option value="Semua Status">Semua Status</option>
-              <option value="Menunggu Review">Menunggu Review</option>
-              <option value="Sedang Direview">Sedang Direview</option>
+              <option value="Menunggu Review (pending)">Menunggu Review (pending)</option>
+              <option value="Sedang Direview (in_review)">Sedang Direview (in_review)</option>
               <option value="Perlu Revisi">Perlu Revisi</option>
             </select>
           </div>
@@ -440,16 +405,16 @@ export default function ManajerApprovePage() {
               
               {/* Alert Banner Dinamis */}
               <div className={`border rounded-lg p-3.5 flex items-start gap-3 mb-6 ${
-                selectedAsset.statusPersetujuan === 'Menunggu Review' ? 'bg-[#FEF9C3] border-yellow-200 text-yellow-800' :
-                selectedAsset.statusPersetujuan === 'Sedang Direview' ? 'bg-[#E0F2FE] border-blue-200 text-blue-800' :
+                selectedAsset.statusPersetujuan === 'Menunggu Review (pending)' ? 'bg-[#FEF9C3] border-yellow-200 text-yellow-800' :
+                selectedAsset.statusPersetujuan === 'Sedang Direview (in_review)' ? 'bg-[#E0F2FE] border-blue-200 text-blue-800' :
                 selectedAsset.statusPersetujuan === 'Perlu Revisi' ? 'bg-[#F3E8FF] border-purple-200 text-purple-800' :
                 'bg-gray-100 border-gray-200 text-gray-800'
               }`}>
                 <Shield className="w-5 h-5 shrink-0 mt-0.5" />
                 <p className="text-[13px] font-medium leading-relaxed">
                   Status: <strong>{selectedAsset.statusPersetujuan}</strong>. 
-                  {selectedAsset.statusPersetujuan === 'Menunggu Review' && " Silakan mulai review untuk melihat detail lebih lanjut."}
-                  {selectedAsset.statusPersetujuan === 'Sedang Direview' && " Anda sedang mereview pengajuan ini. Berikan keputusan setujui atau minta revisi."}
+                  {selectedAsset.statusPersetujuan === 'Menunggu Review (pending)' && " Silakan mulai review untuk melihat detail lebih lanjut."}
+                  {selectedAsset.statusPersetujuan === 'Sedang Direview (in_review)' && " Anda sedang mereview pengajuan ini. Berikan keputusan setujui atau minta revisi."}
                   {selectedAsset.statusPersetujuan === 'Perlu Revisi' && " Menunggu perbaikan dari Tim Inspeksi Teknik."}
                 </p>
               </div>
@@ -528,7 +493,7 @@ export default function ManajerApprovePage() {
 
               {/* Section 3: Hasil Validasi Inspeksi Teknik */}
               <div className="mb-6 bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">
-                {selectedAsset.statusPersetujuan === "Menunggu Review" && (
+                {selectedAsset.statusPersetujuan === "Menunggu Review (pending)" && (
                   <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex items-center justify-center">
                     <div className="bg-white px-4 py-2 border border-gray-200 rounded-full shadow-md text-[12px] font-bold text-gray-600 flex items-center gap-2">
                       <Shield className="w-4 h-4 text-blue-500" />
@@ -546,7 +511,7 @@ export default function ManajerApprovePage() {
                   </div>
                   <div>
                     <p className="text-[12px] text-gray-500 font-medium mb-1">NPP / Role:</p>
-                    <p className="text-[13px] font-bold text-gray-900">NPP2304145 / Inspektur Mekanik</p>
+                    <p className="text-[13px] font-bold text-gray-900">{selectedAsset.inspekturNPP} / Inspektur Mekanik</p>
                   </div>
                   
                   <div>
@@ -611,7 +576,7 @@ export default function ManajerApprovePage() {
                 Tutup
               </button>
               
-              {selectedAsset.statusPersetujuan === "Menunggu Review" && (
+              {selectedAsset.statusPersetujuan === "Menunggu Review (pending)" && (
                 <button 
                   onClick={handleMulaiReview}
                   className="px-6 py-2.5 bg-[#0f4a8a] text-white rounded-md text-[13px] font-semibold hover:bg-[#0b386b] transition-colors shadow-sm"
@@ -620,7 +585,7 @@ export default function ManajerApprovePage() {
                 </button>
               )}
               
-              {selectedAsset.statusPersetujuan === "Sedang Direview" && (
+              {selectedAsset.statusPersetujuan === "Sedang Direview (in_review)" && (
                 <>
                   <button 
                     onClick={() => {
