@@ -33,7 +33,7 @@ export default function FormInspeksiBerkalaPage() {
     async function fetchUser() {
       const res = await getCurrentUserAction();
       if (res.status && res.user) {
-        setFormData(prev => ({ ...prev, inspectorId: String(res.user.Id || res.user.id || '') }));
+        setFormData(prev => ({ ...prev, inspectorId: String(res.user.id || '') }));
       }
     }
     fetchUser();
