@@ -61,8 +61,8 @@ export default function ManajerApprovePage() {
           const eq = equipmentMap.get(Number(equipmentId)) || item.equipment;
           let statusPersetujuan = item.status_label || item.approval_status;
           
-          if (item.approval_status === "PENDING") statusPersetujuan = "Menunggu Review (pending)";
-          else if (item.approval_status === "IN_REVIEW") statusPersetujuan = "Sedang Direview (in_review)";
+          if (item.approval_status === "PENDING") statusPersetujuan = "Menunggu Review";
+          else if (item.approval_status === "IN_REVIEW") statusPersetujuan = "Sedang Direview";
           else if (item.approval_status === "APPROVED") statusPersetujuan = "Disetujui";
           else if (item.approval_status === "REVISION_REQUIRED") statusPersetujuan = "Perlu Revisi";
           
@@ -104,7 +104,7 @@ export default function ManajerApprovePage() {
   };
 
   const handleMulaiReview = async () => {
-    if (selectedAsset && selectedAsset.statusPersetujuan === "Menunggu Review (pending)") {
+    if (selectedAsset && selectedAsset.statusPersetujuan === "Menunggu Review") {
       try {
         const res = await startReviewApproval(selectedAsset.id);
         if (!res.success) {
@@ -115,15 +115,15 @@ export default function ManajerApprovePage() {
       }
 
       const updatedReqs = requests.map(req => 
-        req.kodeAset === selectedAsset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview (in_review)" } : req
+        req.kodeAset === selectedAsset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview" } : req
       );
       setRequests(updatedReqs);
       setFilteredRequests(filteredRequests.map(req => 
-        req.kodeAset === selectedAsset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview (in_review)" } : req
+        req.kodeAset === selectedAsset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview" } : req
       ));
       
       // Update selected asset state so UI re-renders immediately
-      setSelectedAsset({ ...selectedAsset, statusPersetujuan: "Sedang Direview (in_review)" });
+      setSelectedAsset({ ...selectedAsset, statusPersetujuan: "Sedang Direview" });
     }
   };
 
@@ -228,7 +228,7 @@ export default function ManajerApprovePage() {
   };
 
   const getApprovalBadge = (status: string) => {
-    if (status === "Menunggu Review (pending)" || status === "Menunggu Review") {
+    if (status === "Menunggu Review") {
       return <span className="bg-[#FEF9C3] text-[#CA8A04] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
     }
     if (status === "Sedang Direview (in_review)" || status === "Sedang Direview") {
@@ -297,8 +297,8 @@ export default function ManajerApprovePage() {
               className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
             >
               <option value="Semua Status">Semua Status</option>
-              <option value="Menunggu Review (pending)">Menunggu Review (pending)</option>
-              <option value="Sedang Direview (in_review)">Sedang Direview (in_review)</option>
+              <option value="Menunggu Review">Menunggu Review</option>
+              <option value="Sedang Direview">Sedang Direview</option>
               <option value="Perlu Revisi">Perlu Revisi</option>
             </select>
           </div>
@@ -404,16 +404,16 @@ export default function ManajerApprovePage() {
               
               {/* Alert Banner Dinamis */}
               <div className={`border rounded-lg p-3.5 flex items-start gap-3 mb-6 ${
-                selectedAsset.statusPersetujuan === 'Menunggu Review (pending)' ? 'bg-[#FEF9C3] border-yellow-200 text-yellow-800' :
-                selectedAsset.statusPersetujuan === 'Sedang Direview (in_review)' ? 'bg-[#E0F2FE] border-blue-200 text-blue-800' :
+                selectedAsset.statusPersetujuan === 'Menunggu Review' ? 'bg-[#FEF9C3] border-yellow-200 text-yellow-800' :
+                selectedAsset.statusPersetujuan === 'Sedang Direview' ? 'bg-[#E0F2FE] border-blue-200 text-blue-800' :
                 selectedAsset.statusPersetujuan === 'Perlu Revisi' ? 'bg-[#F3E8FF] border-purple-200 text-purple-800' :
                 'bg-gray-100 border-gray-200 text-gray-800'
               }`}>
                 <Shield className="w-5 h-5 shrink-0 mt-0.5" />
                 <p className="text-[13px] font-medium leading-relaxed">
                   Status: <strong>{selectedAsset.statusPersetujuan}</strong>. 
-                  {selectedAsset.statusPersetujuan === 'Menunggu Review (pending)' && " Silakan mulai review untuk melihat detail lebih lanjut."}
-                  {selectedAsset.statusPersetujuan === 'Sedang Direview (in_review)' && " Anda sedang mereview pengajuan ini. Berikan keputusan setujui atau minta revisi."}
+                  {selectedAsset.statusPersetujuan === 'Menunggu Review' && " Silakan mulai review untuk melihat detail lebih lanjut."}
+                  {selectedAsset.statusPersetujuan === 'Sedang Direview' && " Anda sedang mereview pengajuan ini. Berikan keputusan setujui atau minta revisi."}
                   {selectedAsset.statusPersetujuan === 'Perlu Revisi' && " Menunggu perbaikan dari Tim Inspeksi Teknik."}
                 </p>
               </div>
@@ -492,7 +492,7 @@ export default function ManajerApprovePage() {
 
               {/* Section 3: Hasil Validasi Inspeksi Teknik */}
               <div className="mb-6 bg-white border border-gray-200 rounded-xl p-5 shadow-sm relative overflow-hidden">
-                {selectedAsset.statusPersetujuan === "Menunggu Review (pending)" && (
+                {selectedAsset.statusPersetujuan === "Menunggu Review" && (
                   <div className="absolute inset-0 bg-white/60 backdrop-blur-[2px] z-10 flex items-center justify-center">
                     <div className="bg-white px-4 py-2 border border-gray-200 rounded-full shadow-md text-[12px] font-bold text-gray-600 flex items-center gap-2">
                       <Shield className="w-4 h-4 text-blue-500" />
@@ -575,7 +575,7 @@ export default function ManajerApprovePage() {
                 Tutup
               </button>
               
-              {selectedAsset.statusPersetujuan === "Menunggu Review (pending)" && (
+              {selectedAsset.statusPersetujuan === "Menunggu Review" && (
                 <button 
                   onClick={handleMulaiReview}
                   className="px-6 py-2.5 bg-[#0f4a8a] text-white rounded-md text-[13px] font-semibold hover:bg-[#0b386b] transition-colors shadow-sm"
@@ -584,7 +584,7 @@ export default function ManajerApprovePage() {
                 </button>
               )}
               
-              {selectedAsset.statusPersetujuan === "Sedang Direview (in_review)" && (
+              {selectedAsset.statusPersetujuan === "Sedang Direview" && (
                 <>
                   <button 
                     onClick={() => {

@@ -130,3 +130,21 @@
     overflow-x: hidden;
   }
 }
+
+@media print {
+  body, html {
+    height: auto !important;
+    overflow: visible !important;
+    background-color: white !important;
+  }
+  
+  div[class*="layout"], 
+  div[class*="mainContent"], 
+  main[class*="mainArea"] {
+    display: block !important;
+    height: auto !important;
+    overflow: visible !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+}

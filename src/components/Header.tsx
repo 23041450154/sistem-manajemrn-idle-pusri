@@ -15,7 +15,7 @@ export function Header({ user }: { user?: any }) {
   const initial = name.charAt(0).toUpperCase();
 
   return (
-    <header className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-4 md:px-8 shrink-0 sticky top-0 z-10">
+    <header className="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-4 md:px-8 shrink-0 sticky top-0 z-10 print:hidden">
       <div className="flex items-center gap-4">
         <button 
           onClick={toggleSidebar}
@@ -27,15 +27,6 @@ export function Header({ user }: { user?: any }) {
       </div>
 
       <div className="flex items-center gap-3 md:gap-6">
-        <div className="relative hidden md:block">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
-          <input
-            type="text"
-            placeholder="Cari peralatan..."
-            className="w-48 lg:w-64 pl-9 pr-4 py-1.5 bg-gray-50 border border-gray-200 rounded-full text-sm focus:outline-none focus:ring-2 focus:ring-[#0556B3]/20 focus:border-[#0556B3] transition-all"
-          />
-        </div>
-
         <div className="flex items-center gap-2 md:gap-4 text-gray-500">
           <button className="hover:text-gray-700 transition-colors relative">
             <Bell className="w-5 h-5" />

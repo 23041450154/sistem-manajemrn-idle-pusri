@@ -49,7 +49,7 @@ export default function ManajemenInspeksi() {
           getApprovals(),
           getCurrentUserAction()
         ]);
-        const approvalsData = approvalsRes?.data || [];
+        const approvalsData = Array.isArray(approvalsRes) ? approvalsRes : (approvalsRes?.data || []);
         const currentUserNPP = user?.user?.npp || "NPP2304145";
         const mappedData = data.map((item: any) => {
           let objectTypeName = "Belum Ditentukan";
@@ -99,9 +99,19 @@ export default function ManajemenInspeksi() {
             // Cek status dari API approvals jika ada
             const app = approvalsData.find((a: any) => a.equipment_id === Number(item.id) || a.equipment?.id === Number(item.id));
             if (app) {
-              if (app.approval_status === "REVISION_REQUIRED") statusPersetujuan = "NEED_REVISION";
-              else if (app.approval_status === "IN_REVIEW") statusPersetujuan = "IN_REVIEW";
-              else statusPersetujuan = "PENDING_REVIEW";
+              if (app.approval_status === "REVISION_REQUIRED") {
+                statusPersetujuan = "NEED_REVISION";
+              } else if (app.approval_status === "IN_REVIEW") {
+                statusPersetujuan = "IN_REVIEW";
+              } else if (app.approval_status === "APPROVED") {
+                statusPersetujuan = "APPROVED";
+                statusAset = "IDLE";
+              } else if (app.approval_status === "REJECTED") {
+                statusPersetujuan = "REJECTED";
+                statusAset = "REJECTED";
+              } else {
+                statusPersetujuan = "PENDING_REVIEW"; 
+              }
             } else {
               statusPersetujuan = "PENDING_REVIEW"; 
             }

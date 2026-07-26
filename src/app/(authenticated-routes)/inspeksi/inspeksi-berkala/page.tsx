@@ -85,7 +85,7 @@ export default function InspeksiDashboard() {
 
   return (
     <div className="max-w-[1400px] mx-auto p-4 flex flex-col h-[calc(100vh-72px)] overflow-hidden">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 shrink-0">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3 shrink-0 print:hidden">
         <div>
           <div className="flex items-center gap-1.5 text-[11px] text-gray-500 mb-0.5">
             <span>Manajemen Inspeksi</span>
@@ -104,7 +104,7 @@ export default function InspeksiDashboard() {
       <div className="flex flex-col gap-4 flex-1 min-h-0 overflow-hidden">
           
           {/* KPI Cards (Shrink-0 agar tetap tingginya) */}
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0">
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0 print:hidden">
             <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 flex items-center gap-3">
               <div className="w-8 h-8 rounded bg-blue-50 flex items-center justify-center shrink-0">
                 <Calendar className="w-4 h-4 text-[#0A356A]" />
@@ -147,10 +147,10 @@ export default function InspeksiDashboard() {
           </div>
 
           {/* Tabel Data Inspeksi - Menggunakan flex-1 dan min-h-0 agar mengisi sisa ruang */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden">
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden print:shadow-none print:border-none">
             
             {/* Toolbar Tabel */}
-            <div className="p-2 border-b border-gray-200 bg-white flex flex-col sm:flex-row gap-2 justify-between items-center shrink-0">
+            <div className="p-2 border-b border-gray-200 bg-white flex flex-col sm:flex-row gap-2 justify-between items-center shrink-0 print:hidden">
               <div className="relative w-full sm:max-w-[240px]">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
                 <input type="text" placeholder="Cari aset..." className="w-full pl-8 pr-3 py-1.5 text-[12px] bg-gray-50 border border-gray-200 rounded-md focus:bg-white focus:border-[#0A356A] outline-none transition-all placeholder:text-gray-400" />
@@ -184,7 +184,7 @@ export default function InspeksiDashboard() {
             </div>
 
             {/* Isi Tabel dengan scroll Y otomatis (flex-1 min-h-0 memaksanya scroll jika berlebih) */}
-            <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 bg-white">
+            <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 bg-white print:overflow-visible print:h-auto">
               <table className="w-full text-left border-collapse min-w-[700px]">
                 <thead className="sticky top-0 bg-gray-50/95 backdrop-blur-sm z-10 border-b border-gray-200 shadow-sm">
                   <tr className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">
