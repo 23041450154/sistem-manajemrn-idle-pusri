@@ -40,6 +40,24 @@ export async function getApprovals() {
   }
 }
 
+export async function getApprovalById(id: string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/approvals/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    })
+    if (!res.ok) return null
+    const json = await res.json()
+    return json.data || null
+  } catch (error) {
+    console.error(`Fetch approval ${id} error:`, error)
+    return null
+  }
+}
+
 export async function validateEquipment(id: string, isUtilizable: boolean, notes: string) {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value

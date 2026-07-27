@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Eye, X, Shield, FileText, CheckCircle2, RefreshCw, XCircle, Download } from "lucide-react";
-import { getApprovals, reviewApproval, getEquipments, startReviewApproval } from "@/action/api";
+import { getApprovals, reviewApproval, getEquipments, startReviewApproval, getApprovalById } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 
 interface RequestAsset {
@@ -37,6 +37,7 @@ export default function ManajerApprovePage() {
   const [revisiError, setRevisiError] = useState(false);
   const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [approvalSteps, setApprovalSteps] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -99,9 +100,20 @@ export default function ManajerApprovePage() {
     fetchData();
   }, []);
 
-  const openModal = (asset: RequestAsset) => {
+  const openModal = async (asset: RequestAsset) => {
     setSelectedAsset(asset);
     setIsModalOpen(true);
+    try {
+      const data = await getApprovalById(asset.id);
+      if (data && data.steps) {
+        setApprovalSteps(data.steps);
+      } else {
+        setApprovalSteps([]);
+      }
+    } catch (err) {
+      console.error(err);
+      setApprovalSteps([]);
+    }
   };
 
   const handleMulaiReview = async () => {
@@ -131,6 +143,7 @@ export default function ManajerApprovePage() {
   const closeModal = () => {
     setIsModalOpen(false);
     setPreviewImage(null);
+    setApprovalSteps([]);
     setTimeout(() => setSelectedAsset(null), 300);
   };
 
@@ -568,8 +581,23 @@ export default function ManajerApprovePage() {
                   <div className="flex-1 border border-gray-200 rounded-lg bg-gray-50 p-3 text-[11px] text-gray-500 overflow-y-auto h-24">
                     <p className="font-bold text-gray-700 mb-1">Riwayat Audit (Log):</p>
                     <ul className="list-disc pl-4 space-y-1">
-                      <li>12 Sep 2023 11:35 - Validasi disimpan (NPP2304145)</li>
-                      <li>11 Sep 2023 15:20 - Aset diterima di gudang inspeksi</li>
+                      {approvalSteps.length > 0 ? (
+                        approvalSteps.map((step) => (
+                          <li key={step.id}>
+                            {step.approval_date
+                              ? new Date(step.approval_date).toLocaleString("en-GB", {
+                                  day: "2-digit",
+                                  month: "short",
+                                  year: "numeric",
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })
+                              : "-"} - {step.status_label || step.approval_status} {step.approval_name ? `(${step.approval_name})` : (step.approval_role ? `(${step.approval_role})` : '')}
+                          </li>
+                        ))
+                      ) : (
+                        <li>Belum ada riwayat audit</li>
+                      )}
                     </ul>
                   </div>
                 </div>
