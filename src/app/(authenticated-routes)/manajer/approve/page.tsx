@@ -36,6 +36,7 @@ export default function ManajerApprovePage() {
   const [revisiCatatan, setRevisiCatatan] = useState("");
   const [revisiError, setRevisiError] = useState(false);
   const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -129,6 +130,7 @@ export default function ManajerApprovePage() {
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setPreviewImage(null);
     setTimeout(() => setSelectedAsset(null), 300);
   };
 
@@ -551,10 +553,16 @@ export default function ManajerApprovePage() {
                 {/* Dokumentasi */}
                 <p className="text-[12px] text-gray-500 font-medium mb-2">Dokumentasi Foto & Riwayat Audit:</p>
                 <div className="flex gap-3">
-                  <div className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300">
+                  <div 
+                    className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setPreviewImage("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&q=80")}
+                  >
                     <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" className="object-cover w-full h-full" alt="Foto Inspeksi 1" />
                   </div>
-                  <div className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300">
+                  <div 
+                    className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity"
+                    onClick={() => setPreviewImage("https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=800&q=80")}
+                  >
                     <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" className="object-cover w-full h-full" alt="Foto Inspeksi 2" />
                   </div>
                   <div className="flex-1 border border-gray-200 rounded-lg bg-gray-50 p-3 text-[11px] text-gray-500 overflow-y-auto h-24">
@@ -690,6 +698,24 @@ export default function ManajerApprovePage() {
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Image Preview Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm" onClick={() => setPreviewImage(null)}>
+          <button 
+            className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded-full transition-colors"
+            onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img 
+            src={previewImage} 
+            alt="Preview" 
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" 
+            onClick={(e) => e.stopPropagation()} 
+          />
         </div>
       )}
     </div>
