@@ -150,8 +150,10 @@ export default function RegisterEquipmentPage() {
       book_value: 0, // as requested in swagger
       equipment_code: formData.equipmentCode,
       func_loc: formData.funcLoc,
-      id_condition: Number(formData.conditionId),
-      condition_id: Number(formData.conditionId),
+      id_condition: 1, // default to 1 since there is no condition dropdown
+      condition_id: 1, // default to 1 since there is no condition dropdown
+      id_idle_reason: Number(formData.conditionId),
+      idle_date: new Date().toISOString(),
       id_object_type: Number(formData.objectTypeId),
       object_type_id: Number(formData.objectTypeId),
       id_storage_location: Number(formData.storageLocationId),
