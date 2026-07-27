@@ -64,6 +64,13 @@ export default function RendalIdlePage() {
         getEquipments(),
         getObjectTypes()
       ]);
+      // Urutkan data berdasarkan ID terbesar (terbaru) ke terkecil
+      data.sort((a: any, b: any) => {
+        const idA = Number(a.id) || 0;
+        const idB = Number(b.id) || 0;
+        return idB - idA;
+      });
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mappedData = data.map((item: any) => {
         let objectTypeName = "Belum Ditentukan";
