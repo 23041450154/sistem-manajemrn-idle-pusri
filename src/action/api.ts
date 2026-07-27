@@ -1,4 +1,4 @@
-﻿"use server"
+"use server"
 
 import { cookies } from "next/headers"
 
@@ -171,20 +171,7 @@ export async function getObjectTypes() {
     { id: 6, name: "Valve" }
   ];
 
-  try {
-    const cookieStore = await cookies();
-    const token = cookieStore.get("token")?.value;
-    const res = await fetch(`${API_URL}/api/object-types`, {
-      headers: { Authorization: `Bearer ${token}` },
-      cache: "no-store",
-    });
-    if (!res.ok) return hardcoded;
-    const json = await res.json();
-    return json.data?.length > 0 ? json.data : hardcoded;
-  } catch (error) {
-    console.error("Fetch object types error:", error);
-    return hardcoded;
-  }
+  return hardcoded;
 }
 
 export async function createObjectType(name: string) {
