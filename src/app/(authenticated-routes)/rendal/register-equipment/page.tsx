@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2, ChevronLeft, Paperclip, XCircle } from "lucide-react";
 import Link from "next/link";
-import { createEquipment, uploadEquipmentAttachment } from "@/action/api";
+import { createEquipment, uploadEquipmentAttachment, getObjectTypes, getStorageLocations, getAreas } from "@/action/api";
 import { useRouter } from "next/navigation";
 
 export default function RegisterEquipmentPage() {
@@ -23,23 +23,23 @@ export default function RegisterEquipmentPage() {
   const [fileError, setFileError] = useState<string | null>(null);
   const [notification, setNotification] = useState<{type: 'success'|'error', message: string} | null>(null);
 
-  // Hardcode Object Types (Statis sementara)
-  const objectTypes = [
-    { id: 1, name: "Rotary Equipment" },
-    { id: 2, name: "Static Equipment" },
-    { id: 3, name: "Electrical" },
-    { id: 4, name: "Instrument" },
-    { id: 5, name: "Peralatan Umum" },
-    { id: 6, name: "Valve" }
-  ];
+  const [objectTypes, setObjectTypes] = useState<{id: number, name: string}[]>([]);
+  const [storageLocations, setStorageLocations] = useState<{id: number, name: string}[]>([]);
+  const [areas, setAreas] = useState<{id: number, name: string}[]>([]);
 
-  // Hardcode Storage Locations (Statis sementara)
-  const storageLocations = [
-    { id: 1, name: "Gudang Utama P-IIB (Gudang B-12)" },
-    { id: 2, name: "Gudang Utama P-III" },
-    { id: 3, name: "Yard Terbuka P-IIB" },
-    { id: 4, name: "Workshop Mekanik" }
-  ];
+  useEffect(() => {
+    async function loadDropdowns() {
+      const [objs, locs, ars] = await Promise.all([
+        getObjectTypes(),
+        getStorageLocations(),
+        getAreas()
+      ]);
+      setObjectTypes(objs);
+      setStorageLocations(locs);
+      setAreas(ars);
+    }
+    loadDropdowns();
+  }, []);
 
   // UX Improvement: Semua nilai dropdown & radio di-set kosong ("") di awal
   const [formData, setFormData] = useState({
@@ -138,7 +138,7 @@ export default function RegisterEquipmentPage() {
     e.preventDefault();
     
     // Custom Validation Check
-    if (!formData.equipmentCode || !formData.name || !formData.objectTypeId || !formData.storageLocationId || !formData.plant || !formData.conditionId) {
+    if (!formData.equipmentCode || !formData.name || !formData.objectTypeId || !formData.storageLocationId || !formData.plant || !formData.funcLoc || !formData.conditionId) {
       setShowValidationErrors(true);
       return;
     }
@@ -346,8 +346,16 @@ export default function RegisterEquipmentPage() {
                 {(showValidationErrors || touched.plant) && !formData.plant && <p className="text-[10px] text-red-500 mt-1 font-medium">* Pabrik / Plant wajib dipilih.</p>}
               </div>
               <div className="space-y-1.5 lg:col-span-2">
-                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">AREA (FUNCLOC)</label>
-                <input type="text" name="funcLoc" value={formData.funcLoc} onChange={handleChange} placeholder="Contoh: Ammonia Area" className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all" />
+                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">AREA (FUNCLOC) <span className="text-red-500">*</span></label>
+                <select onBlur={handleBlur} name="funcLoc" value={formData.funcLoc} onChange={handleChange} className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all bg-white ${(showValidationErrors || touched.funcLoc) && !formData.funcLoc ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.funcLoc ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}>
+                  <option value="" disabled>Pilih Area...</option>
+                  {areas.map((area: {id: number, name: string}) => (
+                    <option key={area.id} value={area.name} className="text-gray-900">
+                      {area.name}
+                    </option>
+                  ))}
+                </select>
+                {(showValidationErrors || touched.funcLoc) && !formData.funcLoc && <p className="text-[10px] text-red-500 mt-1 font-medium">* Area wajib dipilih.</p>}
               </div>
 
               {/* Garis Pemisah Visual */}

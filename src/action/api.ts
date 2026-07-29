@@ -269,6 +269,37 @@ export async function getStorageLocations() {
   }
 }
 
+export async function getAreas() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/areas`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    })
+    if (!res.ok) {
+      // Fallback if endpoint doesn't exist yet
+      return [
+        { id: 1, name: "Ammonia Area" },
+        { id: 2, name: "Urea Area" },
+        { id: 3, name: "Utility Area" },
+        { id: 4, name: "Offsite Area" }
+      ];
+    }
+    const json = await res.json()
+    return json.data || []
+  } catch (error) {
+    console.error("Fetch areas error:", error)
+    return [
+      { id: 1, name: "Ammonia Area" },
+      { id: 2, name: "Urea Area" },
+      { id: 3, name: "Utility Area" },
+      { id: 4, name: "Offsite Area" }
+    ];
+  }
+}
+
 export async function createEquipment(payload: any) {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value
