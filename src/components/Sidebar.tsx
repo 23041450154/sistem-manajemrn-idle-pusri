@@ -61,7 +61,7 @@ export function Sidebar({ role }: { role?: string }) {
       mainNavItems = [
         { name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
         { name: "Peralatan", href: "/rendal/idle", icon: Wrench },
-        // { name: "Idle Equipment", href: "/rendal/idle", icon: PowerOff },
+        { name: "Perbaikan Alat", href: "/rendal/perbaikan-alat", icon: Wrench },
         { name: "Laporan", href: "/rendal/laporan", icon: FileText },
       ];
       registerCta = { name: "Register Equipment", href: "/rendal/register-equipment" };

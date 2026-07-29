@@ -4,7 +4,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Save, Info, AlertCircle, Camera, CheckCircle2, ChevronLeft, Loader2, Wrench, FileText, DollarSign, X, UploadCloud, User, Calendar } from "lucide-react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
-import { createInspection, getEquipments } from "@/action/api";
+import { createInspection, getEquipments, getAttachments } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 
 function FormInspeksiBerkalaContent() {
@@ -57,9 +57,18 @@ function FormInspeksiBerkalaContent() {
       // Fetch Equipment Info
       if (eqId) {
         setFormData(prev => ({ ...prev, equipmentId: eqId }));
-        const equipments = await getEquipments();
+        const [equipments, attachments] = await Promise.all([
+          getEquipments(),
+          getAttachments()
+        ]);
         const eq = equipments.find((e: any) => String(e.id) === eqId);
         if (eq) {
+          // Cari attachment (registrasi) untuk equipment ini
+          const eqAttachments = (attachments && Array.isArray(attachments)) ? attachments.filter((a: any) => String(a.equipment_id) === String(eqId) || String(a.reference_id) === String(eqId)) : [];
+          // Ambil photo pertama jika ada
+          const firstPhoto = eqAttachments.length > 0 ? eqAttachments[0] : null;
+          const photoUrl = firstPhoto && firstPhoto.file_url ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/${firstPhoto.file_url.replace(/\\/g, '/')}` : '';
+
           setEquipmentInfo({
             name: eq.name || '-',
             code: eq.equipment_code || '-',
@@ -69,7 +78,7 @@ function FormInspeksiBerkalaContent() {
             vendor: eq.vendor || '-',
             year: eq.year || '-',
             storageLocation: eq.storage_location?.name || '-',
-            photo: eq.photo_url || eq.photo || ''
+            photo: photoUrl || eq.photo_url || eq.photo || ''
           });
         }
       }

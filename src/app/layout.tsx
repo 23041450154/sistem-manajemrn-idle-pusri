@@ -35,8 +35,9 @@ export default function RootLayout({
     <html
       lang="en"
       className={cn("h-full", "antialiased", geistSans.variable, geistMono.variable, "font-sans", inter.variable)}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col" suppressHydrationWarning>
         <NextTopLoader color="#0556B3" height={4} showSpinner={false} shadow="0 0 10px #0556B3,0 0 5px #0556B3" />
         {children}
       </body>

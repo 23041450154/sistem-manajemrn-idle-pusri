@@ -229,8 +229,8 @@ export default function InspeksiDashboard() {
                         </td>
                         <td className="px-4 py-2 whitespace-nowrap text-right">
                           {row.status !== "Selesai" ? (
-                            <Link href={`/inspeksi/inspeksi-berkala/formInspeksi?equipmentId=${(row.equipment as any)?.id || row.id}`} className="inline-block bg-blue-50 text-[#0A356A] hover:bg-[#0A356A] hover:text-white border border-blue-200 px-2.5 py-1 rounded text-[10px] font-bold transition-all shadow-sm">
-                              Mulai
+                            <Link href={`/inspeksi/inspeksi-berkala/formInspeksi?equipmentId=${(row.equipment as any)?.id || row.id}`} className="inline-block bg-[#0A356A] text-white hover:bg-[#062854] border border-[#0A356A] px-3 py-1 rounded text-[11px] font-bold transition-all shadow-sm">
+                              Mulai Inspeksi
                             </Link>
                           ) : (
                             <div className="flex items-center justify-end gap-1 text-gray-400 opacity-80 group-hover:opacity-100 transition-opacity">

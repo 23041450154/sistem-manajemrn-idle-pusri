@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2, ChevronLeft, Paperclip, XCircle } from "lucide-react";
 import Link from "next/link";
-import { createEquipment } from "@/action/api";
+import { createEquipment, uploadEquipmentAttachment } from "@/action/api";
 import { useRouter } from "next/navigation";
 
 export default function RegisterEquipmentPage() {
@@ -168,14 +168,67 @@ export default function RegisterEquipmentPage() {
     };
 
     const res = await createEquipment(payload);
-    setIsSubmitting(false);
 
-    if (res.success) {
+    if (res.success && res.data?.id) {
+      const equipmentId = res.data.id;
+      
+      // Upload files
+      if (uploadedFiles.length > 0) {
+        setNotification({ type: 'success', message: 'Menyimpan foto...' });
+        const localAttachments: any[] = [];
+
+        for (const file of uploadedFiles) {
+          try {
+            const reader = new FileReader();
+            const dataUrl = await new Promise<string>((resolve) => {
+              reader.onload = (e) => resolve(e.target?.result as string || '');
+              reader.onerror = () => resolve('');
+              reader.readAsDataURL(file);
+            });
+
+            if (dataUrl) {
+              localAttachments.push({
+                url: dataUrl,
+                name: file.name,
+                type: file.type || file.name.split('.').pop() || 'image',
+                category: 'Registrasi'
+              });
+            }
+          } catch (e) {}
+
+          const fileData = new FormData();
+          fileData.append("equipment_id", equipmentId.toString());
+          fileData.append("reference_id", equipmentId.toString());
+          fileData.append("reference_table", "equipments");
+          fileData.append("category", "equipment_photo");
+          fileData.append("attachment_category", "equipment_photo");
+          fileData.append("file", file);
+          fileData.append("attachment", file);
+          const uploadRes = await uploadEquipmentAttachment(fileData);
+          console.log("Upload attachment result:", uploadRes);
+        }
+
+        if (localAttachments.length > 0) {
+          try {
+            const existing = JSON.parse(localStorage.getItem('local_equipment_attachments') || '{}');
+            existing[String(equipmentId)] = localAttachments;
+            if (formData.equipmentCode) {
+              existing[String(formData.equipmentCode)] = localAttachments;
+            }
+            localStorage.setItem('local_equipment_attachments', JSON.stringify(existing));
+          } catch (e) {
+            console.error("Error saving local attachments:", e);
+          }
+        }
+      }
+
+      setIsSubmitting(false);
       setNotification({ type: 'success', message: 'Berhasil! Peralatan idle telah didaftarkan.' });
       setTimeout(() => {
         router.push("/rendal/idle");
       }, 1500);
     } else {
+      setIsSubmitting(false);
       setNotification({ type: 'error', message: "Gagal menyimpan data: " + (res.message || "Pastikan field sudah sesuai.") });
       setTimeout(() => setNotification(null), 3000);
     }

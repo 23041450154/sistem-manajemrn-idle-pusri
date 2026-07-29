@@ -1,0 +1,56 @@
+{
+  "id": 1,
+  "uuid": "eq-001-pump-centrifugal",
+  "equipment_code": "P-IIB-PMP-001",
+  "name": "Centrifugal Pump 150HP",
+  "object_type_id": 3,
+  "plant": "P-IIB",
+  "plant_description": "Pabrik Pusri IIB",
+  "storage_location_id": 1,
+  "func_loc": "P-IIB-SYNTH-001",
+  "vendor": "KSB Indonesia",
+  "year": 2015,
+  "original_value": 450000000,
+  "book_value": 180000000,
+  "estimated_reuse_value": 250000000,
+  "status_id": 2,
+  "condition_id": 1,
+  "is_utilizable": false,
+  "idle_since": "2025-07-29T04:07:46.1925916Z",
+  "created_by_npp": "",
+  "updated_by_npp": "",
+  "notes": "Idle sejak upgrade pompa unit sintesa",
+  "created_at": "2026-07-29T04:07:46.1925916Z",
+  "updated_at": "2026-07-29T04:07:46.1925916Z",
+  "created_by": 1,
+  "updated_by": 1,
+  "condition": {
+    "id": 1,
+    "name": "BAGUS",
+    "description": "Kondisi peralatan baik, siap digunakan",
+    "created_at": "2026-07-29T04:07:46.1925916Z",
+    "updated_at": "2026-07-29T04:07:46.1925916Z"
+  },
+  "status": {
+    "id": 2,
+    "name": "VALIDATED",
+    "description": "Peralatan telah diinspeksi oleh tim teknisi dan berhasil lewat uji",
+    "created_at": "2026-07-29T04:07:46.1925916Z",
+    "updated_at": "2026-07-29T04:07:46.1925916Z"
+  },
+  "storage_location": {
+    "id": 1,
+    "name": "Pabrik III",
+    "plant": "P-III",
+    "description": "Area penyimpanan Pabrik III",
+    "created_at": "2026-07-29T04:07:46.1925916Z",
+    "updated_at": "2026-07-29T04:07:46.1925916Z"
+  },
+  "object_type": {
+    "id": 3,
+    "name": "Rotating Equipment",
+    "description": "Pompa, kompresor, blower",
+    "created_at": "2026-07-29T04:07:46.1925916Z",
+    "updated_at": "2026-07-29T04:07:46.1925916Z"
+  }
+}

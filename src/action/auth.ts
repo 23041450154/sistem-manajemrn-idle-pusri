@@ -11,7 +11,7 @@ import { homePathForRole } from "../lib/roles"
 
 
 
-const API_URL = process.env.API_URL
+const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
 
 function cookieConfig(maxAge: number) {
   return {
@@ -83,8 +83,8 @@ export async function loginAction(
   prevState: LoginResponse,
   formData: FormData,
 ): Promise<LoginResponse> {
-  const npp = String(formData.get("npp") || null);
-  const password = String(formData.get("password") || null);
+  const npp = String(formData.get("npp") || "");
+  const password = String(formData.get("password") || "");
 
   if (!npp || !password) {
     return {
