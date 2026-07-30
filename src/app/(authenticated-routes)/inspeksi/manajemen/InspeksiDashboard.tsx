@@ -57,7 +57,24 @@ export default function InspeksiDashboard() {
         if (res.ok) {
           const json = await res.json();
           if (json.data && json.data.length > 0) {
-            setData(json.data);
+            const mapped = json.data.map((item: any) => {
+              let inspectorStr = "Siti Rahayu (100003)";
+              if (typeof item.inspector === 'string' && item.inspector.trim() !== '') {
+                inspectorStr = item.inspector;
+              } else if (item.inspector && typeof item.inspector === 'object' && item.inspector.name) {
+                inspectorStr = item.inspector.name;
+              } else if (item.user && item.user.name) {
+                inspectorStr = item.user.name;
+              } else if (item.inspector_npp) {
+                inspectorStr = item.inspector_npp;
+              }
+              return {
+                ...item,
+                inspector: inspectorStr,
+                status: item.status || "Selesai"
+              };
+            });
+            setData(mapped);
             setLoading(false);
             return;
           }
