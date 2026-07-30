@@ -75,7 +75,7 @@ export default function InspeksiAntreanPage() {
               <tr className="border-b-2 border-gray-300">
                 <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">KODE ALAT</th>
                 <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">NAMA ALAT</th>
-                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">PLANT & LOKASI PENYIMPANAN</th>
+                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">PLANT</th>
                 <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">TANGGAL IDLE</th>
                 <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">LAMA IDLE</th>
                 <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">STATUS</th>
@@ -116,7 +116,6 @@ export default function InspeksiAntreanPage() {
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap">
                         <div className="text-[12px] text-gray-900 font-medium">{(typeof row.plant === 'string' ? row.plant : row.plant?.name) || row.area?.name || "-"}</div>
-                        <div className="text-gray-500 text-[11px]">{(typeof row.location === 'string' ? row.location : row.location?.name) || row.storage_location?.name || "-"}</div>
                       </td>
                       <td className="px-4 py-3 whitespace-nowrap text-[12px] text-gray-600">
                         {idleDate.toISOString().split('T')[0]}

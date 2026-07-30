@@ -127,7 +127,10 @@ export default function ManajemenInspeksi() {
         // Sort data by ID descending (newest first)
         mappedWithApproval.sort((a: any, b: any) => Number(b.id) - Number(a.id));
 
-        setAssets(mappedWithApproval);
+        const excludedStatuses = ["READY_TO_USE", "READY TO USE", "MAINTENANCE", "DISPOSAL_RECOMMENDED", "DISPOSAL"];
+        const finalAssets = mappedWithApproval.filter((a: any) => !excludedStatuses.includes(a.statusAset));
+
+        setAssets(finalAssets);
       } catch (err) {
         console.error(err);
       } finally {
