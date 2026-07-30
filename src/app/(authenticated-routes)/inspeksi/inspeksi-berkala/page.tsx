@@ -10,8 +10,8 @@ interface Equipment {
   equipment_code: string;
   name: string;
   status: string;
-  location?: string;
-  plant?: string;
+  location?: string | { name: string };
+  plant?: string | { name: string };
   storage_location?: { name: string };
   area?: { name: string };
   updated_at?: string; 
