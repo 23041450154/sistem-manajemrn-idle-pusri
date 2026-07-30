@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { getEquipments, completeEquipmentMaintenance } from "@/action/api";
+import { getEquipments, completeEquipmentMaintenance, getAttachmentsByEquipmentId } from "@/action/api";
 import { 
   Wrench, 
   Search, 
@@ -79,6 +79,7 @@ export default function PerbaikanAlatPage() {
   const [conditionId, setConditionId] = useState(""); // "1" for BAGUS, "2" for RUSAK RINGAN
   const [preservationStatus, setPreservationStatus] = useState(""); // "Preserved" or "Not Preserved"
   const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+  const [existingFiles, setExistingFiles] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
 
@@ -191,14 +192,24 @@ export default function PerbaikanAlatPage() {
     setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleOpenModal = (asset: MaintenanceEquipment) => {
+  const handleOpenModal = async (asset: MaintenanceEquipment) => {
     setSelectedAsset(asset);
     setActualCost("0");
     setDisplayCost("Rp 0");
     setConditionId("");
     setPreservationStatus("");
     setUploadedFiles([]);
+    setExistingFiles([]);
     setIsModalOpen(true);
+    
+    try {
+      const files = await getAttachmentsByEquipmentId(asset.id);
+      if (files && Array.isArray(files)) {
+        setExistingFiles(files);
+      }
+    } catch (e) {
+      console.error(e);
+    }
   };
 
   const handleCloseModal = () => {
@@ -222,8 +233,8 @@ export default function PerbaikanAlatPage() {
   }, [preservationStatus]);
 
   const isFileValid = useMemo(() => {
-    return uploadedFiles.length > 0;
-  }, [uploadedFiles]);
+    return uploadedFiles.length > 0 || existingFiles.length > 0;
+  }, [uploadedFiles, existingFiles]);
 
   const isFormInvalid = !isCostValid || !isConditionValid || !isPreservationValid || !isFileValid;
 
@@ -552,11 +563,47 @@ export default function PerbaikanAlatPage() {
                   Unggah Berkas Bukti Bayar / Dokumen SPK <span className="text-red-500">*</span>
                 </label>
                 
-                <div className={`border-2 border-dashed rounded-lg p-4 transition-colors flex flex-col items-center justify-center ${uploadedFiles.length > 0 ? 'border-blue-300 bg-blue-50/30' : 'border-gray-300 bg-gray-50/50 hover:bg-blue-50/30 hover:border-blue-400'}`}>
+                <div className={`border-2 border-dashed rounded-lg p-4 transition-colors flex flex-col items-center justify-center ${(uploadedFiles.length > 0 || existingFiles.length > 0) ? 'border-blue-300 bg-blue-50/30' : 'border-gray-300 bg-gray-50/50 hover:bg-blue-50/30 hover:border-blue-400'}`}>
                   
                   {/* File Previews Grid */}
-                  {uploadedFiles.length > 0 && (
+                  {(uploadedFiles.length > 0 || existingFiles.length > 0) && (
                     <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-4 w-full">
+                      {existingFiles.map((file, idx) => {
+                        const isImage = file.type?.startsWith("image/") || file.file_url?.match(/\.(jpg|jpeg|png)$/i) || file.name?.match(/\.(jpg|jpeg|png)$/i);
+                        return (
+                          <div 
+                            key={`existing-${idx}`} 
+                            className="relative group bg-white border border-blue-200 rounded-lg overflow-hidden flex flex-col shadow-sm"
+                          >
+                            {isImage ? (
+                              <div 
+                                className="w-full h-20 bg-gray-100 flex-shrink-0 cursor-pointer relative group/img overflow-hidden"
+                                onClick={() => setPreviewImageUrl(file.file_url || file.url)}
+                              >
+                                <img src={file.file_url || file.url} alt="preview" className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-110" />
+                                <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-colors flex items-center justify-center">
+                                  <Eye className="w-6 h-6 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" />
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="w-full h-20 bg-gray-50 flex items-center justify-center flex-shrink-0 border-b border-gray-100">
+                                <FileText className="w-8 h-8 text-[#0A356A]" />
+                              </div>
+                            )}
+                            <div className="p-1.5 flex flex-col bg-white">
+                              <span className="font-semibold text-gray-800 text-[10px] truncate">{file.name || "Dokumen"}</span>
+                              <span className="text-[9px] text-gray-500">Dari Database</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setExistingFiles(prev => prev.filter((_, i) => i !== idx))}
+                              className="absolute top-1 right-1 bg-white/90 backdrop-blur text-gray-600 hover:text-red-600 p-1 rounded-md shadow-sm border border-gray-200 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50"
+                            >
+                              <X className="w-3 h-3" />
+                            </button>
+                          </div>
+                        );
+                      })}
                       {uploadedFiles.map((file, idx) => {
                         const isImage = file.type.startsWith("image/");
                         return (

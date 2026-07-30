@@ -1,461 +1,380 @@
 "use client";
 
-import React, { useState, useRef, useEffect } from "react";
-import { Save, Info, AlertCircle, Camera, CheckCircle2, ChevronLeft, Loader2, Wrench, FileText, DollarSign, X, UploadCloud, User, Calendar } from "lucide-react";
-import Link from "next/link";
-import { useRouter, useSearchParams } from "next/navigation";
-import { createInspection, getEquipments, getAttachments } from "@/action/api";
-import { getCurrentUserAction } from "@/action/auth";
+import React, { useState, useEffect, useRef } from "react";
+import { useSearchParams, useRouter } from "next/navigation";
+import { ArrowLeft, UploadCloud, X, CheckCircle, AlertCircle, Loader2 } from "lucide-react";
+import { getEquipments, submitInspectionData } from "@/action/api";
 
-function FormInspeksiBerkalaContent() {
+export default function FormInspeksiPage() {
   const searchParams = useSearchParams();
-  const eqId = searchParams.get('equipmentId') || "";
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
-  const [submitStatus, setSubmitStatus] = useState<{type: "success" | "error", message: string} | null>(null);
-
   const router = useRouter();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [photo, setPhoto] = useState<File | null>(null);
-  const [fileError, setFileError] = useState<string | null>(null);
+  const equipmentId = searchParams.get("equipmentId");
 
-  // User Info
-  const [userInfo, setUserInfo] = useState<{ id: string, name: string, npp: string }>({ id: "", name: "", npp: "" });
+  const [equipment, setEquipment] = useState<any>(null);
   
-  const [equipmentInfo, setEquipmentInfo] = useState({ 
-    name: "", code: "", plant: "", funcLoc: "", objectType: "", vendor: "", year: "", storageLocation: "", photo: "" 
-  });
-
-  // Initial Form Data matching EquipmentInspection API Payload
-  const [formData, setFormData] = useState({
-    equipmentId: eqId,
-    inspectionDate: "",
-    inspectorId: "",
-    mechanicalCondition: "",
-    electricalCondition: "",
-    requireActionId: "",
-    refurbishCost: "",
-    notes: ""
-  });
+  // Form State
+  const [isUtilizable, setIsUtilizable] = useState<string>("");
+  const [needsRefurbishment, setNeedsRefurbishment] = useState<string>("");
+  const [notes, setNotes] = useState<string>("");
+  const [files, setFiles] = useState<File[]>([]);
+  const [fileError, setFileError] = useState<string>("");
+  
+  // UI State
+  const [loading, setLoading] = useState(false);
+  const [toast, setToast] = useState<{show: boolean, type: 'success'|'error', message: string}>({ show: false, type: 'success', message: '' });
+  
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
-    async function fetchData() {
-      // Set initial date on client to avoid hydration mismatch
-      setFormData(prev => ({ ...prev, inspectionDate: new Date().toISOString().split("T")[0] }));
-
-      // Fetch User Info
-      const res = await getCurrentUserAction();
-      if (res.status && res.user) {
-        setUserInfo({
-          id: String(res.user.id || ''),
-          name: res.user.name || '-',
-          npp: res.user.npp || '-'
-        });
-        setFormData(prev => ({ ...prev, inspectorId: String(res.user.id || '') }));
-      }
-
-      // Fetch Equipment Info
-      if (eqId) {
-        setFormData(prev => ({ ...prev, equipmentId: eqId }));
-        const [equipments, attachments] = await Promise.all([
-          getEquipments(),
-          getAttachments()
-        ]);
-        const eq = equipments.find((e: any) => String(e.id) === eqId);
-        if (eq) {
-          // Cari attachment (registrasi) untuk equipment ini
-          const eqAttachments = (attachments && Array.isArray(attachments)) ? attachments.filter((a: any) => String(a.equipment_id) === String(eqId) || String(a.reference_id) === String(eqId)) : [];
-          // Ambil photo pertama jika ada
-          const firstPhoto = eqAttachments.length > 0 ? eqAttachments[0] : null;
-          const photoUrl = firstPhoto && firstPhoto.file_url ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/${firstPhoto.file_url.replace(/\\/g, '/')}` : '';
-
-          setEquipmentInfo({
-            name: eq.name || '-',
-            code: eq.equipment_code || '-',
-            plant: eq.plant || '-',
-            funcLoc: eq.func_loc || '-',
-            objectType: eq.object_type?.name || '-',
-            vendor: eq.vendor || '-',
-            year: eq.year || '-',
-            storageLocation: eq.storage_location?.name || '-',
-            photo: photoUrl || eq.photo_url || eq.photo || ''
-          });
-        }
-      }
+    if (equipmentId) {
+      getEquipments().then((res) => {
+        const eq = res.find((e: any) => String(e.id) === String(equipmentId));
+        if (eq) setEquipment(eq);
+      });
     }
-    fetchData();
-  }, [eqId]);
+  }, [equipmentId]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    let { name, value } = e.target;
-    if (name === "equipmentId" && value.length > 50) {
-      value = value.slice(0, 50);
-    }
-    
-    // Auto-format currency untuk input biaya refurbish
-    if (name === "refurbishCost") {
-      const rawValue = value.replace(/\D/g, "");
-      value = rawValue ? parseInt(rawValue, 10).toLocaleString('id-ID') : "";
-    }
-    
-    setFormData(prev => ({ ...prev, [name]: value }));
-    // Hapus error form jika field diisi
-    if (formErrors[name]) {
-      setFormErrors(prev => ({ ...prev, [name]: "" }));
-    }
+  const showToast = (type: 'success'|'error', message: string) => {
+    setToast({ show: true, type, message });
+    setTimeout(() => {
+      setToast(prev => ({ ...prev, show: false }));
+    }, 5000);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const file = e.target.files[0];
-      if (file.size > 5 * 1024 * 1024) {
-        setFileError(`File Anda lebih dari 5MB.`);
-        setPhoto(null);
-        return;
+    if (!e.target.files) return;
+    
+    setFileError("");
+    const selectedFiles = Array.from(e.target.files);
+    let validFiles: File[] = [];
+    let hasError = false;
+
+    for (const file of selectedFiles) {
+      // Validasi Ekstensi
+      const validTypes = ['image/jpeg', 'image/jpg', 'image/png'];
+      if (!validTypes.includes(file.type)) {
+        setFileError("Format file tidak didukung. Harap gunakan JPG, JPEG, atau PNG.");
+        hasError = true;
+        break;
       }
-      setFileError(null);
-      setPhoto(file);
+
+      // Validasi Ukuran (Maks 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setFileError(`File ${file.name} melebihi batas 5MB.`);
+        hasError = true;
+        break;
+      }
+      
+      validFiles.push(file);
+    }
+
+    if (!hasError) {
+      setFiles(prev => [...prev, ...validFiles]);
+    }
+    
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
+
+  const removeFile = (index: number) => {
+    setFiles(prev => prev.filter((_, i) => i !== index));
+    if (fileError) setFileError(""); // Reset error if they remove file
+  };
+
+  // Validasi Form untuk men-disable tombol submit
+  const isNotesEmpty = !notes || notes.trim() === "";
+  const isKelayakanNotSelected = isUtilizable === "";
+  const isPerbaikanKhususNotSelected = isUtilizable === "true" && needsRefurbishment === "";
+  const isFilesNotEnough = files.length < 2;
+
+  const isSubmitDisabled = isKelayakanNotSelected || isPerbaikanKhususNotSelected || isNotesEmpty || isFilesNotEnough || loading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Validasi Manual
-    const errors: Record<string, string> = {};
-    if (!formData.inspectionDate) errors.inspectionDate = "Harap isi tanggal inspeksi.";
-    if (!formData.mechanicalCondition) errors.mechanicalCondition = "Harap pilih kondisi mekanikal.";
-    if (!formData.electricalCondition) errors.electricalCondition = "Harap pilih kondisi elektrikal.";
-    if (!formData.requireActionId) errors.requireActionId = "Harap pilih rekomendasi tindakan lanjutan.";
-    if (!formData.notes) errors.notes = "Harap isi catatan temuan.";
-    
-    setFormErrors(errors);
-    
-    if (Object.keys(errors).length > 0) {
-      setSubmitStatus({ type: "error", message: "Mohon lengkapi semua isian yang wajib (ditandai bintang merah)." });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
+    if (isSubmitDisabled) return;
 
-    setIsSubmitting(true);
-    setSubmitStatus(null);
+    setLoading(true);
 
-    const payload = new FormData();
-    payload.append("equipment_id", formData.equipmentId);
-    payload.append("inspector", formData.inspectorId);
-    payload.append("require_action_id", formData.requireActionId);
-    payload.append("mechanical_condition", formData.mechanicalCondition);
-    payload.append("electrical_condition", formData.electricalCondition);
-    
-    // Hapus format titik pada currency sebelum dikirim ke API
-    const cleanRefurbishCost = formData.refurbishCost ? formData.refurbishCost.replace(/\./g, "") : "0";
-    payload.append("estimated_refurbish_cost", cleanRefurbishCost);
-    
-    payload.append("notes", formData.notes);
-    
-    if (photo) {
-      payload.append("photo", photo);
-    }
+    try {
+      const formData = new FormData();
+      formData.append("equipment_id", equipmentId || "");
+      formData.append("is_utilizable", isUtilizable);
+      
+      if (isUtilizable === "true") {
+        formData.append("needs_refurbishment", needsRefurbishment);
+      }
+      
+      formData.append("notes", notes.trim());
+      
+      files.forEach((file) => {
+        formData.append("photos", file); 
+      });
 
-    const res = await createInspection(payload);
-    setIsSubmitting(false);
-
-    if (res.success) {
-      setSubmitStatus({ type: "success", message: "Laporan inspeksi fisik berhasil disimpan! Mengalihkan..." });
-      setTimeout(() => {
-        router.push("/inspeksi/manajemen");
-      }, 1500);
-    } else {
-      setSubmitStatus({ type: "error", message: "Gagal menyimpan inspeksi: " + (res.message || "Terjadi kesalahan.") });
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      const response = await submitInspectionData(formData);
+      
+      if (response.success) {
+        showToast("success", `Hasil inspeksi berhasil disimpan dengan status ${response.new_status || 'BERHASIL'}`);
+        setTimeout(() => {
+          router.push("/inspeksi/inspeksi-berkala");
+        }, 2000);
+      } else {
+        showToast("error", response.message || "Gagal menyimpan hasil inspeksi.");
+        setLoading(false);
+      }
+    } catch (error: any) {
+      showToast("error", error?.message || "Terjadi kesalahan sistem.");
+      setLoading(false);
     }
   };
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto pb-8 pt-2 relative">
-      {/* Header */}
-      <div className="flex flex-col md:flex-row md:items-start justify-between gap-4 mb-5">
-        <div>
-          <Link href="/inspeksi/manajemen" className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#0A356A] transition-colors mb-2.5">
-            <ChevronLeft className="w-4 h-4" />
-            Kembali
-          </Link>
-          <h1 className="text-2xl font-bold text-[#0A356A] tracking-tight">Form Inspeksi Fisik Berkala</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Isi laporan kondisi aktual peralatan idle di lapangan secara lengkap.</p>
-        </div>
-      </div>
-
-      {submitStatus && (
-        <div className={`p-4 rounded-lg mb-5 flex items-start gap-3 border shadow-sm ${submitStatus.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' : 'bg-red-50 border-red-200 text-red-800'}`}>
-          {submitStatus.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0 text-green-600" /> : <AlertCircle className="w-5 h-5 shrink-0 text-red-600" />}
-          <div className="text-sm font-semibold pt-0.5">{submitStatus.message}</div>
+    <div className="max-w-4xl mx-auto px-4 md:px-8 pt-2 pb-8 relative">
+      
+      {/* Toast Notification */}
+      {toast.show && (
+        <div className={`fixed top-6 right-6 z-50 p-4 rounded-lg shadow-lg flex items-center gap-3 transform transition-all animate-in slide-in-from-top-2 fade-in ${toast.type === 'success' ? 'bg-green-50 border-l-4 border-green-500 text-green-800' : 'bg-red-50 border-l-4 border-red-500 text-red-800'}`}>
+          {toast.type === 'success' ? <CheckCircle className="w-5 h-5 text-green-500" /> : <AlertCircle className="w-5 h-5 text-red-500" />}
+          <p className="text-sm font-semibold">{toast.message}</p>
+          <button onClick={() => setToast(prev => ({ ...prev, show: false }))} className="ml-4 text-gray-500 hover:text-gray-700">
+            <X className="w-4 h-4" />
+          </button>
         </div>
       )}
 
-      <form onSubmit={handleSubmit} noValidate className="w-full flex flex-col gap-5">
-        
-        {/* Informasi Registrasi (Rendal) */}
-        <div className="bg-white border border-gray-200 rounded-lg p-3 mb-4 shadow-sm">
-          <div className="flex items-center justify-between mb-2 pb-2 border-b border-gray-100">
-            <div className="flex items-center gap-2">
-              <Info className="w-4 h-4 text-gray-500" />
-              <h3 className="text-[12px] font-bold text-gray-800">Informasi Equipment</h3>
-            </div>
-            {/* Tanggal Inspeksi Input */}
-            <div className={`flex items-center gap-2 px-2.5 py-1 border rounded-md shadow-sm transition-colors ${formErrors.inspectionDate ? 'bg-red-50 border-red-300' : 'bg-gray-50 border-gray-200'}`}>
-              <Calendar className={`w-3.5 h-3.5 ${formErrors.inspectionDate ? 'text-red-500' : 'text-gray-500'}`} />
-              <span className={`text-[11px] font-bold hidden sm:inline ${formErrors.inspectionDate ? 'text-red-700' : 'text-gray-600'}`}>Tanggal Inspeksi:</span>
-              <input type="date" name="inspectionDate" value={formData.inspectionDate} onChange={handleChange} className={`px-1 text-[11px] font-semibold border-none bg-transparent focus:ring-0 outline-none p-0 h-auto cursor-pointer ${formErrors.inspectionDate ? 'text-red-800' : 'text-gray-800'}`} />
-            </div>
+      <button 
+        onClick={() => router.back()}
+        className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-[#0A356A] mb-4 transition-colors"
+      >
+        <ArrowLeft className="w-4 h-4" />
+        Kembali ke Antrean
+      </button>
+
+      <div className="mb-6">
+        <h1 className="text-2xl font-extrabold text-gray-900">Formulir Inspeksi Fisik Lapangan</h1>
+        <p className="text-sm text-gray-500 mt-1">Lengkapi data hasil pengecekan untuk menentukan kelayakan peralatan.</p>
+      </div>
+
+      <div className="bg-[#F4F9FD] border border-[#BBE1FA] rounded-lg p-5 mb-6">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6">
+          <div>
+            <p className="text-xs text-[#0284c7] font-medium mb-1">Kode Aset:</p>
+            <p className="text-sm font-bold text-[#0A356A]">{equipment?.equipment_code || "Memuat..."}</p>
           </div>
-          
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-4">
-              <div>
-                <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Kode Aset / Tag</span>
-                <span className="text-[12px] font-bold text-[#0A356A]">{equipmentInfo.code || "-"}</span>
-              </div>
-              <div>
-                <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Nama Peralatan</span>
-                <span className="text-[12px] font-medium text-gray-900">{equipmentInfo.name || "-"}</span>
-              </div>
-              <div>
-                <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Kategori (Tipe)</span>
-                <span className="text-[12px] font-medium text-gray-900">{equipmentInfo.objectType || "-"}</span>
-              </div>
-              <div>
-                <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Lokasi Penyimpanan</span>
-                <span className="text-[12px] font-medium text-gray-900">{equipmentInfo.storageLocation || "-"}</span>
-              </div>
-              <div>
-                <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Pabrik / Plant</span>
-                <span className="text-[12px] font-medium text-gray-900">{equipmentInfo.plant || "-"}</span>
-              </div>
-              <div>
-                <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Area (FuncLoc)</span>
-                <span className="text-[12px] font-medium text-gray-900">{equipmentInfo.funcLoc || "-"}</span>
-              </div>
-              <div>
-                <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Vendor / Merk</span>
-                <span className="text-[12px] font-medium text-gray-900">{equipmentInfo.vendor || "-"}</span>
-              </div>
-              <div>
-                <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Tahun Dibuat</span>
-                <span className="text-[12px] font-medium text-gray-900">{equipmentInfo.year || "-"}</span>
-              </div>
-              <div>
-                <span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">Inspektur</span>
-                <span className="text-[12px] font-bold text-[#0A356A]">{userInfo.name || "Inspektur"}</span>
-              </div>
-            </div>
-            
-            {/* Foto Registrasi */}
-            <div className="w-full md:w-56 shrink-0 flex flex-col gap-2 md:border-l md:border-gray-100 md:pl-4">
-              <span className="text-[10px] font-semibold text-gray-500 uppercase block">Foto Registrasi</span>
-              <div className="flex gap-2">
-                <div 
-                  className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm flex items-center justify-center relative"
-                  onClick={() => equipmentInfo.photo && window.open(equipmentInfo.photo, "_blank")}
-                  title={equipmentInfo.photo ? "Lihat Foto Mesin" : "Foto Mesin Belum Ada"}
-                >
-                  {equipmentInfo.photo ? (
-                    <img src={equipmentInfo.photo} alt={equipmentInfo.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-50/50">
-                      <Wrench className="w-5 h-5 opacity-40 mb-1" strokeWidth={1.5} />
-                      <span className="text-[8px] font-bold uppercase tracking-wider text-gray-400 text-center leading-tight">Foto<br/>Mesin</span>
-                    </div>
-                  )}
-                </div>
-                
-                <div 
-                  className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm flex items-center justify-center relative"
-                  title="Foto Nameplate/Plat"
-                >
-                  {/* Nameplate photo placeholder or real data if available */}
-                  <div className="absolute inset-0 flex flex-col items-center justify-center text-gray-400 bg-gray-50/50">
-                    <FileText className="w-5 h-5 opacity-40 mb-1" strokeWidth={1.5} />
-                    <span className="text-[8px] font-bold uppercase tracking-wider text-gray-400 text-center leading-tight">Foto<br/>Plat</span>
-                  </div>
-                </div>
-              </div>
-              <span className="text-[9px] text-gray-400 italic text-center md:text-left mt-0.5">Klik foto untuk memperbesar</span>
-            </div>
+          <div>
+            <p className="text-xs text-[#0284c7] font-medium mb-1">Nama Aset:</p>
+            <p className="text-sm font-bold text-[#0A356A]">{equipment?.name || "Memuat..."}</p>
+          </div>
+          <div>
+            <p className="text-xs text-[#0284c7] font-medium mb-1">Plant Asal & Lokasi Penyimpanan:</p>
+            <p className="text-sm font-medium text-gray-900">
+              <span className="font-semibold">{(typeof equipment?.plant === 'string' ? equipment.plant : equipment?.plant?.name) || equipment?.area?.name || "-"}</span> - {(typeof equipment?.location === 'string' ? equipment.location : equipment?.location?.name) || equipment?.storage_location?.name || "-"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-[#0284c7] font-medium mb-1">Tanggal Deklarasi Idle:</p>
+            <p className="text-sm font-medium text-gray-900">
+              {equipment?.updated_at ? new Date(equipment.updated_at).toISOString().split('T')[0] : "2026-03-31"}
+            </p>
+          </div>
+          <div>
+            <p className="text-xs text-[#0284c7] font-medium mb-1">Status Saat Ini:</p>
+            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#E0E7FF] text-[#4F46E5] mt-0.5">
+              {typeof equipment?.status === 'string' ? equipment.status : equipment?.status?.name || "IDLE"}
+            </span>
+          </div>
+          <div>
+            <p className="text-xs text-[#0284c7] font-medium mb-1">Petugas Pemeriksa (Inspector):</p>
+            <p className="text-sm font-bold text-gray-900">
+              Siti Rahayu (100003)
+            </p>
           </div>
         </div>
+      </div>
+
+      <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-xl shadow-sm p-5 flex flex-col gap-5">
         
-        {/* Konten Utama Inspeksi (Split 2 Columns) */}
-        <div className="w-full grid grid-cols-1 lg:grid-cols-2 gap-5">
-          {/* KIRI: Evaluasi Fisik */}
-          <div className="w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full flex flex-col">
-            <div className="p-4 border-b border-gray-100 flex items-center gap-2.5 bg-gray-50/50">
-              <Wrench className="w-5 h-5 text-[#0A356A]" strokeWidth={2.5} />
-              <h2 className="text-lg font-bold text-gray-900">Evaluasi Kondisi Aktual</h2>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Kiri: Pertanyaan & Catatan */}
+          <div className="flex flex-col gap-6">
+            {/* Komponen 1: Kelayakan */}
+            <div>
+              <label className="block text-sm font-semibold text-gray-900 mb-3">
+                Apakah Layak / Bisa Diperbaiki? <span className="text-red-500">*</span>
+              </label>
+              <div className="flex flex-col sm:flex-row gap-5">
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input 
+                    type="radio" 
+                    name="is_utilizable" 
+                    value="true" 
+                    checked={isUtilizable === "true"} 
+                    onChange={(e) => setIsUtilizable(e.target.value)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-800">Ya (Layak / Bisa Diperbaiki)</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input 
+                    type="radio" 
+                    name="is_utilizable" 
+                    value="false" 
+                    checked={isUtilizable === "false"} 
+                    onChange={(e) => {
+                      setIsUtilizable(e.target.value);
+                      setNeedsRefurbishment(""); // Reset child field
+                    }}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-800">Tidak (Rusak Berat / Disposal)</span>
+                </label>
+              </div>
+              <p className="text-xs text-gray-500 mt-2 italic">Catatan: Jika aset dinyatakan tidak layak diperbaiki, sistem akan mengubah status menjadi Disposal Recommended.</p>
             </div>
+
+            {/* Komponen 2: Perbaikan Khusus (Kondisional) */}
+            {isUtilizable === "true" && (
+              <div className="animate-in fade-in slide-in-from-top-2 bg-[#F8FAFC] border border-gray-200 rounded-lg p-4">
+                <label className="block text-sm font-semibold text-gray-900 mb-3">
+                  Apakah Butuh Perbaikan / Treatment Khusus? <span className="text-red-500">*</span>
+                </label>
+                <div className="flex flex-col sm:flex-row gap-5">
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input 
+                      type="radio" 
+                      name="needs_refurbishment" 
+                      value="true" 
+                      checked={needsRefurbishment === "true"} 
+                      onChange={(e) => setNeedsRefurbishment(e.target.value)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-800">Ya (Butuh Perbaikan Bengkel)</span>
+                  </label>
+                  <label className="flex items-center gap-2 cursor-pointer group">
+                    <input 
+                      type="radio" 
+                      name="needs_refurbishment" 
+                      value="false" 
+                      checked={needsRefurbishment === "false"} 
+                      onChange={(e) => setNeedsRefurbishment(e.target.value)}
+                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    />
+                    <span className="text-sm font-medium text-gray-800">Tidak (Tidak Perlu Perbaikan)</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Komponen 3: Catatan */}
+            <div className="flex-1 flex flex-col">
+              <label className="block text-sm font-semibold text-gray-900 mb-2">
+                Temuan Fisik / Catatan Inspeksi <span className="text-red-500">*</span>
+              </label>
+              <textarea 
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                placeholder="Tuliskan detail pemeriksaan fisik (misal: kebocoran seal, tingkat korosi, kelistrikan)..."
+                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-sm resize-none flex-1 min-h-[100px]"
+              ></textarea>
+              <p className="text-xs text-gray-500 mt-1.5">Wajib diisi dan tidak boleh hanya berupa spasi kosong.</p>
+            </div>
+          </div>
+
+          {/* Kanan: Upload Foto */}
+          <div className="flex flex-col h-full">
+            <label className="block text-sm font-semibold text-gray-900 mb-2">
+              Foto Bukti Lapangan (Nameplate & Kondisi Fisik) <span className="text-red-500">*</span>
+            </label>
             
-            <div className="p-5 flex-1 flex flex-col gap-6">
-              {/* Mekanikal */}
-              <div className="space-y-2">
-                <div>
-                  <label className="text-sm font-bold text-gray-800 block">Kondisi Mekanikal <span className="text-red-500">*</span></label>
-                  <p className="text-[11px] text-gray-500 leading-snug">Status housing, poros, bearing, struktur mekanis lainnya.</p>
-                </div>
-                <select name="mechanicalCondition" value={formData.mechanicalCondition} onChange={handleChange} className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-1 outline-none transition-all ${formErrors.mechanicalCondition ? 'border-red-400 focus:border-red-400 focus:ring-red-200 bg-red-50/30' : 'border-gray-300 focus:border-[#0556B3] focus:ring-[#0556B3]/20'} ${!formData.mechanicalCondition ? 'text-gray-400' : 'text-gray-900'}`}>
-                  <option value="" disabled>Pilih Kondisi Mekanikal...</option>
-                  <option value="bagus">Bagus (Siap Digunakan)</option>
-                  <option value="rusak ringan">Rusak Ringan (Perlu Servis Minor)</option>
-                  <option value="rusak berat">Rusak Berat (Perlu Overhaul)</option>
-                  <option value="tidak layak">Tidak Layak (Scrap)</option>
-                </select>
-                {formErrors.mechanicalCondition && (
-                  <p className="text-red-500 text-[11px] font-semibold flex items-center gap-1.5"><AlertCircle className="w-3 h-3" /> {formErrors.mechanicalCondition}</p>
-                )}
-              </div>
-
-              {/* Elektrikal & Instrumen */}
-              <div className="space-y-2">
-                <div>
-                  <label className="text-sm font-bold text-gray-800 block">Kondisi Elektrikal/Instrumen <span className="text-red-500">*</span></label>
-                  <p className="text-[11px] text-gray-500 leading-snug">Status kabel, panel, sensor, motor listrik.</p>
-                </div>
-                <select name="electricalCondition" value={formData.electricalCondition} onChange={handleChange} className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-1 outline-none transition-all ${formErrors.electricalCondition ? 'border-red-400 focus:border-red-400 focus:ring-red-200 bg-red-50/30' : 'border-gray-300 focus:border-[#0556B3] focus:ring-[#0556B3]/20'} ${!formData.electricalCondition ? 'text-gray-400' : 'text-gray-900'}`}>
-                  <option value="" disabled>Pilih Kondisi Elektrikal...</option>
-                  <option value="bagus">Bagus (Berfungsi Normal)</option>
-                  <option value="rusak ringan">Rusak Ringan (Part Kecil)</option>
-                  <option value="rusak berat">Rusak Berat (Korslet/Terbakar)</option>
-                  <option value="tidak layak">Tidak Layak / Hilang</option>
-                </select>
-                {formErrors.electricalCondition && (
-                  <p className="text-red-500 text-[11px] font-semibold flex items-center gap-1.5"><AlertCircle className="w-3 h-3" /> {formErrors.electricalCondition}</p>
-                )}
-              </div>
-
-              {/* Upload Foto */}
-              <div className="flex-1 flex flex-col space-y-2">
-                <div>
-                  <label className="text-sm font-bold text-gray-800 block">Foto Aktual</label>
-                  <p className="text-[11px] text-gray-500 leading-snug">Lampirkan foto alat yang menunjukkan kondisi saat inspeksi dilakukan (Maks 5MB).</p>
-                </div>
-                <input type="file" ref={fileInputRef} className="hidden" onChange={handleFileChange} accept=".jpg,.jpeg,.png" />
-                <div 
-                  onClick={() => fileInputRef.current?.click()}
-                  className="w-full flex-1 min-h-[140px] border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center text-center hover:bg-blue-50/40 hover:border-[#0556B3] cursor-pointer transition-all bg-gray-50/50 relative overflow-hidden"
-                >
-                  {photo ? (
-                    <div className="absolute inset-0 w-full h-full p-2">
-                      <div className="relative w-full h-full rounded-lg overflow-hidden group border border-gray-200">
-                        <img src={URL.createObjectURL(photo)} alt="Preview" className="w-full h-full object-cover" />
-                        <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
-                          <button type="button" onClick={(e) => { e.stopPropagation(); setPhoto(null); }} className="bg-red-500 text-white p-2 rounded-full hover:bg-red-600 shadow-md">
-                            <X className="w-5 h-5" />
+            <div 
+              onClick={() => fileInputRef.current?.click()}
+              className="flex-1 w-full border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-[#0A356A] transition-all min-h-[180px]"
+            >
+              {files.length === 0 ? (
+                <>
+                  <UploadCloud className="w-8 h-8 text-gray-400 mb-3" />
+                  <p className="text-sm font-semibold text-[#0A356A] text-center">Klik atau Seret Berkas ke Sini</p>
+                  <p className="text-xs text-gray-500 mt-1.5 text-center">Format JPG/PNG, maks. 5MB</p>
+                </>
+              ) : (
+                <div className="w-full h-full flex flex-col justify-start">
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full mb-4">
+                    {files.map((file, idx) => (
+                      <div key={idx} className="relative group rounded-lg overflow-hidden border border-gray-200 aspect-square bg-gray-100">
+                        <img 
+                          src={URL.createObjectURL(file)} 
+                          alt={`Preview ${idx}`} 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                          <button 
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); removeFile(idx); }}
+                            className="bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transform scale-90 group-hover:scale-100 transition-all shadow-lg"
+                            title="Hapus foto"
+                          >
+                            <X className="w-4 h-4" />
                           </button>
                         </div>
                       </div>
-                    </div>
-                  ) : (
-                    <>
-                      <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
-                      <span className="text-sm font-bold text-gray-700">Klik untuk Pilih Foto</span>
-                      <span className="text-[11px] text-gray-500 mt-1">Format JPG/PNG</span>
-                    </>
-                  )}
+                    ))}
+                  </div>
+                  <div className="mt-auto flex items-center justify-center gap-2 text-sm font-semibold text-[#0A356A] bg-blue-50 py-2 rounded-lg border border-blue-100 transition-colors w-full">
+                    <UploadCloud className="w-4 h-4" /> Tambah Foto Lainnya
+                  </div>
                 </div>
-                {fileError && <p className="text-[11px] text-red-500 font-medium">* {fileError}</p>}
-              </div>
-            </div>
-          </div>
-
-          {/* KANAN: Kesimpulan & Biaya */}
-          <div className="w-full bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full flex flex-col">
-            <div className="p-4 border-b border-gray-100 flex items-center gap-2.5 bg-gray-50/50">
-              <FileText className="w-5 h-5 text-[#0A356A]" strokeWidth={2.5} />
-              <h2 className="text-lg font-bold text-gray-900">Kesimpulan Inspeksi</h2>
+              )}
             </div>
             
-            <div className="p-5 flex-1 flex flex-col gap-6">
-              {/* Tindakan Lanjutan */}
-              <div className="space-y-2">
-                <label className="text-sm font-bold text-gray-800 block">Tindakan Lanjutan <span className="text-red-500">*</span></label>
-                <select name="requireActionId" value={formData.requireActionId} onChange={handleChange} className={`w-full px-3 py-2.5 text-sm border rounded-lg focus:ring-1 outline-none transition-all ${formErrors.requireActionId ? 'border-red-400 focus:border-red-400 focus:ring-red-200 bg-red-50/30' : 'border-gray-300 focus:border-[#0556B3] focus:ring-[#0556B3]/20'} ${!formData.requireActionId ? 'text-gray-400' : 'text-gray-900'}`}>
-                  <option value="" disabled>Pilih Rekomendasi Tindakan...</option>
-                  <option value="1">Lanjutkan Preservasi Rutin</option>
-                  <option value="2">Perbaikan Ringan di Tempat</option>
-                  <option value="3">Tarik ke Bengkel / Overhaul</option>
-                  <option value="4">Scrapping / Pemutihan</option>
-                </select>
-                {formErrors.requireActionId && (
-                  <p className="text-red-500 text-[11px] font-semibold flex items-center gap-1.5"><AlertCircle className="w-3 h-3" /> {formErrors.requireActionId}</p>
-                )}
-              </div>
-
-              {/* Estimasi Biaya */}
-              <div className="space-y-2">
-                <div>
-                  <label className="text-sm font-bold text-gray-800 block">Estimasi Biaya Refurbish</label>
-                  <p className="text-[11px] text-gray-500 leading-snug">Kosongkan jika kondisi alat baik atau di-scrap.</p>
-                </div>
-                <div className="relative">
-                  <div className="absolute inset-y-0 left-0 pl-3.5 flex items-center pointer-events-none">
-                    <span className="text-gray-500 text-sm font-medium">Rp</span>
-                  </div>
-                  <input type="text" name="refurbishCost" value={formData.refurbishCost} onChange={handleChange} placeholder="0" className="w-full pl-12 pr-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all" />
-                </div>
-              </div>
-
-              {/* Catatan Bebas */}
-              <div className="space-y-2">
-                <div>
-                  <label className="text-sm font-bold text-gray-800 block">Catatan Temuan <span className="text-red-500">*</span></label>
-                  <p className="text-[11px] text-gray-500 leading-snug">Jelaskan detail kerusakan, temuan anomali, atau alasan pemilihan tindakan.</p>
-                </div>
-                <textarea name="notes" rows={4} value={formData.notes} onChange={handleChange} placeholder="Tuliskan catatan detail hasil inspeksi..." className={`w-full px-3 py-3 text-sm border rounded-lg focus:ring-1 outline-none transition-all resize-none ${formErrors.notes ? 'border-red-400 focus:border-red-400 focus:ring-red-200 bg-red-50/30' : 'border-gray-300 focus:border-[#0556B3] focus:ring-[#0556B3]/20'}`}></textarea>
-                {formErrors.notes && (
-                  <p className="text-red-500 text-[11px] font-semibold flex items-center gap-1.5"><AlertCircle className="w-3 h-3" /> {formErrors.notes}</p>
-                )}
-              </div>
+            <div className="mt-2.5 text-xs font-medium text-red-500">
+              * Wajib unggah min. 2 berkas foto bukti. (Terunggah: {files.length})
             </div>
-          </div>
+          
+          <input 
+            type="file" 
+            ref={fileInputRef} 
+            onChange={handleFileChange} 
+            multiple 
+            accept="image/jpeg, image/png, image/jpg" 
+            className="hidden" 
+          />
+          
+          {fileError && (
+            <div className="mt-2 text-sm font-medium text-red-500 flex items-center gap-1.5">
+              <AlertCircle className="w-4 h-4" /> {fileError}
+            </div>
+          )}
         </div>
+      </div>
 
-        {/* Action Buttons (Full width di bawah) */}
-        <div className="flex items-center justify-end gap-3 mt-1 pb-10">
-          <Link href="/inspeksi/manajemen" className="px-6 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-bold hover:bg-gray-50 transition-all shadow-sm">
-            Batal
-          </Link>
-          <button
-            type="submit"
-            disabled={isSubmitting}
-            className="min-w-[200px] px-6 py-2.5 rounded-lg bg-[#0A356A] hover:bg-[#0556B3] text-white text-sm font-bold transition-all shadow-md flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+        <div className="pt-5 mt-3 border-t border-gray-100 flex flex-col sm:flex-row items-center justify-end gap-3">
+          <button 
+            type="button" 
+            onClick={() => router.back()}
+            className="w-full sm:w-auto flex items-center justify-center px-6 py-2.5 border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
           >
-            {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-            {isSubmitting ? "Menyimpan Data..." : "Simpan Inspeksi"}
+            Batal
+          </button>
+          <button 
+            type="submit" 
+            disabled={isSubmitDisabled}
+            className={`w-full sm:w-auto flex items-center justify-center px-6 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm ${
+              isSubmitDisabled 
+                ? 'bg-[#E2E8F0] text-gray-400 cursor-not-allowed border border-transparent' 
+                : 'bg-[#E2E8F0] text-[#0A356A] hover:bg-[#CBD5E1] border border-transparent'
+            }`}
+          >
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Mengirim...
+              </>
+            ) : (
+              'Kirim Hasil Inspeksi'
+            )}
           </button>
         </div>
-
       </form>
-
-      {/* Loading Overlay */}
-      {isSubmitting && (
-        <div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center border border-gray-100">
-            <Loader2 className="w-12 h-12 text-[#0556B3] animate-spin mb-4" />
-            <h2 className="text-lg font-bold text-gray-900">Menyimpan Laporan...</h2>
-            <p className="text-sm text-gray-500 mt-1">Sistem sedang memproses hasil inspeksi.</p>
-          </div>
-        </div>
-      )}
     </div>
-  );
-}
-
-export default function FormInspeksiBerkalaPage() {
-  return (
-    <React.Suspense fallback={
-      <div className="flex justify-center items-center h-64">
-        <Loader2 className="w-8 h-8 text-[#0556B3] animate-spin" />
-      </div>
-    }>
-      <FormInspeksiBerkalaContent />
-    </React.Suspense>
   );
 }

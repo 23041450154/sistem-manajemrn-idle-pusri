@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { Eye, X, Shield, FileText, CheckCircle2, RefreshCw, XCircle, Download } from "lucide-react";
-import { getApprovals, reviewApproval, getEquipments, startReviewApproval, getApprovalById } from "@/action/api";
+import { getApprovals, reviewApproval, getEquipments, startReviewApproval, getApprovalById, getInspections, getAttachmentsByEquipmentId } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 
 interface RequestAsset {
@@ -15,6 +15,7 @@ interface RequestAsset {
   statusAset: string;
   statusPersetujuan: string;
   inspekturNPP: string;
+  equipmentId: string;
 }
 
 // MOCK_REQUESTS removed
@@ -38,17 +39,24 @@ export default function ManajerApprovePage() {
   const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [approvalSteps, setApprovalSteps] = useState<any[]>([]);
+  const [inspeksiDetail, setInspeksiDetail] = useState<any>(null);
+  const [attachments, setAttachments] = useState<any[]>([]);
+  const [allInspections, setAllInspections] = useState<any[]>([]);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [approvalsData, equipmentsData, user] = await Promise.all([
+        const [approvalsData, equipmentsData, user, insData] = await Promise.all([
           getApprovals(),
           getEquipments(),
-          getCurrentUserAction()
+          getCurrentUserAction(),
+          getInspections()
         ]);
         const currentUserNPP = user?.user?.npp || "NPP2304145";
+        if (insData && Array.isArray(insData)) {
+          setAllInspections(insData);
+        }
         
         // Buat kamus (map) equipment berdasarkan ID untuk pencarian cepat
         const equipmentMap = new Map();
@@ -75,6 +83,7 @@ export default function ManajerApprovePage() {
 
           return {
             id: item.id.toString(),
+            equipmentId: equipmentId?.toString() || "",
             nomorRequest: item.request_number,
             kodeAset: item.equipment_code || eq?.equipment_code || "-",
             namaAset: item.equipment_name || eq?.name || "-",
@@ -103,12 +112,30 @@ export default function ManajerApprovePage() {
   const openModal = async (asset: RequestAsset) => {
     setSelectedAsset(asset);
     setIsModalOpen(true);
+    setInspeksiDetail(null);
+    setAttachments([]);
     try {
-      const data = await getApprovalById(asset.id);
+      const [data, attsData] = await Promise.all([
+        getApprovalById(asset.id),
+        getAttachmentsByEquipmentId(asset.equipmentId)
+      ]);
+      
       if (data && data.steps) {
         setApprovalSteps(data.steps);
       } else {
         setApprovalSteps([]);
+      }
+
+      if (allInspections && Array.isArray(allInspections)) {
+        const eqInspections = allInspections.filter((i: any) => String(i.equipment_id) === String(asset.equipmentId) || String(i.equipment?.id) === String(asset.equipmentId));
+        eqInspections.sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+        if (eqInspections.length > 0) {
+          setInspeksiDetail(eqInspections[0]);
+        }
+      }
+
+      if (attsData && Array.isArray(attsData)) {
+        setAttachments(attsData);
       }
     } catch (err) {
       console.error(err);
@@ -521,63 +548,72 @@ export default function ManajerApprovePage() {
                 <div className="grid grid-cols-2 gap-x-8 gap-y-4 mb-5">
                   <div>
                     <p className="text-[12px] text-gray-500 font-medium mb-1">Nama Inspektur:</p>
-                    <p className="text-[13px] font-bold text-gray-900">Budi Santoso</p>
+                    <p className="text-[13px] font-bold text-gray-900">{inspeksiDetail?.inspector_name || inspeksiDetail?.inspector?.name || "-"}</p>
                   </div>
                   <div>
                     <p className="text-[12px] text-gray-500 font-medium mb-1">NPP / Role:</p>
-                    <p className="text-[13px] font-bold text-gray-900">{selectedAsset.inspekturNPP} / Inspektur Mekanik</p>
+                    <p className="text-[13px] font-bold text-gray-900">{inspeksiDetail?.inspector_npp || inspeksiDetail?.inspector || "-"} / {inspeksiDetail?.inspector_role || "-"}</p>
                   </div>
                   
                   <div>
                     <p className="text-[12px] text-gray-500 font-medium mb-1">Waktu Pemeriksaan:</p>
-                    <p className="text-[13px] font-bold text-gray-900">12 Sep 2023 (09:00 - 11:30)</p>
+                    <p className="text-[13px] font-bold text-gray-900">
+                      {inspeksiDetail?.inspection_date || inspeksiDetail?.created_at 
+                        ? new Date(inspeksiDetail.inspection_date || inspeksiDetail.created_at).toLocaleString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'})
+                        : "-"}
+                    </p>
                   </div>
                   <div>
                     <p className="text-[12px] text-gray-500 font-medium mb-1">Durasi / Lokasi:</p>
-                    <p className="text-[13px] font-bold text-gray-900">2 Jam 30 Menit / Workshop Area 2</p>
+                    <p className="text-[13px] font-bold text-gray-900">{inspeksiDetail ? `2 Jam 30 Menit / ${selectedAsset.plant}` : "-"}</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 mb-5">
                   <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
                     <p className="text-[11px] font-bold text-gray-500 uppercase mb-2">Kondisi Mekanik</p>
-                    <p className="text-[13px] text-gray-800">Seal pompa aus, impeller korosi ringan. Casing luar masih utuh tanpa keretakan.</p>
+                    <p className="text-[13px] text-gray-800">{inspeksiDetail?.mechanical_condition || <span className="text-gray-400 italic">Belum ada data (menunggu inspeksi)</span>}</p>
                   </div>
                   <div className="border border-gray-200 rounded-lg p-3 bg-gray-50">
                     <p className="text-[11px] font-bold text-gray-500 uppercase mb-2">Kondisi Elektrik</p>
-                    <p className="text-[13px] text-gray-800">Motor insulasi normal (resistance &gt; 10MΩ). Kabel koneksi aman.</p>
+                    <p className="text-[13px] text-gray-800">{inspeksiDetail?.electrical_condition || <span className="text-gray-400 italic">Belum ada data (menunggu inspeksi)</span>}</p>
                   </div>
                 </div>
 
-                <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-5">
+                <div className={`border rounded-lg p-4 mb-5 ${inspeksiDetail ? (inspeksiDetail.status === 'REJECTED' || inspeksiDetail.require_action_id === '2' ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200') : 'bg-gray-50 border-gray-200'}`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                    <p className="text-[13px] font-bold text-green-800 uppercase tracking-wide">Hasil: Layak Digunakan (Utilizable)</p>
+                    <div className={`w-2 h-2 rounded-full ${inspeksiDetail ? (inspeksiDetail.status === 'REJECTED' || inspeksiDetail.require_action_id === '2' ? 'bg-red-500' : 'bg-green-500') : 'bg-gray-400'}`}></div>
+                    <p className={`text-[13px] font-bold uppercase tracking-wide ${inspeksiDetail ? (inspeksiDetail.status === 'REJECTED' || inspeksiDetail.require_action_id === '2' ? 'text-red-800' : 'text-green-800') : 'text-gray-500'}`}>
+                      Hasil: {inspeksiDetail ? (inspeksiDetail.result || (inspeksiDetail.status === 'REJECTED' || inspeksiDetail.require_action_id === '2' ? 'Tidak Layak (Butuh Perbaikan)' : 'Layak Digunakan (Utilizable)')) : 'Belum Ada Hasil Validasi'}
+                    </p>
                   </div>
                   <div className="pl-4">
                     <p className="text-[12px] text-gray-500 font-medium mt-2">Catatan Pemeriksaan:</p>
-                    <p className="text-[13px] text-gray-800 italic">"Peralatan masih sangat layak digunakan secara fungsional meskipun ada keausan ringan pada seal."</p>
+                    <p className="text-[13px] text-gray-800 italic">{inspeksiDetail?.notes ? `"${inspeksiDetail.notes}"` : <span className="text-gray-400">Belum ada catatan</span>}</p>
                     
                     <p className="text-[12px] text-gray-500 font-medium mt-3">Rekomendasi Tindakan:</p>
-                    <p className="text-[13px] font-bold text-gray-900">Penggantian seal mekanik sebelum diutilisasi kembali ke plant aktif.</p>
+                    <p className="text-[13px] font-bold text-gray-900">{inspeksiDetail?.recommendation || (inspeksiDetail ? (inspeksiDetail.require_action_id === '2' ? 'Perbaikan diperlukan sebelum utilisasi.' : 'Tidak ada tindakan khusus, siap diutilisasi.') : <span className="text-gray-400 font-normal italic">Belum ada rekomendasi</span>)}</p>
                   </div>
                 </div>
 
                 {/* Dokumentasi */}
                 <p className="text-[12px] text-gray-500 font-medium mb-2">Dokumentasi Foto & Riwayat Audit:</p>
                 <div className="flex gap-3">
-                  <div 
-                    className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={() => setPreviewImage("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=800&q=80")}
-                  >
-                    <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" className="object-cover w-full h-full" alt="Foto Inspeksi 1" />
-                  </div>
-                  <div 
-                    className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity"
-                    onClick={() => setPreviewImage("https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=800&q=80")}
-                  >
-                    <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" className="object-cover w-full h-full" alt="Foto Inspeksi 2" />
-                  </div>
+                  {attachments.length > 0 ? (
+                    attachments.slice(0, 2).map((att: any, idx: number) => (
+                      <div 
+                        key={idx}
+                        className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
+                        onClick={() => setPreviewImage(att.file_url || att.url)}
+                      >
+                        <img src={att.file_url || att.url} className="object-cover w-full h-full" alt={`Foto ${idx+1}`} />
+                      </div>
+                    ))
+                  ) : (
+                    <div className="w-24 h-24 bg-gray-100 rounded-lg border border-gray-200 flex flex-col items-center justify-center text-gray-400 shrink-0">
+                      <span className="text-[10px] font-medium text-center px-2">Tidak ada foto</span>
+                    </div>
+                  )}
                   <div className="flex-1 border border-gray-200 rounded-lg bg-gray-50 p-3 text-[11px] text-gray-500 overflow-y-auto h-24">
                     <p className="font-bold text-gray-700 mb-1">Riwayat Audit (Log):</p>
                     <ul className="list-disc pl-4 space-y-1">

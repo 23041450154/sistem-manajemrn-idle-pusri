@@ -255,23 +255,37 @@ export async function getStorageLocations() {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value
 
+  const fallbackStorage = [
+    { id: 1, name: "Gudang Utama" },
+    { id: 2, name: "Gudang Sparepart" },
+    { id: 3, name: "Gudang Bahan Kimia" },
+    { id: 4, name: "Gudang Limbah" }
+  ];
+
   try {
     const res = await fetch(`${API_URL}/api/storage-locations`, {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     })
-    if (!res.ok) return []
+    if (!res.ok) return fallbackStorage
     const json = await res.json()
-    return json.data || []
+    return json.data && json.data.length > 0 ? json.data : fallbackStorage
   } catch (error) {
     console.error("Fetch storage locations error:", error)
-    return []
+    return fallbackStorage
   }
 }
 
 export async function getAreas() {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value
+
+  const fallbackAreas = [
+    { id: 1, name: "Ammonia Area" },
+    { id: 2, name: "Urea Area" },
+    { id: 3, name: "Utility Area" },
+    { id: 4, name: "Offsite Area" }
+  ];
 
   try {
     const res = await fetch(`${API_URL}/api/areas`, {
@@ -280,23 +294,16 @@ export async function getAreas() {
     })
     if (!res.ok) {
       // Fallback if endpoint doesn't exist yet
-      return [
-        { id: 1, name: "Ammonia Area" },
-        { id: 2, name: "Urea Area" },
-        { id: 3, name: "Utility Area" },
-        { id: 4, name: "Offsite Area" }
-      ];
+      return fallbackAreas;
     }
     const json = await res.json()
-    return json.data || []
+    if (!json.data || json.data.length === 0) {
+      return fallbackAreas;
+    }
+    return json.data
   } catch (error) {
     console.error("Fetch areas error:", error)
-    return [
-      { id: 1, name: "Ammonia Area" },
-      { id: 2, name: "Urea Area" },
-      { id: 3, name: "Utility Area" },
-      { id: 4, name: "Offsite Area" }
-    ];
+    return fallbackAreas;
   }
 }
 
