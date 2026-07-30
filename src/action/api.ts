@@ -157,6 +157,18 @@ export async function getInspections() {
 export async function createInspection(formData: FormData) {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value
+  const userStr = cookieStore.get("user")?.value
+
+  if (userStr && !formData.has("inspector")) {
+    try {
+      const user = JSON.parse(userStr);
+      if (user.id) {
+        formData.append("inspector", String(user.id));
+      }
+    } catch (e) {
+      console.error("Failed to parse user cookie", e);
+    }
+  }
 
   try {
     const res = await fetch(`${API_URL}/api/inspections`, {
@@ -334,6 +346,34 @@ export async function createEquipment(payload: any) {
   }
 }
 
+export async function updateEquipment(id: string, payload: any) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/equipment/${id}`, {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload),
+    })
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      throw new Error(errorData?.error || errorData?.message || "Failed to update equipment");
+    }
+    const responseData = await res.json().catch(() => null);
+    
+    return { success: true, data: responseData?.data }
+  } catch (error: any) {
+    console.error("Update equipment error:", error)
+    return { success: false, message: error.message }
+  }
+}
+
+
 export async function uploadEquipmentAttachment(formData: FormData) {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value
@@ -467,6 +507,115 @@ export async function getAttachmentsByEquipmentId(equipmentId: string) {
   }
 
   return []
+}
+
+// --- Idle Declarations API ---
+export async function getIdleDeclarations() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+  try {
+    const res = await fetch(`${API_URL}/api/idle-declarations`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store"
+    })
+    const json = await res.json().catch(() => null)
+    return json?.data || []
+  } catch (error) {
+    console.error("Fetch idle-declarations error:", error)
+    return []
+  }
+}
+
+export async function getIdleDeclarationById(id: string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+  try {
+    const res = await fetch(`${API_URL}/api/idle-declarations/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store"
+    })
+    const json = await res.json().catch(() => null)
+    return json?.data || null
+  } catch (error) {
+    console.error(`Fetch idle-declaration ${id} error:`, error)
+    return null
+  }
+}
+
+// --- Maintenance API ---
+export async function getMaintenance() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+  try {
+    const res = await fetch(`${API_URL}/api/maintenance`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store"
+    })
+    const json = await res.json().catch(() => null)
+    return json?.data || []
+  } catch (error) {
+    console.error("Fetch maintenance error:", error)
+    return []
+  }
+}
+
+export async function createMaintenance(payload: any) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+  try {
+    const res = await fetch(`${API_URL}/api/maintenance`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`
+      },
+      body: JSON.stringify(payload)
+    })
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      throw new Error(errorData?.error || errorData?.message || "Failed to create maintenance");
+    }
+    const responseData = await res.json().catch(() => null);
+    return { success: true, data: responseData?.data }
+  } catch (error: any) {
+    console.error("Create maintenance error:", error)
+    return { success: false, message: error.message }
+  }
+}
+
+export async function getMaintenanceById(id: string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+  try {
+    const res = await fetch(`${API_URL}/api/maintenance/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store"
+    })
+    const json = await res.json().catch(() => null)
+    return json?.data || null
+  } catch (error) {
+    console.error(`Fetch maintenance ${id} error:`, error)
+    return null
+  }
+}
+
+export async function deleteMaintenance(id: string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+  try {
+    const res = await fetch(`${API_URL}/api/maintenance/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` }
+    })
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      throw new Error(errorData?.error || errorData?.message || "Failed to delete maintenance");
+    }
+    return { success: true }
+  } catch (error: any) {
+    console.error("Delete maintenance error:", error)
+    return { success: false, message: error.message }
+  }
 }
 
 export async function deleteEquipment(id: string) {

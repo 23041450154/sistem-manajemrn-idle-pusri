@@ -580,11 +580,19 @@ export default function ManajerApprovePage() {
                   </div>
                 </div>
 
-                <div className={`border rounded-lg p-4 mb-5 ${inspeksiDetail ? (inspeksiDetail.status === 'REJECTED' || inspeksiDetail.require_action_id === '2' ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200') : 'bg-gray-50 border-gray-200'}`}>
+                <div className={`border rounded-lg p-4 mb-5 ${inspeksiDetail ? (inspeksiDetail.status === 'REJECTED' || ['2', '3', '4', 2, 3, 4].includes(inspeksiDetail.require_action_id) ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200') : 'bg-gray-50 border-gray-200'}`}>
                   <div className="flex items-center gap-2 mb-2">
-                    <div className={`w-2 h-2 rounded-full ${inspeksiDetail ? (inspeksiDetail.status === 'REJECTED' || inspeksiDetail.require_action_id === '2' ? 'bg-red-500' : 'bg-green-500') : 'bg-gray-400'}`}></div>
-                    <p className={`text-[13px] font-bold uppercase tracking-wide ${inspeksiDetail ? (inspeksiDetail.status === 'REJECTED' || inspeksiDetail.require_action_id === '2' ? 'text-red-800' : 'text-green-800') : 'text-gray-500'}`}>
-                      Hasil: {inspeksiDetail ? (inspeksiDetail.result || (inspeksiDetail.status === 'REJECTED' || inspeksiDetail.require_action_id === '2' ? 'Tidak Layak (Butuh Perbaikan)' : 'Layak Digunakan (Utilizable)')) : 'Belum Ada Hasil Validasi'}
+                    <div className={`w-2 h-2 rounded-full ${inspeksiDetail ? (inspeksiDetail.status === 'REJECTED' || ['2', '3', '4', 2, 3, 4].includes(inspeksiDetail.require_action_id) ? 'bg-red-500' : 'bg-green-500') : 'bg-gray-400'}`}></div>
+                    <p className={`text-[13px] font-bold uppercase tracking-wide ${inspeksiDetail ? (inspeksiDetail.status === 'REJECTED' || ['2', '3', '4', 2, 3, 4].includes(inspeksiDetail.require_action_id) ? 'text-red-800' : 'text-green-800') : 'text-gray-500'}`}>
+                      Hasil: {inspeksiDetail ? (
+                        inspeksiDetail.result || (
+                          String(inspeksiDetail.require_action_id) === '1' ? 'Ready to Reuse' :
+                          String(inspeksiDetail.require_action_id) === '2' ? 'Perbaikan Ringan' :
+                          String(inspeksiDetail.require_action_id) === '3' ? 'Overhaul / Perbaikan Besar' :
+                          String(inspeksiDetail.require_action_id) === '4' ? 'Disposal (Rusak Berat)' :
+                          'Tidak Layak (Butuh Perbaikan)'
+                        )
+                      ) : 'Belum Ada Hasil Validasi'}
                     </p>
                   </div>
                   <div className="pl-4">
@@ -592,7 +600,11 @@ export default function ManajerApprovePage() {
                     <p className="text-[13px] text-gray-800 italic">{inspeksiDetail?.notes ? `"${inspeksiDetail.notes}"` : <span className="text-gray-400">Belum ada catatan</span>}</p>
                     
                     <p className="text-[12px] text-gray-500 font-medium mt-3">Rekomendasi Tindakan:</p>
-                    <p className="text-[13px] font-bold text-gray-900">{inspeksiDetail?.recommendation || (inspeksiDetail ? (inspeksiDetail.require_action_id === '2' ? 'Perbaikan diperlukan sebelum utilisasi.' : 'Tidak ada tindakan khusus, siap diutilisasi.') : <span className="text-gray-400 font-normal italic">Belum ada rekomendasi</span>)}</p>
+                    <p className="text-[13px] font-bold text-gray-900">{inspeksiDetail?.recommendation || (inspeksiDetail ? (
+                      String(inspeksiDetail.require_action_id) === '1' ? 'Tidak ada tindakan khusus, siap diutilisasi.' :
+                      String(inspeksiDetail.require_action_id) === '4' ? 'Aset disarankan untuk disposal (afkir).' :
+                      'Perbaikan diperlukan sebelum utilisasi.'
+                    ) : <span className="text-gray-400 font-normal italic">Belum ada rekomendasi</span>)}</p>
                   </div>
                 </div>
 

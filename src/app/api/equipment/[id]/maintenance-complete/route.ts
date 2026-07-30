@@ -14,7 +14,7 @@ export async function PATCH(
     const formData = await request.formData();
     
     // Forward the PATCH request to the Go backend API
-    const backendRes = await fetch(`${API_URL}/api/equipment/${id}/maintenance-complete`, {
+    const backendRes = await fetch(`${API_URL}/api/maintenance/${id}/complete`, {
       method: "PATCH",
       headers: {
         Authorization: `Bearer ${token}`,

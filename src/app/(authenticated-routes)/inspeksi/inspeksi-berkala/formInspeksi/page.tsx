@@ -13,8 +13,10 @@ export default function FormInspeksiPage() {
   const [equipment, setEquipment] = useState<any>(null);
   
   // Form State
-  const [isUtilizable, setIsUtilizable] = useState<string>("");
-  const [needsRefurbishment, setNeedsRefurbishment] = useState<string>("");
+  const [hasilInspeksi, setHasilInspeksi] = useState<string>(""); // "READY", "REPAIR", "DISPOSAL"
+  const [jenisPerbaikan, setJenisPerbaikan] = useState<string>(""); // "RINGAN", "OVERHAUL"
+  const [mechanicalCondition, setMechanicalCondition] = useState<string>("");
+  const [electricalCondition, setElectricalCondition] = useState<string>("");
   const [notes, setNotes] = useState<string>("");
   const [files, setFiles] = useState<File[]>([]);
   const [fileError, setFileError] = useState<string>("");
@@ -84,11 +86,12 @@ export default function FormInspeksiPage() {
 
   // Validasi Form untuk men-disable tombol submit
   const isNotesEmpty = !notes || notes.trim() === "";
-  const isKelayakanNotSelected = isUtilizable === "";
-  const isPerbaikanKhususNotSelected = isUtilizable === "true" && needsRefurbishment === "";
+  const isKelayakanNotSelected = hasilInspeksi === "";
+  const isPerbaikanKhususNotSelected = hasilInspeksi === "REPAIR" && jenisPerbaikan === "";
+  const isKondisiEmpty = !mechanicalCondition.trim() || !electricalCondition.trim();
   const isFilesNotEnough = files.length < 2;
 
-  const isSubmitDisabled = isKelayakanNotSelected || isPerbaikanKhususNotSelected || isNotesEmpty || isFilesNotEnough || loading;
+  const isSubmitDisabled = isKelayakanNotSelected || isPerbaikanKhususNotSelected || isKondisiEmpty || isNotesEmpty || isFilesNotEnough || loading;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -99,16 +102,38 @@ export default function FormInspeksiPage() {
     try {
       const formData = new FormData();
       formData.append("equipment_id", equipmentId || "");
-      formData.append("is_utilizable", isUtilizable);
       
-      if (isUtilizable === "true") {
-        formData.append("needs_refurbishment", needsRefurbishment);
+      // Mapping ke Payload Swagger
+      let requireActionId = 1;
+      let isUtilizableStr = "true";
+      let needsRefurbishmentStr = "false";
+
+      if (hasilInspeksi === "READY") {
+        requireActionId = 1;
+        isUtilizableStr = "true";
+        needsRefurbishmentStr = "false";
+      } else if (hasilInspeksi === "REPAIR") {
+        requireActionId = jenisPerbaikan === "RINGAN" ? 2 : 3;
+        isUtilizableStr = "true";
+        needsRefurbishmentStr = "true";
+      } else if (hasilInspeksi === "DISPOSAL") {
+        requireActionId = 4;
+        isUtilizableStr = "false";
+        needsRefurbishmentStr = "false";
       }
+
+      formData.append("is_utilizable", isUtilizableStr);
+      if (isUtilizableStr === "true") {
+        formData.append("needs_refurbishment", needsRefurbishmentStr);
+      }
+      formData.append("require_action_id", requireActionId.toString());
       
+      formData.append("mechanical_condition", mechanicalCondition.trim());
+      formData.append("electrical_condition", electricalCondition.trim());
       formData.append("notes", notes.trim());
       
       files.forEach((file) => {
-        formData.append("photos", file); 
+        formData.append("photo", file); 
       });
 
       const response = await submitInspectionData(formData);
@@ -197,73 +222,115 @@ export default function FormInspeksiPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           {/* Kiri: Pertanyaan & Catatan */}
           <div className="flex flex-col gap-6">
-            {/* Komponen 1: Kelayakan */}
-            <div>
+            {/* Komponen 1: Hasil Inspeksi Aset */}
+            <div className="flex-1">
               <label className="block text-sm font-semibold text-gray-900 mb-3">
-                Apakah Layak / Bisa Diperbaiki? <span className="text-red-500">*</span>
+                Hasil Inspeksi Aset? <span className="text-red-500">*</span>
               </label>
               <div className="flex flex-col sm:flex-row gap-5">
                 <label className="flex items-center gap-2 cursor-pointer group">
                   <input 
                     type="radio" 
-                    name="is_utilizable" 
-                    value="true" 
-                    checked={isUtilizable === "true"} 
-                    onChange={(e) => setIsUtilizable(e.target.value)}
+                    name="hasil_inspeksi" 
+                    value="READY" 
+                    checked={hasilInspeksi === "READY"} 
+                    onChange={(e) => {
+                      setHasilInspeksi(e.target.value);
+                      setJenisPerbaikan("");
+                    }}
                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
-                  <span className="text-sm font-medium text-gray-800">Ya (Layak / Bisa Diperbaiki)</span>
+                  <span className="text-sm font-medium text-gray-800">Layak (Tidak Perlu Perbaikan)</span>
                 </label>
                 <label className="flex items-center gap-2 cursor-pointer group">
                   <input 
                     type="radio" 
-                    name="is_utilizable" 
-                    value="false" 
-                    checked={isUtilizable === "false"} 
+                    name="hasil_inspeksi" 
+                    value="REPAIR" 
+                    checked={hasilInspeksi === "REPAIR"} 
+                    onChange={(e) => setHasilInspeksi(e.target.value)}
+                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                  />
+                  <span className="text-sm font-medium text-gray-800">Memerlukan Perbaikan</span>
+                </label>
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <input 
+                    type="radio" 
+                    name="hasil_inspeksi" 
+                    value="DISPOSAL" 
+                    checked={hasilInspeksi === "DISPOSAL"} 
                     onChange={(e) => {
-                      setIsUtilizable(e.target.value);
-                      setNeedsRefurbishment(""); // Reset child field
+                      setHasilInspeksi(e.target.value);
+                      setJenisPerbaikan("");
                     }}
                     className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                   />
-                  <span className="text-sm font-medium text-gray-800">Tidak (Rusak Berat / Disposal)</span>
+                  <span className="text-sm font-medium text-gray-800">Tidak Layak (Rusak Berat)</span>
                 </label>
               </div>
-              <p className="text-xs text-gray-500 mt-2 italic">Catatan: Jika aset dinyatakan tidak layak diperbaiki, sistem akan mengubah status menjadi Disposal Recommended.</p>
+              <p className="text-xs text-gray-500 mt-2 italic">Catatan: Sesuai alur, keputusan disposal akan dikirim ke Rendal untuk verifikasi.</p>
             </div>
 
-            {/* Komponen 2: Perbaikan Khusus (Kondisional) */}
-            {isUtilizable === "true" && (
+            {/* Komponen 2: Jenis Perbaikan (Kondisional) */}
+            {hasilInspeksi === "REPAIR" && (
               <div className="animate-in fade-in slide-in-from-top-2 bg-[#F8FAFC] border border-gray-200 rounded-lg p-4">
                 <label className="block text-sm font-semibold text-gray-900 mb-3">
-                  Apakah Butuh Perbaikan / Treatment Khusus? <span className="text-red-500">*</span>
+                  Jenis Perbaikan? <span className="text-red-500">*</span>
                 </label>
                 <div className="flex flex-col sm:flex-row gap-5">
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <input 
                       type="radio" 
-                      name="needs_refurbishment" 
-                      value="true" 
-                      checked={needsRefurbishment === "true"} 
-                      onChange={(e) => setNeedsRefurbishment(e.target.value)}
+                      name="jenis_perbaikan" 
+                      value="RINGAN" 
+                      checked={jenisPerbaikan === "RINGAN"} 
+                      onChange={(e) => setJenisPerbaikan(e.target.value)}
                       className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                     />
-                    <span className="text-sm font-medium text-gray-800">Ya (Butuh Perbaikan Bengkel)</span>
+                    <span className="text-sm font-medium text-gray-800">Perbaikan Ringan</span>
                   </label>
                   <label className="flex items-center gap-2 cursor-pointer group">
                     <input 
                       type="radio" 
-                      name="needs_refurbishment" 
-                      value="false" 
-                      checked={needsRefurbishment === "false"} 
-                      onChange={(e) => setNeedsRefurbishment(e.target.value)}
+                      name="jenis_perbaikan" 
+                      value="OVERHAUL" 
+                      checked={jenisPerbaikan === "OVERHAUL"} 
+                      onChange={(e) => setJenisPerbaikan(e.target.value)}
                       className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
                     />
-                    <span className="text-sm font-medium text-gray-800">Tidak (Tidak Perlu Perbaikan)</span>
+                    <span className="text-sm font-medium text-gray-800">Overhaul / Perbaikan Besar</span>
                   </label>
                 </div>
               </div>
             )}
+
+            {/* Komponen 2.5: Kondisi Mekanik & Elektrik */}
+            <div className="flex flex-col sm:flex-row gap-4">
+              <div className="flex-1">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Kondisi Mekanik <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={mechanicalCondition}
+                  onChange={(e) => setMechanicalCondition(e.target.value)}
+                  placeholder="Contoh: Seal bocor, bearing aus..."
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-sm"
+                />
+              </div>
+              <div className="flex-1">
+                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                  Kondisi Elektrik <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  value={electricalCondition}
+                  onChange={(e) => setElectricalCondition(e.target.value)}
+                  placeholder="Contoh: Kabel terkelupas, motor baik..."
+                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-sm"
+                />
+              </div>
+            </div>
 
             {/* Komponen 3: Catatan */}
             <div className="flex-1 flex flex-col">
