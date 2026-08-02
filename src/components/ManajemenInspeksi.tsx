@@ -7,7 +7,7 @@ import {
   ArrowUpDown, ArrowUp, ArrowDown, Download, Info
 } from "lucide-react";
 
-import { getEquipments, validateEquipment, getObjectTypes, getApprovals } from "@/action/api";
+import { getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment, uploadEquipmentAttachmentBase64 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 
 // Tipe Data
@@ -150,6 +150,8 @@ export default function ManajemenInspeksi() {
   const [modalMode, setModalMode] = useState<"VALIDASI" | "DETAIL">("VALIDASI");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
+  const [attachments, setAttachments] = useState<any[]>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Form Validasi States
   const [hasilPemeriksaan, setHasilPemeriksaan] = useState("");
@@ -197,12 +199,27 @@ export default function ManajemenInspeksi() {
   const [sortConfig, setSortConfig] = useState<{key: keyof Asset, direction: 'asc' | 'desc'} | null>({ key: 'tanggalRegistrasi', direction: 'desc' });
 
   // Handler Buka Modal
-  const openModal = (asset: Asset, mode: "VALIDASI" | "DETAIL" = "VALIDASI") => {
+  const openModal = async (asset: Asset, mode: "VALIDASI" | "DETAIL" = "VALIDASI") => {
     setSelectedAsset(asset);
     setModalMode(mode);
+    setIsModalOpen(true);
     setUploadedFiles([]); // Reset files
     setShowValidationErrors(false);
     setFileError(null);
+    setAttachments([]);
+    setPreviewImage(null);
+    
+    try {
+      const attsData = await getAttachmentsByEquipmentId(asset.id);
+      let finalAtts = [];
+      if (attsData && Array.isArray(attsData) && attsData.length > 0) {
+        finalAtts = attsData;
+      }
+      
+      setAttachments(finalAtts);
+    } catch (err) {
+      console.error(err);
+    }
     
     // Reset Form jika status belum divalidasi (baru pertama kali)
     if (asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE") {
@@ -242,6 +259,40 @@ export default function ManajemenInspeksi() {
       const res = await validateEquipment(selectedAsset.id, isUtilizable, notes);
 
       if (res.success) {
+        // --- MULTIPLE ATTACHMENTS UPLOAD ---
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          try {
+            for (const file of uploadedFiles) {
+              const fd = new FormData();
+              fd.append("equipment_id", selectedAsset.id);
+              fd.append("file", file);
+              fd.append("category", "inspection_photo"); // Kategori sesuai backend
+
+              try {
+                const reader = new FileReader();
+                const dataUrl = await new Promise<string>((resolve) => {
+                  reader.onload = (e) => resolve(e.target?.result as string || '');
+                  reader.onerror = () => resolve('');
+                  reader.readAsDataURL(file);
+                });
+                if (dataUrl) {
+                  await uploadEquipmentAttachmentBase64(
+                    selectedAsset.id.toString(),
+                    dataUrl,
+                    file.name,
+                    file.type || "image/jpeg"
+                  );
+                }
+              } catch(e) {
+                console.error("Base64 upload failed", e);
+              }
+            }
+          } catch (err) {
+            console.error("Error during file upload:", err);
+          }
+        }
+        // -----------------------------------
+
         setNotification({ type: "success", message: "Data inspeksi berhasil disubmit ke sistem." });
         
         const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
@@ -867,20 +918,28 @@ export default function ManajemenInspeksi() {
                   <div className="w-full md:w-56 shrink-0 flex flex-col gap-2 md:border-l md:border-gray-100 md:pl-4">
                     <span className="text-[10px] font-semibold text-gray-500 uppercase block">Foto Registrasi</span>
                     <div className="flex gap-2">
-                      <div 
-                        className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm" 
-                        onClick={() => window.open("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80", "_blank")}
-                        title="Foto Mesin"
-                      >
-                        <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" alt="Foto Aset 1" className="w-full h-full object-cover" />
-                      </div>
-                      <div 
-                        className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm" 
-                        onClick={() => window.open("https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80", "_blank")}
-                        title="Foto Label Plat"
-                      >
-                        <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" alt="Foto Label Aset" className="w-full h-full object-cover" />
-                      </div>
+                      {attachments.filter((att: any) => {
+                        const url = (att.file_url || att.url || "").toLowerCase();
+                        return url.includes('.jpeg') || url.includes('.jpg') || url.includes('.gif') || url.includes('.png') || url.startsWith('data:image');
+                      }).slice(0, 2).map((att: any, idx: number) => (
+                        <div 
+                          key={idx}
+                          className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm" 
+                          onClick={() => setPreviewImage(att.file_url || att.url)}
+                          title={`Foto Aset ${idx+1}`}
+                        >
+                          <img src={att.file_url || att.url} alt={`Foto Aset ${idx+1}`} className="w-full h-full object-cover" />
+                        </div>
+                      ))}
+                      
+                      {attachments.filter((att: any) => {
+                        const url = (att.file_url || att.url || "").toLowerCase();
+                        return url.includes('.jpeg') || url.includes('.jpg') || url.includes('.gif') || url.includes('.png') || url.startsWith('data:image');
+                      }).length === 0 && (
+                        <div className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 border-dashed flex items-center justify-center">
+                          <span className="text-[10px] text-gray-400">Belum ada foto</span>
+                        </div>
+                      )}
                     </div>
                     <span className="text-[9px] text-gray-400 italic text-center md:text-left mt-0.5">Klik foto untuk memperbesar</span>
                   </div>
@@ -1223,58 +1282,32 @@ export default function ManajemenInspeksi() {
               <h3 className="text-[#0A356A] font-bold text-[13px] mb-2.5 uppercase tracking-wide">Lampiran Gambar & Dokumen</h3>
               <div className="grid grid-cols-3 gap-3 mb-3">
                 {/* Images */}
-                <div 
-                  onClick={() => window.open("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80", "_blank")}
-                  className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white cursor-pointer hover:border-[#0A356A] transition-colors group"
-                >
-                  <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Foto Pompa" />
-                  </div>
-                  <div className="p-2 text-center border-t border-gray-200 flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-gray-900 mb-0.5">Foto Utama</p>
-                  </div>
-                </div>
-                <div 
-                  onClick={() => window.open("https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80", "_blank")}
-                  className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white cursor-pointer hover:border-[#0A356A] transition-colors group"
-                >
-                  <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Label Tag" />
-                  </div>
-                  <div className="p-2 text-center border-t border-gray-200 flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-gray-900 mb-0.5">Label Tag Plat Aset</p>
-                  </div>
-                </div>
-                {/* PDF Files in same row if width permits */}
-                <div 
-                  onClick={() => window.open("/laporan_inspeksi_P101.pdf", "_blank")}
-                  className="border border-gray-200 rounded p-2.5 flex flex-col justify-between bg-white shadow-sm cursor-pointer hover:border-[#0A356A] transition-colors group"
-                >
-                  <div className="flex items-start gap-2 mb-2">
-                    <div className="w-7 h-7 rounded bg-red-50 text-red-500 border border-red-100 flex items-center justify-center shrink-0 group-hover:bg-[#0A356A]/10 group-hover:text-[#0A356A] group-hover:border-[#0A356A]/20 transition-colors">
-                      <span className="font-bold text-[9px]">PDF</span>
+                {attachments.filter((att: any) => {
+                  const url = (att.file_url || att.url || "").toLowerCase();
+                  return url.includes('.jpeg') || url.includes('.jpg') || url.includes('.gif') || url.includes('.png') || url.startsWith('data:image');
+                }).slice(0, 2).map((att: any, idx: number) => (
+                  <div 
+                    key={idx}
+                    onClick={() => setPreviewImage(att.file_url || att.url)}
+                    className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white cursor-pointer hover:border-[#0A356A] transition-colors group"
+                  >
+                    <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
+                      <img src={att.file_url || att.url} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt={`Foto ${idx+1}`} />
                     </div>
-                    <div className="overflow-hidden">
-                      <p className="text-[11px] font-bold text-gray-900 truncate" title="laporan_inspeksi_P101.pdf">laporan_inspeksi_P101.pdf</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">3.4 MB</p>
+                    <div className="p-2 text-center border-t border-gray-200 flex flex-col justify-center">
+                      <p className="text-[10px] font-bold text-gray-900 mb-0.5">Foto {idx+1}</p>
                     </div>
                   </div>
-                  <div className="flex gap-2 justify-end mt-auto">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const link = document.createElement("a");
-                        link.href = "/laporan_inspeksi_P101.pdf";
-                        link.download = "laporan_inspeksi_P101.pdf";
-                        link.click();
-                      }} 
-                      className="text-[11px] font-semibold text-[#0A356A] hover:bg-blue-50 p-1.5 rounded transition-colors"
-                      title="Download Laporan"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                    </button>
+                ))}
+                
+                {attachments.filter((att: any) => {
+                  const url = (att.file_url || att.url || "").toLowerCase();
+                  return url.includes('.jpeg') || url.includes('.jpg') || url.includes('.gif') || url.includes('.png') || url.startsWith('data:image');
+                }).length === 0 && (
+                  <div className="border-2 border-dashed border-gray-300 rounded flex flex-col items-center justify-center p-4 bg-gray-50 h-24 col-span-3">
+                    <span className="text-[12px] text-gray-500 font-medium">Belum ada foto</span>
                   </div>
-                </div>
+                )}
               </div>
 
             </div>
@@ -1288,6 +1321,23 @@ export default function ManajemenInspeksi() {
         </div>
       )}
 
+      {/* Render modal preview gambar jika ada */}
+      {previewImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm" onClick={() => setPreviewImage(null)}>
+          <button 
+            className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded-full transition-colors"
+            onClick={() => setPreviewImage(null)}
+          >
+            <X size={24} />
+          </button>
+          <img 
+            src={previewImage} 
+            alt="Preview" 
+            className="max-w-full max-h-[90vh] object-contain rounded shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+      )}
     </div>
   );
 }
