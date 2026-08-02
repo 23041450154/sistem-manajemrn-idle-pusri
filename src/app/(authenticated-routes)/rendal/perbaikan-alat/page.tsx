@@ -73,6 +73,14 @@ export default function PerbaikanAlatPage() {
   const [selectedAsset, setSelectedAsset] = useState<MaintenanceEquipment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery]);
+
   // Form Fields State (Komponen Form FE-007)
   const [actualCost, setActualCost] = useState("0"); // Raw number string
   const [displayCost, setDisplayCost] = useState("Rp 0"); // Masked string e.g. "Rp 25.000.000"
@@ -165,6 +173,14 @@ export default function PerbaikanAlatPage() {
         item.lokasiPenyimpanan.toLowerCase().includes(q)
     );
   }, [equipments, searchQuery]);
+
+  const totalPages = Math.ceil(filteredEquipments.length / ITEMS_PER_PAGE);
+  const paginatedEquipments = useMemo(() => {
+    return filteredEquipments.slice(
+      (currentPage - 1) * ITEMS_PER_PAGE,
+      currentPage * ITEMS_PER_PAGE
+    );
+  }, [filteredEquipments, currentPage]);
 
   const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value.replace(/\D/g, "");
@@ -413,7 +429,7 @@ export default function PerbaikanAlatPage() {
                   </td>
                 </tr>
               ) : (
-                filteredEquipments.map((asset) => (
+                paginatedEquipments.map((asset) => (
                   <tr key={asset.id} className="hover:bg-[#f8fafc] transition-colors">
                     {/* Kode Alat */}
                     <td className="px-5 py-3.5 text-sm font-semibold text-[#0A356A] whitespace-nowrap">
@@ -430,14 +446,14 @@ export default function PerbaikanAlatPage() {
                       {asset.lokasiPenyimpanan}
                     </td>
 
-                    {/* Tanggal Masuk Pemeliharaan */}
+                    {/* Tgl Masuk Pemeliharaan */}
                     <td className="px-5 py-3.5 text-sm text-gray-600 whitespace-nowrap">
                       {asset.tanggalMasukPemeliharaan}
                     </td>
 
                     {/* Status */}
                     <td className="px-5 py-3.5 whitespace-nowrap">
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold border ${
+                      <span className={`inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold border ${
                         asset.statusAset === "READY TO REUSE" 
                           ? "bg-green-100 text-green-800 border-green-200" 
                           : "bg-orange-100 text-orange-800 border-orange-200"
@@ -472,6 +488,48 @@ export default function PerbaikanAlatPage() {
             </tbody>
           </table>
         </div>
+
+        {/* Pagination Footer */}
+        {!isLoading && filteredEquipments.length > 0 && (
+          <div className="px-6 py-3 bg-gray-50 border-t border-gray-200 flex justify-between items-center">
+            <span className="text-[12px] font-medium text-gray-500">
+              Menampilkan {filteredEquipments.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredEquipments.length)} dari {filteredEquipments.length} data (10 baris/halaman)
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                >
+                  Prev
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-7 h-7 rounded-md text-[12px] font-bold flex items-center justify-center transition-colors ${
+                        currentPage === page
+                          ? "bg-[#0A356A] text-white"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Modal Form Detail Realisasi Pemeliharaan (Persis seperti modal di rendal/idle) */}

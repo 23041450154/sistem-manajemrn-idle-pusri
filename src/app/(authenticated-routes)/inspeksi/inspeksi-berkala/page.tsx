@@ -45,6 +45,29 @@ export default function InspeksiAntreanPage() {
     fetchData();
   }, []);
 
+  const [search, setSearch] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search]);
+
+  const filteredData = data.filter((item) => {
+    if (!search.trim()) return true;
+    const q = search.toLowerCase();
+    return (
+      item.equipment_code.toLowerCase().includes(q) ||
+      item.name.toLowerCase().includes(q)
+    );
+  });
+
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+  const paginatedData = filteredData.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   return (
     <div className="max-w-[1400px] mx-auto p-4 flex flex-col h-[calc(100vh-72px)] overflow-hidden">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-6 shrink-0 print:hidden">
@@ -60,9 +83,11 @@ export default function InspeksiAntreanPage() {
           <input 
             type="text" 
             placeholder="Cari kode atau nama..." 
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
             className="flex-1 px-4 py-2 text-sm bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400" 
           />
-          <button className="px-6 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
+          <button onClick={() => setSearch("")} className="px-6 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors">
             Reset
           </button>
         </div>
@@ -87,17 +112,17 @@ export default function InspeksiAntreanPage() {
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-gray-500 text-[13px]">Memuat data aset...</td>
                 </tr>
-              ) : data.length === 0 ? (
+              ) : filteredData.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center">
                       <p className="text-[13px] font-medium text-gray-900 mb-1">Data Tidak Ditemukan</p>
-                      <p className="text-[12px] text-gray-500">Tidak ada aset IDLE untuk diinspeksi.</p>
+                      <p className="text-[12px] text-gray-500">Tidak ada aset IDLE yang sesuai dengan pencarian.</p>
                     </div>
                   </td>
                 </tr>
               ) : (
-                data.map((row, i) => {
+                paginatedData.map((row, i) => {
                   const idleDateStr = row.updated_at || row.created_at || new Date().toISOString();
                   const idleDate = new Date(idleDateStr);
                   const now = new Date();
@@ -145,6 +170,47 @@ export default function InspeksiAntreanPage() {
             </tbody>
           </table>
         </div>
+
+        {filteredData.length > 0 && (
+          <div className="px-6 py-3 border-t border-gray-200 bg-white flex justify-between items-center shrink-0">
+            <span className="text-[12px] font-medium text-gray-500">
+              Menampilkan {filteredData.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)} dari {filteredData.length} data (10 baris/halaman)
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                >
+                  Prev
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-7 h-7 rounded-md text-[12px] font-bold flex items-center justify-center transition-colors ${
+                        currentPage === page
+                          ? "bg-[#0A356A] text-white"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

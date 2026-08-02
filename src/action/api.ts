@@ -2,7 +2,7 @@
 
 import { cookies } from "next/headers"
 
-const API_URL = process.env.API_URL || "http://localhost:8080"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "https://api.testing.naufal.me"
 
 export async function getEquipments() {
   const cookieStore = await cookies()
@@ -19,6 +19,57 @@ export async function getEquipments() {
   } catch (error) {
     console.error("Fetch equipment error:", error)
     return []
+  }
+}
+
+export async function getDisposals() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/disposals`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    })
+    if (!res.ok) return []
+    const json = await res.json()
+    return json.data || []
+  } catch (error) {
+    console.error("Fetch disposals error:", error)
+    return []
+  }
+}
+
+export async function approveDisposal(id: string, payload: { status: string; rejection_reason?: string }) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/disposals/${id}/approve`, {
+      method: "PATCH",
+      headers: { 
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}` 
+      },
+      body: JSON.stringify(payload),
+    })
+
+    const json = await res.json().catch(() => null)
+    
+    if (!res.ok || json?.success === false) {
+      return { 
+        success: false, 
+        message: json?.error || json?.message || `HTTP Error ${res.status}` 
+      }
+    }
+    
+    return { 
+      success: true, 
+      message: json?.message || "Pengajuan disposal berhasil diproses." 
+    }
+  } catch (error: any) {
+    console.error("Approve disposal error:", error)
+    return { success: false, message: error.message || "Terjadi kesalahan server." }
   }
 }
 
@@ -268,10 +319,10 @@ export async function getStorageLocations() {
   const token = cookieStore.get("token")?.value
 
   const fallbackStorage = [
-    { id: 1, name: "Gudang Utama" },
-    { id: 2, name: "Gudang Sparepart" },
-    { id: 3, name: "Gudang Bahan Kimia" },
-    { id: 4, name: "Gudang Limbah" }
+    { id: 1, name: "Gudang Utama", plant: "PUSRI-IB", description: "Penyimpanan pusat" },
+    { id: 2, name: "Gudang Sparepart", plant: "PUSRI-IIB", description: "Penyimpanan cadangan" },
+    { id: 3, name: "Gudang Bahan Kimia", plant: "PUSRI-III", description: "Penyimpanan kimia" },
+    { id: 4, name: "Gudang Limbah", plant: "PUSRI-IV", description: "Area penampungan akhir" }
   ];
 
   try {
@@ -285,6 +336,114 @@ export async function getStorageLocations() {
   } catch (error) {
     console.error("Fetch storage locations error:", error)
     return fallbackStorage
+  }
+}
+
+export async function createStorageLocation(name: string, plant: string, description: string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/storage-locations`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}` 
+      },
+      body: JSON.stringify({ name, plant, description }),
+    })
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return { success: false, message: errorData?.message || `HTTP Error ${res.status}` }
+    }
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, message: error.message }
+  }
+}
+
+export async function deleteStorageLocation(id: number | string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/storage-locations/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return { success: false, message: errorData?.message || `HTTP Error ${res.status}` }
+    }
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, message: error.message }
+  }
+}
+
+export async function getRequireActions() {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  const fallbackActions = [
+    { id: 1, name: "Re-use Langsung", description: "Dapat langsung dipasang tanpa perbaikan" },
+    { id: 2, name: "Perlu Perbaikan / Refurbish", description: "Membutuhkan pemeliharaan sebelum dikirim" },
+    { id: 3, name: "Rekomendasi Disposal / Scrap", description: "Kerusakan berat tidak layak dipelihara" }
+  ];
+
+  try {
+    const res = await fetch(`${API_URL}/api/require-actions`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    })
+    if (!res.ok) return fallbackActions
+    const json = await res.json()
+    return json.data && json.data.length > 0 ? json.data : fallbackActions
+  } catch (error) {
+    console.error("Fetch require actions error:", error)
+    return fallbackActions
+  }
+}
+
+export async function createRequireAction(name: string, description: string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/require-actions`, {
+      method: "POST",
+      headers: { 
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}` 
+      },
+      body: JSON.stringify({ name, description }),
+    })
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return { success: false, message: errorData?.message || `HTTP Error ${res.status}` }
+    }
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, message: error.message }
+  }
+}
+
+export async function deleteRequireAction(id: number | string) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/require-actions/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return { success: false, message: errorData?.message || `HTTP Error ${res.status}` }
+    }
+    return { success: true }
+  } catch (error: any) {
+    return { success: false, message: error.message }
   }
 }
 
@@ -338,8 +497,10 @@ export async function createEquipment(payload: any) {
       throw new Error(errorData?.error || errorData?.message || "Failed to create equipment");
     }
     const responseData = await res.json().catch(() => null);
+    console.log("=== createEquipment RAW RESPONSE ===", JSON.stringify(responseData));
+    console.log("=== createEquipment data?.id ===", responseData?.data?.id, "|| responseData?.id:", responseData?.id);
     
-    return { success: true, data: responseData?.data }
+    return { success: true, data: responseData?.data || responseData }
   } catch (error: any) {
     console.error("Create equipment error:", error)
     return { success: false, message: error.message }
@@ -378,6 +539,13 @@ export async function uploadEquipmentAttachment(formData: FormData) {
   const cookieStore = await cookies()
   const token = cookieStore.get("token")?.value
   const equipmentId = formData.get("equipment_id") || formData.get("reference_id");
+  const file = formData.get("file");
+  console.log("uploadEquipmentAttachment called. equipment_id:", equipmentId, "file name:", file && (file as File).name, "file size:", file && (file as File).size, "category:", formData.get("category"));
+
+  const newFormData = new FormData();
+  for (const [key, value] of formData.entries()) {
+    newFormData.append(key, value);
+  }
 
   const endpoints = [
     `${API_URL}/api/attachments/upload`,
@@ -395,19 +563,71 @@ export async function uploadEquipmentAttachment(formData: FormData) {
         headers: { 
           Authorization: `Bearer ${token}` 
         },
-        body: formData,
+        body: newFormData,
       });
       if (res.ok) {
         const data = await res.json();
         console.log(`Upload attachment success at ${endpoint}:`, data);
         return { success: true, data: data.data || data };
+      } else {
+        console.warn(`Upload attempt failed at ${endpoint} with status ${res.status}:`, await res.text());
       }
     } catch (e) {
-      console.warn(`Upload attempt failed at ${endpoint}:`, e);
+      console.warn(`Upload attempt exception at ${endpoint}:`, e);
     }
   }
 
   return { success: false, message: "Gagal mengunggah foto ke backend" };
+}
+
+export async function uploadEquipmentAttachmentBase64(
+  equipmentId: string, 
+  base64Data: string, 
+  fileName: string, 
+  mimeType: string
+) {
+  const cookieStore = await cookies();
+  const token = cookieStore.get("token")?.value;
+  
+  console.log("=== uploadEquipmentAttachmentBase64 CALLED ===");
+  console.log("equipmentId:", equipmentId, "fileName:", fileName, "mimeType:", mimeType);
+  console.log("base64Data length:", base64Data?.length, "token exists:", !!token);
+  
+  // Pisahkan header "data:image/jpeg;base64," dari isinya
+  const base64Content = base64Data.includes("base64,") ? base64Data.split("base64,")[1] : base64Data;
+  const buffer = Buffer.from(base64Content, "base64");
+  
+  console.log("Buffer size:", buffer.length, "bytes");
+
+  // Gunakan undici File (tersedia di Node 20+) alih-alih Blob
+  const file = new File([buffer], fileName, { type: mimeType });
+  
+  const fd = new FormData();
+  fd.append("equipment_id", equipmentId);
+  fd.append("category", "equipment_photo");
+  fd.append("file", file);
+
+  const endpoint = `${API_URL}/api/attachments/upload`;
+  console.log("Uploading to:", endpoint);
+  
+  try {
+    const res = await fetch(endpoint, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}` },
+      body: fd
+    });
+    const resultText = await res.text();
+    console.log("Upload response status:", res.status);
+    console.log("Upload response body:", resultText);
+    if (res.ok) {
+      return { success: true, message: resultText };
+    } else {
+      return { success: false, message: `Status ${res.status}: ${resultText}` };
+    }
+  } catch (err: any) {
+    console.error("Upload exception:", err);
+    return { success: false, message: err.message };
+  }
 }
 
 export async function getAttachments() {
@@ -427,9 +647,15 @@ export async function getAttachments() {
     
     // Normalize: API bisa mengembalikan {data: [...]}, [...], atau single object {...}
     const raw = json.data || json;
-    if (Array.isArray(raw)) return raw;
-    if (raw && typeof raw === 'object' && raw.id) return [raw];
-    return [];
+    let items: any[] = [];
+    if (Array.isArray(raw)) items = raw;
+    else if (raw && typeof raw === 'object' && raw.id) items = [raw];
+    
+    return items.map((item: any) => {
+      // Do not prepend API_URL anymore.
+      // Next.js will proxy /uploads via rewrites so it works from any device
+      return item;
+    });
   } catch (error) {
     console.error("Fetch attachments error:", error)
     return []
@@ -442,9 +668,14 @@ export async function getAttachmentsByEquipmentId(equipmentId: string) {
 
   const normalizeResponse = (json: any): any[] => {
     const raw = json.data || json;
-    if (Array.isArray(raw)) return raw;
-    if (raw && typeof raw === 'object' && raw.id) return [raw];
-    return [];
+    let items: any[] = [];
+    if (Array.isArray(raw)) items = raw;
+    else if (raw && typeof raw === 'object' && raw.id) items = [raw];
+    
+    return items.map((item: any) => {
+      // Do not prepend API_URL
+      return item;
+    });
   };
 
   const filterByEquipment = (items: any[]) => {
@@ -498,12 +729,16 @@ export async function getAttachmentsByEquipmentId(equipmentId: string) {
     })
     if (res3.ok) {
       const json3 = await res3.json()
-      console.log(`Attachments for eq ${equipmentId} (fallback all):`, JSON.stringify(json3).substring(0, 300));
       const items = normalizeResponse(json3);
-      return filterByEquipment(items);
+      const filtered = filterByEquipment(items);
+      console.log(`[DEBUG] /api/attachments returned ${items.length} items. Filtered for eq ${equipmentId} -> ${filtered.length} items.`);
+      if (filtered.length > 0) {
+        console.log(`[DEBUG] First filtered item:`, JSON.stringify(filtered[0]));
+      }
+      return filtered;
     }
   } catch (e) {
-    console.error(`Fetch attachments for equipment ${equipmentId} error:`, e)
+    console.error("Fetch attachments fallback error:", e)
   }
 
   return []

@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2, ChevronLeft, Paperclip, XCircle } from "lucide-react";
 import Link from "next/link";
-import { createEquipment, uploadEquipmentAttachment, getObjectTypes, getStorageLocations, getAreas } from "@/action/api";
+import { createEquipment, uploadEquipmentAttachment, uploadEquipmentAttachmentBase64, getObjectTypes, getStorageLocations, getAreas } from "@/action/api";
 import { useRouter } from "next/navigation";
 
 export default function RegisterEquipmentPage() {
@@ -172,52 +172,27 @@ export default function RegisterEquipmentPage() {
     if (res.success && res.data?.id) {
       const equipmentId = res.data.id;
       
-      // Upload files
+      // Upload files via proxy route (sends real binary, not Base64)
       if (uploadedFiles.length > 0) {
         setNotification({ type: 'success', message: 'Menyimpan foto...' });
-        const localAttachments: any[] = [];
 
         for (const file of uploadedFiles) {
+          const fd = new FormData();
+          fd.append("equipment_id", equipmentId.toString());
+          fd.append("category", "equipment_photo");
+          fd.append("file", file);
+
           try {
-            const reader = new FileReader();
-            const dataUrl = await new Promise<string>((resolve) => {
-              reader.onload = (e) => resolve(e.target?.result as string || '');
-              reader.onerror = () => resolve('');
-              reader.readAsDataURL(file);
+            const uploadRes = await fetch("/api/upload", {
+              method: "POST",
+              body: fd,
             });
-
-            if (dataUrl) {
-              localAttachments.push({
-                url: dataUrl,
-                name: file.name,
-                type: file.type || file.name.split('.').pop() || 'image',
-                category: 'Registrasi'
-              });
+            if (!uploadRes.ok) {
+              const text = await uploadRes.text();
+              console.error("Gagal upload foto:", file.name, text);
             }
-          } catch (e) {}
-
-          const fileData = new FormData();
-          fileData.append("equipment_id", equipmentId.toString());
-          fileData.append("reference_id", equipmentId.toString());
-          fileData.append("reference_table", "equipments");
-          fileData.append("category", "equipment_photo");
-          fileData.append("attachment_category", "equipment_photo");
-          fileData.append("file", file);
-          fileData.append("attachment", file);
-          const uploadRes = await uploadEquipmentAttachment(fileData);
-          console.log("Upload attachment result:", uploadRes);
-        }
-
-        if (localAttachments.length > 0) {
-          try {
-            const existing = JSON.parse(localStorage.getItem('local_equipment_attachments') || '{}');
-            existing[String(equipmentId)] = localAttachments;
-            if (formData.equipmentCode) {
-              existing[String(formData.equipmentCode)] = localAttachments;
-            }
-            localStorage.setItem('local_equipment_attachments', JSON.stringify(existing));
-          } catch (e) {
-            console.error("Error saving local attachments:", e);
+          } catch (err: any) {
+            console.error(`Error upload ${file.name}: ${err.message}`);
           }
         }
       }

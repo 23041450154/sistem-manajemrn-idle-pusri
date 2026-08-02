@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import Link from "next/link";
 import { 
   CheckSquare, Clock, CheckCircle, RefreshCw, 
-  FileText, Eye, Server, Activity 
+  FileText, Eye, Server, Activity, Trash2 
 } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import styles from "@/app/(authenticated-routes)/dashboard.module.css";
@@ -133,13 +133,13 @@ export default async function ManajerDashboardPage() {
           </p>
         </div>
         <div className={styles.headerActions}>
-          <button className={styles.btnOutline}>
-            <FileText className="w-4 h-4" />
-            Cetak Laporan
-          </button>
+          <Link href="/manajer/disposal" className={styles.btnOutline}>
+            <Trash2 className="w-4 h-4 text-red-600" />
+            Persetujuan Disposal
+          </Link>
           <Link href="/manajer/approve" className={styles.btnPrimary}>
             <CheckSquare className="w-4 h-4" />
-            Kelola Persetujuan
+            Persetujuan Validasi
           </Link>
         </div>
       </div>

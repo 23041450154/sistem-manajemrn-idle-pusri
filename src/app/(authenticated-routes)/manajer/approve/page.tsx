@@ -43,6 +43,16 @@ export default function ManajerApprovePage() {
   const [attachments, setAttachments] = useState<any[]>([]);
   const [allInspections, setAllInspections] = useState<any[]>([]);
 
+  // Pagination State
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
+
+  const totalPages = Math.ceil(filteredRequests.length / ITEMS_PER_PAGE);
+  const paginatedRequests = filteredRequests.slice(
+    (currentPage - 1) * ITEMS_PER_PAGE,
+    currentPage * ITEMS_PER_PAGE
+  );
+
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -251,6 +261,7 @@ export default function ManajerApprovePage() {
       return matchSearch && matchPlant && matchStatus && matchDate;
     });
     setFilteredRequests(result);
+    setCurrentPage(1);
   };
 
   const handleReset = () => {
@@ -260,6 +271,7 @@ export default function ManajerApprovePage() {
     setStartDate("");
     setEndDate("");
     setFilteredRequests(requests);
+    setCurrentPage(1);
   };
 
   const getStatusAsetBadge = (status: string) => {
@@ -394,7 +406,7 @@ export default function ManajerApprovePage() {
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {filteredRequests.map((req) => (
+              {paginatedRequests.map((req) => (
                 <tr key={req.id} className="hover:bg-blue-50/30 transition-colors">
                   <td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug">{req.nomorRequest}</td>
                   <td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900">{req.kodeAset}</td>
@@ -421,6 +433,47 @@ export default function ManajerApprovePage() {
             </tbody>
           </table>
         </div>
+
+        {filteredRequests.length > 0 && (
+          <div className="px-6 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
+            <span className="text-[12px] font-medium text-gray-500">
+              Menampilkan {filteredRequests.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredRequests.length)} dari {filteredRequests.length} data (10 baris/halaman)
+            </span>
+            {totalPages > 1 && (
+              <div className="flex items-center gap-1.5">
+                <button 
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  disabled={currentPage === 1}
+                  className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                >
+                  Prev
+                </button>
+                <div className="flex items-center gap-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => setCurrentPage(page)}
+                      className={`w-7 h-7 rounded-md text-[12px] font-bold flex items-center justify-center transition-colors ${
+                        currentPage === page
+                          ? "bg-[#0A356A] text-white"
+                          : "text-gray-600 hover:bg-gray-100"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+                <button 
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  disabled={currentPage === totalPages}
+                  className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                >
+                  Next
+                </button>
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Modal Detail Informasi Aset */}

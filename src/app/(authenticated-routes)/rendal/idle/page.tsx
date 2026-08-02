@@ -44,7 +44,7 @@ export default function RendalIdlePage() {
   const [detailModal, setDetailModal] = useState<Equipment | null>(null);
   const [isSubmittingRepair, setIsSubmittingRepair] = useState(false);
   
-  const ITEMS_PER_PAGE = 15;
+  const ITEMS_PER_PAGE = 10;
 
   const handleSubmitRepair = (e: React.FormEvent) => {
     e.preventDefault();

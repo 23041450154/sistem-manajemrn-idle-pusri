@@ -32,28 +32,16 @@ export function Sidebar({ role }: { role?: string }) {
 
   type NavItem = { name: string; href: string; icon: typeof LayoutDashboard };
   let mainNavItems: NavItem[] = [];
-  let adminNavItems: NavItem[] = [];
-  let showAdminNav = false;
-  // Tautan CTA di bawah sidebar (placeholder, null jika role tak punya).
   let registerCta: { name: string; href: string } | null = null;
 
   switch (userRole) {
     case "ADMIN":
-      // Placeholder: Administrator (akses penuh)
+      // Administrator (akses penuh)
       mainNavItems = [
         { name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
-        { name: "Peralatan", href: "/admin/peralatan", icon: Wrench },
-        { name: "Idle Equipment", href: "/admin/idle", icon: PowerOff },
-        { name: "Inspeksi", href: "/admin/inspeksi", icon: ClipboardCheck },
-        { name: "Persetujuan", href: "/admin/persetujuan", icon: CheckSquare },
-        { name: "Laporan", href: "/admin/laporan", icon: FileText },
-      ];
-      adminNavItems = [
+        { name: "Peralatan", href: "/admin/equipment", icon: Wrench },
         { name: "Master Data", href: "/admin/master", icon: Database },
-        { name: "Pengguna", href: "/admin/pengguna", icon: Users },
-        { name: "Pengaturan", href: "/admin/pengaturan", icon: Settings },
       ];
-      showAdminNav = true;
       break;
 
     case "RENDAL_PEMELIHARAAN":
@@ -79,10 +67,11 @@ export function Sidebar({ role }: { role?: string }) {
       break;
 
     case "MANAJER_RENDAL":
-      // Placeholder: Manajer Rendal
+      // Manajer Rendal
       mainNavItems = [
         { name: "Dashboard", href: "/manajer/dashboard", icon: LayoutDashboard },
-        { name: "Persetujuan", href: "/manajer/approve", icon: CheckSquare },
+        { name: "Persetujuan Validasi", href: "/manajer/approve", icon: CheckSquare },
+        { name: "Persetujuan Disposal", href: "/manajer/disposal", icon: Trash2 },
         { name: "Laporan", href: "/manajer/laporan", icon: FileText },
       ];
       break;
@@ -159,34 +148,6 @@ export function Sidebar({ role }: { role?: string }) {
             })}
           </ul>
         </div>
-
-        {showAdminNav && (
-          <div>
-            <h2 className="px-3 text-[10px] font-semibold text-blue-300 uppercase tracking-wider mb-2">
-              Administration
-            </h2>
-            <ul className="space-y-1">
-              {adminNavItems.map((item) => {
-                const isActive = pathname === item.href;
-                return (
-                  <li key={item.name}>
-                    <Link
-                      href={item.href}
-                      className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-                        isActive
-                          ? "bg-blue-500/20 text-white border-l-4 border-white"
-                          : "text-blue-100 hover:bg-[#10488f] hover:text-white border-l-4 border-transparent"
-                      }`}
-                    >
-                      <item.icon className="w-4 h-4" />
-                      {item.name}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
       </div>
 
       {registerCta && (

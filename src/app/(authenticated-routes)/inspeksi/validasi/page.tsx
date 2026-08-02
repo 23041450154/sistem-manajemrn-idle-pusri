@@ -7,7 +7,7 @@ import {
   ArrowUpDown, ArrowUp, ArrowDown, Download, Info
 } from "lucide-react";
 
-import { getEquipments, validateEquipment, getObjectTypes, getApprovals } from "@/action/api";
+import { getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 
 // Tipe Data
@@ -153,6 +153,25 @@ export default function ManajemenInspeksi() {
   const [modalMode, setModalMode] = useState<"VALIDASI" | "DETAIL">("VALIDASI");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
+  const [attachments, setAttachments] = useState<any[]>([]);
+  const [allInspections, setAllInspections] = useState<any[]>([]);
+
+  useEffect(() => {
+    // Jalankan scroll setelah render DOM selasai
+    const timer = setTimeout(() => {
+      const mainElem = document.querySelector("main");
+      const tableElem = document.getElementById("validasi-table-container");
+      
+      if (tableElem) {
+        tableElem.scrollIntoView({ behavior: "instant" as ScrollBehavior, block: "start" });
+      } else if (mainElem) {
+        mainElem.scrollTop = 220;
+      }
+    }, 150);
+
+    return () => clearTimeout(timer);
+  }, []);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Form Validasi States
   const [hasilPemeriksaan, setHasilPemeriksaan] = useState("");
@@ -194,18 +213,30 @@ export default function ManajemenInspeksi() {
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 25;
+  const ITEMS_PER_PAGE = 10;
 
   // Sorting State
-  const [sortConfig, setSortConfig] = useState<{key: keyof Asset, direction: 'asc' | 'desc'} | null>({ key: 'tanggalRegistrasi', direction: 'desc' });
+  const [sortConfig, setSortConfig] = useState<{key: keyof Asset, direction: 'asc' | 'desc'} | null>(null);
 
   // Handler Buka Modal
-  const openModal = (asset: Asset, mode: "VALIDASI" | "DETAIL" = "VALIDASI") => {
+  const openModal = async (asset: Asset, mode: "VALIDASI" | "DETAIL" = "VALIDASI") => {
     setSelectedAsset(asset);
     setModalMode(mode);
+    setIsModalOpen(true);
     setUploadedFiles([]); // Reset files
     setShowValidationErrors(false);
     setFileError(null);
+    setAttachments([]);
+    setPreviewImage(null);
+    
+    try {
+      const attsData = await getAttachmentsByEquipmentId(asset.id);
+      if (attsData && Array.isArray(attsData)) {
+        setAttachments(attsData);
+      }
+    } catch (err) {
+      console.error(err);
+    }
     
     // Reset Form jika status belum divalidasi (baru pertama kali)
     if (asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE") {
@@ -226,11 +257,11 @@ export default function ManajemenInspeksi() {
       setJamSelesai("10:30");
       setTglPemeriksaan(new Date().toISOString().split('T')[0]);
     }
-    setIsModalOpen(true);
   };
 
   const closeModal = () => {
     setIsModalOpen(false);
+    setPreviewImage(null);
     setTimeout(() => setSelectedAsset(null), 300);
   };
 
@@ -245,6 +276,40 @@ export default function ManajemenInspeksi() {
       const res = await validateEquipment(selectedAsset.id, isUtilizable, notes);
 
       if (res.success) {
+        
+        // --- MULTIPLE ATTACHMENTS UPLOAD ---
+        if (uploadedFiles && uploadedFiles.length > 0) {
+          try {
+            // Get token from cookies for client-side fetch
+            const tokenMatch = document.cookie.match(/(^|;)\s*token\s*=\s*([^;]+)/);
+            const token = tokenMatch ? tokenMatch[2] : "";
+            const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+
+            for (const file of uploadedFiles) {
+              const fd = new FormData();
+              fd.append("equipment_id", selectedAsset.id);
+              fd.append("file", file);
+              fd.append("category", "inspection_photo"); // Kategori sesuai backend
+
+              const resUpload = await fetch(`${API_URL}/api/attachments/upload`, {
+                method: "POST",
+                headers: {
+                  Authorization: `Bearer ${token}`
+                },
+                body: fd
+              });
+              if (!resUpload.ok) {
+                console.error("Gagal upload file:", file.name, await resUpload.text());
+              } else {
+                console.log("Upload berhasil:", await resUpload.json());
+              }
+            }
+          } catch (err) {
+            console.error("Error during file upload:", err);
+          }
+        }
+        // -----------------------------------
+
         setNotification({ type: "success", message: "Data inspeksi berhasil disubmit ke sistem." });
         
         const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
@@ -526,7 +591,8 @@ export default function ManajemenInspeksi() {
         </div>
       )}
 
-      {/* Page Header */}
+      {/* Page Header (Dicomment/disembunyikan dulu sementara) */}
+      {/* 
       <div className="mb-4">
         <div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
           <span>Idle Equipment</span>
@@ -536,6 +602,7 @@ export default function ManajemenInspeksi() {
         <h1 className="text-xl font-bold text-gray-900 tracking-tight">Manajemen Inspeksi</h1>
         <p className="text-[13px] text-gray-500 mt-1">Daftar peralatan idle yang membutuhkan verifikasi teknis sebelum di-utilisasi.</p>
       </div>
+      */}
 
       {/* Action Notification Banner */}
       {pendingCount > 0 && (
@@ -554,7 +621,7 @@ export default function ManajemenInspeksi() {
       )}
 
       {/* Main Content Area (Tabel) */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+      <div id="validasi-table-container" className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4">
         
         {/* Toolbar / Filters */}
         <div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
@@ -721,24 +788,38 @@ export default function ManajemenInspeksi() {
         
         <div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
           <span className="text-[11px] font-medium text-gray-500">
-            Menampilkan {paginatedAssets.length} dari {filteredAssets.length} data
+            Menampilkan {filteredAssets.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length)} dari {filteredAssets.length} data (10 baris/halaman)
           </span>
           {totalPages > 1 && (
             <div className="flex items-center gap-1.5">
               <button 
                 onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                 disabled={currentPage === 1}
-                className="px-2.5 py-1 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
               >
                 Prev
               </button>
-              <span className="text-[11px] font-medium text-gray-700 px-2">
-                Hal {currentPage} / {totalPages}
-              </span>
+              
+              <div className="flex items-center gap-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
+                      currentPage === page
+                        ? "bg-[#0A356A] text-white"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
               <button 
                 onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                 disabled={currentPage === totalPages}
-                className="px-2.5 py-1 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
               >
                 Next
               </button>
@@ -870,22 +951,24 @@ export default function ManajemenInspeksi() {
                   <div className="w-full md:w-56 shrink-0 flex flex-col gap-2 md:border-l md:border-gray-100 md:pl-4">
                     <span className="text-[10px] font-semibold text-gray-500 uppercase block">Foto Registrasi</span>
                     <div className="flex gap-2">
-                      <div 
-                        className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm" 
-                        onClick={() => window.open("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80", "_blank")}
-                        title="Foto Mesin"
-                      >
-                        <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" alt="Foto Aset 1" className="w-full h-full object-cover" />
-                      </div>
-                      <div 
-                        className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm" 
-                        onClick={() => window.open("https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80", "_blank")}
-                        title="Foto Label Plat"
-                      >
-                        <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" alt="Foto Label Aset" className="w-full h-full object-cover" />
-                      </div>
+                      {attachments.length > 0 ? (
+                        attachments.slice(0, 2).map((att: any, idx: number) => (
+                          <div 
+                            key={idx}
+                            className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm"
+                            onClick={() => setPreviewImage(att.file_url || att.url)}
+                            title={`Foto ${idx+1}`}
+                          >
+                            <img src={att.file_url || att.url} alt={`Foto Aset ${idx+1}`} className="w-full h-full object-cover" />
+                          </div>
+                        ))
+                      ) : (
+                        <div className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 flex flex-col items-center justify-center text-gray-400">
+                          <span className="text-[10px] font-medium text-center px-2">Tidak ada foto</span>
+                        </div>
+                      )}
                     </div>
-                    <span className="text-[9px] text-gray-400 italic text-center md:text-left mt-0.5">Klik foto untuk memperbesar</span>
+                    {attachments.length > 0 && <span className="text-[9px] text-gray-400 italic text-center md:text-left mt-0.5">Klik foto untuk memperbesar</span>}
                   </div>
                 </div>
               </div>
@@ -1226,58 +1309,68 @@ export default function ManajemenInspeksi() {
               <h3 className="text-[#0A356A] font-bold text-[13px] mb-2.5 uppercase tracking-wide">Lampiran Gambar & Dokumen</h3>
               <div className="grid grid-cols-3 gap-3 mb-3">
                 {/* Images */}
-                <div 
-                  onClick={() => window.open("https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80", "_blank")}
-                  className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white cursor-pointer hover:border-[#0A356A] transition-colors group"
-                >
-                  <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1581091226825-a6a2a5aee158?w=300&q=80" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Foto Pompa" />
-                  </div>
-                  <div className="p-2 text-center border-t border-gray-200 flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-gray-900 mb-0.5">Foto Utama</p>
-                  </div>
-                </div>
-                <div 
-                  onClick={() => window.open("https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80", "_blank")}
-                  className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white cursor-pointer hover:border-[#0A356A] transition-colors group"
-                >
-                  <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
-                    <img src="https://images.unsplash.com/photo-1504917595217-d4dc5ebe6122?w=300&q=80" className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt="Label Tag" />
-                  </div>
-                  <div className="p-2 text-center border-t border-gray-200 flex flex-col justify-center">
-                    <p className="text-[10px] font-bold text-gray-900 mb-0.5">Label Tag Plat Aset</p>
-                  </div>
-                </div>
-                {/* PDF Files in same row if width permits */}
-                <div 
-                  onClick={() => window.open("/laporan_inspeksi_P101.pdf", "_blank")}
-                  className="border border-gray-200 rounded p-2.5 flex flex-col justify-between bg-white shadow-sm cursor-pointer hover:border-[#0A356A] transition-colors group"
-                >
-                  <div className="flex items-start gap-2 mb-2">
-                    <div className="w-7 h-7 rounded bg-red-50 text-red-500 border border-red-100 flex items-center justify-center shrink-0 group-hover:bg-[#0A356A]/10 group-hover:text-[#0A356A] group-hover:border-[#0A356A]/20 transition-colors">
-                      <span className="font-bold text-[9px]">PDF</span>
+                {attachments.filter((att: any) => {
+                  const url = att.file_url || att.url || "";
+                  return url.match(/\.(jpeg|jpg|gif|png)$/) || url.startsWith('data:image');
+                }).slice(0, 2).map((att: any, idx: number) => (
+                  <div 
+                    key={idx}
+                    onClick={() => setPreviewImage(att.file_url || att.url)}
+                    className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white cursor-pointer hover:border-[#0A356A] transition-colors group"
+                  >
+                    <div className="h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
+                      <img src={att.file_url || att.url} className="object-cover w-full h-full group-hover:scale-105 transition-transform duration-300" alt={`Foto ${idx+1}`} />
                     </div>
-                    <div className="overflow-hidden">
-                      <p className="text-[11px] font-bold text-gray-900 truncate" title="laporan_inspeksi_P101.pdf">laporan_inspeksi_P101.pdf</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">3.4 MB</p>
+                    <div className="p-2 text-center border-t border-gray-200 flex flex-col justify-center">
+                      <p className="text-[10px] font-bold text-gray-900 mb-0.5">Foto {idx+1}</p>
                     </div>
                   </div>
-                  <div className="flex gap-2 justify-end mt-auto">
-                    <button 
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const link = document.createElement("a");
-                        link.href = "/laporan_inspeksi_P101.pdf";
-                        link.download = "laporan_inspeksi_P101.pdf";
-                        link.click();
-                      }} 
-                      className="text-[11px] font-semibold text-[#0A356A] hover:bg-blue-50 p-1.5 rounded transition-colors"
-                      title="Download Laporan"
-                    >
-                      <Download className="w-3.5 h-3.5" />
-                    </button>
+                ))}
+                
+                {attachments.filter((att: any) => {
+                  const url = att.file_url || att.url || "";
+                  return url.match(/\.(jpeg|jpg|gif|png)$/) || url.startsWith('data:image');
+                }).length === 0 && (
+                  <div className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white p-4">
+                    <div className="text-center text-gray-500 text-sm">Tidak ada foto</div>
                   </div>
-                </div>
+                )}
+                {/* Documents / PDFs */}
+                {attachments.filter((att: any) => {
+                  const url = att.file_url || att.url || "";
+                  return !url.match(/\.(jpeg|jpg|gif|png)$/) && !url.startsWith('data:image');
+                }).map((att: any, idx: number) => (
+                  <div 
+                    key={`doc-${idx}`}
+                    onClick={() => window.open(att.file_url || att.url, "_blank")}
+                    className="border border-gray-200 rounded p-2.5 flex flex-col justify-between bg-white shadow-sm cursor-pointer hover:border-[#0A356A] transition-colors group"
+                  >
+                    <div className="flex items-start gap-2 mb-2">
+                      <div className="w-7 h-7 rounded bg-red-50 text-red-500 border border-red-100 flex items-center justify-center shrink-0 group-hover:bg-[#0A356A]/10 group-hover:text-[#0A356A] group-hover:border-[#0A356A]/20 transition-colors">
+                        <span className="font-bold text-[9px]">DOC</span>
+                      </div>
+                      <div className="overflow-hidden">
+                        <p className="text-[11px] font-bold text-gray-900 truncate" title={att.file_name || `Dokumen ${idx+1}`}>{att.file_name || `Dokumen ${idx+1}`}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-end mt-auto">
+                      <button 
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const link = document.createElement("a");
+                          link.href = att.file_url || att.url;
+                          link.download = att.file_name || `document_${idx+1}`;
+                          link.target = "_blank";
+                          link.click();
+                        }} 
+                        className="text-[11px] font-semibold text-[#0A356A] hover:bg-blue-50 p-1.5 rounded transition-colors"
+                        title="Download Dokumen"
+                      >
+                        <Download className="w-3.5 h-3.5" />
+                      </button>
+                    </div>
+                  </div>
+                ))}
               </div>
 
             </div>
@@ -1290,7 +1383,22 @@ export default function ManajemenInspeksi() {
           </div>
         </div>
       )}
-
+      {previewImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm" onClick={() => setPreviewImage(null)}>
+          <button 
+            className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded-full transition-colors"
+            onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img 
+            src={previewImage} 
+            alt="Preview" 
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" 
+            onClick={(e) => e.stopPropagation()} 
+          />
+        </div>
+      )}
     </div>
   );
 }
