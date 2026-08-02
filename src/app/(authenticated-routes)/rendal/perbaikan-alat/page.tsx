@@ -153,6 +153,7 @@ export default function PerbaikanAlatPage() {
   const [existingFiles, setExistingFiles] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   const loadEquipments = async () => {
     setIsLoading(true);
@@ -269,15 +270,13 @@ export default function PerbaikanAlatPage() {
       const oversizedFiles = newFiles.filter(file => file.size > 5 * 1024 * 1024);
       
       if (oversizedFiles.length > 0) {
-        setNotification({
-          type: "error",
-          message: `Gagal mengunggah: Ukuran berkas "${oversizedFiles[0].name}" melebihi batas maksimal 5MB.`,
-        });
+        setModalError(`Gagal mengunggah: Ukuran berkas "${oversizedFiles[0].name}" melebihi batas maksimal 5MB.`);
         // Clear input value so it can trigger change event again
         e.target.value = "";
         return;
       }
       
+      setModalError(null);
       setUploadedFiles((prev) => [...prev, ...newFiles]);
     }
   };
@@ -294,6 +293,7 @@ export default function PerbaikanAlatPage() {
     setPreservationStatus("");
     setUploadedFiles([]);
     setExistingFiles([]);
+    setModalError(null);
     setIsModalOpen(true);
 
     try {
@@ -310,6 +310,7 @@ export default function PerbaikanAlatPage() {
     if (isSubmitting) return;
     setIsModalOpen(false);
     setSelectedAsset(null);
+    setModalError(null);
   };
 
   const isCostValid = useMemo(() => {
@@ -711,6 +712,13 @@ export default function PerbaikanAlatPage() {
                 <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
                   Unggah Berkas Bukti Bayar / Dokumen SPK <span className="text-red-500">*</span>
                 </label>
+
+                {modalError && (
+                  <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-lg text-xs font-semibold text-red-600 flex items-center gap-1.5 animate-in fade-in duration-200">
+                    <XCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />
+                    <span>{modalError}</span>
+                  </div>
+                )}
 
                 <div className={`border-2 border-dashed rounded-lg p-3 transition-colors flex flex-col items-center justify-center ${(uploadedFiles.length > 0 || existingFiles.length > 0) ? 'border-blue-300 bg-blue-50/30' : 'border-gray-300 bg-gray-50/50 hover:bg-blue-50/30 hover:border-blue-400'}`}>
 
