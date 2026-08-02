@@ -266,6 +266,18 @@ export default function PerbaikanAlatPage() {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files.length > 0) {
       const newFiles = Array.from(e.target.files);
+      const oversizedFiles = newFiles.filter(file => file.size > 5 * 1024 * 1024);
+      
+      if (oversizedFiles.length > 0) {
+        setNotification({
+          type: "error",
+          message: `Gagal mengunggah: Ukuran berkas "${oversizedFiles[0].name}" melebihi batas maksimal 5MB.`,
+        });
+        // Clear input value so it can trigger change event again
+        e.target.value = "";
+        return;
+      }
+      
       setUploadedFiles((prev) => [...prev, ...newFiles]);
     }
   };
