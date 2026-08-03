@@ -587,38 +587,40 @@ export default function PerbaikanAlatPage() {
 
       {/* Pagination Controls */}
       {filteredEquipments.length > ITEMS_PER_PAGE && (
-        <div className="mt-4 flex items-center justify-center gap-2">
+        <div className="mt-4 flex items-center justify-center gap-1.5">
           <button
             type="button"
             onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
             disabled={currentPage === 1}
-            className="flex items-center justify-center h-10 px-3 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 disabled:shadow-none disabled:cursor-not-allowed transition-all shadow-sm"
+            className="px-3.5 py-2 text-[12px] font-bold text-gray-700 bg-white border border-gray-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors shadow-sm"
           >
-            &lt; Prev
+            Prev
           </button>
 
-          {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-            <button
-              type="button"
-              key={page}
-              onClick={() => setCurrentPage(page)}
-              className={`flex items-center justify-center w-10 h-10 rounded-lg text-sm font-bold border transition-all shadow-sm ${
-                currentPage === page
-                  ? "bg-[#0A356A] border-[#0A356A] text-white"
-                  : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
-              }`}
-            >
-              {page}
-            </button>
-          ))}
+          <div className="flex items-center gap-1">
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                type="button"
+                key={page}
+                onClick={() => setCurrentPage(page)}
+                className={`w-8 h-8 rounded-lg text-[12px] font-bold flex items-center justify-center transition-colors border shadow-sm ${
+                  currentPage === page
+                    ? "bg-[#0A356A] border-[#0A356A] text-white"
+                    : "bg-white border-gray-300 text-gray-700 hover:bg-gray-50"
+                }`}
+              >
+                {page}
+              </button>
+            ))}
+          </div>
 
           <button
             type="button"
             onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
             disabled={currentPage === totalPages}
-            className="flex items-center justify-center h-10 px-3 border border-gray-300 rounded-lg text-sm font-bold text-gray-700 bg-white hover:bg-gray-50 disabled:bg-gray-50 disabled:text-gray-400 disabled:border-gray-200 disabled:shadow-none disabled:cursor-not-allowed transition-all shadow-sm"
+            className="px-3.5 py-2 text-[12px] font-bold text-gray-700 bg-white border border-gray-300 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors shadow-sm"
           >
-            Next &gt;
+            Next
           </button>
         </div>
       )}
