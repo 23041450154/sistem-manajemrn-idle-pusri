@@ -486,7 +486,7 @@ export default function PerbaikanAlatPage() {
 
       {/* Tabel Klasik App (Persis seperti rendal/idle) */}
       <div className="bg-white border-x border-b border-gray-200 rounded-b-xl shadow-sm overflow-hidden">
-        <div className="overflow-x-auto max-h-[400px]">
+        <div className="overflow-x-auto">
           <table className="w-full border-collapse table-auto">
             <thead>
               <tr className="bg-gray-100 border-b border-gray-200 h-12">
