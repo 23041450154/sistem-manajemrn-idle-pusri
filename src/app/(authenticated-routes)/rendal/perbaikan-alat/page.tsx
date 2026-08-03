@@ -244,12 +244,14 @@ export default function PerbaikanAlatPage() {
     );
   }, [equipments, searchQuery]);
 
+  const ITEMS_PER_PAGE = 10;
+
   const paginatedEquipments = useMemo(() => {
-    const startIndex = (currentPage - 1) * 5;
-    return filteredEquipments.slice(startIndex, startIndex + 5);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    return filteredEquipments.slice(startIndex, startIndex + ITEMS_PER_PAGE);
   }, [filteredEquipments, currentPage]);
 
-  const totalPages = Math.ceil(filteredEquipments.length / 5) || 1;
+  const totalPages = Math.ceil(filteredEquipments.length / ITEMS_PER_PAGE) || 1;
 
   const handleCostChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const rawVal = e.target.value.replace(/\D/g, "");
@@ -476,7 +478,7 @@ export default function PerbaikanAlatPage() {
           <span className="text-sm font-bold text-[#0A356A] bg-blue-50 px-3.5 py-2 rounded-lg border border-blue-100 h-10 inline-flex items-center shadow-sm">
             {filteredEquipments.length === 0 
               ? "Menampilkan 0 peralatan"
-              : `Menampilkan ${(currentPage - 1) * 5 + 1}–${Math.min(currentPage * 5, filteredEquipments.length)} dari ${filteredEquipments.length} peralatan`
+              : `Menampilkan ${(currentPage - 1) * ITEMS_PER_PAGE + 1}–${Math.min(currentPage * ITEMS_PER_PAGE, filteredEquipments.length)} dari ${filteredEquipments.length} peralatan`
             }
           </span>
         </div>
@@ -523,7 +525,7 @@ export default function PerbaikanAlatPage() {
                   >
                     {/* No */}
                     <td className="px-3 py-2 text-sm font-semibold text-gray-400 text-center w-[5%]">
-                      {(currentPage - 1) * 5 + index + 1}
+                      {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                     </td>
 
                     {/* Kode Alat */}
@@ -584,7 +586,7 @@ export default function PerbaikanAlatPage() {
       </div>
 
       {/* Pagination Controls */}
-      {filteredEquipments.length > 5 && (
+      {filteredEquipments.length > ITEMS_PER_PAGE && (
         <div className="mt-4 flex items-center justify-center gap-2">
           <button
             type="button"
