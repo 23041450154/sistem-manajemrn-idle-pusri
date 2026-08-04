@@ -60,6 +60,7 @@ export function Sidebar({ role }: { role?: string }) {
       mainNavItems = [
         { name: "Dashboard", href: "/inspeksi/dashboard", icon: LayoutDashboard },
         { name: "Validasi Kelayakan", href: "/inspeksi/validasi", icon: Wrench },
+        { name: "Revisi Validasi", href: "/inspeksi/revisi-validasi", icon: Edit },
         // { name: "Inspeksi Berkala", href: "/inspeksi/inspeksi-berkala/", icon: Wrench },
         { name: "Inspeksi Berkala", href: "/inspeksi/inspeksi-berkala", icon: ClipboardCheck },
         // { name: "Laporan", href: "/inspeksi/laporan", icon: FileText },
