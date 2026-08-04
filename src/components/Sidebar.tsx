@@ -131,7 +131,9 @@ export function Sidebar({ role }: { role?: string }) {
         <div>
           <ul className="space-y-1">
             {mainNavItems.map((item) => {
-              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+              const isActive = pathname === item.href || 
+                pathname.startsWith(item.href + "/") ||
+                (item.href === "/rendal/idle" && pathname === "/rendal/register-equipment");
               return (
                 <li key={item.name}>
                   <Link
@@ -152,14 +154,24 @@ export function Sidebar({ role }: { role?: string }) {
         </div>
       </div>
 
-      {registerCta && (
-        <div className="p-4 mt-auto">
-          <Link href={registerCta.href} className="w-full flex items-center justify-center gap-2 bg-[#0556B3] hover:bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium transition-colors shadow-md">
-            <Plus className="w-4 h-4" />
-            {registerCta.name}
-          </Link>
-        </div>
-      )}
+      {registerCta && (() => {
+        const isCtaActive = pathname === registerCta.href || pathname.startsWith(registerCta.href + "/");
+        return (
+          <div className="p-4 mt-auto">
+            <Link 
+              href={registerCta.href} 
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-md ${
+                isCtaActive 
+                  ? "bg-blue-500/20 text-white border-l-4 border-white" 
+                  : "bg-[#0556B3] hover:bg-blue-600 text-white"
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+              {registerCta.name}
+            </Link>
+          </div>
+        );
+      })()}
       </aside>
     </>
   );
