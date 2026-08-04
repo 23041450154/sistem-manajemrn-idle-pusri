@@ -131,7 +131,7 @@ export function Sidebar({ role }: { role?: string }) {
         <div>
           <ul className="space-y-1">
             {mainNavItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
               return (
                 <li key={item.name}>
                   <Link
