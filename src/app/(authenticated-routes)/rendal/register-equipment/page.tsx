@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
-import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2, ChevronLeft, Paperclip, XCircle } from "lucide-react";
+import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2, ChevronLeft, Paperclip, XCircle, Download } from "lucide-react";
 import Link from "next/link";
 import { createEquipment, uploadEquipmentAttachment, uploadEquipmentAttachmentBase64, getObjectTypes, getStorageLocations, getAreas } from "@/action/api";
 import { useRouter } from "next/navigation";
@@ -216,6 +216,42 @@ export default function RegisterEquipmentPage() {
     "4": "Upgrade Teknologi"
   };
 
+  const handleDownloadTemplate = () => {
+    const headers = [
+      "Kode Aset",
+      "Nama Peralatan",
+      "Kategori (Tipe)",
+      "Lokasi Penyimpanan",
+      "Pabrik (Plant)",
+      "Area (FuncLoc)",
+      "Vendor / Merk",
+      "Tahun Dibuat",
+      "Nilai Perolehan (Rp)",
+      "Alasan Idle",
+      "Catatan Tambahan"
+    ];
+
+    const columns = headers
+      .map(h => `<Column ss:Width="${Math.max(h.length * 7 + 10, 80)}" ss:AutoFitWidth="1"/>`)
+      .join("");
+
+    const cells = headers
+      .map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`)
+      .join("");
+
+    const xml = `<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">\n<Worksheet ss:Name="Template Registrasi">\n<Table>\n${columns}\n<Row>${cells}</Row>\n</Table>\n</Worksheet>\n</Workbook>`;
+
+    const blob = new Blob([xml], { type: "application/vnd.ms-excel;charset=utf-8;" });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "Template_Registrasi_Equipment.xls");
+    link.style.visibility = "hidden";
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   return (
     <div className="max-w-[1400px] mx-auto pb-8 pt-2 relative">
 
@@ -244,7 +280,7 @@ export default function RegisterEquipmentPage() {
             className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all shadow-sm focus:outline-none"
           >
             <FileSpreadsheet className="w-4 h-4 text-[#0556B3]" />
-            <span>Import Data</span>
+            <span>Import dari Excel</span>
           </button>
         </div>
       </div>
@@ -493,7 +529,7 @@ export default function RegisterEquipmentPage() {
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
                 <FileSpreadsheet className="w-5 h-5 text-[#0556B3]" />
-                Import Data Massal
+                Import dari Excel Massal
               </h3>
               <button onClick={() => {setShowImportModal(false); setImportFile(null);}} className="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded-md hover:bg-gray-200">
                 <X className="w-5 h-5" />
@@ -513,6 +549,25 @@ export default function RegisterEquipmentPage() {
                   <option value="excel">Microsoft Excel (.xlsx, .xls)</option>
                   <option value="csv">Comma Separated Values (.csv)</option>
                 </select>
+              </div>
+
+              {/* Download Template */}
+              <div className="mb-5 bg-blue-50/60 border border-blue-100 rounded-lg p-3.5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-2.5">
+                  <FileSpreadsheet className="w-5 h-5 text-[#0556B3] shrink-0" />
+                  <div>
+                    <p className="text-xs font-bold text-gray-800">Format Template Excel</p>
+                    <p className="text-[10px] text-gray-500 mt-0.5">Gunakan format ini untuk mengisi data peralatan secara massal</p>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadTemplate}
+                  className="inline-flex items-center gap-1.5 bg-white border border-blue-200 text-[#0556B3] px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-50 transition-colors shadow-sm whitespace-nowrap"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  Download Template
+                </button>
               </div>
 
               {/* Drag & Drop Area */}
@@ -589,7 +644,7 @@ export default function RegisterEquipmentPage() {
                 className="px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-lg transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
                 {isImporting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                {isImporting ? "Memproses..." : "Proses Import Data"}
+                {isImporting ? "Memproses..." : "Proses Import dari Excel"}
               </button>
             </div>
 

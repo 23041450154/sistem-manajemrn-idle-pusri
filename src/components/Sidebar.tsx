@@ -18,7 +18,8 @@ import {
   Plus,
   Trash2,
   Edit,
-  X
+  X,
+  ShieldCheck
 } from "lucide-react";
 import { useSidebar } from "./SidebarProvider";
 
@@ -51,7 +52,7 @@ export function Sidebar({ role }: { role?: string }) {
         { name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
         { name: "Peralatan", href: "/rendal/idle", icon: Wrench },
         { name: "Perbaikan Alat", href: "/rendal/perbaikan-alat", icon: Wrench },
-        { name: "Laporan", href: "/rendal/laporan", icon: FileText },
+        { name: "Laporan Audit", href: "/rendal/laporan", icon: ShieldCheck },
       ];
       registerCta = { name: "Register Equipment", href: "/rendal/register-equipment" };
       break;

@@ -1,9 +1,6 @@
 import Link from "next/link";
-import { FileText, Plus, Server, PowerOff, CheckCircle, Wrench, Clock, FileQuestion } from "lucide-react";
-import { StatCard } from "@/components/StatCard";
-import { ChartSection } from "@/components/ChartSection";
-import { UpcomingInspections } from "@/components/UpcomingInspections";
-import { RecentActivities } from "@/components/RecentActivities";
+import { FileText, Plus } from "lucide-react";
+import { CostAvoidanceSection } from "@/components/CostAvoidanceSection";
 import styles from "@/app/(authenticated-routes)/dashboard.module.css";
 
 export default function RendalDashboard() {
@@ -29,7 +26,7 @@ export default function RendalDashboard() {
         </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats Cards - Hidden sementara
       <div className={styles.statsGrid}>
         <StatCard
           title="Total Peralatan"
@@ -75,19 +72,13 @@ export default function RendalDashboard() {
           iconColor="text-[#0556B3]"
         />
       </div>
+      */}
 
-      {/* Charts Section */}
-      <ChartSection />
+      {/* Charts Section - Hidden sementara */}
+      {/* <ChartSection /> */}
 
-      {/* Bottom Section: Tables & Activity */}
-      <div className={styles.bottomGrid}>
-        <div className={styles.upcomingWrapper}>
-          <UpcomingInspections />
-        </div>
-        <div>
-          <RecentActivities />
-        </div>
-      </div>
+      {/* Cost Avoidance Section */}
+      <CostAvoidanceSection />
     </div>
   );
 }

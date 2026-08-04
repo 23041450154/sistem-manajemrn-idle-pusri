@@ -133,8 +133,9 @@ export default function DisposalInboxPage() {
       } else {
         showToast("error", res.message || "Gagal menyetujui pengajuan disposal.");
       }
-    } catch (err: any) {
-      showToast("error", err.message || "Terjadi kesalahan server saat menyetujui disposal.");
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan server saat menyetujui disposal.";
+      showToast("error", errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -161,8 +162,9 @@ export default function DisposalInboxPage() {
       } else {
         showToast("error", res.message || "Gagal menolak pengajuan disposal.");
       }
-    } catch (err: any) {
-      showToast("error", err.message || "Terjadi kesalahan server saat menolak disposal.");
+    } catch (err: unknown) {
+      const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan server saat menolak disposal.";
+      showToast("error", errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -229,11 +231,6 @@ export default function DisposalInboxPage() {
               }`}
             >
               Antrean Pending
-              <span className={`px-2 py-0.5 text-[11px] rounded-full font-extrabold ${
-                activeTab === "inbox" ? "bg-amber-400 text-gray-900" : "bg-gray-300 text-gray-700"
-              }`}>
-                {pendingDisposals.length}
-              </span>
             </button>
 
             <button
@@ -245,9 +242,6 @@ export default function DisposalInboxPage() {
               }`}
             >
               Riwayat Keputusan
-              <span className="px-2 py-0.5 text-[11px] rounded-full font-bold bg-gray-200 text-gray-700">
-                {historyDisposals.length}
-              </span>
             </button>
           </div>
 
@@ -280,19 +274,27 @@ export default function DisposalInboxPage() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50/80 border-b border-gray-200">
               <tr>
-                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center w-12 whitespace-nowrap">
+                  No
+                </th>
+                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
                   Nomor Pengajuan
                 </th>
-                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
                   Kode & Nama Alat
                 </th>
-                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
                   Taksiran Nilai Scrap
                 </th>
-                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
                   Tanggal Pengusulan
                 </th>
-                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center">
+                {activeTab === "history" && (
+                  <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+                    Status
+                  </th>
+                )}
+                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
                   Aksi
                 </th>
               </tr>
@@ -300,14 +302,14 @@ export default function DisposalInboxPage() {
             <tbody className="divide-y divide-gray-100 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={activeTab === "history" ? 7 : 6} className="px-6 py-12 text-center text-gray-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0A356A]" />
                     <span className="text-xs font-medium">Memuat antrean usulan disposal...</span>
                   </td>
                 </tr>
               ) : filteredDisposals.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={activeTab === "history" ? 7 : 6} className="px-6 py-12 text-center text-gray-400">
                     <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-400 opacity-60" />
                     <p className="text-sm font-semibold text-gray-600">Tidak ada pengajuan disposal dalam antrean</p>
                     <p className="text-xs text-gray-400 mt-1">
@@ -318,28 +320,46 @@ export default function DisposalInboxPage() {
                   </td>
                 </tr>
               ) : (
-                paginatedDisposals.map((item) => (
+                paginatedDisposals.map((item, index) => (
                   <tr key={item.id} className="hover:bg-blue-50/20 transition-colors">
-                    <td className="px-4 py-3.5 text-[13px] font-bold text-[#0A356A] whitespace-nowrap">
+                    <td className="px-4 py-3.5 text-[13px] text-gray-500 font-medium text-center whitespace-nowrap">
+                      {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                    </td>
+                    <td className="px-4 py-3.5 text-[13px] font-bold text-[#0A356A] whitespace-nowrap text-center">
                       {item.disposal_number}
                     </td>
                     <td className="px-4 py-3.5">
                       <p className="text-[13px] font-bold text-gray-900">{item.equipment_code}</p>
                       <p className="text-[12px] text-gray-500 font-medium line-clamp-1">{item.equipment_name}</p>
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-[13px] font-bold text-emerald-700">
+                    <td className="px-4 py-3.5 whitespace-nowrap text-[13px] font-bold text-emerald-700 text-center">
                       {formatCurrency(item.scrap_value)}
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-[12px] text-gray-600 font-medium">
+                    <td className="px-4 py-3.5 whitespace-nowrap text-[12px] text-gray-600 font-medium text-center">
                       {formatDate(item.created_at)}
                     </td>
+                    {activeTab === "history" && (
+                      <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                        {item.status === "DISPOSED" ? (
+                          <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                            <CheckCircle2 className="w-3 h-3" />
+                            Disetujui
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-full text-[10px] font-bold">
+                            <XCircle className="w-3 h-3" />
+                            Ditolak
+                          </span>
+                        )}
+                      </td>
+                    )}
                     <td className="px-4 py-3.5 text-center whitespace-nowrap">
                       <button
                         onClick={() => handleOpenDetail(item)}
                         className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3.5 py-1.5 rounded-lg text-[12px] font-bold hover:bg-[#0556B3] transition-colors shadow-sm"
                       >
                         <Eye className="w-3.5 h-3.5" />
-                        Tinjau Pengajuan
+                        {activeTab === "history" ? "Detail" : "Tinjau Pengajuan"}
                       </button>
                     </td>
                   </tr>
@@ -429,7 +449,7 @@ export default function DisposalInboxPage() {
                 <div>
                   <p className="text-[13px] font-bold">Usulan Penghapusan Buku Aset (Disposal)</p>
                   <p className="text-[12px] text-amber-800 mt-0.5 leading-relaxed">
-                    Aset ini telah dinyatakan <strong>"Rusak Berat"</strong> oleh tim teknik dan diusulkan untuk dihapus dari inventaris oleh Staf Rendal. Penandatanganan digital Manajer Rendal diperlukan untuk legalitas.
+                    Aset ini telah dinyatakan <strong>&quot;Rusak Berat&quot;</strong> oleh tim teknik dan diusulkan untuk dihapus dari inventaris oleh Staf Rendal. Penandatanganan digital Manajer Rendal diperlukan untuk legalitas.
                   </p>
                 </div>
               </div>
@@ -479,7 +499,7 @@ export default function DisposalInboxPage() {
                 <div>
                   <p className="text-[12px] font-bold text-gray-700 mb-1.5">Justifikasi / Alasan Pembuangan:</p>
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-[13px] text-gray-800 leading-relaxed italic">
-                    "{selectedDisposal.justification || "Tidak ada rincian justifikasi."}"
+                    &quot;{selectedDisposal.justification || "Tidak ada rincian justifikasi."}&quot;
                   </div>
                 </div>
               </div>
