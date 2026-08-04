@@ -17,6 +17,7 @@ import {
   Settings,
   Plus,
   Trash2,
+  Edit,
   X
 } from "lucide-react";
 import { useSidebar } from "./SidebarProvider";
