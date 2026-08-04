@@ -1,12 +1,12 @@
 "use client";
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { getEquipments, getObjectTypes, createReuseRequest, getReuseRequests } from "@/action/api";
+import { getEquipments, getObjectTypes, createReuseRequest, getReuseRequests, getAttachmentsByEquipmentId } from "@/action/api";
 import { 
   Search, Eye, X, ChevronRight, Send, 
   CheckCircle2, Clock, AlertCircle, FileSpreadsheet,
   RefreshCw, ArrowUpDown, ArrowUp, ArrowDown, Plus,
-  UserCheck, Wrench, Info, UploadCloud, Paperclip
+  UserCheck, Wrench, Info
 } from "lucide-react";
 
 interface EquipmentItem {
@@ -78,17 +78,16 @@ export default function UnitKerjaKatalogPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  // Upload States
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [isDragging, setIsDragging] = useState(false);
+  // Attachment States (for registered photos)
+  const [attachments, setAttachments] = useState<any[]>([]);
+  const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Reuse Form State
   const [formData, setFormData] = useState({
     request_number: "",
-    requesting_unit: "Unit Kerja Operasi PUSRI IB",
-    target_plant: "Plant PUSRI IB",
-    start_date: new Date().toISOString().split("T")[0],
+    requesting_unit: "",
+    target_plant: "",
+    start_date: "",
     end_date: "",
     justification: "",
     estimated_cost_avoidance: 0,
@@ -293,18 +292,31 @@ export default function UnitKerjaKatalogPage() {
       <ArrowDown className="w-3.5 h-3.5 text-[#0A356A] ml-1.5" />;
   };
 
+  const loadAttachments = async (equipmentId: string) => {
+    setAttachments([]);
+    try {
+      const res = await getAttachmentsByEquipmentId(equipmentId);
+      if (res && Array.isArray(res)) {
+        setAttachments(res);
+      }
+    } catch (err) {
+      console.error("Error loading attachments:", err);
+    }
+  };
+
   // Handle Opening Modal Pengajuan
   const handleOpenReuseModal = (item: EquipmentItem) => {
     setReuseModalItem(item);
+    loadAttachments(item.id);
     const randomSeq = Math.floor(1000 + Math.random() * 9000);
     setFormData({
       request_number: `REQ-REUSE/PUSRI/${new Date().getFullYear()}/${randomSeq}`,
-      requesting_unit: "Unit Kerja Operasi PUSRI IB",
-      target_plant: item.plant || "Plant PUSRI IB",
-      start_date: new Date().toISOString().split("T")[0],
-      end_date: new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split("T")[0],
-      justification: `Permohonan peminjaman / pemanfaatan kembali peralatan ${item.name} (${item.equipment_code}) untuk mendukung kontinuitas produksi dan penghematan biaya investasi peralatan baru.`,
-      estimated_cost_avoidance: item.estimated_reuse_value || 250000000,
+      requesting_unit: "",
+      target_plant: "",
+      start_date: "",
+      end_date: "",
+      justification: "",
+      estimated_cost_avoidance: item.estimated_reuse_value || 0,
       contact_person: "Budi Santoso",
       contact_npp: "100002",
       contact_phone: "0812-7890-1122",
@@ -387,11 +399,22 @@ export default function UnitKerjaKatalogPage() {
   const getActionButton = (item: EquipmentItem) => {
     return (
       <div className="flex flex-wrap items-center gap-1 justify-center w-full max-w-[120px] mx-auto">
-        <button title="Detail" onClick={() => setDetailModalItem(item)} className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-0.5 rounded transition-colors flex flex-col items-center">
+        <button 
+          title="Detail" 
+          onClick={() => {
+            setDetailModalItem(item);
+            loadAttachments(item.id);
+          }} 
+          className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-0.5 rounded transition-colors flex flex-col items-center"
+        >
           <Eye className="w-3.5 h-3.5 mb-0.5" />
           <span className="text-[8px] font-bold">Detail</span>
         </button>
-        <button title="Ajukan Reuse" onClick={() => handleOpenReuseModal(item)} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5 rounded transition-colors flex flex-col items-center">
+        <button 
+          title="Ajukan Reuse" 
+          onClick={() => handleOpenReuseModal(item)} 
+          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5 rounded transition-colors flex flex-col items-center"
+        >
           <Send className="w-3.5 h-3.5 mb-0.5" />
           <span className="text-[8px] font-bold">Ajukan</span>
         </button>
@@ -738,8 +761,8 @@ export default function UnitKerjaKatalogPage() {
             <div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50/50">
               
               {/* Asset Info Ribbon */}
-              <div className="bg-[#f0f7ff] border border-blue-100 rounded-lg p-2.5 mb-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-5 overflow-hidden">
+              <div className="bg-[#f0f7ff] border border-blue-100 rounded-lg p-3 mb-4 flex flex-col md:flex-row justify-between gap-4">
+                <div className="flex-1 flex items-center gap-5 overflow-hidden">
                   <div>
                     <span className="text-blue-700/60 text-[10px] font-semibold uppercase block leading-none mb-1">Nama Peralatan</span>
                     <span className="font-bold text-[13px] text-blue-900 truncate">{detailModalItem.name}</span>
@@ -755,7 +778,27 @@ export default function UnitKerjaKatalogPage() {
                     <span className="text-blue-800 text-[12px] truncate block">{detailModalItem.object_type_name}</span>
                   </div>
                 </div>
-                <div className="shrink-0 flex gap-2">
+                <div className="shrink-0 flex items-center gap-4">
+                  {/* Foto Registrasi */}
+                  <div className="flex flex-col gap-1 border-l border-blue-200 pl-4">
+                    <span className="text-[9px] font-bold text-blue-700/60 uppercase block">Foto Registrasi</span>
+                    <div className="flex gap-1.5">
+                      {attachments.length > 0 ? (
+                        attachments.slice(0, 2).map((att: any, idx: number) => (
+                          <div 
+                            key={idx}
+                            className="h-10 w-14 bg-white rounded border border-blue-100 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-xs shrink-0"
+                            onClick={() => setPreviewImage(att.file_url || att.url)}
+                            title={`Foto ${idx+1}`}
+                          >
+                            <img src={att.file_url || att.url} alt={`Foto Aset ${idx+1}`} className="w-full h-full object-cover" />
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-[10px] text-blue-800/60 font-medium italic">Tidak ada foto</span>
+                      )}
+                    </div>
+                  </div>
                   {getStatusBadge(detailModalItem.status_name)}
                 </div>
               </div>
@@ -851,8 +894,8 @@ export default function UnitKerjaKatalogPage() {
             <div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50/50">
               
               {/* Asset Info Ribbon */}
-              <div className="bg-[#f0f7ff] border border-blue-100 rounded-lg p-2.5 mb-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-5 overflow-hidden">
+              <div className="bg-[#f0f7ff] border border-blue-100 rounded-lg p-3 mb-4 flex flex-col md:flex-row justify-between gap-4">
+                <div className="flex-1 flex items-center gap-5 overflow-hidden">
                   <div>
                     <span className="text-blue-700/60 text-[10px] font-semibold uppercase block leading-none mb-1">Nama Peralatan</span>
                     <span className="font-bold text-[13px] text-blue-900 truncate">{reuseModalItem.name}</span>
@@ -868,7 +911,27 @@ export default function UnitKerjaKatalogPage() {
                     <span className="font-bold text-[13px] text-blue-900">Rp {(reuseModalItem.estimated_reuse_value || 0).toLocaleString("id-ID")}</span>
                   </div>
                 </div>
-                <div className="shrink-0 flex gap-2">
+                <div className="shrink-0 flex items-center gap-4">
+                  {/* Foto Registrasi */}
+                  <div className="flex flex-col gap-1 border-l border-blue-200 pl-4">
+                    <span className="text-[9px] font-bold text-blue-700/60 uppercase block">Foto Registrasi</span>
+                    <div className="flex gap-1.5">
+                      {attachments.length > 0 ? (
+                        attachments.slice(0, 2).map((att: any, idx: number) => (
+                          <div 
+                            key={idx}
+                            className="h-10 w-14 bg-white rounded border border-blue-100 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-xs shrink-0"
+                            onClick={() => setPreviewImage(att.file_url || att.url)}
+                            title={`Foto ${idx+1}`}
+                          >
+                            <img src={att.file_url || att.url} alt={`Foto Aset ${idx+1}`} className="w-full h-full object-cover" />
+                          </div>
+                        ))
+                      ) : (
+                        <span className="text-[10px] text-blue-800/60 font-medium italic">Tidak ada foto</span>
+                      )}
+                    </div>
+                  </div>
                   {getStatusBadge(reuseModalItem.status_name)}
                 </div>
               </div>
@@ -924,7 +987,7 @@ export default function UnitKerjaKatalogPage() {
 
                   {/* Row 2: Tanggal & Nilai */}
                   <div className="grid grid-cols-12 gap-3 mb-3">
-                    <div className="col-span-3">
+                    <div className="col-span-4">
                       <div className="flex justify-between items-end mb-1">
                         <label className="block text-[11px] font-semibold text-gray-700">Tgl Mulai Mobilisasi</label>
                         <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
@@ -937,7 +1000,7 @@ export default function UnitKerjaKatalogPage() {
                         className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none focus:border-[#0A356A] cursor-pointer"
                       />
                     </div>
-                    <div className="col-span-3">
+                    <div className="col-span-4">
                       <label className="block text-[11px] font-semibold text-gray-700 mb-1">Est. Tanggal Selesai <span className="text-gray-400 font-normal">(Ops)</span></label>
                       <input
                         type="date"
@@ -946,31 +1009,19 @@ export default function UnitKerjaKatalogPage() {
                         className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none focus:border-[#0A356A] cursor-pointer"
                       />
                     </div>
-                    <div className="col-span-3">
+                    <div className="col-span-4">
                       <label className="block text-[11px] font-semibold text-gray-700 mb-1">Est. Cost Avoidance (Rp)</label>
                       <input
-                        type="number"
-                        value={formData.estimated_cost_avoidance}
-                        onChange={(e) => setFormData({ ...formData, estimated_cost_avoidance: Number(e.target.value) })}
-                        className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none focus:border-[#0A356A]"
+                        type="text"
+                        value={`Rp ${(reuseModalItem.estimated_reuse_value || 0).toLocaleString("id-ID")}`}
+                        disabled
+                        className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-1.5 text-[13px] font-bold text-blue-800 font-mono"
                       />
-                    </div>
-                    <div className="col-span-3">
-                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">Durasi Rencana</label>
-                      <div className="w-full bg-gray-50 border border-gray-200 rounded-md px-3 py-1.5 text-[13px] text-gray-600 truncate flex items-center gap-1.5">
-                        <Clock className="w-3.5 h-3.5 text-gray-400" />
-                        {formData.start_date && formData.end_date ? (() => {
-                          const start = new Date(formData.start_date);
-                          const end = new Date(formData.end_date);
-                          const diff = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-                          return diff > 0 ? `${diff} Hari` : "-";
-                        })() : "-"}
-                      </div>
                     </div>
                   </div>
 
                   {/* Row 3: Justifikasi & Catatan */}
-                  <div className="grid grid-cols-2 gap-4 mb-3">
+                  <div className="grid grid-cols-2 gap-4">
                     <div>
                       <div className="flex justify-between items-end mb-1">
                         <label className="block text-[11px] font-semibold text-gray-700">Tujuan Penggunaan & Justifikasi</label>
@@ -980,130 +1031,26 @@ export default function UnitKerjaKatalogPage() {
                         required
                         rows={2}
                         value={formData.justification}
-                        onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
+                        onChange={(e) => {
+                          e.target.style.height = "auto";
+                          e.target.style.height = `${e.target.scrollHeight}px`;
+                          setFormData({ ...formData, justification: e.target.value });
+                        }}
                         placeholder="Jelaskan secara rinci alasan peminjaman, urgensi operasional..."
-                        className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none resize-none focus:border-[#0A356A]"
+                        className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none overflow-hidden min-h-[50px] transition-all focus:border-[#0A356A]"
                       />
                     </div>
                     <div>
                       <label className="block text-[11px] font-semibold text-gray-700 mb-1">Catatan Tambahan <span className="text-gray-400 font-normal">(Ops)</span></label>
                       <textarea
                         rows={2}
+                        onChange={(e) => {
+                          e.target.style.height = "auto";
+                          e.target.style.height = `${e.target.scrollHeight}px`;
+                        }}
                         placeholder="Informasi tambahan untuk pihak Rendal..."
-                        className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] focus:border-[#0A356A] outline-none resize-none"
+                        className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none overflow-hidden min-h-[50px] transition-all focus:border-[#0A356A]"
                       />
-                    </div>
-                  </div>
-
-                  {/* Row 4: Penanggung Jawab */}
-                  <div className="grid grid-cols-12 gap-3">
-                    <div className="col-span-4">
-                      <div className="flex justify-between items-end mb-1">
-                        <label className="block text-[11px] font-semibold text-gray-700">Nama Penanggung Jawab</label>
-                        <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                      </div>
-                      <input
-                        type="text"
-                        required
-                        value={formData.contact_person}
-                        onChange={(e) => setFormData({ ...formData, contact_person: e.target.value })}
-                        className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none focus:border-[#0A356A]"
-                      />
-                    </div>
-                    <div className="col-span-4">
-                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">NPP (Nomor Pegawai)</label>
-                      <input
-                        type="text"
-                        value={formData.contact_npp}
-                        onChange={(e) => setFormData({ ...formData, contact_npp: e.target.value })}
-                        className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none focus:border-[#0A356A]"
-                      />
-                    </div>
-                    <div className="col-span-4">
-                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">No. Telepon / Extension</label>
-                      <input
-                        type="text"
-                        value={formData.contact_phone}
-                        onChange={(e) => setFormData({ ...formData, contact_phone: e.target.value })}
-                        className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none focus:border-[#0A356A]"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Row 5: Upload Foto (Opsional) */}
-                  <div className="mt-3">
-                    <input 
-                      type="file" 
-                      multiple 
-                      className="hidden" 
-                      ref={fileInputRef} 
-                      onChange={(e) => {
-                        if (e.target.files) {
-                          const files = Array.from(e.target.files).filter(f => f.size <= 5 * 1024 * 1024);
-                          setUploadedFiles(prev => [...prev, ...files]);
-                          e.target.value = '';
-                        }
-                      }} 
-                      accept=".jpg,.jpeg,.png,.pdf"
-                    />
-                    <div 
-                      onClick={() => fileInputRef.current?.click()}
-                      onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-                      onDragLeave={(e) => { e.preventDefault(); setIsDragging(false); }}
-                      onDrop={(e) => {
-                        e.preventDefault();
-                        setIsDragging(false);
-                        if (e.dataTransfer.files) {
-                          const files = Array.from(e.dataTransfer.files).filter(f => f.size <= 5 * 1024 * 1024);
-                          setUploadedFiles(prev => [...prev, ...files]);
-                        }
-                      }}
-                      className={`border-2 border-dashed rounded-md p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-                        isDragging ? "border-[#0A356A] bg-blue-50/80" : "border-gray-300 bg-gray-50 hover:bg-blue-50/50 hover:border-blue-300"
-                      }`}
-                    >
-                      <UploadCloud className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A] animate-bounce" : "text-gray-400"}`} />
-                      <div className="text-[13px] text-center">
-                        <span className="font-bold text-[#0A356A]">Klik untuk memilih foto pendukung</span>
-                        <span className="text-gray-600 font-medium"> atau drag & drop ke sini</span>
-                      </div>
-                      <span className="text-[11px] text-gray-500 font-medium text-center">Format: JPG, PNG, PDF (Max 5MB) — Opsional</span>
-
-                      {uploadedFiles.length > 0 && (
-                        <div className="mt-4 w-full flex flex-wrap justify-center gap-4" onClick={(e) => e.stopPropagation()}>
-                          {uploadedFiles.map((file, i) => {
-                            const isImage = file.type.startsWith('image/');
-                            const previewUrl = isImage ? URL.createObjectURL(file) : null;
-                            return (
-                              <div key={i} className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white w-[150px] shadow-sm hover:shadow-md transition-all hover:border-[#0A356A]">
-                                {isImage ? (
-                                  <div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                                    <img src={previewUrl!} alt={file.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                                  </div>
-                                ) : (
-                                  <div className="h-28 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
-                                    <Paperclip className="w-8 h-8 mb-2" />
-                                    <span className="text-[10px] font-bold">PDF / DOC</span>
-                                  </div>
-                                )}
-                                <div className="px-2 py-1.5 border-t border-gray-100 bg-white">
-                                  <span className="block text-[10px] font-medium text-[#0A356A] truncate text-center" title={file.name}>{file.name}</span>
-                                </div>
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    setUploadedFiles(prev => prev.filter((_, idx) => idx !== i));
-                                  }} 
-                                  className="absolute top-1.5 right-1.5 bg-red-500 rounded-full p-1 text-white hover:bg-red-600 shadow-md transition-colors opacity-0 group-hover:opacity-100"
-                                  title="Hapus"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
                     </div>
                   </div>
 
@@ -1137,6 +1084,25 @@ export default function UnitKerjaKatalogPage() {
           </div>
         </div>
       )}
+
+      {/* Image Preview Overlay Modal */}
+      {previewImage && (
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm" onClick={() => setPreviewImage(null)}>
+          <button 
+            className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded-full transition-colors"
+            onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
+          >
+            <X className="w-6 h-6" />
+          </button>
+          <img 
+            src={previewImage} 
+            alt="Preview" 
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" 
+            onClick={(e) => e.stopPropagation()} 
+          />
+        </div>
+      )}
+
     </div>
   );
 }

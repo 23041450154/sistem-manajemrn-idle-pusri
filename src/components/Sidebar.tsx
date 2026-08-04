@@ -63,7 +63,7 @@ export function Sidebar({ role }: { role?: string }) {
         { name: "Validasi Kelayakan", href: "/inspeksi/validasi", icon: Wrench },
         { name: "Revisi Validasi", href: "/inspeksi/revisi-validasi", icon: Edit },
         // { name: "Inspeksi Berkala", href: "/inspeksi/inspeksi-berkala/", icon: Wrench },
-        { name: "Inspeksi Berkala", href: "/inspeksi/inspeksi-berkala", icon: ClipboardCheck },
+        { name: "Inspeksi", href: "/inspeksi/inspeksi-berkala", icon: ClipboardCheck },
         // { name: "Laporan", href: "/inspeksi/laporan", icon: FileText },
       ];
       break;
@@ -83,7 +83,7 @@ export function Sidebar({ role }: { role?: string }) {
       // Placeholder: Unit Kerja Operasi (role default / user sebenarnya)
       mainNavItems = [
         { name: "Dashboard", href: "/unit-kerja/dashboard", icon: LayoutDashboard },
-        { name: "Idle Equipment", href: "/unit-kerja/idle", icon: PowerOff },
+        // { name: "Idle Equipment", href: "/unit-kerja/idle", icon: PowerOff },
         { name: "Permintaan", href: "/unit-kerja/permintaan", icon: FileQuestion },
         { name: "Laporan", href: "/unit-kerja/laporan", icon: FileText },
       ];
