@@ -410,15 +410,15 @@ export default function ManajerApprovePage() {
               {paginatedRequests.map((req, index) => (
                 <tr key={req.id} className="hover:bg-blue-50/30 transition-colors">
                   <td className="px-2 py-2 text-[12px] text-gray-500 font-medium text-center">{index + 1 + (currentPage - 1) * ITEMS_PER_PAGE}</td>
-                  <td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug">{req.nomorRequest}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900">{req.kodeAset}</td>
-                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug">{req.namaAset}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium">{req.plant}</td>
-                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug">{req.tanggalPengajuan}</td>
-                  <td className="px-2 py-2 whitespace-nowrap">
+                  <td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug text-center">{req.nomorRequest}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900 text-center">{req.kodeAset}</td>
+                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug text-center">{req.namaAset}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-center">{req.plant}</td>
+                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug text-center">{req.tanggalPengajuan}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-center">
                     {getStatusAsetBadge(req.statusAset)}
                   </td>
-                  <td className="px-2 py-2">
+                  <td className="px-2 py-2 text-center">
                     {getApprovalBadge(req.statusPersetujuan)}
                   </td>
                   <td className="px-2 py-2 text-center w-[80px]">

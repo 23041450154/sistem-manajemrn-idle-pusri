@@ -328,7 +328,7 @@ export default function DisposalInboxPage() {
                     <td className="px-4 py-3.5 text-[13px] font-bold text-[#0A356A] whitespace-nowrap text-center">
                       {item.disposal_number}
                     </td>
-                    <td className="px-4 py-3.5">
+                    <td className="px-4 py-3.5 text-center">
                       <p className="text-[13px] font-bold text-gray-900">{item.equipment_code}</p>
                       <p className="text-[12px] text-gray-500 font-medium line-clamp-1">{item.equipment_name}</p>
                     </td>
