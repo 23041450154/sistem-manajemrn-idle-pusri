@@ -152,12 +152,12 @@ export function CostAvoidanceSection() {
   const readyEquipments = equipments.filter((e: Equipment) => e.status?.name === "READY_TO_REUSE");
 
   const potentialSavings = idleEquipments.reduce(
-    (sum: number, e: Equipment) => sum + (Number(e.estimated_reuse_value) || 0),
+    (sum: number, e: Equipment) => sum + (Number(e.original_value) || Number(e.estimated_reuse_value) || 0),
     0
   );
 
   const realizedSavings = readyEquipments.reduce(
-    (sum: number, e: Equipment) => sum + (Number(e.estimated_reuse_value) || 0),
+    (sum: number, e: Equipment) => sum + (Number(e.original_value) || Number(e.estimated_reuse_value) || 0),
     0
   );
 
@@ -171,7 +171,7 @@ export function CostAvoidanceSection() {
   const plantMap = new Map<string, { plant: string; potential: number; realized: number }>();
   equipments.forEach((e: Equipment) => {
     const plant = e.plant_description || e.plant || "Tidak Diketahui";
-    const reuseValue = Number(e.estimated_reuse_value) || 0;
+    const reuseValue = Number(e.original_value) || Number(e.estimated_reuse_value) || 0;
     if (!plantMap.has(plant)) {
       plantMap.set(plant, { plant, potential: 0, realized: 0 });
     }
@@ -199,7 +199,7 @@ export function CostAvoidanceSection() {
     const key = `${d.getFullYear()}-${d.getMonth()}`;
     if (monthlyMap.has(key)) {
       const entry = monthlyMap.get(key)!;
-      entry.value += Number(e.estimated_reuse_value) || 0;
+      entry.value += Number(e.original_value) || Number(e.estimated_reuse_value) || 0;
     }
   });
 
