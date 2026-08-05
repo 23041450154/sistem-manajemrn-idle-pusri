@@ -475,8 +475,8 @@ export default function ManajemenInspeksi() {
       REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
       VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
       REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-      IDLE: "bg-[#DCFCE7] text-[#16A34A]",
-      "READY TO USE": "bg-[#DCFCE7] text-[#16A34A]"
+      IDLE: "bg-[#E0E7FF] text-[#4F46E5]",
+      "READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]"
     };
     const displayStatus = status === "IDLE" ? "READY TO USE" : status;
     return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status] || styles["READY TO USE"]}`}>{displayStatus}</span>;

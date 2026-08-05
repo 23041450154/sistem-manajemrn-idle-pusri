@@ -3,11 +3,14 @@
 import React, { useState, useEffect, useRef } from "react";
 import { Save, Info, AlertCircle, FileSpreadsheet, UploadCloud, CheckCircle2, X, Loader2, ChevronLeft, Paperclip, XCircle, Download } from "lucide-react";
 import Link from "next/link";
-import { createEquipment, uploadEquipmentAttachment, uploadEquipmentAttachmentBase64, getObjectTypes, getStorageLocations, getAreas } from "@/action/api";
-import { useRouter } from "next/navigation";
+import { createEquipment, updateEquipment, getEquipments, uploadEquipmentAttachment, uploadEquipmentAttachmentBase64, getObjectTypes, getStorageLocations, getAreas } from "@/action/api";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function RegisterEquipmentPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const editId = searchParams.get("editId");
+  
   const [showImportModal, setShowImportModal] = useState(false);
   const [importFile, setImportFile] = useState<File | null>(null);
 
@@ -28,18 +31,38 @@ export default function RegisterEquipmentPage() {
   const [areas, setAreas] = useState<{id: number, name: string}[]>([]);
 
   useEffect(() => {
-    async function loadDropdowns() {
-      const [objs, locs, ars] = await Promise.all([
+    async function loadData() {
+      const [objs, locs, ars, eqList] = await Promise.all([
         getObjectTypes(),
         getStorageLocations(),
-        getAreas()
+        getAreas(),
+        getEquipments()
       ]);
       setObjectTypes(objs);
       setStorageLocations(locs);
       setAreas(ars);
+
+      if (editId) {
+        const found = eqList.find((e: any) => String(e.id) === String(editId));
+        if (found) {
+          setFormData({
+            equipmentCode: found.equipment_code || "",
+            name: found.name || "",
+            funcLoc: found.func_loc || found.funcloc || "",
+            plant: found.plant || "",
+            objectTypeId: (found.object_type_id || found.id_object_type || found.object_type?.id || "").toString(),
+            vendor: found.vendor || "",
+            year: (found.year || new Date().getFullYear()).toString(),
+            originalValue: found.original_value ? Number(found.original_value).toLocaleString('id-ID') : "",
+            conditionId: (found.id_idle_reason || found.idle_reason_id || "1").toString(),
+            storageLocationId: (found.storage_location_id || found.id_storage_location || found.storage_location?.id || "").toString(),
+            notes: found.notes || ""
+          });
+        }
+      }
     }
-    loadDropdowns();
-  }, []);
+    loadData();
+  }, [editId]);
 
   // UX Improvement: Semua nilai dropdown & radio di-set kosong ("") di awal
   const [formData, setFormData] = useState({
@@ -164,13 +187,33 @@ export default function RegisterEquipmentPage() {
       plant: formData.plant,
       plant_description: "",
       vendor: formData.vendor,
-      year: Number(formData.year) || new Date().getFullYear()
+      year: Number(formData.year) || new Date().getFullYear(),
+      status_id: 1,
+      id_status: 1,
+      status: "REGISTERED"
     };
 
-    const res = await createEquipment(payload);
+    let res;
+    if (editId) {
+      res = await updateEquipment(editId, payload);
+    } else {
+      res = await createEquipment(payload);
+    }
 
-    if (res.success && res.data?.id) {
-      const equipmentId = res.data.id;
+    if (res.success && (res.data?.id || editId)) {
+      const equipmentId = res.data?.id || editId;
+      
+      if (typeof window !== "undefined" && editId) {
+        try {
+          const existing = JSON.parse(localStorage.getItem("revised_equipment_ids") || "[]");
+          if (!existing.includes(String(editId))) {
+            existing.push(String(editId));
+            localStorage.setItem("revised_equipment_ids", JSON.stringify(existing));
+          }
+        } catch (err) {
+          console.error("Error saving revised status:", err);
+        }
+      }
       
       // Upload files via proxy route (sends real binary, not Base64)
       if (uploadedFiles.length > 0) {
@@ -198,7 +241,12 @@ export default function RegisterEquipmentPage() {
       }
 
       setIsSubmitting(false);
-      setNotification({ type: 'success', message: 'Berhasil! Peralatan idle telah didaftarkan.' });
+      setNotification({ 
+        type: 'success', 
+        message: editId 
+          ? 'Berhasil! Data revisi peralatan idle telah disimpan.' 
+          : 'Berhasil! Peralatan idle telah didaftarkan.' 
+      });
       setTimeout(() => {
         router.push("/rendal/idle");
       }, 1500);
@@ -213,39 +261,19 @@ export default function RegisterEquipmentPage() {
     "1": "Penyelesaian Proyek",
     "2": "Produksi Berhenti",
     "3": "Rusak / Perlu Servis",
-    "4": "Upgrade Teknologi"
+    "4": "Kebutuhan Operasional Berkurang",
+    "5": "Penggantian Unit Baru / Modernisasi",
+    "6": "Lainnya"
   };
 
   const handleDownloadTemplate = () => {
-    const headers = [
-      "Kode Aset",
-      "Nama Peralatan",
-      "Kategori (Tipe)",
-      "Lokasi Penyimpanan",
-      "Pabrik (Plant)",
-      "Area (FuncLoc)",
-      "Vendor / Merk",
-      "Tahun Dibuat",
-      "Nilai Perolehan (Rp)",
-      "Alasan Idle",
-      "Catatan Tambahan"
-    ];
-
-    const columns = headers
-      .map(h => `<Column ss:Width="${Math.max(h.length * 7 + 10, 80)}" ss:AutoFitWidth="1"/>`)
-      .join("");
-
-    const cells = headers
-      .map(h => `<Cell><Data ss:Type="String">${h}</Data></Cell>`)
-      .join("");
-
-    const xml = `<?xml version="1.0"?>\n<?mso-application progid="Excel.Sheet"?>\n<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet" xmlns:html="http://www.w3.org/TR/REC-html40">\n<Worksheet ss:Name="Template Registrasi">\n<Table>\n${columns}\n<Row>${cells}</Row>\n</Table>\n</Worksheet>\n</Workbook>`;
-
-    const blob = new Blob([xml], { type: "application/vnd.ms-excel;charset=utf-8;" });
+    const csvHeader = "Kode Peralatan,Nama Peralatan,Area (Func Loc),Plant,Kategori (Object Type ID),Vendor,Tahun Dibuat,Nilai Perolehan (Rp),Alasan Idle (ID 1-6),Lokasi Penyimpanan (ID),Catatan\n";
+    const sampleRow = "PMP-001-P2B,Centrifugal Pump,PLANT-2B,P2B,1,PT Flowserve Indonesia,2020,150000000,1,1,Aset dalam kondisi baik\n";
+    const blob = new Blob([csvHeader + sampleRow], { type: "text/csv;charset=utf-8;" });
     const link = document.createElement("a");
     const url = URL.createObjectURL(blob);
     link.setAttribute("href", url);
-    link.setAttribute("download", "Template_Registrasi_Equipment.xls");
+    link.setAttribute("download", "template_import_peralatan_idle.csv");
     link.style.visibility = "hidden";
     document.body.appendChild(link);
     link.click();
@@ -270,8 +298,8 @@ export default function RegisterEquipmentPage() {
             <ChevronLeft className="w-4 h-4" />
             Kembali
           </Link>
-          <h1 className="text-2xl font-bold text-[#0A356A] tracking-tight">Registrasi Peralatan Idle</h1>
-          <p className="text-gray-500 text-sm mt-0.5">Daftarkan aset atau peralatan yang saat ini tidak digunakan.</p>
+          <h1 className="text-2xl font-bold text-[#0A356A] tracking-tight">{editId ? "Revisi Registrasi Peralatan Idle" : "Registrasi Peralatan Idle"}</h1>
+          <p className="text-gray-500 text-sm mt-0.5">{editId ? "Perbarui spesifikasi dan data aset yang dinyatakan tidak layak untuk diajukan kembali." : "Daftarkan aset atau peralatan yang saat ini tidak digunakan."}</p>
         </div>
         <div className="relative md:mt-8">
           <button

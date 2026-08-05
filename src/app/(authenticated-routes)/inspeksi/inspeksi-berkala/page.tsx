@@ -155,7 +155,7 @@ export default function InspeksiAntreanPage() {
                         {diffDays} Hari
                       </td>
                       <td className="px-5 py-4.5 whitespace-nowrap">
-                        <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-[#DCFCE7] text-[#16A34A] border border-[#86EFAC] shadow-sm">
+                        <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-extrabold bg-[#FEF3C7] text-[#D97706] border border-[#FCD34D] shadow-sm">
                           READY TO USE
                         </span>
                       </td>

@@ -4,7 +4,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { getEquipments, getObjectTypes } from "@/action/api";
 import { 
-  Search, AlertCircle, RefreshCw, Filter, Plus, X,
+  Search, AlertCircle, RefreshCw, Filter, Plus, X, RotateCcw,
   ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download, Eye, Upload, Wrench, CheckCircle 
 } from "lucide-react";
 
@@ -71,6 +71,13 @@ export default function RendalIdlePage() {
         return idB - idA;
       });
 
+      let revisedIds: string[] = [];
+      if (typeof window !== "undefined") {
+        try {
+          revisedIds = JSON.parse(localStorage.getItem("revised_equipment_ids") || "[]");
+        } catch (e) {}
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mappedData = data.map((item: any) => {
         let objectTypeName = "Belum Ditentukan";
@@ -86,6 +93,14 @@ export default function RendalIdlePage() {
           }
         }
 
+        const isRevised = revisedIds.includes(String(item.id));
+        const rawStatus = (typeof item.status === 'string' ? item.status : item.status?.name) || "";
+        let statusStr = isRevised 
+          ? "REGISTERED"
+          : (rawStatus || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "READY TO USE" : item.status_id === 5 ? "READY_TO_REUSE" : "REGISTERED")).toUpperCase();
+        
+        if (statusStr === "IDLE") statusStr = "READY TO USE";
+
         return {
           id: item.id?.toString() || "-",
           kodeAlat: item.equipment_code,
@@ -93,7 +108,7 @@ export default function RendalIdlePage() {
           plant: item.plant,
           jenisAlat: objectTypeName,
           tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
-          statusAset: (item.status?.name || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "IDLE" : "REGISTERED")).toUpperCase(),
+          statusAset: statusStr,
           statusPersetujuan: "PENDING", // TODO: match with approvals later if needed
         };
       });
@@ -162,8 +177,8 @@ export default function RendalIdlePage() {
       REGISTERED: "bg-blue-100 text-blue-800 border-blue-200",
       VALIDATED: "bg-emerald-100 text-emerald-800 border-emerald-200",
       REJECTED: "bg-red-100 text-red-800 border-red-200",
-      IDLE: "bg-emerald-100 text-emerald-800 border-emerald-200",
-      "READY TO USE": "bg-emerald-100 text-emerald-800 border-emerald-200",
+      IDLE: "bg-purple-100 text-purple-800 border-purple-200",
+      "READY TO USE": "bg-purple-100 text-purple-800 border-purple-200",
       DALAM_PERBAIKAN: "bg-amber-50 text-amber-700 border-amber-200",
       READY_TO_REUSE: "bg-teal-50 text-teal-700 border-teal-200",
     };
@@ -369,7 +384,7 @@ export default function RendalIdlePage() {
                     <td className="px-5 py-3 whitespace-nowrap">
                       {getStatusBadge(item.statusAset)}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-right">
+                    <td className="px-5 py-3 whitespace-nowrap text-right flex items-center justify-end gap-2">
                       {item.statusAset === "DALAM_PERBAIKAN" && (
                         <button 
                           onClick={() => setRepairModal(item)}
@@ -380,7 +395,16 @@ export default function RendalIdlePage() {
                           <span>Perbaikan</span>
                         </button>
                       )}
-                      {item.statusAset !== "DALAM_PERBAIKAN" && (
+                      {(item.statusAset === "REJECTED" || item.statusAset === "DISPOSAL" || item.statusAset === "TIDAK LAYAK" || item.statusAset === "NEED_REVISION") ? (
+                        <Link 
+                          href={`/rendal/register-equipment?editId=${item.id}`}
+                          className="inline-flex items-center justify-center gap-1.5 bg-amber-50 text-amber-800 hover:bg-amber-600 hover:text-white border border-amber-200 px-2.5 py-1 rounded text-[10px] font-bold transition-all shadow-sm ml-auto"
+                          title="Revisi Aset (Dinyatakan Tidak Layak)"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Revisi Aset</span>
+                        </Link>
+                      ) : item.statusAset !== "DALAM_PERBAIKAN" && (
                         <button 
                           onClick={() => setDetailModal(item)}
                           className="inline-flex items-center justify-center gap-1.5 bg-gray-50 text-gray-600 hover:bg-[#0A356A] hover:text-white border border-gray-200 px-2 py-1 rounded text-[10px] font-bold transition-all shadow-sm ml-auto" 

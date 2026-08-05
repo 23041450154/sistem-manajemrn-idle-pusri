@@ -614,7 +614,7 @@ export default function RevisiValidasiPage() {
                       <td className="px-3 py-1 text-[14px] text-gray-600 font-medium">
                         {asset.jenisAlat}
                       </td>
-                      <td className="px-3 py-1 text-[14px] text-gray-600">
+                      <td className="px-3 py-1 text-[11px] text-gray-600 font-medium whitespace-nowrap">
                         {asset.tanggalRegistrasi}
                       </td>
                       <td className="px-3 py-1 text-[14px]">

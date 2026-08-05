@@ -573,12 +573,12 @@ export default function ManajemenInspeksi() {
       REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
       VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
       REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-      IDLE: "bg-[#DCFCE7] text-[#16A34A]",
-      "READY TO USE": "bg-[#DCFCE7] text-[#16A34A]",
-      "READY_TO_USE": "bg-[#DCFCE7] text-[#16A34A]"
+      IDLE: "bg-[#E0E7FF] text-[#4F46E5]",
+      "READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
+      "READY_TO_USE": "bg-[#E0E7FF] text-[#4F46E5]"
     };
     const displayStatus = status === "IDLE" ? "READY TO USE" : status;
-    return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[status] || styles["READY TO USE"]}`}>{displayStatus}</span>;
+    return <span className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${styles[status] || styles["READY TO USE"]}`}>{displayStatus}</span>;
   };
 
   const getApprovalBadge = (status: ApprovalState) => {
@@ -598,7 +598,7 @@ export default function ManajemenInspeksi() {
       REJECTED: "Ditolak",
       NEED_REVISION: "Perlu Revisi"
     };
-    return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[status]}`}>{labels[status]}</span>;
+    return <span className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${styles[status]}`}>{labels[status]}</span>;
   };
 
   const getActionButton = (asset: Asset) => {
@@ -1393,7 +1393,7 @@ export default function ManajemenInspeksi() {
                 </div>
                 <div>
                   <p className="text-[11px] text-gray-500 mb-0.5">Tanggal Registrasi:</p>
-                  <p className="text-[12px] font-bold text-gray-900">{selectedAsset.tanggalRegistrasi}</p>
+                  <p className="text-[11px] font-medium text-gray-900">{selectedAsset.tanggalRegistrasi}</p>
                 </div>
                 <div className="col-span-4">
                   <p className="text-[11px] text-gray-500 mb-1">Catatan Pendaftaran:</p>
