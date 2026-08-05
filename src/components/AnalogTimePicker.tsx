@@ -16,23 +16,21 @@ export default function AnalogTimePicker({
 }: AnalogTimePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
   
-  // Internal values
-  const [tempHour, setTempHour] = useState(8); // 1-12
+  // Internal values in 24h format directly
+  const [tempHour, setTempHour] = useState(8); // 0-23
   const [tempMinute, setTempMinute] = useState(0); // 0-59
-  const [period, setPeriod] = useState<"AM" | "PM">("AM");
+  const [hourRange, setHourRange] = useState<"AM_RANGE" | "PM_RANGE">("AM_RANGE"); // "AM_RANGE" (00-11) vs "PM_RANGE" (12-23)
   const [mode, setMode] = useState<"HOUR" | "MINUTE">("HOUR");
 
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  // Parse 24h format to 12h format internally
+  // Parse 24h format on open
   useEffect(() => {
     if (value && value.includes(":")) {
       const [h24, m] = value.split(":").map(Number);
-      const isPm = h24 >= 12;
-      const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
-      setTempHour(h12);
+      setTempHour(h24);
       setTempMinute(m || 0);
-      setPeriod(isPm ? "PM" : "AM");
+      setHourRange(h24 >= 12 ? "PM_RANGE" : "AM_RANGE");
     }
   }, [value, isOpen]);
 
@@ -52,12 +50,7 @@ export default function AnalogTimePicker({
   }, [isOpen]);
 
   const handleSave = () => {
-    // Convert 12h + Period back to 24h format
-    let h24 = tempHour;
-    if (period === "PM" && tempHour < 12) h24 += 12;
-    if (period === "AM" && tempHour === 12) h24 = 0;
-
-    const formattedHour = h24.toString().padStart(2, "0");
+    const formattedHour = tempHour.toString().padStart(2, "0");
     const formattedMinute = tempMinute.toString().padStart(2, "0");
     onChange(`${formattedHour}:${formattedMinute}`);
     setIsOpen(false);
@@ -66,8 +59,10 @@ export default function AnalogTimePicker({
   // Convert current selected hour/minute to hand angle
   const getHandAngle = () => {
     if (mode === "HOUR") {
-      // 12 hours = 360 degrees, so 30 deg per hour
-      return tempHour * 30;
+      // 12 positions on dial. Each is 30 degrees.
+      // e.g. 14 % 12 = 2. 2 * 30 = 60 degrees.
+      // 12 and 00 are at 0 degrees.
+      return (tempHour % 12) * 30;
     } else {
       // 60 minutes = 360 degrees, so 6 deg per minute
       return tempMinute * 6;
@@ -88,22 +83,31 @@ export default function AnalogTimePicker({
     const angleDeg = angleRad * (180 / Math.PI);
 
     if (mode === "HOUR") {
-      let hr = Math.round(angleDeg / 30);
-      if (hr === 0) hr = 12;
+      let dialPosition = Math.round(angleDeg / 30);
+      if (dialPosition === 12 || dialPosition === 0) {
+        dialPosition = 0; // 12 o'clock position maps to 0 / 12
+      }
+
+      // Convert dial position (0-11) to actual 24-hour value based on active range
+      let hr = dialPosition;
+      if (hourRange === "PM_RANGE") {
+        hr = dialPosition + 12;
+      }
+      
       setTempHour(hr);
       // Auto switch to minute selection after selecting hour
       setMode("MINUTE");
     } else {
       let min = Math.round(angleDeg / 6);
       if (min === 60) min = 0;
-      // Round to nearest 5 minutes for clean select, but let them customize if needed
+      // Round to nearest 5 minutes for clean select
       min = Math.round(min / 5) * 5;
       if (min === 60) min = 0;
       setTempMinute(min);
     }
   };
 
-  // Increment / decrement helpers for fine-tuning minutes
+  // Increment / decrement helpers for fine-tuning
   const adjustMinute = (amount: number) => {
     setTempMinute(prev => {
       let next = prev + amount;
@@ -116,19 +120,19 @@ export default function AnalogTimePicker({
   const adjustHour = (amount: number) => {
     setTempHour(prev => {
       let next = prev + amount;
-      if (next > 12) next = 1;
-      if (next < 1) next = 12;
+      if (next > 23) next = 0;
+      if (next < 0) next = 23;
+      // Keep range selector in sync
+      setHourRange(next >= 12 ? "PM_RANGE" : "AM_RANGE");
       return next;
     });
   };
 
-  // Format 12-hour values for UI display
+  // Format value for UI display (Indonesian 24h format: HH:MM WIB)
   const displayValue = () => {
-    if (!value) return "--:--";
+    if (!value) return "--:-- WIB";
     const [h24, m] = value.split(":").map(Number);
-    const suffix = h24 >= 12 ? "PM" : "AM";
-    const h12 = h24 % 12 === 0 ? 12 : h24 % 12;
-    return `${h12.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} ${suffix}`;
+    return `${h24.toString().padStart(2, "0")}:${m.toString().padStart(2, "0")} WIB`;
   };
 
   return (
@@ -174,34 +178,43 @@ export default function AnalogTimePicker({
                 >
                   {tempMinute.toString().padStart(2, "0")}
                 </button>
+                <span className="text-xs font-bold text-gray-400 ml-1.5">WIB</span>
               </div>
 
-              {/* AM/PM toggle button */}
-              <div className="flex border border-gray-300 rounded-md overflow-hidden bg-white shrink-0">
+              {/* 24-Hour Range Switcher */}
+              <div className="flex border border-gray-300 rounded-md overflow-hidden bg-white shrink-0 shadow-xs">
                 <button
                   type="button"
-                  onClick={() => setPeriod("AM")}
-                  className={`px-2 py-1 text-[11px] font-bold transition-all ${
-                    period === "AM" ? "bg-[#0A356A] text-white" : "text-gray-500 hover:bg-gray-100"
+                  onClick={() => {
+                    setHourRange("AM_RANGE");
+                    if (tempHour >= 12) setTempHour(tempHour - 12);
+                  }}
+                  className={`px-2 py-1 text-[10px] font-bold transition-all ${
+                    hourRange === "AM_RANGE" ? "bg-[#0A356A] text-white" : "text-gray-500 hover:bg-gray-100"
                   }`}
                 >
-                  AM
+                  00-11
                 </button>
                 <button
                   type="button"
-                  onClick={() => setPeriod("PM")}
-                  className={`px-2 py-1 text-[11px] font-bold transition-all ${
-                    period === "PM" ? "bg-[#0A356A] text-white" : "text-gray-500 hover:bg-gray-100"
+                  onClick={() => {
+                    setHourRange("PM_RANGE");
+                    if (tempHour < 12) setTempHour(tempHour + 12);
+                  }}
+                  className={`px-2 py-1 text-[10px] font-bold transition-all ${
+                    hourRange === "PM_RANGE" ? "bg-[#0A356A] text-white" : "text-gray-500 hover:bg-gray-100"
                   }`}
                 >
-                  PM
+                  12-23
                 </button>
               </div>
             </div>
 
             {/* Mode title */}
             <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-              Pilih {mode === "HOUR" ? "Jam" : "Menit"} (Analog Dial)
+              {mode === "HOUR" 
+                ? `Pilih Jam (${hourRange === "AM_RANGE" ? "Pagi 00-11" : "Siang/Malam 12-23"})` 
+                : "Pilih Menit"}
             </h4>
 
             {/* Analog Clock Face */}
@@ -231,16 +244,21 @@ export default function AnalogTimePicker({
               {/* Render Numbers */}
               {mode === "HOUR"
                 ? Array.from({ length: 12 }).map((_, i) => {
-                    const hr = i === 0 ? 12 : i;
-                    const angle = (hr * 30 - 90) * (Math.PI / 180);
+                    // Position calculations
+                    // i = 0 maps to 12 o'clock position
+                    const dialVal = i;
+                    const angle = (dialVal * 30 - 90) * (Math.PI / 180);
                     const R = 72; // radius
                     const x = 96 + R * Math.cos(angle);
                     const y = 96 + R * Math.sin(angle);
-                    const isSelected = tempHour === hr;
+
+                    // Determine the actual 24-hour number to display
+                    const actualHour = hourRange === "AM_RANGE" ? dialVal : dialVal + 12;
+                    const isSelected = tempHour === actualHour;
 
                     return (
                       <div
-                        key={hr}
+                        key={actualHour}
                         style={{
                           left: `${x - 12}px`,
                           top: `${y - 12}px`,
@@ -251,7 +269,7 @@ export default function AnalogTimePicker({
                             : "text-gray-700 hover:bg-gray-200"
                         }`}
                       >
-                        {hr}
+                        {actualHour.toString().padStart(2, "0")}
                       </div>
                     );
                   })
