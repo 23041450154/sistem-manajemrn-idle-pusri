@@ -7,7 +7,10 @@ import {
   ArrowUpDown, ArrowUp, ArrowDown, Download, Info
 } from "lucide-react";
 
-import { getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment } from "@/action/api";
+import { 
+  getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment,
+  getInspections, getRequireActions, getApprovalById, resubmitApproval 
+} from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 
 // Tipe Data
@@ -156,6 +159,24 @@ export default function ManajemenInspeksi() {
   const [attachments, setAttachments] = useState<any[]>([]);
   const [allInspections, setAllInspections] = useState<any[]>([]);
 
+  // Revision Form States
+  const [managerNotes, setManagerNotes] = useState("");
+  const [approvalId, setApprovalId] = useState("");
+  const [requiredActionId, setRequiredActionId] = useState("");
+  const [requireActions, setRequireActions] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadActions = async () => {
+      try {
+        const acts = await getRequireActions();
+        setRequireActions(acts || []);
+      } catch (err) {
+        console.error("Gagal memuat require actions:", err);
+      }
+    };
+    loadActions();
+  }, []);
+
   useEffect(() => {
     // Jalankan scroll setelah render DOM selasai
     const timer = setTimeout(() => {
@@ -228,6 +249,9 @@ export default function ManajemenInspeksi() {
     setFileError(null);
     setAttachments([]);
     setPreviewImage(null);
+    setManagerNotes("");
+    setApprovalId("");
+    setRequiredActionId("");
     
     try {
       const attsData = await getAttachmentsByEquipmentId(asset.id);
@@ -250,12 +274,48 @@ export default function ManajemenInspeksi() {
     } else {
       // Jika statusnya Ubah Validasi atau Perlu Revisi, muat data yang sudah pernah diisi
       setHasilPemeriksaan(asset.statusAset === "REJECTED" ? "Tidak Layak" : "Layak");
-      setCatatan("Visual fisik aman, tidak ada kebocoran, performa motor stabil.");
-      setRekomendasi("Dapat dimobilisasi segera ke area yang membutuhkan.");
+      setCatatan("");
+      setRekomendasi("");
       setLokasi("Area Unit P-IB"); // Default mock data yang sesuai opsi dropdown
       setJamMulai("09:00");
       setJamSelesai("10:30");
       setTglPemeriksaan(new Date().toISOString().split('T')[0]);
+
+      try {
+        // Ambil data inspeksi sebelumnya secara dinamis dari database
+        const allInsps = await getInspections();
+        const myInsps = (allInsps || []).filter((i: any) => i.equipment_id === Number(asset.id));
+        if (myInsps.length > 0) {
+          myInsps.sort((a: any, b: any) => b.id - a.id);
+          const latest = myInsps[0];
+          setHasilPemeriksaan(latest.is_utilizable ? "Layak" : "Tidak Layak");
+          setCatatan(latest.notes || "");
+          setRekomendasi(latest.mechanical_condition || "");
+          setRequiredActionId(latest.require_action_id ? latest.require_action_id.toString() : "");
+          if (latest.inspection_date) {
+            setTglPemeriksaan(new Date(latest.inspection_date).toISOString().split('T')[0]);
+          }
+        }
+
+        // Ambil catatan penolakan manajer secara dinamis
+        const approvalsRes = await getApprovals();
+        const approvalsData = Array.isArray(approvalsRes) ? approvalsRes : (approvalsRes?.data || []);
+        const app = approvalsData.find((a: any) => a.equipment_id === Number(asset.id));
+        if (app) {
+          setApprovalId(app.id.toString());
+          if (app.approval_status === "REVISION_REQUIRED") {
+            const detail = await getApprovalById(app.id);
+            if (detail && detail.steps) {
+              const revisionStep = detail.steps.find((s: any) => s.approval_status === "REVISION_REQUIRED");
+              if (revisionStep && revisionStep.approval_notes) {
+                setManagerNotes(revisionStep.approval_notes);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data riwayat revisi:", err);
+      }
     }
   };
 
@@ -273,12 +333,31 @@ export default function ManajemenInspeksi() {
     try {
       const isUtilizable = hasilPemeriksaan === "Layak";
       const notes = catatan || rekomendasi;
-      const res = await validateEquipment(selectedAsset.id, isUtilizable, notes);
+      
+      const isRevision = selectedAsset.statusPersetujuan === "NEED_REVISION";
+      let res;
+
+      if (isRevision) {
+        const formData = new FormData();
+        formData.append("is_utilizable", isUtilizable ? "true" : "false");
+        formData.append("notes", catatan.trim());
+        if (isUtilizable && requiredActionId) {
+          formData.append("required_action", requiredActionId);
+        }
+        if (uploadedFiles.length > 0) {
+          uploadedFiles.forEach(file => {
+            formData.append("photos", file);
+          });
+        }
+        res = await resubmitApproval(approvalId, formData);
+      } else {
+        res = await validateEquipment(selectedAsset.id, isUtilizable, notes);
+      }
 
       if (res.success) {
         
         // --- MULTIPLE ATTACHMENTS UPLOAD ---
-        if (uploadedFiles && uploadedFiles.length > 0) {
+        if (!isRevision && uploadedFiles && uploadedFiles.length > 0) {
           try {
             // Get token from cookies for client-side fetch
             const tokenMatch = document.cookie.match(/(^|;)\s*token\s*=\s*([^;]+)/);
@@ -310,7 +389,11 @@ export default function ManajemenInspeksi() {
         }
         // -----------------------------------
 
-        setNotification({ type: "success", message: "Data inspeksi berhasil disubmit ke sistem." });
+        const successMessage = isRevision 
+          ? "Hasil revisi validasi berhasil dikirim ulang ke Manajer."
+          : "Data inspeksi berhasil disubmit ke sistem.";
+
+        setNotification({ type: "success", message: successMessage });
         
         const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
         const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
@@ -547,8 +630,17 @@ export default function ManajemenInspeksi() {
   const validateForm = () => {
     if (!hasilPemeriksaan || !lokasi || !tglPemeriksaan || !jamMulai || !jamSelesai) return false;
     if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
-    if (uploadedFiles.length < 2) return false;
-    return true;
+    
+    const isRevision = selectedAsset?.statusPersetujuan === "NEED_REVISION";
+    const totalPhotosOk = isRevision 
+      ? (uploadedFiles.length === 0 || uploadedFiles.length >= 2)
+      : (uploadedFiles.length >= 2);
+      
+    const actionOk = isRevision 
+      ? (hasilPemeriksaan !== "Layak" || !!requiredActionId)
+      : true;
+
+    return totalPhotosOk && actionOk;
   };
 
   const handleSaveClick = () => {
@@ -882,11 +974,11 @@ export default function ManajemenInspeksi() {
 
               {/* Banners untuk Status Khusus */}
               {selectedAsset.statusPersetujuan === "NEED_REVISION" && (
-                <div className="bg-orange-50 border-l-4 border-orange-500 p-3 mb-4 rounded-r-lg flex gap-3 shadow-sm">
-                  <AlertCircle className="w-5 h-5 text-orange-600 shrink-0" />
+                <div className="bg-purple-50 border-l-4 border-purple-500 p-3 mb-4 rounded-r-lg flex gap-3 shadow-sm">
+                  <AlertCircle className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="text-[12px] font-bold text-orange-800">Menunggu Revisi Anda</h4>
-                    <p className="text-[11px] text-orange-700 mt-0.5">Manager meminta revisi: &quot;Mohon lampirkan bukti foto tambahan dan lengkapi detail kondisi pada catatan pemeriksaan.&quot;</p>
+                    <h4 className="text-[12px] font-bold text-purple-800">Menunggu Revisi Anda</h4>
+                    <p className="text-[11px] text-purple-700 mt-0.5">Manager meminta revisi: &quot;{managerNotes || 'Mohon lengkapi/perbaiki data temuan validasi.'}&quot;</p>
                   </div>
                 </div>
               )}
@@ -1074,6 +1166,31 @@ export default function ManajemenInspeksi() {
                     </div>
                     {showValidationErrors && !hasilPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Hasil Evaluasi wajib dipilih.</p>}
                   </div>
+                  
+                  {/* Dropdown Required Action Khusus Mode Revisi & Layak */}
+                  {selectedAsset.statusPersetujuan === "NEED_REVISION" && hasilPemeriksaan === "Layak" && (
+                    <div className="col-span-12 mt-2">
+                      <div className="flex justify-between items-end mb-1">
+                        <label className="block text-[11px] font-semibold text-gray-700">Perbaikan Khusus <span className="text-red-500">*</span></label>
+                        <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
+                      </div>
+                      <select
+                        value={requiredActionId}
+                        onChange={e => setRequiredActionId(e.target.value)}
+                        className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${
+                          showValidationErrors && !requiredActionId ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"
+                        }`}
+                      >
+                        <option value="" disabled>Pilih Tindakan Perbaikan...</option>
+                        {requireActions.map((action: any) => (
+                          <option key={action.id} value={action.id.toString()}>{action.name}</option>
+                        ))}
+                      </select>
+                      {showValidationErrors && !requiredActionId && (
+                        <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Tindakan Perbaikan wajib dipilih saat layak.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Row 3: Catatan & Rekomendasi (Side by side) */}
@@ -1181,11 +1298,38 @@ export default function ManajemenInspeksi() {
                       )}
                     </div>
                     
-                    {showValidationErrors && uploadedFiles.length < 2 && (
-                      <p className="text-[10px] text-red-500 mt-1.5 font-medium">* Wajib mengunggah minimal 2 foto dokumentasi/file referensi.</p>
+                    {showValidationErrors && (selectedAsset.statusPersetujuan === "NEED_REVISION" ? (uploadedFiles.length > 0 && uploadedFiles.length < 2) : (uploadedFiles.length < 2)) && (
+                      <p className="text-[10px] text-red-500 mt-1.5 font-medium">* Wajib mengunggah minimal 2 foto dokumentasi/file referensi baru.</p>
                     )}
                     {fileError && (
                       <p className="text-[10px] text-red-500 mt-1.5 font-medium">* {fileError}</p>
+                    )}
+                    
+                    {/* Tampilkan Foto Validasi Lama (Milik User) agar Tidak Hilang / Tak Terlihat */}
+                    {selectedAsset.statusPersetujuan === "NEED_REVISION" && attachments.filter((att: any) => {
+                      const url = att.file_url || att.url || "";
+                      return url.match(/\.(jpeg|jpg|gif|png)$/) || url.startsWith('data:image');
+                    }).length > 0 && (
+                      <div className="mt-4 border-t border-gray-100 pt-3 text-left">
+                        <span className="text-[11px] font-bold text-gray-500 block mb-2 uppercase tracking-wide">Foto Lama yang Tersimpan (Tidak Akan Diganti kecuali Anda Mengunggah Foto Baru):</span>
+                        <div className="grid grid-cols-3 gap-3">
+                          {attachments.filter((att: any) => {
+                            const url = att.file_url || att.url || "";
+                            return url.match(/\.(jpeg|jpg|gif|png)$/) || url.startsWith('data:image');
+                          }).map((att: any, idx: number) => (
+                            <div key={idx} className="relative border border-gray-200 rounded overflow-hidden aspect-video bg-gray-50">
+                              <img src={att.file_url.startsWith("http") ? att.file_url : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/${att.file_url}`} className="w-full h-full object-cover" alt="Foto Lama" />
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-[10px] text-white font-medium truncate p-1">{att.file_name}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {uploadedFiles.length > 0 && selectedAsset.statusPersetujuan === "NEED_REVISION" && (
+                      <p className="text-[10px] text-amber-600 mt-2 font-medium">* Catatan: Mengunggah foto baru akan mengganti seluruh foto lama di atas.</p>
                     )}
                   </div>
                 )}
