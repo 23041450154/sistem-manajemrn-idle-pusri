@@ -21,6 +21,14 @@ interface Equipment {
   tanggalRegistrasi: string;
   statusAset: AssetState;
   statusPersetujuan: ApprovalState;
+  storageLocation?: string;
+  funcLoc?: string;
+  vendor?: string;
+  year?: string | number;
+  originalValue?: number;
+  notes?: string;
+  idleReason?: string;
+  photos?: string[];
 }
 
 
@@ -110,6 +118,18 @@ export default function RendalIdlePage() {
           tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
           statusAset: statusStr,
           statusPersetujuan: "PENDING", // TODO: match with approvals later if needed
+          storageLocation: item.storage_location?.name || "Belum Ditentukan",
+          funcLoc: item.func_loc || "-",
+          vendor: item.vendor || "-",
+          year: item.year || "-",
+          originalValue: item.original_value || 0,
+          notes: item.notes || "-",
+          idleReason: item.idle_declaration?.idle_reason?.reason_name || "-",
+          photos: item.attachments 
+            ? item.attachments
+                .filter((att: any) => att.attachment_category === "equipment_photo" || att.category === "equipment_photo")
+                .map((att: any) => att.file_url || att.fileUrl)
+            : []
         };
       });
       setEquipments(mappedData as Equipment[]);
@@ -515,7 +535,7 @@ export default function RendalIdlePage() {
       {/* Modal Detail Informasi Aset */}
       {detailModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div className="flex items-center gap-2.5">
                 <Eye className="w-5 h-5 text-[#0A356A]" />
@@ -530,36 +550,109 @@ export default function RendalIdlePage() {
             </div>
             
             <div className="p-5 overflow-y-auto flex-1 flex flex-col gap-5">
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nama Alat</p>
-                  <p className="text-sm font-bold text-gray-900">{detailModal.namaAlat}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Kode Alat</p>
-                  <p className="text-sm font-bold text-gray-900">{detailModal.kodeAlat}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Plant</p>
-                  <p className="text-sm font-medium text-gray-800">{detailModal.plant}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Jenis Alat</p>
-                  <p className="text-sm font-medium text-gray-800">{detailModal.jenisAlat}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Tanggal Registrasi</p>
-                  <p className="text-sm font-medium text-gray-800">{detailModal.tanggalRegistrasi}</p>
-                </div>
-                <div>
-                  <p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Status Aset</p>
-                  <div className="mt-1">{getStatusBadge(detailModal.statusAset)}</div>
+              {/* Section 1: Informasi Dasar */}
+              <div className="border-b border-gray-100 pb-4">
+                <h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">Informasi & Spesifikasi Aset</h3>
+                <div className="grid grid-cols-2 gap-y-3.5 gap-x-4">
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Nama Alat</p>
+                    <p className="text-sm font-bold text-gray-900">{detailModal.namaAlat}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Kode Alat</p>
+                    <p className="text-sm font-bold text-gray-900">{detailModal.kodeAlat}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Plant</p>
+                    <p className="text-sm font-medium text-gray-800">{detailModal.plant}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Jenis Alat</p>
+                    <p className="text-sm font-medium text-gray-800">{detailModal.jenisAlat}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Vendor / Merk</p>
+                    <p className="text-sm font-medium text-gray-800">{detailModal.vendor || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Tahun Dibuat</p>
+                    <p className="text-sm font-medium text-gray-800">{detailModal.year || "-"}</p>
+                  </div>
                 </div>
               </div>
 
-              {detailModal.statusAset === "REGISTERED" && (
-                <div className="mt-2 bg-blue-50/50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800 leading-relaxed shadow-sm">
-                  <strong>Catatan:</strong> Aset ini masih berstatus <em>REGISTERED</em>. Ia sedang menunggu tim <strong>Inspeksi Teknik</strong> untuk melakukan validasi teknis. Setelah divalidasi (layak pakai), aset akan diteruskan ke Manajer untuk persetujuan akhir (menjadi <em>READY TO USE</em>).
+              {/* Section 2: Lokasi & Nilai Aset */}
+              <div className="border-b border-gray-100 pb-4">
+                <h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">Lokasi & Nilai Aset</h3>
+                <div className="grid grid-cols-2 gap-y-3.5 gap-x-4">
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Lokasi Penyimpanan</p>
+                    <p className="text-sm font-semibold text-gray-800">{detailModal.storageLocation || "-"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Area (FuncLoc)</p>
+                    <p className="text-sm font-semibold text-gray-800">{detailModal.funcLoc || "-"}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Nilai Perolehan</p>
+                    <p className="text-sm font-bold text-emerald-700">
+                      {detailModal.originalValue 
+                        ? `Rp ${Number(detailModal.originalValue).toLocaleString("id-ID")}` 
+                        : "Rp 0"}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 3: Kondisi & Status */}
+              <div className="border-b border-gray-100 pb-4">
+                <h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">Kondisi & Status</h3>
+                <div className="grid grid-cols-2 gap-y-3.5 gap-x-4">
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Status Aset</p>
+                    <div className="mt-0.5">{getStatusBadge(detailModal.statusAset)}</div>
+                  </div>
+                  <div>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Tanggal Registrasi</p>
+                    <p className="text-sm font-medium text-gray-800">{detailModal.tanggalRegistrasi}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Alasan Idle</p>
+                    <p className="text-sm font-medium text-gray-800 leading-relaxed">{detailModal.idleReason || "-"}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Catatan Tambahan</p>
+                    <p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 leading-relaxed whitespace-pre-line">
+                      {detailModal.notes || "Tidak ada catatan tambahan."}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Section 4: Foto Peralatan */}
+              {detailModal.photos && detailModal.photos.length > 0 && (
+                <div>
+                  <h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">Foto Peralatan</h3>
+                  <div className="grid grid-cols-3 gap-2.5">
+                    {detailModal.photos.map((photo, index) => {
+                      const photoUrl = photo.startsWith("http") || photo.startsWith("/") ? photo : `/${photo}`;
+                      return (
+                        <a 
+                          key={index}
+                          href={photoUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          className="group relative border border-gray-200 rounded-lg overflow-hidden aspect-video bg-gray-100 hover:border-[#0A356A] transition-all shadow-sm"
+                        >
+                          <img 
+                            src={photoUrl} 
+                            alt={`Foto ${index + 1}`} 
+                            className="w-full h-full object-cover transition-all group-hover:scale-105"
+                          />
+                        </a>
+                      );
+                    })}
+                  </div>
                 </div>
               )}
             </div>
