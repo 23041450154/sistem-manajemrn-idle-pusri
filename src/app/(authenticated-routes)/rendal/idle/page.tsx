@@ -533,7 +533,7 @@ export default function RendalIdlePage() {
 
               {detailModal.statusAset === "REGISTERED" && (
                 <div className="mt-2 bg-blue-50/50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800 leading-relaxed shadow-sm">
-                  <strong>Catatan:</strong> Aset ini masih berstatus <em>REGISTERED</em>. Ia sedang menunggu tim <strong>Inspeksi Teknik</strong> untuk melakukan validasi teknis. Setelah divalidasi (layak pakai), aset akan diteruskan ke Manajer untuk persetujuan akhir (menjadi <em>IDLE</em>).
+                  <strong>Catatan:</strong> Aset ini masih berstatus <em>REGISTERED</em>. Ia sedang menunggu tim <strong>Inspeksi Teknik</strong> untuk melakukan validasi teknis. Setelah divalidasi (layak pakai), aset akan diteruskan ke Manajer untuk persetujuan akhir (menjadi <em>READY TO USE</em>).
                 </div>
               )}
             </div>
