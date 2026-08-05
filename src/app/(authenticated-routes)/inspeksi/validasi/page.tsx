@@ -7,6 +7,8 @@ import {
   ArrowUpDown, ArrowUp, ArrowDown, Download, Info
 } from "lucide-react";
 
+import AnalogTimePicker from "@/components/AnalogTimePicker";
+
 import { 
   getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment,
   getInspections, getRequireActions, getApprovalById, resubmitApproval 
@@ -1050,24 +1052,20 @@ export default function ManajemenInspeksi() {
                     {showValidationErrors && !tglPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Tanggal wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Jam Mulai *</label>
-                    <input 
-                      type="time" 
+                    <AnalogTimePicker 
                       value={jamMulai} 
-                      onChange={e => setJamMulai(e.target.value)} 
+                      onChange={setJamMulai} 
+                      label="Jam Mulai *" 
                       disabled={isReadOnly} 
-                      className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && !jamMulai ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} 
                     />
                     {showValidationErrors && !jamMulai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam Mulai wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
-                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Jam Selesai *</label>
-                    <input 
-                      type="time" 
+                    <AnalogTimePicker 
                       value={jamSelesai} 
-                      onChange={e => setJamSelesai(e.target.value)} 
+                      onChange={setJamSelesai} 
+                      label="Jam Selesai *" 
                       disabled={isReadOnly} 
-                      className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && !jamSelesai ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} 
                     />
                     {showValidationErrors && !jamSelesai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam Selesai wajib diisi.</p>}
                   </div>
