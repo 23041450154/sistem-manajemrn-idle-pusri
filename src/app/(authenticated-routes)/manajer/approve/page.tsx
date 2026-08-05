@@ -88,7 +88,7 @@ export default function ManajerApprovePage() {
           
           let statusAset = (item.equipment_status || eq?.status?.name || "VALIDATED").toUpperCase();
           if (item.approval_status === "APPROVED") {
-            statusAset = "IDLE";
+            statusAset = "READY TO USE";
           }
 
           return {
@@ -192,13 +192,13 @@ export default function ManajerApprovePage() {
         setNotification({ type: "success", message: "Berhasil menyetujui aset!" });
         const updated = requests.map(req => 
           req.kodeAset === selectedAsset.kodeAset 
-            ? { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" }
+            ? { ...req, statusAset: "READY TO USE", statusPersetujuan: "Disetujui" }
             : req
         );
         setRequests(updated);
         setFilteredRequests(filteredRequests.map(req => 
           req.kodeAset === selectedAsset.kodeAset 
-            ? { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" }
+            ? { ...req, statusAset: "READY TO USE", statusPersetujuan: "Disetujui" }
             : req
         ));
         setIsConfirmOpen(false);
@@ -275,7 +275,7 @@ export default function ManajerApprovePage() {
   };
 
   const getStatusAsetBadge = (status: string) => {
-    if (status === "VALIDATED") {
+    if (status === "VALIDATED" || status === "READY TO USE" || status === "READY_TO_USE" || status === "READY_TO_REUSE") {
       return <span className="bg-[#DCFCE7] text-[#16A34A] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
     }
     return <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
@@ -762,7 +762,7 @@ export default function ManajerApprovePage() {
             <h3 className="text-lg font-bold text-gray-900 mb-2">Konfirmasi Persetujuan Aset</h3>
             
             <p className="text-[13px] text-gray-600 mb-6 leading-relaxed">
-              Apakah Anda yakin ingin menyetujui hasil validasi ini? Setelah disetujui, <span className="font-bold">{selectedAsset.kodeAset}</span> aset akan berubah menjadi <span className="font-bold text-green-700">IDLE</span>, proses persetujuan selesai, dan pengajuan tidak lagi muncul pada Inbox Approval.
+              Apakah Anda yakin ingin menyetujui hasil validasi ini? Setelah disetujui, <span className="font-bold">{selectedAsset.kodeAset}</span> aset akan berubah menjadi <span className="font-bold text-green-700">READY TO USE</span>, proses persetujuan selesai, dan pengajuan tidak lagi muncul pada Inbox Approval.
             </p>
             
             <div className="flex items-center gap-3 w-full justify-center">

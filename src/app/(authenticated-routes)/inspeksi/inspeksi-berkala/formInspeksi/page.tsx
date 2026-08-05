@@ -172,7 +172,7 @@ export default function FormInspeksiPage() {
         className="flex items-center gap-2.5 text-base font-bold text-gray-650 hover:text-[#0A356A] mb-5 transition-colors"
       >
         <ArrowLeft className="w-5 h-5 text-gray-600" />
-        Kembali ke Antrean
+        Kembali
       </button>
 
       <div className="mb-6">
@@ -205,8 +205,11 @@ export default function FormInspeksiPage() {
           <div>
             <p className="text-sm text-gray-500 font-semibold mb-1">Status Saat Ini</p>
             <div>
-              <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#E0E7FF] text-[#4F46E5] mt-0.5 border border-[#C7D2FE]">
-                {typeof equipment?.status === 'string' ? equipment.status : equipment?.status?.name || "IDLE"}
+              <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#DCFCE7] text-[#16A34A] mt-0.5 border border-[#86EFAC]">
+                {(() => {
+                  const s = typeof equipment?.status === 'string' ? equipment.status : equipment?.status?.name || "READY TO USE";
+                  return s === "IDLE" ? "READY TO USE" : s;
+                })()}
               </span>
             </div>
           </div>
@@ -342,10 +345,14 @@ export default function FormInspeksiPage() {
                 </label>
                 <textarea
                   value={mechanicalCondition}
-                  onChange={(e) => setMechanicalCondition(e.target.value)}
-                  placeholder={"Misal:\n- Seal bocor\n- Bearing aus\n- Mur hilang"}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-base font-medium resize-none"
+                  onChange={(e) => {
+                    setMechanicalCondition(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
+                  }}
+                  placeholder="Tuliskan kondisi di sini..."
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-base font-medium whitespace-pre-wrap break-words min-h-[80px] resize-y overflow-y-auto"
                 />
               </div>
               <div className="flex-1">
@@ -354,10 +361,14 @@ export default function FormInspeksiPage() {
                 </label>
                 <textarea
                   value={electricalCondition}
-                  onChange={(e) => setElectricalCondition(e.target.value)}
-                  placeholder={"Misal:\n- Kabel terkelupas\n- Motor baik\n- Indikator mati"}
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-base font-medium resize-none"
+                  onChange={(e) => {
+                    setElectricalCondition(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
+                  }}
+                  placeholder="Tuliskan kondisi di sini..."
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-base font-medium whitespace-pre-wrap break-words min-h-[80px] resize-y overflow-y-auto"
                 />
               </div>
             </div>

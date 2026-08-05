@@ -107,7 +107,7 @@ export default function ManajemenInspeksi() {
                 statusPersetujuan = "IN_REVIEW";
               } else if (app.approval_status === "APPROVED") {
                 statusPersetujuan = "APPROVED";
-                statusAset = "IDLE";
+                statusAset = "READY TO USE";
               } else if (app.approval_status === "REJECTED") {
                 statusPersetujuan = "REJECTED";
                 statusAset = "REJECTED";
@@ -117,7 +117,7 @@ export default function ManajemenInspeksi() {
             } else {
               statusPersetujuan = "PENDING_REVIEW"; 
             }
-          } else if (statusAset === "IDLE") {
+          } else if (statusAset === "IDLE" || statusAset === "READY TO USE" || statusAset === "READY_TO_USE") {
             statusPersetujuan = "APPROVED";
           } else if (statusAset === "REJECTED") {
             statusPersetujuan = "REJECTED";
@@ -470,14 +470,16 @@ export default function ManajemenInspeksi() {
   }, [search, plantFilter, statusFilter, dateFilter]);
 
   // UI Helpers
-  const getStatusAsetBadge = (status: AssetState) => {
-    const styles = {
+  const getStatusAsetBadge = (status: AssetState | string) => {
+    const styles: Record<string, string> = {
       REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
       VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
       REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-      IDLE: "bg-[#E0E7FF] text-[#4F46E5]"
+      IDLE: "bg-[#DCFCE7] text-[#16A34A]",
+      "READY TO USE": "bg-[#DCFCE7] text-[#16A34A]"
     };
-    return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status]}`}>{status}</span>;
+    const displayStatus = status === "IDLE" ? "READY TO USE" : status;
+    return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status] || styles["READY TO USE"]}`}>{displayStatus}</span>;
   };
 
   const getApprovalBadge = (status: ApprovalState) => {

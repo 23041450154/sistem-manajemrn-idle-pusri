@@ -157,19 +157,19 @@ export default function RendalIdlePage() {
       : <ArrowDown className="w-3.5 h-3.5 text-[#0A356A]" />;
   };
 
-  const getStatusBadge = (status: AssetState) => {
+  const getStatusBadge = (status: AssetState | string) => {
     const styles: Record<string, string> = {
-      REGISTERED: "bg-purple-100 text-purple-800 border-purple-200",      // 🟣 REGISTERED
-      VALIDATED: "bg-emerald-100 text-emerald-800 border-emerald-200",    // 🟢 VALIDATED
-      IDLE: "bg-yellow-100 text-yellow-800 border-yellow-200",            // 🟡 IDLE
-      READY_TO_REUSE: "bg-blue-100 text-blue-800 border-blue-200",        // 🔵 READY TO REUSE
-      REJECTED: "bg-red-100 text-red-800 border-red-200",                 // 🔴 REJECTED
-      DALAM_PERBAIKAN: "bg-orange-100 text-orange-800 border-orange-200", // 🟠 DALAM PERBAIKAN
+      REGISTERED: "bg-blue-100 text-blue-800 border-blue-200",
+      VALIDATED: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      REJECTED: "bg-red-100 text-red-800 border-red-200",
+      IDLE: "bg-emerald-100 text-emerald-800 border-emerald-200",
+      "READY TO USE": "bg-emerald-100 text-emerald-800 border-emerald-200",
+      DALAM_PERBAIKAN: "bg-amber-50 text-amber-700 border-amber-200",
+      READY_TO_REUSE: "bg-teal-50 text-teal-700 border-teal-200",
     };
-    
-    const label = status.replace(/_/g, ' ');
-    const style = styles[status] || "bg-gray-50 text-gray-700 border-gray-200";
-    return <span className={`inline-flex items-center justify-center text-[10px] font-extrabold px-2 py-0.5 rounded border tracking-wide whitespace-nowrap shadow-sm ${style}`}>{label}</span>;
+    const displayStatus = status === "IDLE" ? "READY TO USE" : status.replace(/_/g, ' ');
+    const style = styles[status] || styles["READY TO USE"] || "bg-gray-50 text-gray-700 border-gray-200";
+    return <span className={`inline-flex items-center justify-center text-[10px] font-extrabold px-2 py-0.5 rounded border tracking-wide whitespace-nowrap shadow-sm ${style}`}>{displayStatus}</span>;
   };
 
   return (
@@ -535,7 +535,7 @@ export default function RendalIdlePage() {
 
               {detailModal.statusAset === "REGISTERED" && (
                 <div className="mt-2 bg-blue-50/50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800 leading-relaxed shadow-sm">
-                  <strong>Catatan:</strong> Aset ini masih berstatus <em>REGISTERED</em>. Ia sedang menunggu tim <strong>Inspeksi Teknik</strong> untuk melakukan validasi teknis. Setelah divalidasi (layak pakai), aset akan diteruskan ke Manajer untuk persetujuan akhir (menjadi <em>IDLE</em>).
+                  <strong>Catatan:</strong> Aset ini masih berstatus <em>REGISTERED</em>. Ia sedang menunggu tim <strong>Inspeksi Teknik</strong> untuk melakukan validasi teknis. Setelah divalidasi (layak pakai), aset akan diteruskan ke Manajer untuk persetujuan akhir (menjadi <em>READY TO USE</em>).
                 </div>
               )}
             </div>
