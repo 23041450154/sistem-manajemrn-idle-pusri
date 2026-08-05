@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 
 // Tipe Data menyesuaikan dengan struktur standar Asset/Equipment
-type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE" | "DALAM_PERBAIKAN" | "READY_TO_REUSE";
+type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE" | "DALAM_PERBAIKAN" | "READY_TO_REUSE" | "READY TO USE" | "DISPOSAL" | "TIDAK LAYAK" | "NEED_REVISION";
 type ApprovalState = "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "NEED_REVISION";
 
 interface Equipment {
