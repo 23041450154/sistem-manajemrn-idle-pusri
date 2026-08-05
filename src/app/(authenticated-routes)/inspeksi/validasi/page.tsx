@@ -488,12 +488,12 @@ export default function ManajemenInspeksi() {
       REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
       VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
       REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-      IDLE: "bg-[#DCFCE7] text-[#16A34A]",
-      "READY TO USE": "bg-[#DCFCE7] text-[#16A34A]",
-      "READY_TO_USE": "bg-[#DCFCE7] text-[#16A34A]"
+      IDLE: "bg-[#E0E7FF] text-[#4F46E5]",
+      "READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
+      "READY_TO_USE": "bg-[#E0E7FF] text-[#4F46E5]"
     };
     const displayStatus = status === "IDLE" ? "READY TO USE" : status;
-    return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[status] || styles["READY TO USE"]}`}>{displayStatus}</span>;
+    return <span className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${styles[status] || styles["READY TO USE"]}`}>{displayStatus}</span>;
   };
 
   const getApprovalBadge = (status: ApprovalState) => {
@@ -513,7 +513,7 @@ export default function ManajemenInspeksi() {
       REJECTED: "Ditolak",
       NEED_REVISION: "Perlu Revisi"
     };
-    return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[status]}`}>{labels[status]}</span>;
+    return <span className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${styles[status]}`}>{labels[status]}</span>;
   };
 
   const getActionButton = (asset: Asset) => {
@@ -691,8 +691,8 @@ export default function ManajemenInspeksi() {
             <thead className="bg-gray-50/95 backdrop-blur-sm">
               <tr className="border-b border-gray-300">
                 <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center w-12 whitespace-nowrap">No</th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
-                  <div className="flex items-center justify-center">Nama Alat {getSortIcon('namaAlat')}</div>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
+                  <div className="flex items-center justify-start">Nama Alat {getSortIcon('namaAlat')}</div>
                 </th>
                 <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
                   <div className="flex items-center justify-center">Plant {getSortIcon('plant')}</div>
@@ -735,8 +735,8 @@ export default function ManajemenInspeksi() {
                   return (
                     <tr key={asset.id} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
                       <td className="px-3 py-1 text-[14px] text-gray-500 font-medium text-center">{rowNum}</td>
-                      <td className="px-3 py-1 text-[14px] font-semibold text-gray-800 text-center" title={asset.namaAlat}>
-                        <span className="leading-tight line-clamp-2 block text-center">{asset.namaAlat}</span>
+                      <td className="px-3 py-1 text-[14px] font-semibold text-gray-800 text-left" title={asset.namaAlat}>
+                        <span className="leading-tight line-clamp-2 block text-left">{asset.namaAlat}</span>
                       </td>
                       <td className="px-3 py-1 text-[14px] text-gray-600 font-medium text-center">
                         {asset.plant}
@@ -744,7 +744,7 @@ export default function ManajemenInspeksi() {
                       <td className="px-3 py-1 text-[14px] text-gray-600 font-medium text-center">
                         {asset.jenisAlat}
                       </td>
-                      <td className="px-3 py-1 text-[14px] text-gray-600 text-center">
+                      <td className="px-3 py-1 text-[11px] text-gray-600 text-center font-medium whitespace-nowrap">
                         {asset.tanggalRegistrasi}
                       </td>
                       <td className="px-3 py-1 text-[14px] text-center">
@@ -1272,7 +1272,7 @@ export default function ManajemenInspeksi() {
                 </div>
                 <div>
                   <p className="text-[11px] text-gray-500 mb-0.5">Tanggal Registrasi:</p>
-                  <p className="text-[12px] font-bold text-gray-900">{selectedAsset.tanggalRegistrasi}</p>
+                  <p className="text-[11px] font-medium text-gray-900">{selectedAsset.tanggalRegistrasi}</p>
                 </div>
                 <div className="col-span-4">
                   <p className="text-[11px] text-gray-500 mb-1">Catatan Pendaftaran:</p>

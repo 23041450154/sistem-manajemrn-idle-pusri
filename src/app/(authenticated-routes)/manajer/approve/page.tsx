@@ -414,7 +414,7 @@ export default function ManajerApprovePage() {
                   <td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900 text-center">{req.kodeAset}</td>
                   <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug text-center">{req.namaAset}</td>
                   <td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-center">{req.plant}</td>
-                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug text-center">{req.tanggalPengajuan}</td>
+                  <td className="px-2 py-2 text-[11px] text-gray-600 font-medium leading-snug text-center whitespace-nowrap">{req.tanggalPengajuan}</td>
                   <td className="px-2 py-2 whitespace-nowrap text-center">
                     {getStatusAsetBadge(req.statusAset)}
                   </td>
@@ -553,7 +553,7 @@ export default function ManajerApprovePage() {
 
                   <div>
                     <p className="text-[12px] text-gray-500 font-medium mb-1">Tanggal Registrasi:</p>
-                    <p className="text-[13px] font-bold text-gray-900">{selectedAsset.tanggalPengajuan}</p>
+                    <p className="text-[11px] font-medium text-gray-900">{selectedAsset.tanggalPengajuan}</p>
                   </div>
                   <div className="hidden"></div>
                   
