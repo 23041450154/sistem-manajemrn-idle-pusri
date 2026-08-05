@@ -7,7 +7,12 @@ import {
   ArrowUpDown, ArrowUp, ArrowDown, Download, Info
 } from "lucide-react";
 
-import { getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment } from "@/action/api";
+import AnalogTimePicker from "@/components/AnalogTimePicker";
+
+import { 
+  getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment,
+  getInspections, getRequireActions, getApprovalById, resubmitApproval 
+} from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 
 // Tipe Data
@@ -156,6 +161,24 @@ export default function ManajemenInspeksi() {
   const [attachments, setAttachments] = useState<any[]>([]);
   const [allInspections, setAllInspections] = useState<any[]>([]);
 
+  // Revision Form States
+  const [managerNotes, setManagerNotes] = useState("");
+  const [approvalId, setApprovalId] = useState("");
+  const [requiredActionId, setRequiredActionId] = useState("");
+  const [requireActions, setRequireActions] = useState<any[]>([]);
+
+  useEffect(() => {
+    const loadActions = async () => {
+      try {
+        const acts = await getRequireActions();
+        setRequireActions(acts || []);
+      } catch (err) {
+        console.error("Gagal memuat require actions:", err);
+      }
+    };
+    loadActions();
+  }, []);
+
   useEffect(() => {
     // Jalankan scroll setelah render DOM selasai
     const timer = setTimeout(() => {
@@ -178,8 +201,8 @@ export default function ManajemenInspeksi() {
   const [catatan, setCatatan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [tglPemeriksaan, setTglPemeriksaan] = useState(new Date().toISOString().split('T')[0]);
-  const [jamMulai, setJamMulai] = useState("");
-  const [jamSelesai, setJamSelesai] = useState("");
+  const [jamMulai, setJamMulai] = useState("08:00");
+  const [jamSelesai, setJamSelesai] = useState("09:00");
 
   const handleTimeInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
     const numbers = value.replace(/\D/g, "");
@@ -228,6 +251,9 @@ export default function ManajemenInspeksi() {
     setFileError(null);
     setAttachments([]);
     setPreviewImage(null);
+    setManagerNotes("");
+    setApprovalId("");
+    setRequiredActionId("");
     
     try {
       const attsData = await getAttachmentsByEquipmentId(asset.id);
@@ -244,18 +270,54 @@ export default function ManajemenInspeksi() {
       setCatatan("");
       setRekomendasi("");
       setLokasi("");
-      setJamMulai("");
-      setJamSelesai("");
+      setJamMulai("08:00");
+      setJamSelesai("09:00");
       setTglPemeriksaan(new Date().toISOString().split('T')[0]);
     } else {
       // Jika statusnya Ubah Validasi atau Perlu Revisi, muat data yang sudah pernah diisi
       setHasilPemeriksaan(asset.statusAset === "REJECTED" ? "Tidak Layak" : "Layak");
-      setCatatan("Visual fisik aman, tidak ada kebocoran, performa motor stabil.");
-      setRekomendasi("Dapat dimobilisasi segera ke area yang membutuhkan.");
+      setCatatan("");
+      setRekomendasi("");
       setLokasi("Area Unit P-IB"); // Default mock data yang sesuai opsi dropdown
       setJamMulai("09:00");
       setJamSelesai("10:30");
       setTglPemeriksaan(new Date().toISOString().split('T')[0]);
+
+      try {
+        // Ambil data inspeksi sebelumnya secara dinamis dari database
+        const allInsps = await getInspections();
+        const myInsps = (allInsps || []).filter((i: any) => i.equipment_id === Number(asset.id));
+        if (myInsps.length > 0) {
+          myInsps.sort((a: any, b: any) => b.id - a.id);
+          const latest = myInsps[0];
+          setHasilPemeriksaan(latest.is_utilizable ? "Layak" : "Tidak Layak");
+          setCatatan(latest.notes || "");
+          setRekomendasi(latest.mechanical_condition || "");
+          setRequiredActionId(latest.require_action_id ? latest.require_action_id.toString() : "");
+          if (latest.inspection_date) {
+            setTglPemeriksaan(new Date(latest.inspection_date).toISOString().split('T')[0]);
+          }
+        }
+
+        // Ambil catatan penolakan manajer secara dinamis
+        const approvalsRes = await getApprovals();
+        const approvalsData = Array.isArray(approvalsRes) ? approvalsRes : (approvalsRes?.data || []);
+        const app = approvalsData.find((a: any) => a.equipment_id === Number(asset.id));
+        if (app) {
+          setApprovalId(app.id.toString());
+          if (app.approval_status === "REVISION_REQUIRED") {
+            const detail = await getApprovalById(app.id);
+            if (detail && detail.steps) {
+              const revisionStep = detail.steps.find((s: any) => s.approval_status === "REVISION_REQUIRED");
+              if (revisionStep && revisionStep.approval_notes) {
+                setManagerNotes(revisionStep.approval_notes);
+              }
+            }
+          }
+        }
+      } catch (err) {
+        console.error("Gagal mengambil data riwayat revisi:", err);
+      }
     }
   };
 
@@ -273,12 +335,31 @@ export default function ManajemenInspeksi() {
     try {
       const isUtilizable = hasilPemeriksaan === "Layak";
       const notes = catatan || rekomendasi;
-      const res = await validateEquipment(selectedAsset.id, isUtilizable, notes);
+      
+      const isRevision = selectedAsset.statusPersetujuan === "NEED_REVISION";
+      let res;
+
+      if (isRevision) {
+        const formData = new FormData();
+        formData.append("is_utilizable", isUtilizable ? "true" : "false");
+        formData.append("notes", catatan.trim());
+        if (isUtilizable && requiredActionId) {
+          formData.append("required_action", requiredActionId);
+        }
+        if (uploadedFiles.length > 0) {
+          uploadedFiles.forEach(file => {
+            formData.append("photos", file);
+          });
+        }
+        res = await resubmitApproval(approvalId, formData);
+      } else {
+        res = await validateEquipment(selectedAsset.id, isUtilizable, notes);
+      }
 
       if (res.success) {
         
         // --- MULTIPLE ATTACHMENTS UPLOAD ---
-        if (uploadedFiles && uploadedFiles.length > 0) {
+        if (!isRevision && uploadedFiles && uploadedFiles.length > 0) {
           try {
             // Get token from cookies for client-side fetch
             const tokenMatch = document.cookie.match(/(^|;)\s*token\s*=\s*([^;]+)/);
@@ -310,7 +391,11 @@ export default function ManajemenInspeksi() {
         }
         // -----------------------------------
 
-        setNotification({ type: "success", message: "Data inspeksi berhasil disubmit ke sistem." });
+        const successMessage = isRevision 
+          ? "Hasil revisi validasi berhasil dikirim ulang ke Manajer."
+          : "Data inspeksi berhasil disubmit ke sistem.";
+
+        setNotification({ type: "success", message: successMessage });
         
         const revised = JSON.parse(localStorage.getItem('revisedAssets') || '[]');
         const inReview = JSON.parse(localStorage.getItem('inReviewAssets') || '[]');
@@ -364,7 +449,7 @@ export default function ManajemenInspeksi() {
     const endMins = hSelesai * 60 + mSelesai;
     const diff = endMins - startMins;
     
-    if (diff <= 0) return "Invalid";
+    if (diff <= 0) return "-";
     const h = Math.floor(diff / 60);
     const m = diff % 60;
     return `${h > 0 ? h + ' Jam ' : ''}${m > 0 ? m + ' Menit' : ''}`;
@@ -488,12 +573,12 @@ export default function ManajemenInspeksi() {
       REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
       VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
       REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-      IDLE: "bg-[#DCFCE7] text-[#16A34A]",
-      "READY TO USE": "bg-[#DCFCE7] text-[#16A34A]",
-      "READY_TO_USE": "bg-[#DCFCE7] text-[#16A34A]"
+      IDLE: "bg-[#E0E7FF] text-[#4F46E5]",
+      "READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
+      "READY_TO_USE": "bg-[#E0E7FF] text-[#4F46E5]"
     };
     const displayStatus = status === "IDLE" ? "READY TO USE" : status;
-    return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[status] || styles["READY TO USE"]}`}>{displayStatus}</span>;
+    return <span className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${styles[status] || styles["READY TO USE"]}`}>{displayStatus}</span>;
   };
 
   const getApprovalBadge = (status: ApprovalState) => {
@@ -513,7 +598,7 @@ export default function ManajemenInspeksi() {
       REJECTED: "Ditolak",
       NEED_REVISION: "Perlu Revisi"
     };
-    return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[status]}`}>{labels[status]}</span>;
+    return <span className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${styles[status]}`}>{labels[status]}</span>;
   };
 
   const getActionButton = (asset: Asset) => {
@@ -550,8 +635,16 @@ export default function ManajemenInspeksi() {
   const validateForm = () => {
     if (!hasilPemeriksaan || !lokasi || !tglPemeriksaan || !jamMulai || !jamSelesai) return false;
     if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
-    if (uploadedFiles.length < 2) return false;
-    return true;
+    
+    const isRevision = selectedAsset?.statusPersetujuan === "NEED_REVISION";
+    // Foto tidak lagi wajib diisi (selalu lolos validasi)
+    const totalPhotosOk = true;
+      
+    const actionOk = isRevision 
+      ? (hasilPemeriksaan !== "Layak" || !!requiredActionId)
+      : true;
+
+    return totalPhotosOk && actionOk;
   };
 
   const handleSaveClick = () => {
@@ -635,10 +728,12 @@ export default function ManajemenInspeksi() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input 
                 type="text" 
-                placeholder="Cari Kode atau Nama Alat..." 
+                placeholder="Cari kode atau nama alat..." 
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && setSearch(searchInput)}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  setSearch(e.target.value); // Realtime search!
+                }}
                 className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400" 
               />
             </div>
@@ -690,38 +785,35 @@ export default function ManajemenInspeksi() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50/95 backdrop-blur-sm">
               <tr className="border-b border-gray-300">
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center w-12 whitespace-nowrap">No</th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
-                  <div className="flex items-center justify-center">Nama Alat {getSortIcon('namaAlat')}</div>
+                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center w-12 whitespace-nowrap">No</th>
+                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
+                  <div className="flex items-center justify-start">Nama Alat {getSortIcon('namaAlat')}</div>
                 </th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
-                  <div className="flex items-center justify-center">Plant {getSortIcon('plant')}</div>
+                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
+                  <div className="flex items-center justify-start">Plant {getSortIcon('plant')}</div>
                 </th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
-                  <div className="flex items-center justify-center">Jenis {getSortIcon('jenisAlat')}</div>
+                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
+                  <div className="flex items-center justify-start">Jenis {getSortIcon('jenisAlat')}</div>
                 </th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('tanggalRegistrasi')}>
-                  <div className="flex items-center justify-center">Tanggal {getSortIcon('tanggalRegistrasi')}</div>
+                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
+                  <div className="flex items-center justify-start">Aset {getSortIcon('statusAset')}</div>
                 </th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
-                  <div className="flex items-center justify-center">Aset {getSortIcon('statusAset')}</div>
+                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
+                  <div className="flex items-center justify-start">Persetujuan {getSortIcon('statusPersetujuan')}</div>
                 </th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
-                  <div className="flex items-center justify-center">Persetujuan {getSortIcon('statusPersetujuan')}</div>
-                </th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Tindakan</th>
+                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">Tindakan</th>
               </tr>
             </thead>
             <tbody className="bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
+                  <td colSpan={7} className="px-5 py-12 text-center text-gray-500">
                     Memuat data...
                   </td>
                 </tr>
               ) : paginatedAssets.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
+                  <td colSpan={7} className="px-5 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center">
                       <AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
                       <p className="text-[13px] font-medium text-gray-900">Data Tidak Ditemukan</p>
@@ -734,27 +826,24 @@ export default function ManajemenInspeksi() {
                   const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
                   return (
                     <tr key={asset.id} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
-                      <td className="px-3 py-1 text-[14px] text-gray-500 font-medium text-center">{rowNum}</td>
-                      <td className="px-3 py-1 text-[14px] font-semibold text-gray-800 text-center" title={asset.namaAlat}>
-                        <span className="leading-tight line-clamp-2 block text-center">{asset.namaAlat}</span>
+                      <td className="px-3 py-3 text-[15px] text-gray-500 font-medium text-center">{rowNum}</td>
+                      <td className="px-3 py-3 text-[15px] font-semibold text-gray-800 text-left" title={asset.namaAlat}>
+                        <span className="leading-tight line-clamp-2 block text-left">{asset.namaAlat}</span>
                       </td>
-                      <td className="px-3 py-1 text-[14px] text-gray-600 font-medium text-center">
+                      <td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
                         {asset.plant}
                       </td>
-                      <td className="px-3 py-1 text-[14px] text-gray-600 font-medium text-center">
+                      <td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
                         {asset.jenisAlat}
                       </td>
-                      <td className="px-3 py-1 text-[14px] text-gray-600 text-center">
-                        {asset.tanggalRegistrasi}
+                      <td className="px-3 py-3 text-[15px] text-left">
+                        <div className="flex justify-start">{getStatusAsetBadge(asset.statusAset)}</div>
                       </td>
-                      <td className="px-3 py-1 text-[14px] text-center">
-                        <div className="flex justify-center">{getStatusAsetBadge(asset.statusAset)}</div>
+                      <td className="px-3 py-3 text-[15px] text-left">
+                        <div className="flex justify-start">{getApprovalBadge(asset.statusPersetujuan)}</div>
                       </td>
-                      <td className="px-3 py-1 text-[14px] text-center">
-                        <div className="flex justify-center">{getApprovalBadge(asset.statusPersetujuan)}</div>
-                      </td>
-                      <td className="px-3 py-1 text-center">
-                        <div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
+                      <td className="px-3 py-3 text-left">
+                        <div className="flex justify-start opacity-90 group-hover:opacity-100 transition-opacity">
                           {getActionButton(asset)}
                         </div>
                       </td>
@@ -860,11 +949,11 @@ export default function ManajemenInspeksi() {
 
               {/* Banners untuk Status Khusus */}
               {selectedAsset.statusPersetujuan === "NEED_REVISION" && (
-                <div className="bg-orange-50 border-l-4 border-orange-500 p-3 mb-4 rounded-r-lg flex gap-3 shadow-sm">
-                  <AlertCircle className="w-5 h-5 text-orange-600 shrink-0" />
+                <div className="bg-purple-50 border-l-4 border-purple-500 p-3 mb-4 rounded-r-lg flex gap-3 shadow-sm">
+                  <AlertCircle className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
                   <div>
-                    <h4 className="text-[12px] font-bold text-orange-800">Menunggu Revisi Anda</h4>
-                    <p className="text-[11px] text-orange-700 mt-0.5">Manager meminta revisi: &quot;Mohon lampirkan bukti foto tambahan dan lengkapi detail kondisi pada catatan pemeriksaan.&quot;</p>
+                    <h4 className="text-[12px] font-bold text-purple-800">Menunggu Revisi Anda</h4>
+                    <p className="text-[11px] text-purple-700 mt-0.5">Manager meminta revisi: &quot;{managerNotes || 'Mohon lengkapi/perbaiki data temuan validasi.'}&quot;</p>
                   </div>
                 </div>
               )}
@@ -961,34 +1050,27 @@ export default function ManajemenInspeksi() {
                     <input type="text" value={`INSP-${selectedAsset.kodeAlat}`} disabled className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-1.5 text-[13px] font-medium text-gray-500" />
                   </div>
                   <div className="col-span-3">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Tanggal</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Tanggal *</label>
                     <input type="date" value={tglPemeriksaan} onChange={e => setTglPemeriksaan(e.target.value)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !tglPemeriksaan ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
                     {showValidationErrors && !tglPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Tanggal wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Mulai</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
-                    <div className="relative">
-                      <input type="text" placeholder="00:00" maxLength={5} value={jamMulai} onChange={e => handleTimeInput(e.target.value, setJamMulai)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && jamMulai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
-                    </div>
-                    {showValidationErrors && jamMulai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
+                    <AnalogTimePicker 
+                      value={jamMulai} 
+                      onChange={setJamMulai} 
+                      label="Jam Mulai *" 
+                      disabled={isReadOnly} 
+                    />
+                    {showValidationErrors && !jamMulai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam Mulai wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Selesai</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
-                    <div className="relative">
-                      <input type="text" placeholder="00:00" maxLength={5} value={jamSelesai} onChange={e => handleTimeInput(e.target.value, setJamSelesai)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && jamSelesai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
-                    </div>
-                    {showValidationErrors && jamSelesai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
+                    <AnalogTimePicker 
+                      value={jamSelesai} 
+                      onChange={setJamSelesai} 
+                      label="Jam Selesai *" 
+                      disabled={isReadOnly} 
+                    />
+                    {showValidationErrors && !jamSelesai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam Selesai wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Durasi</label>
@@ -1002,10 +1084,7 @@ export default function ManajemenInspeksi() {
                 {/* Row 2: Lokasi & Hasil (Compact) */}
                 <div className="grid grid-cols-12 gap-3 mb-3">
                   <div className="col-span-5">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Lokasi Pengecekan</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Lokasi Pengecekan *</label>
                     <select 
                       value={lokasi} 
                       onChange={e => setLokasi(e.target.value)} 
@@ -1025,10 +1104,7 @@ export default function ManajemenInspeksi() {
                   </div>
                   
                   <div className="col-span-7">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Hasil Evaluasi Kelayakan</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Hasil Evaluasi Kelayakan *</label>
                     <div className="flex gap-2.5">
                       <label className={`flex-1 relative border rounded-md p-1.5 cursor-pointer flex items-center justify-center gap-2 transition-all ${
                         hasilPemeriksaan === "Layak" ? "border-emerald-500 bg-emerald-50/50" : "border-gray-200 bg-white hover:bg-gray-50"
@@ -1036,7 +1112,7 @@ export default function ManajemenInspeksi() {
                         <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Layak" ? "border-emerald-500" : (showValidationErrors && !hasilPemeriksaan ? "border-red-400" : "border-gray-300")}`}>
                           {hasilPemeriksaan === "Layak" && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
                         </div>
-                        <span className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-emerald-700" : "text-gray-700"}`}>Layak Utilisasi</span>
+                        <span className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-emerald-700" : "text-gray-700"}`}>Layak Digunakan</span>
                         <input type="radio" name="hasil" value="Layak" checked={hasilPemeriksaan === "Layak"} onChange={e => setHasilPemeriksaan(e.target.value)} disabled={isReadOnly} className="hidden" />
                       </label>
                       
@@ -1052,21 +1128,43 @@ export default function ManajemenInspeksi() {
                     </div>
                     {showValidationErrors && !hasilPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Hasil Evaluasi wajib dipilih.</p>}
                   </div>
+                  
+                  {/* Dropdown Required Action Khusus Mode Revisi & Layak */}
+                  {selectedAsset.statusPersetujuan === "NEED_REVISION" && hasilPemeriksaan === "Layak" && (
+                    <div className="col-span-12 mt-2">
+                      <div className="flex justify-between items-end mb-1">
+                        <label className="block text-[11px] font-semibold text-gray-700">Perbaikan Khusus <span className="text-red-500">*</span></label>
+                        <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
+                      </div>
+                      <select
+                        value={requiredActionId}
+                        onChange={e => setRequiredActionId(e.target.value)}
+                        className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${
+                          showValidationErrors && !requiredActionId ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"
+                        }`}
+                      >
+                        <option value="" disabled>Pilih Tindakan Perbaikan...</option>
+                        {requireActions.map((action: any) => (
+                          <option key={action.id} value={action.id.toString()}>{action.name}</option>
+                        ))}
+                      </select>
+                      {showValidationErrors && !requiredActionId && (
+                        <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Tindakan Perbaikan wajib dipilih saat layak.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
 
                 {/* Row 3: Catatan & Rekomendasi (Side by side) */}
                 <div className="grid grid-cols-2 gap-4 mb-3">
                   <div>
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Catatan Pemeriksaan <span className={hasilPemeriksaan === "Tidak Layak" ? "text-red-500" : ""}>{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}</span></label>
-                      {hasilPemeriksaan === "Tidak Layak" && <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>}
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Catatan Pemeriksaan <span className={hasilPemeriksaan === "Tidak Layak" ? "text-red-500" : ""}>{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}</span></label>
                     <textarea 
                       rows={2} 
                       value={catatan}
                       onChange={e => setCatatan(e.target.value)}
                       disabled={isReadOnly}
-                      placeholder={hasilPemeriksaan === "Tidak Layak" ? "Tuliskan alasan (wajib)..." : "Detail temuan..."}
+                      placeholder={hasilPemeriksaan === "Tidak Layak" ? "Tuliskan alasan (wajib)..." : "Tuliskan hasil pemeriksaan..."}
                       className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 resize-none transition-all ${
                         hasilPemeriksaan === "Tidak Layak" && !catatan.trim() 
                         ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" 
@@ -1112,58 +1210,81 @@ export default function ManajemenInspeksi() {
                     >
                       <UploadCloud className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A] animate-bounce" : "text-gray-400"}`} />
                       <div className="text-[13px] text-center">
-                        <span className="font-bold text-[#0A356A]">Klik untuk memilih</span>
-                        <span className="text-gray-600 font-medium"> atau drag & drop ke sini</span>
+                        <span className="font-bold text-[#0A356A]">📎 Upload Foto Pemeriksaan</span>
                       </div>
                       <span className="text-[11px] text-gray-500 font-medium text-center">Format: JPG, PNG, PDF (Max 5MB)</span>
                       
                       {uploadedFiles.length === 0 && (
-                        <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1.5 py-0.5 rounded mt-1">Wajib Minimal 2 Foto/File</span>
+                        <span className="text-[9px] font-bold text-gray-500 uppercase bg-gray-50 px-1.5 py-0.5 rounded mt-1">Opsional</span>
                       )}
 
                       {/* Preview Selected Files (Inside Dropzone) */}
                       {uploadedFiles.length > 0 && (
                         <div className="mt-4 w-full flex flex-wrap justify-center gap-4" onClick={(e) => e.stopPropagation()}>
-                          {uploadedFiles.map((file, i) => {
-                            const isImage = file.type.startsWith('image/');
-                            const previewUrl = isImage ? URL.createObjectURL(file) : null;
-                            return (
-                              <div key={i} className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white w-[150px] shadow-sm hover:shadow-md transition-all hover:border-[#0A356A]">
-                                {isImage ? (
-                                  <div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                                    <img src={previewUrl!} alt={file.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                                  </div>
-                                ) : (
-                                  <div className="h-28 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
-                                    <Paperclip className="w-8 h-8 mb-2" />
-                                    <span className="text-[10px] font-bold">PDF / DOC</span>
-                                  </div>
-                                )}
-                                <div className="px-2 py-1.5 border-t border-gray-100 bg-white">
-                                  <span className="block text-[10px] font-medium text-gray-700 truncate text-center" title={file.name}>{file.name}</span>
-                                </div>
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeFile(i);
-                                  }} 
-                                  className="absolute top-1.5 right-1.5 bg-red-500 rounded-full p-1 text-white hover:bg-red-600 shadow-md transition-colors opacity-0 group-hover:opacity-100"
-                                  title="Hapus"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            );
-                          })}
+                           {uploadedFiles.map((file, i) => {
+                             const isImage = file.type.startsWith('image/');
+                             const previewUrl = isImage ? URL.createObjectURL(file) : null;
+                             return (
+                               <div key={i} className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white w-[150px] shadow-sm hover:shadow-md transition-all hover:border-[#0A356A]">
+                                 {isImage ? (
+                                   <div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                                     <img src={previewUrl!} alt={file.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                   </div>
+                                 ) : (
+                                   <div className="h-28 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
+                                     <Paperclip className="w-8 h-8 mb-2" />
+                                     <span className="text-[10px] font-bold">PDF / DOC</span>
+                                   </div>
+                                 )}
+                                 <div className="px-2 py-1.5 border-t border-gray-100 bg-white">
+                                   <span className="block text-[10px] font-medium text-gray-700 truncate text-center" title={file.name}>{file.name}</span>
+                                 </div>
+                                 <button 
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     removeFile(i);
+                                   }} 
+                                   className="absolute top-1.5 right-1.5 bg-red-500 rounded-full p-1 text-white hover:bg-red-600 shadow-md transition-colors opacity-0 group-hover:opacity-100"
+                                   title="Hapus"
+                                 >
+                                   <X className="w-3.5 h-3.5" />
+                                 </button>
+                               </div>
+                             );
+                           })}
                         </div>
                       )}
                     </div>
                     
-                    {showValidationErrors && uploadedFiles.length < 2 && (
-                      <p className="text-[10px] text-red-500 mt-1.5 font-medium">* Wajib mengunggah minimal 2 foto dokumentasi/file referensi.</p>
-                    )}
                     {fileError && (
                       <p className="text-[10px] text-red-500 mt-1.5 font-medium">* {fileError}</p>
+                    )}
+                    
+                    {/* Tampilkan Foto Validasi Lama (Milik User) agar Tidak Hilang / Tak Terlihat */}
+                    {selectedAsset.statusPersetujuan === "NEED_REVISION" && attachments.filter((att: any) => {
+                      const url = att.file_url || att.url || "";
+                      return url.match(/\.(jpeg|jpg|gif|png)$/) || url.startsWith('data:image');
+                    }).length > 0 && (
+                      <div className="mt-4 border-t border-gray-100 pt-3 text-left">
+                        <span className="text-[11px] font-bold text-gray-500 block mb-2 uppercase tracking-wide">Foto Lama yang Tersimpan (Tidak Akan Diganti kecuali Anda Mengunggah Foto Baru):</span>
+                        <div className="grid grid-cols-3 gap-3">
+                          {attachments.filter((att: any) => {
+                            const url = att.file_url || att.url || "";
+                            return url.match(/\.(jpeg|jpg|gif|png)$/) || url.startsWith('data:image');
+                          }).map((att: any, idx: number) => (
+                            <div key={idx} className="relative border border-gray-200 rounded overflow-hidden aspect-video bg-gray-50">
+                              <img src={att.file_url.startsWith("http") ? att.file_url : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8080'}/${att.file_url}`} className="w-full h-full object-cover" alt="Foto Lama" />
+                              <div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                <span className="text-[10px] text-white font-medium truncate p-1">{att.file_name}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {uploadedFiles.length > 0 && selectedAsset.statusPersetujuan === "NEED_REVISION" && (
+                      <p className="text-[10px] text-amber-600 mt-2 font-medium">* Catatan: Mengunggah foto baru akan mengganti seluruh foto lama di atas.</p>
                     )}
                   </div>
                 )}
@@ -1202,7 +1323,7 @@ export default function ManajemenInspeksi() {
                   {isSubmitting ? (
                     <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Proses...</>
                   ) : (
-                    <><Save className="w-3.5 h-3.5" /> Simpan Hasil</>
+                    <><Save className="w-3.5 h-3.5" /> Simpan Hasil Inspeksi</>
                   )}
                 </button>
               )}
@@ -1272,7 +1393,7 @@ export default function ManajemenInspeksi() {
                 </div>
                 <div>
                   <p className="text-[11px] text-gray-500 mb-0.5">Tanggal Registrasi:</p>
-                  <p className="text-[12px] font-bold text-gray-900">{selectedAsset.tanggalRegistrasi}</p>
+                  <p className="text-[11px] font-medium text-gray-900">{selectedAsset.tanggalRegistrasi}</p>
                 </div>
                 <div className="col-span-4">
                   <p className="text-[11px] text-gray-500 mb-1">Catatan Pendaftaran:</p>

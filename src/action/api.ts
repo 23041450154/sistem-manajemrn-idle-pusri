@@ -1353,6 +1353,30 @@ export async function completeEquipmentMaintenance(
 	}
 }
 
+export async function resubmitApproval(id: string, formData: FormData) {
+  const cookieStore = await cookies()
+  const token = cookieStore.get("token")?.value
+
+  try {
+    const res = await fetch(`${API_URL}/api/approvals/${id}/resubmit`, {
+      method: "PATCH",
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      body: formData,
+    })
+    
+    if (!res.ok) {
+      const errorData = await res.json().catch(() => null);
+      return { success: false, message: errorData?.message || errorData?.error || `HTTP Error ${res.status}` }
+    }
+    return { success: true }
+  } catch (error: any) {
+    console.error("Resubmit approval error:", error)
+    return { success: false, message: error.message }
+  }
+}
+
 export async function createReuseRequest(payload: {
 	equipment_id: string;
 	request_number?: string;

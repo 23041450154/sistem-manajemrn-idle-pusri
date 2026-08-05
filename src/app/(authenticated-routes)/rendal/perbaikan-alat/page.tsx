@@ -2,20 +2,17 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { getEquipments, completeEquipmentMaintenance, getAttachmentsByEquipmentId } from "@/action/api";
+import { getEquipments, completeEquipmentMaintenance } from "@/action/api";
 import {
   Wrench,
   Search,
   RefreshCw,
   CheckCircle2,
   XCircle,
-  FileText,
-  Upload,
   X,
   Loader2,
   ChevronRight,
-  Database,
-  Eye
+  Database
 } from "lucide-react";
 
 interface MaintenanceEquipment {
@@ -29,108 +26,7 @@ interface MaintenanceEquipment {
   statusId: number;
 }
 
-const INITIAL_MAINTENANCE_SAMPLES: MaintenanceEquipment[] = [
-  {
-    id: "601",
-    kodeAlat: "P-IB-PMP-102",
-    namaAlat: "Turbine Gas Generator Unit 3 Area Ammonia Plant P- III...",
-    plant: "PUSRI-IB",
-    lokasiPenyimpanan: "PUSRI-IB - Bengkel Pemeliharaan Sentral",
-    tanggalMasukPemeliharaan: "2026-07-15",
-    statusAset: "MAINTENANCE",
-    statusId: 6,
-  },
-  {
-    id: "602",
-    kodeAlat: "STG-1-GEN-004",
-    namaAlat: "Turbin Generator STG-1 5MW",
-    plant: "STG-1",
-    lokasiPenyimpanan: "STG-1 - Area Pemeliharaan Utilitas",
-    tanggalMasukPemeliharaan: "2026-07-18",
-    statusAset: "MAINTENANCE",
-    statusId: 6,
-  },
-  {
-    id: "603",
-    kodeAlat: "P-IIB-COMP-201",
-    namaAlat: "High Pressure Gas Compressor C-201",
-    plant: "PUSRI-IIB",
-    lokasiPenyimpanan: "PUSRI-IIB - Gudang Perbaikan Mekanik IIB",
-    tanggalMasukPemeliharaan: "2026-07-22",
-    statusAset: "MAINTENANCE",
-    statusId: 6,
-  },
-  {
-    id: "604",
-    kodeAlat: "P-IB-PMP-001",
-    namaAlat: "Centrifugal Pump 150HP",
-    plant: "PUSRI-IB",
-    lokasiPenyimpanan: "PUSRI-IB - Pabrik III",
-    tanggalMasukPemeliharaan: "2026-08-02",
-    statusAset: "MAINTENANCE",
-    statusId: 6,
-  },
-  {
-    id: "605",
-    kodeAlat: "P-III-MOT-010",
-    namaAlat: "Electric Motor 200kW",
-    plant: "PUSRI-III",
-    lokasiPenyimpanan: "PUSRI-III - Pabrik IV",
-    tanggalMasukPemeliharaan: "2026-07-27",
-    statusAset: "MAINTENANCE",
-    statusId: 6,
-  },
-  {
-    id: "606",
-    kodeAlat: "P-II-PMP-105",
-    namaAlat: "Boiler Feed Pump BFP-102",
-    plant: "PUSRI-II",
-    lokasiPenyimpanan: "PUSRI-II - Area Utility Boiler",
-    tanggalMasukPemeliharaan: "2026-07-20",
-    statusAset: "MAINTENANCE",
-    statusId: 6,
-  },
-  {
-    id: "607",
-    kodeAlat: "P-IB-GEN-002",
-    namaAlat: "Diesel Generator Backup 1.2MW",
-    plant: "PUSRI-IB",
-    lokasiPenyimpanan: "PUSRI-IB - Power Station",
-    tanggalMasukPemeliharaan: "2026-07-25",
-    statusAset: "MAINTENANCE",
-    statusId: 6,
-  },
-  {
-    id: "608",
-    kodeAlat: "P-IV-COMP-302",
-    namaAlat: "Ammonia Gas Compressor C-302",
-    plant: "PUSRI-IV",
-    lokasiPenyimpanan: "PUSRI-IV - Ammonia Plant",
-    tanggalMasukPemeliharaan: "2026-07-30",
-    statusAset: "MAINTENANCE",
-    statusId: 6,
-  },
-  {
-    id: "609",
-    kodeAlat: "P-IIB-FAN-101",
-    namaAlat: "Induced Draft Fan ID-FAN-101",
-    plant: "PUSRI-IIB",
-    lokasiPenyimpanan: "PUSRI-IIB - Utility Boiler",
-    tanggalMasukPemeliharaan: "2026-08-01",
-    statusAset: "MAINTENANCE",
-    statusId: 6,
-  },
-  {
-    id: "610",
-    kodeAlat: "P-III-TUR-202",
-    namaAlat: "Steam Turbine Drive ST-202",
-    plant: "PUSRI-III",
-    lokasiPenyimpanan: "PUSRI-III - Ammonia Synthesis Loop",
-    tanggalMasukPemeliharaan: "2026-07-29",
-    statusAset: "MAINTENANCE",
-    statusId: 6,
-  },
-];
+const INITIAL_MAINTENANCE_SAMPLES: MaintenanceEquipment[] = [];
 
 export default function PerbaikanAlatPage() {
   const router = useRouter();
@@ -151,10 +47,7 @@ export default function PerbaikanAlatPage() {
   const [displayCost, setDisplayCost] = useState("Rp 0"); // Masked string e.g. "Rp 25.000.000"
   const [conditionId, setConditionId] = useState(""); // "1" for BAGUS, "2" for RUSAK RINGAN
   const [preservationStatus, setPreservationStatus] = useState(""); // "Preserved" or "Not Preserved"
-  const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
-  const [existingFiles, setExistingFiles] = useState<any[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [previewImageUrl, setPreviewImageUrl] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
 
   const loadEquipments = async () => {
@@ -268,46 +161,14 @@ export default function PerbaikanAlatPage() {
     setDisplayCost(`Rp ${formatted}`);
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      const newFiles = Array.from(e.target.files);
-      const oversizedFiles = newFiles.filter(file => file.size > 5 * 1024 * 1024);
-      
-      if (oversizedFiles.length > 0) {
-        setModalError(`Gagal mengunggah: Ukuran berkas "${oversizedFiles[0].name}" melebihi batas maksimal 5MB.`);
-        // Clear input value so it can trigger change event again
-        e.target.value = "";
-        return;
-      }
-      
-      setModalError(null);
-      setUploadedFiles((prev) => [...prev, ...newFiles]);
-    }
-  };
-
-  const removeFile = (index: number) => {
-    setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
-  };
-
   const handleOpenModal = async (asset: MaintenanceEquipment) => {
     setSelectedAsset(asset);
     setActualCost("0");
     setDisplayCost("Rp 0");
     setConditionId("");
     setPreservationStatus("");
-    setUploadedFiles([]);
-    setExistingFiles([]);
     setModalError(null);
     setIsModalOpen(true);
-
-    try {
-      const files = await getAttachmentsByEquipmentId(asset.id);
-      if (files && Array.isArray(files)) {
-        setExistingFiles(files);
-      }
-    } catch (e) {
-      console.error(e);
-    }
   };
 
   const handleCloseModal = () => {
@@ -331,11 +192,7 @@ export default function PerbaikanAlatPage() {
     return preservationStatus === "Preserved" || preservationStatus === "Not Preserved";
   }, [preservationStatus]);
 
-  const isFileValid = useMemo(() => {
-    return uploadedFiles.length > 0 || existingFiles.length > 0;
-  }, [uploadedFiles, existingFiles]);
-
-  const isFormInvalid = !isCostValid || !isConditionValid || !isPreservationValid || !isFileValid;
+  const isFormInvalid = !isCostValid || !isConditionValid || !isPreservationValid;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -349,12 +206,6 @@ export default function PerbaikanAlatPage() {
       formData.append("actual_cost", actualCost);
       formData.append("condition_id", conditionId);
       formData.append("preservation_status", preservationStatus);
-
-      uploadedFiles.forEach((file) => {
-        formData.append("proof_document", file);
-        formData.append("file", file);
-        formData.append("bukti_bayar", file);
-      });
 
       const result = await completeEquipmentMaintenance(selectedAsset.id, formData);
 
@@ -698,125 +549,6 @@ export default function PerbaikanAlatPage() {
 
               </div>
 
-              {/* Komponen 4: Unggah Berkas Bukti Bayar / Dokumen SPK */}
-              <div>
-                <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1">
-                  Unggah Berkas Bukti Bayar / Dokumen SPK <span className="text-red-500">*</span>
-                </label>
-
-                {modalError && (
-                  <div className="mb-2 p-2 bg-red-50 border border-red-200 rounded-lg text-xs font-semibold text-red-600 flex items-center gap-1.5 animate-in fade-in duration-200">
-                    <XCircle className="w-3.5 h-3.5 shrink-0 text-red-500" />
-                    <span>{modalError}</span>
-                  </div>
-                )}
-
-                <div className={`border-2 border-dashed rounded-lg p-3 transition-colors flex flex-col items-center justify-center ${(uploadedFiles.length > 0 || existingFiles.length > 0) ? 'border-blue-300 bg-blue-50/30' : 'border-gray-300 bg-gray-50/50 hover:bg-blue-50/30 hover:border-blue-400'}`}>
-
-                  {/* File Previews Grid */}
-                  {(uploadedFiles.length > 0 || existingFiles.length > 0) && (
-                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 mb-3 w-full">
-                      {existingFiles.map((file, idx) => {
-                        const isImage = file.type?.startsWith("image/") || file.file_url?.match(/\.(jpg|jpeg|png)$/i) || file.name?.match(/\.(jpg|jpeg|png)$/i);
-                        return (
-                          <div
-                            key={`existing-${idx}`}
-                            className="relative group bg-white border border-blue-200 rounded-lg overflow-hidden flex flex-col shadow-sm"
-                          >
-                            {isImage ? (
-                              <div
-                                className="w-full h-20 bg-gray-100 flex-shrink-0 cursor-pointer relative group/img overflow-hidden"
-                                onClick={() => setPreviewImageUrl(file.file_url || file.url)}
-                              >
-                                <img src={file.file_url || file.url} alt="preview" className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-110" />
-                                <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-colors flex items-center justify-center">
-                                  <Eye className="w-6 h-6 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" />
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="w-full h-20 bg-gray-50 flex items-center justify-center flex-shrink-0 border-b border-gray-100">
-                                <FileText className="w-8 h-8 text-[#0A356A]" />
-                              </div>
-                            )}
-                            <div className="p-1.5 flex flex-col bg-white">
-                              <span className="font-semibold text-gray-800 text-[10px] truncate">{file.name || "Dokumen"}</span>
-                              <span className="text-[9px] text-gray-500">Dari Database</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setExistingFiles(prev => prev.filter((_, i) => i !== idx))}
-                              className="absolute top-1 right-1 bg-white/90 backdrop-blur text-gray-600 hover:text-red-600 p-1 rounded-md shadow-sm border border-gray-200 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                      {uploadedFiles.map((file, idx) => {
-                        const isImage = file.type.startsWith("image/");
-                        return (
-                          <div
-                            key={idx}
-                            className="relative group bg-white border border-blue-200 rounded-lg overflow-hidden flex flex-col shadow-sm"
-                          >
-                            {isImage ? (
-                              <div
-                                className="w-full h-20 bg-gray-100 flex-shrink-0 cursor-pointer relative group/img overflow-hidden"
-                                onClick={() => setPreviewImageUrl(URL.createObjectURL(file))}
-                              >
-                                {/* eslint-disable-next-line @next/next/no-img-element */}
-                                <img src={URL.createObjectURL(file)} alt="preview" className="w-full h-full object-cover transition-transform duration-300 group-hover/img:scale-110" />
-                                <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/20 transition-colors flex items-center justify-center">
-                                  <Eye className="w-6 h-6 text-white opacity-0 group-hover/img:opacity-100 transition-opacity drop-shadow-md" />
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="w-full h-20 bg-gray-50 flex items-center justify-center flex-shrink-0 border-b border-gray-100">
-                                <FileText className="w-8 h-8 text-[#0A356A]" />
-                              </div>
-                            )}
-                            <div className="p-1.5 flex flex-col bg-white">
-                              <span className="font-semibold text-gray-800 text-[10px] truncate">{file.name}</span>
-                              <span className="text-[9px] text-gray-500">{(file.size / 1024).toFixed(1)} KB</span>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => removeFile(idx)}
-                              className="absolute top-1 right-1 bg-white/90 backdrop-blur text-gray-600 hover:text-red-600 p-1 rounded-md shadow-sm border border-gray-200 opacity-0 group-hover:opacity-100 transition-all hover:bg-red-50"
-                            >
-                              <X className="w-3 h-3" />
-                            </button>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  )}
-
-                  {/* Upload Trigger Area */}
-                  <label className="flex flex-col items-center justify-center text-center cursor-pointer w-full">
-                    {uploadedFiles.length === 0 ? (
-                      <>
-                        <Upload className="w-4 h-4 text-gray-400 mb-1" />
-                        <span className="text-xs font-bold text-gray-700">Pilih berkas bukti bayar / dokumen SPK</span>
-                        <span className="text-[9px] text-gray-400 mt-0.5">Mendukung PDF, JPG, PNG. Maksimal 5MB.</span>
-                      </>
-                    ) : (
-                      <div className="flex items-center gap-1.5 text-xs font-bold text-[#0A356A] bg-white px-3 py-1.5 rounded border border-blue-200 shadow-sm hover:bg-blue-50 transition-colors">
-                        <Upload className="w-3.5 h-3.5" />
-                        Tambah Berkas
-                      </div>
-                    )}
-                    <input
-                      type="file"
-                      multiple
-                      accept="application/pdf,image/*"
-                      onChange={handleFileChange}
-                      className="hidden"
-                    />
-                  </label>
-                </div>
-              </div>
-
               {/* Modal Footer Actions */}
               <div className="mt-1 flex items-center justify-end gap-3 pt-2.5 border-t border-gray-100">
                 <button
@@ -844,25 +576,6 @@ export default function PerbaikanAlatPage() {
 
             </form>
           </div>
-        </div>
-      )}
-
-      {/* Image Preview Lightbox */}
-      {previewImageUrl && (
-        <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setPreviewImageUrl(null)}>
-          <button
-            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white bg-gray-800/50 hover:bg-gray-800 rounded-full transition-colors"
-            onClick={(e) => { e.stopPropagation(); setPreviewImageUrl(null); }}
-          >
-            <X className="w-6 h-6" />
-          </button>
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={previewImageUrl}
-            alt="Full Preview"
-            className="max-w-full max-h-[90vh] object-contain rounded-lg shadow-2xl animate-in zoom-in-95 duration-200"
-            onClick={(e) => e.stopPropagation()}
-          />
         </div>
       )}
 

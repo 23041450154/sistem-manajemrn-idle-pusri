@@ -99,7 +99,7 @@ export default function EquipmentManagementPage() {
       REGISTERED: "bg-slate-100 text-slate-600 border-slate-200",
       VALIDATED: "bg-emerald-50 text-emerald-700 border-emerald-200",
       REJECTED: "bg-red-50 text-red-700 border-red-200",
-      "READY TO USE": "bg-emerald-50 text-emerald-700 border-emerald-200",
+      "READY TO USE": "bg-[#0A356A]/10 text-[#0A356A] border-[#0A356A]/20",
       MAINTENANCE: "bg-amber-50 text-amber-800 border-amber-200",
       "READY TO REUSE": "bg-emerald-50 text-emerald-700 border-emerald-200",
     };

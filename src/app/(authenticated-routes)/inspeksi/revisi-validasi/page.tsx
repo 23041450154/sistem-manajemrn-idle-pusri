@@ -7,6 +7,8 @@ import {
   ArrowUpDown, ArrowUp, ArrowDown, Download, Info
 } from "lucide-react";
 
+import AnalogTimePicker from "@/components/AnalogTimePicker";
+
 import { getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 
@@ -172,8 +174,8 @@ export default function RevisiValidasiPage() {
   const [catatan, setCatatan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [tglPemeriksaan, setTglPemeriksaan] = useState(new Date().toISOString().split('T')[0]);
-  const [jamMulai, setJamMulai] = useState("");
-  const [jamSelesai, setJamSelesai] = useState("");
+  const [jamMulai, setJamMulai] = useState("08:00");
+  const [jamSelesai, setJamSelesai] = useState("09:00");
 
   const handleTimeInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
     const numbers = value.replace(/\D/g, "");
@@ -311,7 +313,7 @@ export default function RevisiValidasiPage() {
     const endMins = hSelesai * 60 + mSelesai;
     const diff = endMins - startMins;
     
-    if (diff <= 0) return "Invalid";
+    if (diff <= 0) return "-";
     const h = Math.floor(diff / 60);
     const m = diff % 60;
     return `${h > 0 ? h + ' Jam ' : ''}${m > 0 ? m + ' Menit' : ''}`;
@@ -449,7 +451,6 @@ export default function RevisiValidasiPage() {
   const validateForm = () => {
     if (!hasilPemeriksaan || !lokasi || !tglPemeriksaan || !jamMulai || !jamSelesai) return false;
     if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
-    if (uploadedFiles.length < 2) return false;
     return true;
   };
 
@@ -613,7 +614,7 @@ export default function RevisiValidasiPage() {
                       <td className="px-3 py-1 text-[14px] text-gray-600 font-medium">
                         {asset.jenisAlat}
                       </td>
-                      <td className="px-3 py-1 text-[14px] text-gray-600">
+                      <td className="px-3 py-1 text-[11px] text-gray-600 font-medium whitespace-nowrap">
                         {asset.tanggalRegistrasi}
                       </td>
                       <td className="px-3 py-1 text-[14px]">
@@ -745,34 +746,25 @@ export default function RevisiValidasiPage() {
                     <input type="text" value={`INSP-${selectedAsset.kodeAlat}`} disabled className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-1.5 text-[13px] font-medium text-gray-500" />
                   </div>
                   <div className="col-span-3">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Tanggal</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Tanggal *</label>
                     <input type="date" value={tglPemeriksaan} onChange={e => setTglPemeriksaan(e.target.value)} className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${showValidationErrors && !tglPemeriksaan ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
                     {showValidationErrors && !tglPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Tanggal wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Mulai</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
-                    <div className="relative">
-                      <input type="text" placeholder="00:00" maxLength={5} value={jamMulai} onChange={e => handleTimeInput(e.target.value, setJamMulai)} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none ${showValidationErrors && jamMulai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
-                    </div>
-                    {showValidationErrors && jamMulai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
+                    <AnalogTimePicker 
+                      value={jamMulai} 
+                      onChange={setJamMulai} 
+                      label="Jam Mulai *" 
+                    />
+                    {showValidationErrors && !jamMulai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam Mulai wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Selesai</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
-                    <div className="relative">
-                      <input type="text" placeholder="00:00" maxLength={5} value={jamSelesai} onChange={e => handleTimeInput(e.target.value, setJamSelesai)} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none ${showValidationErrors && jamSelesai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
-                    </div>
-                    {showValidationErrors && jamSelesai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
+                    <AnalogTimePicker 
+                      value={jamSelesai} 
+                      onChange={setJamSelesai} 
+                      label="Jam Selesai *" 
+                    />
+                    {showValidationErrors && !jamSelesai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam Selesai wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Durasi</label>
@@ -786,10 +778,7 @@ export default function RevisiValidasiPage() {
                 {/* Row 2: Lokasi & Hasil */}
                 <div className="grid grid-cols-12 gap-3 mb-3">
                   <div className="col-span-5">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Lokasi Pengecekan</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Lokasi Pengecekan *</label>
                     <select 
                       value={lokasi} 
                       onChange={e => setLokasi(e.target.value)} 
@@ -808,10 +797,7 @@ export default function RevisiValidasiPage() {
                   </div>
                   
                   <div className="col-span-7">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Hasil Evaluasi Kelayakan</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Hasil Evaluasi Kelayakan *</label>
                     <div className="flex gap-2.5">
                       <label className={`flex-1 relative border rounded-md p-1.5 cursor-pointer flex items-center justify-center gap-2 transition-all ${
                         hasilPemeriksaan === "Layak" ? "border-emerald-500 bg-emerald-50/50" : "border-gray-200 bg-white hover:bg-gray-50"
@@ -819,7 +805,7 @@ export default function RevisiValidasiPage() {
                         <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Layak" ? "border-emerald-500" : (showValidationErrors && !hasilPemeriksaan ? "border-red-400" : "border-gray-300")}`}>
                           {hasilPemeriksaan === "Layak" && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
                         </div>
-                        <span className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-emerald-700" : "text-gray-700"}`}>Layak Utilisasi</span>
+                        <span className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-emerald-700" : "text-gray-700"}`}>Layak Digunakan</span>
                         <input type="radio" name="hasil" value="Layak" checked={hasilPemeriksaan === "Layak"} onChange={e => setHasilPemeriksaan(e.target.value)} className="hidden" />
                       </label>
                       
@@ -840,15 +826,12 @@ export default function RevisiValidasiPage() {
                 {/* Row 3: Catatan & Rekomendasi */}
                 <div className="grid grid-cols-2 gap-4 mb-3">
                   <div>
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Catatan Pemeriksaan Baru <span className={hasilPemeriksaan === "Tidak Layak" ? "text-red-500" : ""}>{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}</span></label>
-                      {hasilPemeriksaan === "Tidak Layak" && <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>}
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Catatan Pemeriksaan Baru <span className={hasilPemeriksaan === "Tidak Layak" ? "text-red-500" : ""}>{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}</span></label>
                     <textarea 
                       rows={2} 
                       value={catatan}
                       onChange={e => setCatatan(e.target.value)}
-                      placeholder={hasilPemeriksaan === "Tidak Layak" ? "Tuliskan alasan perbaikan (wajib)..." : "Detail temuan baru..."}
+                      placeholder={hasilPemeriksaan === "Tidak Layak" ? "Tuliskan alasan perbaikan (wajib)..." : "Tuliskan hasil pemeriksaan..."}
                       className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none resize-none transition-all ${
                         hasilPemeriksaan === "Tidak Layak" && !catatan.trim() 
                         ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" 
@@ -892,13 +875,12 @@ export default function RevisiValidasiPage() {
                   >
                     <UploadCloud className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A] animate-bounce" : "text-gray-400"}`} />
                     <div className="text-[13px] text-center">
-                      <span className="font-bold text-[#0A356A]">Klik untuk memilih foto revisi</span>
-                      <span className="text-gray-600 font-medium"> atau drag & drop ke sini</span>
+                      <span className="font-bold text-[#0A356A]">📎 Upload Foto Pemeriksaan</span>
                     </div>
                     <span className="text-[11px] text-gray-500 font-medium text-center">Format: JPG, PNG, PDF (Max 5MB)</span>
                     
                     {uploadedFiles.length === 0 && (
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1.5 py-0.5 rounded mt-1">Wajib Minimal 2 Foto/File Baru</span>
+                      <span className="text-[9px] font-bold text-gray-500 uppercase bg-gray-50 px-1.5 py-0.5 rounded mt-1">Opsional</span>
                     )}
 
                     {uploadedFiles.length > 0 && (
@@ -938,9 +920,6 @@ export default function RevisiValidasiPage() {
                     )}
                   </div>
                   
-                  {showValidationErrors && uploadedFiles.length < 2 && (
-                    <p className="text-[10px] text-red-500 mt-1.5 font-medium">* Wajib mengunggah minimal 2 foto dokumentasi/file referensi revisi.</p>
-                  )}
                   {fileError && (
                     <p className="text-[10px] text-red-500 mt-1.5 font-medium">* {fileError}</p>
                   )}
@@ -965,9 +944,9 @@ export default function RevisiValidasiPage() {
                 className="px-5 py-1.5 text-[13px] font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-md transition-all shadow-sm disabled:opacity-50 flex items-center gap-1.5"
               >
                 {isSubmitting ? (
-                  <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Mengirim Revisi...</>
+                  <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Proses...</>
                 ) : (
-                  <><Save className="w-3.5 h-3.5" /> Kirim Revisi Validasi</>
+                  <><Save className="w-3.5 h-3.5" /> Simpan Hasil Inspeksi</>
                 )}
               </button>
             </div>

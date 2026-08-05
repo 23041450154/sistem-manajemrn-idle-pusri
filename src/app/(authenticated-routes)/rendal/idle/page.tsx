@@ -4,12 +4,12 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { getEquipments, getObjectTypes } from "@/action/api";
 import { 
-  Search, AlertCircle, RefreshCw, Filter, Plus, X,
+  Search, AlertCircle, RefreshCw, Filter, Plus, X, RotateCcw,
   ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download, Eye, Upload, Wrench, CheckCircle 
 } from "lucide-react";
 
 // Tipe Data menyesuaikan dengan struktur standar Asset/Equipment
-type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE" | "DALAM_PERBAIKAN" | "READY_TO_REUSE";
+type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE" | "DALAM_PERBAIKAN" | "READY_TO_REUSE" | "READY TO USE" | "DISPOSAL" | "TIDAK LAYAK" | "NEED_REVISION";
 type ApprovalState = "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "NEED_REVISION";
 
 interface Equipment {
@@ -71,6 +71,13 @@ export default function RendalIdlePage() {
         return idB - idA;
       });
 
+      let revisedIds: string[] = [];
+      if (typeof window !== "undefined") {
+        try {
+          revisedIds = JSON.parse(localStorage.getItem("revised_equipment_ids") || "[]");
+        } catch (e) {}
+      }
+
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const mappedData = data.map((item: any) => {
         let objectTypeName = "Belum Ditentukan";
@@ -86,6 +93,14 @@ export default function RendalIdlePage() {
           }
         }
 
+        const isRevised = revisedIds.includes(String(item.id));
+        const rawStatus = (typeof item.status === 'string' ? item.status : item.status?.name) || "";
+        let statusStr = isRevised 
+          ? "REGISTERED"
+          : (rawStatus || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "READY TO USE" : item.status_id === 5 ? "READY_TO_REUSE" : "REGISTERED")).toUpperCase();
+        
+        if (statusStr === "IDLE") statusStr = "READY TO USE";
+
         return {
           id: item.id?.toString() || "-",
           kodeAlat: item.equipment_code,
@@ -93,7 +108,7 @@ export default function RendalIdlePage() {
           plant: item.plant,
           jenisAlat: objectTypeName,
           tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
-          statusAset: (item.status?.name || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "IDLE" : "REGISTERED")).toUpperCase(),
+          statusAset: statusStr,
           statusPersetujuan: "PENDING", // TODO: match with approvals later if needed
         };
       });
@@ -162,8 +177,8 @@ export default function RendalIdlePage() {
       REGISTERED: "bg-blue-100 text-blue-800 border-blue-200",
       VALIDATED: "bg-emerald-100 text-emerald-800 border-emerald-200",
       REJECTED: "bg-red-100 text-red-800 border-red-200",
-      IDLE: "bg-emerald-100 text-emerald-800 border-emerald-200",
-      "READY TO USE": "bg-emerald-100 text-emerald-800 border-emerald-200",
+      IDLE: "bg-purple-100 text-purple-800 border-purple-200",
+      "READY TO USE": "bg-purple-100 text-purple-800 border-purple-200",
       DALAM_PERBAIKAN: "bg-amber-50 text-amber-700 border-amber-200",
       READY_TO_REUSE: "bg-teal-50 text-teal-700 border-teal-200",
     };
@@ -184,8 +199,8 @@ export default function RendalIdlePage() {
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-[#0A356A] tracking-tight">Data Idle Equipment</h1>
-            <p className="text-sm text-gray-500 mt-1">Daftar seluruh peralatan idle yang terhubung dengan database utama.</p>
+            <h1 className="text-2xl font-bold text-[#0A356A] tracking-tight">Data Registrasi Aset Idle</h1>
+            <p className="text-sm text-gray-500 mt-1">Daftar seluruh aset idle yang telah diregistrasi beserta status proses validasinya.</p>
           </div>
           <button 
             onClick={fetchEquipments}
@@ -213,13 +228,11 @@ export default function RendalIdlePage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
-              placeholder="Cari Kode atau Nama Alat (Tekan Enter)..." 
+              placeholder="Cari kode atau nama alat..." 
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setSearch(searchInput);
-                }
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setSearch(e.target.value); // Realtime search!
               }}
               className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] transition-all outline-none"
             />
@@ -257,7 +270,7 @@ export default function RendalIdlePage() {
             
             <Link href="/rendal/register-equipment" className="flex items-center gap-2 bg-[#0A356A] hover:bg-[#062854] text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm whitespace-nowrap">
               <Plus className="w-4 h-4" />
-              Register Equipment
+              Daftarkan Peralatan
             </Link>
           </div>
         </div>
@@ -288,9 +301,11 @@ export default function RendalIdlePage() {
                 className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-[#0A356A] cursor-pointer font-medium"
               >
                 <option value="Semua">Semua Status</option>
-                <option value="IDLE">IDLE</option>
                 <option value="REGISTERED">REGISTERED</option>
                 <option value="VALIDATED">VALIDATED</option>
+                <option value="IDLE">IDLE</option>
+                <option value="DALAM_PERBAIKAN">DALAM PERBAIKAN</option>
+                <option value="READY_TO_REUSE">READY TO REUSE</option>
               </select>
             </div>
           </div>
@@ -369,7 +384,7 @@ export default function RendalIdlePage() {
                     <td className="px-5 py-3 whitespace-nowrap">
                       {getStatusBadge(item.statusAset)}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-right">
+                    <td className="px-5 py-3 whitespace-nowrap text-right flex items-center justify-end gap-2">
                       {item.statusAset === "DALAM_PERBAIKAN" && (
                         <button 
                           onClick={() => setRepairModal(item)}
@@ -380,7 +395,16 @@ export default function RendalIdlePage() {
                           <span>Perbaikan</span>
                         </button>
                       )}
-                      {item.statusAset !== "DALAM_PERBAIKAN" && (
+                      {(item.statusAset === "REJECTED" || item.statusAset === "DISPOSAL" || item.statusAset === "TIDAK LAYAK" || item.statusAset === "NEED_REVISION") ? (
+                        <Link 
+                          href={`/rendal/register-equipment?editId=${item.id}`}
+                          className="inline-flex items-center justify-center gap-1.5 bg-amber-50 text-amber-800 hover:bg-amber-600 hover:text-white border border-amber-200 px-2.5 py-1 rounded text-[10px] font-bold transition-all shadow-sm ml-auto"
+                          title="Revisi (Dinyatakan Tidak Layak)"
+                        >
+                          <RotateCcw className="w-3 h-3" />
+                          <span>Revisi</span>
+                        </Link>
+                      ) : item.statusAset !== "DALAM_PERBAIKAN" && (
                         <button 
                           onClick={() => setDetailModal(item)}
                           className="inline-flex items-center justify-center gap-1.5 bg-gray-50 text-gray-600 hover:bg-[#0A356A] hover:text-white border border-gray-200 px-2 py-1 rounded text-[10px] font-bold transition-all shadow-sm ml-auto" 
@@ -402,7 +426,7 @@ export default function RendalIdlePage() {
         {!isLoading && filteredData.length > 0 && (
           <div className="px-5 py-3 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
             <span className="text-sm font-medium text-gray-500">
-              Menampilkan {paginatedData.length} data (Total {filteredData.length})
+              Menampilkan {filteredData.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)} dari {filteredData.length} data
             </span>
             {totalPages > 1 && (
               <div className="flex items-center gap-2">

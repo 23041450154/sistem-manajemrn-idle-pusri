@@ -387,7 +387,7 @@ export default function UnitKerjaKatalogPage() {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       READY_TO_REUSE: "bg-[#DCFCE7] text-[#16A34A]",
-      IDLE: "bg-[#DCFCE7] text-[#16A34A]",
+      IDLE: "bg-[#E0E7FF] text-[#4F46E5]",
     };
     const labels: Record<string, string> = {
       READY_TO_REUSE: "Ready to Use",
