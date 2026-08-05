@@ -159,15 +159,20 @@ export default function RendalIdlePage() {
 
   const getStatusBadge = (status: AssetState) => {
     const styles: Record<string, string> = {
-      REGISTERED: "bg-blue-100 text-blue-800 border-blue-200",
-      VALIDATED: "bg-emerald-100 text-emerald-800 border-emerald-200",
-      REJECTED: "bg-red-100 text-red-800 border-red-200",
-      IDLE: "bg-purple-100 text-purple-800 border-purple-200",
-      DALAM_PERBAIKAN: "bg-amber-50 text-amber-700 border-amber-200",
-      READY_TO_REUSE: "bg-teal-50 text-teal-700 border-teal-200",
+      REGISTERED: "bg-purple-100 text-purple-800 border-purple-200",      // 🟣 REGISTERED
+      VALIDATED: "bg-emerald-100 text-emerald-800 border-emerald-200",    // 🟢 MENUNGGU APPROVAL
+      IDLE: "bg-yellow-100 text-yellow-800 border-yellow-200",            // 🟡 IDLE
+      READY_TO_REUSE: "bg-blue-100 text-blue-800 border-blue-200",        // 🔵 READY TO REUSE
+      REJECTED: "bg-red-100 text-red-800 border-red-200",                 // 🔴 REJECTED
+      DALAM_PERBAIKAN: "bg-orange-100 text-orange-800 border-orange-200", // 🟠 DALAM PERBAIKAN
     };
+    
+    let label = status.replace(/_/g, ' ');
+    if (status === "VALIDATED") {
+      label = "MENUNGGU APPROVAL";
+    }
     const style = styles[status] || "bg-gray-50 text-gray-700 border-gray-200";
-    return <span className={`inline-flex items-center justify-center text-[10px] font-extrabold px-2 py-0.5 rounded border tracking-wide whitespace-nowrap shadow-sm ${style}`}>{status.replace(/_/g, ' ')}</span>;
+    return <span className={`inline-flex items-center justify-center text-[10px] font-extrabold px-2 py-0.5 rounded border tracking-wide whitespace-nowrap shadow-sm ${style}`}>{label}</span>;
   };
 
   return (
@@ -182,8 +187,8 @@ export default function RendalIdlePage() {
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl font-bold text-[#0A356A] tracking-tight">Data Idle Equipment</h1>
-            <p className="text-sm text-gray-500 mt-1">Daftar seluruh peralatan idle yang terhubung dengan database utama.</p>
+            <h1 className="text-2xl font-bold text-[#0A356A] tracking-tight">Data Registrasi Aset Idle</h1>
+            <p className="text-sm text-gray-500 mt-1">Daftar seluruh aset idle yang telah diregistrasi beserta status proses validasinya.</p>
           </div>
           <button 
             onClick={fetchEquipments}
@@ -211,13 +216,11 @@ export default function RendalIdlePage() {
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input 
               type="text" 
-              placeholder="Cari Kode atau Nama Alat (Tekan Enter)..." 
+              placeholder="Cari kode atau nama alat..." 
               value={searchInput}
-              onChange={(e) => setSearchInput(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  setSearch(searchInput);
-                }
+              onChange={(e) => {
+                setSearchInput(e.target.value);
+                setSearch(e.target.value); // Realtime search!
               }}
               className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] transition-all outline-none"
             />
@@ -286,9 +289,11 @@ export default function RendalIdlePage() {
                 className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-[#0A356A] cursor-pointer font-medium"
               >
                 <option value="Semua">Semua Status</option>
-                <option value="IDLE">IDLE</option>
                 <option value="REGISTERED">REGISTERED</option>
-                <option value="VALIDATED">VALIDATED</option>
+                <option value="VALIDATED">MENUNGGU APPROVAL</option>
+                <option value="IDLE">IDLE</option>
+                <option value="DALAM_PERBAIKAN">DALAM PERBAIKAN</option>
+                <option value="READY_TO_REUSE">READY TO REUSE</option>
               </select>
             </div>
           </div>
@@ -400,7 +405,7 @@ export default function RendalIdlePage() {
         {!isLoading && filteredData.length > 0 && (
           <div className="px-5 py-3 bg-gray-50 border-t border-gray-200 flex flex-col sm:flex-row justify-between items-center gap-4">
             <span className="text-sm font-medium text-gray-500">
-              Menampilkan {paginatedData.length} data (Total {filteredData.length})
+              Menampilkan {filteredData.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}–{Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)} dari {filteredData.length} data
             </span>
             {totalPages > 1 && (
               <div className="flex items-center gap-2">
