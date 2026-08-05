@@ -23,6 +23,7 @@ import {
 	getObjectTypes,
 	getStorageLocations,
 	getIdleReasons,
+	getFunctionalLocations,
 } from "@/action/api";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -56,6 +57,9 @@ export default function RegisterEquipmentPage() {
 	const [idleReasons, setIdleReasons] = useState<
 		{ id: number; reason_name: string; description?: string }[]
 	>([]);
+	const [functionalLocations, setFunctionalLocations] = useState<
+		{ id: number; code: string; description: string }[]
+	>([]);
 
 	// UX Improvement: Semua nilai dropdown & radio di-set kosong ("") di awal
 	const [formData, setFormData] = useState({
@@ -74,15 +78,17 @@ export default function RegisterEquipmentPage() {
 
 	useEffect(() => {
 		async function loadData() {
-			const [objs, locs, reasons, equipments] = await Promise.all([
+			const [objs, locs, reasons, funlocs, equipments] = await Promise.all([
 				getObjectTypes(),
 				getStorageLocations(),
 				getIdleReasons(),
+				getFunctionalLocations(),
 				editId ? getEquipments() : Promise.resolve([]),
 			]);
 			setObjectTypes(objs);
 			setStorageLocations(locs);
 			setIdleReasons(reasons);
+			setFunctionalLocations(funlocs);
 
 			// ponytail: backend equipment shape belum punya DTO frontend bersama.
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -578,15 +584,20 @@ export default function RegisterEquipmentPage() {
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									AREA (FUNCLOC)
 								</label>
-								<input
-									type="text"
+								<select
 									onBlur={handleBlur}
 									name="funcLoc"
 									value={formData.funcLoc}
 									onChange={handleChange}
-									placeholder="FuncLoc"
-									className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg outline-none transition-all focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
-								/>
+									className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white outline-none transition-all focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
+								>
+									<option value="">Pilih Area (FuncLoc)...</option>
+									{functionalLocations.map((loc) => (
+										<option key={loc.id} value={loc.code}>
+											{loc.code} - {loc.description}
+										</option>
+									))}
+								</select>
 							</div>
 
 							{/* Garis Pemisah Visual */}

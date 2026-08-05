@@ -1495,3 +1495,22 @@ export async function getReuseRequests() {
 		return [];
 	}
 }
+
+export async function getFunctionalLocations() {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
+
+	try {
+		const res = await fetch(`${baseUrl}/api/functional-locations`, {
+			headers: { Authorization: `Bearer ${token}` },
+			cache: "no-store",
+		});
+		if (!res.ok) return [];
+		const json = await res.json();
+		return json.data || [];
+	} catch (error) {
+		console.error("Fetch functional locations error:", error);
+		return [];
+	}
+}
