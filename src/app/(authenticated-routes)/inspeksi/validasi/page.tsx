@@ -724,10 +724,12 @@ export default function ManajemenInspeksi() {
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input 
                 type="text" 
-                placeholder="Cari Kode atau Nama Alat..." 
+                placeholder="Cari kode atau nama alat..." 
                 value={searchInput}
-                onChange={(e) => setSearchInput(e.target.value)}
-                onKeyDown={(e) => e.key === 'Enter' && setSearch(searchInput)}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  setSearch(e.target.value); // Realtime search!
+                }}
                 className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400" 
               />
             </div>
