@@ -395,28 +395,30 @@ export default function ManajerApprovePage() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Nomor Request</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Kode Aset</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider min-w-[120px]">Nama Aset</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Plant</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Tanggal Pengajuan</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Status Aset</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Status Persetujuan</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Aksi</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center w-12 whitespace-nowrap">No</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Kode</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Kode Aset</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider min-w-[120px] whitespace-nowrap text-center">Nama Aset</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Plant</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Tanggal</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Status Aset</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Status</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {paginatedRequests.map((req) => (
+              {paginatedRequests.map((req, index) => (
                 <tr key={req.id} className="hover:bg-blue-50/30 transition-colors">
-                  <td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug">{req.nomorRequest}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900">{req.kodeAset}</td>
-                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug">{req.namaAset}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium">{req.plant}</td>
-                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug">{req.tanggalPengajuan}</td>
-                  <td className="px-2 py-2 whitespace-nowrap">
+                  <td className="px-2 py-2 text-[12px] text-gray-500 font-medium text-center">{index + 1 + (currentPage - 1) * ITEMS_PER_PAGE}</td>
+                  <td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug text-center">{req.nomorRequest}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900 text-center">{req.kodeAset}</td>
+                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug text-center">{req.namaAset}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-center">{req.plant}</td>
+                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug text-center">{req.tanggalPengajuan}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-center">
                     {getStatusAsetBadge(req.statusAset)}
                   </td>
-                  <td className="px-2 py-2">
+                  <td className="px-2 py-2 text-center">
                     {getApprovalBadge(req.statusPersetujuan)}
                   </td>
                   <td className="px-2 py-2 text-center w-[80px]">

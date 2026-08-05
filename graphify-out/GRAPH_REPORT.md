@@ -1,11 +1,11 @@
-# Graph Report - .  (2026-08-02)
+# Graph Report - .  (2026-08-04)
 
 ## Corpus Check
-- 52 files · ~222,740 words
+- 22 files · ~227,936 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 498 nodes · 744 edges · 57 communities (39 shown, 18 thin omitted)
+- 505 nodes · 765 edges · 57 communities (39 shown, 18 thin omitted)
 - Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 13 edges (avg confidence: 0.87)
 - Token cost: 0 input · 0 output
 
@@ -57,13 +57,13 @@
 - Community 56
 
 ## God Nodes (most connected - your core abstractions)
-1. `getCurrentUserAction()` - 26 edges
-2. `getEquipments()` - 23 edges
+1. `getCurrentUserAction()` - 27 edges
+2. `getEquipments()` - 25 edges
 3. `normalizeRole()` - 22 edges
 4. `compilerOptions` - 16 edges
 5. `OpenInTerminalPlugin` - 15 edges
-6. `getObjectTypes()` - 12 edges
-7. `getAttachmentsByEquipmentId()` - 11 edges
+6. `getObjectTypes()` - 14 edges
+7. `getAttachmentsByEquipmentId()` - 13 edges
 8. `MasterDataPage()` - 10 edges
 9. `onload()` - 9 edges
 10. `__awaiter()` - 9 edges
@@ -75,10 +75,10 @@
   README.md → Dokumentasi Aplikasi.md
 - `UnitKerjaDashboard()` --references--> `react`  [EXTRACTED]
   src/components/Dashboards/UnitKerjaDashboard.tsx → package.json
+- `RendalDashboard()` --calls--> `getEquipments()`  [EXTRACTED]
+  src/components/Dashboards/RendalDashboard.tsx → src/action/api.ts
 - `Agents MD Reference` --references--> `Next.js Breaking Changes Rules`  [EXTRACTED]
   CLAUDE.md → AGENTS.md
-- `Frontend Next.js Architecture` --references--> `Next.js Breaking Changes Rules`  [EXTRACTED]
-  Dokumentasi Aplikasi.md → AGENTS.md
 
 ## Import Cycles
 - None detected.
@@ -102,8 +102,8 @@
 ## Communities (57 total, 18 thin omitted)
 
 ### Community 0 - "Community 0"
-Cohesion: 0.06
-Nodes (49): approveDisposal(), createEquipment(), createInspection(), createObjectType(), createRequireAction(), createStorageLocation(), deleteObjectType(), deleteRequireAction() (+41 more)
+Cohesion: 0.05
+Nodes (62): approveDisposal(), completeEquipmentMaintenance(), createEquipment(), createInspection(), createObjectType(), createRequireAction(), createStorageLocation(), deleteEquipment() (+54 more)
 
 ### Community 1 - "Community 1"
 Cohesion: 0.08
@@ -114,28 +114,28 @@ Cohesion: 0.10
 Nodes (28): __awaiter(), buildDefaultTerminalAppSetting(), buildLaunchCommand(), buildMacLaunch(), buildUnixLaunch(), buildWindowsLaunch(), DEFAULT_SETTINGS, defaultTerminalApp() (+20 more)
 
 ### Community 3 - "Community 3"
-Cohesion: 0.11
-Nodes (19): completeEquipmentMaintenance(), deleteEquipment(), getEquipments(), EquipmentManagementPage(), fetchDashboardData(), InspeksiDashboardPage(), Equipment, InspeksiAntreanPage() (+11 more)
-
-### Community 4 - "Community 4"
 Cohesion: 0.07
 Nodes (28): @base-ui/react, class-variance-authority, clsx, lucide-react, next, nextjs-toploader, dependencies, @base-ui/react (+20 more)
 
-### Community 5 - "Community 5"
+### Community 4 - "Community 4"
 Cohesion: 0.07
 Nodes (28): dom, dom.iterable, esnext, **/*.mts, .next/dev/types/**/*.ts, next-env.d.ts, .next/types/**/*.ts, node_modules (+20 more)
 
-### Community 6 - "Community 6"
+### Community 5 - "Community 5"
 Cohesion: 0.08
 Nodes (25): eslint, eslint-config-next, devDependencies, eslint, eslint-config-next, tailwindcss, @tailwindcss/postcss, @types/node (+17 more)
 
-### Community 7 - "Community 7"
+### Community 6 - "Community 6"
 Cohesion: 0.09
 Nodes (21): aliases, components, hooks, lib, ui, utils, iconLibrary, menuAccent (+13 more)
 
-### Community 8 - "Community 8"
+### Community 7 - "Community 7"
 Cohesion: 0.18
 Nodes (16): b(), broadcastSelection(), D(), E(), I(), L(), N(), onload() (+8 more)
+
+### Community 8 - "Community 8"
+Cohesion: 0.19
+Nodes (10): fetchDashboardData(), InspeksiDashboardPage(), fetchDashboardData(), ManajerDashboardPage(), ChartSection(), RendalDashboard(), RecentActivities(), StatCard() (+2 more)
 
 ### Community 9 - "Community 9"
 Cohesion: 0.27
@@ -210,24 +210,24 @@ Cohesion: 0.67
 Nodes (3): Celest Ruyi Boom Mic IEM Cable Product Image, Detachable Boom Microphone Attachment, 2-Pin IEM Upgrade Cable
 
 ## Knowledge Gaps
-- **185 isolated node(s):** `id`, `name`, `version`, `minAppVersion`, `description` (+180 more)
+- **188 isolated node(s):** `id`, `name`, `version`, `minAppVersion`, `description` (+183 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `dependencies` connect `Community 4` to `Community 6`?**
+- **Why does `dependencies` connect `Community 3` to `Community 5`?**
   _High betweenness centrality (0.075) - this node is a cross-community bridge._
 - **What connects `id`, `name`, `version` to the rest of the system?**
-  _185 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _188 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `Community 0` be split into smaller, more focused modules?**
-  _Cohesion score 0.05672926447574335 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.05005107252298264 - nodes in this community are weakly interconnected._
 - **Should `Community 1` be split into smaller, more focused modules?**
-  _Cohesion score 0.08357685563997662 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07978142076502732 - nodes in this community are weakly interconnected._
 - **Should `Community 2` be split into smaller, more focused modules?**
   _Cohesion score 0.09565217391304348 - nodes in this community are weakly interconnected._
 - **Should `Community 3` be split into smaller, more focused modules?**
-  _Cohesion score 0.11397849462365592 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._
 - **Should `Community 4` be split into smaller, more focused modules?**
   _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._

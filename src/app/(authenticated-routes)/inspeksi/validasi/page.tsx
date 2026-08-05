@@ -573,7 +573,7 @@ export default function ManajemenInspeksi() {
       REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
       IDLE: "bg-[#E0E7FF] text-[#4F46E5]"
     };
-    return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status]}`}>{status}</span>;
+    return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[status]}`}>{status}</span>;
   };
 
   const getApprovalBadge = (status: ApprovalState) => {
@@ -593,34 +593,34 @@ export default function ManajemenInspeksi() {
       REJECTED: "Ditolak",
       NEED_REVISION: "Perlu Revisi"
     };
-    return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status]}`}>{labels[status]}</span>;
+    return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[status]}`}>{labels[status]}</span>;
   };
 
   const getActionButton = (asset: Asset) => {
     return (
-      <div className="flex flex-wrap items-center gap-1 justify-center w-full max-w-[100px] mx-auto">
+      <div className="flex items-center gap-1.5 justify-center">
         {asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE" && (
-          <button title="Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5 rounded transition-colors flex flex-col items-center">
-            <Check className="w-3 h-3 mb-0.5" />
-            <span className="text-[8px] font-bold">Validasi</span>
+          <button title="Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1">
+            <Check className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-bold">Validasi</span>
           </button>
         )}
         {asset.statusAset === "VALIDATED" && asset.statusPersetujuan === "PENDING_REVIEW" && (
-          <button title="Ubah Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-0.5 rounded transition-colors flex flex-col items-center">
-            <Edit className="w-3 h-3 mb-0.5" />
-            <span className="text-[8px] font-bold">Ubah Validasi</span>
+          <button title="Ubah Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1">
+            <Edit className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-bold">Ubah Validasi</span>
           </button>
         )}
         {asset.statusPersetujuan === "NEED_REVISION" && (
-          <button title="Revisi Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-0.5 rounded transition-colors flex flex-col items-center">
-            <Edit className="w-3 h-3 mb-0.5" />
-            <span className="text-[8px] font-bold">Revisi Validasi</span>
+          <button title="Revisi Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1">
+            <Edit className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-bold">Revisi Validasi</span>
           </button>
         )}
         {(asset.statusPersetujuan === "IN_REVIEW" || asset.statusAset === "IDLE" || asset.statusAset === "REJECTED") && (
-          <button title="Detail Info" onClick={() => openModal(asset, "DETAIL")} className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-0.5 rounded transition-colors flex flex-col items-center">
-            <Eye className="w-3 h-3 mb-0.5" />
-            <span className="text-[8px] font-bold">Detail Info</span>
+          <button title="Detail Info" onClick={() => openModal(asset, "DETAIL")} className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1 px-2 rounded-md transition-colors flex items-center gap-1">
+            <Eye className="w-3.5 h-3.5" />
+            <span className="text-[11px] font-bold">Detail Info</span>
           </button>
         )}
       </div>
@@ -778,47 +778,39 @@ export default function ManajemenInspeksi() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50/95 backdrop-blur-sm">
-              <tr className="border-b-2 border-gray-300">
-                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('kodeAlat')}>
-                  <div className="flex items-center">Kode {getSortIcon('kodeAlat')}</div>
+              <tr className="border-b border-gray-300">
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center w-12 whitespace-nowrap">No</th>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
+                  <div className="flex items-center justify-center">Nama Alat {getSortIcon('namaAlat')}</div>
                 </th>
-                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
-                  <div className="flex items-center">Nama Alat {getSortIcon('namaAlat')}</div>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
+                  <div className="flex items-center justify-center">Plant {getSortIcon('plant')}</div>
                 </th>
-                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
-                  <div className="flex items-center">Plant {getSortIcon('plant')}</div>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
+                  <div className="flex items-center justify-center">Jenis {getSortIcon('jenisAlat')}</div>
                 </th>
-                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
-                  <div className="flex items-center">Jenis {getSortIcon('jenisAlat')}</div>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('tanggalRegistrasi')}>
+                  <div className="flex items-center justify-center">Tanggal {getSortIcon('tanggalRegistrasi')}</div>
                 </th>
-                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('tanggalRegistrasi')}>
-                  <div className="flex items-center">Tanggal {getSortIcon('tanggalRegistrasi')}</div>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
+                  <div className="flex items-center justify-center">Aset {getSortIcon('statusAset')}</div>
                 </th>
-                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider">
-                  SLA Target
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
+                  <div className="flex items-center justify-center">Persetujuan {getSortIcon('statusPersetujuan')}</div>
                 </th>
-                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider">
-                  Pemohon
-                </th>
-                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
-                  <div className="flex items-center">Aset {getSortIcon('statusAset')}</div>
-                </th>
-                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
-                  <div className="flex items-center">Persetujuan {getSortIcon('statusPersetujuan')}</div>
-                </th>
-                <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Tindakan</th>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Tindakan</th>
               </tr>
             </thead>
             <tbody className="bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={10} className="px-5 py-12 text-center text-gray-500">
+                  <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
                     Memuat data...
                   </td>
                 </tr>
               ) : paginatedAssets.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-gray-500">
+                  <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center">
                       <AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
                       <p className="text-[13px] font-medium text-gray-900">Data Tidak Ditemukan</p>
@@ -827,52 +819,37 @@ export default function ManajemenInspeksi() {
                   </td>
                 </tr>
               ) : (
-                paginatedAssets.map((asset) => (
-                  <tr key={asset.id} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
-                    <td className="px-1.5 py-1 whitespace-nowrap text-[10px] font-bold text-[#0A356A] relative">
-                      {(asset.statusPersetujuan === "NONE" || asset.statusPersetujuan === "PENDING_REVIEW" || asset.statusPersetujuan === "NEED_REVISION") && (
-                        <span className="absolute left-0 top-1/2 -translate-y-1/2 flex h-1.5 w-1.5" title={asset.statusPersetujuan === "NEED_REVISION" ? "Perlu Revisi" : "Perlu Validasi"}>
-                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${(asset.statusPersetujuan === "NONE" || asset.statusPersetujuan === "PENDING_REVIEW") ? "bg-red-400" : "bg-orange-400"}`}></span>
-                          <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${(asset.statusPersetujuan === "NONE" || asset.statusPersetujuan === "PENDING_REVIEW") ? "bg-red-500" : "bg-orange-500"}`}></span>
-                        </span>
-                      )}
-                      <span className="ml-1.5">{asset.kodeAlat}</span>
-                    </td>
-                    <td className="px-1.5 py-1">
-                      <div className="text-[10px] font-medium text-gray-700 leading-tight line-clamp-2" title={asset.namaAlat}>{asset.namaAlat}</div>
-                    </td>
-                    <td className="px-1.5 py-1 text-[10px] text-gray-600 font-medium">
-                      {asset.plant}
-                    </td>
-                    <td className="px-1.5 py-1 text-[10px] text-gray-600 font-medium">
-                      {asset.jenisAlat}
-                    </td>
-                    <td className="px-1.5 py-1 text-[10px] text-gray-600">
-                      {asset.tanggalRegistrasi}
-                    </td>
-                    <td className="px-1.5 py-1 text-[10px]">
-                      {(asset.statusPersetujuan === 'NONE' || asset.statusPersetujuan === 'PENDING_REVIEW') ? (
-                        <span className="bg-[#DCFCE7] text-[#16A34A] px-1.5 py-0.5 rounded-full flex items-center gap-1 w-fit font-semibold text-[8px]"><div className="w-1.5 h-1.5 bg-[#16A34A] rounded-full"></div> 1 Hari</span>
-                      ) : (
-                        <span className="text-gray-400 font-medium text-[9px]">Selesai</span>
-                      )}
-                    </td>
-                    <td className="px-1.5 py-1 text-[10px] text-gray-600 font-medium">
-                       {asset.pemohon}
-                    </td>
-                    <td className="px-1.5 py-1">
-                      {getStatusAsetBadge(asset.statusAset)}
-                    </td>
-                    <td className="px-1.5 py-1">
-                      {getApprovalBadge(asset.statusPersetujuan)}
-                    </td>
-                    <td className="px-1.5 py-1 text-center">
-                      <div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
-                        {getActionButton(asset)}
-                      </div>
-                    </td>
-                  </tr>
-                ))
+                paginatedAssets.map((asset, index) => {
+                  const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
+                  return (
+                    <tr key={asset.id} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
+                      <td className="px-3 py-1 text-[14px] text-gray-500 font-medium text-center">{rowNum}</td>
+                      <td className="px-3 py-1 text-[14px] font-semibold text-gray-800 text-center" title={asset.namaAlat}>
+                        <span className="leading-tight line-clamp-2 block text-center">{asset.namaAlat}</span>
+                      </td>
+                      <td className="px-3 py-1 text-[14px] text-gray-600 font-medium text-center">
+                        {asset.plant}
+                      </td>
+                      <td className="px-3 py-1 text-[14px] text-gray-600 font-medium text-center">
+                        {asset.jenisAlat}
+                      </td>
+                      <td className="px-3 py-1 text-[14px] text-gray-600 text-center">
+                        {asset.tanggalRegistrasi}
+                      </td>
+                      <td className="px-3 py-1 text-[14px] text-center">
+                        <div className="flex justify-center">{getStatusAsetBadge(asset.statusAset)}</div>
+                      </td>
+                      <td className="px-3 py-1 text-[14px] text-center">
+                        <div className="flex justify-center">{getApprovalBadge(asset.statusPersetujuan)}</div>
+                      </td>
+                      <td className="px-3 py-1 text-center">
+                        <div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
+                          {getActionButton(asset)}
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>
@@ -882,41 +859,39 @@ export default function ManajemenInspeksi() {
           <span className="text-[11px] font-medium text-gray-500">
             Menampilkan {filteredAssets.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length)} dari {filteredAssets.length} data (10 baris/halaman)
           </span>
-          {totalPages > 1 && (
-            <div className="flex items-center gap-1.5">
-              <button 
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                disabled={currentPage === 1}
-                className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
-              >
-                Prev
-              </button>
-              
-              <div className="flex items-center gap-1">
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                  <button
-                    key={page}
-                    onClick={() => setCurrentPage(page)}
-                    className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
-                      currentPage === page
-                        ? "bg-[#0A356A] text-white"
-                        : "text-gray-600 hover:bg-gray-100"
-                    }`}
-                  >
-                    {page}
-                  </button>
-                ))}
-              </div>
-
-              <button 
-                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                disabled={currentPage === totalPages}
-                className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
-              >
-                Next
-              </button>
+          <div className="flex items-center gap-1.5">
+            <button 
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1}
+              className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            >
+              Prev
+            </button>
+            
+            <div className="flex items-center gap-1">
+              {Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map((page) => (
+                <button
+                  key={page}
+                  onClick={() => setCurrentPage(page)}
+                  className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
+                    currentPage === page
+                      ? "bg-[#0A356A] text-white"
+                      : "text-gray-600 hover:bg-gray-100"
+                  }`}
+                >
+                  {page}
+                </button>
+              ))}
             </div>
-          )}
+
+            <button 
+              onClick={() => setCurrentPage(p => Math.min(Math.max(1, totalPages), p + 1))}
+              disabled={currentPage === Math.max(1, totalPages)}
+              className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+            >
+              Next
+            </button>
+          </div>
         </div>
 
       </div>

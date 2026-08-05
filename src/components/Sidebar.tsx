@@ -19,7 +19,8 @@ import {
   Plus,
   Trash2,
   Edit,
-  X
+  X,
+  ShieldCheck
 } from "lucide-react";
 import { useSidebar } from "./SidebarProvider";
 
@@ -52,7 +53,7 @@ export function Sidebar({ role }: { role?: string }) {
         { name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
         { name: "Peralatan", href: "/rendal/idle", icon: Wrench },
         { name: "Perbaikan Alat", href: "/rendal/perbaikan-alat", icon: Wrench },
-        { name: "Laporan", href: "/rendal/laporan", icon: FileText },
+        { name: "Laporan Audit", href: "/rendal/laporan", icon: ShieldCheck },
       ];
       registerCta = { name: "Register Equipment", href: "/rendal/register-equipment" };
       break;
@@ -63,7 +64,7 @@ export function Sidebar({ role }: { role?: string }) {
         { name: "Dashboard", href: "/inspeksi/dashboard", icon: LayoutDashboard },
         { name: "Validasi Kelayakan", href: "/inspeksi/validasi", icon: Wrench },
         { name: "Revisi Validasi", href: "/inspeksi/revisi-validasi", icon: Edit },
-        { name: "Inspeksi Berkala", href: "/inspeksi/inspeksi-berkala", icon: ClipboardCheck },
+        { name: "Inspeksi", href: "/inspeksi/inspeksi-berkala", icon: ClipboardCheck },
       ];
       break;
 
@@ -83,7 +84,7 @@ export function Sidebar({ role }: { role?: string }) {
       // Placeholder: Unit Kerja Operasi (role default / user sebenarnya)
       mainNavItems = [
         { name: "Dashboard", href: "/unit-kerja/dashboard", icon: LayoutDashboard },
-        { name: "Idle Equipment", href: "/unit-kerja/idle", icon: PowerOff },
+        // { name: "Idle Equipment", href: "/unit-kerja/idle", icon: PowerOff },
         { name: "Permintaan", href: "/unit-kerja/permintaan", icon: FileQuestion },
         { name: "Laporan", href: "/unit-kerja/laporan", icon: FileText },
       ];
@@ -131,7 +132,9 @@ export function Sidebar({ role }: { role?: string }) {
         <div>
           <ul className="space-y-1">
             {mainNavItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = pathname === item.href || 
+                pathname.startsWith(item.href + "/") ||
+                (item.href === "/rendal/idle" && pathname === "/rendal/register-equipment");
               return (
                 <li key={item.name}>
                   <Link
@@ -152,14 +155,24 @@ export function Sidebar({ role }: { role?: string }) {
         </div>
       </div>
 
-      {registerCta && (
-        <div className="p-4 mt-auto">
-          <Link href={registerCta.href} className="w-full flex items-center justify-center gap-2 bg-[#0556B3] hover:bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium transition-colors shadow-md">
-            <Plus className="w-4 h-4" />
-            {registerCta.name}
-          </Link>
-        </div>
-      )}
+      {registerCta && (() => {
+        const isCtaActive = pathname === registerCta.href || pathname.startsWith(registerCta.href + "/");
+        return (
+          <div className="p-4 mt-auto">
+            <Link 
+              href={registerCta.href} 
+              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-md ${
+                isCtaActive 
+                  ? "bg-blue-500/20 text-white border-l-4 border-white" 
+                  : "bg-[#0556B3] hover:bg-blue-600 text-white"
+              }`}
+            >
+              <Plus className="w-4 h-4" />
+              {registerCta.name}
+            </Link>
+          </div>
+        );
+      })()}
       </aside>
     </>
   );

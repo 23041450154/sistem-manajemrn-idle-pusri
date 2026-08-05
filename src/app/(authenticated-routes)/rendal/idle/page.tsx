@@ -301,6 +301,7 @@ export default function RendalIdlePage() {
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
+                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide text-center">NO</th>
                 <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('kodeAlat')}>
                   <div className="flex items-center gap-1">KODE ALAT {getSortIcon('kodeAlat')}</div>
                 </th>
@@ -327,14 +328,14 @@ export default function RendalIdlePage() {
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-16 text-center">
+                  <td colSpan={8} className="px-5 py-16 text-center">
                     <RefreshCw className="w-6 h-6 text-[#0A356A] animate-spin mx-auto mb-3" />
                     <p className="text-sm font-medium text-gray-600">Memuat data dari database...</p>
                   </td>
                 </tr>
               ) : paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-5 py-16 text-center">
+                  <td colSpan={8} className="px-5 py-16 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <AlertCircle className="w-8 h-8 text-gray-300 mb-3" />
                       <p className="text-base font-medium text-gray-800">Tidak ada data ditemukan</p>
@@ -345,6 +346,9 @@ export default function RendalIdlePage() {
               ) : (
                 paginatedData.map((item, index) => (
                   <tr key={item.id || index} className="hover:bg-[#f8fafc] transition-colors">
+                    <td className="px-5 py-3 text-sm font-semibold text-gray-400 text-center">
+                      {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+                    </td>
                     <td className="px-5 py-3 text-sm font-semibold text-[#0A356A] whitespace-nowrap">
                       {item.kodeAlat}
                     </td>
