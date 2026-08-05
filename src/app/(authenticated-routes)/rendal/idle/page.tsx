@@ -160,17 +160,14 @@ export default function RendalIdlePage() {
   const getStatusBadge = (status: AssetState) => {
     const styles: Record<string, string> = {
       REGISTERED: "bg-purple-100 text-purple-800 border-purple-200",      // 🟣 REGISTERED
-      VALIDATED: "bg-emerald-100 text-emerald-800 border-emerald-200",    // 🟢 MENUNGGU APPROVAL
+      VALIDATED: "bg-emerald-100 text-emerald-800 border-emerald-200",    // 🟢 VALIDATED
       IDLE: "bg-yellow-100 text-yellow-800 border-yellow-200",            // 🟡 IDLE
       READY_TO_REUSE: "bg-blue-100 text-blue-800 border-blue-200",        // 🔵 READY TO REUSE
       REJECTED: "bg-red-100 text-red-800 border-red-200",                 // 🔴 REJECTED
       DALAM_PERBAIKAN: "bg-orange-100 text-orange-800 border-orange-200", // 🟠 DALAM PERBAIKAN
     };
     
-    let label = status.replace(/_/g, ' ');
-    if (status === "VALIDATED") {
-      label = "MENUNGGU APPROVAL";
-    }
+    const label = status.replace(/_/g, ' ');
     const style = styles[status] || "bg-gray-50 text-gray-700 border-gray-200";
     return <span className={`inline-flex items-center justify-center text-[10px] font-extrabold px-2 py-0.5 rounded border tracking-wide whitespace-nowrap shadow-sm ${style}`}>{label}</span>;
   };
@@ -290,7 +287,7 @@ export default function RendalIdlePage() {
               >
                 <option value="Semua">Semua Status</option>
                 <option value="REGISTERED">REGISTERED</option>
-                <option value="VALIDATED">MENUNGGU APPROVAL</option>
+                <option value="VALIDATED">VALIDATED</option>
                 <option value="IDLE">IDLE</option>
                 <option value="DALAM_PERBAIKAN">DALAM PERBAIKAN</option>
                 <option value="READY_TO_REUSE">READY TO REUSE</option>
