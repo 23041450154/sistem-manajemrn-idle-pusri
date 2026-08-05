@@ -35,7 +35,6 @@ export function Sidebar({ role }: { role?: string }) {
 
   type NavItem = { name: string; href: string; icon: typeof LayoutDashboard };
   let mainNavItems: NavItem[] = [];
-  let registerCta: { name: string; href: string } | null = null;
 
   switch (userRole) {
     case "ADMIN":
@@ -55,7 +54,6 @@ export function Sidebar({ role }: { role?: string }) {
         { name: "Perbaikan Alat", href: "/rendal/perbaikan-alat", icon: Wrench },
         { name: "Laporan Audit", href: "/rendal/laporan", icon: ShieldCheck },
       ];
-      registerCta = { name: "Register Equipment", href: "/rendal/register-equipment" };
       break;
 
     case "INSPEKSI_TEKNIK":
@@ -154,25 +152,6 @@ export function Sidebar({ role }: { role?: string }) {
           </ul>
         </div>
       </div>
-
-      {registerCta && (() => {
-        const isCtaActive = pathname === registerCta.href || pathname.startsWith(registerCta.href + "/");
-        return (
-          <div className="p-4 mt-auto">
-            <Link 
-              href={registerCta.href} 
-              className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-sm font-medium transition-colors shadow-md ${
-                isCtaActive 
-                  ? "bg-blue-500/20 text-white border-l-4 border-white" 
-                  : "bg-[#0556B3] hover:bg-blue-600 text-white"
-              }`}
-            >
-              <Plus className="w-4 h-4" />
-              {registerCta.name}
-            </Link>
-          </div>
-        );
-      })()}
       </aside>
     </>
   );

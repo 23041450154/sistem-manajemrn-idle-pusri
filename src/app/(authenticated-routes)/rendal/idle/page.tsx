@@ -255,7 +255,7 @@ export default function RendalIdlePage() {
             
             <Link href="/rendal/register-equipment" className="flex items-center gap-2 bg-[#0A356A] hover:bg-[#062854] text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm whitespace-nowrap">
               <Plus className="w-4 h-4" />
-              Register Equipment
+              Daftarkan Peralatan
             </Link>
           </div>
         </div>
