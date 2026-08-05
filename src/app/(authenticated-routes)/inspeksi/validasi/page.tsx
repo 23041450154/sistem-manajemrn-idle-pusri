@@ -1,17 +1,20 @@
 "use client";
 
+/* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { 
   Search, Eye, Edit, AlertCircle, X, Check, Save, Clock,
-  UploadCloud, Paperclip, RefreshCw, XCircle, CheckCircle2, ChevronRight,
+  UploadCloud, Paperclip, RefreshCw, XCircle, CheckCircle2,
   ArrowUpDown, ArrowUp, ArrowDown, Download, Info
 } from "lucide-react";
 
 import AnalogTimePicker from "@/components/AnalogTimePicker";
 
 import { 
-  getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment,
-  getInspections, getRequireActions, getApprovalById, resubmitApproval 
+  getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId,
+  getInspections, getRequireActions, getApprovalById, getConditions, resubmitApproval
 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 
@@ -42,18 +45,21 @@ interface Asset {
 
 export default function ManajemenInspeksi() {
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [conditions, setConditions] = useState<Array<{ id: number; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [data, objTypes, approvalsRes, user] = await Promise.all([
+        const [data, objTypes, approvalsRes, user, conditionsData] = await Promise.all([
           getEquipments(),
           getObjectTypes(),
           getApprovals(),
-          getCurrentUserAction()
+          getCurrentUserAction(),
+          getConditions()
         ]);
+        setConditions(conditionsData);
         const approvalsData = Array.isArray(approvalsRes) ? approvalsRes : (approvalsRes?.data || []);
         const currentUserNPP = user?.user?.npp || "NPP2304145";
         const mappedData = data.map((item: any) => {
@@ -159,7 +165,6 @@ export default function ManajemenInspeksi() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
   const [attachments, setAttachments] = useState<any[]>([]);
-  const [allInspections, setAllInspections] = useState<any[]>([]);
 
   // Revision Form States
   const [managerNotes, setManagerNotes] = useState("");
@@ -198,33 +203,13 @@ export default function ManajemenInspeksi() {
 
   // Form Validasi States
   const [hasilPemeriksaan, setHasilPemeriksaan] = useState("");
+  const [conditionId, setConditionId] = useState("");
   const [catatan, setCatatan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [tglPemeriksaan, setTglPemeriksaan] = useState(new Date().toISOString().split('T')[0]);
   const [jamMulai, setJamMulai] = useState("08:00");
   const [jamSelesai, setJamSelesai] = useState("09:00");
 
-  const handleTimeInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
-    const numbers = value.replace(/\D/g, "");
-    if (numbers.length > 4) return;
-    let formatted = numbers;
-    if (numbers.length >= 3) {
-      formatted = `${numbers.slice(0, 2)}:${numbers.slice(2)}`;
-    }
-    
-    // Validasi jam (max 23)
-    if (formatted.length >= 2) {
-      const h = parseInt(formatted.slice(0, 2), 10);
-      if (h > 23) formatted = `23${formatted.slice(2)}`;
-    }
-    // Validasi menit (max 59)
-    if (formatted.length === 5) {
-      const m = parseInt(formatted.slice(3, 5), 10);
-      if (m > 59) formatted = `${formatted.slice(0, 3)}59`;
-    }
-    
-    setter(formatted);
-  };
   const [lokasi, setLokasi] = useState("");
   const [showValidationErrors, setShowValidationErrors] = useState(false);
 
@@ -267,6 +252,7 @@ export default function ManajemenInspeksi() {
     // Reset Form jika status belum divalidasi (baru pertama kali)
     if (asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE") {
       setHasilPemeriksaan("");
+      setConditionId("");
       setCatatan("");
       setRekomendasi("");
       setLokasi("");
@@ -276,6 +262,7 @@ export default function ManajemenInspeksi() {
     } else {
       // Jika statusnya Ubah Validasi atau Perlu Revisi, muat data yang sudah pernah diisi
       setHasilPemeriksaan(asset.statusAset === "REJECTED" ? "Tidak Layak" : "Layak");
+      setConditionId("");
       setCatatan("");
       setRekomendasi("");
       setLokasi("Area Unit P-IB"); // Default mock data yang sesuai opsi dropdown
@@ -291,6 +278,7 @@ export default function ManajemenInspeksi() {
           myInsps.sort((a: any, b: any) => b.id - a.id);
           const latest = myInsps[0];
           setHasilPemeriksaan(latest.is_utilizable ? "Layak" : "Tidak Layak");
+          setConditionId(latest.condition_id?.toString() || "");
           setCatatan(latest.notes || "");
           setRekomendasi(latest.mechanical_condition || "");
           setRequiredActionId(latest.require_action_id ? latest.require_action_id.toString() : "");
@@ -353,7 +341,7 @@ export default function ManajemenInspeksi() {
         }
         res = await resubmitApproval(approvalId, formData);
       } else {
-        res = await validateEquipment(selectedAsset.id, isUtilizable, notes);
+        res = await validateEquipment(selectedAsset.id, isUtilizable, Number(conditionId), notes);
       }
 
       if (res.success) {
@@ -633,7 +621,7 @@ export default function ManajemenInspeksi() {
   };
 
   const validateForm = () => {
-    if (!hasilPemeriksaan || !lokasi || !tglPemeriksaan || !jamMulai || !jamSelesai) return false;
+    if (!hasilPemeriksaan || !conditionId || !lokasi || !tglPemeriksaan || !jamMulai || !jamSelesai) return false;
     if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
     
     const isRevision = selectedAsset?.statusPersetujuan === "NEED_REVISION";
@@ -1127,6 +1115,22 @@ export default function ManajemenInspeksi() {
                       </label>
                     </div>
                     {showValidationErrors && !hasilPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Hasil Evaluasi wajib dipilih.</p>}
+                  </div>
+
+                  <div className="col-span-12">
+                    <label htmlFor="condition" className="block text-[11px] font-semibold text-gray-700 mb-1">Kondisi Aset *</label>
+                    <select
+                      id="condition"
+                      value={conditionId}
+                      onChange={e => setConditionId(e.target.value)}
+                      disabled={isReadOnly}
+                      required
+                      className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !conditionId ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`}
+                    >
+                      <option value="" disabled>Pilih Kondisi...</option>
+                      {conditions.map(condition => <option key={condition.id} value={condition.id}>{condition.name}</option>)}
+                    </select>
+                    {showValidationErrors && !conditionId && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Kondisi aset wajib dipilih.</p>}
                   </div>
                   
                   {/* Dropdown Required Action Khusus Mode Revisi & Layak */}

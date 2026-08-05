@@ -1,6 +1,6 @@
 {
-  "0": "validasi/page.tsx",
-  "1": "getCurrentUserAction",
+  "0": "getCurrentUserAction",
+  "1": "auth.ts",
   "2": "open-in-terminal/main.js",
   "3": "dependencies",
   "4": "compilerOptions",
@@ -57,14 +57,12 @@
   "55": "Vercel Logo",
   "56": "Window Icon SVG",
   "57": "api.ts",
-  "58": "CostAvoidanceSection.tsx",
+  "58": "laporan/page.tsx",
   "59": "getEquipments",
   "60": "PRODUCT.md",
-  "61": "admin/dashboard/page.tsx",
+  "61": "getObjectTypes",
   "62": "check-equipment-form.mjs",
-  "63": "getAttachmentsByEquipmentId",
+  "63": "inspeksi/dashboard/page.tsx",
   "64": "ui-layouts-mcp",
-  "65": "EVIDENCE.md",
-  "66": "getInspections",
-  "67": "perbaikan-alat/page.tsx"
+  "65": "EVIDENCE.md"
 }

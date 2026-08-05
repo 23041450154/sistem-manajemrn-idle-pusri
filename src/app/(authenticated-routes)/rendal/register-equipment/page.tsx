@@ -18,15 +18,17 @@ import {
 import Link from "next/link";
 import {
 	createEquipment,
+	updateEquipment,
+	getEquipments,
 	getObjectTypes,
 	getStorageLocations,
-	getAreas,
 	getIdleReasons,
 } from "@/action/api";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 export default function RegisterEquipmentPage() {
 	const router = useRouter();
+	const editId = useSearchParams().get("editId");
 	const [showImportModal, setShowImportModal] = useState(false);
 	const [importFile, setImportFile] = useState<File | null>(null);
 
@@ -51,26 +53,9 @@ export default function RegisterEquipmentPage() {
 	const [storageLocations, setStorageLocations] = useState<
 		{ id: number; name: string }[]
 	>([]);
-	const [areas, setAreas] = useState<{ id: number; name: string }[]>([]);
 	const [idleReasons, setIdleReasons] = useState<
 		{ id: number; reason_name: string; description?: string }[]
 	>([]);
-
-	useEffect(() => {
-		async function loadDropdowns() {
-			const [objs, locs, ars, reasons] = await Promise.all([
-				getObjectTypes(),
-				getStorageLocations(),
-				getAreas(),
-				getIdleReasons(),
-			]);
-			setObjectTypes(objs);
-			setStorageLocations(locs);
-			setAreas(ars);
-			setIdleReasons(reasons);
-		}
-		loadDropdowns();
-	}, []);
 
 	// UX Improvement: Semua nilai dropdown & radio di-set kosong ("") di awal
 	const [formData, setFormData] = useState({
@@ -86,6 +71,54 @@ export default function RegisterEquipmentPage() {
 		storageLocationId: "",
 		notes: "",
 	});
+
+	useEffect(() => {
+		async function loadData() {
+			const [objs, locs, reasons, equipments] = await Promise.all([
+				getObjectTypes(),
+				getStorageLocations(),
+				getIdleReasons(),
+				editId ? getEquipments() : Promise.resolve([]),
+			]);
+			setObjectTypes(objs);
+			setStorageLocations(locs);
+			setIdleReasons(reasons);
+
+			// ponytail: backend equipment shape belum punya DTO frontend bersama.
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
+			const found = equipments.find((item: any) => String(item.id) === editId);
+			if (found) {
+				setFormData({
+					equipmentCode: found.equipment_code || "",
+					name: found.name || "",
+					funcLoc: found.func_loc || found.funcloc || "",
+					plant: found.plant || "",
+					objectTypeId: String(
+						found.object_type_id ||
+							found.id_object_type ||
+							found.object_type?.id ||
+							"",
+					),
+					vendor: found.vendor || "",
+					year: String(found.year || new Date().getFullYear()),
+					originalValue: found.original_value
+						? Number(found.original_value).toLocaleString("id-ID")
+						: "",
+					idleReasonId: String(
+						found.id_idle_reason || found.idle_reason_id || "",
+					),
+					storageLocationId: String(
+						found.storage_location_id ||
+							found.id_storage_location ||
+							found.storage_location?.id ||
+							"",
+					),
+					notes: found.notes || "",
+				});
+			}
+		}
+		loadData();
+	}, [editId]);
 
 	const handleChange = (
 		e: React.ChangeEvent<
@@ -192,6 +225,49 @@ export default function RegisterEquipmentPage() {
 
 		setIsSubmitting(true);
 		setShowValidationErrors(false);
+
+		if (editId) {
+			const res = await updateEquipment(editId, {
+				equipment_code: formData.equipmentCode,
+				name: formData.name,
+				func_loc: formData.funcLoc,
+				plant: formData.plant,
+				id_object_type: Number(formData.objectTypeId),
+				object_type_id: Number(formData.objectTypeId),
+				id_storage_location: Number(formData.storageLocationId),
+				storage_location_id: Number(formData.storageLocationId),
+				vendor: formData.vendor,
+				year: Number(formData.year) || new Date().getFullYear(),
+				original_value: Number(formData.originalValue.replace(/\./g, "")) || 0,
+				id_idle_reason: Number(formData.idleReasonId),
+				notes: formData.notes,
+			});
+
+			if (res.success && uploadedFiles.length) {
+				for (const file of uploadedFiles) {
+					const attachment = new FormData();
+					attachment.append("equipment_id", editId);
+					attachment.append("category", "equipment_photo");
+					attachment.append("file", file);
+					const upload = await fetch("/api/upload", {
+						method: "POST",
+						body: attachment,
+					});
+					if (!upload.ok)
+						console.error("Gagal upload foto:", file.name, await upload.text());
+				}
+			}
+
+			setIsSubmitting(false);
+			setNotification({
+				type: res.success ? "success" : "error",
+				message: res.success
+					? "Berhasil! Data revisi peralatan idle telah disimpan."
+					: `Gagal menyimpan data: ${res.message || "Pastikan field sudah sesuai."}`,
+			});
+			if (res.success) setTimeout(() => router.push("/rendal/idle"), 1500);
+			return;
+		}
 
 		// Backend memakai tag `form:` -> multipart/form-data, foto ikut di request yang sama.
 		const fd = new FormData();
@@ -307,10 +383,14 @@ export default function RegisterEquipmentPage() {
 						Kembali
 					</Link>
 					<h1 className="text-2xl font-bold text-[#0A356A] tracking-tight">
-						Registrasi Peralatan Idle
+						{editId
+							? "Revisi Registrasi Peralatan Idle"
+							: "Registrasi Peralatan Idle"}
 					</h1>
 					<p className="text-gray-500 text-sm mt-0.5">
-						Daftarkan aset atau peralatan yang saat ini tidak digunakan.
+						{editId
+							? "Perbarui spesifikasi dan data aset yang dinyatakan tidak layak untuk diajukan kembali."
+							: "Daftarkan aset atau peralatan yang saat ini tidak digunakan."}
 					</p>
 				</div>
 				<div className="relative md:mt-8">
@@ -498,26 +578,15 @@ export default function RegisterEquipmentPage() {
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									AREA (FUNCLOC)
 								</label>
-								<select
+								<input
+									type="text"
 									onBlur={handleBlur}
 									name="funcLoc"
 									value={formData.funcLoc}
 									onChange={handleChange}
-									className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all bg-white ${!formData.funcLoc ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
-								>
-									<option value="" disabled>
-										Pilih Area...
-									</option>
-									{areas.map((area: { id: number; name: string }) => (
-										<option
-											key={area.id}
-											value={area.name}
-											className="text-gray-900"
-										>
-											{area.name}
-										</option>
-									))}
-								</select>
+									placeholder="FuncLoc"
+									className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg outline-none transition-all focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
+								/>
 							</div>
 
 							{/* Garis Pemisah Visual */}

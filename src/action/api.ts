@@ -1,5 +1,8 @@
 "use server";
 
+/* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { cookies } from "next/headers";
 
 const API_URL =
@@ -374,6 +377,7 @@ export async function getApprovalById(id: string) {
 export async function validateEquipment(
 	id: string,
 	isUtilizable: boolean,
+	conditionId: number,
 	notes: string,
 ) {
 	const cookieStore = await cookies();
@@ -386,7 +390,11 @@ export async function validateEquipment(
 				"Content-Type": "application/json",
 				Authorization: `Bearer ${token}`,
 			},
-			body: JSON.stringify({ is_utilizable: isUtilizable, notes }),
+			body: JSON.stringify({
+				is_utilizable: isUtilizable,
+				id_condition: conditionId,
+				notes,
+			}),
 		});
 
 		if (!res.ok) {
@@ -533,6 +541,24 @@ export async function createInspection(formData: FormData) {
 
 export async function submitInspectionData(formData: FormData) {
 	return await createInspection(formData);
+}
+
+export async function getConditions() {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+
+	try {
+		const res = await fetch(`${API_URL}/api/condition`, {
+			headers: { Authorization: `Bearer ${token}` },
+			cache: "no-store",
+		});
+		if (!res.ok) return [];
+		const json = await res.json();
+		return json.data || [];
+	} catch (error) {
+		console.error("Fetch conditions error:", error);
+		return [];
+	}
 }
 
 export async function getObjectTypes() {

@@ -9,7 +9,7 @@ import {
 
 import AnalogTimePicker from "@/components/AnalogTimePicker";
 
-import { getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment, uploadEquipmentAttachmentBase64 } from "@/action/api";
+import { getConditions, getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment, uploadEquipmentAttachmentBase64 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 
 // Tipe Data
@@ -39,18 +39,21 @@ interface Asset {
 
 export default function ManajemenInspeksi() {
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [conditions, setConditions] = useState<Array<{ id: number; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [data, objTypes, approvalsRes, user] = await Promise.all([
+        const [data, objTypes, approvalsRes, user, conditionsData] = await Promise.all([
           getEquipments(),
           getObjectTypes(),
           getApprovals(),
-          getCurrentUserAction()
+          getCurrentUserAction(),
+          getConditions()
         ]);
+        setConditions(conditionsData);
         const approvalsData = Array.isArray(approvalsRes) ? approvalsRes : (approvalsRes?.data || []);
         const currentUserNPP = user?.user?.npp || "NPP2304145";
         const mappedData = data.map((item: any) => {
@@ -158,6 +161,7 @@ export default function ManajemenInspeksi() {
 
   // Form Validasi States
   const [hasilPemeriksaan, setHasilPemeriksaan] = useState("");
+  const [conditionId, setConditionId] = useState("");
   const [catatan, setCatatan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [tglPemeriksaan, setTglPemeriksaan] = useState(new Date().toISOString().split('T')[0]);
@@ -206,6 +210,7 @@ export default function ManajemenInspeksi() {
     setSelectedAsset(asset);
     setModalMode(mode);
     setRequiredActionId("");
+    setConditionId("");
     setIsModalOpen(true);
     setUploadedFiles([]); // Reset files
     setShowValidationErrors(false);
@@ -260,7 +265,7 @@ export default function ManajemenInspeksi() {
     try {
       const isUtilizable = hasilPemeriksaan === "Layak";
       const notes = catatan || rekomendasi;
-      const res = await validateEquipment(selectedAsset.id, isUtilizable, notes);
+      const res = await validateEquipment(selectedAsset.id, isUtilizable, Number(conditionId), notes);
 
       if (res.success) {
         // --- MULTIPLE ATTACHMENTS UPLOAD ---
@@ -534,7 +539,7 @@ export default function ManajemenInspeksi() {
   };
 
   const validateForm = () => {
-    if (!hasilPemeriksaan || !lokasi || !tglPemeriksaan || !jamMulai || !jamSelesai) return false;
+    if (!hasilPemeriksaan || !conditionId || !lokasi || !tglPemeriksaan || !jamMulai || !jamSelesai) return false;
     if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
     return true;
   };
@@ -1038,6 +1043,22 @@ export default function ManajemenInspeksi() {
                       </label>
                     </div>
                     {showValidationErrors && !hasilPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Hasil Evaluasi wajib dipilih.</p>}
+                  </div>
+
+                  <div className="col-span-12">
+                    <label htmlFor="dashboard-condition" className="block text-[11px] font-semibold text-gray-700 mb-1">Kondisi Aset *</label>
+                    <select
+                      id="dashboard-condition"
+                      value={conditionId}
+                      onChange={e => setConditionId(e.target.value)}
+                      disabled={isReadOnly}
+                      required
+                      className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !conditionId ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`}
+                    >
+                      <option value="" disabled>Pilih Kondisi...</option>
+                      {conditions.map(condition => <option key={condition.id} value={condition.id}>{condition.name}</option>)}
+                    </select>
+                    {showValidationErrors && !conditionId && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Kondisi aset wajib dipilih.</p>}
                   </div>
                 </div>
 
