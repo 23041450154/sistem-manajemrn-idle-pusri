@@ -631,15 +631,183 @@ export default function RegisterEquipmentPage() {
                     return;
                   }
 
-                  // Simulasi Loading Import
                   setIsImporting(true);
-                  setTimeout(() => {
-                    setIsImporting(false);
-                    alert(`File ${importFile.name} berhasil disiapkan untuk di-import!`);
-                    setShowImportModal(false);
-                    setImportFile(null);
-                  }, 2000);
+                  const reader = new FileReader();
+                  reader.onload = async (event) => {
+                    try {
+                      const text = event.target?.result as string;
+                      if (!text) {
+                        alert("Gagal membaca isi file!");
+                        setIsImporting(false);
+                        return;
+                      }
 
+                      // Parser helpers
+                      const parseCSV = (csvText: string) => {
+                        const lines: string[][] = [];
+                        let row: string[] = [""];
+                        let inQuotes = false;
+                        for (let i = 0; i < csvText.length; i++) {
+                          const char = csvText[i];
+                          const nextChar = csvText[i+1];
+                          if (char === '"') {
+                            if (inQuotes && nextChar === '"') {
+                              row[row.length - 1] += '"';
+                              i++;
+                            } else {
+                              inQuotes = !inQuotes;
+                            }
+                          } else if (char === ',' && !inQuotes) {
+                            row.push('');
+                          } else if ((char === '\r' || char === '\n') && !inQuotes) {
+                            if (char === '\r' && nextChar === '\n') { i++; }
+                            lines.push(row);
+                            row = [''];
+                          } else {
+                            row[row.length - 1] += char;
+                          }
+                        }
+                        if (row.length > 1 || row[0] !== '') {
+                          lines.push(row);
+                        }
+                        return lines;
+                      };
+
+                      const parseXmlSpreadsheet = (xmlText: string) => {
+                        const parser = new DOMParser();
+                        const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                        const xmlRows = xmlDoc.getElementsByTagName("Row");
+                        const resultRows: string[][] = [];
+                        for (let i = 0; i < xmlRows.length; i++) {
+                          const xmlCells = xmlRows[i].getElementsByTagName("Cell");
+                          const row: string[] = [];
+                          for (let j = 0; j < xmlCells.length; j++) {
+                            const data = xmlCells[j].getElementsByTagName("Data")[0];
+                            row.push(data ? data.textContent || "" : "");
+                          }
+                          resultRows.push(row);
+                        }
+                        return resultRows;
+                      };
+
+                      let rows: string[][] = [];
+                      if (text.startsWith("<?xml")) {
+                        rows = parseXmlSpreadsheet(text);
+                      } else {
+                        rows = parseCSV(text);
+                      }
+
+                      if (rows.length <= 1) {
+                        alert("Dokumen kosong atau tidak memiliki baris data!");
+                        setIsImporting(false);
+                        return;
+                      }
+
+                      // Skip header row
+                      const dataRows = rows.slice(1).filter(r => r.length > 0 && r[0] && r[0].trim() !== "");
+
+                      if (dataRows.length === 0) {
+                        alert("Tidak ditemukan baris data yang valid!");
+                        setIsImporting(false);
+                        return;
+                      }
+
+                      let successCount = 0;
+                      let failCount = 0;
+
+                      for (const r of dataRows) {
+                        const rowCode = r[0]?.trim();
+                        const rowName = r[1]?.trim();
+                        const rowKategori = r[2]?.trim();
+                        const rowLokasi = r[3]?.trim();
+                        const rowPlant = r[4]?.trim();
+                        const rowFuncLoc = r[5]?.trim();
+                        const rowVendor = r[6]?.trim();
+                        const rowYear = parseInt(r[7]?.trim() || "") || new Date().getFullYear();
+                        const rowVal = parseInt((r[8] || "").replace(/\D/g, "")) || 0;
+                        const rowReasonText = (r[9] || "").trim().toLowerCase();
+                        const rowNotes = r[10]?.trim() || "";
+
+                        // Lookup kategori ID
+                        let objectTypeId = 1;
+                        if (rowKategori && objectTypes && objectTypes.length > 0) {
+                          const found = objectTypes.find(o => o.name.toLowerCase() === rowKategori.toLowerCase());
+                          if (found) objectTypeId = found.id;
+                        }
+
+                        // Lookup lokasi ID
+                        let storageLocationId = 1;
+                        if (rowLokasi && storageLocations && storageLocations.length > 0) {
+                          const found = storageLocations.find(l => l.name.toLowerCase() === rowLokasi.toLowerCase());
+                          if (found) storageLocationId = found.id;
+                        }
+
+                        // Map alasan idle
+                        let idleReasonId = 1;
+                        if (rowReasonText.includes("proyek")) {
+                          idleReasonId = 1;
+                        } else if (rowReasonText.includes("berhenti")) {
+                          idleReasonId = 2;
+                        } else if (rowReasonText.includes("rusak") || rowReasonText.includes("servis")) {
+                          idleReasonId = 3;
+                        } else if (rowReasonText.includes("upgrade") || rowReasonText.includes("teknologi")) {
+                          idleReasonId = 4;
+                        }
+
+                        const payload = {
+                          book_value: 0,
+                          equipment_code: rowCode,
+                          func_loc: rowFuncLoc || "P-III",
+                          id_condition: 1,
+                          condition_id: 1,
+                          id_idle_reason: idleReasonId,
+                          idle_date: new Date().toISOString(),
+                          id_object_type: objectTypeId,
+                          object_type_id: objectTypeId,
+                          id_storage_location: storageLocationId,
+                          storage_location_id: storageLocationId,
+                          name: rowName,
+                          notes: rowNotes,
+                          original_value: rowVal,
+                          plant: rowPlant || "P-III",
+                          plant_description: "",
+                          vendor: rowVendor || "",
+                          year: rowYear
+                        };
+
+                        const res = await createEquipment(payload);
+                        if (res.success) {
+                          successCount++;
+                        } else {
+                          console.error("Failed to import row:", r, res.message);
+                          failCount++;
+                        }
+                      }
+
+                      setIsImporting(false);
+                      setShowImportModal(false);
+                      setImportFile(null);
+                      
+                      if (failCount > 0) {
+                        alert(`Proses import selesai. Berhasil: ${successCount} peralatan, Gagal: ${failCount} peralatan.`);
+                      } else {
+                        alert(`Berhasil meng-import ${successCount} peralatan ke database!`);
+                      }
+                      
+                      router.push("/rendal/idle");
+                    } catch (err: any) {
+                      console.error("Import file processing error:", err);
+                      alert("Gagal membaca atau memproses file: " + err.message);
+                      setIsImporting(false);
+                    }
+                  };
+                  
+                  reader.onerror = () => {
+                    alert("Gagal membaca file!");
+                    setIsImporting(false);
+                  };
+                  
+                  reader.readAsText(importFile);
                 }}
                 className="px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-lg transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
               >
