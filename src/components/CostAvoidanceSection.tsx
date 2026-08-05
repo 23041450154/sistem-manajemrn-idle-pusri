@@ -92,8 +92,8 @@ export function CostAvoidanceSection() {
   });
 
   const recentActivities = sortedEquipments.slice(0, 4).map((e: any) => {
-    const name = e.namaAlat || e.nama_alat || "Peralatan";
-    const tag = e.kodeAlat || e.kode_alat || "";
+    const name = e.name || e.namaAlat || e.nama_alat || "Peralatan";
+    const tag = e.equipment_code || e.kodeAlat || e.kode_alat || "";
     const status = e.status?.name || e.statusAset || "REGISTERED";
     
     let text = "";
@@ -124,16 +124,6 @@ export function CostAvoidanceSection() {
     
     return { text, time: timeStr };
   });
-
-  // Fallback logs if no data exists
-  if (recentActivities.length === 0) {
-    recentActivities.push(
-      { text: "Pompa Sentrifugal A-101 selesai diperbaiki", time: "Hari ini" },
-      { text: "Control Valve B-202 diajukan untuk disposal", time: "Hari ini" },
-      { text: "Motor Induksi C-303 berhasil direuse di Plant P-IB", time: "Kemarin" },
-      { text: "Kompresor Udara D-404 masuk antrean inspeksi", time: "Kemarin" }
-    );
-  }
 
   // --- Donut Chart: Breakdown by Status (Counts) ---
   const pieData = [
@@ -328,17 +318,23 @@ export function CostAvoidanceSection() {
               Aktivitas Terbaru
             </h3>
             <div className="divide-y divide-gray-100">
-              {recentActivities.map((act, index) => (
-                <div key={index} className="py-2.5 flex items-start gap-3 first:pt-0 last:pb-0">
-                  <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-bold">
-                    ✓
+              {recentActivities.length > 0 ? (
+                recentActivities.map((act, index) => (
+                  <div key={index} className="py-2.5 flex items-start gap-3 first:pt-0 last:pb-0">
+                    <div className="w-5 h-5 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0 mt-0.5 text-[10px] font-bold">
+                      ✓
+                    </div>
+                    <div className="flex-1">
+                      <p className="text-[13px] text-gray-700 font-medium">{act.text}</p>
+                      <span className="text-[10px] text-gray-400 font-medium block mt-0.5">{act.time}</span>
+                    </div>
                   </div>
-                  <div className="flex-1">
-                    <p className="text-[13px] text-gray-700 font-medium">{act.text}</p>
-                    <span className="text-[10px] text-gray-400 font-medium block mt-0.5">{act.time}</span>
-                  </div>
+                ))
+              ) : (
+                <div className="py-4 text-center text-sm text-gray-400 font-medium">
+                  Belum ada aktivitas perekaman atau pembaruan aset saat ini.
                 </div>
-              ))}
+              )}
             </div>
           </div>
 
