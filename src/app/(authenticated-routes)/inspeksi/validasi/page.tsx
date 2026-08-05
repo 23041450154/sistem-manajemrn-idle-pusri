@@ -199,8 +199,8 @@ export default function ManajemenInspeksi() {
   const [catatan, setCatatan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [tglPemeriksaan, setTglPemeriksaan] = useState(new Date().toISOString().split('T')[0]);
-  const [jamMulai, setJamMulai] = useState("");
-  const [jamSelesai, setJamSelesai] = useState("");
+  const [jamMulai, setJamMulai] = useState("00:00");
+  const [jamSelesai, setJamSelesai] = useState("00:00");
 
   const handleTimeInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
     const numbers = value.replace(/\D/g, "");
@@ -268,8 +268,8 @@ export default function ManajemenInspeksi() {
       setCatatan("");
       setRekomendasi("");
       setLokasi("");
-      setJamMulai("");
-      setJamSelesai("");
+      setJamMulai("00:00");
+      setJamSelesai("00:00");
       setTglPemeriksaan(new Date().toISOString().split('T')[0]);
     } else {
       // Jika statusnya Ubah Validasi atau Perlu Revisi, muat data yang sudah pernah diisi
@@ -632,9 +632,8 @@ export default function ManajemenInspeksi() {
     if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
     
     const isRevision = selectedAsset?.statusPersetujuan === "NEED_REVISION";
-    const totalPhotosOk = isRevision 
-      ? (uploadedFiles.length === 0 || uploadedFiles.length >= 2)
-      : (uploadedFiles.length >= 2);
+    // Foto tidak lagi wajib diisi (selalu lolos validasi)
+    const totalPhotosOk = true;
       
     const actionOk = isRevision 
       ? (hasilPemeriksaan !== "Layak" || !!requiredActionId)
@@ -1058,22 +1057,80 @@ export default function ManajemenInspeksi() {
                       <label className="block text-[11px] font-semibold text-gray-700">Mulai</label>
                       <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
                     </div>
-                    <div className="relative">
-                      <input type="text" placeholder="00:00" maxLength={5} value={jamMulai} onChange={e => handleTimeInput(e.target.value, setJamMulai)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && jamMulai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
+                    <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-md px-2 py-1.5 justify-center">
+                      <select 
+                        value={jamMulai && jamMulai.includes(":") ? jamMulai.split(":")[0] : "00"} 
+                        onChange={(e) => {
+                          const hour = e.target.value;
+                          const min = jamMulai.includes(":") ? jamMulai.split(":")[1] : "00";
+                          setJamMulai(`${hour}:${min}`);
+                        }}
+                        disabled={isReadOnly}
+                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer disabled:cursor-not-allowed flex-1"
+                      >
+                        {Array.from({ length: 24 }).map((_, i) => {
+                          const val = i.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="text-gray-400 font-bold text-[12px]">:</span>
+                      <select 
+                        value={jamMulai && jamMulai.includes(":") ? jamMulai.split(":")[1] : "00"} 
+                        onChange={(e) => {
+                          const hour = jamMulai.includes(":") ? jamMulai.split(":")[0] : "00";
+                          const min = e.target.value;
+                          setJamMulai(`${hour}:${min}`);
+                        }}
+                        disabled={isReadOnly}
+                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer disabled:cursor-not-allowed flex-1"
+                      >
+                        {Array.from({ length: 60 }).map((_, i) => {
+                          const val = i.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="text-[10px] font-bold text-gray-400 ml-1 shrink-0">WIB</span>
                     </div>
-                    {showValidationErrors && jamMulai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <div className="flex justify-between items-end mb-1">
                       <label className="block text-[11px] font-semibold text-gray-700">Selesai</label>
                       <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
                     </div>
-                    <div className="relative">
-                      <input type="text" placeholder="00:00" maxLength={5} value={jamSelesai} onChange={e => handleTimeInput(e.target.value, setJamSelesai)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && jamSelesai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
+                    <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-md px-2 py-1.5 justify-center">
+                      <select 
+                        value={jamSelesai && jamSelesai.includes(":") ? jamSelesai.split(":")[0] : "00"} 
+                        onChange={(e) => {
+                          const hour = e.target.value;
+                          const min = jamSelesai.includes(":") ? jamSelesai.split(":")[1] : "00";
+                          setJamSelesai(`${hour}:${min}`);
+                        }}
+                        disabled={isReadOnly}
+                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer disabled:cursor-not-allowed flex-1"
+                      >
+                        {Array.from({ length: 24 }).map((_, i) => {
+                          const val = i.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="text-gray-400 font-bold text-[12px]">:</span>
+                      <select 
+                        value={jamSelesai && jamSelesai.includes(":") ? jamSelesai.split(":")[1] : "00"} 
+                        onChange={(e) => {
+                          const hour = jamSelesai.includes(":") ? jamSelesai.split(":")[0] : "00";
+                          const min = e.target.value;
+                          setJamSelesai(`${hour}:${min}`);
+                        }}
+                        disabled={isReadOnly}
+                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer disabled:cursor-not-allowed flex-1"
+                      >
+                        {Array.from({ length: 60 }).map((_, i) => {
+                          const val = i.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="text-[10px] font-bold text-gray-400 ml-1 shrink-0">WIB</span>
                     </div>
-                    {showValidationErrors && jamSelesai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Durasi</label>
@@ -1228,50 +1285,47 @@ export default function ManajemenInspeksi() {
                       <span className="text-[11px] text-gray-500 font-medium text-center">Format: JPG, PNG, PDF (Max 5MB)</span>
                       
                       {uploadedFiles.length === 0 && (
-                        <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1.5 py-0.5 rounded mt-1">Wajib Minimal 2 Foto/File</span>
+                        <span className="text-[9px] font-bold text-gray-500 uppercase bg-gray-50 px-1.5 py-0.5 rounded mt-1">Opsional</span>
                       )}
 
                       {/* Preview Selected Files (Inside Dropzone) */}
                       {uploadedFiles.length > 0 && (
                         <div className="mt-4 w-full flex flex-wrap justify-center gap-4" onClick={(e) => e.stopPropagation()}>
-                          {uploadedFiles.map((file, i) => {
-                            const isImage = file.type.startsWith('image/');
-                            const previewUrl = isImage ? URL.createObjectURL(file) : null;
-                            return (
-                              <div key={i} className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white w-[150px] shadow-sm hover:shadow-md transition-all hover:border-[#0A356A]">
-                                {isImage ? (
-                                  <div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
-                                    <img src={previewUrl!} alt={file.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
-                                  </div>
-                                ) : (
-                                  <div className="h-28 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
-                                    <Paperclip className="w-8 h-8 mb-2" />
-                                    <span className="text-[10px] font-bold">PDF / DOC</span>
-                                  </div>
-                                )}
-                                <div className="px-2 py-1.5 border-t border-gray-100 bg-white">
-                                  <span className="block text-[10px] font-medium text-gray-700 truncate text-center" title={file.name}>{file.name}</span>
-                                </div>
-                                <button 
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    removeFile(i);
-                                  }} 
-                                  className="absolute top-1.5 right-1.5 bg-red-500 rounded-full p-1 text-white hover:bg-red-600 shadow-md transition-colors opacity-0 group-hover:opacity-100"
-                                  title="Hapus"
-                                >
-                                  <X className="w-3.5 h-3.5" />
-                                </button>
-                              </div>
-                            );
-                          })}
+                           {uploadedFiles.map((file, i) => {
+                             const isImage = file.type.startsWith('image/');
+                             const previewUrl = isImage ? URL.createObjectURL(file) : null;
+                             return (
+                               <div key={i} className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white w-[150px] shadow-sm hover:shadow-md transition-all hover:border-[#0A356A]">
+                                 {isImage ? (
+                                   <div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+                                     <img src={previewUrl!} alt={file.name} className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                   </div>
+                                 ) : (
+                                   <div className="h-28 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
+                                     <Paperclip className="w-8 h-8 mb-2" />
+                                     <span className="text-[10px] font-bold">PDF / DOC</span>
+                                   </div>
+                                 )}
+                                 <div className="px-2 py-1.5 border-t border-gray-100 bg-white">
+                                   <span className="block text-[10px] font-medium text-gray-700 truncate text-center" title={file.name}>{file.name}</span>
+                                 </div>
+                                 <button 
+                                   onClick={(e) => {
+                                     e.stopPropagation();
+                                     removeFile(i);
+                                   }} 
+                                   className="absolute top-1.5 right-1.5 bg-red-500 rounded-full p-1 text-white hover:bg-red-600 shadow-md transition-colors opacity-0 group-hover:opacity-100"
+                                   title="Hapus"
+                                 >
+                                   <X className="w-3.5 h-3.5" />
+                                 </button>
+                               </div>
+                             );
+                           })}
                         </div>
                       )}
                     </div>
                     
-                    {showValidationErrors && (selectedAsset.statusPersetujuan === "NEED_REVISION" ? (uploadedFiles.length > 0 && uploadedFiles.length < 2) : (uploadedFiles.length < 2)) && (
-                      <p className="text-[10px] text-red-500 mt-1.5 font-medium">* Wajib mengunggah minimal 2 foto dokumentasi/file referensi baru.</p>
-                    )}
                     {fileError && (
                       <p className="text-[10px] text-red-500 mt-1.5 font-medium">* {fileError}</p>
                     )}

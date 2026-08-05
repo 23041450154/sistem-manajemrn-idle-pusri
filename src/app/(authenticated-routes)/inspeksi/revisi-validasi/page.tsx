@@ -449,7 +449,6 @@ export default function RevisiValidasiPage() {
   const validateForm = () => {
     if (!hasilPemeriksaan || !lokasi || !tglPemeriksaan || !jamMulai || !jamSelesai) return false;
     if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
-    if (uploadedFiles.length < 2) return false;
     return true;
   };
 
@@ -757,22 +756,76 @@ export default function RevisiValidasiPage() {
                       <label className="block text-[11px] font-semibold text-gray-700">Mulai</label>
                       <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
                     </div>
-                    <div className="relative">
-                      <input type="text" placeholder="00:00" maxLength={5} value={jamMulai} onChange={e => handleTimeInput(e.target.value, setJamMulai)} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none ${showValidationErrors && jamMulai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
+                    <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-md px-2 py-1.5 justify-center">
+                      <select 
+                        value={jamMulai && jamMulai.includes(":") ? jamMulai.split(":")[0] : "00"} 
+                        onChange={(e) => {
+                          const hour = e.target.value;
+                          const min = jamMulai.includes(":") ? jamMulai.split(":")[1] : "00";
+                          setJamMulai(`${hour}:${min}`);
+                        }}
+                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer flex-1"
+                      >
+                        {Array.from({ length: 24 }).map((_, i) => {
+                          const val = i.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="text-gray-400 font-bold text-[12px]">:</span>
+                      <select 
+                        value={jamMulai && jamMulai.includes(":") ? jamMulai.split(":")[1] : "00"} 
+                        onChange={(e) => {
+                          const hour = jamMulai.includes(":") ? jamMulai.split(":")[0] : "00";
+                          const min = e.target.value;
+                          setJamMulai(`${hour}:${min}`);
+                        }}
+                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer flex-1"
+                      >
+                        {Array.from({ length: 60 }).map((_, i) => {
+                          const val = i.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="text-[10px] font-bold text-gray-400 ml-1 shrink-0">WIB</span>
                     </div>
-                    {showValidationErrors && jamMulai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <div className="flex justify-between items-end mb-1">
                       <label className="block text-[11px] font-semibold text-gray-700">Selesai</label>
                       <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
                     </div>
-                    <div className="relative">
-                      <input type="text" placeholder="00:00" maxLength={5} value={jamSelesai} onChange={e => handleTimeInput(e.target.value, setJamSelesai)} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none ${showValidationErrors && jamSelesai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
+                    <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-md px-2 py-1.5 justify-center">
+                      <select 
+                        value={jamSelesai && jamSelesai.includes(":") ? jamSelesai.split(":")[0] : "00"} 
+                        onChange={(e) => {
+                          const hour = e.target.value;
+                          const min = jamSelesai.includes(":") ? jamSelesai.split(":")[1] : "00";
+                          setJamSelesai(`${hour}:${min}`);
+                        }}
+                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer flex-1"
+                      >
+                        {Array.from({ length: 24 }).map((_, i) => {
+                          const val = i.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="text-gray-400 font-bold text-[12px]">:</span>
+                      <select 
+                        value={jamSelesai && jamSelesai.includes(":") ? jamSelesai.split(":")[1] : "00"} 
+                        onChange={(e) => {
+                          const hour = jamSelesai.includes(":") ? jamSelesai.split(":")[0] : "00";
+                          const min = e.target.value;
+                          setJamSelesai(`${hour}:${min}`);
+                        }}
+                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer flex-1"
+                      >
+                        {Array.from({ length: 60 }).map((_, i) => {
+                          const val = i.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="text-[10px] font-bold text-gray-400 ml-1 shrink-0">WIB</span>
                     </div>
-                    {showValidationErrors && jamSelesai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Durasi</label>
@@ -898,7 +951,7 @@ export default function RevisiValidasiPage() {
                     <span className="text-[11px] text-gray-500 font-medium text-center">Format: JPG, PNG, PDF (Max 5MB)</span>
                     
                     {uploadedFiles.length === 0 && (
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1.5 py-0.5 rounded mt-1">Wajib Minimal 2 Foto/File Baru</span>
+                      <span className="text-[9px] font-bold text-gray-500 uppercase bg-gray-50 px-1.5 py-0.5 rounded mt-1">Opsional</span>
                     )}
 
                     {uploadedFiles.length > 0 && (
@@ -938,9 +991,6 @@ export default function RevisiValidasiPage() {
                     )}
                   </div>
                   
-                  {showValidationErrors && uploadedFiles.length < 2 && (
-                    <p className="text-[10px] text-red-500 mt-1.5 font-medium">* Wajib mengunggah minimal 2 foto dokumentasi/file referensi revisi.</p>
-                  )}
                   {fileError && (
                     <p className="text-[10px] text-red-500 mt-1.5 font-medium">* {fileError}</p>
                   )}

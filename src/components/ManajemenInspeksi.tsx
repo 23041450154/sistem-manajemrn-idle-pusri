@@ -152,14 +152,15 @@ export default function ManajemenInspeksi() {
   const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [requiredActionId, setRequiredActionId] = useState("");
 
   // Form Validasi States
   const [hasilPemeriksaan, setHasilPemeriksaan] = useState("");
   const [catatan, setCatatan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [tglPemeriksaan, setTglPemeriksaan] = useState(new Date().toISOString().split('T')[0]);
-  const [jamMulai, setJamMulai] = useState("");
-  const [jamSelesai, setJamSelesai] = useState("");
+  const [jamMulai, setJamMulai] = useState("00:00");
+  const [jamSelesai, setJamSelesai] = useState("00:00");
 
   const handleTimeInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
     const numbers = value.replace(/\D/g, "");
@@ -202,6 +203,7 @@ export default function ManajemenInspeksi() {
   const openModal = async (asset: Asset, mode: "VALIDASI" | "DETAIL" = "VALIDASI") => {
     setSelectedAsset(asset);
     setModalMode(mode);
+    setRequiredActionId("");
     setIsModalOpen(true);
     setUploadedFiles([]); // Reset files
     setShowValidationErrors(false);
@@ -227,8 +229,8 @@ export default function ManajemenInspeksi() {
       setCatatan("");
       setRekomendasi("");
       setLokasi("");
-      setJamMulai("");
-      setJamSelesai("");
+      setJamMulai("00:00");
+      setJamSelesai("00:00");
       setTglPemeriksaan(new Date().toISOString().split('T')[0]);
     } else {
       // Jika statusnya Ubah Validasi atau Perlu Revisi, muat data yang sudah pernah diisi
@@ -530,7 +532,6 @@ export default function ManajemenInspeksi() {
   const validateForm = () => {
     if (!hasilPemeriksaan || !lokasi || !tglPemeriksaan || !jamMulai || !jamSelesai) return false;
     if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
-    if (uploadedFiles.length < 2) return false;
     return true;
   };
 
@@ -968,22 +969,80 @@ export default function ManajemenInspeksi() {
                       <label className="block text-[11px] font-semibold text-gray-700">Mulai</label>
                       <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
                     </div>
-                    <div className="relative">
-                      <input type="text" placeholder="00:00" maxLength={5} value={jamMulai} onChange={e => handleTimeInput(e.target.value, setJamMulai)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && jamMulai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
+                    <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-md px-2 py-1.5 justify-center">
+                      <select 
+                        value={jamMulai && jamMulai.includes(":") ? jamMulai.split(":")[0] : "00"} 
+                        onChange={(e) => {
+                          const hour = e.target.value;
+                          const min = jamMulai.includes(":") ? jamMulai.split(":")[1] : "00";
+                          setJamMulai(`${hour}:${min}`);
+                        }}
+                        disabled={isReadOnly}
+                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer disabled:cursor-not-allowed flex-1"
+                      >
+                        {Array.from({ length: 24 }).map((_, i) => {
+                          const val = i.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="text-gray-400 font-bold text-[12px]">:</span>
+                      <select 
+                        value={jamMulai && jamMulai.includes(":") ? jamMulai.split(":")[1] : "00"} 
+                        onChange={(e) => {
+                          const hour = jamMulai.includes(":") ? jamMulai.split(":")[0] : "00";
+                          const min = e.target.value;
+                          setJamMulai(`${hour}:${min}`);
+                        }}
+                        disabled={isReadOnly}
+                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer disabled:cursor-not-allowed flex-1"
+                      >
+                        {Array.from({ length: 60 }).map((_, i) => {
+                          const val = i.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="text-[10px] font-bold text-gray-400 ml-1 shrink-0">WIB</span>
                     </div>
-                    {showValidationErrors && jamMulai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <div className="flex justify-between items-end mb-1">
                       <label className="block text-[11px] font-semibold text-gray-700">Selesai</label>
                       <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
                     </div>
-                    <div className="relative">
-                      <input type="text" placeholder="00:00" maxLength={5} value={jamSelesai} onChange={e => handleTimeInput(e.target.value, setJamSelesai)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && jamSelesai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
+                    <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-md px-2 py-1.5 justify-center">
+                      <select 
+                        value={jamSelesai && jamSelesai.includes(":") ? jamSelesai.split(":")[0] : "00"} 
+                        onChange={(e) => {
+                          const hour = e.target.value;
+                          const min = jamSelesai.includes(":") ? jamSelesai.split(":")[1] : "00";
+                          setJamSelesai(`${hour}:${min}`);
+                        }}
+                        disabled={isReadOnly}
+                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer disabled:cursor-not-allowed flex-1"
+                      >
+                        {Array.from({ length: 24 }).map((_, i) => {
+                          const val = i.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="text-gray-400 font-bold text-[12px]">:</span>
+                      <select 
+                        value={jamSelesai && jamSelesai.includes(":") ? jamSelesai.split(":")[1] : "00"} 
+                        onChange={(e) => {
+                          const hour = jamSelesai.includes(":") ? jamSelesai.split(":")[0] : "00";
+                          const min = e.target.value;
+                          setJamSelesai(`${hour}:${min}`);
+                        }}
+                        disabled={isReadOnly}
+                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer disabled:cursor-not-allowed flex-1"
+                      >
+                        {Array.from({ length: 60 }).map((_, i) => {
+                          const val = i.toString().padStart(2, '0');
+                          return <option key={val} value={val}>{val}</option>;
+                        })}
+                      </select>
+                      <span className="text-[10px] font-bold text-gray-400 ml-1 shrink-0">WIB</span>
                     </div>
-                    {showValidationErrors && jamSelesai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Durasi</label>
@@ -1113,7 +1172,7 @@ export default function ManajemenInspeksi() {
                       <span className="text-[11px] text-gray-500 font-medium text-center">Format: JPG, PNG, PDF (Max 5MB)</span>
                       
                       {uploadedFiles.length === 0 && (
-                        <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1.5 py-0.5 rounded mt-1">Wajib Minimal 2 Foto/File</span>
+                        <span className="text-[9px] font-bold text-gray-500 uppercase bg-gray-50 px-1.5 py-0.5 rounded mt-1">Opsional</span>
                       )}
 
                       {/* Preview Selected Files (Inside Dropzone) */}
@@ -1154,9 +1213,6 @@ export default function ManajemenInspeksi() {
                       )}
                     </div>
                     
-                    {showValidationErrors && uploadedFiles.length < 2 && (
-                      <p className="text-[10px] text-red-500 mt-1.5 font-medium">* Wajib mengunggah minimal 2 foto dokumentasi/file referensi.</p>
-                    )}
                     {fileError && (
                       <p className="text-[10px] text-red-500 mt-1.5 font-medium">* {fileError}</p>
                     )}
