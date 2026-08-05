@@ -11,7 +11,7 @@ import { getEquipments, validateEquipment, getObjectTypes, getApprovals, getAtta
 import { getCurrentUserAction } from "@/action/auth";
 
 // Tipe Data
-type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE";
+type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "READY TO USE" | "IDLE";
 type ApprovalState = "NONE" | "PENDING_REVIEW" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "NEED_REVISION";
 
 interface Asset {
@@ -72,7 +72,7 @@ export default function ManajemenInspeksi() {
             plant: item.plant,
             jenisAlat: objectTypeName,
             tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
-            statusAset: (item.status?.name || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "IDLE" : "REGISTERED")).toUpperCase(),
+            statusAset: (item.status?.name || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "READY TO USE" : "REGISTERED")).toUpperCase(),
             statusPersetujuan: "NONE", // Default, will override below
             spesifikasi: item.notes || "Belum ada spesifikasi",
             lampiran: [],
@@ -105,7 +105,7 @@ export default function ManajemenInspeksi() {
                 statusPersetujuan = "IN_REVIEW";
               } else if (app.approval_status === "APPROVED") {
                 statusPersetujuan = "APPROVED";
-                statusAset = "IDLE";
+                statusAset = "READY TO USE";
               } else if (app.approval_status === "REJECTED") {
                 statusPersetujuan = "REJECTED";
                 statusAset = "REJECTED";
@@ -115,7 +115,7 @@ export default function ManajemenInspeksi() {
             } else {
               statusPersetujuan = "PENDING_REVIEW"; 
             }
-          } else if (statusAset === "IDLE") {
+          } else if (statusAset === "IDLE" || statusAset === "READY TO USE" || statusAset === "READY_TO_USE") {
             statusPersetujuan = "APPROVED";
           } else if (statusAset === "REJECTED") {
             statusPersetujuan = "REJECTED";
@@ -483,14 +483,17 @@ export default function ManajemenInspeksi() {
   }, [search, plantFilter, statusFilter, dateFilter]);
 
   // UI Helpers
-  const getStatusAsetBadge = (status: AssetState) => {
-    const styles = {
+  const getStatusAsetBadge = (status: AssetState | string) => {
+    const styles: Record<string, string> = {
       REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
       VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
       REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-      IDLE: "bg-[#E0E7FF] text-[#4F46E5]"
+      IDLE: "bg-[#DCFCE7] text-[#16A34A]",
+      "READY TO USE": "bg-[#DCFCE7] text-[#16A34A]",
+      "READY_TO_USE": "bg-[#DCFCE7] text-[#16A34A]"
     };
-    return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[status]}`}>{status}</span>;
+    const displayStatus = status === "IDLE" ? "READY TO USE" : status;
+    return <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[status] || styles["READY TO USE"]}`}>{displayStatus}</span>;
   };
 
   const getApprovalBadge = (status: ApprovalState) => {
@@ -662,7 +665,7 @@ export default function ManajemenInspeksi() {
               <option value="REGISTERED">Registered</option>
               <option value="VALIDATED">Validated</option>
               <option value="NEED_REVISION">Perlu Revisi</option>
-              <option value="IDLE">Idle</option>
+              <option value="IDLE">Ready to Use</option>
               <option value="REJECTED">Ditolak</option>
             </select>
             

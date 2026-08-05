@@ -387,11 +387,11 @@ export default function UnitKerjaKatalogPage() {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       READY_TO_REUSE: "bg-[#DCFCE7] text-[#16A34A]",
-      IDLE: "bg-[#E0E7FF] text-[#4F46E5]",
+      IDLE: "bg-[#DCFCE7] text-[#16A34A]",
     };
     const labels: Record<string, string> = {
       READY_TO_REUSE: "Ready to Use",
-      IDLE: "Idle",
+      IDLE: "Ready to Use",
     };
     return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status] || "bg-gray-100 text-gray-700"}`}>{labels[status] || status}</span>;
   };
@@ -510,7 +510,7 @@ export default function UnitKerjaKatalogPage() {
               <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[140px] cursor-pointer">
                 <option value="Semua">Semua Status</option>
                 <option value="READY_TO_REUSE">Ready to Use</option>
-                <option value="IDLE">Idle</option>
+                <option value="IDLE">Ready to Use</option>
               </select>
 
               <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 max-w-[180px] cursor-pointer">

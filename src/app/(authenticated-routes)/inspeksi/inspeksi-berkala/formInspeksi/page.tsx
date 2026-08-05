@@ -205,8 +205,11 @@ export default function FormInspeksiPage() {
           <div>
             <p className="text-sm text-gray-500 font-semibold mb-1">Status Saat Ini</p>
             <div>
-              <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#E0E7FF] text-[#4F46E5] mt-0.5 border border-[#C7D2FE]">
-                {typeof equipment?.status === 'string' ? equipment.status : equipment?.status?.name || "IDLE"}
+              <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#DCFCE7] text-[#16A34A] mt-0.5 border border-[#86EFAC]">
+                {(() => {
+                  const s = typeof equipment?.status === 'string' ? equipment.status : equipment?.status?.name || "READY TO USE";
+                  return s === "IDLE" ? "READY TO USE" : s;
+                })()}
               </span>
             </div>
           </div>
