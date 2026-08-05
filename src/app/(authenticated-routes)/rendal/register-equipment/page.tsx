@@ -22,8 +22,6 @@ import {
 	getEquipments,
 	getObjectTypes,
 	getStorageLocations,
-	getIdleReasons,
-	getFunctionalLocations,
 } from "@/action/api";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -54,12 +52,6 @@ export default function RegisterEquipmentPage() {
 	const [storageLocations, setStorageLocations] = useState<
 		{ id: number; name: string }[]
 	>([]);
-	const [idleReasons, setIdleReasons] = useState<
-		{ id: number; reason_name: string; description?: string }[]
-	>([]);
-	const [functionalLocations, setFunctionalLocations] = useState<
-		{ id: number; code: string; description: string }[]
-	>([]);
 
 	// UX Improvement: Semua nilai dropdown & radio di-set kosong ("") di awal
 	const [formData, setFormData] = useState({
@@ -78,17 +70,13 @@ export default function RegisterEquipmentPage() {
 
 	useEffect(() => {
 		async function loadData() {
-			const [objs, locs, reasons, funlocs, equipments] = await Promise.all([
+			const [objs, locs, equipments] = await Promise.all([
 				getObjectTypes(),
 				getStorageLocations(),
-				getIdleReasons(),
-				getFunctionalLocations(),
 				editId ? getEquipments() : Promise.resolve([]),
 			]);
 			setObjectTypes(objs);
 			setStorageLocations(locs);
-			setIdleReasons(reasons);
-			setFunctionalLocations(funlocs);
 
 			// ponytail: backend equipment shape belum punya DTO frontend bersama.
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -245,7 +233,7 @@ export default function RegisterEquipmentPage() {
 				vendor: formData.vendor,
 				year: Number(formData.year) || new Date().getFullYear(),
 				original_value: Number(formData.originalValue.replace(/\./g, "")) || 0,
-				id_idle_reason: Number(formData.idleReasonId),
+				id_idle_reason: formData.idleReasonId,
 				notes: formData.notes,
 			});
 
@@ -584,20 +572,15 @@ export default function RegisterEquipmentPage() {
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									AREA (FUNCLOC)
 								</label>
-								<select
+								<input
+									type="text"
 									onBlur={handleBlur}
 									name="funcLoc"
 									value={formData.funcLoc}
 									onChange={handleChange}
-									className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-white outline-none transition-all focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
-								>
-									<option value="">Pilih Area (FuncLoc)...</option>
-									{functionalLocations.map((loc) => (
-										<option key={loc.id} value={loc.code}>
-											{loc.code} - {loc.description}
-										</option>
-									))}
-								</select>
+									placeholder="Masukkan Functional Location..."
+									className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg outline-none transition-all focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
+								/>
 							</div>
 
 							{/* Garis Pemisah Visual */}
@@ -685,45 +668,28 @@ export default function RegisterEquipmentPage() {
 						</div>
 
 						<div className="p-4 sm:p-5 flex-1 flex flex-col gap-4">
-							{/* Alasan Idle (Radio Grid 2x2 yang sangat hemat tempat) */}
+							{/* Alasan Idle (Input teks manual agar fleksibel) */}
 							<div>
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">
 									ALASAN IDLE <span className="text-red-500">*</span>
 								</label>
-								<div className="grid grid-cols-2 gap-2.5" onBlur={handleBlur}>
-									{idleReasons.map((reason) => {
-										const id = String(reason.id);
-										return (
-											<label
-												key={id}
-												title={reason.description}
-												className={`flex items-start gap-2 p-2.5 border rounded-lg cursor-pointer transition-all ${formData.idleReasonId === id ? "border-[#0556B3] bg-blue-50/40 ring-1 ring-[#0556B3]" : (showValidationErrors || touched.idleReasonId) && !formData.idleReasonId ? "border-red-400 bg-red-50/30 hover:border-red-500" : "border-gray-300 hover:border-gray-400"}`}
-											>
-												<input
-													type="radio"
-													name="idleReasonId"
-													value={id}
-													checked={formData.idleReasonId === id}
-													onChange={handleChange}
-													onBlur={handleBlur}
-													className="mt-0.5 w-3.5 h-3.5 text-[#0556B3] focus:ring-[#0556B3] cursor-pointer shrink-0"
-												/>
-												<span className="text-xs font-semibold text-gray-700 leading-tight">
-													{reason.reason_name}
-												</span>
-											</label>
-										);
-									})}
-									{idleReasons.length === 0 && (
-										<p className="col-span-2 text-[11px] text-gray-500">
-											Memuat alasan idle...
-										</p>
-									)}
-								</div>
+								<input
+									type="text"
+									onBlur={handleBlur}
+									name="idleReasonId"
+									value={formData.idleReasonId}
+									onChange={handleChange}
+									placeholder="Masukkan Alasan Idle..."
+									className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${
+										(showValidationErrors || touched.idleReasonId) && !formData.idleReasonId
+											? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10 text-gray-900"
+											: "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
+									}`}
+								/>
 								{(showValidationErrors || touched.idleReasonId) &&
 									!formData.idleReasonId && (
 										<p className="text-[10px] text-red-500 mt-1.5 font-medium">
-											* Alasan idle wajib dipilih.
+											* Alasan idle wajib diisi.
 										</p>
 									)}
 							</div>
