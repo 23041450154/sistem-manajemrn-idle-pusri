@@ -780,25 +780,25 @@ export default function ManajemenInspeksi() {
             <thead className="bg-gray-50/95 backdrop-blur-sm">
               <tr className="border-b border-gray-300">
                 <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center w-12 whitespace-nowrap">No</th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
-                  <div className="flex items-center justify-center">Nama Alat {getSortIcon('namaAlat')}</div>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
+                  <div className="flex items-center justify-start">Nama Alat {getSortIcon('namaAlat')}</div>
                 </th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
-                  <div className="flex items-center justify-center">Plant {getSortIcon('plant')}</div>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
+                  <div className="flex items-center justify-start">Plant {getSortIcon('plant')}</div>
                 </th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
-                  <div className="flex items-center justify-center">Jenis {getSortIcon('jenisAlat')}</div>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
+                  <div className="flex items-center justify-start">Jenis {getSortIcon('jenisAlat')}</div>
                 </th>
                 <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('tanggalRegistrasi')}>
                   <div className="flex items-center justify-center">Tanggal {getSortIcon('tanggalRegistrasi')}</div>
                 </th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
-                  <div className="flex items-center justify-center">Aset {getSortIcon('statusAset')}</div>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
+                  <div className="flex items-center justify-start">Aset {getSortIcon('statusAset')}</div>
                 </th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
-                  <div className="flex items-center justify-center">Persetujuan {getSortIcon('statusPersetujuan')}</div>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
+                  <div className="flex items-center justify-start">Persetujuan {getSortIcon('statusPersetujuan')}</div>
                 </th>
-                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Tindakan</th>
+                <th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-left whitespace-nowrap">Tindakan</th>
               </tr>
             </thead>
             <tbody className="bg-white">
@@ -824,26 +824,26 @@ export default function ManajemenInspeksi() {
                   return (
                     <tr key={asset.id} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
                       <td className="px-3 py-1 text-[14px] text-gray-500 font-medium text-center">{rowNum}</td>
-                      <td className="px-3 py-1 text-[14px] font-semibold text-gray-800 text-center" title={asset.namaAlat}>
-                        <span className="leading-tight line-clamp-2 block text-center">{asset.namaAlat}</span>
+                      <td className="px-3 py-1 text-[14px] font-semibold text-gray-800 text-left" title={asset.namaAlat}>
+                        <span className="leading-tight line-clamp-2 block text-left">{asset.namaAlat}</span>
                       </td>
-                      <td className="px-3 py-1 text-[14px] text-gray-600 font-medium text-center">
+                      <td className="px-3 py-1 text-[14px] text-gray-600 font-medium text-left">
                         {asset.plant}
                       </td>
-                      <td className="px-3 py-1 text-[14px] text-gray-600 font-medium text-center">
+                      <td className="px-3 py-1 text-[14px] text-gray-600 font-medium text-left">
                         {asset.jenisAlat}
                       </td>
                       <td className="px-3 py-1 text-[14px] text-gray-600 text-center">
                         {asset.tanggalRegistrasi}
                       </td>
-                      <td className="px-3 py-1 text-[14px] text-center">
-                        <div className="flex justify-center">{getStatusAsetBadge(asset.statusAset)}</div>
+                      <td className="px-3 py-1 text-[14px] text-left">
+                        <div className="flex justify-start">{getStatusAsetBadge(asset.statusAset)}</div>
                       </td>
-                      <td className="px-3 py-1 text-[14px] text-center">
-                        <div className="flex justify-center">{getApprovalBadge(asset.statusPersetujuan)}</div>
+                      <td className="px-3 py-1 text-[14px] text-left">
+                        <div className="flex justify-start">{getApprovalBadge(asset.statusPersetujuan)}</div>
                       </td>
-                      <td className="px-3 py-1 text-center">
-                        <div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
+                      <td className="px-3 py-1 text-left">
+                        <div className="flex justify-start opacity-90 group-hover:opacity-100 transition-opacity">
                           {getActionButton(asset)}
                         </div>
                       </td>
