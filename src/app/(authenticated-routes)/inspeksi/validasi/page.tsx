@@ -199,8 +199,8 @@ export default function ManajemenInspeksi() {
   const [catatan, setCatatan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [tglPemeriksaan, setTglPemeriksaan] = useState(new Date().toISOString().split('T')[0]);
-  const [jamMulai, setJamMulai] = useState("00:00");
-  const [jamSelesai, setJamSelesai] = useState("00:00");
+  const [jamMulai, setJamMulai] = useState("08:00");
+  const [jamSelesai, setJamSelesai] = useState("09:00");
 
   const handleTimeInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
     const numbers = value.replace(/\D/g, "");
@@ -268,8 +268,8 @@ export default function ManajemenInspeksi() {
       setCatatan("");
       setRekomendasi("");
       setLokasi("");
-      setJamMulai("00:00");
-      setJamSelesai("00:00");
+      setJamMulai("08:00");
+      setJamSelesai("09:00");
       setTglPemeriksaan(new Date().toISOString().split('T')[0]);
     } else {
       // Jika statusnya Ubah Validasi atau Perlu Revisi, muat data yang sudah pernah diisi
@@ -447,7 +447,7 @@ export default function ManajemenInspeksi() {
     const endMins = hSelesai * 60 + mSelesai;
     const diff = endMins - startMins;
     
-    if (diff <= 0) return "Invalid";
+    if (diff <= 0) return "-";
     const h = Math.floor(diff / 60);
     const m = diff % 60;
     return `${h > 0 ? h + ' Jam ' : ''}${m > 0 ? m + ' Menit' : ''}`;
@@ -1045,92 +1045,31 @@ export default function ManajemenInspeksi() {
                     <input type="text" value={`INSP-${selectedAsset.kodeAlat}`} disabled className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-1.5 text-[13px] font-medium text-gray-500" />
                   </div>
                   <div className="col-span-3">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Tanggal</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Tanggal *</label>
                     <input type="date" value={tglPemeriksaan} onChange={e => setTglPemeriksaan(e.target.value)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !tglPemeriksaan ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
                     {showValidationErrors && !tglPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Tanggal wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Mulai</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
-                    <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-md px-2 py-1.5 justify-center">
-                      <select 
-                        value={jamMulai && jamMulai.includes(":") ? jamMulai.split(":")[0] : "00"} 
-                        onChange={(e) => {
-                          const hour = e.target.value;
-                          const min = jamMulai.includes(":") ? jamMulai.split(":")[1] : "00";
-                          setJamMulai(`${hour}:${min}`);
-                        }}
-                        disabled={isReadOnly}
-                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer disabled:cursor-not-allowed flex-1"
-                      >
-                        {Array.from({ length: 24 }).map((_, i) => {
-                          const val = i.toString().padStart(2, '0');
-                          return <option key={val} value={val}>{val}</option>;
-                        })}
-                      </select>
-                      <span className="text-gray-400 font-bold text-[12px]">:</span>
-                      <select 
-                        value={jamMulai && jamMulai.includes(":") ? jamMulai.split(":")[1] : "00"} 
-                        onChange={(e) => {
-                          const hour = jamMulai.includes(":") ? jamMulai.split(":")[0] : "00";
-                          const min = e.target.value;
-                          setJamMulai(`${hour}:${min}`);
-                        }}
-                        disabled={isReadOnly}
-                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer disabled:cursor-not-allowed flex-1"
-                      >
-                        {Array.from({ length: 60 }).map((_, i) => {
-                          const val = i.toString().padStart(2, '0');
-                          return <option key={val} value={val}>{val}</option>;
-                        })}
-                      </select>
-                      <span className="text-[10px] font-bold text-gray-400 ml-1 shrink-0">WIB</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Jam Mulai *</label>
+                    <input 
+                      type="time" 
+                      value={jamMulai} 
+                      onChange={e => setJamMulai(e.target.value)} 
+                      disabled={isReadOnly} 
+                      className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && !jamMulai ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} 
+                    />
+                    {showValidationErrors && !jamMulai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam Mulai wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Selesai</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
-                    <div className="flex items-center gap-1 bg-white border border-gray-300 rounded-md px-2 py-1.5 justify-center">
-                      <select 
-                        value={jamSelesai && jamSelesai.includes(":") ? jamSelesai.split(":")[0] : "00"} 
-                        onChange={(e) => {
-                          const hour = e.target.value;
-                          const min = jamSelesai.includes(":") ? jamSelesai.split(":")[1] : "00";
-                          setJamSelesai(`${hour}:${min}`);
-                        }}
-                        disabled={isReadOnly}
-                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer disabled:cursor-not-allowed flex-1"
-                      >
-                        {Array.from({ length: 24 }).map((_, i) => {
-                          const val = i.toString().padStart(2, '0');
-                          return <option key={val} value={val}>{val}</option>;
-                        })}
-                      </select>
-                      <span className="text-gray-400 font-bold text-[12px]">:</span>
-                      <select 
-                        value={jamSelesai && jamSelesai.includes(":") ? jamSelesai.split(":")[1] : "00"} 
-                        onChange={(e) => {
-                          const hour = jamSelesai.includes(":") ? jamSelesai.split(":")[0] : "00";
-                          const min = e.target.value;
-                          setJamSelesai(`${hour}:${min}`);
-                        }}
-                        disabled={isReadOnly}
-                        className="bg-transparent text-[13px] font-mono outline-none cursor-pointer disabled:cursor-not-allowed flex-1"
-                      >
-                        {Array.from({ length: 60 }).map((_, i) => {
-                          const val = i.toString().padStart(2, '0');
-                          return <option key={val} value={val}>{val}</option>;
-                        })}
-                      </select>
-                      <span className="text-[10px] font-bold text-gray-400 ml-1 shrink-0">WIB</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Jam Selesai *</label>
+                    <input 
+                      type="time" 
+                      value={jamSelesai} 
+                      onChange={e => setJamSelesai(e.target.value)} 
+                      disabled={isReadOnly} 
+                      className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && !jamSelesai ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} 
+                    />
+                    {showValidationErrors && !jamSelesai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam Selesai wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Durasi</label>
@@ -1144,10 +1083,7 @@ export default function ManajemenInspeksi() {
                 {/* Row 2: Lokasi & Hasil (Compact) */}
                 <div className="grid grid-cols-12 gap-3 mb-3">
                   <div className="col-span-5">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Lokasi Pengecekan</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Lokasi Pengecekan *</label>
                     <select 
                       value={lokasi} 
                       onChange={e => setLokasi(e.target.value)} 
@@ -1167,10 +1103,7 @@ export default function ManajemenInspeksi() {
                   </div>
                   
                   <div className="col-span-7">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Hasil Evaluasi Kelayakan</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Hasil Evaluasi Kelayakan *</label>
                     <div className="flex gap-2.5">
                       <label className={`flex-1 relative border rounded-md p-1.5 cursor-pointer flex items-center justify-center gap-2 transition-all ${
                         hasilPemeriksaan === "Layak" ? "border-emerald-500 bg-emerald-50/50" : "border-gray-200 bg-white hover:bg-gray-50"
@@ -1178,7 +1111,7 @@ export default function ManajemenInspeksi() {
                         <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Layak" ? "border-emerald-500" : (showValidationErrors && !hasilPemeriksaan ? "border-red-400" : "border-gray-300")}`}>
                           {hasilPemeriksaan === "Layak" && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
                         </div>
-                        <span className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-emerald-700" : "text-gray-700"}`}>Layak Utilisasi</span>
+                        <span className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-emerald-700" : "text-gray-700"}`}>Layak Digunakan</span>
                         <input type="radio" name="hasil" value="Layak" checked={hasilPemeriksaan === "Layak"} onChange={e => setHasilPemeriksaan(e.target.value)} disabled={isReadOnly} className="hidden" />
                       </label>
                       
@@ -1224,16 +1157,13 @@ export default function ManajemenInspeksi() {
                 {/* Row 3: Catatan & Rekomendasi (Side by side) */}
                 <div className="grid grid-cols-2 gap-4 mb-3">
                   <div>
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Catatan Pemeriksaan <span className={hasilPemeriksaan === "Tidak Layak" ? "text-red-500" : ""}>{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}</span></label>
-                      {hasilPemeriksaan === "Tidak Layak" && <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>}
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Catatan Pemeriksaan <span className={hasilPemeriksaan === "Tidak Layak" ? "text-red-500" : ""}>{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}</span></label>
                     <textarea 
                       rows={2} 
                       value={catatan}
                       onChange={e => setCatatan(e.target.value)}
                       disabled={isReadOnly}
-                      placeholder={hasilPemeriksaan === "Tidak Layak" ? "Tuliskan alasan (wajib)..." : "Detail temuan..."}
+                      placeholder={hasilPemeriksaan === "Tidak Layak" ? "Tuliskan alasan (wajib)..." : "Tuliskan hasil pemeriksaan..."}
                       className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 resize-none transition-all ${
                         hasilPemeriksaan === "Tidak Layak" && !catatan.trim() 
                         ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" 
@@ -1279,8 +1209,7 @@ export default function ManajemenInspeksi() {
                     >
                       <UploadCloud className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A] animate-bounce" : "text-gray-400"}`} />
                       <div className="text-[13px] text-center">
-                        <span className="font-bold text-[#0A356A]">Klik untuk memilih</span>
-                        <span className="text-gray-600 font-medium"> atau drag & drop ke sini</span>
+                        <span className="font-bold text-[#0A356A]">📎 Upload Foto Pemeriksaan</span>
                       </div>
                       <span className="text-[11px] text-gray-500 font-medium text-center">Format: JPG, PNG, PDF (Max 5MB)</span>
                       
@@ -1393,7 +1322,7 @@ export default function ManajemenInspeksi() {
                   {isSubmitting ? (
                     <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Proses...</>
                   ) : (
-                    <><Save className="w-3.5 h-3.5" /> Simpan Hasil</>
+                    <><Save className="w-3.5 h-3.5" /> Simpan Hasil Inspeksi</>
                   )}
                 </button>
               )}
