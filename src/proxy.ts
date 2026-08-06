@@ -21,20 +21,30 @@ export function proxy(request: NextRequest) {
     return NextResponse.redirect(loginUrl)
   }
 
-  // Jika sudah login tapi akses halaman public, arahkan ke dashboard
+  // Jika ada token tapi di public path (seperti /login)
   if (token && isPublicPath) {
-    let homeUrl = '/'
-    if (userCookie) {
-      try {
-        const user = JSON.parse(userCookie)
-        const role = normalizeRole(user?.role)
-        homeUrl = homePathForRole(role)
-      } catch (e) {}
+    if (!userCookie) {
+      // Token ada tapi userCookie hilang/rusak: hapus token dan ijinkan ke login
+      const response = NextResponse.next()
+      response.cookies.delete('token')
+      response.cookies.delete('user')
+      return response
     }
-    return NextResponse.redirect(new URL(homeUrl, request.url))
+
+    try {
+      const user = JSON.parse(userCookie)
+      const role = normalizeRole(user?.role)
+      const homeUrl = homePathForRole(role)
+      return NextResponse.redirect(new URL(homeUrl, request.url))
+    } catch (e) {
+      const response = NextResponse.next()
+      response.cookies.delete('token')
+      response.cookies.delete('user')
+      return response
+    }
   }
 
-  // Cek RBAC
+  // Cek RBAC untuk protected path
   if (token && userCookie && !isPublicPath) {
     try {
       const user = JSON.parse(userCookie)
@@ -71,6 +81,15 @@ export function proxy(request: NextRequest) {
       response.cookies.delete('user')
       return response
     }
+  }
+
+  // Jika token ada tapi userCookie tidak ada pada protected path
+  if (token && !userCookie && !isPublicPath) {
+    const loginUrl = new URL('/login', request.url)
+    const response = NextResponse.redirect(loginUrl)
+    response.cookies.delete('token')
+    response.cookies.delete('user')
+    return response
   }
 
   return NextResponse.next()
