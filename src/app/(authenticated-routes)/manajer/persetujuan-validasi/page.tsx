@@ -449,13 +449,17 @@ export default function ManajerApprovePage() {
                   </td>
                   <td className="px-2 py-2 text-center w-[120px]">
                     <div className="flex items-center justify-center gap-1">
-                      <button
-                        type="button"
-                        onClick={(e) => { e.preventDefault(); openModal(req); }}
-                        className="px-2.5 py-1 rounded-lg text-xs font-bold text-[#0A356A] bg-blue-50 hover:bg-[#0A356A] hover:text-white transition-colors"
-                      >
-                        Tinjau
-                      </button>
+                      <Tooltip content="Detail Eagle Eye">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          type="button"
+                          onClick={(e) => { e.preventDefault(); openModal(req); }}
+                          className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100"
+                        >
+                          <Eye className="w-4 h-4" />
+                        </Button>
+                      </Tooltip>
                       {isAdmin && (
                         <>
                           <Tooltip content="Edit">

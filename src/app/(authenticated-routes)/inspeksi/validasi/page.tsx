@@ -871,15 +871,15 @@ export default function ManajemenInspeksi() {
                       </td>
                       <td className="px-3 py-2 text-center w-[120px]">
                         <div className="flex items-center justify-center gap-1">
-                          <Tooltip content="Detail Inspeksi">
+                          <Tooltip content="Detail Eagle Eye">
                             <Button
                               variant="ghost"
                               size="icon"
                               type="button"
                               onClick={(e) => { e.preventDefault(); setDetailItem(asset); setIsDetailOpen(true); }}
-                              className="h-8 w-8 text-[#0A356A] hover:text-[#0556B3] hover:bg-blue-50"
+                              className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100"
                             >
-                              <FileText className="w-4 h-4" />
+                              <Eye className="w-4 h-4" />
                             </Button>
                           </Tooltip>
                           {isAdmin && (

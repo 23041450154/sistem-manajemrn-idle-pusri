@@ -16,14 +16,15 @@ File ini adalah pedoman lengkap dan **instruksi wajib (Mandatory Rules)** bagi s
 Seluruh agen AI **WAJIB MEMATUHI** aturan desain di [`design.md`](file:///C:/projek/branch%20baru/design.md) dan [`DESIGN.md`](file:///C:/projek/branch%20baru/DESIGN.md) untuk semua modifikasi komponen UI frontend.
 
 ### Aturan Utama Tampilan:
-1. **Ikon Eagle Eye (`Eye`)**:
-   - **Ikon `Eye` (Eagle Eye) HANYA BOLEH TERSEDIA pada tabel Administrator (`/admin/equipment`).**
-   - **DILARANG MENAMPILKAN IKON `Eye` (Eagle Eye) pada tabel di role operasional lain** (*Rendal Pemeliharaan, Inspeksi Teknik, Manajer Rendal, Unit Kerja Operasi*).
+1. **Tiga Ikon Aksi Standar (`Eye`, `Pencil`, `Trash2`)**:
+   - **Eagle Eye (`Eye`)**: Selalu digunakan untuk tombol aksi Detail di semua tabel.
+   - **Edit (`Pencil`) & Hapus (`Trash2`)**: Ditampilkan khusus untuk role Admin (`{isAdmin && (...)}`) dan disembunyikan untuk role lain.
 
-2. **Konsistensi Data Table**:
-   - **Header (`<thead>`)**: `bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider px-5 py-3.5`
-   - **Body Row (`<tbody> <tr>`)**: `hover:bg-slate-50/80 transition-colors px-5 py-4 text-xs font-medium text-slate-700`
-   - **Kolom Actions**: Selalu berada di paling kanan (`text-center whitespace-nowrap`), menggunakan ikon Lucide (`Pencil`, `Trash2` jika Admin) atau tombol teks role (*Tinjau / Verifikasi*).
+2. **Konsistensi Data Table & Bebas Scroll Horizontal**:
+   - Seluruh tabel WAJIB menggunakan `table-fixed` untuk mencegah scrollbar horizontal.
+   - **Header (`<thead>`)**: `bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider px-3 py-3.5`
+   - **Body Row (`<tbody> <tr>`)**: `hover:bg-slate-50/80 transition-colors px-3 py-2 text-xs font-medium text-slate-700 h-[48px]`
+   - **Kolom Actions**: Selalu berada di paling kanan (`text-center whitespace-nowrap w-[120px]`).
 
 3. **Warna Identitas Brand & Summary KPI Cards**:
    - Brand Primary Navy: `#0A356A`
@@ -33,7 +34,7 @@ Seluruh agen AI **WAJIB MEMATUHI** aturan desain di [`design.md`](file:///C:/pro
 4. **Status Badges (Terstandarisasi)**:
    - **Validated / Ready / Active**: `bg-blue-50 text-blue-700 border border-blue-200`
    - **Maintenance / Perbaikan**: `bg-amber-50 text-amber-700 border border-amber-200`
-   - **Idle / Cadangan**: `bg-purple-50 text-purple-700 border border-purple-200` (atau `bg-slate-100 text-slate-700 border border-slate-200`)
+   - **Idle / Cadangan**: `bg-purple-50 text-purple-700 border border-purple-200`
    - **Waiting Approval / Pending**: `bg-yellow-50 text-yellow-800 border border-yellow-200`
    - **Disposed / Rejected**: `bg-rose-50 text-rose-700 border border-rose-200`
 
@@ -59,24 +60,7 @@ Seluruh agen AI **WAJIB MEMATUHI** aturan desain di [`design.md`](file:///C:/pro
 
 ---
 
-## 🗺️ 3. Aturan Struktur Navigasi & Routing
-
-1. **Sidebar Navigation**:
-   - **Master Data**: Merupakan menu collapsible parent yang berisi sub-item:
-     - Kategori Aset (`/admin/master/kategori-aset`)
-     - Lokasi Penyimpanan (`/admin/master/lokasi-penyimpanan`)
-     - Rekomendasi Tindakan (`/admin/master/rekomendasi-tindakan`)
-   - **Kelola Data**: Merupakan menu collapsible parent untuk menu role operasional.
-   - **Manajer Rendal Routes**:
-     - Dashboard (`/manajer/dashboard`)
-     - Persetujuan Validasi (`/manajer/persetujuan-validasi`)
-     - Persetujuan Peminjaman (`/manajer/peminjaman`)
-     - Persetujuan Disposal (`/manajer/disposal`)
-     - Laporan (`/manajer/laporan`)
-
----
-
-## 🛡️ 4. Aturan Verifikasi & Quality Assurance (QA)
+## 🛡️ 3. Aturan Verifikasi & Quality Assurance (QA)
 
 1. **Pemeriksaan TypeScript Wajib**:
    - Setelah melakukan modifikasi struktur komponen atau kode, agen WAJIB menjalankan perintah `npx tsc --noEmit` untuk memastikan **0 error kompilasi (Exit Code 0)**.

@@ -430,16 +430,16 @@ export default function UnitKerjaKatalogPage() {
     return (
       <div className="flex flex-wrap items-center gap-1 justify-center w-full max-w-[120px] mx-auto">
         <button 
-          title="Detail" 
+          title="Detail Eagle Eye" 
           type="button"
           onClick={(e) => {
             e.preventDefault();
             setDetailModalItem(item);
             loadAttachments(item.id);
           }} 
-          className="text-[#0A356A] hover:text-[#0556B3] hover:bg-blue-50 p-0.5 rounded transition-colors flex flex-col items-center"
+          className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-0.5 rounded transition-colors flex flex-col items-center"
         >
-          <FileText className="w-3.5 h-3.5 mb-0.5" />
+          <Eye className="w-3.5 h-3.5 mb-0.5" />
           <span className="text-[8px] font-bold">Detail</span>
         </button>
         <button 
