@@ -54,8 +54,6 @@ export function Sidebar({ role }: { role?: string }) {
         { name: "Peralatan", href: "/rendal/idle" },
         { name: "Perbaikan Alat", href: "/rendal/perbaikan-alat" },
         { name: "Verifikasi Disposal", href: "/rendal/disposal" },
-        { name: "Laporan", href: "/rendal/laporan" },
-        { name: "Registrasi Alat", href: "/rendal/register-equipment" },
       ]
     },
     {
@@ -103,7 +101,6 @@ export function Sidebar({ role }: { role?: string }) {
         { name: "Peralatan", href: "/rendal/idle", icon: Boxes },
         { name: "Perbaikan Alat", href: "/rendal/perbaikan-alat", icon: Wrench },
         { name: "Verifikasi Disposal", href: "/rendal/disposal", icon: Trash2 },
-        { name: "Laporan Audit", href: "/rendal/laporan", icon: ShieldCheck },
       ];
       break;
 
