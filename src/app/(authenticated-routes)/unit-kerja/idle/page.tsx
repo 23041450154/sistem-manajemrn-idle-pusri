@@ -1,13 +1,18 @@
 "use client";
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
-import { getEquipments, getObjectTypes, createReuseRequest, getReuseRequests, getAttachmentsByEquipmentId } from "@/action/api";
+import { getEquipments, getObjectTypes, createReuseRequest, getReuseRequests, getAttachmentsByEquipmentId, deleteEquipment } from "@/action/api";
 import { 
   Search, Eye, X, ChevronRight, Send, 
   CheckCircle2, Clock, AlertCircle, FileSpreadsheet,
   RefreshCw, ArrowUpDown, ArrowUp, ArrowDown, Plus,
-  UserCheck, Wrench, Info, FileText
+  UserCheck, Wrench, Info, FileText, Pencil, Trash2
 } from "lucide-react";
+import { useUser } from "@/components/UserProvider";
+import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { Tooltip } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 interface EquipmentItem {
   id: string;
@@ -52,11 +57,36 @@ interface ReuseRequestItem {
 }
 
 export default function UnitKerjaKatalogPage() {
+  const { isAdmin } = useUser();
   const [activeTab, setActiveTab] = useState<"katalog" | "permintaan">("katalog");
   const [equipments, setEquipments] = useState<EquipmentItem[]>([]);
   const [reuseRequests, setReuseRequests] = useState<ReuseRequestItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  // Edit & Delete Dialog State for Admin
+  const [editItem, setEditItem] = useState<any>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<any>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteEquipment = async () => {
+    if (!deleteItem) return;
+    setIsDeleting(true);
+    try {
+      const res = await deleteEquipment(deleteItem.id);
+      if (res.success) {
+        setEquipments(prev => prev.filter(e => e.id !== deleteItem.id));
+        setIsDeleteOpen(false);
+        setDeleteItem(null);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Filter States
   const [searchInput, setSearchInput] = useState("");
@@ -414,12 +444,39 @@ export default function UnitKerjaKatalogPage() {
         </button>
         <button 
           title="Ajukan Reuse" 
-          onClick={() => handleOpenReuseModal(item)} 
+          type="button"
+          onClick={(e) => { e.preventDefault(); handleOpenReuseModal(item); }} 
           className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5 rounded transition-colors flex flex-col items-center"
         >
           <Send className="w-3.5 h-3.5 mb-0.5" />
           <span className="text-[8px] font-bold">Ajukan</span>
         </button>
+        {isAdmin && (
+          <>
+            <Tooltip content="Edit">
+              <Button
+                variant="ghost"
+                size="icon"
+                type="button"
+                onClick={(e) => { e.preventDefault(); setEditItem(item); setIsEditOpen(true); }}
+                className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+              >
+                <Pencil className="w-3.5 h-3.5" />
+              </Button>
+            </Tooltip>
+            <Tooltip content="Hapus">
+              <Button
+                variant="ghost"
+                size="icon"
+                type="button"
+                onClick={(e) => { e.preventDefault(); setDeleteItem(item); setIsDeleteOpen(true); }}
+                className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+              </Button>
+            </Tooltip>
+          </>
+        )}
       </div>
     );
   };
@@ -1104,6 +1161,22 @@ export default function UnitKerjaKatalogPage() {
           />
         </div>
       )}
+
+      {/* Edit & Delete Dialogs for Admin */}
+      <EditEquipmentDialog
+        open={isEditOpen}
+        onClose={() => { setIsEditOpen(false); setEditItem(null); }}
+        onSaved={fetchData}
+        equipment={editItem}
+      />
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onClose={() => { setIsDeleteOpen(false); setDeleteItem(null); }}
+        onConfirm={handleDeleteEquipment}
+        title="Hapus Peralatan"
+        description={`Apakah Anda yakin ingin menghapus peralatan ${deleteItem?.equipment_code || ''}?`}
+        isDeleting={isDeleting}
+      />
 
     </div>
   );

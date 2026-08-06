@@ -3,9 +3,12 @@
 import React, { useState, useEffect } from "react";
 import {
   Eye, X, FileText, CheckCircle2, RefreshCw, XCircle, AlertTriangle,
-  Clock, Boxes, Search, Calendar, ChevronRight
+  Clock, Boxes, Search, Calendar, ChevronRight, Pencil, Trash2
 } from "lucide-react";
-import { getReuseRequests, updateReuseRequestStatus } from "@/action/api";
+import { getReuseRequests, updateReuseRequestStatus, deleteEquipment } from "@/action/api";
+import { useUser } from "@/components/UserProvider";
+import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 
@@ -37,6 +40,7 @@ interface ReuseRequest {
 }
 
 export default function ManajerPeminjamanPage() {
+  const { isAdmin } = useUser();
   const [search, setSearch] = useState("");
   const [plant, setPlant] = useState("Semua Plant");
   const [status, setStatus] = useState("Semua Status");
@@ -46,6 +50,32 @@ export default function ManajerPeminjamanPage() {
   const [requests, setRequests] = useState<ReuseRequest[]>([]);
   const [filteredRequests, setFilteredRequests] = useState<ReuseRequest[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Edit & Delete Dialog State
+  const [editItem, setEditItem] = useState<any>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<any>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteEquipment = async () => {
+    if (!deleteItem) return;
+    setIsDeleting(true);
+    try {
+      const targetId = deleteItem.equipment_id || deleteItem.id;
+      const res = await deleteEquipment(targetId);
+      if (res.success) {
+        setRequests(prev => prev.filter(r => r.id !== deleteItem.id));
+        setFilteredRequests(prev => prev.filter(r => r.id !== deleteItem.id));
+        setIsDeleteOpen(false);
+        setDeleteItem(null);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   // Centered Modal State
   const [selectedRequest, setSelectedRequest] = useState<ReuseRequest | null>(null);
@@ -458,8 +488,8 @@ export default function ManajerPeminjamanPage() {
                   <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
                     {getStatusBadge(req.status)}
                   </td>
-                  <td className="px-2 py-2 text-center w-[90px]">
-                    <div className="flex items-center justify-center">
+                  <td className="px-2 py-2 text-center w-[120px]">
+                    <div className="flex items-center justify-center gap-1">
                       <button
                         type="button"
                         onClick={(e) => { e.preventDefault(); e.stopPropagation(); openDrawer(req); }}
@@ -467,6 +497,41 @@ export default function ManajerPeminjamanPage() {
                       >
                         Tinjau
                       </button>
+                      {isAdmin && (
+                        <>
+                          <Tooltip content="Edit">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              type="button"
+                              onClick={(e) => {
+                                e.preventDefault();
+                                setEditItem({
+                                  id: req.equipment_id || req.id,
+                                  equipment_code: req.equipment_code,
+                                  name: req.equipment_name,
+                                  plant: req.target_plant
+                                });
+                                setIsEditOpen(true);
+                              }}
+                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          </Tooltip>
+                          <Tooltip content="Hapus">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); setDeleteItem(req); setIsDeleteOpen(true); }}
+                              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </Tooltip>
+                        </>
+                      )}
                     </div>
                   </td>
                 </tr>
@@ -693,6 +758,21 @@ export default function ManajerPeminjamanPage() {
           </div>
         </div>
       )}
+      {/* Edit & Delete Dialogs for Admin */}
+      <EditEquipmentDialog
+        open={isEditOpen}
+        onClose={() => { setIsEditOpen(false); setEditItem(null); }}
+        onSaved={fetchRequests}
+        equipment={editItem}
+      />
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onClose={() => { setIsDeleteOpen(false); setDeleteItem(null); }}
+        onConfirm={handleDeleteEquipment}
+        title="Hapus Peralatan"
+        description={`Apakah Anda yakin ingin menghapus peralatan ${deleteItem?.equipment_code || ''}?`}
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }
