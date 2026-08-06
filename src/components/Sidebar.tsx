@@ -52,6 +52,7 @@ export function Sidebar({ role }: { role?: string }) {
         { name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
         { name: "Peralatan", href: "/rendal/idle", icon: Wrench },
         { name: "Perbaikan Alat", href: "/rendal/perbaikan-alat", icon: Wrench },
+        { name: "Verifikasi Disposal", href: "/rendal/disposal", icon: Trash2 },
         { name: "Laporan Audit", href: "/rendal/laporan", icon: ShieldCheck },
       ];
       break;
@@ -60,7 +61,7 @@ export function Sidebar({ role }: { role?: string }) {
       // Placeholder: Inspeksi Teknik
       mainNavItems = [
         { name: "Dashboard", href: "/inspeksi/dashboard", icon: LayoutDashboard },
-        { name: "Validasi Kelayakan", href: "/inspeksi/validasi", icon: Wrench },
+        { name: "List Equipment", href: "/inspeksi/validasi", icon: Wrench },
         { name: "Revisi Validasi", href: "/inspeksi/revisi-validasi", icon: Edit },
         { name: "Inspeksi", href: "/inspeksi/inspeksi-berkala", icon: ClipboardCheck },
       ];
