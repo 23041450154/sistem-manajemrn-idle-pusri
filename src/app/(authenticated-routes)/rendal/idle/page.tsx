@@ -127,8 +127,16 @@ export default function RendalIdlePage() {
           idleReason: item.idle_declaration?.idle_reason?.reason_name || "-",
           photos: item.attachments 
             ? item.attachments
-                .filter((att: any) => att.attachment_category === "equipment_photo" || att.category === "equipment_photo")
-                .map((att: any) => att.file_url || att.fileUrl)
+                .filter((att: any) => 
+                  att.attachment_category === "equipment_photo" || 
+                  att.attachment_category === "photo" || 
+                  att.category === "equipment_photo" || 
+                  att.category === "photo"
+                )
+                .map((att: any) => {
+                  const url = att.file_url || att.fileUrl || "";
+                  return url.replace(/\\/g, "/");
+                })
             : []
         };
       });

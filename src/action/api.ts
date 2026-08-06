@@ -21,7 +21,26 @@ export async function getEquipments() {
 		});
 		if (!res.ok) return [];
 		const json = await res.json();
-		return json.data || [];
+		const data = json.data || [];
+		if (Array.isArray(data)) {
+			data.forEach((eq: any) => {
+				if (eq.attachments && Array.isArray(eq.attachments)) {
+					eq.attachments.forEach((att: any) => {
+						let url = att.file_url || att.fileUrl || att.url || "";
+						if (url) {
+							url = url.replace(/\\/g, "/");
+							if (!url.startsWith("/") && !url.startsWith("http")) {
+								url = "/" + url;
+							}
+							att.file_url = url;
+							att.fileUrl = url;
+							att.url = url;
+						}
+					});
+				}
+			});
+		}
+		return data;
 	} catch (error) {
 		console.error("Fetch equipment error:", error);
 		return [];
@@ -34,14 +53,37 @@ export async function getDisposals() {
 	const headers = { Authorization: `Bearer ${token}` };
 
 	try {
-		const res = await fetch(`${API_URL}/api/disposals`, {
-			headers,
+		const res = await fetch(`${API_URL}/api/disposal`, {
+			headers: { Authorization: `Bearer ${token}` },
 			cache: "no-store",
 		});
 		if (res.ok) {
 			const json = await res.json();
 			if (Array.isArray(json.data) && json.data.length > 0) {
-				return json.data;
+				return json.data.map((item: any) => {
+					return {
+						id: String(item.id),
+						disposal_number: item.disposal_number || "-",
+						equipment_id: String(item.equipment_id),
+						equipment_code: item.equipment?.equipment_code || "-",
+						equipment_name: item.equipment?.name || "-",
+						disposal_method: item.disposal_method?.name || "Scrap",
+						scrap_value: item.scrap_value || 0,
+						book_value: item.equipment?.book_value || 0,
+						original_value: item.equipment?.original_value || 0,
+						plant: item.equipment?.plant || "-",
+						justification: item.justification || "-",
+						status: item.approval_status || "PENDING",
+						created_at: item.created_at || new Date().toISOString(),
+						attachments: item.equipment?.attachments 
+							? item.equipment.attachments.map((att: any) => ({
+								id: String(att.id),
+								file_url: att.file_url || att.url || "",
+								caption: att.file_name || "Foto Dokumentasi",
+							}))
+							: []
+					};
+				});
 			}
 		}
 	} catch (error) {
@@ -336,6 +378,47 @@ export async function approveDisposal(
 			? "Pengajuan disposal berhasil disetujui, status aset berubah menjadi DISPOSED."
 			: "Pengajuan disposal berhasil ditolak.",
 	};
+}
+
+export async function createDisposalRequest(payload: {
+	disposal_number: string;
+	equipment_id: number;
+	disposal_method_id: number;
+	scrap_value: number;
+	disposal_date: string;
+	justification: string;
+}) {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+	const headers = {
+		"Content-Type": "application/json",
+		Authorization: `Bearer ${token}`,
+	};
+
+	try {
+		const res = await fetch(`${API_URL}/api/disposal`, {
+			method: "POST",
+			headers,
+			body: JSON.stringify(payload),
+		});
+
+		const json = await res.json().catch(() => null);
+
+		if (res.ok) {
+			return {
+				success: true,
+				message: json?.message || "Usulan disposal berhasil dikirim ke Manajer.",
+				data: json?.data
+			};
+		}
+		return {
+			success: false,
+			message: json?.error || json?.message || "Gagal mengirim usulan disposal."
+		};
+	} catch (error) {
+		console.error("Create disposal request error:", error);
+		return { success: false, message: "Terjadi kesalahan koneksi ke server." };
+	}
 }
 
 export async function getApprovals() {
@@ -1079,7 +1162,18 @@ export async function getAttachmentsByEquipmentId(equipmentId: string) {
 		else if (raw && typeof raw === "object" && raw.id) items = [raw];
 
 		return items.map((item: any) => {
-			// Do not prepend API_URL
+			if (item && typeof item === "object") {
+				let url = item.file_url || item.fileUrl || item.url || "";
+				if (url) {
+					url = url.replace(/\\/g, "/");
+					if (!url.startsWith("/") && !url.startsWith("http")) {
+						url = "/" + url;
+					}
+					item.file_url = url;
+					item.fileUrl = url;
+					item.url = url;
+				}
+			}
 			return item;
 		});
 	};
@@ -1511,6 +1605,25 @@ export async function getFunctionalLocations() {
 		return json.data || [];
 	} catch (error) {
 		console.error("Fetch functional locations error:", error);
+		return [];
+	}
+}
+
+export async function getDisposalMethods() {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
+
+	try {
+		const res = await fetch(`${baseUrl}/api/disposal-method`, {
+			headers: { Authorization: `Bearer ${token}` },
+			cache: "no-store",
+		});
+		if (!res.ok) return [];
+		const json = await res.json();
+		return json.data || [];
+	} catch (error) {
+		console.error("Fetch disposal methods error:", error);
 		return [];
 	}
 }

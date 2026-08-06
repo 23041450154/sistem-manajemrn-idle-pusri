@@ -593,21 +593,21 @@ export default function ManajemenInspeksi() {
     return (
       <div className="flex items-center gap-1.5 justify-center">
         {asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE" && (
-          <button title="Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1">
+          <button title="Inspeksi" onClick={() => openModal(asset, "VALIDASI")} className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1">
             <Check className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-bold">Validasi</span>
+            <span className="text-[11px] font-bold">Inspeksi</span>
           </button>
         )}
         {asset.statusAset === "VALIDATED" && asset.statusPersetujuan === "PENDING_REVIEW" && (
-          <button title="Ubah Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1">
+          <button title="Ubah Inspeksi" onClick={() => openModal(asset, "VALIDASI")} className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1">
             <Edit className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-bold">Ubah Validasi</span>
+            <span className="text-[11px] font-bold">Ubah Inspeksi</span>
           </button>
         )}
         {asset.statusPersetujuan === "NEED_REVISION" && (
-          <button title="Revisi Validasi" onClick={() => openModal(asset, "VALIDASI")} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1">
+          <button title="Revisi Inspeksi" onClick={() => openModal(asset, "VALIDASI")} className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1">
             <Edit className="w-3.5 h-3.5" />
-            <span className="text-[11px] font-bold">Revisi Validasi</span>
+            <span className="text-[11px] font-bold">Revisi Inspeksi</span>
           </button>
         )}
         {(asset.statusPersetujuan === "IN_REVIEW" || asset.statusAset === "IDLE" || asset.statusAset === "REJECTED") && (
@@ -696,7 +696,7 @@ export default function ManajemenInspeksi() {
                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
              </span>
-             <span className="text-[13px] text-blue-800 font-medium">Terdapat <strong className="font-bold">{pendingCount} aset</strong> yang membutuhkan tindakan Validasi atau Revisi dari Anda.</span>
+             <span className="text-[13px] text-blue-800 font-medium">Terdapat <strong className="font-bold">{pendingCount} aset</strong> yang membutuhkan tindakan Inspeksi atau Revisi dari Anda.</span>
            </div>
            <button onClick={() => setStatusFilter("ACTION_NEEDED")} className="text-[11px] font-bold text-blue-700 hover:text-blue-900 bg-white px-3 py-1.5 rounded-md border border-blue-200 shadow-sm transition-colors uppercase tracking-wide">
              Lihat Semua
@@ -897,8 +897,8 @@ export default function ManajemenInspeksi() {
             <div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
               <div className="flex items-center gap-3">
                 <h2 className="text-base font-bold text-gray-900">
-                  {selectedAsset.statusPersetujuan === "NEED_REVISION" ? "Revisi Validasi Inspeksi" : 
-                   (selectedAsset.statusPersetujuan === "PENDING_REVIEW" ? "Ubah Validasi Inspeksi" : "Validasi Inspeksi Teknik")}
+                  {selectedAsset.statusPersetujuan === "NEED_REVISION" ? "Revisi Inspeksi Equipment" : 
+                   (selectedAsset.statusPersetujuan === "PENDING_REVIEW" ? "Ubah Inspeksi Equipment" : "Inspeksi Equipment")}
                 </h2>
                 <span className="text-gray-300">|</span>
                 <span className="text-[13px] font-semibold text-[#0A356A]">{selectedAsset.kodeAlat}</span>
