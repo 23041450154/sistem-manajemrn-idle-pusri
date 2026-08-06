@@ -16,6 +16,7 @@ import { useUser } from "@/components/UserProvider";
 import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
 import { DetailEquipmentDialog } from "@/components/DetailEquipmentDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { ActionMenu } from "@/components/ActionMenu";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
 
@@ -351,54 +352,21 @@ export default function VerifikasiDisposalPage() {
                         Disposal Recommended
                       </span>
                     </td>
-                    <td className="px-3 py-2 text-center w-[120px]">
-                      <div className="flex items-center justify-center gap-1">
-                        <Tooltip content="Detail Eagle Eye">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            type="button"
-                            onClick={(e) => { e.preventDefault(); setDetailItem(asset); setIsDetailOpen(true); }}
-                            className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
-                        {isAdmin && (
-                          <>
-                            <Tooltip content="Edit">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => { setEditItem(asset); setIsEditOpen(true); }}
-                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
-                            <Tooltip content="Hapus">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => { setDeleteItem(asset); setIsDeleteOpen(true); }}
-                                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
-                          </>
-                        )}
-                        <Tooltip content="Verifikasi">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenVerification(asset)}
-                            className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                          >
-                            <FileText className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
-                      </div>
+                    <td className="px-3 py-2 text-center w-[160px]">
+                      <ActionMenu
+                        onView={() => { setDetailItem(asset); setIsDetailOpen(true); }}
+                        onEdit={() => { setEditItem(asset); setIsEditOpen(true); }}
+                        onDelete={() => { setDeleteItem(asset); setIsDeleteOpen(true); }}
+                        customActions={[
+                          {
+                            key: "verifikasi",
+                            label: "Verifikasi",
+                            onClick: () => handleOpenVerification(asset),
+                            variant: "primary" as const,
+                            permission: "disposal" as const,
+                          }
+                        ]}
+                      />
                     </td>
                   </tr>
                 ))

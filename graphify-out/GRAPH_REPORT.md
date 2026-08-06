@@ -1,100 +1,210 @@
-# Graph Report - sistem-manajemrn-idle-pusri  (2026-08-06)
+# Graph Report - .  (2026-08-06)
 
 ## Corpus Check
-- 98 files · ~237,595 words
+- 101 files · ~245,041 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 554 nodes · 849 edges · 68 communities (50 shown, 18 thin omitted)
-- Extraction: 98% EXTRACTED · 2% INFERRED · 0% AMBIGUOUS · INFERRED: 13 edges (avg confidence: 0.87)
-- Token cost: 0 input · 0 output
-
-## Graph Freshness
-- Built from commit: `19289253`
-- Run `git rev-parse HEAD` and compare to check if the graph is stale.
-- Run `graphify update .` after code changes (no API cost).
+- 455 nodes · 367 edges · 174 communities (31 shown, 143 thin omitted)
+- Extraction: 97% EXTRACTED · 3% INFERRED · 0% AMBIGUOUS · INFERRED: 12 edges (avg confidence: 0.88)
+- Token cost: 1,500 input · 500 output
 
 ## Community Hubs (Navigation)
-- validasi/page.tsx
-- getCurrentUserAction
-- open-in-terminal/main.js
-- dependencies
-- compilerOptions
-- devDependencies
-- components.json
-- claude-code-ide/main.js
-- RendalDashboard.tsx
-- app/layout.tsx
-- open-in-terminal/manifest.json
-- claude-code-ide/manifest.json
-- Detail Informasi Aset Drawer
-- Frontend Next.js Architecture
-- Dashboard Inspeksi Teknik Interface
-- Dashboard Rendal View UI
-- Dashboard Unit Kerja Overview UI
-- Dashboard Inspeksi UI Layout
-- Data Hasil Inspeksi Form Component
-- Registrasi Idle Equipment Form UI
-- Pusat Data Aset Dashboard
-- Asset Detail Information Modal UI
-- Detail Informasi Aset Side Panel
-- Mobile Login Screen UI Reference
-- Inspection Validation Table UI
-- generate-pdf.js
-- disposals/route.ts
-- InspeksiDashboard.tsx
-- Celest Ruyi Boom Mic IEM Cable Product Image
-- Authentication and Authorization System
-- eslint.config.mjs
-- next.config.ts
-- postcss.config.mjs
-- Background Left Panel Image
-- PUSRI Palembang Brand & Corporate Identity
-- PUSRI Logo Asset
-- unit-kerja/idle/page.tsx
-- Inspection Photo Attachment (Pixel Art Anime Avatar)
-- File Document Icon
-- Globe Icon SVG
-- Application Icon
-- PUSRI Palembang Logo
-- PUSRI Palembang Logo Background
-- Next.js Logo SVG
-- Vercel Logo
-- Window Icon SVG
-- api.ts
-- CostAvoidanceSection.tsx
-- getEquipments
-- PRODUCT.md
-- admin/dashboard/page.tsx
-- check-equipment-form.mjs
-- getAttachmentsByEquipmentId
-- ui-layouts-mcp
-- getInspections
-- perbaikan-alat/page.tsx
+- Community 0
+- Community 1
+- Community 2
+- Community 3
+- Community 4
+- Community 5
+- Community 6
+- Community 7
+- Community 8
+- Community 9
+- Community 10
+- Community 11
+- Community 12
+- Community 13
+- Community 14
+- Community 15
+- Community 16
+- Community 17
+- Community 18
+- Community 19
+- Community 20
+- Community 21
+- Community 22
+- Community 23
+- Community 24
+- Community 25
+- Community 26
+- Community 27
+- Community 28
+- Community 29
+- Community 30
+- Community 31
+- Community 32
+- Community 33
+- Community 34
+- Community 35
+- Community 36
+- Community 38
+- Community 41
+- Community 42
+- Community 43
+- Community 44
+- Community 45
+- Community 46
+- Community 47
+- Community 48
+- Community 49
+- Community 50
+- Community 51
+- Community 52
+- Community 53
+- Community 54
+- Community 55
+- Community 56
+- Community 57
+- Community 58
+- Community 59
+- Community 60
+- Community 61
+- Community 62
+- Community 63
+- Community 64
+- Community 65
+- Community 66
+- Community 67
+- Community 68
+- Community 69
+- Community 70
+- Community 71
+- Community 72
+- Community 73
+- Community 74
+- Community 75
+- Community 76
+- Community 77
+- Community 78
+- Community 79
+- Community 80
+- Community 81
+- Community 82
+- Community 83
+- Community 84
+- Community 85
+- Community 86
+- Community 87
+- Community 88
+- Community 89
+- Community 90
+- Community 91
+- Community 92
+- Community 93
+- Community 94
+- Community 95
+- Community 96
+- Community 97
+- Community 98
+- Community 99
+- Community 100
+- Community 101
+- Community 102
+- Community 103
+- Community 104
+- Community 105
+- Community 106
+- Community 107
+- Community 108
+- Community 109
+- Community 110
+- Community 111
+- Community 112
+- Community 113
+- Community 114
+- Community 115
+- Community 116
+- Community 117
+- Community 118
+- Community 119
+- Community 120
+- Community 121
+- Community 122
+- Community 123
+- Community 124
+- Community 125
+- Community 126
+- Community 127
+- Community 128
+- Community 129
+- Community 130
+- Community 131
+- Community 132
+- Community 133
+- Community 134
+- Community 135
+- Community 136
+- Community 137
+- Community 138
+- Community 139
+- Community 140
+- Community 141
+- Community 142
+- Community 143
+- Community 144
+- Community 145
+- Community 146
+- Community 147
+- Community 148
+- Community 149
+- Community 150
+- Community 151
+- Community 152
+- Community 153
+- Community 154
+- Community 155
+- Community 156
+- Community 157
+- Community 158
+- Community 159
+- Community 160
+- Community 161
+- Community 162
+- Community 163
+- Community 164
+- Community 165
+- Community 166
+- Community 167
+- Community 168
+- Community 169
+- Community 170
+- Community 171
+- Community 172
+- Community 173
 
 ## God Nodes (most connected - your core abstractions)
-1. `getCurrentUserAction()` - 31 edges
-2. `getEquipments()` - 30 edges
-3. `normalizeRole()` - 23 edges
-4. `getObjectTypes()` - 16 edges
-5. `compilerOptions` - 16 edges
-6. `OpenInTerminalPlugin` - 15 edges
-7. `getAttachmentsByEquipmentId()` - 13 edges
-8. `ManajemenInspeksi()` - 12 edges
-9. `getApprovals()` - 10 edges
-10. `MasterDataPage()` - 10 edges
+1. `compilerOptions` - 16 edges
+2. `OpenInTerminalPlugin` - 15 edges
+3. `onload()` - 9 edges
+4. `__awaiter()` - 9 edges
+5. `include` - 7 edges
+6. `Detail Informasi Aset Drawer` - 7 edges
+7. `tailwind` - 6 edges
+8. `aliases` - 6 edges
+9. `Dashboard Rendal View UI` - 6 edges
+10. `v()` - 5 edges
 
 ## Surprising Connections (you probably didn't know these)
 - `Laporan Inspeksi P101 Document` --conceptually_related_to--> `Sistem Manajemen Idle Equipment PUSRI`  [INFERRED]
   public/laporan_inspeksi_P101.pdf → Dokumentasi Aplikasi.md
 - `Next.js Getting Started Guide` --semantically_similar_to--> `Frontend Next.js Architecture`  [INFERRED] [semantically similar]
   README.md → Dokumentasi Aplikasi.md
-- `UnitKerjaDashboard()` --references--> `react`  [EXTRACTED]
-  src/components/Dashboards/UnitKerjaDashboard.tsx → package.json
-- `RendalDashboard()` --calls--> `getEquipments()`  [EXTRACTED]
-  src/components/Dashboards/RendalDashboard.tsx → src/action/api.ts
-- `LoginForm()` --indirect_call--> `loginAction()`  [INFERRED]
-  src/app/(auth)/login/LoginForm.tsx → src/action/auth.ts
+- `Agents MD Reference` --references--> `Next.js Breaking Changes Rules`  [EXTRACTED]
+  CLAUDE.md → AGENTS.md
+- `Frontend Next.js Architecture` --references--> `Next.js Breaking Changes Rules`  [EXTRACTED]
+  Dokumentasi Aplikasi.md → AGENTS.md
+- `EVIDENCE.md — Evidence Base` --CONFIRMS--> `#0A356A Brand Navy`  [EXTRACTED]
+  EVIDENCE.md → DESIGN.md
 
 ## Import Cycles
 - None detected.
@@ -115,179 +225,139 @@
 - **Asset Validation and Revision Workflow** — public_refrensi_image3_pusat_data_aset_dashboard, public_refrensi_image3_detail_informasi_aset_panel, public_refrensi_image3_minta_revisi_validasi_modal [INFERRED 0.85]
 - **Inspection Validation Management System UI Workflow** — public_validasiinspeksi_ui_table, public_validasiinspeksi_asset_status_flow, public_validasiinspeksi_approval_status_flow, public_validasiinspeksi_validation_actions [EXTRACTED 1.00]
 
-## Communities (68 total, 18 thin omitted)
+## Communities (174 total, 143 thin omitted)
 
-### Community 0 - "validasi/page.tsx"
-Cohesion: 0.15
-Nodes (21): getApprovals(), getConditions(), getObjectTypes(), resubmitApproval(), uploadEquipmentAttachment(), uploadEquipmentAttachmentBase64(), validateEquipment(), ApprovalState (+13 more)
+### Community 0 - "Community 0"
+Cohesion: 0.12
+Nodes (26): buildDefaultTerminalAppSetting(), buildLaunchCommand(), buildMacLaunch(), buildUnixLaunch(), buildWindowsLaunch(), DEFAULT_SETTINGS, defaultTerminalApp(), ensureTempScript() (+18 more)
 
-### Community 1 - "getCurrentUserAction"
-Cohesion: 0.08
-Nodes (38): cookieConfig(), getCurrentUserAction(), login(), loginAction(), logoutAction(), initialState, LoginForm(), LogoutPage() (+30 more)
-
-### Community 2 - "open-in-terminal/main.js"
-Cohesion: 0.10
-Nodes (28): __awaiter(), buildDefaultTerminalAppSetting(), buildLaunchCommand(), buildMacLaunch(), buildUnixLaunch(), buildWindowsLaunch(), DEFAULT_SETTINGS, defaultTerminalApp() (+20 more)
-
-### Community 3 - "dependencies"
-Cohesion: 0.07
-Nodes (28): @base-ui/react, class-variance-authority, clsx, lucide-react, next, nextjs-toploader, dependencies, @base-ui/react (+20 more)
-
-### Community 4 - "compilerOptions"
+### Community 1 - "Community 1"
 Cohesion: 0.07
 Nodes (28): dom, dom.iterable, esnext, **/*.mts, .next/dev/types/**/*.ts, next-env.d.ts, .next/types/**/*.ts, node_modules (+20 more)
 
-### Community 5 - "devDependencies"
+### Community 2 - "Community 2"
+Cohesion: 0.07
+Nodes (27): @base-ui/react, class-variance-authority, clsx, lucide-react, next, nextjs-toploader, dependencies, @base-ui/react (+19 more)
+
+### Community 3 - "Community 3"
 Cohesion: 0.08
 Nodes (25): eslint, eslint-config-next, devDependencies, eslint, eslint-config-next, tailwindcss, @tailwindcss/postcss, @types/node (+17 more)
 
-### Community 6 - "components.json"
+### Community 4 - "Community 4"
 Cohesion: 0.09
 Nodes (21): aliases, components, hooks, lib, ui, utils, iconLibrary, menuAccent (+13 more)
 
-### Community 7 - "claude-code-ide/main.js"
+### Community 5 - "Community 5"
 Cohesion: 0.18
 Nodes (16): b(), broadcastSelection(), D(), E(), I(), L(), N(), onload() (+8 more)
 
-### Community 8 - "RendalDashboard.tsx"
-Cohesion: 0.21
-Nodes (8): fetchDashboardData(), InspeksiDashboardPage(), ChartSection(), RendalDashboard(), RecentActivities(), StatCard(), StatCardProps, UpcomingInspections()
-
-### Community 9 - "app/layout.tsx"
-Cohesion: 0.27
-Nodes (8): geistMono, geistSans, inter, metadata, RootLayout(), Button(), buttonVariants, cn()
-
-### Community 10 - "open-in-terminal/manifest.json"
+### Community 7 - "Community 7"
 Cohesion: 0.20
 Nodes (9): author, authorUrl, description, fundingUrl, id, isDesktopOnly, minAppVersion, name (+1 more)
 
-### Community 11 - "claude-code-ide/manifest.json"
+### Community 8 - "Community 8"
+Cohesion: 0.20
+Nodes (9): Anti-references, Brand voice, Constraints, Key messages, Missing facts, Target audience, User-provided facts, What it is (+1 more)
+
+### Community 9 - "Community 9"
 Cohesion: 0.22
 Nodes (8): author, authorUrl, description, id, isDesktopOnly, minAppVersion, name, version
 
-### Community 12 - "Detail Informasi Aset Drawer"
+### Community 10 - "Community 10"
 Cohesion: 0.31
 Nodes (9): Detail Spesifikasi Alat Section, Lampiran Gambar dan Dokumen Section, Validasi Inspeksi Teknik Page, Detail Informasi Aset Drawer, Asset Approval Changes Status to IDLE, image2.png UI Reference, Konfirmasi Persetujuan Aset Modal, Pusat Data Aset Table View (+1 more)
 
-### Community 13 - "Frontend Next.js Architecture"
-Cohesion: 0.29
-Nodes (7): Next.js Breaking Changes Rules, Agents MD Reference, Backend Go Gin Architecture, Frontend Next.js Architecture, Sistem Manajemen Idle Equipment PUSRI, Laporan Inspeksi P101 Document, Next.js Getting Started Guide
-
-### Community 14 - "Dashboard Inspeksi Teknik Interface"
-Cohesion: 0.38
-Nodes (7): Tabel Daftar Inspeksi Teknik, Filter dan Pencarian Inspeksi, Statistik Jadwal Inspeksi, Penjadwalan Inspeksi Baru, Panduan Inspeksi dan SOP, Status Kesehatan Aset Idle, Dashboard Inspeksi Teknik Interface
-
-### Community 15 - "Dashboard Rendal View UI"
-Cohesion: 0.33
-Nodes (7): Dashboard Rendal View UI, Equipment Summary KPI Cards, Recent Activity Log Feed, Rendal Role Dashboard Layout Rationale, Equipment Status Distribution Donut Chart, Equipment Registration Trend Chart, Upcoming Inspections Table
-
-### Community 16 - "Dashboard Unit Kerja Overview UI"
-Cohesion: 0.40
-Nodes (6): Dashboard Unit Kerja Overview UI, Distribusi Aset per Lokasi Bar Chart, Asset KPI Summary Cards, Jadwal Maintenance Unit Panel, Permintaan Terbaru Table Widget, Status Pemanfaatan Aset Donut Chart
-
-### Community 17 - "Dashboard Inspeksi UI Layout"
-Cohesion: 0.33
-Nodes (6): Temuan Kritikal Aktif Widget, Asset Health Index (AHI) KPI Card, Log Inspeksi Prioritas Tinggi Table, Status Inspeksi Berdasarkan Unit Pabrik Bar Chart, Dashboard Inspeksi UI Layout, Jadwal Mendatang Timeline Widget
-
-### Community 18 - "Data Hasil Inspeksi Form Component"
-Cohesion: 0.40
-Nodes (6): Data Hasil Inspeksi Form Component, Detail Aset Component, Formulir Inspeksi Teknik UI, Idle Asset Technical Inspection Workflow, Riwayat Inspeksi Terakhir Component, Upload Foto Kondisi Component
-
-### Community 19 - "Registrasi Idle Equipment Form UI"
-Cohesion: 0.40
-Nodes (5): Alasan Idle Options, Detail Lokasi Section, Informasi Peralatan Section, Registrasi Idle Equipment Form UI, Upload Foto Peralatan Component
-
-### Community 20 - "Pusat Data Aset Dashboard"
-Cohesion: 0.50
-Nodes (4): Asset Filter Bar, Asset Request Table, Mock Role Switcher, Pusat Data Aset Dashboard
-
-### Community 21 - "Asset Detail Information Modal UI"
-Cohesion: 0.67
-Nodes (4): Asset Documentation and Photo Attachments, Asset Detail Information Modal UI, Asset Review and Approval Workflow, Control Valve V-202 Urea Asset (VLV-202-UR3)
-
-### Community 22 - "Detail Informasi Aset Side Panel"
-Cohesion: 0.50
-Nodes (4): Detail Informasi Aset Side Panel, Lampiran Gambar dan Dokumen Section, Minta Revisi Validasi Modal Dialog, Pusat Data Aset Dashboard
-
-### Community 23 - "Mobile Login Screen UI Reference"
-Cohesion: 0.67
-Nodes (4): Mobile Login Screen UI Reference, NPP Employee ID Login Form, PT Pupuk Sriwidjaja Idle Equipment Management System, SSO Authentication Option
-
-### Community 24 - "Inspection Validation Table UI"
-Cohesion: 0.67
-Nodes (4): Approval Workflow (Menunggu Review, Sedang Direview, Disetujui, Perlu Revisi), Asset Status Flow (Registered, Validated, Idle, Rejected), Inspection Validation Table UI, Inspection Validation Actions (Validasi, Ubah Validasi, Detail Info, Revisi Validasi)
-
-### Community 25 - "generate-pdf.js"
-Cohesion: 0.50
-Nodes (3): doc, fs, PDFDocument
-
-### Community 28 - "Celest Ruyi Boom Mic IEM Cable Product Image"
-Cohesion: 0.67
-Nodes (3): Celest Ruyi Boom Mic IEM Cable Product Image, Detachable Boom Microphone Attachment, 2-Pin IEM Upgrade Cable
-
-### Community 43 - "unit-kerja/idle/page.tsx"
-Cohesion: 0.29
-Nodes (5): createReuseRequest(), getReuseRequests(), EquipmentItem, ReuseRequestItem, UnitKerjaKatalogPage()
-
-### Community 57 - "api.ts"
-Cohesion: 0.15
-Nodes (16): createEquipment(), createObjectType(), createRequireAction(), createStorageLocation(), deleteObjectType(), deleteRequireAction(), deleteStorageLocation(), getAreas() (+8 more)
-
-### Community 58 - "CostAvoidanceSection.tsx"
-Cohesion: 0.29
-Nodes (6): fetchDashboardData(), ManajerDashboardPage(), CostAvoidanceSection(), Equipment, formatCurrency(), monthNames
-
-### Community 59 - "getEquipments"
-Cohesion: 0.17
-Nodes (12): createInspection(), deleteEquipment(), getEquipments(), submitInspectionData(), EquipmentManagementPage(), FormInspeksiPage(), Equipment, InspeksiAntreanPage() (+4 more)
-
-### Community 60 - "PRODUCT.md"
-Cohesion: 0.18
-Nodes (9): Anti-references, Brand voice, Constraints, Key messages, Missing facts, Target audience, User-provided facts, What it is (+1 more)
-
-### Community 61 - "admin/dashboard/page.tsx"
-Cohesion: 0.32
-Nodes (5): approveDisposal(), getDisposals(), MODULES, DisposalInboxPage(), DisposalItem
-
-### Community 62 - "check-equipment-form.mjs"
+### Community 11 - "Community 11"
 Cohesion: 0.25
 Nodes (7): api, appended, body, createFn, optional, page, required
 
-### Community 63 - "getAttachmentsByEquipmentId"
-Cohesion: 0.36
-Nodes (7): getApprovalById(), getAttachmentsByEquipmentId(), reviewApproval(), startReviewApproval(), GET(), ManajerApprovePage(), RequestAsset
+### Community 12 - "Community 12"
+Cohesion: 0.29
+Nodes (7): Next.js Breaking Changes Rules, Agents MD Reference, Backend Go Gin Architecture, Frontend Next.js Architecture, Sistem Manajemen Idle Equipment PUSRI, Laporan Inspeksi P101 Document, Next.js Getting Started Guide
 
-### Community 64 - "ui-layouts-mcp"
+### Community 13 - "Community 13"
+Cohesion: 0.38
+Nodes (7): Tabel Daftar Inspeksi Teknik, Filter dan Pencarian Inspeksi, Statistik Jadwal Inspeksi, Penjadwalan Inspeksi Baru, Panduan Inspeksi dan SOP, Status Kesehatan Aset Idle, Dashboard Inspeksi Teknik Interface
+
+### Community 14 - "Community 14"
+Cohesion: 0.33
+Nodes (7): Dashboard Rendal View UI, Equipment Summary KPI Cards, Recent Activity Log Feed, Rendal Role Dashboard Layout Rationale, Equipment Status Distribution Donut Chart, Equipment Registration Trend Chart, Upcoming Inspections Table
+
+### Community 15 - "Community 15"
+Cohesion: 0.40
+Nodes (6): Dashboard Unit Kerja Overview UI, Distribusi Aset per Lokasi Bar Chart, Asset KPI Summary Cards, Jadwal Maintenance Unit Panel, Permintaan Terbaru Table Widget, Status Pemanfaatan Aset Donut Chart
+
+### Community 16 - "Community 16"
+Cohesion: 0.33
+Nodes (6): Temuan Kritikal Aktif Widget, Asset Health Index (AHI) KPI Card, Log Inspeksi Prioritas Tinggi Table, Status Inspeksi Berdasarkan Unit Pabrik Bar Chart, Dashboard Inspeksi UI Layout, Jadwal Mendatang Timeline Widget
+
+### Community 17 - "Community 17"
+Cohesion: 0.40
+Nodes (6): Data Hasil Inspeksi Form Component, Detail Aset Component, Formulir Inspeksi Teknik UI, Idle Asset Technical Inspection Workflow, Riwayat Inspeksi Terakhir Component, Upload Foto Kondisi Component
+
+### Community 18 - "Community 18"
 Cohesion: 0.40
 Nodes (4): npx, 21st, ui-layouts-mcp, @ui-layouts/mcp
 
-### Community 66 - "getInspections"
-Cohesion: 0.25
-Nodes (5): getInspections(), Inspection, InspeksiDashboard(), actionTypeConfig, AuditLogEntry
+### Community 19 - "Community 19"
+Cohesion: 0.40
+Nodes (5): Alasan Idle Options, Detail Lokasi Section, Informasi Peralatan Section, Registrasi Idle Equipment Form UI, Upload Foto Peralatan Component
 
-### Community 67 - "perbaikan-alat/page.tsx"
+### Community 20 - "Community 20"
 Cohesion: 0.50
-Nodes (4): completeEquipmentMaintenance(), INITIAL_MAINTENANCE_SAMPLES, MaintenanceEquipment, PerbaikanAlatPage()
+Nodes (4): Asset Filter Bar, Asset Request Table, Mock Role Switcher, Pusat Data Aset Dashboard
+
+### Community 21 - "Community 21"
+Cohesion: 0.67
+Nodes (4): Asset Documentation and Photo Attachments, Asset Detail Information Modal UI, Asset Review and Approval Workflow, Control Valve V-202 Urea Asset (VLV-202-UR3)
+
+### Community 22 - "Community 22"
+Cohesion: 0.50
+Nodes (4): Detail Informasi Aset Side Panel, Lampiran Gambar dan Dokumen Section, Minta Revisi Validasi Modal Dialog, Pusat Data Aset Dashboard
+
+### Community 23 - "Community 23"
+Cohesion: 0.67
+Nodes (4): Mobile Login Screen UI Reference, NPP Employee ID Login Form, PT Pupuk Sriwidjaja Idle Equipment Management System, SSO Authentication Option
+
+### Community 24 - "Community 24"
+Cohesion: 0.67
+Nodes (4): Approval Workflow (Menunggu Review, Sedang Direview, Disetujui, Perlu Revisi), Asset Status Flow (Registered, Validated, Idle, Rejected), Inspection Validation Table UI, Inspection Validation Actions (Validasi, Ubah Validasi, Detail Info, Revisi Validasi)
+
+### Community 25 - "Community 25"
+Cohesion: 0.50
+Nodes (3): doc, fs, PDFDocument
+
+### Community 26 - "Community 26"
+Cohesion: 0.83
+Nodes (3): Button(), buttonVariants, cn
+
+### Community 27 - "Community 27"
+Cohesion: 0.67
+Nodes (3): #0A356A Brand Navy, DESIGN.md — Visual System, EVIDENCE.md — Evidence Base
+
+### Community 28 - "Community 28"
+Cohesion: 0.67
+Nodes (3): Celest Ruyi Boom Mic IEM Cable Product Image, Detachable Boom Microphone Attachment, 2-Pin IEM Upgrade Cable
 
 ## Knowledge Gaps
-- **213 isolated node(s):** `21st`, `npx`, `@ui-layouts/mcp`, `id`, `name` (+208 more)
+- **300 isolated node(s):** `21st`, `npx`, `@ui-layouts/mcp`, `id`, `name` (+295 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **18 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **143 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `dependencies` connect `dependencies` to `devDependencies`?**
-  _High betweenness centrality (0.071) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `Community 2` to `Community 3`?**
+  _High betweenness centrality (0.010) - this node is a cross-community bridge._
 - **What connects `21st`, `npx`, `@ui-layouts/mcp` to the rest of the system?**
-  _213 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `getCurrentUserAction` be split into smaller, more focused modules?**
-  _Cohesion score 0.08305084745762711 - nodes in this community are weakly interconnected._
-- **Should `open-in-terminal/main.js` be split into smaller, more focused modules?**
-  _Cohesion score 0.09565217391304348 - nodes in this community are weakly interconnected._
-- **Should `dependencies` be split into smaller, more focused modules?**
+  _300 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `Community 0` be split into smaller, more focused modules?**
+  _Cohesion score 0.11954022988505747 - nodes in this community are weakly interconnected._
+- **Should `Community 1` be split into smaller, more focused modules?**
   _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._
-- **Should `compilerOptions` be split into smaller, more focused modules?**
-  _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._
-- **Should `devDependencies` be split into smaller, more focused modules?**
+- **Should `Community 2` be split into smaller, more focused modules?**
+  _Cohesion score 0.07407407407407407 - nodes in this community are weakly interconnected._
+- **Should `Community 3` be split into smaller, more focused modules?**
   _Cohesion score 0.07692307692307693 - nodes in this community are weakly interconnected._
+- **Should `Community 4` be split into smaller, more focused modules?**
+  _Cohesion score 0.09090909090909091 - nodes in this community are weakly interconnected._

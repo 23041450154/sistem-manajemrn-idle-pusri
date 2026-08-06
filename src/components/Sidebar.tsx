@@ -145,7 +145,7 @@ export function Sidebar({ role }: { role?: string }) {
 
       {/* Sidebar */}
       <aside 
-        className={`fixed md:sticky top-0 left-0 z-50 w-64 bg-[#0A356A] text-white flex flex-col h-screen shrink-0 overflow-y-auto transition-transform duration-300 ease-in-out print:hidden ${
+        className={`fixed md:sticky top-0 left-0 z-50 w-64 bg-[#0A356A] text-white flex flex-col h-screen shrink-0 overflow-y-auto custom-sidebar-scrollbar scroll-smooth transition-transform duration-300 ease-in-out print:hidden ${
           isOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0"
         }`}
       >
@@ -170,7 +170,7 @@ export function Sidebar({ role }: { role?: string }) {
           </button>
         </div>
 
-        <div className="flex-1 px-4 py-2 space-y-4 overflow-y-auto">
+        <div className="flex-1 pl-4 pr-3.5 py-2 space-y-4 overflow-y-auto custom-sidebar-scrollbar scroll-smooth">
           <div>
             <ul className="space-y-1">
               {mainNavItems.map((item) => {

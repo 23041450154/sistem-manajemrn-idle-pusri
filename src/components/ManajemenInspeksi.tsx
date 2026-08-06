@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 
 import AnalogTimePicker from "@/components/AnalogTimePicker";
+import { useDebounce } from "@/hooks/useDebounce";
 
 import { getConditions, getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment, uploadEquipmentAttachmentBase64 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
@@ -141,13 +142,18 @@ export default function ManajemenInspeksi() {
     };
     fetchData();
   }, []);
-  
+
   // Filter States
   const [searchInput, setSearchInput] = useState("");
+  const debouncedSearchInput = useDebounce(searchInput, 500);
   const [search, setSearch] = useState("");
   const [plantFilter, setPlantFilter] = useState("Semua");
   const [statusFilter, setStatusFilter] = useState("Semua");
   const [dateFilter, setDateFilter] = useState("");
+
+  useEffect(() => {
+    setSearch(debouncedSearchInput);
+  }, [debouncedSearchInput]);
 
   // Modal & Form States
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);

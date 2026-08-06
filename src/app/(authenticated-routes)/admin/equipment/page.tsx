@@ -8,12 +8,15 @@ import { DetailEquipmentDialog } from "@/components/DetailEquipmentDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { useDebounce } from "@/hooks/useDebounce";
+import { ActionMenu } from "@/components/ActionMenu";
 
 export default function EquipmentManagementPage() {
   const [equipments, setEquipments] = useState<any[]>([]);
   const [filteredEquipments, setFilteredEquipments] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
   const [plantFilter, setPlantFilter] = useState("Semua Plant");
   
   // Modals
@@ -29,27 +32,27 @@ export default function EquipmentManagementPage() {
   
   const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
-
   const fetchData = async () => {
     setIsLoading(true);
     try {
       const data = await getEquipments();
-      setEquipments(data);
-      setFilteredEquipments(data);
-    } catch (error) {
-      console.error(error);
+      setEquipments(data || []);
+      setFilteredEquipments(data || []);
+    } catch (err) {
+      console.error(err);
     } finally {
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
+    fetchData();
+  }, []);
+
+  useEffect(() => {
     let result = equipments;
-    if (search.trim() !== "") {
-      const query = search.toLowerCase();
+    if (debouncedSearch.trim() !== "") {
+      const query = debouncedSearch.toLowerCase();
       result = result.filter((eq) => 
         eq.equipment_code?.toLowerCase().includes(query) ||
         eq.name?.toLowerCase().includes(query) ||
@@ -60,7 +63,7 @@ export default function EquipmentManagementPage() {
       result = result.filter((eq) => eq.plant === plantFilter);
     }
     setFilteredEquipments(result);
-  }, [search, plantFilter, equipments]);
+  }, [debouncedSearch, plantFilter, equipments]);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -68,7 +71,7 @@ export default function EquipmentManagementPage() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, plantFilter]);
+  }, [debouncedSearch, plantFilter]);
 
   const totalPages = Math.ceil(filteredEquipments.length / ITEMS_PER_PAGE);
   const paginatedEquipments = filteredEquipments.slice(
@@ -158,33 +161,48 @@ export default function EquipmentManagementPage() {
         </button>
       </div>
 
-      {/* Filters Bar */}
-      <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
-        <div className="relative w-full sm:w-80">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input
-            type="text"
-            placeholder="Cari Kode Alat, Nama, atau Plant..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-full pl-9 pr-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] focus:bg-white outline-none transition-all font-medium"
-          />
+      {/* Filters Bar (Compact Enterprise 1-Row Layout) */}
+      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-4 mb-6 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-4">
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto flex-1">
+          {/* Search Input (flex-1 max-w-320px) */}
+          <div className="relative w-full lg:flex-1 lg:max-w-[320px] shrink-0">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input
+              type="text"
+              placeholder="Cari Kode Alat, Nama, atau Plant..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full h-[40px] pl-9 pr-3.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] focus:bg-white outline-none transition-all font-medium"
+            />
+          </div>
+
+          {/* Plant Dropdown (180px) */}
+          <div className="relative w-full sm:w-[180px] shrink-0">
+            <select
+              value={plantFilter}
+              onChange={(e) => setPlantFilter(e.target.value)}
+              className="w-full h-[40px] px-3.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none font-semibold text-slate-700 cursor-pointer"
+            >
+              <option value="Semua Plant">Semua Plant</option>
+              <option value="PUSRI-IB">PUSRI-IB</option>
+              <option value="PUSRI-IIB">PUSRI-IIB</option>
+              <option value="PUSRI-III">PUSRI-III</option>
+              <option value="PUSRI-IV">PUSRI-IV</option>
+              <option value="STG-1">STG-1 (Utilitas)</option>
+            </select>
+          </div>
         </div>
 
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-slate-400 shrink-0" />
-          <select
-            value={plantFilter}
-            onChange={(e) => setPlantFilter(e.target.value)}
-            className="flex-1 px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none font-semibold text-slate-700 cursor-pointer"
+        {/* Reset Action Button (90px) */}
+        <div className="flex items-center gap-4 w-full lg:w-auto justify-end shrink-0">
+          <button
+            type="button"
+            onClick={() => { setSearch(""); setPlantFilter("Semua Plant"); }}
+            className="w-full sm:w-[90px] h-[40px] px-3 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors shrink-0 flex items-center justify-center gap-1.5 shadow-2xs"
           >
-            <option value="Semua Plant">Semua Plant / Pabrik</option>
-            <option value="PUSRI-IB">PUSRI-IB</option>
-            <option value="PUSRI-IIB">PUSRI-IIB</option>
-            <option value="PUSRI-III">PUSRI-III</option>
-            <option value="PUSRI-IV">PUSRI-IV</option>
-            <option value="STG-1">STG-1 (Utilitas)</option>
-          </select>
+            <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+            Reset
+          </button>
         </div>
       </div>
 
@@ -237,41 +255,11 @@ export default function EquipmentManagementPage() {
                         </div>
                       </td>
                       <td className="px-4 py-3.5 whitespace-nowrap text-center align-middle w-[140px]">
-                        <div className="flex items-center justify-center gap-2">
-                          <Tooltip content="Detail">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              type="button"
-                              onClick={(e) => { e.preventDefault(); setDetailItem(item); setIsDetailOpen(true); }}
-                              className="h-9 w-9 p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </Tooltip>
-                          <Tooltip content="Edit">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              type="button"
-                              onClick={(e) => { e.preventDefault(); setEditItem(item); setIsEditOpen(true); }}
-                              className="h-9 w-9 p-2 rounded-md text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                          </Tooltip>
-                          <Tooltip content="Hapus">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              type="button"
-                              onClick={(e) => { e.preventDefault(); setSelectedItem(item); setIsDeleteOpen(true); }}
-                              className="h-9 w-9 p-2 rounded-md text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </Tooltip>
-                        </div>
+                        <ActionMenu
+                          onView={() => { setDetailItem(item); setIsDetailOpen(true); }}
+                          onEdit={() => { setEditItem(item); setIsEditOpen(true); }}
+                          onDelete={() => { setSelectedItem(item); setIsDeleteOpen(true); }}
+                        />
                       </td>
                     </tr>
                   );

@@ -6,6 +6,7 @@ import {
   Clock, Boxes, Search, Calendar, ChevronRight, Pencil, Trash2
 } from "lucide-react";
 import { getReuseRequests, updateReuseRequestStatus, deleteEquipment } from "@/action/api";
+import { ActionMenu } from "@/components/ActionMenu";
 import { useUser } from "@/components/UserProvider";
 import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
@@ -489,54 +490,22 @@ export default function ManajerPeminjamanPage() {
                     {getStatusBadge(req.status)}
                   </td>
                   <td className="px-2 py-2 text-center w-[120px]">
-                    <div className="flex items-center justify-center gap-1">
-                      <Tooltip content="Detail Eagle Eye">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          type="button"
-                          onClick={(e) => { e.preventDefault(); e.stopPropagation(); openDrawer(req); }}
-                          className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </Tooltip>
-                      {isAdmin && (
-                        <>
-                          <Tooltip content="Edit">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              type="button"
-                              onClick={(e) => {
-                                e.preventDefault();
-                                setEditItem({
-                                  id: req.equipment_id || req.id,
-                                  equipment_code: req.equipment_code,
-                                  name: req.equipment_name,
-                                  plant: req.target_plant
-                                });
-                                setIsEditOpen(true);
-                              }}
-                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                          </Tooltip>
-                          <Tooltip content="Hapus">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              type="button"
-                              onClick={(e) => { e.preventDefault(); setDeleteItem(req); setIsDeleteOpen(true); }}
-                              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </Tooltip>
-                        </>
-                      )}
-                    </div>
+                    <ActionMenu
+                      onView={() => openDrawer(req)}
+                      onEdit={() => {
+                        setEditItem({
+                          id: req.equipment_id || req.id,
+                          equipment_code: req.equipment_code,
+                          name: req.equipment_name,
+                          plant: req.target_plant
+                        });
+                        setIsEditOpen(true);
+                      }}
+                      onDelete={() => {
+                        setDeleteItem(req);
+                        setIsDeleteOpen(true);
+                      }}
+                    />
                   </td>
                 </tr>
               ))

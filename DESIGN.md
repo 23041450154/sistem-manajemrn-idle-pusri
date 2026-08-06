@@ -22,31 +22,33 @@
 
 ---
 
-## 📊 2. Spesifikasi Standar Data Table (100% Konsisten di Semua Role)
+## 📊 2. Spesifikasi Standar Data Table (100% Konsisten di Semua Role & Tanpa Scroll Horizontal)
 
-Seluruh tabel data di semua role (`admin/equipment`, `rendal/idle`, `rendal/perbaikan-alat`, `inspeksi/validasi`, `manajer/persetujuan-validasi`, `manajer/peminjaman`, `unit-kerja/idle`) **WAJIB** menggunakan struktur berikut:
+Seluruh tabel data di semua role (`admin/equipment`, `rendal/idle`, `rendal/perbaikan-alat`, `inspeksi/validasi`, `manajer/persetujuan-validasi`, `manajer/peminjaman`, `unit-kerja/idle`) **WAJIB** menggunakan `table-fixed` untuk mencegah scrollbar horizontal:
 
 ### A. Header Tabel (`<thead>`)
 ```tsx
 <tr className="bg-slate-50 border-b border-slate-200 text-[11px] font-bold text-slate-600 uppercase tracking-wider">
-  <th className="px-5 py-3.5">Kode Aset</th>
-  <th className="px-5 py-3.5">Nama Peralatan</th>
-  <th className="px-5 py-3.5">Plant</th>
-  <th className="px-5 py-3.5">Lokasi Penyimpanan</th>
-  <th className="px-5 py-3.5">Status Aset</th>
-  <th className="px-5 py-3.5 text-center w-[120px]">Actions</th>
+  <th className="px-3 py-3 text-center w-[40px]">No</th>
+  <th className="px-3 py-3 text-center w-[130px]">Kode Aset</th>
+  <th className="px-3 py-3 text-left">Nama Peralatan</th>
+  <th className="px-3 py-3 text-center w-[90px]">Plant</th>
+  <th className="px-3 py-3 text-left w-[130px]">Jenis</th>
+  <th className="px-3 py-3 text-left w-[130px]">Status Aset</th>
+  <th className="px-3 py-3 text-center w-[120px]">Actions</th>
 </tr>
 ```
 
 ### B. Baris Tabel (`<tbody> <tr>`)
 ```tsx
-<tr key={item.id} className="hover:bg-slate-50/80 transition-colors">
-  <td className="px-5 py-4 font-mono font-bold text-slate-900">{item.equipment_code}</td>
-  <td className="px-5 py-4 font-semibold text-slate-900 max-w-[220px] truncate">{item.name}</td>
-  <td className="px-5 py-4 text-slate-700 font-medium">{item.plant}</td>
-  <td className="px-5 py-4 text-slate-600 font-medium">{item.storage_location}</td>
-  <td className="px-5 py-4">{getStatusBadge(item.status)}</td>
-  <td className="px-5 py-4 text-center whitespace-nowrap">
+<tr key={item.id} className="hover:bg-slate-50/80 transition-colors h-[48px]">
+  <td className="px-3 py-2 text-center text-slate-500 font-medium text-xs">{index + 1}</td>
+  <td className="px-3 py-2 font-mono font-bold text-[#0A356A] text-center truncate">{item.equipment_code}</td>
+  <td className="px-3 py-2 font-semibold text-slate-900 truncate" title={item.name}>{item.name}</td>
+  <td className="px-3 py-2 text-slate-700 font-medium text-center truncate">{item.plant}</td>
+  <td className="px-3 py-2 text-slate-600 font-medium truncate">{item.object_type}</td>
+  <td className="px-3 py-2">{getStatusBadge(item.status)}</td>
+  <td className="px-3 py-2 text-center whitespace-nowrap w-[120px]">
     {/* Kolom Actions */}
   </td>
 </tr>
@@ -54,18 +56,16 @@ Seluruh tabel data di semua role (`admin/equipment`, `rendal/idle`, `rendal/perb
 
 ---
 
-## 🛠️ 3. Spesifikasi Kolom Actions & Aturan Ikon Eagle Eye (`Eye`)
+## 🛠️ 3. Spesifikasi Kolom Actions (3 Tombol Ikon Standardized)
 
-1. **ATURAN IKON EAGLE EYE (`Eye`)**:
-   - **Ikon `Eye` (Eagle Eye) HANYA BOLEH DIGUNAKAN pada halaman Administrator (`/admin/equipment`).**
-   - **DILARANG MENAMPILKAN IKON `Eye` (Eagle Eye) pada tabel di role operasional lain** (*Rendal Pemeliharaan, Inspeksi Teknik, Manajer Rendal, Unit Kerja Operasi*).
-   - Untuk role operasional seperti Manajer Rendal, gunakan tombol aksi berupa teks/badge seperti **"Tinjau"** atau **"Verifikasi"**.
+Seluruh tabel data di semua role menggunakan 3 tombol aksi ikon seragam (`Eye`, `Pencil`, `Trash2`):
+- **Eagle Eye (`Eye`)**: Selalu tampil di semua role untuk membuka Modal Detail / Peninjauan Aset.
+- **Edit (`Pencil`) & Delete (`Trash2`)**: Diberikan role-guard `{isAdmin && (...)}` sehingga HANYA TAMPIL untuk role Administrator.
 
-2. **Template Kolom Actions untuk Administrator (`/admin/equipment`)**:
 ```tsx
-<td className="px-5 py-4 text-center whitespace-nowrap">
+<td className="px-3 py-2 text-center whitespace-nowrap w-[120px]">
   <div className="flex items-center justify-center gap-1">
-    {/* Eagle Eye (Khusus Admin) */}
+    {/* Eagle Eye (Semua Role) */}
     <Tooltip content="Detail Eagle Eye">
       <Button
         variant="ghost"
@@ -78,31 +78,33 @@ Seluruh tabel data di semua role (`admin/equipment`, `rendal/idle`, `rendal/perb
       </Button>
     </Tooltip>
 
-    {/* Edit (Khusus Admin) */}
-    <Tooltip content="Edit">
-      <Button
-        variant="ghost"
-        size="icon"
-        type="button"
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleEdit(item); }}
-        className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-      >
-        <Pencil className="w-4 h-4" />
-      </Button>
-    </Tooltip>
-
-    {/* Delete (Khusus Admin) */}
-    <Tooltip content="Hapus">
-      <Button
-        variant="ghost"
-        size="icon"
-        type="button"
-        onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(item); }}
-        className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-      >
-        <Trash2 className="w-4 h-4" />
-      </Button>
-    </Tooltip>
+    {/* Edit & Delete (Khusus Admin / isAdmin) */}
+    {isAdmin && (
+      <>
+        <Tooltip content="Edit">
+          <Button
+            variant="ghost"
+            size="icon"
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleEdit(item); }}
+            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+          >
+            <Pencil className="w-4 h-4" />
+          </Button>
+        </Tooltip>
+        <Tooltip content="Hapus">
+          <Button
+            variant="ghost"
+            size="icon"
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleDelete(item); }}
+            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+          >
+            <Trash2 className="w-4 h-4" />
+          </Button>
+        </Tooltip>
+      </>
+    )}
   </div>
 </td>
 ```
@@ -190,28 +192,13 @@ const getStatusBadge = (statusName?: string) => {
 
 ### B. Summary KPI Cards (4 Cards Grid)
 - **Top Border Uniform**: Seluruh 4 card menggunakan top border biru navy yang sama (`border-t-4 border-t-[#0A356A]`).
-- **Diferensiasi Warna Icon Box**:
-  1. Total Asset: Icon box Biru (`bg-blue-50 text-[#0A356A] border-blue-100`)
-  2. Asset Idle: Icon box Ungu (`bg-purple-50 text-purple-600 border-purple-100`)
-  3. Maintenance: Icon box Oranye (`bg-amber-50 text-amber-600 border-amber-100`)
-  4. Disposal Pending: Icon box Merah (`bg-rose-50 text-rose-600 border-rose-100`)
 
 ---
 
-## 📝 6. Spesifikasi Form Edit & Modal Dialog (`EditEquipmentDialog.tsx`)
+## 📝 6. Form Edit & Modal Dialog (`EditEquipmentDialog.tsx`)
 
 1. **Mekanisme Reusable Tunggal**: Seluruh role WAJIB memanggil `<EditEquipmentDialog />`.
 2. **Instant Prefill (< 1ms)**: Modal terbuka instan dari prop data baris tanpa *blocking spinner screen*.
 3. **Pencegahan Page Reload**:
    - Seluruh `<button>` non-submit WAJIB menyertakan `type="button"`.
    - Form submit WAJIB menangkap `onSubmit={(e) => { e.preventDefault(); handleSave(); }}`.
-4. **Pencegahan `[object Object]`**: Seluruh nilai objek (misal `storage_location: { id: 2, name: "Gudang P-IIIB" }`) diekstrak menggunakan helper `extractStringValue()`.
-
----
-
-### 🛡️ Aturan Penjagaan untuk AI Agent (Agent Enforcement Rules)
-1. **Dilarang** menampilkan ikon `Eye` (Eagle Eye) di tabel non-admin.
-2. **Dilarang** mengganti warna header tabel dari `bg-slate-50 border-b border-slate-200`.
-3. **Dilarang** membuat tombol Edit/Delete dalam bentuk tombol teks besar di tabel.
-4. **Dilarang** memicu `location.reload()` atau `window.location.href` pada proses Simpan/Edit (gunakan state update + `fetchData()`).
-5. **Dilarang** menggunakan warna top border yang berbeda-beda pada summary card (gunakan `border-t-[#0A356A]`).

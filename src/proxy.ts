@@ -50,13 +50,13 @@ export function proxy(request: NextRequest) {
 
       if (pathname.startsWith('/admin') && role !== 'ADMIN') {
         isAllowed = false;
-      } else if (pathname.startsWith('/rendal') && role !== 'RENDAL_PEMELIHARAAN') {
+      } else if (pathname.startsWith('/rendal') && role !== 'RENDAL_PEMELIHARAAN' && role !== 'ADMIN') {
         isAllowed = false;
-      } else if (pathname.startsWith('/inspeksi') && role !== 'INSPEKSI_TEKNIK') {
+      } else if (pathname.startsWith('/inspeksi') && role !== 'INSPEKSI_TEKNIK' && role !== 'ADMIN') {
         isAllowed = false;
-      } else if (pathname.startsWith('/manajer') && role !== 'MANAJER_RENDAL') {
+      } else if (pathname.startsWith('/manajer') && role !== 'MANAJER_RENDAL' && role !== 'ADMIN') {
         isAllowed = false;
-      } else if (pathname.startsWith('/unit-kerja') && role !== 'UNIT_KERJA_OPERASI') {
+      } else if (pathname.startsWith('/unit-kerja') && role !== 'UNIT_KERJA_OPERASI' && role !== 'ADMIN') {
         isAllowed = false;
       }
 

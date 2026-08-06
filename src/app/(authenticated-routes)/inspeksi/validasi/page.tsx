@@ -6,17 +6,19 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { 
   Search, Eye, Edit, AlertCircle, X, Check, Save, Clock,
-  UploadCloud, Paperclip, RefreshCw, XCircle, CheckCircle2,
+  UploadCloud, Paperclip, RefreshCw, XCircle, CheckCircle2, Loader2, Database,
   ArrowUpDown, ArrowUp, ArrowDown, Download, Info, Pencil, Trash2, FileText, Shield
 } from "lucide-react";
 
 import AnalogTimePicker from "@/components/AnalogTimePicker";
+import { useDebounce } from "@/hooks/useDebounce";
 
 import { 
   getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId,
   getInspections, getRequireActions, getApprovalById, getConditions, resubmitApproval, deleteEquipment
 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
+import { ActionMenu } from "@/components/ActionMenu";
 import { useUser } from "@/components/UserProvider";
 import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
 import { DetailEquipmentDialog } from "@/components/DetailEquipmentDialog";
@@ -183,13 +185,18 @@ export default function ManajemenInspeksi() {
   useEffect(() => {
     fetchData();
   }, []);
-  
+
   // Filter States
   const [searchInput, setSearchInput] = useState("");
+  const debouncedSearchInput = useDebounce(searchInput, 500);
   const [search, setSearch] = useState("");
   const [plantFilter, setPlantFilter] = useState("Semua");
   const [statusFilter, setStatusFilter] = useState("Semua");
   const [dateFilter, setDateFilter] = useState("");
+
+  useEffect(() => {
+    setSearch(debouncedSearchInput);
+  }, [debouncedSearchInput]);
 
   // Modal & Form States
   const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
@@ -698,85 +705,76 @@ export default function ManajemenInspeksi() {
   };
 
   return (
-    <div className="max-w-7xl mx-auto pt-2 pb-8">
-      
-      {/* Toast */}
+    <div className="max-w-7xl mx-auto pt-6 pb-12 px-4 sm:px-6">
+      {/* Toast Notification */}
       {notification && (
-        <div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
-          {notification.type === 'success' ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : <XCircle className="w-4 h-4 text-red-400" />}
-          <span className="text-[13px] font-medium">{notification.message}</span>
+        <div className="fixed top-6 right-6 z-[100] bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 border border-slate-700">
+          {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" /> : <XCircle className="w-5 h-5 text-red-400 shrink-0" />}
+          <span className="text-[13px] font-medium leading-snug">{notification.message}</span>
         </div>
       )}
-
-      {/* Page Header (Dicomment/disembunyikan dulu sementara) */}
-      {/* 
-      <div className="mb-4">
-        <div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
-          <span>Idle Equipment</span>
-          <ChevronRight className="w-3.5 h-3.5" />
-          <span className="text-[#0A356A] font-semibold">Validasi Inspeksi (FC1)</span>
-        </div>
-        <h1 className="text-xl font-bold text-gray-900 tracking-tight">Manajemen Inspeksi</h1>
-        <p className="text-[13px] text-gray-500 mt-1">Daftar peralatan idle yang membutuhkan verifikasi teknis sebelum di-utilisasi.</p>
-      </div>
-      */}
 
       {/* Action Notification Banner */}
       {pendingCount > 0 && (
-        <div className="mb-4 flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
-           <div className="flex items-center gap-3">
-             <span className="flex h-2.5 w-2.5 relative">
-               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-               <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
-             </span>
-             <span className="text-[13px] text-blue-800 font-medium">Terdapat <strong className="font-bold">{pendingCount} aset</strong> yang membutuhkan tindakan Inspeksi atau Revisi dari Anda.</span>
-           </div>
-           <button onClick={() => setStatusFilter("ACTION_NEEDED")} className="text-[11px] font-bold text-blue-700 hover:text-blue-900 bg-white px-3 py-1.5 rounded-md border border-blue-200 shadow-sm transition-colors uppercase tracking-wide">
-             Lihat Semua
-           </button>
+        <div className="mb-6 flex items-center justify-between bg-blue-50 border border-blue-200 text-blue-900 rounded-2xl px-5 py-3.5 shadow-sm">
+          <div className="flex items-center gap-3">
+            <span className="flex h-2.5 w-2.5 relative shrink-0">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
+              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-[#0A356A]"></span>
+            </span>
+            <span className="text-xs text-blue-900 font-medium">
+              Terdapat <strong className="font-bold">{pendingCount} aset</strong> yang membutuhkan verifikasi teknis atau revisi dari Anda.
+            </span>
+          </div>
+          <button 
+            type="button"
+            onClick={() => setStatusFilter("ACTION_NEEDED")} 
+            className="text-xs font-bold text-[#0A356A] hover:text-[#0556B3] bg-white px-3.5 py-1.5 rounded-xl border border-blue-200 shadow-2xs transition-colors shrink-0"
+          >
+            Lihat Semua
+          </button>
         </div>
       )}
 
-      {/* Main Content Area (Tabel) */}
-      <div id="validasi-table-container" className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4">
-        
-        {/* Toolbar / Filters */}
-        <div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
-          
-          {/* Search */}
-          <div className="flex w-full lg:w-auto gap-2">
-            <div className="relative flex-1 lg:w-72">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input 
-                type="text" 
-                placeholder="Cari kode atau nama alat..." 
-                value={searchInput}
-                onChange={(e) => {
-                  setSearchInput(e.target.value);
-                  setSearch(e.target.value); // Realtime search!
-                }}
-                className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400" 
-              />
-            </div>
-            <button 
-              onClick={() => setSearch(searchInput)}
-              className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
-            >
-              Cari
-            </button>
+      {/* Filter Section (Compact Enterprise 1-Row Responsive Layout) */}
+      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-4 mb-6 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-4">
+        {/* Left Controls: Search + Plant + Status + Date */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto flex-1 flex-wrap lg:flex-nowrap">
+          {/* Search Input (flex-1 max-w-[320px]) */}
+          <div className="relative w-full lg:flex-1 lg:max-w-[320px] shrink-0">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+            <input 
+              type="text" 
+              placeholder="Cari Kode atau Nama Aset..." 
+              value={searchInput}
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full h-[40px] pl-9 pr-3.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] focus:bg-white outline-none transition-all font-medium" 
+            />
           </div>
-          
-          {/* Filter Group */}
-          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-            <select value={plantFilter} onChange={(e) => setPlantFilter(e.target.value)} className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer">
+
+          {/* Plant Dropdown (180px) */}
+          <div className="relative w-full sm:w-[180px] shrink-0">
+            <select 
+              value={plantFilter} 
+              onChange={(e) => setPlantFilter(e.target.value)} 
+              className="w-full h-[40px] px-3.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none font-semibold text-slate-700 cursor-pointer"
+            >
               <option value="Semua">Semua Plant</option>
-              <option value="P-1">Plant 1</option>
-              <option value="P-2">Plant 2</option>
-              <option value="P-3">Plant 3</option>
-              <option value="P-4">Plant 4</option>
+              <option value="PUSRI-IB">PUSRI-IB</option>
+              <option value="PUSRI-IIB">PUSRI-IIB</option>
+              <option value="PUSRI-III">PUSRI-III</option>
+              <option value="PUSRI-IV">PUSRI-IV</option>
+              <option value="STG-1">STG-1 (Utilitas)</option>
             </select>
-            
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[140px] cursor-pointer">
+          </div>
+
+          {/* Status Dropdown (180px) */}
+          <div className="relative w-full sm:w-[180px] shrink-0">
+            <select 
+              value={statusFilter} 
+              onChange={(e) => setStatusFilter(e.target.value)} 
+              className="w-full h-[40px] px-3.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none font-semibold text-slate-700 cursor-pointer"
+            >
               <option value="Semua">Semua Status</option>
               <option value="REGISTERED">Registered</option>
               <option value="VALIDATED">Validated</option>
@@ -784,145 +782,176 @@ export default function ManajemenInspeksi() {
               <option value="IDLE">Ready to Use</option>
               <option value="REJECTED">Ditolak</option>
             </select>
-            
-            <input type="date" value={dateFilter} onChange={(e) => setDateFilter(e.target.value)} className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer" />
-            
-            <div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
-            
-            {/* Reset Button */}
-            <button 
-              onClick={resetFilter} 
-              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
-              title="Reset semua filter"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Reset
-            </button>
+          </div>
+
+          {/* Date Picker (170px) */}
+          <div className="relative w-full sm:w-[170px] shrink-0">
+            <input 
+              type="date" 
+              value={dateFilter} 
+              onChange={(e) => setDateFilter(e.target.value)} 
+              className="w-full h-[40px] px-3.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none font-semibold text-slate-700 cursor-pointer" 
+            />
           </div>
         </div>
 
-        {/* Table */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse table-fixed">
-            <thead className="bg-gray-50/95 backdrop-blur-sm">
-              <tr className="border-b border-gray-300">
-                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[40px]">No</th>
-                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center w-[130px]" title="Klik untuk mengurutkan" onClick={() => handleSort('kodeAlat')}>
-                  <div className="flex items-center justify-center">Kode Aset {getSortIcon('kodeAlat')}</div>
-                </th>
-                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
-                  <div className="flex items-center justify-start">Nama Alat {getSortIcon('namaAlat')}</div>
-                </th>
-                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center w-[90px]" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
-                  <div className="flex items-center justify-center">Plant {getSortIcon('plant')}</div>
-                </th>
-                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[130px]" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
-                  <div className="flex items-center justify-start">Jenis {getSortIcon('jenisAlat')}</div>
-                </th>
-                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[130px]" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
-                  <div className="flex items-center justify-start">Aset {getSortIcon('statusAset')}</div>
-                </th>
-                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[140px]" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
-                  <div className="flex items-center justify-start">Persetujuan {getSortIcon('statusPersetujuan')}</div>
-                </th>
-                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[120px]">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="bg-white divide-y divide-gray-100">
-              {isLoading ? (
-                <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
-                    Memuat data...
-                  </td>
-                </tr>
-              ) : paginatedAssets.length === 0 ? (
-                <tr>
-                  <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
-                    <div className="flex flex-col items-center">
-                      <AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
-                      <p className="text-[13px] font-medium text-gray-900">Data Tidak Ditemukan</p>
-                      <p className="text-[11px] text-gray-500 mt-1">Coba sesuaikan filter pencarian Anda.</p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                paginatedAssets.map((asset, index) => {
-                  const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
-                  return (
-                    <tr key={asset.id} className="hover:bg-gray-50/50 transition-colors h-[48px]">
-                      <td className="px-3 py-2 text-sm text-gray-500 font-medium text-center">{rowNum}</td>
-                      <td className="px-3 py-2 text-sm font-bold text-[#0A356A] text-center truncate" title={asset.kodeAlat}>
-                        {asset.kodeAlat}
-                      </td>
-                      <td className="px-3 py-2 text-sm font-semibold text-gray-800 text-left truncate" title={asset.namaAlat}>
-                        <span className="truncate block text-left">{asset.namaAlat}</span>
-                      </td>
-                      <td className="px-3 py-2 text-sm text-gray-600 font-medium text-center truncate">
-                        {asset.plant}
-                      </td>
-                      <td className="px-3 py-2 text-sm text-gray-600 font-medium text-left truncate">
-                        {asset.jenisAlat}
-                      </td>
-                      <td className="px-3 py-2 text-sm text-left whitespace-nowrap">
-                        <div className="flex justify-start">{getStatusAsetBadge(asset.statusAset)}</div>
-                      </td>
-                      <td className="px-3 py-2 text-sm text-left whitespace-nowrap">
-                        <div className="flex justify-start">{getApprovalBadge(asset.statusPersetujuan)}</div>
-                      </td>
-                      <td className="px-3 py-2 text-center w-[120px]">
-                        <div className="flex items-center justify-center gap-1">
-                          <Tooltip content="Detail Eagle Eye">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              type="button"
-                              onClick={(e) => { e.preventDefault(); setDetailItem(asset); setIsDetailOpen(true); }}
-                              className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                            >
-                              <Eye className="w-4 h-4" />
-                            </Button>
-                          </Tooltip>
-                          {isAdmin && (
-                            <>
-                              <Tooltip content="Edit">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  type="button"
-                                  onClick={(e) => { e.preventDefault(); setEditItem(asset); setIsEditOpen(true); }}
-                                  className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                                >
-                                  <Pencil className="w-4 h-4" />
-                                </Button>
-                              </Tooltip>
-                              <Tooltip content="Hapus">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  type="button"
-                                  onClick={(e) => { e.preventDefault(); setDeleteItem(asset); setIsDeleteOpen(true); }}
-                                  className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                >
-                                  <Trash2 className="w-4 h-4" />
-                                </Button>
-                              </Tooltip>
-                            </>
-                          )}
-                          {!isAdmin && (
-                            <div className="flex justify-start">
-                              {getActionButton(asset)}
-                            </div>
-                          )}
-                        </div>
-                      </td>
-                    </tr>
-                  );
-                })
-              )}
-            </tbody>
-          </table>
+        {/* Right Action Buttons Group (Cari 90px + Reset 90px right next to each other) */}
+        <div className="flex items-center gap-4 w-full sm:w-auto justify-end shrink-0">
+          <button 
+            type="button"
+            onClick={() => setSearch(searchInput)}
+            className="w-full sm:w-[90px] h-[40px] bg-[#0A356A] text-white text-xs font-semibold rounded-xl hover:bg-[#0556B3] transition-colors shrink-0 flex items-center justify-center shadow-2xs"
+          >
+            Cari
+          </button>
+
+          <button 
+            type="button"
+            onClick={resetFilter} 
+            className="w-full sm:w-[90px] h-[40px] px-3 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors shrink-0 flex items-center justify-center gap-1.5 shadow-2xs"
+            title="Reset semua filter"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+            Reset
+          </button>
         </div>
-        
+      </div>
+
+      {/* Main Table Card (List Equipment Design System) */}
+      <div id="validasi-table-container" className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[420px] scroll-mt-4">
+        {isLoading ? (
+          <div className="flex flex-col items-center justify-center h-64">
+            <Loader2 className="w-8 h-8 text-[#0A356A] animate-spin mb-3" />
+            <p className="text-xs font-semibold text-slate-500">Memuat data inspeksi peralatan...</p>
+          </div>
+        ) : paginatedAssets.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-64 text-center px-4">
+            <div className="w-12 h-12 bg-slate-100 text-[#0A356A] rounded-2xl flex items-center justify-center mb-3">
+              <Database className="w-6 h-6" />
+            </div>
+            <h3 className="text-sm font-bold text-slate-900 mb-1">Data Tidak Ditemukan</h3>
+            <p className="text-xs text-slate-500 max-w-md">Tidak ada data inspeksi yang cocok dengan pencarian Anda.</p>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse table-fixed">
+              <thead className="bg-gray-50/95 backdrop-blur-sm">
+                <tr className="border-b border-gray-300">
+                  <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[40px]">No</th>
+                  <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center w-[130px]" title="Klik untuk mengurutkan" onClick={() => handleSort('kodeAlat')}>
+                    <div className="flex items-center justify-center">Kode Aset {getSortIcon('kodeAlat')}</div>
+                  </th>
+                  <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
+                    <div className="flex items-center justify-start">Nama Alat {getSortIcon('namaAlat')}</div>
+                  </th>
+                  <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center w-[90px]" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
+                    <div className="flex items-center justify-center">Plant {getSortIcon('plant')}</div>
+                  </th>
+                  <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[130px]" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
+                    <div className="flex items-center justify-start">Jenis {getSortIcon('jenisAlat')}</div>
+                  </th>
+                  <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[130px]" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
+                    <div className="flex items-center justify-start">Aset {getSortIcon('statusAset')}</div>
+                  </th>
+                  <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[140px]" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
+                    <div className="flex items-center justify-start">Persetujuan {getSortIcon('statusPersetujuan')}</div>
+                  </th>
+                  <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[120px]">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="bg-white divide-y divide-gray-100">
+                {isLoading ? (
+                  <tr>
+                    <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
+                      Memuat data...
+                    </td>
+                  </tr>
+                ) : paginatedAssets.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
+                      <div className="flex flex-col items-center">
+                        <AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
+                        <p className="text-[13px] font-medium text-gray-900">Data Tidak Ditemukan</p>
+                        <p className="text-[11px] text-gray-500 mt-1">Coba sesuaikan filter pencarian Anda.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  paginatedAssets.map((asset, index) => {
+                    const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
+                    return (
+                      <tr key={asset.id} className="hover:bg-gray-50/50 transition-colors h-[48px]">
+                        <td className="px-3 py-2 text-sm text-gray-500 font-medium text-center">{rowNum}</td>
+                        <td className="px-3 py-2 text-sm font-bold text-[#0A356A] text-center truncate" title={asset.kodeAlat}>
+                          {asset.kodeAlat}
+                        </td>
+                        <td className="px-3 py-2 text-sm font-semibold text-gray-800 text-left truncate" title={asset.namaAlat}>
+                          <span className="truncate block text-left">{asset.namaAlat}</span>
+                        </td>
+                        <td className="px-3 py-2 text-sm text-gray-600 font-medium text-center truncate">
+                          {asset.plant}
+                        </td>
+                        <td className="px-3 py-2 text-sm text-gray-600 font-medium text-left truncate">
+                          {asset.jenisAlat}
+                        </td>
+                        <td className="px-3 py-2 text-sm text-left whitespace-nowrap">
+                          <div className="flex justify-start">{getStatusAsetBadge(asset.statusAset)}</div>
+                        </td>
+                        <td className="px-3 py-2 text-sm text-left whitespace-nowrap">
+                          <div className="flex justify-start">{getApprovalBadge(asset.statusPersetujuan)}</div>
+                        </td>
+                        <td className="px-3 py-2 text-center w-[140px]">
+                          <div className="flex items-center justify-center gap-2">
+                            <Tooltip content="Detail Eagle Eye">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); setDetailItem(asset); setIsDetailOpen(true); }}
+                                className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
+                            {isAdmin ? (
+                              <>
+                                <Tooltip content="Edit">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    type="button"
+                                    onClick={(e) => { e.preventDefault(); setEditItem(asset); setIsEditOpen(true); }}
+                                    className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                                  >
+                                    <Pencil className="w-4 h-4" />
+                                  </Button>
+                                </Tooltip>
+                                <Tooltip content="Hapus">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    type="button"
+                                    onClick={(e) => { e.preventDefault(); setDeleteItem(asset); setIsDeleteOpen(true); }}
+                                    className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                                  >
+                                    <Trash2 className="w-4 h-4" />
+                                  </Button>
+                                </Tooltip>
+                              </>
+                            ) : (
+                              getActionButton(asset)
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
+
         <div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
           <span className="text-[11px] font-medium text-gray-500">
             Menampilkan {filteredAssets.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length)} dari {filteredAssets.length} data (10 baris/halaman)
@@ -951,17 +980,16 @@ export default function ManajemenInspeksi() {
                 </button>
               ))}
             </div>
-
+            
             <button 
-              onClick={() => setCurrentPage(p => Math.min(Math.max(1, totalPages), p + 1))}
-              disabled={currentPage === Math.max(1, totalPages)}
+              onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+              disabled={currentPage === totalPages}
               className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
             >
               Next
             </button>
           </div>
         </div>
-
       </div>
 
       {/* CENTERED MODAL FOR INSPECTION VALIDATION (NO SCROLL DESIGN) */}

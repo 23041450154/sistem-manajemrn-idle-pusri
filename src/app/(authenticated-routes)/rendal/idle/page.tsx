@@ -11,8 +11,10 @@ import { useUser } from "@/components/UserProvider";
 import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
 import { DetailEquipmentDialog } from "@/components/DetailEquipmentDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { ActionMenu } from "@/components/ActionMenu";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { useDebounce } from "@/hooks/useDebounce";
 
 // Tipe Data menyesuaikan dengan struktur standar Asset/Equipment
 type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE" | "DALAM_PERBAIKAN" | "READY_TO_REUSE" | "READY TO USE" | "DISPOSAL" | "TIDAK LAYAK" | "NEED_REVISION";
@@ -52,12 +54,17 @@ export default function RendalIdlePage() {
 
   // States untuk Filter & Pagination
   const [search, setSearch] = useState("");
-  const [searchInput, setSearchInput] = useState(""); // State untuk yang diketik (belum enter)
+  const [searchInput, setSearchInput] = useState("");
+  const debouncedSearchInput = useDebounce(searchInput, 500);
   const [plantFilter, setPlantFilter] = useState("Semua");
   const [statusFilter, setStatusFilter] = useState("Semua");
   const [showFilters, setShowFilters] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [sortConfig, setSortConfig] = useState<{key: keyof Equipment, direction: 'asc' | 'desc'} | null>(null);
+
+  useEffect(() => {
+    setSearch(debouncedSearchInput);
+  }, [debouncedSearchInput]);
 
   // States untuk Modal Perbaikan & Detail
   const [repairModal, setRepairModal] = useState<Equipment | null>(null);
@@ -280,95 +287,68 @@ export default function RendalIdlePage() {
         </div>
       )}
 
-      {/* Kontrol Tabel (Filter & Pencarian) */}
-      <div className="bg-white p-4 border border-gray-200 rounded-t shadow-sm flex flex-col gap-4">
-        <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
-          <div className="relative w-full sm:w-80">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+      {/* Filter Section (Compact Enterprise 1-Row Layout) */}
+      <div className="bg-white border border-slate-200 rounded-2xl px-5 py-4 mb-6 shadow-sm flex flex-col lg:flex-row items-center justify-between gap-4">
+        {/* Left Controls: Search + Plant + Status */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 w-full lg:w-auto flex-1 flex-wrap lg:flex-nowrap">
+          {/* Search Input (flex-1 max-w-[320px]) */}
+          <div className="relative w-full lg:flex-1 lg:max-w-[320px] shrink-0">
+            <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
             <input 
               type="text" 
               placeholder="Cari kode atau nama alat..." 
               value={searchInput}
-              onChange={(e) => {
-                setSearchInput(e.target.value);
-                setSearch(e.target.value); // Realtime search!
-              }}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] transition-all outline-none"
+              onChange={(e) => setSearchInput(e.target.value)}
+              className="w-full h-[40px] pl-9 pr-3.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] focus:bg-white outline-none transition-all font-medium" 
             />
           </div>
-          
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            <button 
-              onClick={() => setShowFilters(!showFilters)}
-              className={`relative flex items-center gap-2 px-4 py-1.5 rounded border text-sm font-medium transition-colors ${showFilters ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
-            >
-              <Filter className="w-4 h-4" />
-              Filter
-              {(plantFilter !== "Semua" || statusFilter !== "Semua") && (
-                <span className="w-2.5 h-2.5 rounded-full bg-red-500 absolute -top-1 -right-1 border border-white"></span>
-              )}
-            </button>
 
-            {(plantFilter !== "Semua" || statusFilter !== "Semua" || search !== "" || searchInput !== "") && (
-              <button 
-                onClick={() => {
-                  setPlantFilter("Semua");
-                  setStatusFilter("Semua");
-                  setSearch("");
-                  setSearchInput("");
-                }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors whitespace-nowrap"
-                title="Reset Pencarian & Filter"
-              >
-                <X className="w-4 h-4" />
-                Reset
-              </button>
-            )}
-            
-            <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block"></div>
-            
-            <Link href="/rendal/register-equipment" className="flex items-center gap-2 bg-[#0A356A] hover:bg-[#062854] text-white px-4 py-1.5 rounded text-sm font-medium transition-colors shadow-sm whitespace-nowrap">
-              <Plus className="w-4 h-4" />
-              Daftarkan Peralatan
-            </Link>
-          </div>
+          {/* Plant Dropdown (180px) */}
+          <select 
+            value={plantFilter} 
+            onChange={(e) => setPlantFilter(e.target.value)} 
+            className="w-full sm:w-[180px] h-[40px] px-3.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none font-semibold text-slate-700 cursor-pointer shrink-0"
+          >
+            <option value="Semua">Semua Plant</option>
+            <option value="PUSRI-IB">PUSRI-IB</option>
+            <option value="PUSRI-IIB">PUSRI-IIB</option>
+            <option value="PUSRI-III">PUSRI-III</option>
+            <option value="PUSRI-IV">PUSRI-IV</option>
+            <option value="STG-1">STG-1 (Utilitas)</option>
+          </select>
+          
+          {/* Status Dropdown (180px) */}
+          <select 
+            value={statusFilter} 
+            onChange={(e) => setStatusFilter(e.target.value)} 
+            className="w-full sm:w-[180px] h-[40px] px-3.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none font-semibold text-slate-700 cursor-pointer shrink-0"
+          >
+            <option value="Semua">Semua Status</option>
+            <option value="REGISTERED">Registered</option>
+            <option value="VALIDATED">Validated</option>
+            <option value="NEED_REVISION">Perlu Revisi</option>
+            <option value="READY TO USE">Ready to Use</option>
+            <option value="REJECTED">Ditolak</option>
+          </select>
         </div>
 
-        {/* Expanded Filters */}
-        {showFilters && (
-          <div className="flex flex-wrap items-center gap-4 pt-3 border-t border-gray-100 animate-in slide-in-from-top-2 duration-200">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Plant:</span>
-              <select 
-                value={plantFilter} 
-                onChange={(e) => setPlantFilter(e.target.value)} 
-                className="bg-gray-50 border border-gray-200 rounded px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-[#0A356A] cursor-pointer font-medium"
-              >
-                <option value="Semua">Semua Plant</option>
-                <option value="P-1">Plant 1</option>
-                <option value="P-2">Plant 2</option>
-                <option value="P-3">Plant 3</option>
-                <option value="P-4">Plant 4</option>
-              </select>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-gray-500 uppercase tracking-wide">Status:</span>
-              <select 
-                value={statusFilter} 
-                onChange={(e) => setStatusFilter(e.target.value)} 
-                className="bg-gray-50 border border-gray-200 rounded px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-[#0A356A] cursor-pointer font-medium"
-              >
-                <option value="Semua">Semua Status</option>
-                <option value="REGISTERED">REGISTERED</option>
-                <option value="VALIDATED">VALIDATED</option>
-                <option value="IDLE">IDLE</option>
-                <option value="DALAM_PERBAIKAN">DALAM PERBAIKAN</option>
-                <option value="READY_TO_REUSE">READY TO REUSE</option>
-              </select>
-            </div>
-          </div>
-        )}
+        {/* Right Action Buttons Group (Reset 90px) */}
+        <div className="flex items-center gap-4 w-full sm:w-auto justify-end shrink-0">
+          <button 
+            type="button"
+            onClick={() => {
+              setPlantFilter("Semua");
+              setStatusFilter("Semua");
+              setSearch("");
+              setSearchInput("");
+            }} 
+            className="w-full sm:w-[90px] h-[40px] px-3 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors shrink-0 flex items-center justify-center gap-1.5 shadow-2xs"
+            title="Reset semua filter"
+          >
+            <RefreshCw className="w-3.5 h-3.5 text-slate-500" />
+            Reset
+          </button>
+        </div>
       </div>
 
       {/* Area Tabel Klasik */}
@@ -444,45 +424,11 @@ export default function RendalIdlePage() {
                       {getStatusBadge(item.statusAset)}
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-center w-[120px]">
-                      <div className="flex items-center justify-center gap-1">
-                        <Tooltip content="Detail Eagle Eye">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            type="button"
-                            onClick={(e) => { e.preventDefault(); setDetailModal(item); }}
-                            className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
-                        {isAdmin && (
-                          <>
-                            <Tooltip content="Edit">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                type="button"
-                                onClick={(e) => { e.preventDefault(); setEditItem(item); setIsEditOpen(true); }}
-                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
-                            <Tooltip content="Hapus">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                type="button"
-                                onClick={(e) => { e.preventDefault(); setDeleteItem(item); setIsDeleteOpen(true); }}
-                                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
-                          </>
-                        )}
-                      </div>
+                      <ActionMenu
+                        onView={() => setDetailModal(item)}
+                        onEdit={() => { setEditItem(item); setIsEditOpen(true); }}
+                        onDelete={() => { setDeleteItem(item); setIsDeleteOpen(true); }}
+                      />
                     </td>
                   </tr>
                 ))

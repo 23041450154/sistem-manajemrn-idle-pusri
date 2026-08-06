@@ -3,6 +3,7 @@
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { getEquipments, completeEquipmentMaintenance, deleteEquipment } from "@/action/api";
+import { useDebounce } from "@/hooks/useDebounce";
 import {
   Wrench,
   Search,
@@ -15,10 +16,10 @@ import {
   Database,
   Eye,
   Pencil,
-  Trash2,
   FileText
 } from "lucide-react";
 import { useUser } from "@/components/UserProvider";
+import { ActionMenu } from "@/components/ActionMenu";
 import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
 import { DetailEquipmentDialog } from "@/components/DetailEquipmentDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
@@ -178,13 +179,15 @@ export default function PerbaikanAlatPage() {
     loadEquipments();
   }, []);
 
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
+
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery]);
+  }, [debouncedSearchQuery]);
 
   const filteredEquipments = useMemo(() => {
-    if (!searchQuery.trim()) return equipments;
-    const q = searchQuery.toLowerCase();
+    if (!debouncedSearchQuery.trim()) return equipments;
+    const q = debouncedSearchQuery.toLowerCase();
     return equipments.filter(
       (item) =>
         item.kodeAlat.toLowerCase().includes(q) ||
@@ -192,7 +195,7 @@ export default function PerbaikanAlatPage() {
         item.plant.toLowerCase().includes(q) ||
         item.lokasiPenyimpanan.toLowerCase().includes(q)
     );
-  }, [equipments, searchQuery]);
+  }, [equipments, debouncedSearchQuery]);
 
   const ITEMS_PER_PAGE = 10;
 
@@ -460,58 +463,21 @@ export default function PerbaikanAlatPage() {
                     </td>
 
                     {/* Aksi */}
-                    <td className="px-3 py-2 text-sm text-center w-[120px]">
-                      <div className="flex items-center justify-center gap-1">
-                        <Tooltip content="Detail Eagle Eye">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            type="button"
-                            onClick={(e) => { e.preventDefault(); setDetailItem(asset); setIsDetailOpen(true); }}
-                            className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
-                        {isAdmin && (
-                          <>
-                            <Tooltip content="Edit">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                type="button"
-                                onClick={(e) => { e.preventDefault(); setEditItem(asset); setIsEditOpen(true); }}
-                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                              >
-                                <Pencil className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
-                            <Tooltip content="Hapus">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                type="button"
-                                onClick={(e) => { e.preventDefault(); setDeleteItem(asset); setIsDeleteOpen(true); }}
-                                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                              >
-                                <Trash2 className="w-4 h-4" />
-                              </Button>
-                            </Tooltip>
-                          </>
-                        )}
-                        {asset.statusAset !== "READY TO REUSE" || isAdmin ? (
-                          <Tooltip content="Selesaikan Perbaikan">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => handleOpenModal(asset)}
-                              className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                            >
-                              <Wrench className="w-4 h-4" />
-                            </Button>
-                          </Tooltip>
-                        ) : null}
-                      </div>
+                    <td className="px-3 py-2 text-sm text-center w-[160px]">
+                      <ActionMenu
+                        onView={() => { setDetailItem(asset); setIsDetailOpen(true); }}
+                        onEdit={() => { setEditItem(asset); setIsEditOpen(true); }}
+                        onDelete={() => { setDeleteItem(asset); setIsDeleteOpen(true); }}
+                        customActions={asset.statusAset !== "READY TO REUSE" ? [
+                          {
+                            key: "selesaikan",
+                            label: "Selesaikan",
+                            onClick: () => handleOpenModal(asset),
+                            variant: "emerald" as const,
+                            permission: "perbaikan" as const,
+                          }
+                        ] : []}
+                      />
                     </td>
                   </tr>
                 ))

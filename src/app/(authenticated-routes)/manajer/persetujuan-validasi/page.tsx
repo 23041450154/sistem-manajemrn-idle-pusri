@@ -8,8 +8,10 @@ import { useUser } from "@/components/UserProvider";
 import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
 import { DetailEquipmentDialog } from "@/components/DetailEquipmentDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { ActionMenu } from "@/components/ActionMenu";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface RequestAsset {
   id: string;
@@ -29,6 +31,7 @@ interface RequestAsset {
 export default function ManajerApprovePage() {
   const { isAdmin } = useUser();
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebounce(search, 500);
   const [plant, setPlant] = useState("Semua Plant");
   const [status, setStatus] = useState("Semua Status");
   const [startDate, setStartDate] = useState("");
@@ -57,6 +60,31 @@ export default function ManajerApprovePage() {
   const [deleteItem, setDeleteItem] = useState<any>(null);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const result = requests.filter((req: RequestAsset) => {
+      const matchSearch = debouncedSearch
+        ? req.nomorRequest.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          req.kodeAset.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+          req.namaAset.toLowerCase().includes(debouncedSearch.toLowerCase())
+        : true;
+      const matchPlant = plant !== "Semua Plant" ? req.plant === plant : true;
+      const matchStatus = status !== "Semua Status" ? req.statusPersetujuan === status : true;
+
+      let matchDate = true;
+      if (startDate && endDate) {
+        const reqDate = new Date(req.tanggalPengajuan);
+        matchDate = reqDate >= new Date(startDate) && reqDate <= new Date(endDate);
+      }
+      return matchSearch && matchPlant && matchStatus && matchDate;
+    });
+    setFilteredRequests(result);
+    setCurrentPage(1);
+  }, [debouncedSearch, plant, status, startDate, endDate, requests]);
+
+  const handleCari = () => {
+    // Manual trigger wrapper
+  };
 
   const handleDeleteEquipment = async () => {
     if (!deleteItem) return;
@@ -278,27 +306,6 @@ export default function ManajerApprovePage() {
     }
   };
 
-  const handleCari = () => {
-    const result = requests.filter((req: RequestAsset) => {
-      const matchSearch = search
-        ? req.nomorRequest.toLowerCase().includes(search.toLowerCase()) ||
-          req.kodeAset.toLowerCase().includes(search.toLowerCase()) ||
-          req.namaAset.toLowerCase().includes(search.toLowerCase())
-        : true;
-      const matchPlant = plant !== "Semua Plant" ? req.plant === plant : true;
-      const matchStatus = status !== "Semua Status" ? req.statusPersetujuan === status : true;
-
-      let matchDate = true;
-      if (startDate && endDate) {
-        const reqDate = new Date(req.tanggalPengajuan);
-        matchDate = reqDate >= new Date(startDate) && reqDate <= new Date(endDate);
-      }
-      return matchSearch && matchPlant && matchStatus && matchDate;
-    });
-    setFilteredRequests(result);
-    setCurrentPage(1);
-  };
-
   const handleReset = () => {
     setSearch("");
     setPlant("Semua Plant");
@@ -447,56 +454,25 @@ export default function ManajerApprovePage() {
                   <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
                     {getApprovalBadge(req.statusPersetujuan)}
                   </td>
-                  <td className="px-2 py-2 text-center w-[120px]">
-                    <div className="flex items-center justify-center gap-1">
-                      <Tooltip content="Detail Eagle Eye">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          type="button"
-                          onClick={(e) => { e.preventDefault(); openModal(req); }}
-                          className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                        >
-                          <Eye className="w-4 h-4" />
-                        </Button>
-                      </Tooltip>
-                      {isAdmin && (
-                        <>
-                          <Tooltip content="Edit">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setEditItem({
-                                  id: req.equipmentId || req.id,
-                                  equipment_code: req.kodeAset,
-                                  name: req.namaAset,
-                                  plant: req.plant
-                                });
-                                setIsEditOpen(true);
-                              }}
-                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                            >
-                              <Pencil className="w-4 h-4" />
-                            </Button>
-                          </Tooltip>
-                          <Tooltip content="Hapus">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setDeleteItem(req);
-                                setIsDeleteOpen(true);
-                              }}
-                              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
-                          </Tooltip>
-                        </>
-                      )}
-                    </div>
-                  </td>
+                  <td className="px-3 py-2 text-center w-[160px]">
+                      <ActionMenu
+                        onView={() => openModal(req)}
+                        onEdit={() => {
+                          setEditItem({
+                            id: req.equipmentId || req.id,
+                            equipment_code: req.kodeAset,
+                            name: req.namaAset,
+                            plant: req.plant
+                          });
+                          setIsEditOpen(true);
+                        }}
+                        onDelete={() => {
+                          setDeleteItem(req);
+                          setIsDeleteOpen(true);
+                        }}
+                        onApprove={req.statusPersetujuan === "Sedang Direview" || req.statusPersetujuan === "Menunggu Review" || req.statusPersetujuan === "PENDING_REVIEW" || req.statusPersetujuan === "IN_REVIEW" ? () => openModal(req) : undefined}
+                      />
+                    </td>
                 </tr>
               ))}
             </tbody>

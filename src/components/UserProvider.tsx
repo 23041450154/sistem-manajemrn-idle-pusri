@@ -1,12 +1,14 @@
 "use client";
 
-import { createContext, useContext } from "react";
+import { createContext, useContext, useCallback } from "react";
+import { ActionType, hasPermission as checkPermission } from "@/config/rbac";
 
 interface UserContextType {
   role: string | null;
   isAdmin: boolean;
   name: string | null;
   npp: string | null;
+  hasPermission: (action: ActionType) => boolean;
 }
 
 const UserContext = createContext<UserContextType>({
@@ -14,6 +16,7 @@ const UserContext = createContext<UserContextType>({
   isAdmin: false,
   name: null,
   npp: null,
+  hasPermission: () => false,
 });
 
 export function UserProvider({
@@ -27,13 +30,23 @@ export function UserProvider({
   name?: string | null;
   npp?: string | null;
 }) {
+  const currentRole = role ?? null;
+
+  const hasPermission = useCallback(
+    (action: ActionType) => {
+      return checkPermission(currentRole, action);
+    },
+    [currentRole]
+  );
+
   return (
     <UserContext.Provider
       value={{
-        role: role ?? null,
-        isAdmin: role === "ADMIN",
+        role: currentRole,
+        isAdmin: currentRole === "ADMIN",
         name: name ?? null,
         npp: npp ?? null,
+        hasPermission,
       }}
     >
       {children}

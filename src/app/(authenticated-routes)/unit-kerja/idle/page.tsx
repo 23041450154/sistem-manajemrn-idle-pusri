@@ -9,6 +9,7 @@ import {
   UserCheck, Wrench, Info, FileText, Pencil, Trash2
 } from "lucide-react";
 import { useUser } from "@/components/UserProvider";
+import { ActionMenu } from "@/components/ActionMenu";
 import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
 import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
 import { Tooltip } from "@/components/ui/tooltip";
@@ -428,56 +429,23 @@ export default function UnitKerjaKatalogPage() {
 
   const getActionButton = (item: EquipmentItem) => {
     return (
-      <div className="flex flex-wrap items-center gap-1 justify-center w-full max-w-[120px] mx-auto">
-        <button 
-          title="Detail Eagle Eye" 
-          type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            setDetailModalItem(item);
-            loadAttachments(item.id);
-          }} 
-          className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-0.5 rounded transition-colors flex flex-col items-center"
-        >
-          <Eye className="w-3.5 h-3.5 mb-0.5" />
-          <span className="text-[8px] font-bold">Detail</span>
-        </button>
-        <button 
-          title="Ajukan Reuse" 
-          type="button"
-          onClick={(e) => { e.preventDefault(); handleOpenReuseModal(item); }} 
-          className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-0.5 rounded transition-colors flex flex-col items-center"
-        >
-          <Send className="w-3.5 h-3.5 mb-0.5" />
-          <span className="text-[8px] font-bold">Ajukan</span>
-        </button>
-        {isAdmin && (
-          <>
-            <Tooltip content="Edit">
-              <Button
-                variant="ghost"
-                size="icon"
-                type="button"
-                onClick={(e) => { e.preventDefault(); setEditItem(item); setIsEditOpen(true); }}
-                className="h-7 w-7 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-              >
-                <Pencil className="w-3.5 h-3.5" />
-              </Button>
-            </Tooltip>
-            <Tooltip content="Hapus">
-              <Button
-                variant="ghost"
-                size="icon"
-                type="button"
-                onClick={(e) => { e.preventDefault(); setDeleteItem(item); setIsDeleteOpen(true); }}
-                className="h-7 w-7 text-red-500 hover:text-red-700 hover:bg-red-50"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
-            </Tooltip>
-          </>
-        )}
-      </div>
+      <ActionMenu
+        onView={() => {
+          setDetailModalItem(item);
+          loadAttachments(item.id);
+        }}
+        onEdit={() => { setEditItem(item); setIsEditOpen(true); }}
+        onDelete={() => { setDeleteItem(item); setIsDeleteOpen(true); }}
+        customActions={[
+          {
+            key: "ajukan-reuse",
+            label: "Ajukan Reuse",
+            onClick: () => handleOpenReuseModal(item),
+            variant: "primary" as const,
+            permission: "pinjam" as const,
+          }
+        ]}
+      />
     );
   };
 

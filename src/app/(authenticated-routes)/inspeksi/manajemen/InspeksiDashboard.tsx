@@ -6,6 +6,7 @@ import {
   Download, Printer, Eye, Plus, Info, BarChart2 
 } from "lucide-react";
 import Link from "next/link";
+import { useDebounce } from "@/hooks/useDebounce";
 
 interface Inspection {
   id: number;
@@ -26,10 +27,11 @@ export default function InspeksiDashboard() {
   const [data, setData] = useState<Inspection[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const debouncedSearchQuery = useDebounce(searchQuery, 500);
   const [statusFilter, setStatusFilter] = useState("");
 
   const filteredData = data.filter((row) => {
-    const searchLower = searchQuery.toLowerCase();
+    const searchLower = debouncedSearchQuery.toLowerCase();
     const matchesSearch = 
       row.equipment.equipment_code.toLowerCase().includes(searchLower) ||
       row.equipment.name.toLowerCase().includes(searchLower) ||
