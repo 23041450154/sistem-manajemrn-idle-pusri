@@ -182,18 +182,18 @@ export default function LokasiPenyimpananPage() {
             <table className="w-full text-left border-collapse table-fixed">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr className="h-[44px] align-middle">
-                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[80px] whitespace-nowrap align-middle">ID</th>
-                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-left whitespace-nowrap align-middle">Nama Entri</th>
-                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[140px] whitespace-nowrap align-middle">Pabrik (Plant)</th>
-                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-left whitespace-nowrap align-middle">Deskripsi Keterangan</th>
-                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[130px] whitespace-nowrap align-middle">Actions</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-center w-[80px] whitespace-nowrap align-middle">ID</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-left whitespace-nowrap align-middle w-[220px]">Nama Entri</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-center w-[140px] whitespace-nowrap align-middle">Pabrik (Plant)</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-left whitespace-nowrap align-middle">Deskripsi Keterangan</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-center w-[140px] whitespace-nowrap align-middle">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-100">
                 {paginatedData.map((item) => (
-                  <tr key={item.id} className="hover:bg-slate-50/80 transition-colors h-[48px] align-middle">
-                    <td className="px-3 py-2.5 whitespace-nowrap text-xs font-mono font-medium text-slate-500 text-center align-middle">#{item.id}</td>
-                    <td className="px-3 py-2.5 whitespace-nowrap text-xs font-semibold text-slate-900 truncate align-middle">
+                  <tr key={item.id} className="hover:bg-slate-50/80 transition-colors h-[52px] align-middle">
+                    <td className="px-4 py-3.5 whitespace-nowrap text-sm font-mono font-medium text-slate-500 text-center align-middle">#{item.id}</td>
+                    <td className="px-4 py-3.5 whitespace-nowrap text-sm font-semibold text-slate-900 truncate align-middle">
                       <span className="inline-flex items-center gap-2">
                         <span className="w-6 h-6 rounded-lg bg-slate-100 text-[#0A356A] flex items-center justify-center shrink-0">
                           <MapPin className="w-3.5 h-3.5" />
@@ -201,13 +201,13 @@ export default function LokasiPenyimpananPage() {
                         <span className="truncate">{item.name}</span>
                       </span>
                     </td>
-                    <td className="px-3 py-2.5 whitespace-nowrap text-xs font-medium text-slate-600 text-center align-middle">
+                    <td className="px-4 py-3.5 whitespace-nowrap text-sm font-medium text-slate-600 text-center align-middle">
                       {item.plant || "-"}
                     </td>
-                    <td className="px-3 py-2.5 text-xs text-slate-600 font-medium truncate align-middle">
+                    <td className="px-4 py-3.5 text-sm text-slate-600 font-medium truncate align-middle" title={item.description}>
                       {item.description || <span className="text-slate-300">—</span>}
                     </td>
-                    <td className="px-3 py-2.5 whitespace-nowrap text-center align-middle w-[130px]">
+                    <td className="px-4 py-3.5 whitespace-nowrap text-center align-middle w-[140px]">
                       <div className="flex items-center justify-center gap-2">
                         <Tooltip content="Detail">
                           <Button
@@ -215,7 +215,7 @@ export default function LokasiPenyimpananPage() {
                             size="icon"
                             type="button"
                             onClick={(e) => { e.preventDefault(); setDetailItem(item); setIsDetailOpen(true); }}
-                            className="h-8 w-8 p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                            className="h-9 w-9 p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                           >
                             <Eye className="w-4 h-4" />
                           </Button>
@@ -226,7 +226,7 @@ export default function LokasiPenyimpananPage() {
                             size="icon"
                             type="button"
                             onClick={(e) => { e.preventDefault(); setEditItem(item); setIsEditOpen(true); }}
-                            className="h-8 w-8 p-1.5 rounded-lg text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                            className="h-9 w-9 p-2 rounded-md text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
                           >
                             <Pencil className="w-4 h-4" />
                           </Button>
@@ -237,7 +237,7 @@ export default function LokasiPenyimpananPage() {
                             size="icon"
                             type="button"
                             onClick={(e) => { e.preventDefault(); setSelectedItem(item); setIsDeleteOpen(true); }}
-                            className="h-8 w-8 p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                            className="h-9 w-9 p-2 rounded-md text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
                           >
                             <Trash2 className="w-4 h-4" />
                           </Button>

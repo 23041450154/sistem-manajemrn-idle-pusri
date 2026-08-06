@@ -208,35 +208,35 @@ export default function EquipmentManagementPage() {
             <table className="w-full text-left border-collapse table-fixed">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr className="h-[44px] align-middle">
-                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[50px] whitespace-nowrap align-middle">No</th>
-                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[140px] whitespace-nowrap align-middle">Kode Aset</th>
-                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-left whitespace-nowrap align-middle">Nama Peralatan</th>
-                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[110px] whitespace-nowrap align-middle">Plant</th>
-                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[150px] whitespace-nowrap align-middle">Status Aset</th>
-                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[130px] whitespace-nowrap align-middle">Actions</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-center w-[50px] whitespace-nowrap align-middle">No</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-center w-[150px] whitespace-nowrap align-middle">Kode Aset</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-left whitespace-nowrap align-middle">Nama Peralatan</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-center w-[110px] whitespace-nowrap align-middle">Plant</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-center w-[140px] whitespace-nowrap align-middle">Status Aset</th>
+                  <th className="px-4 py-3 text-xs font-semibold text-slate-600 uppercase tracking-wider text-center w-[140px] whitespace-nowrap align-middle">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-100">
                 {paginatedEquipments.map((item, index) => {
                   const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
                   return (
-                    <tr key={item.id || item.ID || item.equipment_id || index} className="hover:bg-slate-50/80 transition-colors h-[48px] align-middle">
-                      <td className="px-3 py-2.5 whitespace-nowrap text-xs font-medium text-slate-500 text-center align-middle">{rowNum}</td>
-                      <td className="px-3 py-2.5 whitespace-nowrap text-xs font-mono font-bold text-[#0A356A] text-center align-middle">
+                    <tr key={item.id || item.ID || item.equipment_id || index} className="hover:bg-slate-50/80 transition-colors h-[52px] align-middle">
+                      <td className="px-4 py-3.5 whitespace-nowrap text-sm font-medium text-slate-500 text-center align-middle">{rowNum}</td>
+                      <td className="px-4 py-3.5 whitespace-nowrap text-sm font-mono font-bold text-[#0A356A] text-center align-middle">
                         {item.equipment_code}
                       </td>
-                      <td className="px-3 py-2.5 text-xs font-medium text-slate-900 truncate align-middle" title={item.name}>
+                      <td className="px-4 py-3.5 text-sm font-medium text-slate-900 truncate align-middle" title={item.name}>
                         {item.name}
                       </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap text-xs font-medium text-slate-600 text-center align-middle">
+                      <td className="px-4 py-3.5 whitespace-nowrap text-sm font-medium text-slate-600 text-center align-middle">
                         {item.plant || "-"}
                       </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap text-center align-middle">
+                      <td className="px-4 py-3.5 whitespace-nowrap text-center align-middle">
                         <div className="flex items-center justify-center">
                           {getStatusBadge(item.status, item.status_id)}
                         </div>
                       </td>
-                      <td className="px-3 py-2.5 whitespace-nowrap text-center align-middle w-[130px]">
+                      <td className="px-4 py-3.5 whitespace-nowrap text-center align-middle w-[140px]">
                         <div className="flex items-center justify-center gap-2">
                           <Tooltip content="Detail">
                             <Button
@@ -244,7 +244,7 @@ export default function EquipmentManagementPage() {
                               size="icon"
                               type="button"
                               onClick={(e) => { e.preventDefault(); setDetailItem(item); setIsDetailOpen(true); }}
-                              className="h-8 w-8 p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                              className="h-9 w-9 p-2 rounded-md text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
                             >
                               <Eye className="w-4 h-4" />
                             </Button>
@@ -255,7 +255,7 @@ export default function EquipmentManagementPage() {
                               size="icon"
                               type="button"
                               onClick={(e) => { e.preventDefault(); setEditItem(item); setIsEditOpen(true); }}
-                              className="h-8 w-8 p-1.5 rounded-lg text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                              className="h-9 w-9 p-2 rounded-md text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
                             >
                               <Pencil className="w-4 h-4" />
                             </Button>
@@ -266,7 +266,7 @@ export default function EquipmentManagementPage() {
                               size="icon"
                               type="button"
                               onClick={(e) => { e.preventDefault(); setSelectedItem(item); setIsDeleteOpen(true); }}
-                              className="h-8 w-8 p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                              className="h-9 w-9 p-2 rounded-md text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
                             >
                               <Trash2 className="w-4 h-4" />
                             </Button>
