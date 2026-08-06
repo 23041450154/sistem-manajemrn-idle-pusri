@@ -2,50 +2,49 @@
 
 ## What it is
 
-Equipment registration form for PT Pusri's idle equipment management system. Used by maintenance staff (RENDAL_PEMELIHARAAN role) to register idle assets with photos, specifications, and storage details.
+Internal web application for PT Pusri to register, validate, repair, and dispose of idle plant equipment. This redesign scope covers the **Rendal Pemeliharaan** role surface only: `src/app/(authenticated-routes)/rendal/`.
 
 ## Target audience
 
-Internal operational staff: maintenance coordinators, warehouse managers, asset controllers at PT Pusri manufacturing plants. Technical literacy: moderate. Context: desktop workstations during shift work.
+Staff Rendal Pemeliharaan (maintenance planning & control) at a fertilizer plant. Desktop-first, long shifts, high data volume. They scan tables of equipment codes, compare rupiah values, and move assets through a fixed workflow. Not a public site, not a marketing surface. Indonesian language.
+
+## Primary job-to-be-done
+
+"Show me which assets are stuck, at which stage, and let me act on them without hunting."
 
 ## Brand voice
 
-Professional, clear, trustworthy. Operational tool, not consumer product. No marketing fluff.
+Precise / Technical / Calm. Instrument panel, not a product tour.
 
 ## Key messages
 
-- Register equipment accurately with complete data
-- Upload photos and documents for verification
-- Track equipment from idle to ready-to-reuse
+Not applicable. This is an operational tool, not a marketing page. The interface's job is legibility and state clarity.
 
 ## Anti-references
 
-Not consumer-friendly/playful, not dark tech, not startup-bro, not minimal luxury. Should feel like SAP/Oracle but modern.
+- Not a SaaS marketing dashboard with floating gradient cards
+- Not the current state: 6 competing accent hues, `shadow-sm` on every surface, tiny uppercase labels above every value, `rounded-xl` on data tables
+- Not the anti-slop overcorrection either: no cream/serif/editorial treatment on a plant maintenance tool
 
 ## User-provided facts
 
-- Source: user — Blue color palette must be preserved: #0A356A (primary dark) and #0556B3 (primary)
-- Source: existing code — Form has: equipment code, name, object type, storage location, plant, area, vendor, year, value, condition, notes, file uploads
-- Source: existing code — Users can upload multiple photos (drag-drop)
-- Source: existing code — Excel import modal exists
-- Source: existing code — Max file size 5MB per file
+- Source: user — Redesign scope starts at `src/app/(authenticated-routes)/rendal/`
+- Source: user — Corner radius must be small. "Jangan rounded banget, masih keliatan kotak tapi sedikit rounded."
+- Source: user — Current output reads as AI slop and must not.
+- Source: existing codebase — Brand navy `#0A356A` and link blue `#0556B3` are already in use across the app and in the sidebar.
 
 ## Missing facts
 
-- Photo requirements (how many minimum): [NEEDS INPUT]
-- Validation rules priority: [NEEDS INPUT]
-- Mobile usage context: [NEEDS INPUT]
+- Official PT Pusri brand guideline hex values: [NEEDS INPUT] (using the hexes already committed in the repo)
+- Accessibility target (WCAG level required by PT Pusri IT): [NEEDS INPUT] (defaulting to WCAG 2.2 AA)
+- Whether other role surfaces (admin, inspeksi, manajer, unit-kerja) should follow: [NEEDS INPUT]
 
 ## Working assumptions
 
-- Desktop-primary workflow (maintenance staff at workstations)
-- Multi-step wizard will reduce cognitive load vs. long single form
-- Step 1: Basic info, Step 2: Specifications, Step 3: Photos/docs
-- Existing Tailwind v4 + shadcn/ui should be leveraged
+- Desktop 1280px+ is the primary working width; mobile is occasional field lookup.
+- All numbers rendered in the UI come from the live API. No sample or seeded figures are introduced by this redesign.
 
 ## Constraints
 
-- Must integrate with existing API: createEquipment, uploadEquipmentAttachment
-- Must preserve existing role-based access (RENDAL_PEMELIHARAAN)
-- Must work within existing authenticated layout
-- Blue palette (#0A356A / #0556B3) is non-negotiable
+- Next.js 16 + Tailwind v4 + `lucide-react` already installed. No new runtime dependencies.
+- Page logic, data fetching, and route behaviour must not change. Presentation only.

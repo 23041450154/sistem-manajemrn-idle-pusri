@@ -257,7 +257,7 @@ export default function PerbaikanAlatPage() {
       {/* Toast Notification */}
       {notification && (
         <div
-          className={`fixed top-6 right-6 z-[100] px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 max-w-md border ${notification.type === "success"
+          className={`fixed top-6 right-6 z-[100] px-5 py-3.5 rounded shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 max-w-md border ${notification.type === "success"
             ? "bg-gray-900 text-white border-emerald-500/30"
             : "bg-red-950 text-white border-red-500/40"
             }`}
@@ -296,7 +296,7 @@ export default function PerbaikanAlatPage() {
           <button
             onClick={loadEquipments}
             disabled={isLoading}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
             Muat Ulang
@@ -305,7 +305,7 @@ export default function PerbaikanAlatPage() {
       </div>
 
       {/* Area Control Bar */}
-      <div className="bg-white p-4 border border-gray-200 rounded-t-xl shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
+      <div className="bg-white p-4 border border-gray-200 rounded-t shadow-sm flex flex-col sm:flex-row justify-between items-center gap-4">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
           <input
@@ -313,7 +313,7 @@ export default function PerbaikanAlatPage() {
             placeholder="Cari kode alat atau nama peralatan..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] transition-all outline-none"
+            className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] transition-all outline-none"
           />
           {searchQuery && (
             <button
@@ -336,7 +336,7 @@ export default function PerbaikanAlatPage() {
       </div>
 
       {/* Tabel Klasik App (Persis seperti rendal/idle) */}
-      <div className="bg-white border-x border-b border-gray-200 rounded-b-xl shadow-sm overflow-hidden">
+      <div className="bg-white border-x border-b border-gray-200 rounded-b shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -438,7 +438,7 @@ export default function PerbaikanAlatPage() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 shadow-sm transition-colors"
+                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded disabled:opacity-50 hover:bg-gray-50 shadow-sm transition-colors"
                 >
                   Sebelumnya
                 </button>
@@ -448,7 +448,7 @@ export default function PerbaikanAlatPage() {
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 shadow-sm transition-colors"
+                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded disabled:opacity-50 hover:bg-gray-50 shadow-sm transition-colors"
                 >
                   Selanjutnya
                 </button>
@@ -463,7 +463,7 @@ export default function PerbaikanAlatPage() {
       {/* Modal Form Detail Realisasi Pemeliharaan (Persis seperti modal di rendal/idle) */}
       {isModalOpen && selectedAsset && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded shadow-xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
 
             {/* Modal Header */}
             <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
@@ -477,7 +477,7 @@ export default function PerbaikanAlatPage() {
               <button
                 onClick={handleCloseModal}
                 disabled={isSubmitting}
-                className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors disabled:opacity-50"
+                className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded transition-colors disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -486,7 +486,7 @@ export default function PerbaikanAlatPage() {
             {/* Form Content */}
             <form onSubmit={handleSubmit} className="p-4 overflow-y-auto flex-1 flex flex-col gap-3">
 
-              <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-2.5 text-[11px] text-blue-800 leading-normal shadow-sm">
+              <div className="bg-blue-50/50 border border-blue-100 rounded p-2.5 text-[11px] text-blue-800 leading-normal shadow-sm">
                 Lengkapi detail realisasi perbaikan di bawah ini untuk mengubah status peralatan menjadi <strong>Ready to Reuse</strong>.
               </div>
 
@@ -499,7 +499,7 @@ export default function PerbaikanAlatPage() {
                   type="text"
                   value={displayCost}
                   onChange={handleCostChange}
-                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all font-mono"
+                  className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all font-mono"
                 />
                 <p className="text-[9px] text-gray-450 mt-0.5">
                   Format ketikan otomatis menjadi mata uang Rupiah.
@@ -517,7 +517,7 @@ export default function PerbaikanAlatPage() {
                   <select
                     value={conditionId}
                     onChange={(e) => setConditionId(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all font-medium text-gray-800 cursor-pointer"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all font-medium text-gray-800 cursor-pointer"
                   >
                     <option value="">-- Pilih Kondisi --</option>
                     <option value="1">Bagus</option>
@@ -536,7 +536,7 @@ export default function PerbaikanAlatPage() {
                   <select
                     value={preservationStatus}
                     onChange={(e) => setPreservationStatus(e.target.value)}
-                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all font-medium text-gray-800 cursor-pointer"
+                    className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all font-medium text-gray-800 cursor-pointer"
                   >
                     <option value="">-- Pilih Preservasi --</option>
                     <option value="Preserved">Preserved</option>
@@ -555,7 +555,7 @@ export default function PerbaikanAlatPage() {
                   type="button"
                   disabled={isSubmitting}
                   onClick={handleCloseModal}
-                  className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
+                  className="px-4 py-2 rounded border border-gray-300 bg-white text-gray-700 text-xs font-bold hover:bg-gray-50 transition-colors shadow-sm disabled:opacity-50"
                 >
                   Batal
                 </button>
@@ -563,7 +563,7 @@ export default function PerbaikanAlatPage() {
                 <button
                   type="submit"
                   disabled={isFormInvalid || isSubmitting}
-                  className="px-5 py-2 rounded-lg bg-[#0A356A] hover:bg-[#0556B3] text-white text-xs font-bold transition-colors shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="px-5 py-2 rounded bg-[#0A356A] hover:bg-[#0556B3] text-white text-xs font-bold transition-colors shadow-md flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   {isSubmitting ? (
                     <Loader2 className="w-3.5 h-3.5 animate-spin" />

@@ -354,7 +354,7 @@ export default function RegisterEquipmentPage() {
 		<div className="max-w-[1400px] mx-auto pb-8 pt-2 relative">
 			{/* Toast Notification */}
 			{notification && (
-				<div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+				<div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
 					{notification.type === "success" ? (
 						<CheckCircle2 className="w-4 h-4 text-emerald-400" />
 					) : (
@@ -391,7 +391,7 @@ export default function RegisterEquipmentPage() {
 					<button
 						type="button"
 						onClick={() => setShowImportModal(true)}
-						className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 px-4 py-2 rounded-lg text-sm font-semibold flex items-center gap-2 transition-all shadow-sm focus:outline-none"
+						className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 transition-all shadow-sm focus:outline-none"
 					>
 						<FileSpreadsheet className="w-4 h-4 text-[#0556B3]" />
 						<span>Import dari Excel</span>
@@ -405,9 +405,9 @@ export default function RegisterEquipmentPage() {
 			>
 				{/* PANEL KIRI: Data Utama & Spesifikasi (Lebar 7 Kolom) */}
 				<div className="lg:col-span-8 flex flex-col gap-5">
-					<div className="bg-white rounded-xl shadow-sm border border-gray-200">
+					<div className="bg-white rounded shadow-sm border border-gray-200">
 						{/* Judul Panel */}
-						<div className="p-4 sm:p-5 border-b border-gray-100 flex items-center gap-2.5 bg-gray-50/50 rounded-t-xl">
+						<div className="p-4 sm:p-5 border-b border-gray-100 flex items-center gap-2.5 bg-gray-50/50 rounded-t">
 							<Info className="w-5 h-5 text-[#0A356A]" strokeWidth={2.5} />
 							<h2 className="text-lg font-bold text-gray-900">
 								Informasi & Lokasi Aset
@@ -434,7 +434,7 @@ export default function RegisterEquipmentPage() {
 									value={formData.equipmentCode}
 									onChange={handleChange}
 									placeholder="P-102-MKN"
-									className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${(showValidationErrors || touched.equipmentCode) && !formData.equipmentCode ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
+									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all ${(showValidationErrors || touched.equipmentCode) && !formData.equipmentCode ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
 								/>
 								{(showValidationErrors || touched.equipmentCode) &&
 									!formData.equipmentCode && (
@@ -462,7 +462,7 @@ export default function RegisterEquipmentPage() {
 									value={formData.name}
 									onChange={handleChange}
 									placeholder="Contoh: Centrifugal Pump P-102"
-									className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${(showValidationErrors || touched.name) && !formData.name ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : formData.name.length >= 150 ? "border-orange-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 bg-orange-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
+									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all ${(showValidationErrors || touched.name) && !formData.name ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : formData.name.length >= 150 ? "border-orange-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 bg-orange-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
 								/>
 								{(showValidationErrors || touched.name) && !formData.name && (
 									<p className="text-[10px] text-red-500 mt-1 font-medium">
@@ -486,7 +486,7 @@ export default function RegisterEquipmentPage() {
 									name="objectTypeId"
 									value={formData.objectTypeId}
 									onChange={handleChange}
-									className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all bg-white ${(showValidationErrors || touched.objectTypeId) && !formData.objectTypeId ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.objectTypeId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
+									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white ${(showValidationErrors || touched.objectTypeId) && !formData.objectTypeId ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.objectTypeId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
 								>
 									<option value="" disabled>
 										Pilih Kategori...
@@ -517,7 +517,7 @@ export default function RegisterEquipmentPage() {
 									name="storageLocationId"
 									value={formData.storageLocationId}
 									onChange={handleChange}
-									className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all bg-white ${!formData.storageLocationId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
+									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white ${!formData.storageLocationId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
 								>
 									<option value="" disabled>
 										Pilih Lokasi Simpan...
@@ -544,7 +544,7 @@ export default function RegisterEquipmentPage() {
 									name="plant"
 									value={formData.plant}
 									onChange={handleChange}
-									className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all bg-white ${(showValidationErrors || touched.plant) && !formData.plant ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.plant ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
+									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white ${(showValidationErrors || touched.plant) && !formData.plant ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.plant ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
 								>
 									<option value="" disabled>
 										Pilih Pabrik...
@@ -579,7 +579,7 @@ export default function RegisterEquipmentPage() {
 									value={formData.funcLoc}
 									onChange={handleChange}
 									placeholder="Masukkan Functional Location..."
-									className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded-lg outline-none transition-all focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
+									className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded outline-none transition-all focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
 								/>
 							</div>
 
@@ -597,7 +597,7 @@ export default function RegisterEquipmentPage() {
 									value={formData.vendor}
 									onChange={handleChange}
 									placeholder="KSB Indonesia"
-									className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all"
+									className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0556B3] outline-none transition-all"
 								/>
 							</div>
 							<div className="space-y-1.5">
@@ -611,7 +611,7 @@ export default function RegisterEquipmentPage() {
 									onChange={handleChange}
 									min="1950"
 									max="2100"
-									className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all"
+									className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0556B3] outline-none transition-all"
 								/>
 							</div>
 							<div className="space-y-1.5">
@@ -631,7 +631,7 @@ export default function RegisterEquipmentPage() {
 										value={formData.originalValue}
 										onChange={handleChange}
 										placeholder="0"
-										className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all"
+										className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0556B3] outline-none transition-all"
 									/>
 								</div>
 							</div>
@@ -639,7 +639,7 @@ export default function RegisterEquipmentPage() {
 					</div>
 
 					{/* Banner Bawah (Menghemat ruang vertikal) */}
-					<div className="bg-blue-50/70 border border-blue-100 rounded-xl p-4 flex items-center gap-3">
+					<div className="bg-blue-50/70 border border-blue-100 rounded p-4 flex items-center gap-3">
 						<CheckCircle2 className="w-7 h-7 text-[#0556B3] shrink-0" />
 						<div>
 							<h4 className="text-sm font-bold text-[#0A356A]">
@@ -655,9 +655,9 @@ export default function RegisterEquipmentPage() {
 
 				{/* PANEL KANAN: Kondisi, File, & Submit (Lebar 5 Kolom) */}
 				<div className="lg:col-span-4 flex flex-col gap-5">
-					<div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full">
+					<div className="bg-white rounded shadow-sm border border-gray-200 flex flex-col h-full">
 						{/* Judul Panel */}
-						<div className="p-4 sm:p-5 border-b border-gray-100 flex items-center gap-2.5 bg-gray-50/50 rounded-t-xl">
+						<div className="p-4 sm:p-5 border-b border-gray-100 flex items-center gap-2.5 bg-gray-50/50 rounded-t">
 							<AlertCircle
 								className="w-5 h-5 text-[#0A356A]"
 								strokeWidth={2.5}
@@ -680,7 +680,7 @@ export default function RegisterEquipmentPage() {
 									value={formData.idleReasonId}
 									onChange={handleChange}
 									placeholder="Masukkan Alasan Idle..."
-									className={`w-full px-3 py-2 text-sm border rounded-lg outline-none transition-all ${
+									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all ${
 										(showValidationErrors || touched.idleReasonId) && !formData.idleReasonId
 											? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10 text-gray-900"
 											: "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
@@ -705,7 +705,7 @@ export default function RegisterEquipmentPage() {
 									onChange={handleChange}
 									rows={2}
 									placeholder="Keterangan kondisi, kontak penanggung jawab..."
-									className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] outline-none transition-all resize-none"
+									className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0556B3] outline-none transition-all resize-none"
 								></textarea>
 							</div>
 
@@ -727,7 +727,7 @@ export default function RegisterEquipmentPage() {
 									onDragOver={handleDragOver}
 									onDragLeave={handleDragLeave}
 									onDrop={handleDrop}
-									className={`flex-1 border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all min-h-[110px] ${
+									className={`flex-1 border-2 border-dashed rounded p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all min-h-[110px] ${
 										isDragging
 											? "border-[#0556B3] bg-blue-50/80"
 											: "border-gray-300 hover:bg-blue-50/40 hover:border-[#0556B3]"
@@ -757,7 +757,7 @@ export default function RegisterEquipmentPage() {
 												return (
 													<div
 														key={i}
-														className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white w-[100px] shadow-sm hover:shadow-md transition-all hover:border-[#0A356A]"
+														className="relative group border border-gray-200 rounded overflow-hidden bg-white w-[100px] shadow-sm hover:shadow-md transition-all hover:border-[#0A356A]"
 													>
 														{isImage ? (
 															<div className="h-16 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -812,14 +812,14 @@ export default function RegisterEquipmentPage() {
 					<div className="flex items-center justify-end gap-3 mt-1">
 						<Link
 							href="/rendal/idle"
-							className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-bold hover:bg-gray-50 transition-all shadow-sm"
+							className="px-5 py-2.5 rounded border border-gray-300 bg-white text-gray-700 text-sm font-bold hover:bg-gray-50 transition-all shadow-sm"
 						>
 							Batal
 						</Link>
 						<button
 							type="submit"
 							disabled={isSubmitting}
-							className="w-full px-5 py-2.5 rounded-lg bg-[#0A356A] hover:bg-[#0556B3] text-white text-sm font-bold transition-all shadow-md flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+							className="w-full px-5 py-2.5 rounded bg-[#0A356A] hover:bg-[#0556B3] text-white text-sm font-bold transition-all shadow-md flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
 						>
 							{isSubmitting ? (
 								<Loader2 className="w-4 h-4 animate-spin" />
@@ -835,7 +835,7 @@ export default function RegisterEquipmentPage() {
 			{/* MODAL IMPORT DATA MASSAL */}
 			{showImportModal && (
 				<div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-					<div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden scale-in-center">
+					<div className="bg-white rounded shadow-2xl w-full max-w-lg overflow-hidden scale-in-center">
 						{/* Modal Header */}
 						<div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
 							<h3 className="text-lg font-bold text-gray-900 flex items-center gap-2">
@@ -847,7 +847,7 @@ export default function RegisterEquipmentPage() {
 									setShowImportModal(false);
 									setImportFile(null);
 								}}
-								className="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded-md hover:bg-gray-200"
+								className="text-gray-400 hover:text-gray-700 transition-colors p-1 rounded hover:bg-gray-200"
 							>
 								<X className="w-5 h-5" />
 							</button>
@@ -865,14 +865,14 @@ export default function RegisterEquipmentPage() {
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">
 									TIPE FORMAT DATA <span className="text-red-500">*</span>
 								</label>
-								<select className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all bg-white font-medium text-gray-800">
+								<select className="w-full px-3 py-2.5 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0556B3] focus:border-[#0556B3] outline-none transition-all bg-white font-medium text-gray-800">
 									<option value="excel">Microsoft Excel (.xlsx, .xls)</option>
 									<option value="csv">Comma Separated Values (.csv)</option>
 								</select>
 							</div>
 
 							{/* Download Template */}
-							<div className="mb-5 bg-blue-50/60 border border-blue-100 rounded-lg p-3.5 flex items-center justify-between gap-3">
+							<div className="mb-5 bg-blue-50/60 border border-blue-100 rounded p-3.5 flex items-center justify-between gap-3">
 								<div className="flex items-center gap-2.5">
 									<FileSpreadsheet className="w-5 h-5 text-[#0556B3] shrink-0" />
 									<div>
@@ -888,7 +888,7 @@ export default function RegisterEquipmentPage() {
 								<button
 									type="button"
 									onClick={handleDownloadTemplate}
-									className="inline-flex items-center gap-1.5 bg-white border border-blue-200 text-[#0556B3] px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-blue-50 transition-colors shadow-sm whitespace-nowrap"
+									className="inline-flex items-center gap-1.5 bg-white border border-blue-200 text-[#0556B3] px-3 py-1.5 rounded text-xs font-bold hover:bg-blue-50 transition-colors shadow-sm whitespace-nowrap"
 								>
 									<Download className="w-3.5 h-3.5" />
 									Download Template
@@ -896,7 +896,7 @@ export default function RegisterEquipmentPage() {
 							</div>
 
 							{/* Drag & Drop Area */}
-							<div className="border-2 border-dashed border-gray-300 rounded-xl p-8 flex flex-col items-center justify-center text-center hover:bg-blue-50/40 hover:border-[#0556B3] cursor-pointer transition-all bg-gray-50/30">
+							<div className="border-2 border-dashed border-gray-300 rounded p-8 flex flex-col items-center justify-center text-center hover:bg-blue-50/40 hover:border-[#0556B3] cursor-pointer transition-all bg-gray-50/30">
 								<UploadCloud className="w-12 h-12 text-[#0556B3] mb-3" />
 								<span className="text-base font-bold text-gray-900">
 									Tarik & lepas file Anda di sini
@@ -923,7 +923,7 @@ export default function RegisterEquipmentPage() {
 									onClick={() =>
 										document.getElementById("import-file-upload")?.click()
 									}
-									className="bg-white border border-gray-300 text-gray-700 px-5 py-2 rounded-lg text-sm font-bold hover:bg-gray-100 transition-colors shadow-sm"
+									className="bg-white border border-gray-300 text-gray-700 px-5 py-2 rounded text-sm font-bold hover:bg-gray-100 transition-colors shadow-sm"
 								>
 									Pilih File Dokumen
 								</button>
@@ -931,7 +931,7 @@ export default function RegisterEquipmentPage() {
 
 							{/* Preview File yang dipilih */}
 							{importFile && (
-								<div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+								<div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded flex items-center justify-between">
 									<div className="flex items-center gap-3 overflow-hidden">
 										<FileSpreadsheet className="w-5 h-5 text-blue-700 shrink-0" />
 										<div>
@@ -945,7 +945,7 @@ export default function RegisterEquipmentPage() {
 									</div>
 									<button
 										onClick={() => setImportFile(null)}
-										className="text-blue-700 hover:text-blue-900 p-1.5 hover:bg-blue-100 rounded-md transition-colors"
+										className="text-blue-700 hover:text-blue-900 p-1.5 hover:bg-blue-100 rounded transition-colors"
 									>
 										<X className="w-4 h-4" />
 									</button>
@@ -960,7 +960,7 @@ export default function RegisterEquipmentPage() {
 									setShowImportModal(false);
 									setImportFile(null);
 								}}
-								className="px-5 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors shadow-sm"
+								className="px-5 py-2 text-sm font-bold text-gray-700 bg-white border border-gray-300 hover:bg-gray-100 rounded transition-colors shadow-sm"
 							>
 								Batal
 							</button>
@@ -985,7 +985,7 @@ export default function RegisterEquipmentPage() {
 										setImportFile(null);
 									}, 2000);
 								}}
-								className="px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-lg transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+								className="px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded transition-colors shadow-sm flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
 							>
 								{isImporting ? (
 									<Loader2 className="w-4 h-4 animate-spin" />
@@ -1002,7 +1002,7 @@ export default function RegisterEquipmentPage() {
 			{/* FULLSCREEN SPINNER OVERLAY (MUTAR-MUTAR) */}
 			{(isSubmitting || isImporting) && (
 				<div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-in fade-in duration-200">
-					<div className="bg-white p-8 rounded-2xl shadow-xl flex flex-col items-center border border-gray-100">
+					<div className="bg-white p-8 rounded shadow-xl flex flex-col items-center border border-gray-100">
 						<Loader2 className="w-12 h-12 text-[#0556B3] animate-spin mb-4" />
 						<h2 className="text-lg font-bold text-gray-900">
 							{isSubmitting ? "Menyimpan Data..." : "Memproses Dokumen..."}

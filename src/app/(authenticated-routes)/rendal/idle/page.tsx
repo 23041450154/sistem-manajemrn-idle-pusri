@@ -225,7 +225,7 @@ export default function RendalIdlePage() {
           <button 
             onClick={fetchEquipments}
             disabled={isLoading}
-            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded-lg text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
+            className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
           >
             <RefreshCw className={`w-4 h-4 ${isLoading ? 'animate-spin' : ''}`} />
             Muat Ulang
@@ -235,14 +235,14 @@ export default function RendalIdlePage() {
 
       {/* Error Banner */}
       {error && (
-        <div className="mb-6 flex items-start gap-3 bg-red-50 border border-red-200 text-red-800 p-4 rounded-lg shadow-sm">
+        <div className="mb-6 flex items-start gap-3 bg-red-50 border border-red-200 text-red-800 p-4 rounded shadow-sm">
           <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
           <p className="text-sm font-medium leading-relaxed">{error}</p>
         </div>
       )}
 
       {/* Kontrol Tabel (Filter & Pencarian) */}
-      <div className="bg-white p-4 border border-gray-200 rounded-t-xl shadow-sm flex flex-col gap-4">
+      <div className="bg-white p-4 border border-gray-200 rounded-t shadow-sm flex flex-col gap-4">
         <div className="flex flex-col sm:flex-row justify-between items-center gap-4">
           <div className="relative w-full sm:w-80">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
@@ -254,14 +254,14 @@ export default function RendalIdlePage() {
                 setSearchInput(e.target.value);
                 setSearch(e.target.value); // Realtime search!
               }}
-              className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] transition-all outline-none"
+              className="w-full pl-9 pr-4 py-2 text-sm bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] transition-all outline-none"
             />
           </div>
           
           <div className="flex items-center gap-3 w-full sm:w-auto">
             <button 
               onClick={() => setShowFilters(!showFilters)}
-              className={`relative flex items-center gap-2 px-4 py-1.5 rounded-lg border text-sm font-medium transition-colors ${showFilters ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
+              className={`relative flex items-center gap-2 px-4 py-1.5 rounded border text-sm font-medium transition-colors ${showFilters ? 'bg-blue-50 border-blue-200 text-blue-700' : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'}`}
             >
               <Filter className="w-4 h-4" />
               Filter
@@ -278,7 +278,7 @@ export default function RendalIdlePage() {
                   setSearch("");
                   setSearchInput("");
                 }}
-                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors whitespace-nowrap"
                 title="Reset Pencarian & Filter"
               >
                 <X className="w-4 h-4" />
@@ -288,7 +288,7 @@ export default function RendalIdlePage() {
             
             <div className="w-px h-6 bg-gray-200 mx-1 hidden sm:block"></div>
             
-            <Link href="/rendal/register-equipment" className="flex items-center gap-2 bg-[#0A356A] hover:bg-[#062854] text-white px-4 py-1.5 rounded-lg text-sm font-medium transition-colors shadow-sm whitespace-nowrap">
+            <Link href="/rendal/register-equipment" className="flex items-center gap-2 bg-[#0A356A] hover:bg-[#062854] text-white px-4 py-1.5 rounded text-sm font-medium transition-colors shadow-sm whitespace-nowrap">
               <Plus className="w-4 h-4" />
               Daftarkan Peralatan
             </Link>
@@ -303,7 +303,7 @@ export default function RendalIdlePage() {
               <select 
                 value={plantFilter} 
                 onChange={(e) => setPlantFilter(e.target.value)} 
-                className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-[#0A356A] cursor-pointer font-medium"
+                className="bg-gray-50 border border-gray-200 rounded px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-[#0A356A] cursor-pointer font-medium"
               >
                 <option value="Semua">Semua Plant</option>
                 <option value="P-1">Plant 1</option>
@@ -318,7 +318,7 @@ export default function RendalIdlePage() {
               <select 
                 value={statusFilter} 
                 onChange={(e) => setStatusFilter(e.target.value)} 
-                className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-[#0A356A] cursor-pointer font-medium"
+                className="bg-gray-50 border border-gray-200 rounded px-3 py-1.5 text-sm text-gray-700 outline-none focus:border-[#0A356A] cursor-pointer font-medium"
               >
                 <option value="Semua">Semua Status</option>
                 <option value="REGISTERED">REGISTERED</option>
@@ -333,7 +333,7 @@ export default function RendalIdlePage() {
       </div>
 
       {/* Area Tabel Klasik */}
-      <div className="bg-white border-x border-b border-gray-200 rounded-b-xl shadow-sm overflow-hidden">
+      <div className="bg-white border-x border-b border-gray-200 rounded-b shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead>
@@ -453,7 +453,7 @@ export default function RendalIdlePage() {
                 <button 
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 shadow-sm transition-colors"
+                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded disabled:opacity-50 hover:bg-gray-50 shadow-sm transition-colors"
                 >
                   Sebelumnya
                 </button>
@@ -463,7 +463,7 @@ export default function RendalIdlePage() {
                 <button 
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md disabled:opacity-50 hover:bg-gray-50 shadow-sm transition-colors"
+                  className="px-3 py-1.5 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded disabled:opacity-50 hover:bg-gray-50 shadow-sm transition-colors"
                 >
                   Selanjutnya
                 </button>
@@ -476,7 +476,7 @@ export default function RendalIdlePage() {
       {/* Modal Pencatatan Perbaikan */}
       {repairModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded shadow-xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div className="flex items-center gap-2.5">
                 <Wrench className="w-5 h-5 text-emerald-600" />
@@ -485,34 +485,34 @@ export default function RendalIdlePage() {
                   <p className="text-xs text-gray-500 font-medium mt-0.5">{repairModal.kodeAlat} - {repairModal.namaAlat}</p>
                 </div>
               </div>
-              <button onClick={() => setRepairModal(null)} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors">
+              <button onClick={() => setRepairModal(null)} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
             
             <form onSubmit={handleSubmitRepair} className="p-5 overflow-y-auto flex-1 flex flex-col gap-4">
-              <div className="bg-blue-50/50 border border-blue-100 rounded-lg p-3 text-sm text-blue-800 leading-relaxed shadow-sm">
+              <div className="bg-blue-50/50 border border-blue-100 rounded p-3 text-sm text-blue-800 leading-relaxed shadow-sm">
                 Unggah bukti biaya dan deskripsi tindakan perbaikan di bawah ini untuk merubah status peralatan menjadi <strong>Ready to Reuse</strong>.
               </div>
 
               <div>
                 <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Deskripsi Perbaikan <span className="text-red-500">*</span></label>
-                <textarea required rows={3} placeholder="Jelaskan tindakan perbaikan/refurbish yang telah dilakukan secara detail..." className="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none shadow-sm"></textarea>
+                <textarea required rows={3} placeholder="Jelaskan tindakan perbaikan/refurbish yang telah dilakukan secara detail..." className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all resize-none shadow-sm"></textarea>
               </div>
 
               <div>
                 <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Total Biaya Aktual <span className="text-red-500">*</span></label>
-                <div className="relative shadow-sm rounded-lg">
+                <div className="relative shadow-sm rounded">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <span className="text-gray-500 text-sm font-bold">Rp</span>
                   </div>
-                  <input required type="number" min="0" placeholder="Contoh: 15000000" className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
+                  <input required type="number" min="0" placeholder="Contoh: 15000000" className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-emerald-500 focus:border-emerald-500 outline-none transition-all" />
                 </div>
               </div>
 
               <div>
                 <label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block mb-1.5">Unggah Bukti Biaya / Nota Perbaikan <span className="text-red-500">*</span></label>
-                <label className="border-2 border-dashed border-gray-300 rounded-lg p-5 flex flex-col items-center justify-center text-center hover:bg-emerald-50/30 hover:border-emerald-400 cursor-pointer transition-colors bg-gray-50/50">
+                <label className="border-2 border-dashed border-gray-300 rounded p-5 flex flex-col items-center justify-center text-center hover:bg-emerald-50/30 hover:border-emerald-400 cursor-pointer transition-colors bg-gray-50/50">
                   <Upload className="w-6 h-6 text-gray-400 mb-2" />
                   <span className="text-sm font-bold text-gray-700">Pilih file nota / invoice perbaikan</span>
                   <span className="text-[10px] text-gray-500 mt-1">Mendukung format PDF, JPG, PNG (Maks. 5MB)</span>
@@ -521,8 +521,8 @@ export default function RendalIdlePage() {
               </div>
 
               <div className="mt-2 flex items-center justify-end gap-3 pt-4 border-t border-gray-100">
-                <button type="button" disabled={isSubmittingRepair} onClick={() => setRepairModal(null)} className="px-4 py-2 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm">Batal</button>
-                <button type="submit" disabled={isSubmittingRepair} className="px-5 py-2 rounded-lg bg-[#0A356A] hover:bg-[#0556B3] text-white text-sm font-bold transition-colors shadow-md flex items-center gap-2 disabled:opacity-70">
+                <button type="button" disabled={isSubmittingRepair} onClick={() => setRepairModal(null)} className="px-4 py-2 rounded border border-gray-300 bg-white text-gray-700 text-sm font-bold hover:bg-gray-50 transition-colors shadow-sm">Batal</button>
+                <button type="submit" disabled={isSubmittingRepair} className="px-5 py-2 rounded bg-[#0A356A] hover:bg-[#0556B3] text-white text-sm font-bold transition-colors shadow-md flex items-center gap-2 disabled:opacity-70">
                   {isSubmittingRepair ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle className="w-4 h-4" />}
                   {isSubmittingRepair ? "Menyimpan..." : "Simpan & Ubah Status"}
                 </button>
@@ -535,7 +535,7 @@ export default function RendalIdlePage() {
       {/* Modal Detail Informasi Aset */}
       {detailModal && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+          <div className="bg-white rounded shadow-xl w-full max-w-xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
             <div className="p-4 border-b border-gray-100 flex items-center justify-between bg-gray-50/50">
               <div className="flex items-center gap-2.5">
                 <Eye className="w-5 h-5 text-[#0A356A]" />
@@ -544,7 +544,7 @@ export default function RendalIdlePage() {
                   <p className="text-xs text-gray-500 font-medium mt-0.5">{detailModal.kodeAlat}</p>
                 </div>
               </div>
-              <button onClick={() => setDetailModal(null)} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded-lg transition-colors">
+              <button onClick={() => setDetailModal(null)} className="text-gray-400 hover:text-gray-700 hover:bg-gray-100 p-1.5 rounded transition-colors">
                 <X className="w-5 h-5" />
               </button>
             </div>
@@ -622,7 +622,7 @@ export default function RendalIdlePage() {
                   </div>
                   <div className="col-span-2">
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">Catatan Tambahan</p>
-                    <p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 leading-relaxed whitespace-pre-line">
+                    <p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded border border-gray-100 leading-relaxed whitespace-pre-line">
                       {detailModal.notes || "Tidak ada catatan tambahan."}
                     </p>
                   </div>
@@ -642,7 +642,7 @@ export default function RendalIdlePage() {
                           href={photoUrl} 
                           target="_blank" 
                           rel="noopener noreferrer" 
-                          className="group relative border border-gray-200 rounded-lg overflow-hidden aspect-video bg-gray-100 hover:border-[#0A356A] transition-all shadow-sm"
+                          className="group relative border border-gray-200 rounded overflow-hidden aspect-video bg-gray-100 hover:border-[#0A356A] transition-all shadow-sm"
                         >
                           <img 
                             src={photoUrl} 
@@ -658,7 +658,7 @@ export default function RendalIdlePage() {
             </div>
 
             <div className="p-4 border-t border-gray-100 flex items-center justify-end bg-gray-50">
-              <button onClick={() => setDetailModal(null)} className="px-5 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 text-sm font-bold hover:bg-gray-100 transition-colors shadow-sm">
+              <button onClick={() => setDetailModal(null)} className="px-5 py-2 rounded bg-white border border-gray-300 text-gray-700 text-sm font-bold hover:bg-gray-100 transition-colors shadow-sm">
                 Tutup
               </button>
             </div>
