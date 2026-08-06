@@ -11,7 +11,7 @@ import { homePathForRole } from "../lib/roles"
 
 
 
-const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"
+const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "https://api.testing.naufal.me"
 
 function cookieConfig(maxAge: number) {
   return {

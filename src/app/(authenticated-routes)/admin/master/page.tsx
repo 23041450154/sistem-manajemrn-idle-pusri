@@ -203,11 +203,6 @@ export default function MasterDataPage() {
             >
               <Icon className="w-4 h-4" />
               <span>{label}</span>
-              <span className={`px-2 py-0.5 rounded-full text-[10px] font-extrabold ${
-                isActive ? "bg-white/20 text-white" : "bg-slate-200 text-slate-700"
-              }`}>
-                {counts[key]}
-              </span>
             </button>
           );
         })}

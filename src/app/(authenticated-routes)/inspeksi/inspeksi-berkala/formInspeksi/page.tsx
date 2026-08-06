@@ -169,66 +169,80 @@ export default function FormInspeksiPage() {
 
       <button 
         onClick={() => router.back()}
-        className="flex items-center gap-2 text-sm font-medium text-gray-500 hover:text-[#0A356A] mb-4 transition-colors"
+        className="flex items-center gap-2.5 text-base font-bold text-gray-650 hover:text-[#0A356A] mb-5 transition-colors"
       >
-        <ArrowLeft className="w-4 h-4" />
-        Kembali ke Antrean
+        <ArrowLeft className="w-5 h-5 text-gray-600" />
+        Kembali
       </button>
 
       <div className="mb-6">
         <h1 className="text-2xl font-extrabold text-gray-900">Formulir Inspeksi Fisik Lapangan</h1>
-        <p className="text-sm text-gray-500 mt-1">Lengkapi data hasil pengecekan untuk menentukan kelayakan peralatan.</p>
+        <p className="text-base text-gray-600 mt-1">Lengkapi data hasil pengecekan untuk menentukan kelayakan peralatan.</p>
       </div>
 
-      <div className="bg-[#F4F9FD] border border-[#BBE1FA] rounded-lg p-5 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-4 gap-x-6">
+      <div className="bg-[#F4F9FD] border border-[#BBE1FA] rounded-xl p-8 mb-8 shadow-sm">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-y-6 gap-x-8">
           <div>
-            <p className="text-xs text-[#0284c7] font-medium mb-1">Kode Aset:</p>
-            <p className="text-sm font-bold text-[#0A356A]">{equipment?.equipment_code || "Memuat..."}</p>
+            <p className="text-sm text-gray-500 font-semibold mb-1">Kode Aset</p>
+            <p className="text-lg font-extrabold text-[#0A356A]">{equipment?.equipment_code || "Memuat..."}</p>
           </div>
           <div>
-            <p className="text-xs text-[#0284c7] font-medium mb-1">Nama Aset:</p>
-            <p className="text-sm font-bold text-[#0A356A]">{equipment?.name || "Memuat..."}</p>
+            <p className="text-sm text-gray-500 font-semibold mb-1">Nama Aset</p>
+            <p className="text-lg font-extrabold text-[#0A356A]">{equipment?.name || "Memuat..."}</p>
           </div>
           <div>
-            <p className="text-xs text-[#0284c7] font-medium mb-1">Plant Asal & Lokasi Penyimpanan:</p>
-            <p className="text-sm font-medium text-gray-900">
-              <span className="font-semibold">{(typeof equipment?.plant === 'string' ? equipment.plant : equipment?.plant?.name) || equipment?.area?.name || "-"}</span> - {(typeof equipment?.location === 'string' ? equipment.location : equipment?.location?.name) || equipment?.storage_location?.name || "-"}
+            <p className="text-sm text-gray-500 font-semibold mb-1">Plant Asal & Lokasi Penyimpanan</p>
+            <p className="text-lg font-semibold text-gray-900">
+              <span className="font-bold">{(typeof equipment?.plant === 'string' ? equipment.plant : equipment?.plant?.name) || equipment?.area?.name || "-"}</span> - {(typeof equipment?.location === 'string' ? equipment.location : equipment?.location?.name) || equipment?.storage_location?.name || "-"}
             </p>
           </div>
           <div>
-            <p className="text-xs text-[#0284c7] font-medium mb-1">Tanggal Deklarasi Idle:</p>
-            <p className="text-sm font-medium text-gray-900">
+            <p className="text-sm text-gray-500 font-semibold mb-1">Tanggal Deklarasi Idle</p>
+            <p className="text-lg font-semibold text-gray-900">
               {equipment?.updated_at ? new Date(equipment.updated_at).toISOString().split('T')[0] : "2026-03-31"}
             </p>
           </div>
           <div>
-            <p className="text-xs text-[#0284c7] font-medium mb-1">Status Saat Ini:</p>
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-[#E0E7FF] text-[#4F46E5] mt-0.5">
-              {typeof equipment?.status === 'string' ? equipment.status : equipment?.status?.name || "IDLE"}
-            </span>
+            <p className="text-sm text-gray-500 font-semibold mb-1">Status Saat Ini</p>
+            <div>
+              <span className="inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-bold bg-[#E0E7FF] text-[#4F46E5] mt-0.5 border border-[#C7D2FE]">
+                {(() => {
+                  const s = typeof equipment?.status === 'string' ? equipment.status : equipment?.status?.name || "READY TO USE";
+                  return s === "IDLE" ? "READY TO USE" : s;
+                })()}
+              </span>
+            </div>
           </div>
           <div>
-            <p className="text-xs text-[#0284c7] font-medium mb-1">Petugas Pemeriksa (Inspector):</p>
-            <p className="text-sm font-bold text-gray-900">
+            <p className="text-sm text-gray-500 font-semibold mb-1">Petugas Pemeriksa (Inspector)</p>
+            <p className="text-lg font-extrabold text-gray-900">
               Siti Rahayu (100003)
             </p>
           </div>
         </div>
       </div>
 
-      <form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-xl shadow-sm p-5 flex flex-col gap-5">
+      <form onSubmit={handleSubmit} className="bg-white border border-gray-250 rounded-2xl shadow-md p-8 flex flex-col gap-6">
         
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Kiri: Pertanyaan & Catatan */}
-          <div className="flex flex-col gap-6">
+        {/* Info Wajib Diisi di atas */}
+        <div className="flex justify-end shrink-0">
+          <span className="text-sm font-bold text-red-500">* Wajib diisi</span>
+        </div>
+
+        {/* Grid Pembagian Ruang: Kiri 60% (col-span-3), Kanan 40% (col-span-2) */}
+        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+          {/* Kiri: Pertanyaan & Catatan (col-span-3) */}
+          <div className="lg:col-span-3 flex flex-col gap-6">
+            
             {/* Komponen 1: Hasil Inspeksi Aset */}
             <div className="flex-1">
-              <label className="block text-sm font-semibold text-gray-900 mb-3">
+              <label className="block text-base font-bold text-gray-900 mb-4">
                 Hasil Inspeksi Aset? <span className="text-red-500">*</span>
               </label>
-              <div className="flex flex-col sm:flex-row gap-5">
-                <label className="flex items-center gap-2 cursor-pointer group">
+              
+              <div className="flex flex-col gap-5">
+                {/* Layak */}
+                <label className="flex items-start gap-4 cursor-pointer group">
                   <input 
                     type="radio" 
                     name="hasil_inspeksi" 
@@ -238,22 +252,32 @@ export default function FormInspeksiPage() {
                       setHasilInspeksi(e.target.value);
                       setJenisPerbaikan("");
                     }}
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    className="w-6 h-6 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer mt-0.5"
                   />
-                  <span className="text-sm font-medium text-gray-800">Layak (Tidak Perlu Perbaikan)</span>
+                  <div>
+                    <span className="text-base font-extrabold text-gray-800 group-hover:text-[#0A356A] transition-colors">Layak</span>
+                    <p className="text-sm text-gray-500 font-semibold mt-0.5">Tidak perlu perbaikan</p>
+                  </div>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer group">
+
+                {/* Memerlukan Perbaikan */}
+                <label className="flex items-start gap-4 cursor-pointer group">
                   <input 
                     type="radio" 
                     name="hasil_inspeksi" 
                     value="REPAIR" 
                     checked={hasilInspeksi === "REPAIR"} 
                     onChange={(e) => setHasilInspeksi(e.target.value)}
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    className="w-6 h-6 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer mt-0.5"
                   />
-                  <span className="text-sm font-medium text-gray-800">Memerlukan Perbaikan</span>
+                  <div>
+                    <span className="text-base font-extrabold text-gray-800 group-hover:text-[#0A356A] transition-colors">Perlu Perbaikan</span>
+                    <p className="text-sm text-gray-500 font-semibold mt-0.5">Membutuhkan perbaikan ringan atau overhaul</p>
+                  </div>
                 </label>
-                <label className="flex items-center gap-2 cursor-pointer group">
+
+                {/* Tidak Layak */}
+                <label className="flex items-start gap-4 cursor-pointer group">
                   <input 
                     type="radio" 
                     name="hasil_inspeksi" 
@@ -263,109 +287,132 @@ export default function FormInspeksiPage() {
                       setHasilInspeksi(e.target.value);
                       setJenisPerbaikan("");
                     }}
-                    className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                    className="w-6 h-6 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer mt-0.5"
                   />
-                  <span className="text-sm font-medium text-gray-800">Tidak Layak (Rusak Berat)</span>
+                  <div>
+                    <span className="text-base font-extrabold text-gray-800 group-hover:text-[#0A356A] transition-colors">Tidak Layak</span>
+                    <p className="text-sm text-gray-500 font-semibold mt-0.5">(Rekomendasi Disposal)</p>
+                  </div>
                 </label>
               </div>
-              <p className="text-xs text-gray-500 mt-2 italic">Catatan: Sesuai alur, keputusan disposal akan dikirim ke Rendal untuk verifikasi.</p>
+
+              {/* Warning/Catatan untuk Disposal */}
+              {hasilInspeksi === "DISPOSAL" && (
+                <p className="text-sm text-amber-800 mt-4 font-bold bg-amber-50 p-4 rounded-xl border border-amber-200 animate-in fade-in duration-200">
+                  * Aset akan diajukan sebagai rekomendasi disposal dan memerlukan persetujuan Rendal.
+                </p>
+              )}
             </div>
 
             {/* Komponen 2: Jenis Perbaikan (Kondisional) */}
             {hasilInspeksi === "REPAIR" && (
-              <div className="animate-in fade-in slide-in-from-top-2 bg-[#F8FAFC] border border-gray-200 rounded-lg p-4">
-                <label className="block text-sm font-semibold text-gray-900 mb-3">
+              <div className="animate-in fade-in slide-in-from-top-2 bg-[#F8FAFC] border border-gray-200 rounded-xl p-5">
+                <label className="block text-base font-bold text-gray-900 mb-4">
                   Jenis Perbaikan? <span className="text-red-500">*</span>
                 </label>
-                <div className="flex flex-col sm:flex-row gap-5">
-                  <label className="flex items-center gap-2 cursor-pointer group">
+                <div className="flex flex-col sm:flex-row gap-8">
+                  <label className="flex items-center gap-3 cursor-pointer group">
                     <input 
                       type="radio" 
                       name="jenis_perbaikan" 
                       value="RINGAN" 
                       checked={jenisPerbaikan === "RINGAN"} 
                       onChange={(e) => setJenisPerbaikan(e.target.value)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
                     />
-                    <span className="text-sm font-medium text-gray-800">Perbaikan Ringan</span>
+                    <span className="text-base font-bold text-gray-800 cursor-pointer">Perbaikan Ringan</span>
                   </label>
-                  <label className="flex items-center gap-2 cursor-pointer group">
+                  <label className="flex items-center gap-3 cursor-pointer group">
                     <input 
                       type="radio" 
                       name="jenis_perbaikan" 
                       value="OVERHAUL" 
                       checked={jenisPerbaikan === "OVERHAUL"} 
                       onChange={(e) => setJenisPerbaikan(e.target.value)}
-                      className="w-4 h-4 text-blue-600 border-gray-300 focus:ring-blue-500"
+                      className="w-5 h-5 text-blue-600 border-gray-300 focus:ring-blue-500 cursor-pointer"
                     />
-                    <span className="text-sm font-medium text-gray-800">Overhaul / Perbaikan Besar</span>
+                    <span className="text-base font-bold text-gray-800 cursor-pointer">Overhaul / Perbaikan Besar</span>
                   </label>
                 </div>
               </div>
             )}
 
             {/* Komponen 2.5: Kondisi Mekanik & Elektrik */}
-            <div className="flex flex-col sm:flex-row gap-4">
+            <div className="flex flex-col sm:flex-row gap-5">
               <div className="flex-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                <label className="block text-base font-bold text-gray-900 mb-2.5">
                   Kondisi Mekanik <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <textarea
                   value={mechanicalCondition}
-                  onChange={(e) => setMechanicalCondition(e.target.value)}
-                  placeholder="Contoh: Seal bocor, bearing aus..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-sm"
+                  onChange={(e) => {
+                    setMechanicalCondition(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
+                  }}
+                  placeholder="Tuliskan kondisi di sini..."
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-base font-medium whitespace-pre-wrap break-words min-h-[80px] resize-y overflow-y-auto"
                 />
               </div>
               <div className="flex-1">
-                <label className="block text-sm font-semibold text-gray-900 mb-2">
+                <label className="block text-base font-bold text-gray-900 mb-2.5">
                   Kondisi Elektrik <span className="text-red-500">*</span>
                 </label>
-                <input
-                  type="text"
+                <textarea
                   value={electricalCondition}
-                  onChange={(e) => setElectricalCondition(e.target.value)}
-                  placeholder="Contoh: Kabel terkelupas, motor baik..."
-                  className="w-full p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-sm"
+                  onChange={(e) => {
+                    setElectricalCondition(e.target.value);
+                    e.target.style.height = 'auto';
+                    e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
+                  }}
+                  placeholder="Tuliskan kondisi di sini..."
+                  rows={2}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-base font-medium whitespace-pre-wrap break-words min-h-[80px] resize-y overflow-y-auto"
                 />
               </div>
             </div>
 
             {/* Komponen 3: Catatan */}
             <div className="flex-1 flex flex-col">
-              <label className="block text-sm font-semibold text-gray-900 mb-2">
+              <label className="block text-base font-bold text-gray-900 mb-2.5">
                 Temuan Fisik / Catatan Inspeksi <span className="text-red-500">*</span>
               </label>
               <textarea 
                 value={notes}
                 onChange={(e) => setNotes(e.target.value)}
-                placeholder="Tuliskan detail pemeriksaan fisik (misal: kebocoran seal, tingkat korosi, kelistrikan)..."
-                className="w-full p-3 border border-gray-300 rounded-lg focus:ring-1 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-sm resize-none flex-1 min-h-[100px]"
+                placeholder="Tuliskan temuan lapangan secara rinci di sini..."
+                rows={6}
+                className="w-full px-4 py-3.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#0A356A] focus:border-[#0A356A] outline-none transition-all text-base resize-none flex-1 min-h-[180px] font-medium"
               ></textarea>
-              <p className="text-xs text-gray-500 mt-1.5">Wajib diisi dan tidak boleh hanya berupa spasi kosong.</p>
+              <p className="text-sm text-gray-600 mt-2 font-medium">Wajib diisi dan tidak boleh hanya berupa spasi kosong.</p>
             </div>
           </div>
 
-          {/* Kanan: Upload Foto */}
-          <div className="flex flex-col h-full">
-            <label className="block text-sm font-semibold text-gray-900 mb-2">
-              Foto Bukti Lapangan (Nameplate & Kondisi Fisik) <span className="text-red-500">*</span>
-            </label>
+          {/* Kanan: Upload Foto (col-span-2) - Diperkecil 20% */}
+          <div className="lg:col-span-2 flex flex-col h-full">
+            <div className="mb-2">
+              <label className="block text-base font-bold text-gray-900">
+                Foto Bukti Lapangan <span className="text-red-500">*</span>
+              </label>
+              <p className="text-sm font-bold text-red-600">
+                (minimal 2 foto)
+              </p>
+            </div>
             
             <div 
               onClick={() => fileInputRef.current?.click()}
-              className="flex-1 w-full border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-[#0A356A] transition-all min-h-[180px]"
+              className="flex-1 w-full border-2 border-dashed border-gray-300 rounded-xl p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-[#0A356A] transition-all min-h-[150px]"
             >
               {files.length === 0 ? (
                 <>
-                  <UploadCloud className="w-8 h-8 text-gray-400 mb-3" />
-                  <p className="text-sm font-semibold text-[#0A356A] text-center">Klik atau Seret Berkas ke Sini</p>
-                  <p className="text-xs text-gray-500 mt-1.5 text-center">Format JPG/PNG, maks. 5MB</p>
+                  <UploadCloud className="w-8 h-8 text-gray-400 mb-2" />
+                  <p className="text-base font-bold text-[#0A356A] text-center">Klik atau Seret Berkas</p>
+                  <p className="text-sm text-gray-500 mt-1 text-center font-medium">JPG, PNG maks 5 MB</p>
                 </>
               ) : (
                 <div className="w-full h-full flex flex-col justify-start">
-                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 w-full mb-4">
+                  <div className="grid grid-cols-2 gap-2.5 w-full mb-3">
                     {files.map((file, idx) => (
                       <div key={idx} className="relative group rounded-lg overflow-hidden border border-gray-200 aspect-square bg-gray-100">
                         <img 
@@ -386,15 +433,15 @@ export default function FormInspeksiPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="mt-auto flex items-center justify-center gap-2 text-sm font-semibold text-[#0A356A] bg-blue-50 py-2 rounded-lg border border-blue-100 transition-colors w-full">
-                    <UploadCloud className="w-4 h-4" /> Tambah Foto Lainnya
+                  <div className="mt-auto flex items-center justify-center gap-2 text-sm font-bold text-[#0A356A] bg-blue-50 py-2.5 rounded-lg border border-blue-100 transition-colors w-full h-11">
+                    <UploadCloud className="w-4 h-4" /> Tambah Foto
                   </div>
                 </div>
               )}
             </div>
             
-            <div className="mt-2.5 text-xs font-medium text-red-500">
-              * Wajib unggah min. 2 berkas foto bukti. (Terunggah: {files.length})
+            <div className="mt-3 text-sm font-bold text-gray-800">
+              Terunggah: <span className={files.length >= 2 ? "text-green-600" : "text-red-500"}>{files.length} berkas</span>
             </div>
           
           <input 
@@ -418,17 +465,17 @@ export default function FormInspeksiPage() {
           <button 
             type="button" 
             onClick={() => router.back()}
-            className="w-full sm:w-auto flex items-center justify-center px-6 py-2.5 border border-gray-300 rounded-lg font-semibold text-sm text-gray-700 hover:bg-gray-50 transition-all shadow-sm"
+            className="w-full sm:w-auto flex items-center justify-center px-8 py-3.5 border border-gray-300 rounded-lg font-bold text-base text-gray-700 hover:bg-gray-50 transition-all shadow-sm h-12"
           >
             Batal
           </button>
           <button 
             type="submit" 
             disabled={isSubmitDisabled}
-            className={`w-full sm:w-auto flex items-center justify-center px-6 py-2.5 rounded-lg font-semibold text-sm transition-all shadow-sm ${
+            className={`w-full sm:w-auto flex items-center justify-center px-8 py-3.5 rounded-lg font-bold text-base transition-all shadow-sm h-12 ${
               isSubmitDisabled 
                 ? 'bg-[#E2E8F0] text-gray-400 cursor-not-allowed border border-transparent' 
-                : 'bg-[#E2E8F0] text-[#0A356A] hover:bg-[#CBD5E1] border border-transparent'
+                : 'bg-[#0A356A] text-white hover:bg-[#062854] border border-transparent'
             }`}
           >
             {loading ? (

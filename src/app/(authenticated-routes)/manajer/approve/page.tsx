@@ -26,7 +26,7 @@ export default function ManajerApprovePage() {
   const [status, setStatus] = useState("Semua Status");
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
-  
+
   const [requests, setRequests] = useState<RequestAsset[]>([]);
   const [filteredRequests, setFilteredRequests] = useState<RequestAsset[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -67,7 +67,7 @@ export default function ManajerApprovePage() {
         if (insData && Array.isArray(insData)) {
           setAllInspections(insData);
         }
-        
+
         // Buat kamus (map) equipment berdasarkan ID untuk pencarian cepat
         const equipmentMap = new Map();
         if (Array.isArray(equipmentsData)) {
@@ -80,15 +80,15 @@ export default function ManajerApprovePage() {
           const equipmentId = item.equipment_id || item.equipment?.id;
           const eq = equipmentMap.get(Number(equipmentId)) || item.equipment;
           let statusPersetujuan = item.status_label || item.approval_status;
-          
+
           if (item.approval_status === "PENDING") statusPersetujuan = "Menunggu Review";
           else if (item.approval_status === "IN_REVIEW") statusPersetujuan = "Sedang Direview";
           else if (item.approval_status === "APPROVED") statusPersetujuan = "Disetujui";
           else if (item.approval_status === "REVISION_REQUIRED") statusPersetujuan = "Perlu Revisi";
-          
+
           let statusAset = (item.equipment_status || eq?.status?.name || "VALIDATED").toUpperCase();
           if (item.approval_status === "APPROVED") {
-            statusAset = "IDLE";
+            statusAset = "READY TO USE";
           }
 
           return {
@@ -129,7 +129,7 @@ export default function ManajerApprovePage() {
         getApprovalById(asset.id),
         getAttachmentsByEquipmentId(asset.equipmentId)
       ]);
-      
+
       if (data && data.steps) {
         setApprovalSteps(data.steps);
       } else {
@@ -164,14 +164,14 @@ export default function ManajerApprovePage() {
         console.error(err);
       }
 
-      const updatedReqs = requests.map(req => 
+      const updatedReqs = requests.map(req =>
         req.kodeAset === selectedAsset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview" } : req
       );
       setRequests(updatedReqs);
-      setFilteredRequests(filteredRequests.map(req => 
+      setFilteredRequests(filteredRequests.map(req =>
         req.kodeAset === selectedAsset.kodeAset ? { ...req, statusPersetujuan: "Sedang Direview" } : req
       ));
-      
+
       // Update selected asset state so UI re-renders immediately
       setSelectedAsset({ ...selectedAsset, statusPersetujuan: "Sedang Direview" });
     }
@@ -187,18 +187,18 @@ export default function ManajerApprovePage() {
   const handleApprove = async () => {
     if (selectedAsset) {
       const res = await reviewApproval(selectedAsset.id, "APPROVE", "Disetujui oleh manajer");
-      
+
       if (res.success) {
         setNotification({ type: "success", message: "Berhasil menyetujui aset!" });
-        const updated = requests.map(req => 
-          req.kodeAset === selectedAsset.kodeAset 
-            ? { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" }
+        const updated = requests.map(req =>
+          req.kodeAset === selectedAsset.kodeAset
+            ? { ...req, statusAset: "READY TO USE", statusPersetujuan: "Disetujui" }
             : req
         );
         setRequests(updated);
-        setFilteredRequests(filteredRequests.map(req => 
-          req.kodeAset === selectedAsset.kodeAset 
-            ? { ...req, statusAset: "IDLE", statusPersetujuan: "Disetujui" }
+        setFilteredRequests(filteredRequests.map(req =>
+          req.kodeAset === selectedAsset.kodeAset
+            ? { ...req, statusAset: "READY TO USE", statusPersetujuan: "Disetujui" }
             : req
         ));
         setIsConfirmOpen(false);
@@ -216,20 +216,20 @@ export default function ManajerApprovePage() {
       setRevisiError(true);
       return;
     }
-    
+
     if (selectedAsset) {
       const res = await reviewApproval(selectedAsset.id, "REVISION", revisiCatatan);
-      
+
       if (res.success) {
         setNotification({ type: "success", message: "Berhasil mengirim permintaan revisi!" });
-        const updated = requests.map(req => 
-          req.kodeAset === selectedAsset.kodeAset 
+        const updated = requests.map(req =>
+          req.kodeAset === selectedAsset.kodeAset
             ? { ...req, statusPersetujuan: "Perlu Revisi" }
             : req
         );
         setRequests(updated);
-        setFilteredRequests(filteredRequests.map(req => 
-          req.kodeAset === selectedAsset.kodeAset 
+        setFilteredRequests(filteredRequests.map(req =>
+          req.kodeAset === selectedAsset.kodeAset
             ? { ...req, statusPersetujuan: "Perlu Revisi" }
             : req
         ));
@@ -245,14 +245,14 @@ export default function ManajerApprovePage() {
 
   const handleCari = () => {
     const result = requests.filter(req => {
-      const matchSearch = search 
-        ? req.nomorRequest.toLowerCase().includes(search.toLowerCase()) || 
-          req.kodeAset.toLowerCase().includes(search.toLowerCase()) || 
+      const matchSearch = search
+        ? req.nomorRequest.toLowerCase().includes(search.toLowerCase()) ||
+          req.kodeAset.toLowerCase().includes(search.toLowerCase()) ||
           req.namaAset.toLowerCase().includes(search.toLowerCase())
         : true;
       const matchPlant = plant !== "Semua Plant" ? req.plant === plant : true;
       const matchStatus = status !== "Semua Status" ? req.statusPersetujuan === status : true;
-      
+
       let matchDate = true;
       if (startDate && endDate) {
         const reqDate = new Date(req.tanggalPengajuan);
@@ -275,7 +275,7 @@ export default function ManajerApprovePage() {
   };
 
   const getStatusAsetBadge = (status: string) => {
-    if (status === "VALIDATED") {
+    if (status === "VALIDATED" || status === "READY TO USE" || status === "READY_TO_USE" || status === "READY_TO_REUSE") {
       return <span className="bg-[#DCFCE7] text-[#16A34A] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
     }
     return <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
@@ -299,7 +299,7 @@ export default function ManajerApprovePage() {
 
   return (
     <div className="max-w-7xl mx-auto pt-6 pb-8 px-6">
-      
+
       {/* Toast */}
       {notification && (
         <div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
@@ -316,21 +316,21 @@ export default function ManajerApprovePage() {
       {/* Filter Section */}
       <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">
         <div className="flex flex-wrap items-end gap-4">
-          
+
           <div className="flex-1 min-w-[220px]">
             <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">Cari Pengajuan</label>
-            <input 
-              type="text" 
-              placeholder="No. Request / Kode / Nama..." 
+            <input
+              type="text"
+              placeholder="No. Request / Kode / Nama..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
             />
           </div>
-          
+
           <div className="w-[150px]">
             <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">Pabrik (Plant)</label>
-            <select 
+            <select
               value={plant}
               onChange={(e) => setPlant(e.target.value)}
               className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
@@ -342,10 +342,10 @@ export default function ManajerApprovePage() {
               <option value="UTILITY">Utility</option>
             </select>
           </div>
-          
+
           <div className="w-[170px]">
             <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">Status Persetujuan</label>
-            <select 
+            <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
               className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
@@ -356,27 +356,27 @@ export default function ManajerApprovePage() {
               <option value="Perlu Revisi">Perlu Revisi</option>
             </select>
           </div>
-          
+
           <div className="w-[160px]">
             <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">Tanggal Mulai</label>
-            <input 
-              type="date" 
+            <input
+              type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
               className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-600 cursor-pointer"
             />
           </div>
-          
+
           <div className="w-[160px]">
             <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">Tanggal Akhir</label>
-            <input 
-              type="date" 
+            <input
+              type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
               className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-600 cursor-pointer"
             />
           </div>
-          
+
           <div className="flex items-center gap-2">
             <button onClick={handleCari} className="bg-[#0A356A] text-white px-5 py-2 rounded-lg text-[13px] font-semibold hover:bg-[#0556B3] transition-colors whitespace-nowrap h-[38px]">
               Cari
@@ -385,7 +385,7 @@ export default function ManajerApprovePage() {
               Reset
             </button>
           </div>
-          
+
         </div>
       </div>
 
@@ -395,32 +395,34 @@ export default function ManajerApprovePage() {
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Nomor Request</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Kode Aset</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider min-w-[120px]">Nama Aset</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Plant</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Tanggal Pengajuan</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap">Status Aset</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider">Status Persetujuan</th>
-                <th className="px-2 py-2 text-[10px] font-bold text-gray-500 uppercase tracking-wider text-center">Aksi</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center w-12 whitespace-nowrap">No</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Kode</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Kode Aset</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider min-w-[120px] whitespace-nowrap text-center">Nama Aset</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Plant</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Tanggal</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Status Aset</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Status</th>
+                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Aksi</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {paginatedRequests.map((req) => (
+              {paginatedRequests.map((req, index) => (
                 <tr key={req.id} className="hover:bg-blue-50/30 transition-colors">
-                  <td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug">{req.nomorRequest}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900">{req.kodeAset}</td>
-                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug">{req.namaAset}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium">{req.plant}</td>
-                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug">{req.tanggalPengajuan}</td>
-                  <td className="px-2 py-2 whitespace-nowrap">
+                  <td className="px-2 py-2 text-[12px] text-gray-500 font-medium text-center">{index + 1 + (currentPage - 1) * ITEMS_PER_PAGE}</td>
+                  <td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug text-center">{req.nomorRequest}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900 text-center">{req.kodeAset}</td>
+                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug text-center">{req.namaAset}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-center">{req.plant}</td>
+                  <td className="px-2 py-2 text-[11px] text-gray-600 font-medium leading-snug text-center whitespace-nowrap">{req.tanggalPengajuan}</td>
+                  <td className="px-2 py-2 whitespace-nowrap text-center">
                     {getStatusAsetBadge(req.statusAset)}
                   </td>
-                  <td className="px-2 py-2">
+                  <td className="px-2 py-2 text-center">
                     {getApprovalBadge(req.statusPersetujuan)}
                   </td>
                   <td className="px-2 py-2 text-center w-[80px]">
-                    <button 
+                    <button
                       onClick={() => openModal(req)}
                       className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors w-full"
                     >
@@ -441,7 +443,7 @@ export default function ManajerApprovePage() {
             </span>
             {totalPages > 1 && (
               <div className="flex items-center gap-1.5">
-                <button 
+                <button
                   onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                   className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
@@ -463,7 +465,7 @@ export default function ManajerApprovePage() {
                     </button>
                   ))}
                 </div>
-                <button 
+                <button
                   onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                   className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
@@ -480,9 +482,9 @@ export default function ManajerApprovePage() {
       {isModalOpen && selectedAsset && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onClick={closeModal} />
-          
+
           <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
-            
+
             {/* Modal Header */}
             <div className="flex items-start justify-between px-6 py-4 border-b border-gray-200 bg-white shrink-0">
               <div>
@@ -496,7 +498,7 @@ export default function ManajerApprovePage() {
 
             {/* Modal Body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 bg-gray-50">
-              
+
               {/* Alert Banner Dinamis */}
               <div className={`border rounded-lg p-3.5 flex items-start gap-3 mb-6 ${
                 selectedAsset.statusPersetujuan === 'Menunggu Review' ? 'bg-[#FEF9C3] border-yellow-200 text-yellow-800' :
@@ -506,7 +508,7 @@ export default function ManajerApprovePage() {
               }`}>
                 <Shield className="w-5 h-5 shrink-0 mt-0.5" />
                 <p className="text-[13px] font-medium leading-relaxed">
-                  Status: <strong>{selectedAsset.statusPersetujuan}</strong>. 
+                  Status: <strong>{selectedAsset.statusPersetujuan}</strong>.
                   {selectedAsset.statusPersetujuan === 'Menunggu Review' && " Silakan mulai review untuk melihat detail lebih lanjut."}
                   {selectedAsset.statusPersetujuan === 'Sedang Direview' && " Anda sedang mereview pengajuan ini. Berikan keputusan setujui atau minta revisi."}
                   {selectedAsset.statusPersetujuan === 'Perlu Revisi' && " Menunggu perbaikan dari Tim Inspeksi Teknik."}
@@ -525,12 +527,12 @@ export default function ManajerApprovePage() {
                     <p className="text-[12px] text-gray-500 font-medium mb-1">Kode Aset:</p>
                     <p className="text-[13px] font-bold text-gray-900">{selectedAsset.kodeAset}</p>
                   </div>
-                  
+
                   <div className="col-span-2">
                     <p className="text-[12px] text-gray-500 font-medium mb-1">Nama Aset:</p>
                     <p className="text-[13px] font-bold text-gray-900">{selectedAsset.namaAset}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-[12px] text-gray-500 font-medium mb-1">Jenis Aset:</p>
                     <p className="text-[13px] font-bold text-gray-900">Peralatan Rotating</p>
@@ -551,10 +553,10 @@ export default function ManajerApprovePage() {
 
                   <div>
                     <p className="text-[12px] text-gray-500 font-medium mb-1">Tanggal Registrasi:</p>
-                    <p className="text-[13px] font-bold text-gray-900">{selectedAsset.tanggalPengajuan}</p>
+                    <p className="text-[11px] font-medium text-gray-900">{selectedAsset.tanggalPengajuan}</p>
                   </div>
                   <div className="hidden"></div>
-                  
+
                   <div>
                     <p className="text-[12px] text-gray-500 font-medium mb-1">Status Aset:</p>
                     {getStatusAsetBadge(selectedAsset.statusAset)}
@@ -595,9 +597,9 @@ export default function ManajerApprovePage() {
                     </div>
                   </div>
                 )}
-                
+
                 <h3 className="text-[14px] font-bold text-[#0f4a8a] border-b border-blue-100 pb-2 mb-4">3. Hasil Validasi Inspeksi Teknik</h3>
-                
+
                 <div className="grid grid-cols-2 gap-x-8 gap-y-4 mb-5">
                   <div>
                     <p className="text-[12px] text-gray-500 font-medium mb-1">Nama Inspektur:</p>
@@ -607,11 +609,11 @@ export default function ManajerApprovePage() {
                     <p className="text-[12px] text-gray-500 font-medium mb-1">NPP / Role:</p>
                     <p className="text-[13px] font-bold text-gray-900">{inspeksiDetail?.inspector_npp || inspeksiDetail?.inspector || "-"} / {inspeksiDetail?.inspector_role || "-"}</p>
                   </div>
-                  
+
                   <div>
                     <p className="text-[12px] text-gray-500 font-medium mb-1">Waktu Pemeriksaan:</p>
                     <p className="text-[13px] font-bold text-gray-900">
-                      {inspeksiDetail?.inspection_date || inspeksiDetail?.created_at 
+                      {inspeksiDetail?.inspection_date || inspeksiDetail?.created_at
                         ? new Date(inspeksiDetail.inspection_date || inspeksiDetail.created_at).toLocaleString('id-ID', {day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute:'2-digit'})
                         : "-"}
                     </p>
@@ -651,7 +653,7 @@ export default function ManajerApprovePage() {
                   <div className="pl-4">
                     <p className="text-[12px] text-gray-500 font-medium mt-2">Catatan Pemeriksaan:</p>
                     <p className="text-[13px] text-gray-800 italic">{inspeksiDetail?.notes ? `"${inspeksiDetail.notes}"` : <span className="text-gray-400">Belum ada catatan</span>}</p>
-                    
+
                     <p className="text-[12px] text-gray-500 font-medium mt-3">Rekomendasi Tindakan:</p>
                     <p className="text-[13px] font-bold text-gray-900">{inspeksiDetail?.recommendation || (inspeksiDetail ? (
                       String(inspeksiDetail.require_action_id) === '1' ? 'Tidak ada tindakan khusus, siap diutilisasi.' :
@@ -666,7 +668,7 @@ export default function ManajerApprovePage() {
                 <div className="flex gap-3">
                   {attachments.length > 0 ? (
                     attachments.slice(0, 2).map((att: any, idx: number) => (
-                      <div 
+                      <div
                         key={idx}
                         className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
                         onClick={() => setPreviewImage(att.file_url || att.url)}
@@ -711,19 +713,19 @@ export default function ManajerApprovePage() {
               <button onClick={closeModal} className="px-6 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md text-[13px] font-semibold hover:bg-gray-50 transition-colors">
                 Tutup
               </button>
-              
+
               {selectedAsset.statusPersetujuan === "Menunggu Review" && (
-                <button 
+                <button
                   onClick={handleMulaiReview}
                   className="px-6 py-2.5 bg-[#0f4a8a] text-white rounded-md text-[13px] font-semibold hover:bg-[#0b386b] transition-colors shadow-sm"
                 >
                   Mulai Review
                 </button>
               )}
-              
+
               {selectedAsset.statusPersetujuan === "Sedang Direview" && (
                 <>
-                  <button 
+                  <button
                     onClick={() => {
                       setRevisiCatatan("");
                       setRevisiError(false);
@@ -733,7 +735,7 @@ export default function ManajerApprovePage() {
                   >
                     Minta Revisi
                   </button>
-                  <button 
+                  <button
                     onClick={() => setIsConfirmOpen(true)}
                     className="px-6 py-2.5 bg-[#166534] text-white rounded-md text-[13px] font-semibold hover:bg-[#14532d] transition-colors shadow-sm"
                   >
@@ -751,26 +753,26 @@ export default function ManajerApprovePage() {
       {isConfirmOpen && selectedAsset && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsConfirmOpen(false)} />
-          
+
           <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
             <div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
               <CheckCircle2 className="w-7 h-7 text-green-600" />
             </div>
-            
+
             <h3 className="text-lg font-bold text-gray-900 mb-2">Konfirmasi Persetujuan Aset</h3>
-            
+
             <p className="text-[13px] text-gray-600 mb-6 leading-relaxed">
-              Apakah Anda yakin ingin menyetujui hasil validasi ini? Setelah disetujui, <span className="font-bold">{selectedAsset.kodeAset}</span> aset akan berubah menjadi <span className="font-bold text-green-700">IDLE</span>, proses persetujuan selesai, dan pengajuan tidak lagi muncul pada Inbox Approval.
+              Apakah Anda yakin ingin menyetujui hasil validasi ini? Setelah disetujui, <span className="font-bold">{selectedAsset.kodeAset}</span> aset akan berubah menjadi <span className="font-bold text-green-700">READY TO USE</span>, proses persetujuan selesai, dan pengajuan tidak lagi muncul pada Inbox Approval.
             </p>
-            
+
             <div className="flex items-center gap-3 w-full justify-center">
-              <button 
-                onClick={() => setIsConfirmOpen(false)} 
+              <button
+                onClick={() => setIsConfirmOpen(false)}
                 className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md text-[13px] font-semibold hover:bg-gray-50 transition-colors w-[120px]"
               >
                 Batal
               </button>
-              <button 
+              <button
                 onClick={handleApprove}
                 className="px-5 py-2.5 bg-[#166534] text-white rounded-md text-[13px] font-semibold hover:bg-[#14532d] transition-colors w-[120px]"
               >
@@ -785,7 +787,7 @@ export default function ManajerApprovePage() {
       {isRevisiOpen && selectedAsset && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onClick={() => setIsRevisiOpen(false)} />
-          
+
           <div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl p-6 flex flex-col items-start animate-in zoom-in-95 duration-200">
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
@@ -793,14 +795,14 @@ export default function ManajerApprovePage() {
               </div>
               <h3 className="text-[16px] font-bold text-gray-900">Minta Revisi Validasi</h3>
             </div>
-            
+
             <p className="text-[13px] text-gray-600 mb-5 leading-relaxed text-left">
               Apakah Anda yakin ingin meminta revisi? Tim Inspeksi Teknik akan dapat memperbarui hasil validasi berdasarkan catatan revisi yang Anda berikan di bawah ini.
             </p>
-            
+
             <div className="text-left w-full mb-6">
               <label className="block text-[12px] font-bold text-gray-800 mb-1.5">Catatan Revisi Manajer (Wajib) *</label>
-              <textarea 
+              <textarea
                 value={revisiCatatan}
                 onChange={(e) => {
                   setRevisiCatatan(e.target.value);
@@ -811,15 +813,15 @@ export default function ManajerApprovePage() {
               />
               {revisiError && <p className="text-red-500 text-[11px] mt-1.5 font-medium">Catatan revisi tidak boleh kosong.</p>}
             </div>
-            
+
             <div className="flex items-center justify-end gap-3 w-full">
-              <button 
-                onClick={() => setIsRevisiOpen(false)} 
+              <button
+                onClick={() => setIsRevisiOpen(false)}
                 className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-[13px] font-semibold hover:bg-gray-50 transition-colors"
               >
                 Batal
               </button>
-              <button 
+              <button
                 onClick={handleKirimRevisi}
                 className="px-5 py-2 bg-[#ff0000] text-white rounded-md text-[13px] font-semibold hover:bg-[#8c0000] transition-colors"
               >
@@ -833,17 +835,17 @@ export default function ManajerApprovePage() {
       {/* Image Preview Modal */}
       {previewImage && (
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm" onClick={() => setPreviewImage(null)}>
-          <button 
+          <button
             className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded-full transition-colors"
             onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
           >
             <X className="w-6 h-6" />
           </button>
-          <img 
-            src={previewImage} 
-            alt="Preview" 
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" 
-            onClick={(e) => e.stopPropagation()} 
+          <img
+            src={previewImage}
+            alt="Preview"
+            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
           />
         </div>
       )}

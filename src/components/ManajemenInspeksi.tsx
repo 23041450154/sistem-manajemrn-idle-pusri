@@ -7,7 +7,9 @@ import {
   ArrowUpDown, ArrowUp, ArrowDown, Download, Info
 } from "lucide-react";
 
-import { getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment, uploadEquipmentAttachmentBase64 } from "@/action/api";
+import AnalogTimePicker from "@/components/AnalogTimePicker";
+
+import { getConditions, getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId, uploadEquipmentAttachment, uploadEquipmentAttachmentBase64 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 
 // Tipe Data
@@ -37,18 +39,21 @@ interface Asset {
 
 export default function ManajemenInspeksi() {
   const [assets, setAssets] = useState<Asset[]>([]);
+  const [conditions, setConditions] = useState<Array<{ id: number; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
         setIsLoading(true);
-        const [data, objTypes, approvalsRes, user] = await Promise.all([
+        const [data, objTypes, approvalsRes, user, conditionsData] = await Promise.all([
           getEquipments(),
           getObjectTypes(),
           getApprovals(),
-          getCurrentUserAction()
+          getCurrentUserAction(),
+          getConditions()
         ]);
+        setConditions(conditionsData);
         const approvalsData = Array.isArray(approvalsRes) ? approvalsRes : (approvalsRes?.data || []);
         const currentUserNPP = user?.user?.npp || "NPP2304145";
         const mappedData = data.map((item: any) => {
@@ -105,7 +110,7 @@ export default function ManajemenInspeksi() {
                 statusPersetujuan = "IN_REVIEW";
               } else if (app.approval_status === "APPROVED") {
                 statusPersetujuan = "APPROVED";
-                statusAset = "IDLE";
+                statusAset = "READY TO USE";
               } else if (app.approval_status === "REJECTED") {
                 statusPersetujuan = "REJECTED";
                 statusAset = "REJECTED";
@@ -115,7 +120,7 @@ export default function ManajemenInspeksi() {
             } else {
               statusPersetujuan = "PENDING_REVIEW"; 
             }
-          } else if (statusAset === "IDLE") {
+          } else if (statusAset === "IDLE" || statusAset === "READY TO USE" || statusAset === "READY_TO_USE") {
             statusPersetujuan = "APPROVED";
           } else if (statusAset === "REJECTED") {
             statusPersetujuan = "REJECTED";
@@ -152,14 +157,16 @@ export default function ManajemenInspeksi() {
   const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
   const [attachments, setAttachments] = useState<any[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [requiredActionId, setRequiredActionId] = useState("");
 
   // Form Validasi States
   const [hasilPemeriksaan, setHasilPemeriksaan] = useState("");
+  const [conditionId, setConditionId] = useState("");
   const [catatan, setCatatan] = useState("");
   const [rekomendasi, setRekomendasi] = useState("");
   const [tglPemeriksaan, setTglPemeriksaan] = useState(new Date().toISOString().split('T')[0]);
-  const [jamMulai, setJamMulai] = useState("");
-  const [jamSelesai, setJamSelesai] = useState("");
+  const [jamMulai, setJamMulai] = useState("08:00");
+  const [jamSelesai, setJamSelesai] = useState("09:00");
 
   const handleTimeInput = (value: string, setter: React.Dispatch<React.SetStateAction<string>>) => {
     const numbers = value.replace(/\D/g, "");
@@ -202,6 +209,8 @@ export default function ManajemenInspeksi() {
   const openModal = async (asset: Asset, mode: "VALIDASI" | "DETAIL" = "VALIDASI") => {
     setSelectedAsset(asset);
     setModalMode(mode);
+    setRequiredActionId("");
+    setConditionId("");
     setIsModalOpen(true);
     setUploadedFiles([]); // Reset files
     setShowValidationErrors(false);
@@ -227,8 +236,8 @@ export default function ManajemenInspeksi() {
       setCatatan("");
       setRekomendasi("");
       setLokasi("");
-      setJamMulai("");
-      setJamSelesai("");
+      setJamMulai("08:00");
+      setJamSelesai("09:00");
       setTglPemeriksaan(new Date().toISOString().split('T')[0]);
     } else {
       // Jika statusnya Ubah Validasi atau Perlu Revisi, muat data yang sudah pernah diisi
@@ -256,7 +265,7 @@ export default function ManajemenInspeksi() {
     try {
       const isUtilizable = hasilPemeriksaan === "Layak";
       const notes = catatan || rekomendasi;
-      const res = await validateEquipment(selectedAsset.id, isUtilizable, notes);
+      const res = await validateEquipment(selectedAsset.id, isUtilizable, Number(conditionId), notes);
 
       if (res.success) {
         // --- MULTIPLE ATTACHMENTS UPLOAD ---
@@ -347,7 +356,7 @@ export default function ManajemenInspeksi() {
     const endMins = hSelesai * 60 + mSelesai;
     const diff = endMins - startMins;
     
-    if (diff <= 0) return "Invalid";
+    if (diff <= 0) return "-";
     const h = Math.floor(diff / 60);
     const m = diff % 60;
     return `${h > 0 ? h + ' Jam ' : ''}${m > 0 ? m + ' Menit' : ''}`;
@@ -466,14 +475,16 @@ export default function ManajemenInspeksi() {
   }, [search, plantFilter, statusFilter, dateFilter]);
 
   // UI Helpers
-  const getStatusAsetBadge = (status: AssetState) => {
-    const styles = {
+  const getStatusAsetBadge = (status: AssetState | string) => {
+    const styles: Record<string, string> = {
       REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
       VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
       REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-      IDLE: "bg-[#E0E7FF] text-[#4F46E5]"
+      IDLE: "bg-[#E0E7FF] text-[#4F46E5]",
+      "READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]"
     };
-    return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status]}`}>{status}</span>;
+    const displayStatus = status === "IDLE" ? "READY TO USE" : status;
+    return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status] || styles["READY TO USE"]}`}>{displayStatus}</span>;
   };
 
   const getApprovalBadge = (status: ApprovalState) => {
@@ -528,9 +539,8 @@ export default function ManajemenInspeksi() {
   };
 
   const validateForm = () => {
-    if (!hasilPemeriksaan || !lokasi || !tglPemeriksaan || !jamMulai || !jamSelesai) return false;
+    if (!hasilPemeriksaan || !conditionId || !lokasi || !tglPemeriksaan || !jamMulai || !jamSelesai) return false;
     if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
-    if (uploadedFiles.length < 2) return false;
     return true;
   };
 
@@ -956,34 +966,27 @@ export default function ManajemenInspeksi() {
                     <input type="text" value={`INSP-${selectedAsset.kodeAlat}`} disabled className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-1.5 text-[13px] font-medium text-gray-500" />
                   </div>
                   <div className="col-span-3">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Tanggal</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Tanggal *</label>
                     <input type="date" value={tglPemeriksaan} onChange={e => setTglPemeriksaan(e.target.value)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !tglPemeriksaan ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
                     {showValidationErrors && !tglPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Tanggal wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Mulai</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
-                    <div className="relative">
-                      <input type="text" placeholder="00:00" maxLength={5} value={jamMulai} onChange={e => handleTimeInput(e.target.value, setJamMulai)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && jamMulai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
-                    </div>
-                    {showValidationErrors && jamMulai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
+                    <AnalogTimePicker 
+                      value={jamMulai} 
+                      onChange={setJamMulai} 
+                      label="Jam Mulai *" 
+                      disabled={isReadOnly} 
+                    />
+                    {showValidationErrors && !jamMulai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam Mulai wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Selesai</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
-                    <div className="relative">
-                      <input type="text" placeholder="00:00" maxLength={5} value={jamSelesai} onChange={e => handleTimeInput(e.target.value, setJamSelesai)} disabled={isReadOnly} className={`w-full bg-white border rounded-md px-3 py-1.5 pr-10 text-[13px] text-center font-mono outline-none disabled:bg-gray-50 ${showValidationErrors && jamSelesai.length < 5 ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`} />
-                      <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[10px] font-bold text-gray-400 pointer-events-none">WIB</span>
-                    </div>
-                    {showValidationErrors && jamSelesai.length < 5 && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Format HH:MM wajib diisi.</p>}
+                    <AnalogTimePicker 
+                      value={jamSelesai} 
+                      onChange={setJamSelesai} 
+                      label="Jam Selesai *" 
+                      disabled={isReadOnly} 
+                    />
+                    {showValidationErrors && !jamSelesai && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Jam Selesai wajib diisi.</p>}
                   </div>
                   <div className="col-span-2">
                     <label className="block text-[11px] font-semibold text-gray-700 mb-1">Durasi</label>
@@ -997,10 +1000,7 @@ export default function ManajemenInspeksi() {
                 {/* Row 2: Lokasi & Hasil (Compact) */}
                 <div className="grid grid-cols-12 gap-3 mb-3">
                   <div className="col-span-5">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Lokasi Pengecekan</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Lokasi Pengecekan *</label>
                     <select 
                       value={lokasi} 
                       onChange={e => setLokasi(e.target.value)} 
@@ -1020,10 +1020,7 @@ export default function ManajemenInspeksi() {
                   </div>
                   
                   <div className="col-span-7">
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Hasil Evaluasi Kelayakan</label>
-                      <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Hasil Evaluasi Kelayakan *</label>
                     <div className="flex gap-2.5">
                       <label className={`flex-1 relative border rounded-md p-1.5 cursor-pointer flex items-center justify-center gap-2 transition-all ${
                         hasilPemeriksaan === "Layak" ? "border-emerald-500 bg-emerald-50/50" : "border-gray-200 bg-white hover:bg-gray-50"
@@ -1031,7 +1028,7 @@ export default function ManajemenInspeksi() {
                         <div className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Layak" ? "border-emerald-500" : (showValidationErrors && !hasilPemeriksaan ? "border-red-400" : "border-gray-300")}`}>
                           {hasilPemeriksaan === "Layak" && <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />}
                         </div>
-                        <span className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-emerald-700" : "text-gray-700"}`}>Layak Utilisasi</span>
+                        <span className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-emerald-700" : "text-gray-700"}`}>Layak Digunakan</span>
                         <input type="radio" name="hasil" value="Layak" checked={hasilPemeriksaan === "Layak"} onChange={e => setHasilPemeriksaan(e.target.value)} disabled={isReadOnly} className="hidden" />
                       </label>
                       
@@ -1047,21 +1044,34 @@ export default function ManajemenInspeksi() {
                     </div>
                     {showValidationErrors && !hasilPemeriksaan && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Hasil Evaluasi wajib dipilih.</p>}
                   </div>
+
+                  <div className="col-span-12">
+                    <label htmlFor="dashboard-condition" className="block text-[11px] font-semibold text-gray-700 mb-1">Kondisi Aset *</label>
+                    <select
+                      id="dashboard-condition"
+                      value={conditionId}
+                      onChange={e => setConditionId(e.target.value)}
+                      disabled={isReadOnly}
+                      required
+                      className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !conditionId ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`}
+                    >
+                      <option value="" disabled>Pilih Kondisi...</option>
+                      {conditions.map(condition => <option key={condition.id} value={condition.id}>{condition.name}</option>)}
+                    </select>
+                    {showValidationErrors && !conditionId && <p className="text-[10px] text-red-500 mt-0.5 font-medium">* Kondisi aset wajib dipilih.</p>}
+                  </div>
                 </div>
 
                 {/* Row 3: Catatan & Rekomendasi (Side by side) */}
                 <div className="grid grid-cols-2 gap-4 mb-3">
                   <div>
-                    <div className="flex justify-between items-end mb-1">
-                      <label className="block text-[11px] font-semibold text-gray-700">Catatan Pemeriksaan <span className={hasilPemeriksaan === "Tidak Layak" ? "text-red-500" : ""}>{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}</span></label>
-                      {hasilPemeriksaan === "Tidak Layak" && <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>}
-                    </div>
+                    <label className="block text-[11px] font-semibold text-gray-700 mb-1">Catatan Pemeriksaan <span className={hasilPemeriksaan === "Tidak Layak" ? "text-red-500" : ""}>{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}</span></label>
                     <textarea 
                       rows={2} 
                       value={catatan}
                       onChange={e => setCatatan(e.target.value)}
                       disabled={isReadOnly}
-                      placeholder={hasilPemeriksaan === "Tidak Layak" ? "Tuliskan alasan (wajib)..." : "Detail temuan..."}
+                      placeholder={hasilPemeriksaan === "Tidak Layak" ? "Tuliskan alasan (wajib)..." : "Tuliskan hasil pemeriksaan..."}
                       className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 resize-none transition-all ${
                         hasilPemeriksaan === "Tidak Layak" && !catatan.trim() 
                         ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" 
@@ -1107,13 +1117,12 @@ export default function ManajemenInspeksi() {
                     >
                       <UploadCloud className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A] animate-bounce" : "text-gray-400"}`} />
                       <div className="text-[13px] text-center">
-                        <span className="font-bold text-[#0A356A]">Klik untuk memilih</span>
-                        <span className="text-gray-600 font-medium"> atau drag & drop ke sini</span>
+                        <span className="font-bold text-[#0A356A]">📎 Upload Foto Pemeriksaan</span>
                       </div>
                       <span className="text-[11px] text-gray-500 font-medium text-center">Format: JPG, PNG, PDF (Max 5MB)</span>
                       
                       {uploadedFiles.length === 0 && (
-                        <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1.5 py-0.5 rounded mt-1">Wajib Minimal 2 Foto/File</span>
+                        <span className="text-[9px] font-bold text-gray-500 uppercase bg-gray-50 px-1.5 py-0.5 rounded mt-1">Opsional</span>
                       )}
 
                       {/* Preview Selected Files (Inside Dropzone) */}
@@ -1154,9 +1163,6 @@ export default function ManajemenInspeksi() {
                       )}
                     </div>
                     
-                    {showValidationErrors && uploadedFiles.length < 2 && (
-                      <p className="text-[10px] text-red-500 mt-1.5 font-medium">* Wajib mengunggah minimal 2 foto dokumentasi/file referensi.</p>
-                    )}
                     {fileError && (
                       <p className="text-[10px] text-red-500 mt-1.5 font-medium">* {fileError}</p>
                     )}
@@ -1197,7 +1203,7 @@ export default function ManajemenInspeksi() {
                   {isSubmitting ? (
                     <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Proses...</>
                   ) : (
-                    <><Save className="w-3.5 h-3.5" /> Simpan Hasil</>
+                    <><Save className="w-3.5 h-3.5" /> Simpan Hasil Inspeksi</>
                   )}
                 </button>
               )}

@@ -12,12 +12,15 @@ import {
   FileQuestion,
   CheckSquare,
   FileText,
+  Inbox,
   Database,
   Users,
   Settings,
   Plus,
   Trash2,
-  X
+  Edit,
+  X,
+  ShieldCheck
 } from "lucide-react";
 import { useSidebar } from "./SidebarProvider";
 
@@ -32,7 +35,6 @@ export function Sidebar({ role }: { role?: string }) {
 
   type NavItem = { name: string; href: string; icon: typeof LayoutDashboard };
   let mainNavItems: NavItem[] = [];
-  let registerCta: { name: string; href: string } | null = null;
 
   switch (userRole) {
     case "ADMIN":
@@ -50,9 +52,8 @@ export function Sidebar({ role }: { role?: string }) {
         { name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
         { name: "Peralatan", href: "/rendal/idle", icon: Wrench },
         { name: "Perbaikan Alat", href: "/rendal/perbaikan-alat", icon: Wrench },
-        { name: "Laporan", href: "/rendal/laporan", icon: FileText },
+        { name: "Laporan Audit", href: "/rendal/laporan", icon: ShieldCheck },
       ];
-      registerCta = { name: "Register Equipment", href: "/rendal/register-equipment" };
       break;
 
     case "INSPEKSI_TEKNIK":
@@ -60,11 +61,11 @@ export function Sidebar({ role }: { role?: string }) {
       mainNavItems = [
         { name: "Dashboard", href: "/inspeksi/dashboard", icon: LayoutDashboard },
         { name: "Validasi Kelayakan", href: "/inspeksi/validasi", icon: Wrench },
-        // { name: "Inspeksi Berkala", href: "/inspeksi/inspeksi-berkala/", icon: Wrench },
-        { name: "Inspeksi Berkala", href: "/inspeksi/inspeksi-berkala", icon: ClipboardCheck },
-        // { name: "Laporan", href: "/inspeksi/laporan", icon: FileText },
+        { name: "Revisi Validasi", href: "/inspeksi/revisi-validasi", icon: Edit },
+        { name: "Inspeksi", href: "/inspeksi/inspeksi-berkala", icon: ClipboardCheck },
       ];
       break;
+
 
     case "MANAJER_RENDAL":
       // Manajer Rendal
@@ -81,7 +82,7 @@ export function Sidebar({ role }: { role?: string }) {
       // Placeholder: Unit Kerja Operasi (role default / user sebenarnya)
       mainNavItems = [
         { name: "Dashboard", href: "/unit-kerja/dashboard", icon: LayoutDashboard },
-        { name: "Idle Equipment", href: "/unit-kerja/idle", icon: PowerOff },
+        // { name: "Idle Equipment", href: "/unit-kerja/idle", icon: PowerOff },
         { name: "Permintaan", href: "/unit-kerja/permintaan", icon: FileQuestion },
         { name: "Laporan", href: "/unit-kerja/laporan", icon: FileText },
       ];
@@ -129,7 +130,9 @@ export function Sidebar({ role }: { role?: string }) {
         <div>
           <ul className="space-y-1">
             {mainNavItems.map((item) => {
-              const isActive = pathname === item.href;
+              const isActive = pathname === item.href || 
+                pathname.startsWith(item.href + "/") ||
+                (item.href === "/rendal/idle" && pathname === "/rendal/register-equipment");
               return (
                 <li key={item.name}>
                   <Link
@@ -149,15 +152,6 @@ export function Sidebar({ role }: { role?: string }) {
           </ul>
         </div>
       </div>
-
-      {registerCta && (
-        <div className="p-4 mt-auto">
-          <Link href={registerCta.href} className="w-full flex items-center justify-center gap-2 bg-[#0556B3] hover:bg-blue-600 text-white py-2.5 rounded-lg text-sm font-medium transition-colors shadow-md">
-            <Plus className="w-4 h-4" />
-            {registerCta.name}
-          </Link>
-        </div>
-      )}
       </aside>
     </>
   );
