@@ -117,7 +117,7 @@ export default function EquipmentManagementPage() {
     };
 
     return (
-      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border inline-block ${styles[name] || "bg-slate-100 text-slate-600 border-slate-200"}`}>
+      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border min-w-[110px] h-6 inline-flex items-center justify-center whitespace-nowrap ${styles[name] || "bg-slate-100 text-slate-600 border-slate-200"}`}>
         {name}
       </span>
     );
@@ -207,65 +207,75 @@ export default function EquipmentManagementPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse table-fixed">
               <thead className="bg-slate-50 border-b border-slate-200">
-                <tr>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[140px]">Kode Aset</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nama Peralatan</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[120px]">Plant</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[140px]">Status Aset</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center w-[120px]">Actions</th>
+                <tr className="h-[44px] align-middle">
+                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[50px] whitespace-nowrap align-middle">No</th>
+                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[140px] whitespace-nowrap align-middle">Kode Aset</th>
+                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-left whitespace-nowrap align-middle">Nama Peralatan</th>
+                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[110px] whitespace-nowrap align-middle">Plant</th>
+                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[150px] whitespace-nowrap align-middle">Status Aset</th>
+                  <th className="px-3 py-2.5 text-xs font-bold text-slate-600 uppercase tracking-wider text-center w-[130px] whitespace-nowrap align-middle">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-100">
-                {paginatedEquipments.map((item, index) => (
-                  <tr key={item.id || item.ID || item.equipment_id || index} className="hover:bg-gray-50/50 transition-colors h-[48px]">
-                    <td className="px-3 py-2 whitespace-nowrap text-sm font-mono font-semibold text-[#0A356A]">
-                      {item.equipment_code}
-                    </td>
-                    <td className="px-3 py-2 text-sm font-medium text-slate-900 truncate" title={item.name}>
-                      {item.name}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-slate-500">
-                      {item.plant || "-"}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      {getStatusBadge(item.status, item.status_id)}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-center w-[120px]">
-                      <div className="flex items-center justify-center gap-1">
-                        <Tooltip content="Detail">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => { setDetailItem(item); setIsDetailOpen(true); }}
-                            className="h-8 w-8 text-slate-500 hover:text-slate-700 hover:bg-slate-100"
-                          >
-                            <Eye className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
-                        <Tooltip content="Edit">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => { setEditItem(item); setIsEditOpen(true); }}
-                            className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
-                          >
-                            <Pencil className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
-                        <Tooltip content="Hapus">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => { setSelectedItem(item); setIsDeleteOpen(true); }}
-                            className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                          </Button>
-                        </Tooltip>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
+                {paginatedEquipments.map((item, index) => {
+                  const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
+                  return (
+                    <tr key={item.id || item.ID || item.equipment_id || index} className="hover:bg-slate-50/80 transition-colors h-[48px] align-middle">
+                      <td className="px-3 py-2.5 whitespace-nowrap text-xs font-medium text-slate-500 text-center align-middle">{rowNum}</td>
+                      <td className="px-3 py-2.5 whitespace-nowrap text-xs font-mono font-bold text-[#0A356A] text-center align-middle">
+                        {item.equipment_code}
+                      </td>
+                      <td className="px-3 py-2.5 text-xs font-medium text-slate-900 truncate align-middle" title={item.name}>
+                        {item.name}
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap text-xs font-medium text-slate-600 text-center align-middle">
+                        {item.plant || "-"}
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap text-center align-middle">
+                        <div className="flex items-center justify-center">
+                          {getStatusBadge(item.status, item.status_id)}
+                        </div>
+                      </td>
+                      <td className="px-3 py-2.5 whitespace-nowrap text-center align-middle w-[130px]">
+                        <div className="flex items-center justify-center gap-2">
+                          <Tooltip content="Detail">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); setDetailItem(item); setIsDetailOpen(true); }}
+                              className="h-8 w-8 p-1.5 rounded-lg text-slate-500 hover:text-slate-700 hover:bg-slate-100 transition-colors"
+                            >
+                              <Eye className="w-4 h-4" />
+                            </Button>
+                          </Tooltip>
+                          <Tooltip content="Edit">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); setEditItem(item); setIsEditOpen(true); }}
+                              className="h-8 w-8 p-1.5 rounded-lg text-blue-600 hover:text-blue-700 hover:bg-blue-50 transition-colors"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          </Tooltip>
+                          <Tooltip content="Hapus">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); setSelectedItem(item); setIsDeleteOpen(true); }}
+                              className="h-8 w-8 p-1.5 rounded-lg text-red-500 hover:text-red-700 hover:bg-red-50 transition-colors"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </Tooltip>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
