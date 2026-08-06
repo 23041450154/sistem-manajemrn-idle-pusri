@@ -1,33 +1,35 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Trash2, CheckCircle2, XCircle, Loader2, Database, Search, Wrench, RefreshCw, Filter, Pencil, Eye } from "lucide-react";
-import { getEquipments, deleteEquipment } from "@/action/api";
-import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
-import { DetailEquipmentDialog } from "@/components/DetailEquipmentDialog";
-import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { Plus, Trash2, CheckCircle2, XCircle, Loader2, Database, Tag, Pencil, Eye, Search } from "lucide-react";
+import { getObjectTypes, createObjectType, deleteObjectType } from "@/action/api";
 import { Tooltip } from "@/components/ui/tooltip";
 import { Button } from "@/components/ui/button";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { EditMasterDialog } from "@/components/EditMasterDialog";
+import { DetailMasterDialog } from "@/components/DetailMasterDialog";
 
-export default function EquipmentManagementPage() {
-  const [equipments, setEquipments] = useState<any[]>([]);
-  const [filteredEquipments, setFilteredEquipments] = useState<any[]>([]);
+export default function KategoriAsetPage() {
+  const [data, setData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState("");
-  const [plantFilter, setPlantFilter] = useState("Semua Plant");
-  
-  // Modals
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const [isAddOpen, setIsAddOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  
+
   const [editItem, setEditItem] = useState<any>(null);
   const [isEditOpen, setIsEditOpen] = useState(false);
 
   const [detailItem, setDetailItem] = useState<any>(null);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
-  
-  const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
+
+  const [itemName, setItemName] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 10;
 
   useEffect(() => {
     fetchData();
@@ -36,98 +38,72 @@ export default function EquipmentManagementPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const data = await getEquipments();
-      setEquipments(data);
-      setFilteredEquipments(data);
+      const result = await getObjectTypes();
+      setData(result || []);
     } catch (error) {
-      console.error(error);
+      console.error("Fetch object types error:", error);
     } finally {
       setIsLoading(false);
     }
   };
 
-  useEffect(() => {
-    let result = equipments;
-    if (search.trim() !== "") {
-      const query = search.toLowerCase();
-      result = result.filter((eq) => 
-        eq.equipment_code?.toLowerCase().includes(query) ||
-        eq.name?.toLowerCase().includes(query) ||
-        eq.plant?.toLowerCase().includes(query)
-      );
+  const filteredData = searchQuery.trim()
+    ? data.filter(item => item.name && item.name.toLowerCase().includes(searchQuery.toLowerCase()))
+    : data;
+
+  const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE);
+  const paginatedData = filteredData.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE);
+
+  const handleAdd = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!itemName.trim()) return;
+
+    setIsSubmitting(true);
+    const res = await createObjectType(itemName);
+    setIsSubmitting(false);
+
+    if (res.success) {
+      setNotification({ type: "success", message: "Berhasil menambahkan kategori aset baru!" });
+      setItemName("");
+      setIsAddOpen(false);
+      fetchData();
+      setTimeout(() => setNotification(null), 3000);
+    } else {
+      setNotification({ type: "error", message: "Gagal menambahkan data: " + (res.message || "Silakan coba lagi.") });
+      setTimeout(() => setNotification(null), 3000);
     }
-    if (plantFilter !== "Semua Plant") {
-      result = result.filter((eq) => eq.plant === plantFilter);
-    }
-    setFilteredEquipments(result);
-  }, [search, plantFilter, equipments]);
-
-  // Pagination State
-  const [currentPage, setCurrentPage] = useState(1);
-  const ITEMS_PER_PAGE = 10;
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [search, plantFilter]);
-
-  const totalPages = Math.ceil(filteredEquipments.length / ITEMS_PER_PAGE);
-  const paginatedEquipments = filteredEquipments.slice(
-    (currentPage - 1) * ITEMS_PER_PAGE,
-    currentPage * ITEMS_PER_PAGE
-  );
+  };
 
   const handleDelete = async () => {
     if (!selectedItem) return;
 
     setIsSubmitting(true);
-    const targetId = selectedItem.id || selectedItem.ID || selectedItem.equipment_id || selectedItem.equipmentCode;
-    
-    if (!targetId) {
-      setNotification({ type: "error", message: "Gagal menghapus: ID aset tidak dikenali." });
-      setIsSubmitting(false);
-      return;
-    }
-
-    const res = await deleteEquipment(targetId);
+    const res = await deleteObjectType(selectedItem.id);
     setIsSubmitting(false);
 
     if (res.success) {
-      setNotification({ type: "success", message: "Berhasil menghapus data aset dari sistem!" });
+      setNotification({ type: "success", message: "Berhasil menghapus kategori aset!" });
       setIsDeleteOpen(false);
       setSelectedItem(null);
       fetchData();
       setTimeout(() => setNotification(null), 3000);
     } else {
-      setNotification({ type: "error", message: "Gagal menghapus aset: " + (res.message || "Silakan coba lagi.") });
+      setNotification({ type: "error", message: "Gagal menghapus data: " + (res.message || "Pastikan tidak ada data yang terkait.") });
       setTimeout(() => setNotification(null), 3000);
     }
   };
 
-  const getStatusBadge = (statusObj: any, statusId: number) => {
-    let name = (statusObj?.name || (statusId === 2 ? "VALIDATED" : statusId === 3 ? "REJECTED" : statusId === 4 ? "READY TO USE" : statusId === 6 ? "MAINTENANCE" : statusId === 5 ? "READY TO REUSE" : "REGISTERED")).toUpperCase();
-    if (name === "IDLE") name = "READY TO USE";
-
-    const styles: Record<string, string> = {
-      REGISTERED: "bg-slate-100 text-slate-600 border-slate-200",
-      VALIDATED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-      REJECTED: "bg-red-50 text-red-700 border-red-200",
-      "READY TO USE": "bg-[#0A356A]/10 text-[#0A356A] border-[#0A356A]/20",
-      MAINTENANCE: "bg-amber-50 text-amber-800 border-amber-200",
-      "READY TO REUSE": "bg-emerald-50 text-emerald-700 border-emerald-200",
-    };
-
-    return (
-      <span className={`px-2.5 py-0.5 rounded-full text-[11px] font-bold border inline-block ${styles[name] || "bg-slate-100 text-slate-600 border-slate-200"}`}>
-        {name}
-      </span>
-    );
+  const handleEditSaved = (updatedItem: any) => {
+    setData(prev => prev.map(item => item.id === updatedItem.id ? updatedItem : item));
+    setNotification({ type: "success", message: "Berhasil memperbarui kategori aset!" });
+    setTimeout(() => setNotification(null), 3000);
   };
 
   return (
     <div className="max-w-7xl mx-auto pt-6 pb-12 px-4 sm:px-6">
       {/* Toast Notification */}
       {notification && (
-        <div className="fixed top-6 right-6 z-[100] bg-slate-900 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 border border-slate-700">
+        <div className="fixed top-6 right-6 z-[100] bg-gray-900 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 border border-gray-700">
           {notification.type === 'success' ? <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" /> : <XCircle className="w-5 h-5 text-red-400 shrink-0" />}
           <span className="text-[13px] font-medium leading-snug">{notification.message}</span>
         </div>
@@ -137,98 +113,83 @@ export default function EquipmentManagementPage() {
       <div className="bg-[#0A356A] rounded-2xl px-6 py-5 mb-6 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-xl bg-white/10 text-white flex items-center justify-center border border-white/20">
-            <Wrench className="w-5 h-5" />
+            <Tag className="w-5 h-5" />
           </div>
           <div>
             <h1 className="text-xl font-bold text-white tracking-tight">
-              Manajemen Data Peralatan
+              Master Data — Kategori Aset
             </h1>
-            <p className="text-xs text-blue-200/90 mt-0.5 font-medium">
-              Inventaris peralatan terdaftar di seluruh plant PT Pupuk Sriwidjaja.
+            <p className="text-xs text-blue-200/90 mt-0.5 font-medium max-w-xl">
+              Klasifikasi jenis dan tipe peralatan pabrik untuk inventaris &amp; laporan.
             </p>
           </div>
         </div>
 
         <button
-          onClick={fetchData}
-          className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold text-white bg-white/10 border border-white/20 rounded-xl hover:bg-white/20 transition-colors shrink-0"
+          onClick={() => {
+            setItemName("");
+            setIsAddOpen(true);
+          }}
+          className="bg-white hover:bg-blue-50 active:scale-[0.98] text-[#0A356A] px-4 py-2.5 rounded-xl text-xs font-bold flex items-center gap-2 transition-all shadow-sm shrink-0"
         >
-          <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-          Refresh Data
+          <Plus className="w-4 h-4" />
+          <span>Tambah Kategori Aset</span>
         </button>
       </div>
 
-      {/* Filters Bar */}
+      {/* Filter & Search Bar */}
       <div className="bg-white border border-slate-200 rounded-2xl p-4 mb-6 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="relative w-full sm:w-80">
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Cari Kode Alat, Nama, atau Plant..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            placeholder="Cari kategori aset..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1);
+            }}
             className="w-full pl-9 pr-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] focus:bg-white outline-none transition-all font-medium"
           />
         </div>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Filter className="w-4 h-4 text-slate-400 shrink-0" />
-          <select
-            value={plantFilter}
-            onChange={(e) => setPlantFilter(e.target.value)}
-            className="flex-1 px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none font-semibold text-slate-700 cursor-pointer"
-          >
-            <option value="Semua Plant">Semua Plant / Pabrik</option>
-            <option value="PUSRI-IB">PUSRI-IB</option>
-            <option value="PUSRI-IIB">PUSRI-IIB</option>
-            <option value="PUSRI-III">PUSRI-III</option>
-            <option value="PUSRI-IV">PUSRI-IV</option>
-            <option value="STG-1">STG-1 (Utilitas)</option>
-          </select>
-        </div>
       </div>
 
-      {/* Tabel Aset */}
+      {/* Main Data Table */}
       <div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[420px]">
         {isLoading ? (
           <div className="flex flex-col items-center justify-center h-64">
             <Loader2 className="w-8 h-8 text-[#0A356A] animate-spin mb-3" />
-            <p className="text-xs font-semibold text-slate-500">Memuat data aset peralatan...</p>
+            <p className="text-xs font-semibold text-slate-500">Memuat data kategori aset...</p>
           </div>
-        ) : filteredEquipments.length === 0 ? (
+        ) : filteredData.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-64 text-center px-4">
             <div className="w-12 h-12 bg-slate-100 text-[#0A356A] rounded-2xl flex items-center justify-center mb-3">
               <Database className="w-6 h-6" />
             </div>
             <h3 className="text-sm font-bold text-slate-900 mb-1">Data Tidak Ditemukan</h3>
-            <p className="text-xs text-slate-500 max-w-md">Tidak ada data aset terdaftar yang cocok dengan pencarian Anda.</p>
+            <p className="text-xs text-slate-500 max-w-md">Tidak ada data kategori aset yang cocok dengan pencarian Anda.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse table-fixed">
               <thead className="bg-slate-50 border-b border-slate-200">
                 <tr>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[140px]">Kode Aset</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nama Peralatan</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[120px]">Plant</th>
-                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[140px]">Status Aset</th>
+                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider w-[80px]">ID</th>
+                  <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider">Nama Entri</th>
                   <th className="px-3 py-2 text-xs font-semibold text-slate-500 uppercase tracking-wider text-center w-[120px]">Actions</th>
                 </tr>
               </thead>
               <tbody className="bg-white divide-y divide-slate-100">
-                {paginatedEquipments.map((item, index) => (
-                  <tr key={item.id || item.ID || item.equipment_id || index} className="hover:bg-gray-50/50 transition-colors h-[48px]">
-                    <td className="px-3 py-2 whitespace-nowrap text-sm font-mono font-semibold text-[#0A356A]">
-                      {item.equipment_code}
-                    </td>
-                    <td className="px-3 py-2 text-sm font-medium text-slate-900 truncate" title={item.name}>
-                      {item.name}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap text-sm font-medium text-slate-500">
-                      {item.plant || "-"}
-                    </td>
-                    <td className="px-3 py-2 whitespace-nowrap">
-                      {getStatusBadge(item.status, item.status_id)}
+                {paginatedData.map((item) => (
+                  <tr key={item.id} className="hover:bg-gray-50/50 transition-colors h-[48px]">
+                    <td className="px-3 py-2 whitespace-nowrap text-sm font-mono font-medium text-slate-500">#{item.id}</td>
+                    <td className="px-3 py-2 whitespace-nowrap text-sm font-semibold text-slate-900 truncate">
+                      <span className="inline-flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-lg bg-slate-100 text-[#0A356A] flex items-center justify-center shrink-0">
+                          <Tag className="w-3.5 h-3.5" />
+                        </span>
+                        <span className="truncate">{item.name}</span>
+                      </span>
                     </td>
                     <td className="px-3 py-2 whitespace-nowrap text-center w-[120px]">
                       <div className="flex items-center justify-center gap-1">
@@ -271,10 +232,10 @@ export default function EquipmentManagementPage() {
           </div>
         )}
 
-        {filteredEquipments.length > 0 && (
+        {filteredData.length > 0 && (
           <div className="px-6 py-3 border-t border-slate-200 bg-white flex justify-between items-center">
             <span className="text-xs font-medium text-slate-500">
-              Menampilkan {filteredEquipments.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredEquipments.length)} dari {filteredEquipments.length} data
+              Menampilkan {filteredData.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)} dari {filteredData.length} data
             </span>
             {totalPages > 1 && (
               <div className="flex items-center gap-1.5">
@@ -313,8 +274,57 @@ export default function EquipmentManagementPage() {
         )}
       </div>
 
-      {/* Dialog Detail */}
-      <DetailEquipmentDialog
+      {/* Modal Tambah */}
+      {isAddOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity" onClick={() => !isSubmitting && setIsAddOpen(false)} />
+          
+          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 flex flex-col animate-in zoom-in-95 duration-200 border border-slate-100">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+              <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                <Plus className="w-5 h-5 text-[#0A356A]" />
+                Tambah Kategori Aset Baru
+              </h3>
+            </div>
+
+            <form onSubmit={handleAdd}>
+              <div className="mb-4">
+                <label className="block text-xs font-bold text-slate-700 mb-1.5">Nama Entri <span className="text-red-500">*</span></label>
+                <input
+                  required
+                  type="text"
+                  value={itemName}
+                  onChange={(e) => setItemName(e.target.value)}
+                  placeholder="Contoh: Valve, Rotating Equipment"
+                  className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] focus:bg-white outline-none transition-all font-medium"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-3 mt-5 pt-3 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setIsAddOpen(false)}
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors disabled:opacity-70"
+                >
+                  Batal
+                </button>
+                <button
+                  type="submit"
+                  disabled={isSubmitting || !itemName.trim()}
+                  className="px-5 py-2.5 bg-[#0A356A] text-white rounded-xl text-xs font-bold hover:bg-[#0556B3] transition-colors flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
+                >
+                  {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                  {isSubmitting ? "Menyimpan..." : "Simpan Data"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Dialog Detail Master */}
+      <DetailMasterDialog
         open={isDetailOpen}
         onClose={() => { setIsDetailOpen(false); setDetailItem(null); }}
         onEdit={() => {
@@ -324,22 +334,20 @@ export default function EquipmentManagementPage() {
           setEditItem(itemToEdit);
           setIsEditOpen(true);
         }}
-        equipment={detailItem}
+        item={detailItem}
+        activeTab="objectTypes"
       />
 
-      {/* Dialog Edit */}
-      <EditEquipmentDialog
+      {/* Dialog Edit Master */}
+      <EditMasterDialog
         open={isEditOpen}
         onClose={() => { setIsEditOpen(false); setEditItem(null); }}
-        onSaved={() => {
-          setNotification({ type: "success", message: "Berhasil memperbarui data peralatan!" });
-          fetchData();
-          setTimeout(() => setNotification(null), 3000);
-        }}
-        equipment={editItem}
+        onSaved={handleEditSaved}
+        item={editItem}
+        activeTab="objectTypes"
       />
 
-      {/* Dialog Hapus */}
+      {/* Dialog Hapus Master */}
       <DeleteConfirmDialog
         open={isDeleteOpen}
         onClose={() => { setIsDeleteOpen(false); setSelectedItem(null); }}
