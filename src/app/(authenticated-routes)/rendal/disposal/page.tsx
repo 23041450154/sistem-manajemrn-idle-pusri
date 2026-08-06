@@ -6,11 +6,18 @@ import {
   getDisposals, 
   getInspections, 
   getDisposalMethods, 
-  createDisposalRequest 
+  createDisposalRequest,
+  deleteEquipment
 } from "@/action/api";
 import { 
-  Trash2, Search, RefreshCw, FileText, CheckCircle2, XCircle, Eye, Upload, X, ChevronRight 
+  Trash2, Search, RefreshCw, FileText, CheckCircle2, XCircle, Eye, Upload, X, ChevronRight, Pencil
 } from "lucide-react";
+import { useUser } from "@/components/UserProvider";
+import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
+import { DetailEquipmentDialog } from "@/components/DetailEquipmentDialog";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { Tooltip } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 interface Equipment {
   id: string;
@@ -70,6 +77,35 @@ export default function VerifikasiDisposalPage() {
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const { isAdmin } = useUser();
+  const [editItem, setEditItem] = useState<any>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [detailItem, setDetailItem] = useState<any>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<any>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteEquipment = async () => {
+    if (!deleteItem) return;
+    setIsDeleting(true);
+    try {
+      const res = await deleteEquipment(deleteItem.id);
+      if (res.success) {
+        setNotification({ type: "success", message: "Berhasil menghapus data aset!" });
+        setIsDeleteOpen(false);
+        setDeleteItem(null);
+        loadData();
+      } else {
+        setNotification({ type: "error", message: res.message || "Gagal menghapus data." });
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const loadData = async () => {
     setIsLoading(true);
@@ -269,32 +305,32 @@ export default function VerifikasiDisposalPage() {
       {/* Main Table Container */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="bg-gray-50/75 border-b border-gray-200">
-                <th className="px-5 py-3.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider">No</th>
-                <th className="px-5 py-3.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider">Kode Alat</th>
-                <th className="px-5 py-3.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider">Nama Alat</th>
-                <th className="px-5 py-3.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider">Plant</th>
-                <th className="px-5 py-3.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider">Lokasi Penyimpanan</th>
-                <th className="px-5 py-3.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider">Kondisi Fisik</th>
-                <th className="px-5 py-3.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider">Status</th>
-                <th className="px-5 py-3.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center">Aksi</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider w-[50px]">No</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider w-[140px]">Kode Alat</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider">Nama Alat</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider w-[110px]">Plant</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[150px]">Lokasi Penyimpanan</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider w-[130px]">Vendor</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider w-[150px]">Status</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[120px]">Actions</th>
               </tr>
             </thead>
-            <tbody>
+            <tbody className="divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
                   <td colSpan={8} className="text-center py-10">
                     <div className="flex flex-col items-center justify-center gap-2 text-gray-500">
                       <RefreshCw className="w-6 h-6 animate-spin text-[#0A356A]" />
-                      <span className="text-[14px]">Memuat data...</span>
+                      <span className="text-sm font-medium">Memuat data...</span>
                     </div>
                   </td>
                 </tr>
               ) : filteredAssets.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="text-center py-12 text-gray-500 text-[14px]">
+                  <td colSpan={8} className="text-center py-12 text-gray-500 text-sm">
                     Tidak ada usulan disposal yang menunggu verifikasi.
                   </td>
                 </tr>
@@ -302,29 +338,56 @@ export default function VerifikasiDisposalPage() {
                 filteredAssets.map((asset, index) => (
                   <tr 
                     key={asset.id} 
-                    className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors"
-                    style={{ height: "46px" }}
+                    className="border-b border-gray-100 hover:bg-gray-50/50 transition-colors h-[48px]"
                   >
-                    <td className="px-5 py-2 text-[14px] text-gray-800 font-medium">{index + 1}</td>
-                    <td className="px-5 py-2 text-[14px] font-semibold text-[#0A356A]">{asset.kodeAlat}</td>
-                    <td className="px-5 py-2 text-[14px] text-gray-900 font-medium">{asset.namaAlat}</td>
-                    <td className="px-5 py-2 text-[14px] text-gray-800">{asset.plant}</td>
-                    <td className="px-5 py-2 text-[14px] text-gray-700">{asset.storageLocation}</td>
-                    <td className="px-5 py-2 text-[14px] text-gray-800">
-                      <span className="font-semibold">{asset.vendor}</span>
-                    </td>
-                    <td className="px-5 py-2 text-[14px]">
-                      <span className="px-2.5 py-1 text-[11px] font-bold rounded-full bg-red-50 text-red-700 border border-red-200 uppercase tracking-wide">
+                    <td className="px-3 py-2 text-sm text-gray-800 font-medium text-center">{index + 1}</td>
+                    <td className="px-3 py-2 text-sm font-semibold text-[#0A356A] whitespace-nowrap">{asset.kodeAlat}</td>
+                    <td className="px-3 py-2 text-sm text-gray-900 font-medium truncate" title={asset.namaAlat}>{asset.namaAlat}</td>
+                    <td className="px-3 py-2 text-sm text-gray-800 whitespace-nowrap">{asset.plant}</td>
+                    <td className="px-3 py-2 text-sm text-gray-700 text-center truncate">{asset.storageLocation}</td>
+                    <td className="px-3 py-2 text-sm text-gray-800 truncate">{asset.vendor}</td>
+                    <td className="px-3 py-2 text-sm whitespace-nowrap">
+                      <span className="px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-red-50 text-red-700 border border-red-200 uppercase tracking-wide">
                         Disposal Recommended
                       </span>
                     </td>
-                    <td className="px-5 py-2 text-center">
-                      <button
-                        onClick={() => handleOpenVerification(asset)}
-                        className="px-4 py-1.5 bg-[#0A356A] hover:bg-[#062854] text-white text-[13px] font-bold rounded-lg transition-colors shadow-sm"
-                      >
-                        Verifikasi
-                      </button>
+                    <td className="px-3 py-2 text-center w-[120px]">
+                      <div className="flex items-center justify-center gap-1">
+                        {isAdmin && (
+                          <>
+                            <Tooltip content="Edit">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => { setEditItem(asset); setIsEditOpen(true); }}
+                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
+                            <Tooltip content="Hapus">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => { setDeleteItem(asset); setIsDeleteOpen(true); }}
+                                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
+                          </>
+                        )}
+                        <Tooltip content="Verifikasi">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpenVerification(asset)}
+                            className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </Button>
+                        </Tooltip>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -509,6 +572,42 @@ export default function VerifikasiDisposalPage() {
           </div>
         </div>
       )}
+
+      {/* Dialog Detail Aset */}
+      <DetailEquipmentDialog
+        open={isDetailOpen}
+        onClose={() => { setIsDetailOpen(false); setDetailItem(null); }}
+        onEdit={() => {
+          const itemToEdit = detailItem;
+          setIsDetailOpen(false);
+          setDetailItem(null);
+          setEditItem(itemToEdit);
+          setIsEditOpen(true);
+        }}
+        equipment={detailItem}
+      />
+
+      {/* Dialog Edit Aset */}
+      <EditEquipmentDialog
+        open={isEditOpen}
+        onClose={() => { setIsEditOpen(false); setEditItem(null); }}
+        onSaved={() => {
+          setNotification({ type: "success", message: "Berhasil memperbarui data peralatan!" });
+          loadData();
+          setTimeout(() => setNotification(null), 3000);
+        }}
+        equipment={editItem}
+      />
+
+      {/* Dialog Hapus Aset */}
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onClose={() => { setIsDeleteOpen(false); setDeleteItem(null); }}
+        onConfirm={handleDeleteEquipment}
+        title="Hapus Data"
+        description="Apakah Anda yakin ingin menghapus data ini?"
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

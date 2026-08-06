@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { getEquipments, completeEquipmentMaintenance } from "@/action/api";
+import { getEquipments, completeEquipmentMaintenance, deleteEquipment } from "@/action/api";
 import {
   Wrench,
   Search,
@@ -12,8 +12,18 @@ import {
   X,
   Loader2,
   ChevronRight,
-  Database
+  Database,
+  Eye,
+  Pencil,
+  Trash2,
+  FileText
 } from "lucide-react";
+import { useUser } from "@/components/UserProvider";
+import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
+import { DetailEquipmentDialog } from "@/components/DetailEquipmentDialog";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { Tooltip } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 interface MaintenanceEquipment {
   id: string;
@@ -42,6 +52,31 @@ export default function PerbaikanAlatPage() {
   const [selectedAsset, setSelectedAsset] = useState<MaintenanceEquipment | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
 
+  const [editItem, setEditItem] = useState<any>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [detailItem, setDetailItem] = useState<any>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<any>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteEquipment = async () => {
+    if (!deleteItem) return;
+    setIsDeleting(true);
+    try {
+      const result = await deleteEquipment(deleteItem.id);
+      if (result.success) {
+        loadEquipments();
+        setIsDeleteOpen(false);
+        setDeleteItem(null);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Form Fields State (Komponen Form FE-007)
   const [actualCost, setActualCost] = useState("0"); // Raw number string
   const [displayCost, setDisplayCost] = useState("Rp 0"); // Masked string e.g. "Rp 25.000.000"
@@ -49,6 +84,8 @@ export default function PerbaikanAlatPage() {
   const [preservationStatus, setPreservationStatus] = useState(""); // "Preserved" or "Not Preserved"
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [modalError, setModalError] = useState<string | null>(null);
+
+  const { isAdmin } = useUser();
 
   const loadEquipments = async () => {
     setIsLoading(true);
@@ -358,15 +395,15 @@ export default function PerbaikanAlatPage() {
       {/* Tabel Klasik App (Persis seperti rendal/idle) */}
       <div className="bg-white border-x border-b border-gray-200 rounded-b shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide text-center">NO</th>
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide text-center">KODE ALAT</th>
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide text-left">NAMA PERALATAN</th>
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide text-left">LOKASI PENYIMPANAN</th>
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide text-center whitespace-nowrap">TANGGAL MASUK</th>
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide text-center">AKSI</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide text-center w-[50px]">NO</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide text-center w-[140px]">KODE ALAT</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide text-left">NAMA PERALATAN</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide text-center w-[180px]">LOKASI PENYIMPANAN</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide text-center whitespace-nowrap w-[120px]">TANGGAL MASUK</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide text-center w-[120px]">ACTIONS</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
@@ -389,28 +426,28 @@ export default function PerbaikanAlatPage() {
                 </tr>
               ) : (
                 paginatedEquipments.map((asset, index) => (
-                  <tr key={asset.id} className="hover:bg-[#f8fafc] transition-colors">
+                  <tr key={asset.id} className="hover:bg-gray-50/50 transition-colors h-[48px]">
                     {/* No */}
-                    <td className="px-5 py-3 text-sm font-semibold text-gray-400 text-center">
+                    <td className="px-3 py-2 text-sm font-semibold text-gray-400 text-center">
                       {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                     </td>
 
                     {/* Kode Alat */}
-                    <td className="px-5 py-3 text-sm font-semibold text-[#0A356A] whitespace-nowrap text-center">
+                    <td className="px-3 py-2 text-sm font-semibold text-[#0A356A] whitespace-nowrap text-center">
                       {asset.kodeAlat}
                     </td>
 
                     {/* Nama Alat */}
-                    <td className="px-5 py-3 text-sm font-medium text-gray-800" title={asset.namaAlat}>
+                    <td className="px-3 py-2 text-sm font-medium text-gray-800 truncate" title={asset.namaAlat}>
                       {asset.namaAlat}
                     </td>
 
                     {/* Lokasi Penyimpanan */}
-                    <td className="px-5 py-3 text-sm text-gray-600" title={asset.lokasiPenyimpanan}>
-                      <div className="font-semibold text-gray-800 leading-tight">
+                    <td className="px-3 py-2 text-sm text-gray-600 text-center truncate" title={asset.lokasiPenyimpanan}>
+                      <div className="font-semibold text-gray-800 leading-tight truncate">
                         {asset.plant || "-"}
                       </div>
-                      <div className="text-xs text-gray-500 mt-0.5 leading-snug">
+                      <div className="text-xs text-gray-500 mt-0.5 leading-snug truncate">
                         {asset.lokasiPenyimpanan && asset.lokasiPenyimpanan.includes(" - ")
                           ? asset.lokasiPenyimpanan.split(" - ").slice(1).join(" - ")
                           : asset.lokasiPenyimpanan || "-"}
@@ -418,27 +455,63 @@ export default function PerbaikanAlatPage() {
                     </td>
 
                     {/* Tanggal Masuk Pemeliharaan */}
-                    <td className="px-5 py-3 text-sm text-gray-600 whitespace-nowrap text-center">
+                    <td className="px-3 py-2 text-sm text-gray-600 whitespace-nowrap text-center">
                       {asset.tanggalMasukPemeliharaan}
                     </td>
 
                     {/* Aksi */}
-                    <td className="px-5 py-3 whitespace-nowrap text-center">
-                      {asset.statusAset === "READY TO REUSE" ? (
-                        <span className="inline-flex items-center justify-center gap-1.5 bg-green-50 text-green-700 border border-green-200 px-2 py-1 rounded text-[10px] font-bold transition-all shadow-sm">
-                          <CheckCircle2 className="w-3 h-3" />
-                          Selesai
-                        </span>
-                      ) : (
-                        <button
-                          onClick={() => handleOpenModal(asset)}
-                          className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] hover:bg-[#0556B3] text-white px-3 py-1.5 rounded text-[10px] font-bold transition-all shadow-sm"
-                          title="Selesaikan Perbaikan"
-                        >
-                          <Wrench className="w-3 h-3" />
-                          <span>Selesaikan</span>
-                        </button>
-                      )}
+                    <td className="px-3 py-2 text-sm text-center w-[120px]">
+                      <div className="flex items-center justify-center gap-1">
+                        <Tooltip content="Detail Peralatan">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); setDetailItem(asset); setIsDetailOpen(true); }}
+                            className="h-8 w-8 text-[#0A356A] hover:text-[#0556B3] hover:bg-blue-50"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </Button>
+                        </Tooltip>
+                        {isAdmin && (
+                          <>
+                            <Tooltip content="Edit">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); setEditItem(asset); setIsEditOpen(true); }}
+                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
+                            <Tooltip content="Hapus">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); setDeleteItem(asset); setIsDeleteOpen(true); }}
+                                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
+                          </>
+                        )}
+                        {asset.statusAset !== "READY TO REUSE" || isAdmin ? (
+                          <Tooltip content="Selesaikan Perbaikan">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenModal(asset)}
+                              className="h-8 w-8 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                            >
+                              <Wrench className="w-4 h-4" />
+                            </Button>
+                          </Tooltip>
+                        ) : null}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -598,6 +671,33 @@ export default function PerbaikanAlatPage() {
           </div>
         </div>
       )}
+
+      <DetailEquipmentDialog
+        open={isDetailOpen}
+        onClose={() => { setIsDetailOpen(false); setDetailItem(null); }}
+        onEdit={() => {
+          const itemToEdit = detailItem;
+          setIsDetailOpen(false);
+          setDetailItem(null);
+          setEditItem(itemToEdit);
+          setIsEditOpen(true);
+        }}
+        equipment={detailItem}
+      />
+      <EditEquipmentDialog
+        open={isEditOpen}
+        onClose={() => { setIsEditOpen(false); setEditItem(null); }}
+        onSaved={loadEquipments}
+        equipment={editItem}
+      />
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onClose={() => { setIsDeleteOpen(false); setDeleteItem(null); }}
+        onConfirm={handleDeleteEquipment}
+        title="Hapus Data"
+        description="Apakah Anda yakin ingin menghapus data ini?"
+        isDeleting={isDeleting}
+      />
 
     </div>
   );

@@ -2,11 +2,17 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { getEquipments, getObjectTypes } from "@/action/api";
+import { getEquipments, getObjectTypes, deleteEquipment } from "@/action/api";
 import { 
   Search, AlertCircle, RefreshCw, Filter, Plus, X, RotateCcw,
-  ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download, Eye, Upload, Wrench, CheckCircle 
+  ChevronRight, ArrowUpDown, ArrowUp, ArrowDown, Download, Eye, Upload, Wrench, CheckCircle, Pencil, Trash2, FileText 
 } from "lucide-react";
+import { useUser } from "@/components/UserProvider";
+import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
+import { DetailEquipmentDialog } from "@/components/DetailEquipmentDialog";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { Tooltip } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 // Tipe Data menyesuaikan dengan struktur standar Asset/Equipment
 type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE" | "DALAM_PERBAIKAN" | "READY_TO_REUSE" | "READY TO USE" | "DISPOSAL" | "TIDAK LAYAK" | "NEED_REVISION";
@@ -38,6 +44,12 @@ export default function RendalIdlePage() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  const [editItem, setEditItem] = useState<any>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<any>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
   // States untuk Filter & Pagination
   const [search, setSearch] = useState("");
   const [searchInput, setSearchInput] = useState(""); // State untuk yang diketik (belum enter)
@@ -51,6 +63,8 @@ export default function RendalIdlePage() {
   const [repairModal, setRepairModal] = useState<Equipment | null>(null);
   const [detailModal, setDetailModal] = useState<Equipment | null>(null);
   const [isSubmittingRepair, setIsSubmittingRepair] = useState(false);
+
+  const { isAdmin } = useUser();
   
   const ITEMS_PER_PAGE = 10;
 
@@ -62,6 +76,23 @@ export default function RendalIdlePage() {
       alert("Berhasil! Hasil perbaikan dan bukti biaya telah disimpan. Status alat berubah menjadi Ready to Reuse.");
       setRepairModal(null);
     }, 1500);
+  };
+
+  const handleDelete = async () => {
+    if (!deleteItem) return;
+    setIsDeleting(true);
+    try {
+      const result = await deleteEquipment(deleteItem.id);
+      if (result.success) {
+        setEquipments(prev => prev.filter(e => e.id !== deleteItem.id));
+        setIsDeleteOpen(false);
+        setDeleteItem(null);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   const fetchEquipments = async () => {
@@ -343,44 +374,44 @@ export default function RendalIdlePage() {
       {/* Area Tabel Klasik */}
       <div className="bg-white border-x border-b border-gray-200 rounded-b shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-fixed">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide text-center">NO</th>
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('kodeAlat')}>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide text-center w-[50px]">NO</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors w-[140px]" onClick={() => handleSort('kodeAlat')}>
                   <div className="flex items-center gap-1">KODE ALAT {getSortIcon('kodeAlat')}</div>
                 </th>
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('namaAlat')}>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('namaAlat')}>
                   <div className="flex items-center gap-1">NAMA ALAT {getSortIcon('namaAlat')}</div>
                 </th>
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('plant')}>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors w-[110px]" onClick={() => handleSort('plant')}>
                   <div className="flex items-center gap-1">PLANT {getSortIcon('plant')}</div>
                 </th>
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('jenisAlat')}>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors w-[140px]" onClick={() => handleSort('jenisAlat')}>
                   <div className="flex items-center gap-1">JENIS ALAT {getSortIcon('jenisAlat')}</div>
                 </th>
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('tanggalRegistrasi')}>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors w-[120px]" onClick={() => handleSort('tanggalRegistrasi')}>
                   <div className="flex items-center gap-1">TGL REGISTRASI {getSortIcon('tanggalRegistrasi')}</div>
                 </th>
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors" onClick={() => handleSort('statusAset')}>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide cursor-pointer hover:bg-gray-100 transition-colors w-[140px]" onClick={() => handleSort('statusAset')}>
                   <div className="flex items-center gap-1">STATUS {getSortIcon('statusAset')}</div>
                 </th>
-                <th className="px-5 py-3 text-xs font-bold text-gray-600 uppercase tracking-wide text-right">
-                  AKSI
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wide text-center w-[120px]">
+                  ACTIONS
                 </th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-16 text-center">
+                  <td colSpan={8} className="px-3 py-16 text-center">
                     <RefreshCw className="w-6 h-6 text-[#0A356A] animate-spin mx-auto mb-3" />
                     <p className="text-sm font-medium text-gray-600">Memuat data dari database...</p>
                   </td>
                 </tr>
               ) : paginatedData.length === 0 ? (
                 <tr>
-                  <td colSpan={8} className="px-5 py-16 text-center">
+                  <td colSpan={8} className="px-3 py-16 text-center">
                     <div className="flex flex-col items-center justify-center">
                       <AlertCircle className="w-8 h-8 text-gray-300 mb-3" />
                       <p className="text-base font-medium text-gray-800">Tidak ada data ditemukan</p>
@@ -390,58 +421,68 @@ export default function RendalIdlePage() {
                 </tr>
               ) : (
                 paginatedData.map((item, index) => (
-                  <tr key={item.id || index} className="hover:bg-[#f8fafc] transition-colors">
-                    <td className="px-5 py-3 text-sm font-semibold text-gray-400 text-center">
+                  <tr key={item.id || index} className="hover:bg-gray-50/50 transition-colors h-[48px]">
+                    <td className="px-3 py-2 text-sm font-semibold text-gray-400 text-center">
                       {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                     </td>
-                    <td className="px-5 py-3 text-sm font-semibold text-[#0A356A] whitespace-nowrap">
+                    <td className="px-3 py-2 text-sm font-semibold text-[#0A356A] whitespace-nowrap">
                       {item.kodeAlat}
                     </td>
-                    <td className="px-5 py-3 text-sm font-medium text-gray-800">
+                    <td className="px-3 py-2 text-sm font-medium text-gray-800 truncate" title={item.namaAlat}>
                       {item.namaAlat}
                     </td>
-                    <td className="px-5 py-3 text-sm text-gray-600 whitespace-nowrap">
+                    <td className="px-3 py-2 text-sm text-gray-600 whitespace-nowrap">
                       {item.plant}
                     </td>
-                    <td className="px-5 py-3 text-sm text-gray-600">
+                    <td className="px-3 py-2 text-sm text-gray-600 truncate">
                       {item.jenisAlat}
                     </td>
-                    <td className="px-5 py-3 text-sm text-gray-600 whitespace-nowrap">
+                    <td className="px-3 py-2 text-sm text-gray-600 whitespace-nowrap">
                       {item.tanggalRegistrasi}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap">
+                    <td className="px-3 py-2 whitespace-nowrap">
                       {getStatusBadge(item.statusAset)}
                     </td>
-                    <td className="px-5 py-3 whitespace-nowrap text-right flex items-center justify-end gap-2">
-                      {item.statusAset === "DALAM_PERBAIKAN" && (
-                        <button 
-                          onClick={() => setRepairModal(item)}
-                          className="inline-flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 hover:bg-emerald-600 hover:text-white border border-emerald-200 px-2 py-1 rounded text-[10px] font-bold transition-all shadow-sm ml-auto"
-                          title="Catat Hasil Perbaikan"
-                        >
-                          <Wrench className="w-3 h-3" />
-                          <span>Perbaikan</span>
-                        </button>
-                      )}
-                      {(item.statusAset === "REJECTED" || item.statusAset === "DISPOSAL" || item.statusAset === "TIDAK LAYAK" || item.statusAset === "NEED_REVISION") ? (
-                        <Link 
-                          href={`/rendal/register-equipment?editId=${item.id}`}
-                          className="inline-flex items-center justify-center gap-1.5 bg-amber-50 text-amber-800 hover:bg-amber-600 hover:text-white border border-amber-200 px-2.5 py-1 rounded text-[10px] font-bold transition-all shadow-sm ml-auto"
-                          title="Revisi (Dinyatakan Tidak Layak)"
-                        >
-                          <RotateCcw className="w-3 h-3" />
-                          <span>Revisi</span>
-                        </Link>
-                      ) : item.statusAset !== "DALAM_PERBAIKAN" && (
-                        <button 
-                          onClick={() => setDetailModal(item)}
-                          className="inline-flex items-center justify-center gap-1.5 bg-gray-50 text-gray-600 hover:bg-[#0A356A] hover:text-white border border-gray-200 px-2 py-1 rounded text-[10px] font-bold transition-all shadow-sm ml-auto" 
-                          title="Lihat Detail"
-                        >
-                          <Eye className="w-3 h-3" />
-                          <span>Detail</span>
-                        </button>
-                      )}
+                    <td className="px-3 py-2 whitespace-nowrap text-center w-[120px]">
+                      <div className="flex items-center justify-center gap-1">
+                        <Tooltip content="Detail Peralatan">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            type="button"
+                            onClick={(e) => { e.preventDefault(); setDetailModal(item); }}
+                            className="h-8 w-8 text-[#0A356A] hover:text-[#0556B3] hover:bg-blue-50"
+                          >
+                            <FileText className="w-4 h-4" />
+                          </Button>
+                        </Tooltip>
+                        {isAdmin && (
+                          <>
+                            <Tooltip content="Edit">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); setEditItem(item); setIsEditOpen(true); }}
+                                className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
+                            <Tooltip content="Hapus">
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                type="button"
+                                onClick={(e) => { e.preventDefault(); setDeleteItem(item); setIsDeleteOpen(true); }}
+                                className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </Tooltip>
+                          </>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -674,6 +715,31 @@ export default function RendalIdlePage() {
         </div>
       )}
       
+      <DetailEquipmentDialog
+        open={Boolean(detailModal)}
+        onClose={() => setDetailModal(null)}
+        onEdit={() => {
+          const itemToEdit = detailModal;
+          setDetailModal(null);
+          setEditItem(itemToEdit);
+          setIsEditOpen(true);
+        }}
+        equipment={detailModal}
+      />
+      <EditEquipmentDialog
+        open={isEditOpen}
+        onClose={() => { setIsEditOpen(false); setEditItem(null); }}
+        onSaved={fetchEquipments}
+        equipment={editItem}
+      />
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onClose={() => { setIsDeleteOpen(false); setDeleteItem(null); }}
+        onConfirm={handleDelete}
+        title="Hapus Data"
+        description="Apakah Anda yakin ingin menghapus data ini?"
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

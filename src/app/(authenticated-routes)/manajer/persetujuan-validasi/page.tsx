@@ -1,9 +1,15 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Eye, X, Shield, FileText, CheckCircle2, RefreshCw, XCircle, Download } from "lucide-react";
-import { getApprovals, reviewApproval, getEquipments, startReviewApproval, getApprovalById, getInspections, getAttachmentsByEquipmentId } from "@/action/api";
+import { Eye, X, Shield, FileText, CheckCircle2, RefreshCw, XCircle, Download, Pencil, Trash2 } from "lucide-react";
+import { getApprovals, reviewApproval, getEquipments, startReviewApproval, getApprovalById, getInspections, getAttachmentsByEquipmentId, deleteEquipment } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
+import { useUser } from "@/components/UserProvider";
+import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
+import { DetailEquipmentDialog } from "@/components/DetailEquipmentDialog";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { Tooltip } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 interface RequestAsset {
   id: string;
@@ -21,6 +27,7 @@ interface RequestAsset {
 // MOCK_REQUESTS removed
 
 export default function ManajerApprovePage() {
+  const { isAdmin } = useUser();
   const [search, setSearch] = useState("");
   const [plant, setPlant] = useState("Semua Plant");
   const [status, setStatus] = useState("Semua Status");
@@ -43,6 +50,33 @@ export default function ManajerApprovePage() {
   const [attachments, setAttachments] = useState<any[]>([]);
   const [allInspections, setAllInspections] = useState<any[]>([]);
 
+  const [editItem, setEditItem] = useState<any>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [detailItem, setDetailItem] = useState<any>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<any>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteEquipment = async () => {
+    if (!deleteItem) return;
+    setIsDeleting(true);
+    try {
+      const targetId = deleteItem.equipmentId || deleteItem.id;
+      const res = await deleteEquipment(targetId);
+      if (res.success) {
+        setIsDeleteOpen(false);
+        setDeleteItem(null);
+        // refresh data by calling fetch
+        window.location.reload();
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
@@ -53,69 +87,70 @@ export default function ManajerApprovePage() {
     currentPage * ITEMS_PER_PAGE
   );
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const [approvalsData, equipmentsData, user, insData] = await Promise.all([
-          getApprovals(),
-          getEquipments(),
-          getCurrentUserAction(),
-          getInspections()
-        ]);
-        const currentUserNPP = user?.user?.npp || "NPP2304145";
-        if (insData && Array.isArray(insData)) {
-          setAllInspections(insData);
-        }
-
-        // Buat kamus (map) equipment berdasarkan ID untuk pencarian cepat
-        const equipmentMap = new Map();
-        if (Array.isArray(equipmentsData)) {
-          equipmentsData.forEach((eq: any) => {
-            equipmentMap.set(Number(eq.id), eq);
-          });
-        }
-
-        const mappedData = approvalsData.map((item: any) => {
-          const equipmentId = item.equipment_id || item.equipment?.id;
-          const eq = equipmentMap.get(Number(equipmentId)) || item.equipment;
-          let statusPersetujuan = item.status_label || item.approval_status;
-
-          if (item.approval_status === "PENDING") statusPersetujuan = "Menunggu Review";
-          else if (item.approval_status === "IN_REVIEW") statusPersetujuan = "Sedang Direview";
-          else if (item.approval_status === "APPROVED") statusPersetujuan = "Disetujui";
-          else if (item.approval_status === "REVISION_REQUIRED") statusPersetujuan = "Perlu Revisi";
-
-          let statusAset = (item.equipment_status || eq?.status?.name || "VALIDATED").toUpperCase();
-          if (item.approval_status === "APPROVED") {
-            statusAset = "READY TO USE";
-          }
-
-          return {
-            id: item.id.toString(),
-            equipmentId: equipmentId?.toString() || "",
-            nomorRequest: item.request_number,
-            kodeAset: item.equipment_code || eq?.equipment_code || "-",
-            namaAset: item.equipment_name || eq?.name || "-",
-            plant: item.plant || eq?.plant || "-",
-            tanggalPengajuan: item.request_date ? new Date(item.request_date).toISOString().split('T')[0] : "-",
-            statusAset: statusAset,
-            statusPersetujuan: statusPersetujuan,
-            inspekturNPP: (() => {
-              const p = eq?.updated_by_npp || eq?.created_by_npp || currentUserNPP;
-              return /^\d/.test(p) ? `NPP${p}` : p;
-            })()
-          };
-        });
-
-        setRequests(mappedData);
-        setFilteredRequests(mappedData);
-      } catch (error) {
-        console.error(error);
-      } finally {
-        setIsLoading(false);
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const [approvalsData, equipmentsData, user, insData] = await Promise.all([
+        getApprovals(),
+        getEquipments(),
+        getCurrentUserAction(),
+        getInspections()
+      ]);
+      const currentUserNPP = user?.user?.npp || "NPP2304145";
+      if (insData && Array.isArray(insData)) {
+        setAllInspections(insData);
       }
-    };
+
+      // Buat kamus (map) equipment berdasarkan ID untuk pencarian cepat
+      const equipmentMap = new Map();
+      if (Array.isArray(equipmentsData)) {
+        equipmentsData.forEach((eq: any) => {
+          equipmentMap.set(Number(eq.id), eq);
+        });
+      }
+
+      const mappedData = approvalsData.map((item: any) => {
+        const equipmentId = item.equipment_id || item.equipment?.id;
+        const eq = equipmentMap.get(Number(equipmentId)) || item.equipment;
+        let statusPersetujuan = item.status_label || item.approval_status;
+
+        if (item.approval_status === "PENDING") statusPersetujuan = "Menunggu Review";
+        else if (item.approval_status === "IN_REVIEW") statusPersetujuan = "Sedang Direview";
+        else if (item.approval_status === "APPROVED") statusPersetujuan = "Disetujui";
+        else if (item.approval_status === "REVISION_REQUIRED") statusPersetujuan = "Perlu Revisi";
+
+        let statusAset = (item.equipment_status || eq?.status?.name || "VALIDATED").toUpperCase();
+        if (item.approval_status === "APPROVED") {
+          statusAset = "READY TO USE";
+        }
+
+        return {
+          id: item.id.toString(),
+          equipmentId: equipmentId?.toString() || "",
+          nomorRequest: item.request_number,
+          kodeAset: item.equipment_code || eq?.equipment_code || "-",
+          namaAset: item.equipment_name || eq?.name || "-",
+          plant: item.plant || eq?.plant || "-",
+          tanggalPengajuan: item.request_date ? new Date(item.request_date).toISOString().split('T')[0] : "-",
+          statusAset: statusAset,
+          statusPersetujuan: statusPersetujuan,
+          inspekturNPP: (() => {
+            const p = eq?.updated_by_npp || eq?.created_by_npp || currentUserNPP;
+            return /^\d/.test(p) ? `NPP${p}` : p;
+          })()
+        };
+      });
+
+      setRequests(mappedData);
+      setFilteredRequests(mappedData);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
 
@@ -196,7 +231,7 @@ export default function ManajerApprovePage() {
             : req
         );
         setRequests(updated);
-        setFilteredRequests(filteredRequests.map(req =>
+        setFilteredRequests(filteredRequests.map((req: RequestAsset) =>
           req.kodeAset === selectedAsset.kodeAset
             ? { ...req, statusAset: "READY TO USE", statusPersetujuan: "Disetujui" }
             : req
@@ -222,13 +257,13 @@ export default function ManajerApprovePage() {
 
       if (res.success) {
         setNotification({ type: "success", message: "Berhasil mengirim permintaan revisi!" });
-        const updated = requests.map(req =>
+        const updated = requests.map((req: RequestAsset) =>
           req.kodeAset === selectedAsset.kodeAset
             ? { ...req, statusPersetujuan: "Perlu Revisi" }
             : req
         );
         setRequests(updated);
-        setFilteredRequests(filteredRequests.map(req =>
+        setFilteredRequests(filteredRequests.map((req: RequestAsset) =>
           req.kodeAset === selectedAsset.kodeAset
             ? { ...req, statusPersetujuan: "Perlu Revisi" }
             : req
@@ -244,7 +279,7 @@ export default function ManajerApprovePage() {
   };
 
   const handleCari = () => {
-    const result = requests.filter(req => {
+    const result = requests.filter((req: RequestAsset) => {
       const matchSearch = search
         ? req.nomorRequest.toLowerCase().includes(search.toLowerCase()) ||
           req.kodeAset.toLowerCase().includes(search.toLowerCase()) ||
@@ -275,26 +310,17 @@ export default function ManajerApprovePage() {
   };
 
   const getStatusAsetBadge = (status: string) => {
-    if (status === "VALIDATED" || status === "READY TO USE" || status === "READY_TO_USE" || status === "READY_TO_REUSE") {
+    if (status === "VALIDATED") {
       return <span className="bg-[#DCFCE7] text-[#16A34A] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
     }
-    return <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
+    return <span className="bg-[#F3E8FF] text-[#9333EA] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
   };
 
   const getApprovalBadge = (status: string) => {
-    if (status === "Menunggu Review") {
-      return <span className="bg-[#FEF9C3] text-[#CA8A04] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
-    }
-    if (status === "Sedang Direview (in_review)" || status === "Sedang Direview") {
-      return <span className="bg-[#E0F2FE] text-[#0284C7] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
-    }
-    if (status === "Perlu Revisi") {
-      return <span className="bg-[#F3E8FF] text-[#9333EA] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
-    }
     if (status === "Disetujui") {
       return <span className="bg-[#DCFCE7] text-[#16A34A] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
     }
-    return <span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
+    return <span className="bg-[#F3E8FF] text-[#9333EA] px-3 py-1 rounded-full text-[11px] font-semibold">{status}</span>;
   };
 
   return (
@@ -392,43 +418,80 @@ export default function ManajerApprovePage() {
       {/* Table Section */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-fixed">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center w-12 whitespace-nowrap">No</th>
-                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Kode</th>
-                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Kode Aset</th>
-                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider min-w-[120px] whitespace-nowrap text-center">Nama Aset</th>
-                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Plant</th>
-                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Tanggal</th>
-                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Status Aset</th>
-                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">Status</th>
-                <th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">Aksi</th>
+                <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[40px]">No</th>
+                <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[110px]">Kode</th>
+                <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[130px]">Kode Aset</th>
+                <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left">Nama Aset</th>
+                <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[100px]">Plant</th>
+                <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[110px]">Tanggal</th>
+                <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[130px]">Status Aset</th>
+                <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[130px]">Status</th>
+                <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[120px]">Actions</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-100">
-              {paginatedRequests.map((req, index) => (
-                <tr key={req.id} className="hover:bg-blue-50/30 transition-colors">
-                  <td className="px-2 py-2 text-[12px] text-gray-500 font-medium text-center">{index + 1 + (currentPage - 1) * ITEMS_PER_PAGE}</td>
-                  <td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug text-center">{req.nomorRequest}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900 text-center">{req.kodeAset}</td>
-                  <td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug text-center">{req.namaAset}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-center">{req.plant}</td>
-                  <td className="px-2 py-2 text-[11px] text-gray-600 font-medium leading-snug text-center whitespace-nowrap">{req.tanggalPengajuan}</td>
-                  <td className="px-2 py-2 whitespace-nowrap text-center">
+              {paginatedRequests.map((req: RequestAsset, index: number) => (
+                <tr key={req.id} className="hover:bg-gray-50/50 transition-colors h-[48px]">
+                  <td className="px-2 py-2 text-sm text-gray-500 font-medium text-center">{index + 1 + (currentPage - 1) * ITEMS_PER_PAGE}</td>
+                  <td className="px-2 py-2 text-sm font-bold text-[#0A356A] text-center truncate">{req.nomorRequest}</td>
+                  <td className="px-2 py-2 text-sm font-bold text-gray-900 text-center truncate">{req.kodeAset}</td>
+                  <td className="px-2 py-2 text-sm text-gray-600 font-medium truncate" title={req.namaAset}>{req.namaAset}</td>
+                  <td className="px-2 py-2 text-sm text-gray-600 font-medium text-center truncate">{req.plant}</td>
+                  <td className="px-2 py-2 text-sm text-gray-600 font-medium text-center whitespace-nowrap">{req.tanggalPengajuan}</td>
+                  <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
                     {getStatusAsetBadge(req.statusAset)}
                   </td>
-                  <td className="px-2 py-2 text-center">
+                  <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
                     {getApprovalBadge(req.statusPersetujuan)}
                   </td>
-                  <td className="px-2 py-2 text-center w-[80px]">
-                    <button
-                      onClick={() => openModal(req)}
-                      className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors w-full"
-                    >
-                      <Eye className="w-3.5 h-3.5" />
-                      Detail
-                    </button>
+                  <td className="px-2 py-2 text-center w-[120px]">
+                    <div className="flex items-center justify-center gap-1">
+                      <button
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); openModal(req); }}
+                        className="px-2.5 py-1 rounded-lg text-xs font-bold text-[#0A356A] bg-blue-50 hover:bg-[#0A356A] hover:text-white transition-colors"
+                      >
+                        Tinjau
+                      </button>
+                      {isAdmin && (
+                        <>
+                          <Tooltip content="Edit">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setEditItem({
+                                  id: req.equipmentId || req.id,
+                                  equipment_code: req.kodeAset,
+                                  name: req.namaAset,
+                                  plant: req.plant
+                                });
+                                setIsEditOpen(true);
+                              }}
+                              className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+                          </Tooltip>
+                          <Tooltip content="Hapus">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setDeleteItem(req);
+                                setIsDeleteOpen(true);
+                              }}
+                              className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </Tooltip>
+                        </>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -444,7 +507,7 @@ export default function ManajerApprovePage() {
             {totalPages > 1 && (
               <div className="flex items-center gap-1.5">
                 <button
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  onClick={() => setCurrentPage((p: number) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
                   className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
                 >
@@ -466,7 +529,7 @@ export default function ManajerApprovePage() {
                   ))}
                 </div>
                 <button
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  onClick={() => setCurrentPage((p: number) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
                   className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
                 >
@@ -501,10 +564,9 @@ export default function ManajerApprovePage() {
 
               {/* Alert Banner Dinamis */}
               <div className={`border rounded-lg p-3.5 flex items-start gap-3 mb-6 ${
-                selectedAsset.statusPersetujuan === 'Menunggu Review' ? 'bg-[#FEF9C3] border-yellow-200 text-yellow-800' :
-                selectedAsset.statusPersetujuan === 'Sedang Direview' ? 'bg-[#E0F2FE] border-blue-200 text-blue-800' :
-                selectedAsset.statusPersetujuan === 'Perlu Revisi' ? 'bg-[#F3E8FF] border-purple-200 text-purple-800' :
-                'bg-gray-100 border-gray-200 text-gray-800'
+                selectedAsset.statusPersetujuan === 'Disetujui'
+                  ? 'bg-[#DCFCE7] border-green-200 text-[#16A34A]'
+                  : 'bg-[#F3E8FF] border-purple-200 text-[#9333EA]'
               }`}>
                 <Shield className="w-5 h-5 shrink-0 mt-0.5" />
                 <p className="text-[13px] font-medium leading-relaxed">
@@ -685,7 +747,7 @@ export default function ManajerApprovePage() {
                     <p className="font-bold text-gray-700 mb-1">Riwayat Audit (Log):</p>
                     <ul className="list-disc pl-4 space-y-1">
                       {approvalSteps.length > 0 ? (
-                        approvalSteps.map((step) => (
+                        approvalSteps.map((step: any) => (
                           <li key={step.id}>
                             {step.approval_date
                               ? new Date(step.approval_date).toLocaleString("en-GB", {
@@ -714,7 +776,7 @@ export default function ManajerApprovePage() {
                 Tutup
               </button>
 
-              {selectedAsset.statusPersetujuan === "Menunggu Review" && (
+              {(isAdmin || selectedAsset.statusPersetujuan === "Menunggu Review") && (
                 <button
                   onClick={handleMulaiReview}
                   className="px-6 py-2.5 bg-[#0f4a8a] text-white rounded-md text-[13px] font-semibold hover:bg-[#0b386b] transition-colors shadow-sm"
@@ -723,7 +785,7 @@ export default function ManajerApprovePage() {
                 </button>
               )}
 
-              {selectedAsset.statusPersetujuan === "Sedang Direview" && (
+              {(isAdmin || selectedAsset.statusPersetujuan === "Sedang Direview") && (
                 <>
                   <button
                     onClick={() => {
@@ -849,6 +911,29 @@ export default function ManajerApprovePage() {
           />
         </div>
       )}
+      {/* Dialog Edit Aset */}
+      <EditEquipmentDialog
+        open={isEditOpen}
+        onClose={() => { setIsEditOpen(false); setEditItem(null); }}
+        onSaved={() => {
+          setIsEditOpen(false);
+          setEditItem(null);
+          setNotification({ type: "success", message: "Berhasil memperbarui data peralatan!" });
+          fetchData();
+          setTimeout(() => setNotification(null), 3000);
+        }}
+        equipment={editItem}
+      />
+
+      {/* Dialog Hapus Aset */}
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onClose={() => { setIsDeleteOpen(false); setDeleteItem(null); }}
+        onConfirm={handleDeleteEquipment}
+        title="Hapus Data"
+        description="Apakah Anda yakin ingin menghapus data ini?"
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

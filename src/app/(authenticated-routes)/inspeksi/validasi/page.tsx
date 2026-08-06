@@ -7,16 +7,22 @@ import React, { useState, useMemo, useRef, useEffect } from "react";
 import { 
   Search, Eye, Edit, AlertCircle, X, Check, Save, Clock,
   UploadCloud, Paperclip, RefreshCw, XCircle, CheckCircle2,
-  ArrowUpDown, ArrowUp, ArrowDown, Download, Info
+  ArrowUpDown, ArrowUp, ArrowDown, Download, Info, Pencil, Trash2, FileText, Shield
 } from "lucide-react";
 
 import AnalogTimePicker from "@/components/AnalogTimePicker";
 
 import { 
   getEquipments, validateEquipment, getObjectTypes, getApprovals, getAttachmentsByEquipmentId,
-  getInspections, getRequireActions, getApprovalById, getConditions, resubmitApproval
+  getInspections, getRequireActions, getApprovalById, getConditions, resubmitApproval, deleteEquipment
 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
+import { useUser } from "@/components/UserProvider";
+import { EditEquipmentDialog } from "@/components/EditEquipmentDialog";
+import { DetailEquipmentDialog } from "@/components/DetailEquipmentDialog";
+import { DeleteConfirmDialog } from "@/components/DeleteConfirmDialog";
+import { Tooltip } from "@/components/ui/tooltip";
+import { Button } from "@/components/ui/button";
 
 // Tipe Data
 type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "READY TO USE" | "IDLE";
@@ -44,110 +50,137 @@ interface Asset {
 
 
 export default function ManajemenInspeksi() {
+  const { isAdmin } = useUser();
   const [assets, setAssets] = useState<Asset[]>([]);
   const [conditions, setConditions] = useState<Array<{ id: number; name: string }>>([]);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setIsLoading(true);
-        const [data, objTypes, approvalsRes, user, conditionsData] = await Promise.all([
-          getEquipments(),
-          getObjectTypes(),
-          getApprovals(),
-          getCurrentUserAction(),
-          getConditions()
-        ]);
-        setConditions(conditionsData);
-        const approvalsData = Array.isArray(approvalsRes) ? approvalsRes : (approvalsRes?.data || []);
-        const currentUserNPP = user?.user?.npp || "NPP2304145";
-        const mappedData = data.map((item: any) => {
-          let objectTypeName = "Belum Ditentukan";
-          if (item.object_type?.name) {
-            objectTypeName = item.object_type.name;
-          } else if (item.objectType?.name) {
-            objectTypeName = item.objectType.name;
-          } else {
-            const otId = item.id_object_type || item.object_type_id || item.objectTypeId;
-            if (otId && objTypes) {
-              const found = objTypes.find((o: any) => o.id === otId || o.id === Number(otId));
-              if (found) objectTypeName = found.name;
-            }
+  const [editItem, setEditItem] = useState<any>(null);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [detailItem, setDetailItem] = useState<any>(null);
+  const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [deleteItem, setDeleteItem] = useState<any>(null);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleDeleteEquipment = async () => {
+    if (!deleteItem) return;
+    setIsDeleting(true);
+    try {
+      const res = await deleteEquipment(deleteItem.id);
+      if (res.success) {
+        setAssets(prev => prev.filter(a => a.id !== deleteItem.id));
+        setIsDeleteOpen(false);
+        setDeleteItem(null);
+      }
+    } catch (e) {
+      console.error(e);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const fetchData = async () => {
+    try {
+      setIsLoading(true);
+      const [data, objTypes, approvalsRes, user, conditionsData] = await Promise.all([
+        getEquipments(),
+        getObjectTypes(),
+        getApprovals(),
+        getCurrentUserAction(),
+        getConditions()
+      ]);
+      setConditions(conditionsData);
+      const approvalsData = Array.isArray(approvalsRes) ? approvalsRes : (approvalsRes?.data || []);
+      const currentUserNPP = user?.user?.npp || "NPP2304145";
+      const mappedData = data.map((item: any) => {
+        let objectTypeName = "Belum Ditentukan";
+        if (item.object_type?.name) {
+          objectTypeName = item.object_type.name;
+        } else if (item.objectType?.name) {
+          objectTypeName = item.objectType.name;
+        } else {
+          const otId = item.id_object_type || item.object_type_id || item.objectTypeId;
+          if (otId && objTypes) {
+            const found = objTypes.find((o: any) => o.id === otId || o.id === Number(otId));
+            if (found) objectTypeName = found.name;
           }
+        }
 
-          return {
-            id: item.id?.toString() || "-",
-            kodeAlat: item.equipment_code,
-            namaAlat: item.name,
-            plant: item.plant,
-            jenisAlat: objectTypeName,
-            tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
-            statusAset: (item.status?.name || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "READY TO USE" : "REGISTERED")).toUpperCase(),
-            statusPersetujuan: "NONE", // Default, will override below
-            spesifikasi: item.notes || "Belum ada spesifikasi",
-            lampiran: [],
-            lokasiPenyimpanan: item.storage_location?.name || item.storageLocation?.name || "Belum ditentukan",
-            area: item.func_loc || item.funcloc || "-",
-            vendor: item.vendor || "-",
-            tahunDibuat: item.year?.toString() || "-",
-            nilaiPerolehan: item.original_value ? `Rp ${Number(item.original_value).toLocaleString('id-ID')}` : "Rp 0",
-            pemohon: (() => {
-              const p = item.created_by_npp || currentUserNPP;
-              return /^\d/.test(p) ? `NPP${p}` : p;
-            })()
-          };
-        });
-        
-        // Correcting status mapping based on API
-        const mappedWithApproval = mappedData.map((item: any) => {
-          let statusAset = item.statusAset?.toUpperCase() || "REGISTERED";
-          let statusPersetujuan: ApprovalState = "NONE";
+        return {
+          id: item.id?.toString() || "-",
+          kodeAlat: item.equipment_code,
+          namaAlat: item.name,
+          plant: item.plant,
+          jenisAlat: objectTypeName,
+          tanggalRegistrasi: item.created_at ? new Date(item.created_at).toISOString().split('T')[0] : "-",
+          statusAset: (item.status?.name || (item.status_id === 2 ? "VALIDATED" : item.status_id === 3 ? "REJECTED" : item.status_id === 4 ? "READY TO USE" : "REGISTERED")).toUpperCase(),
+          statusPersetujuan: "NONE", // Default, will override below
+          spesifikasi: item.notes || "Belum ada spesifikasi",
+          lampiran: [],
+          lokasiPenyimpanan: item.storage_location?.name || item.storageLocation?.name || "Belum ditentukan",
+          area: item.func_loc || item.funcloc || "-",
+          vendor: item.vendor || "-",
+          tahunDibuat: item.year?.toString() || "-",
+          nilaiPerolehan: item.original_value ? `Rp ${Number(item.original_value).toLocaleString('id-ID')}` : "Rp 0",
+          pemohon: (() => {
+            const p = item.created_by_npp || currentUserNPP;
+            return /^\d/.test(p) ? `NPP${p}` : p;
+          })()
+        };
+      });
+      
+      // Correcting status mapping based on API
+      const mappedWithApproval = mappedData.map((item: any) => {
+        let statusAset = item.statusAset?.toUpperCase() || "REGISTERED";
+        let statusPersetujuan: ApprovalState = "NONE";
 
-          if (statusAset === "REGISTERED") {
-            statusPersetujuan = "NONE";
-          } else if (statusAset === "VALIDATED") {
-            // Cek status dari API approvals jika ada
-            const app = approvalsData.find((a: any) => a.equipment_id === Number(item.id) || a.equipment?.id === Number(item.id));
-            if (app) {
-              if (app.approval_status === "REVISION_REQUIRED") {
-                statusPersetujuan = "NEED_REVISION";
-              } else if (app.approval_status === "IN_REVIEW") {
-                statusPersetujuan = "IN_REVIEW";
-              } else if (app.approval_status === "APPROVED") {
-                statusPersetujuan = "APPROVED";
-                statusAset = "READY TO USE";
-              } else if (app.approval_status === "REJECTED") {
-                statusPersetujuan = "REJECTED";
-                statusAset = "REJECTED";
-              } else {
-                statusPersetujuan = "PENDING_REVIEW"; 
-              }
+        if (statusAset === "REGISTERED") {
+          statusPersetujuan = "NONE";
+        } else if (statusAset === "VALIDATED") {
+          // Cek status dari API approvals jika ada
+          const app = approvalsData.find((a: any) => a.equipment_id === Number(item.id) || a.equipment?.id === Number(item.id));
+          if (app) {
+            if (app.approval_status === "REVISION_REQUIRED") {
+              statusPersetujuan = "NEED_REVISION";
+            } else if (app.approval_status === "IN_REVIEW") {
+              statusPersetujuan = "IN_REVIEW";
+            } else if (app.approval_status === "APPROVED") {
+              statusPersetujuan = "APPROVED";
+              statusAset = "READY TO USE";
+            } else if (app.approval_status === "REJECTED") {
+              statusPersetujuan = "REJECTED";
+              statusAset = "REJECTED";
             } else {
               statusPersetujuan = "PENDING_REVIEW"; 
             }
-          } else if (statusAset === "IDLE" || statusAset === "READY TO USE" || statusAset === "READY_TO_USE") {
-            statusPersetujuan = "APPROVED";
-          } else if (statusAset === "REJECTED") {
-            statusPersetujuan = "REJECTED";
+          } else {
+            statusPersetujuan = "PENDING_REVIEW"; 
           }
+        } else if (statusAset === "IDLE" || statusAset === "READY TO USE" || statusAset === "READY_TO_USE") {
+          statusPersetujuan = "APPROVED";
+        } else if (statusAset === "REJECTED") {
+          statusPersetujuan = "REJECTED";
+        }
 
-          return { ...item, statusAset, statusPersetujuan };
-        });
+        return { ...item, statusAset, statusPersetujuan };
+      });
 
-        // Sort data by ID descending (newest first)
-        mappedWithApproval.sort((a: any, b: any) => Number(b.id) - Number(a.id));
+      // Sort data by ID descending (newest first)
+      mappedWithApproval.sort((a: any, b: any) => Number(b.id) - Number(a.id));
 
-        const excludedStatuses = ["READY_TO_USE", "READY TO USE", "MAINTENANCE", "DISPOSAL_RECOMMENDED", "DISPOSAL"];
-        const finalAssets = mappedWithApproval.filter((a: any) => !excludedStatuses.includes(a.statusAset) && a.statusPersetujuan !== "NEED_REVISION");
+      const excludedStatuses = ["READY_TO_USE", "READY TO USE", "MAINTENANCE", "DISPOSAL_RECOMMENDED", "DISPOSAL"];
+      const finalAssets = mappedWithApproval.filter((a: any) => !excludedStatuses.includes(a.statusAset) && a.statusPersetujuan !== "NEED_REVISION");
 
-        setAssets(finalAssets);
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setIsLoading(false);
-      }
-    };
+      setAssets(finalAssets);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchData();
   }, []);
   
@@ -643,7 +676,7 @@ export default function ManajemenInspeksi() {
     handleSave();
   };
   
-  const isReadOnly = selectedAsset?.statusPersetujuan === "IN_REVIEW" || selectedAsset?.statusPersetujuan === "APPROVED";
+  const isReadOnly = !isAdmin && (selectedAsset?.statusPersetujuan === "IN_REVIEW" || selectedAsset?.statusPersetujuan === "APPROVED");
 
   const pendingCount = assets.filter(a => a.statusPersetujuan === "NONE" || a.statusPersetujuan === "PENDING_REVIEW" || a.statusPersetujuan === "NEED_REVISION").length;
 
@@ -770,38 +803,41 @@ export default function ManajemenInspeksi() {
 
         {/* Table */}
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse table-fixed">
             <thead className="bg-gray-50/95 backdrop-blur-sm">
               <tr className="border-b border-gray-300">
-                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center w-12 whitespace-nowrap">No</th>
-                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[40px]">No</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center w-[130px]" title="Klik untuk mengurutkan" onClick={() => handleSort('kodeAlat')}>
+                  <div className="flex items-center justify-center">Kode Aset {getSortIcon('kodeAlat')}</div>
+                </th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left" title="Klik untuk mengurutkan" onClick={() => handleSort('namaAlat')}>
                   <div className="flex items-center justify-start">Nama Alat {getSortIcon('namaAlat')}</div>
                 </th>
-                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
-                  <div className="flex items-center justify-start">Plant {getSortIcon('plant')}</div>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center w-[90px]" title="Klik untuk mengurutkan" onClick={() => handleSort('plant')}>
+                  <div className="flex items-center justify-center">Plant {getSortIcon('plant')}</div>
                 </th>
-                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[130px]" title="Klik untuk mengurutkan" onClick={() => handleSort('jenisAlat')}>
                   <div className="flex items-center justify-start">Jenis {getSortIcon('jenisAlat')}</div>
                 </th>
-                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[130px]" title="Klik untuk mengurutkan" onClick={() => handleSort('statusAset')}>
                   <div className="flex items-center justify-start">Aset {getSortIcon('statusAset')}</div>
                 </th>
-                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[140px]" title="Klik untuk mengurutkan" onClick={() => handleSort('statusPersetujuan')}>
                   <div className="flex items-center justify-start">Persetujuan {getSortIcon('statusPersetujuan')}</div>
                 </th>
-                <th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">Tindakan</th>
+                <th className="px-3 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[120px]">Actions</th>
               </tr>
             </thead>
-            <tbody className="bg-white">
+            <tbody className="bg-white divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-gray-500">
+                  <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
                     Memuat data...
                   </td>
                 </tr>
               ) : paginatedAssets.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-5 py-12 text-center text-gray-500">
+                  <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center">
                       <AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
                       <p className="text-[13px] font-medium text-gray-900">Data Tidak Ditemukan</p>
@@ -813,26 +849,70 @@ export default function ManajemenInspeksi() {
                 paginatedAssets.map((asset, index) => {
                   const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
                   return (
-                    <tr key={asset.id} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
-                      <td className="px-3 py-3 text-[15px] text-gray-500 font-medium text-center">{rowNum}</td>
-                      <td className="px-3 py-3 text-[15px] font-semibold text-gray-800 text-left" title={asset.namaAlat}>
-                        <span className="leading-tight line-clamp-2 block text-left">{asset.namaAlat}</span>
+                    <tr key={asset.id} className="hover:bg-gray-50/50 transition-colors h-[48px]">
+                      <td className="px-3 py-2 text-sm text-gray-500 font-medium text-center">{rowNum}</td>
+                      <td className="px-3 py-2 text-sm font-bold text-[#0A356A] text-center truncate" title={asset.kodeAlat}>
+                        {asset.kodeAlat}
                       </td>
-                      <td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
+                      <td className="px-3 py-2 text-sm font-semibold text-gray-800 text-left truncate" title={asset.namaAlat}>
+                        <span className="truncate block text-left">{asset.namaAlat}</span>
+                      </td>
+                      <td className="px-3 py-2 text-sm text-gray-600 font-medium text-center truncate">
                         {asset.plant}
                       </td>
-                      <td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
+                      <td className="px-3 py-2 text-sm text-gray-600 font-medium text-left truncate">
                         {asset.jenisAlat}
                       </td>
-                      <td className="px-3 py-3 text-[15px] text-left">
+                      <td className="px-3 py-2 text-sm text-left whitespace-nowrap">
                         <div className="flex justify-start">{getStatusAsetBadge(asset.statusAset)}</div>
                       </td>
-                      <td className="px-3 py-3 text-[15px] text-left">
+                      <td className="px-3 py-2 text-sm text-left whitespace-nowrap">
                         <div className="flex justify-start">{getApprovalBadge(asset.statusPersetujuan)}</div>
                       </td>
-                      <td className="px-3 py-3 text-left">
-                        <div className="flex justify-start opacity-90 group-hover:opacity-100 transition-opacity">
-                          {getActionButton(asset)}
+                      <td className="px-3 py-2 text-center w-[120px]">
+                        <div className="flex items-center justify-center gap-1">
+                          <Tooltip content="Detail Inspeksi">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              type="button"
+                              onClick={(e) => { e.preventDefault(); setDetailItem(asset); setIsDetailOpen(true); }}
+                              className="h-8 w-8 text-[#0A356A] hover:text-[#0556B3] hover:bg-blue-50"
+                            >
+                              <FileText className="w-4 h-4" />
+                            </Button>
+                          </Tooltip>
+                          {isAdmin && (
+                            <>
+                              <Tooltip content="Edit">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); setEditItem(asset); setIsEditOpen(true); }}
+                                  className="h-8 w-8 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                                >
+                                  <Pencil className="w-4 h-4" />
+                                </Button>
+                              </Tooltip>
+                              <Tooltip content="Hapus">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  type="button"
+                                  onClick={(e) => { e.preventDefault(); setDeleteItem(asset); setIsDeleteOpen(true); }}
+                                  className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                >
+                                  <Trash2 className="w-4 h-4" />
+                                </Button>
+                              </Tooltip>
+                            </>
+                          )}
+                          {!isAdmin && (
+                            <div className="flex justify-start">
+                              {getActionButton(asset)}
+                            </div>
+                          )}
                         </div>
                       </td>
                     </tr>
@@ -1502,6 +1582,42 @@ export default function ManajemenInspeksi() {
           />
         </div>
       )}
+
+      {/* Dialog Detail Aset */}
+      <DetailEquipmentDialog
+        open={isDetailOpen}
+        onClose={() => { setIsDetailOpen(false); setDetailItem(null); }}
+        onEdit={() => {
+          const itemToEdit = detailItem;
+          setIsDetailOpen(false);
+          setDetailItem(null);
+          setEditItem(itemToEdit);
+          setIsEditOpen(true);
+        }}
+        equipment={detailItem}
+      />
+
+      {/* Dialog Edit Aset */}
+      <EditEquipmentDialog
+        open={isEditOpen}
+        onClose={() => { setIsEditOpen(false); setEditItem(null); }}
+        onSaved={() => {
+          setIsEditOpen(false);
+          setEditItem(null);
+          fetchData();
+        }}
+        equipment={editItem}
+      />
+
+      {/* Dialog Hapus Aset */}
+      <DeleteConfirmDialog
+        open={isDeleteOpen}
+        onClose={() => { setIsDeleteOpen(false); setDeleteItem(null); }}
+        onConfirm={handleDeleteEquipment}
+        title="Hapus Data"
+        description="Apakah Anda yakin ingin menghapus data ini?"
+        isDeleting={isDeleting}
+      />
     </div>
   );
 }

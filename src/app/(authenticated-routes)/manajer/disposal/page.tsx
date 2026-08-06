@@ -355,10 +355,11 @@ export default function DisposalInboxPage() {
                     )}
                     <td className="px-4 py-3.5 text-center whitespace-nowrap">
                       <button
-                        onClick={() => handleOpenDetail(item)}
+                        type="button"
+                        onClick={(e) => { e.preventDefault(); handleOpenDetail(item); }}
                         className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3.5 py-1.5 rounded-lg text-[12px] font-bold hover:bg-[#0556B3] transition-colors shadow-sm"
                       >
-                        <Eye className="w-3.5 h-3.5" />
+                        <FileText className="w-3.5 h-3.5" />
                         {activeTab === "history" ? "Detail" : "Tinjau Pengajuan"}
                       </button>
                     </td>
