@@ -73,6 +73,7 @@ export function Sidebar({ role }: { role?: string }) {
       mainNavItems = [
         { name: "Dashboard", href: "/manajer/dashboard", icon: LayoutDashboard },
         { name: "Persetujuan Validasi", href: "/manajer/approve", icon: CheckSquare },
+        { name: "Persetujuan Peminjaman", href: "/manajer/peminjaman", icon: FileQuestion },
         { name: "Persetujuan Disposal", href: "/manajer/disposal", icon: Trash2 },
         { name: "Laporan", href: "/manajer/laporan", icon: FileText },
       ];
