@@ -75,13 +75,13 @@ export async function getDisposals() {
 						justification: item.justification || "-",
 						status: item.approval_status || "PENDING",
 						created_at: item.created_at || new Date().toISOString(),
-						attachments: item.equipment?.attachments 
+						attachments: item.equipment?.attachments
 							? item.equipment.attachments.map((att: any) => ({
-								id: String(att.id),
-								file_url: att.file_url || att.url || "",
-								caption: att.file_name || "Foto Dokumentasi",
-							}))
-							: []
+									id: String(att.id),
+									file_url: att.file_url || att.url || "",
+									caption: att.file_name || "Foto Dokumentasi",
+								}))
+							: [],
 					};
 				});
 			}
@@ -407,13 +407,15 @@ export async function createDisposalRequest(payload: {
 		if (res.ok) {
 			return {
 				success: true,
-				message: json?.message || "Usulan disposal berhasil dikirim ke Manajer.",
-				data: json?.data
+				message:
+					json?.message || "Usulan disposal berhasil dikirim ke Manajer.",
+				data: json?.data,
 			};
 		}
 		return {
 			success: false,
-			message: json?.error || json?.message || "Gagal mengirim usulan disposal."
+			message:
+				json?.error || json?.message || "Gagal mengirim usulan disposal.",
 		};
 	} catch (error) {
 		console.error("Create disposal request error:", error);
@@ -692,13 +694,31 @@ export async function getIdleReasons() {
 	}
 }
 
-export async function getStorageLocations() {
+export async function getPlants() {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 
-	
 	try {
-		const res = await fetch(`${API_URL}/api/storage-locations`, {
+		const res = await fetch(`${API_URL}/api/plants`, {
+			headers: { Authorization: `Bearer ${token}` },
+			cache: "no-store",
+		});
+		if (!res.ok) return [];
+		const json = await res.json();
+		return json.data || [];
+	} catch (error) {
+		console.error("Fetch plants error:", error);
+		return [];
+	}
+}
+
+export async function getStorageLocations(plantId?: number | string) {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+
+	const query = plantId ? `?plant_id=${encodeURIComponent(plantId)}` : "";
+	try {
+		const res = await fetch(`${API_URL}/api/storage-locations${query}`, {
 			headers: { Authorization: `Bearer ${token}` },
 			cache: "no-store",
 		});
@@ -1340,27 +1360,31 @@ export async function completeEquipmentMaintenance(
 }
 
 export async function resubmitApproval(id: string, formData: FormData) {
-  const cookieStore = await cookies()
-  const token = cookieStore.get("token")?.value
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
 
-  try {
-    const res = await fetch(`${API_URL}/api/approvals/${id}/resubmit`, {
-      method: "PATCH",
-      headers: {
-        Authorization: `Bearer ${token}`
-      },
-      body: formData,
-    })
-    
-    if (!res.ok) {
-      const errorData = await res.json().catch(() => null);
-      return { success: false, message: errorData?.message || errorData?.error || `HTTP Error ${res.status}` }
-    }
-    return { success: true }
-  } catch (error: any) {
-    console.error("Resubmit approval error:", error)
-    return { success: false, message: error.message }
-  }
+	try {
+		const res = await fetch(`${API_URL}/api/approvals/${id}/resubmit`, {
+			method: "PATCH",
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+			body: formData,
+		});
+
+		if (!res.ok) {
+			const errorData = await res.json().catch(() => null);
+			return {
+				success: false,
+				message:
+					errorData?.message || errorData?.error || `HTTP Error ${res.status}`,
+			};
+		}
+		return { success: true };
+	} catch (error: any) {
+		console.error("Resubmit approval error:", error);
+		return { success: false, message: error.message };
+	}
 }
 
 export async function createReuseRequest(payload: {
@@ -1494,7 +1518,11 @@ export async function getDisposalMethods() {
 	}
 }
 
-export async function updateReuseRequestStatus(id: string, status: "APPROVED" | "REJECTED" | "IN_REVIEW" | "REVISION_REQUESTED", notes?: string) {
+export async function updateReuseRequestStatus(
+	id: string,
+	status: "APPROVED" | "REJECTED" | "IN_REVIEW" | "REVISION_REQUESTED",
+	notes?: string,
+) {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
@@ -1520,7 +1548,8 @@ export async function updateReuseRequestStatus(id: string, status: "APPROVED" | 
 		const json = await res.json().catch(() => null);
 		return {
 			success: true,
-			message: json?.message || `Status pengajuan peminjaman berhasil diperbarui.`,
+			message:
+				json?.message || `Status pengajuan peminjaman berhasil diperbarui.`,
 			data: json?.data,
 		};
 	} catch (error: any) {
@@ -1531,4 +1560,3 @@ export async function updateReuseRequestStatus(id: string, status: "APPROVED" | 
 		};
 	}
 }
-
