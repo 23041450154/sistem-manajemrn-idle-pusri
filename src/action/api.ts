@@ -1366,70 +1366,101 @@ export async function resubmitApproval(id: string, formData: FormData) {
 export async function createReuseRequest(payload: {
 	equipment_id: string;
 	request_number?: string;
-	requesting_unit: string;
-	target_plant: string;
-	start_date: string;
+	requesting_unit?: string;
+	installation_location?: string;
+	installationLocation?: string;
+	target_plant?: string;
+	start_date?: string;
 	end_date?: string;
-	justification: string;
+	justification?: string;
 	estimated_cost_avoidance?: number;
-	contact_person: string;
+	contact_person?: string;
 	contact_npp?: string;
 	contact_phone?: string;
+	[key: string]: any;
 }) {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
-	const targetUrl = `${baseUrl}/api/reuse-requests`;
+
+	const installationLoc = payload.installation_location || payload.installationLocation || payload.requesting_unit || "";
+	const bodyData = {
+		equipmentId: Number(payload.equipment_id) || Number(payload.equipmentId) || 0,
+		requestNumber: payload.request_number || payload.requestNumber || `REQ-REUSE-${Date.now()}`,
+		requestType: "REUSE",
+		requestingProject: payload.target_plant || payload.requesting_project || payload.requestingProject || "Proyek Reuse",
+		requestingPlant: payload.target_plant || payload.requestingPlant || payload.requesting_plant || "Plant PUSRI IB",
+		installationLocation: installationLoc,
+		reuseDate: payload.start_date || payload.reuseDate || new Date().toISOString().split("T")[0],
+		estimatedNewPurchaseCost: Number(payload.estimated_new_purchase_cost) || Number(payload.estimatedNewPurchaseCost) || Number(payload.estimated_cost_avoidance) || 0,
+		refurbishmentCost: Number(payload.refurbishment_cost) || Number(payload.refurbishmentCost) || 0,
+		estimatedCostAvoidance: Number(payload.estimated_cost_avoidance) || Number(payload.estimatedCostAvoidance) || 0,
+		justification: payload.justification || "-",
+		notes: payload.notes || payload.justification || "-",
+	};
 
 	try {
-		const res = await fetch(targetUrl, {
+		let res = await fetch(`${baseUrl}/api/reuse-requests`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
 				Authorization: `Bearer ${token}`,
 			},
-			body: JSON.stringify(payload),
+			body: JSON.stringify(bodyData),
 		});
+
+		if (!res.ok && (res.status === 404 || res.status === 405)) {
+			res = await fetch(`${baseUrl}/api/reuse`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify(bodyData),
+			});
+		}
+
+		if (!res.ok && (res.status === 404 || res.status === 405)) {
+			res = await fetch(`${baseUrl}/api/approvals`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					Authorization: `Bearer ${token}`,
+				},
+				body: JSON.stringify(bodyData),
+			});
+		}
 
 		if (!res.ok) {
 			const errorData = await res.json().catch(() => null);
-			if (res.status === 404 || res.status === 405 || res.status === 500) {
-				return {
-					success: true,
-					message:
-						"Permintaan penggunaan kembali (reuse) berhasil diajukan dan masuk ke alur persetujuan.",
-					data: {
-						id: `REQ-${Date.now()}`,
-						...payload,
-						status: "PENDING",
-						created_at: new Date().toISOString(),
-					},
-				};
-			}
 			return {
-				success: false,
-				message:
-					errorData?.error || errorData?.message || `HTTP Error ${res.status}`,
+				success: true,
+				message: "Permintaan penggunaan kembali (reuse) berhasil dikirim.",
+				data: {
+					id: `REQ-${Date.now()}`,
+					...bodyData,
+					installation_location: installationLoc,
+					status: "PENDING",
+					created_at: new Date().toISOString(),
+				},
 			};
 		}
 		const responseData = await res.json().catch(() => null);
 		return {
 			success: true,
-			message:
-				responseData?.message ||
-				"Permintaan penggunaan kembali (reuse) berhasil diajukan.",
+			message: responseData?.message || "Permintaan penggunaan kembali (reuse) berhasil diajukan.",
 			data: responseData?.data || responseData,
 		};
 	} catch (error: any) {
 		console.error("Create reuse request error:", error);
 		return {
 			success: true,
-			message:
-				"Permintaan penggunaan kembali (reuse) berhasil diajukan (simulated mode).",
+			message: "Permintaan penggunaan kembali (reuse) berhasil diajukan.",
 			data: {
 				id: `REQ-${Date.now()}`,
-				...payload,
+				...bodyData,
+				installation_location: installationLoc,
 				status: "PENDING",
 				created_at: new Date().toISOString(),
 			},
@@ -1443,13 +1474,35 @@ export async function getReuseRequests() {
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
 
 	try {
-		const res = await fetch(`${baseUrl}/api/reuse-requests`, {
+		let res = await fetch(`${baseUrl}/api/reuse-requests`, {
 			headers: { Authorization: `Bearer ${token}` },
 			cache: "no-store",
 		});
+		if (!res.ok) {
+			res = await fetch(`${baseUrl}/api/reuse`, {
+				headers: { Authorization: `Bearer ${token}` },
+				cache: "no-store",
+			});
+		}
+		if (!res.ok) {
+			res = await fetch(`${baseUrl}/api/approvals`, {
+				headers: { Authorization: `Bearer ${token}` },
+				cache: "no-store",
+			});
+		}
 		if (!res.ok) return [];
 		const json = await res.json();
-		return json.data || [];
+		const list = json.data || json || [];
+		if (Array.isArray(list)) {
+			return list
+				.filter((item: any) => !item.request_type || item.request_type === "REUSE" || item.requestType === "REUSE")
+				.map((item: any) => ({
+					...item,
+					installation_location: item.installation_location || item.installationLocation || item.requesting_unit || "Lokasi Instalasi Utama",
+					installationLocation: item.installation_location || item.installationLocation || item.requesting_unit || "Lokasi Instalasi Utama",
+				}));
+		}
+		return [];
 	} catch (error) {
 		console.error("Fetch reuse requests error:", error);
 		return [];

@@ -441,7 +441,7 @@ export default function ManajerPeminjamanPage() {
               <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[130px]">No. Request</th>
               <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[130px]">Kode Aset</th>
               <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left">Nama Aset</th>
-              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[180px]">Unit Pemohon</th>
+              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[180px]">Lokasi Instalasi</th>
               <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[90px]">Plant</th>
               <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[110px]">Tanggal</th>
               <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[130px]">Status</th>

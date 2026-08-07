@@ -39,6 +39,7 @@ interface ReuseRequestItem {
   equipment_code: string;
   equipment_name: string;
   requesting_unit: string;
+  installation_location: string;
   target_plant: string;
   start_date: string;
   end_date?: string;
@@ -78,14 +79,14 @@ export default function UnitKerjaKatalogPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
-  // Attachment States (for registered photos)
+  // Attachment States
   const [attachments, setAttachments] = useState<any[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Reuse Form State
   const [formData, setFormData] = useState({
     request_number: "",
-    requesting_unit: "",
+    installation_location: "",
     target_plant: "",
     start_date: "",
     end_date: "",
@@ -150,17 +151,17 @@ export default function UnitKerjaKatalogPage() {
           plant_description: item.plant_description || item.plant || "STG & Boilers",
           object_type_name: catName,
           status_name: normalizedStatus,
-          condition_name: item.condition?.name || item.condition || "Baik (Bisa Digunakan)",
-          storage_location: item.storage_location?.name || item.location || "Gudang Utama Pusri",
-          serial_number: item.serial_number || item.sn || "SN-8849-PX",
-          vendor: item.vendor || item.manufacturer || "Siemens / Ebara",
-          year_of_purchase: item.year_of_purchase || item.year || 2020,
-          book_value: item.book_value || item.bookValue || 150000000,
+          condition_name: item.condition?.name || item.condition || "Baik / Operasional",
+          storage_location: item.storage_location || item.location || "Gudang Utama Pusri",
+          serial_number: item.serial_number || "SN-2026-X89",
+          vendor: item.vendor || item.manufacturer || "PT Utama Engineering",
+          year_of_purchase: item.year_of_purchase || 2020,
+          book_value: item.book_value || 120000000,
           original_value: item.original_value || 350000000,
-          estimated_reuse_value: item.estimated_reuse_value || item.reuseValue || 280000000,
-          specifications: specText || "Daya: 75 kW, Tegangan: 380V / 3 Phase, RPM: 1450, Material: SS316, Pressure Rating: 16 Bar",
-          capacity: item.capacity || "120 m³/jam",
-          notes: item.notes || "Kondisi terpreservasi rutin, minyak pelumas & seal dalam kondisi baik.",
+          estimated_reuse_value: item.estimated_reuse_value || 250000000,
+          specifications: specText || "Kapasitas 150 m3/h, Tekanan 12 Bar, Material Stainless Steel 316",
+          capacity: item.capacity || "150 m3/h",
+          notes: item.notes || "Kondisi peralatan siap operasi. Terakhir diinspeksi tim pemeliharaan.",
           created_at: item.created_at || new Date().toISOString(),
           raw_data: item,
         };
@@ -172,21 +173,22 @@ export default function UnitKerjaKatalogPage() {
       // Mapped Reuse Requests
       const reqList: ReuseRequestItem[] = (rawRequests || []).map((r: any) => ({
         id: String(r.id),
-        request_number: r.request_number || `REQ-REUSE-2026-${r.id}`,
-        equipment_id: String(r.equipment_id || ""),
-        equipment_code: r.equipment_code || r.equipment?.equipment_code || "EQ-99",
-        equipment_name: r.equipment_name || r.equipment?.name || "Equipment Reuse",
-        requesting_unit: r.requesting_unit || "Unit Kerja Operasi",
-        target_plant: r.target_plant || "Plant PUSRI IB",
-        start_date: r.start_date || new Date().toISOString().split("T")[0],
-        end_date: r.end_date || "-",
-        justification: r.justification || "Penggantian darurat pompa eksisting yang rusak.",
-        estimated_cost_avoidance: r.estimated_cost_avoidance || 250000000,
-        contact_person: r.contact_person || "Budi Santoso",
-        contact_npp: r.contact_npp || "100002",
-        contact_phone: r.contact_phone || "0812-7890-1122",
-        status: r.status || "PENDING",
-        created_at: r.created_at || new Date().toISOString(),
+        request_number: r.request_number || r.requestNumber || `REQ-REUSE-2026-${r.id}`,
+        equipment_id: String(r.equipment_id || r.equipmentId || ""),
+        equipment_code: r.equipment_code || r.equipmentCode || r.equipment?.equipment_code || "EQ-99",
+        equipment_name: r.equipment_name || r.equipmentName || r.equipment?.name || "Equipment Reuse",
+        installation_location: r.installation_location || r.installationLocation || r.requesting_unit || "Area Ammonia P-IB",
+        requesting_unit: r.requesting_unit || r.installation_location || r.installationLocation || "Area Ammonia P-IB",
+        target_plant: r.target_plant || r.targetPlant || r.requesting_plant || r.requestingPlant || "Plant PUSRI IB",
+        start_date: r.start_date || r.startDate || r.reuse_date || r.reuseDate || new Date().toISOString().split("T")[0],
+        end_date: r.end_date || r.endDate || "-",
+        justification: r.justification || "-",
+        estimated_cost_avoidance: r.estimated_cost_avoidance || r.estimatedCostAvoidance || 0,
+        contact_person: r.contact_person || r.contactPerson || "Budi Santoso",
+        contact_npp: r.contact_npp || r.contactNpp || "100002",
+        contact_phone: r.contact_phone || r.contactPhone || "0812-7890-1122",
+        status: r.status || r.approval_status || r.approvalStatus || "PENDING",
+        created_at: r.created_at || r.createdAt || r.requested_at || r.requestedAt || new Date().toISOString(),
       }));
 
       setReuseRequests(reqList);
@@ -228,8 +230,7 @@ export default function UnitKerjaKatalogPage() {
       const matchCategory = selectedCategory === "Semua" || eq.object_type_name === selectedCategory;
       const matchStatus =
         selectedStatus === "Semua" ||
-        (selectedStatus === "READY_TO_REUSE" && (eq.status_name === "READY_TO_REUSE" || eq.status_name === "VALIDATED")) ||
-        (selectedStatus === "IDLE" && eq.status_name === "IDLE");
+        (selectedStatus === "READY_TO_REUSE" && (eq.status_name === "READY_TO_REUSE" || eq.status_name === "IDLE" || eq.status_name === "VALIDATED"));
 
       return matchSearch && matchPlant && matchCategory && matchStatus;
     });
@@ -299,21 +300,21 @@ export default function UnitKerjaKatalogPage() {
       if (res && Array.isArray(res)) {
         setAttachments(res);
       }
-    } catch (err) {
-      console.error("Error loading attachments:", err);
+    } catch (e) {
+      console.error("Gagal memuat attachment foto:", e);
     }
   };
 
-  // Handle Opening Modal Pengajuan
+  // Handle Form Open
   const handleOpenReuseModal = (item: EquipmentItem) => {
     setReuseModalItem(item);
     loadAttachments(item.id);
-    const randomSeq = Math.floor(1000 + Math.random() * 9000);
+    const generatedReqNum = `REQ-REUSE/PUSRI/${new Date().getFullYear()}/${Math.floor(1000 + Math.random() * 9000)}`;
     setFormData({
-      request_number: `REQ-REUSE/PUSRI/${new Date().getFullYear()}/${randomSeq}`,
-      requesting_unit: "",
-      target_plant: "",
-      start_date: "",
+      request_number: generatedReqNum,
+      installation_location: "",
+      target_plant: item.plant,
+      start_date: new Date().toISOString().split("T")[0],
       end_date: "",
       justification: "",
       estimated_cost_avoidance: item.estimated_reuse_value || 0,
@@ -323,7 +324,7 @@ export default function UnitKerjaKatalogPage() {
     });
   };
 
-  // Submit Reuse Form
+  // Handle Submit Form
   const handleSubmitReuseForm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!reuseModalItem) return;
@@ -337,13 +338,20 @@ export default function UnitKerjaKatalogPage() {
     try {
       const payload = {
         equipment_id: reuseModalItem.id,
+        equipmentId: Number(reuseModalItem.id),
         request_number: formData.request_number,
-        requesting_unit: formData.requesting_unit,
+        requestNumber: formData.request_number,
+        installation_location: formData.installation_location,
+        installationLocation: formData.installation_location,
+        requesting_unit: formData.installation_location,
         target_plant: formData.target_plant,
+        targetPlant: formData.target_plant,
         start_date: formData.start_date,
-        end_date: formData.end_date,
+        reuse_date: formData.start_date,
+        reuseDate: formData.start_date,
         justification: formData.justification,
         estimated_cost_avoidance: Number(formData.estimated_cost_avoidance) || 0,
+        estimatedCostAvoidance: Number(formData.estimated_cost_avoidance) || 0,
         contact_person: formData.contact_person,
         contact_npp: formData.contact_npp,
         contact_phone: formData.contact_phone,
@@ -359,7 +367,8 @@ export default function UnitKerjaKatalogPage() {
           equipment_id: reuseModalItem.id,
           equipment_code: reuseModalItem.equipment_code,
           equipment_name: reuseModalItem.name,
-          requesting_unit: formData.requesting_unit,
+          installation_location: formData.installation_location,
+          requesting_unit: formData.installation_location,
           target_plant: formData.target_plant,
           start_date: formData.start_date,
           end_date: formData.end_date,
@@ -372,7 +381,7 @@ export default function UnitKerjaKatalogPage() {
           created_at: new Date().toISOString(),
         };
 
-        setReuseRequests([newReq, ...reuseRequests]);
+        setReuseRequests((prev) => [newReq, ...prev.filter((r) => r.request_number !== newReq.request_number)]);
         setReuseModalItem(null);
       } else {
         showNotification("error", res.message || "Gagal mengirim pengajuan reuse.");
@@ -387,13 +396,19 @@ export default function UnitKerjaKatalogPage() {
   const getStatusBadge = (status: string) => {
     const styles: Record<string, string> = {
       READY_TO_REUSE: "bg-[#DCFCE7] text-[#16A34A]",
-      IDLE: "bg-[#E0E7FF] text-[#4F46E5]",
+      IDLE: "bg-[#DCFCE7] text-[#16A34A]",
+      VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
     };
     const labels: Record<string, string> = {
       READY_TO_REUSE: "Ready to Use",
       IDLE: "Ready to Use",
+      VALIDATED: "Ready to Use",
     };
-    return <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status] || "bg-gray-100 text-gray-700"}`}>{labels[status] || status}</span>;
+    return (
+      <span className={`text-[9px] font-bold px-2 py-0.5 rounded-full ${styles[status] || "bg-[#DCFCE7] text-[#16A34A]"}`}>
+        {labels[status] || "Ready to Use"}
+      </span>
+    );
   };
 
   const getActionButton = (item: EquipmentItem) => {
@@ -441,7 +456,7 @@ export default function UnitKerjaKatalogPage() {
                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
                <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
              </span>
-             <span className="text-[13px] text-blue-900 font-medium">Terdapat <strong className="font-bold">{readyCount} aset siap pakai</strong> dan <strong className="font-bold">{idleCount} aset idle</strong> yang tersedia untuk pengajuan reuse.</span>
+             <span className="text-[13px] text-blue-900 font-medium">Terdapat <strong className="font-bold">{equipments.length} aset Ready to Use</strong> dan <strong className="font-bold">{reuseRequests.length} permintaan</strong> sudah diajukan.</span>
            </div>
            <div className="flex items-center gap-2">
              <button
@@ -476,59 +491,86 @@ export default function UnitKerjaKatalogPage() {
         <div id="katalog-table-container" className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4">
           
           {/* Toolbar / Filters */}
-          <div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
-            
-            {/* Search */}
-            <div className="flex w-full lg:w-auto gap-2">
-              <div className="relative flex-1 lg:w-72">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                <input 
-                  type="text" 
-                  placeholder="Cari Kode atau Nama Alat..." 
-                  value={searchInput}
-                  onChange={(e) => setSearchInput(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && setSearch(searchInput)}
-                  className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400" 
-                />
+          <div className="p-3 border-b border-gray-200 bg-white">
+            <div className="flex flex-nowrap items-end gap-2 overflow-x-auto pb-0.5">
+              
+              {/* Search Box Group (Input + Button Cari) */}
+              <div className="flex-1 min-w-[240px] shrink-0">
+                <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Cari Equipment</label>
+                <div className="flex items-center gap-1.5">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
+                    <input 
+                      type="text" 
+                      placeholder="Masukkan kode atau nama alat..." 
+                      value={searchInput}
+                      onChange={(e) => setSearchInput(e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && setSearch(searchInput)}
+                      className="w-full pl-8 pr-3 py-1.5 text-[12px] bg-white border border-gray-300 rounded-md focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium text-gray-900 placeholder:text-gray-400 h-[34px]" 
+                    />
+                  </div>
+                  <button 
+                    onClick={() => setSearch(searchInput)}
+                    className="px-3.5 py-1.5 bg-[#0A356A] text-white text-[12px] font-bold rounded-md hover:bg-[#062854] transition-colors whitespace-nowrap shadow-xs h-[34px]"
+                  >
+                    Cari
+                  </button>
+                </div>
               </div>
-              <button 
-                onClick={() => setSearch(searchInput)}
-                className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
-              >
-                Cari
-              </button>
-            </div>
-            
-            {/* Filter Group */}
-            <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-              <select value={selectedPlant} onChange={(e) => setSelectedPlant(e.target.value)} className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer">
-                {plantOptions.map((p) => (
-                  <option key={p} value={p}>{p === "Semua" ? "Semua Plant" : p}</option>
-                ))}
-              </select>
 
-              <select value={selectedStatus} onChange={(e) => setSelectedStatus(e.target.value)} className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[140px] cursor-pointer">
-                <option value="Semua">Semua Status</option>
-                <option value="READY_TO_REUSE">Ready to Use</option>
-                <option value="IDLE">Ready to Use</option>
-              </select>
+              {/* Plant Filter */}
+              <div className="w-[125px] shrink-0">
+                <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Plant</label>
+                <select 
+                  value={selectedPlant} 
+                  onChange={(e) => setSelectedPlant(e.target.value)} 
+                  className="w-full px-2.5 py-1.5 text-[12px] bg-white border border-gray-300 rounded-md focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-800 font-medium cursor-pointer h-[34px]"
+                >
+                  {plantOptions.map((p) => (
+                    <option key={p} value={p}>{p === "Semua" ? "Semua Plant" : p}</option>
+                  ))}
+                </select>
+              </div>
 
-              <select value={selectedCategory} onChange={(e) => setSelectedCategory(e.target.value)} className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 max-w-[180px] cursor-pointer">
-                {categoryOptions.map((c) => (
-                  <option key={c} value={c}>{c === "Semua" ? "Semua Kategori" : c}</option>
-                ))}
-              </select>
-              
-              <div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
-              
-              <button 
-                onClick={resetFilter} 
-                className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
-                title="Reset semua filter"
-              >
-                <RefreshCw className="w-3.5 h-3.5" />
-                Reset
-              </button>
+              {/* Category Filter */}
+              <div className="w-[135px] shrink-0">
+                <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Kategori</label>
+                <select 
+                  value={selectedCategory} 
+                  onChange={(e) => setSelectedCategory(e.target.value)} 
+                  className="w-full px-2.5 py-1.5 text-[12px] bg-white border border-gray-300 rounded-md focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-800 font-medium cursor-pointer h-[34px]"
+                >
+                  {categoryOptions.map((c) => (
+                    <option key={c} value={c}>{c === "Semua" ? "Semua Kategori" : c}</option>
+                  ))}
+                </select>
+              </div>
+
+              {/* Status Filter */}
+              <div className="w-[120px] shrink-0">
+                <label className="block text-[10px] font-bold text-gray-700 mb-0.5">Status</label>
+                <select 
+                  value={selectedStatus} 
+                  onChange={(e) => setSelectedStatus(e.target.value)} 
+                  className="w-full px-2.5 py-1.5 text-[12px] bg-white border border-gray-300 rounded-md focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-800 font-medium cursor-pointer h-[34px]"
+                >
+                  <option value="Semua">Semua Status</option>
+                  <option value="READY_TO_REUSE">Ready to Use</option>
+                </select>
+              </div>
+
+              {/* Action: Reset */}
+              <div className="shrink-0">
+                <button 
+                  onClick={resetFilter} 
+                  className="flex items-center gap-1 px-2.5 py-1.5 text-[12px] font-semibold text-gray-600 bg-white border border-gray-300 hover:bg-gray-50 rounded-md transition-colors whitespace-nowrap h-[34px]"
+                  title="Reset semua filter"
+                >
+                  <RefreshCw className="w-3 h-3" />
+                  Reset
+                </button>
+              </div>
+
             </div>
           </div>
 
@@ -537,6 +579,7 @@ export default function UnitKerjaKatalogPage() {
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-50/95 backdrop-blur-sm">
                 <tr className="border-b-2 border-gray-300">
+                  <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider text-center w-[30px]">No.</th>
                   <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors whitespace-nowrap" title="Klik untuk mengurutkan" onClick={() => handleSort('equipment_code')}>
                     <div className="flex items-center">Kode {getSortIcon('equipment_code')}</div>
                   </th>
@@ -564,13 +607,13 @@ export default function UnitKerjaKatalogPage() {
               <tbody className="bg-white">
                 {isLoading ? (
                   <tr>
-                    <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
+                    <td colSpan={9} className="px-5 py-12 text-center text-gray-500">
                       Memuat data katalog...
                     </td>
                   </tr>
                 ) : paginatedEquipments.length === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
+                    <td colSpan={9} className="px-5 py-12 text-center text-gray-500">
                       <div className="flex flex-col items-center">
                         <AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
                         <p className="text-[13px] font-medium text-gray-900">Data Tidak Ditemukan</p>
@@ -579,8 +622,11 @@ export default function UnitKerjaKatalogPage() {
                     </td>
                   </tr>
                 ) : (
-                  paginatedEquipments.map((item) => (
+                  paginatedEquipments.map((item, index) => (
                     <tr key={item.id} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
+                      <td className="px-1.5 py-1 text-center text-[10px] text-gray-500 font-medium">
+                        {index + 1 + (currentPage - 1) * ITEMS_PER_PAGE}
+                      </td>
                       <td className="px-1.5 py-1 whitespace-nowrap text-[10px] font-bold text-[#0A356A]">
                         {item.equipment_code}
                       </td>
@@ -613,59 +659,59 @@ export default function UnitKerjaKatalogPage() {
               </tbody>
             </table>
           </div>
-          
-          {/* Pagination */}
-          <div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
-            <span className="text-[11px] font-medium text-gray-500">
-              Menampilkan {filteredEquipments.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredEquipments.length)} dari {filteredEquipments.length} data (10 baris/halaman)
-            </span>
-            {totalPages > 1 && (
-              <div className="flex items-center gap-1.5">
-                <button 
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+
+          {/* Pagination Controls */}
+          {!isLoading && filteredEquipments.length > 0 && (
+            <div className="px-5 py-3 border-t border-gray-200 bg-gray-50 flex items-center justify-between">
+              <span className="text-[11px] text-gray-500">
+                Menampilkan <strong className="font-semibold text-gray-900">{(currentPage - 1) * ITEMS_PER_PAGE + 1}</strong> - <strong className="font-semibold text-gray-900">{Math.min(currentPage * ITEMS_PER_PAGE, filteredEquipments.length)}</strong> dari <strong className="font-semibold text-gray-900">{filteredEquipments.length}</strong> alat
+              </span>
+              
+              <div className="flex items-center gap-1">
+                <button
+                  onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                   disabled={currentPage === 1}
-                  className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                  className="px-2.5 py-1 text-[11px] border border-gray-300 rounded bg-white font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  Prev
+                  Sebelumnya
                 </button>
-                
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+
+                <div className="flex items-center gap-1 px-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                     <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
-                        currentPage === page
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`w-6 h-6 text-[11px] rounded font-semibold transition-colors ${
+                        currentPage === pageNum
                           ? "bg-[#0A356A] text-white"
-                          : "text-gray-600 hover:bg-gray-100"
+                          : "text-gray-700 hover:bg-gray-200"
                       }`}
                     >
-                      {page}
+                      {pageNum}
                     </button>
                   ))}
                 </div>
 
-                <button 
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                <button
+                  onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                   disabled={currentPage === totalPages}
-                  className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+                  className="px-2.5 py-1 text-[11px] border border-gray-300 rounded bg-[#0A356A] text-white font-semibold hover:bg-[#062854] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                 >
-                  Next
+                  Selanjutnya
                 </button>
               </div>
-            )}
-          </div>
+            </div>
+          )}
 
         </div>
       ) : (
-        /* Tab Riwayat Permintaan */
+        /* TAB 2: RIWAYAT PERMINTAAN REUSE */
         <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
           
-          {/* Header */}
-          <div className="p-3 border-b border-gray-200 bg-white flex items-center justify-between">
+          <div className="p-4 border-b border-gray-200 flex items-center justify-between bg-gray-50/50">
             <div>
-              <h2 className="text-[15px] font-bold text-gray-900">Daftar Permintaan Reuse</h2>
-              <p className="text-[11px] text-gray-500 mt-0.5">Status dan alur persetujuan permohonan peminjaman aset idle.</p>
+              <h3 className="text-sm font-bold text-gray-900">Daftar Permintaan Reuse</h3>
+              <p className="text-[12px] text-gray-500 mt-0.5">Riwayat permohonan penggunaan kembali peralatan yang telah diajukan ke Rendal.</p>
             </div>
             <button
               onClick={() => setActiveTab("katalog")}
@@ -681,9 +727,10 @@ export default function UnitKerjaKatalogPage() {
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-50/95 backdrop-blur-sm">
                 <tr className="border-b-2 border-gray-300">
+                  <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider text-center w-[30px]">No.</th>
                   <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider">No. Pengajuan</th>
                   <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider">Equipment</th>
-                  <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider">Unit Pemohon</th>
+                  <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider">Lokasi Instalasi</th>
                   <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider">Target Plant</th>
                   <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider">Justifikasi</th>
                   <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider">Tgl Pengajuan</th>
@@ -693,7 +740,7 @@ export default function UnitKerjaKatalogPage() {
               <tbody className="bg-white">
                 {reuseRequests.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-5 py-12 text-center text-gray-500">
+                    <td colSpan={8} className="px-5 py-12 text-center text-gray-500">
                       <div className="flex flex-col items-center">
                         <FileSpreadsheet className="w-6 h-6 text-gray-300 mb-2" />
                         <p className="text-[13px] font-medium text-gray-900">Belum Ada Permintaan Reuse</p>
@@ -702,21 +749,26 @@ export default function UnitKerjaKatalogPage() {
                     </td>
                   </tr>
                 ) : (
-                  reuseRequests.map((req) => (
-                    <tr key={req.id} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/80 transition-colors">
-                      <td className="px-1.5 py-1 font-mono font-bold text-blue-700 text-[10px]">{req.request_number}</td>
-                      <td className="px-1.5 py-1">
+                  reuseRequests.map((req, index) => (
+                    <tr key={req.id} className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/80 transition-colors align-middle font-bold">
+                      <td className="px-2 py-2 text-center text-[10px] text-gray-700 font-bold">{index + 1}</td>
+                      <td className="px-2 py-2 font-mono font-bold text-blue-700 text-[10px] whitespace-nowrap">{req.request_number}</td>
+                      <td className="px-2 py-2">
                         <div className="flex flex-col">
                            <span className="text-[10px] font-bold text-gray-900 leading-tight">{req.equipment_name}</span>
-                           <span className="text-[9px] text-gray-500 mt-0.5">{req.equipment_code}</span>
+                           <span className="text-[9px] text-gray-600 mt-0.5 font-mono font-bold">{req.equipment_code}</span>
                         </div>
                       </td>
-                      <td className="px-1.5 py-1 font-semibold text-gray-800 text-[10px]">{req.requesting_unit}</td>
-                      <td className="px-1.5 py-1 text-gray-700 text-[10px]">{req.target_plant}</td>
-                      <td className="px-1.5 py-1 text-gray-600 text-[9px] max-w-[200px] line-clamp-2" title={req.justification}>{req.justification}</td>
-                      <td className="px-1.5 py-1 text-gray-500 text-[10px]">{new Date(req.created_at).toLocaleDateString("id-ID")}</td>
-                      <td className="px-1.5 py-1">
-                        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-amber-50 text-amber-700">
+                      <td className="px-2 py-2 font-bold text-gray-900 text-[10px]">{req.installation_location || req.requesting_unit}</td>
+                      <td className="px-2 py-2 text-gray-900 text-[10px] font-bold whitespace-nowrap">{req.target_plant}</td>
+                      <td className="px-2 py-2">
+                        <div className="text-[10px] text-gray-900 leading-tight max-w-[240px] line-clamp-2 font-bold" title={req.justification}>
+                          {req.justification}
+                        </div>
+                      </td>
+                      <td className="px-2 py-2 text-gray-700 text-[10px] whitespace-nowrap font-mono font-bold">{new Date(req.created_at).toLocaleDateString("id-ID")}</td>
+                      <td className="px-2 py-2 whitespace-nowrap">
+                        <span className="text-[9px] font-bold px-2 py-0.5 rounded-full bg-amber-50 text-amber-700 border border-amber-200 inline-block">
                           Menunggu Review
                         </span>
                       </td>
@@ -726,31 +778,22 @@ export default function UnitKerjaKatalogPage() {
               </tbody>
             </table>
           </div>
-
-          {/* Pagination placeholder */}
-          <div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
-            <span className="text-[11px] font-medium text-gray-500">
-              Total {reuseRequests.length} permintaan
-            </span>
-          </div>
         </div>
       )}
 
-      {/* MODAL DETAIL – Matches revisi-validasi modal style */}
+      {/* MODAL DETAIL EQUIPMENT */}
       {detailModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onClick={() => setDetailModalItem(null)} />
           
-          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-3xl max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             
             {/* Header */}
-            <div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shrink-0">
               <div className="flex items-center gap-3">
-                <h2 className="text-base font-bold text-gray-900">
-                  Detail Spesifikasi Aset
-                </h2>
+                <h3 className="text-base font-bold text-gray-900">Detail Peralatan</h3>
                 <span className="text-gray-300">|</span>
-                <span className="text-[13px] font-semibold text-[#0A356A]">{detailModalItem.equipment_code}</span>
+                <span className="text-[13px] font-mono font-bold text-[#0A356A]">{detailModalItem.equipment_code}</span>
               </div>
               <button onClick={() => setDetailModalItem(null)} className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded-md transition-colors">
                 <X className="w-4 h-4" />
@@ -758,95 +801,106 @@ export default function UnitKerjaKatalogPage() {
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50/50">
+            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 bg-gray-50/50">
               
-              {/* Asset Info Ribbon */}
-              <div className="bg-[#f0f7ff] border border-blue-100 rounded-lg p-3 mb-4 flex flex-col md:flex-row justify-between gap-4">
-                <div className="flex-1 flex items-center gap-5 overflow-hidden">
-                  <div>
-                    <span className="text-blue-700/60 text-[10px] font-semibold uppercase block leading-none mb-1">Nama Peralatan</span>
-                    <span className="font-bold text-[13px] text-blue-900 truncate">{detailModalItem.name}</span>
-                  </div>
-                  <div className="w-px h-5 bg-blue-200"></div>
-                  <div>
-                    <span className="text-blue-700/60 text-[10px] font-semibold uppercase block leading-none mb-1">Plant</span>
-                    <span className="font-bold text-[13px] text-blue-900">{detailModalItem.plant}</span>
-                  </div>
-                  <div className="w-px h-5 bg-blue-200"></div>
-                  <div className="flex-1 min-w-52">
-                    <span className="text-blue-700/60 text-[10px] font-semibold uppercase block leading-none mb-1">Kategori</span>
-                    <span className="text-blue-800 text-[12px] truncate block">{detailModalItem.object_type_name}</span>
-                  </div>
+              {/* Card Summary */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex flex-col md:flex-row justify-between gap-4">
+                <div>
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Nama Alat</span>
+                  <h4 className="text-base font-bold text-gray-900 leading-tight">{detailModalItem.name}</h4>
+                  <p className="text-[12px] text-gray-500 mt-1 font-medium">{detailModalItem.plant_description}</p>
                 </div>
-                <div className="shrink-0 flex items-center gap-4">
-                  {/* Foto Registrasi */}
-                  <div className="flex flex-col gap-1 border-l border-blue-200 pl-4">
-                    <span className="text-[9px] font-bold text-blue-700/60 uppercase block">Foto Registrasi</span>
-                    <div className="flex gap-1.5">
-                      {attachments.length > 0 ? (
-                        attachments.slice(0, 2).map((att: any, idx: number) => (
-                          <div 
-                            key={idx}
-                            className="h-10 w-14 bg-white rounded border border-blue-100 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-xs shrink-0"
-                            onClick={() => setPreviewImage(att.file_url || att.url)}
-                            title={`Foto ${idx+1}`}
-                          >
-                            <img src={att.file_url || att.url} alt={`Foto Aset ${idx+1}`} className="w-full h-full object-cover" />
-                          </div>
-                        ))
-                      ) : (
-                        <span className="text-[10px] text-blue-800/60 font-medium italic">Tidak ada foto</span>
-                      )}
-                    </div>
-                  </div>
+                <div className="flex flex-col items-start md:items-end justify-between border-t md:border-t-0 pt-3 md:pt-0 border-gray-100">
+                  <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block mb-1">Status Ketersediaan</span>
                   {getStatusBadge(detailModalItem.status_name)}
                 </div>
               </div>
 
-              {/* Specifications Grid */}
-              <div className="space-y-3">
-                <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider">Spesifikasi & Data Teknis</h4>
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                  <div className="bg-white p-3 rounded-lg border border-gray-200">
-                    <span className="text-[10px] text-gray-400 block mb-0.5">Vendor / Manufacture</span>
-                    <p className="text-[12px] font-bold text-gray-900">{detailModalItem.vendor}</p>
-                  </div>
-                  <div className="bg-white p-3 rounded-lg border border-gray-200">
-                    <span className="text-[10px] text-gray-400 block mb-0.5">Serial Number</span>
-                    <p className="text-[12px] font-bold text-gray-900">{detailModalItem.serial_number}</p>
-                  </div>
-                  <div className="bg-white p-3 rounded-lg border border-gray-200">
-                    <span className="text-[10px] text-gray-400 block mb-0.5">Tahun Pembelian</span>
-                    <p className="text-[12px] font-bold text-gray-900">{detailModalItem.year_of_purchase}</p>
-                  </div>
-                  <div className="bg-white p-3 rounded-lg border border-gray-200">
-                    <span className="text-[10px] text-gray-400 block mb-0.5">Kapasitas</span>
-                    <p className="text-[12px] font-bold text-gray-900">{detailModalItem.capacity}</p>
+              {/* Grid Details */}
+              <div className="grid grid-cols-2 gap-4">
+                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-3">
+                  <h5 className="text-[11px] font-bold text-[#0A356A] uppercase tracking-wider border-b border-gray-100 pb-2">Informasi Umum</h5>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-[12px]">
+                    <span className="text-gray-500 font-medium">Kategori:</span>
+                    <span className="font-semibold text-gray-900">{detailModalItem.object_type_name}</span>
+                    
+                    <span className="text-gray-500 font-medium">Lokasi Simpan:</span>
+                    <span className="font-semibold text-gray-900">{detailModalItem.storage_location}</span>
+                    
+                    <span className="text-gray-500 font-medium">Serial Number:</span>
+                    <span className="font-mono font-medium text-gray-800">{detailModalItem.serial_number}</span>
+                    
+                    <span className="text-gray-500 font-medium">Manufaktur/Vendor:</span>
+                    <span className="font-semibold text-gray-900">{detailModalItem.vendor}</span>
                   </div>
                 </div>
-                <div className="bg-white p-3 rounded-lg border border-gray-200">
-                  <span className="text-[10px] text-gray-400 block mb-1">Spesifikasi Detail</span>
-                  <p className="text-[12px] font-medium text-gray-800 leading-relaxed">{detailModalItem.specifications}</p>
+
+                <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-3">
+                  <h5 className="text-[11px] font-bold text-[#0A356A] uppercase tracking-wider border-b border-gray-100 pb-2">Nilai Aset & Estimasi</h5>
+                  
+                  <div className="grid grid-cols-2 gap-2 text-[12px]">
+                    <span className="text-gray-500 font-medium">Tahun Perolehan:</span>
+                    <span className="font-semibold text-gray-900">{detailModalItem.year_of_purchase}</span>
+                    
+                    <span className="text-gray-500 font-medium">Nilai Buku:</span>
+                    <span className="font-semibold text-gray-900">Rp {(detailModalItem.book_value || 0).toLocaleString("id-ID")}</span>
+                    
+                    <span className="text-gray-500 font-medium">Nilai Perolehan:</span>
+                    <span className="font-semibold text-gray-900">Rp {(detailModalItem.original_value || 0).toLocaleString("id-ID")}</span>
+                    
+                    <span className="text-gray-500 font-semibold text-emerald-700">Est. Reuse Value:</span>
+                    <span className="font-bold text-emerald-700">Rp {(detailModalItem.estimated_reuse_value || 0).toLocaleString("id-ID")}</span>
+                  </div>
                 </div>
               </div>
 
-              {/* Condition & Financial */}
-              <div className="grid grid-cols-2 gap-3 mt-4">
-                <div className="bg-white p-3 rounded-lg border border-gray-200">
-                  <span className="text-[10px] text-gray-400 block mb-0.5">Kondisi Fisik</span>
-                  <p className="text-[12px] font-bold text-gray-900">{detailModalItem.condition_name}</p>
-                  <p className="text-[10px] text-gray-500 mt-1">{detailModalItem.notes}</p>
+              {/* Specs & Notes */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm space-y-3">
+                <h5 className="text-[11px] font-bold text-[#0A356A] uppercase tracking-wider border-b border-gray-100 pb-2">Spesifikasi & Kondisi</h5>
+                
+                <div>
+                  <span className="text-[11px] font-bold text-gray-500 block mb-1">Spesifikasi Teknik:</span>
+                  <p className="text-[12px] text-gray-700 bg-gray-50 p-2.5 rounded border border-gray-200 leading-relaxed font-mono">
+                    {detailModalItem.specifications}
+                  </p>
                 </div>
-                <div className="bg-white p-3 rounded-lg border border-gray-200">
-                  <span className="text-[10px] text-gray-400 block mb-0.5">Estimasi Nilai Reuse</span>
-                  <p className="text-[14px] font-extrabold text-blue-700">Rp {(detailModalItem.estimated_reuse_value || 0).toLocaleString("id-ID")}</p>
-                  <p className="text-[10px] text-gray-500 mt-1">Lokasi: {detailModalItem.storage_location}</p>
+
+                <div>
+                  <span className="text-[11px] font-bold text-gray-500 block mb-1">Catatan Kondisi Operasional:</span>
+                  <p className="text-[12px] text-gray-700 bg-gray-50 p-2.5 rounded border border-gray-200 leading-relaxed">
+                    {detailModalItem.notes}
+                  </p>
                 </div>
               </div>
+
+              {/* Lampiran Foto */}
+              <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+                <h5 className="text-[11px] font-bold text-[#0A356A] uppercase tracking-wider border-b border-gray-100 pb-2 mb-3">Foto Registrasi Peralatan</h5>
+                {attachments.length > 0 ? (
+                  <div className="grid grid-cols-3 gap-3">
+                    {attachments.map((att: any, idx: number) => (
+                      <div 
+                        key={idx}
+                        className="h-28 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity relative group"
+                        onClick={() => setPreviewImage(att.file_url || att.url)}
+                      >
+                        <img src={att.file_url || att.url} alt={`Lampiran ${idx+1}`} className="w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-medium">
+                          Lihat Foto
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-[12px] text-gray-500 italic">Belum ada foto registrasi yang dilampirkan.</p>
+                )}
+              </div>
+
             </div>
 
             {/* Footer */}
-            <div className="flex items-center justify-end gap-3 px-6 py-3 border-t border-gray-200 bg-white rounded-b-xl shrink-0">
+            <div className="px-6 py-3.5 border-t border-gray-200 bg-white flex justify-end gap-3 shrink-0">
               <button
                 onClick={() => setDetailModalItem(null)}
                 className="px-4 py-2 rounded-lg text-[13px] font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
@@ -869,7 +923,7 @@ export default function UnitKerjaKatalogPage() {
         </div>
       )}
 
-      {/* MODAL FORMULIR PENGAJUAN REUSE – Matches revisi-validasi modal style */}
+      {/* MODAL FORMULIR PENGAJUAN REUSE */}
       {reuseModalItem && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity" onClick={() => setReuseModalItem(null)} />
@@ -912,7 +966,6 @@ export default function UnitKerjaKatalogPage() {
                   </div>
                 </div>
                 <div className="shrink-0 flex items-center gap-4">
-                  {/* Foto Registrasi */}
                   <div className="flex flex-col gap-1 border-l border-blue-200 pl-4">
                     <span className="text-[9px] font-bold text-blue-700/60 uppercase block">Foto Registrasi</span>
                     <div className="flex gap-1.5">
@@ -947,7 +1000,7 @@ export default function UnitKerjaKatalogPage() {
                 </div>
               </div>
 
-              {/* Form Grid – matches revisi-validasi form pattern */}
+              {/* Form Grid */}
               <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
                 <form id="reuse-form" onSubmit={handleSubmitReuseForm}>
                 
@@ -959,14 +1012,15 @@ export default function UnitKerjaKatalogPage() {
                     </div>
                     <div className="col-span-4">
                       <div className="flex justify-between items-end mb-1">
-                        <label className="block text-[11px] font-semibold text-gray-700">Unit Kerja Pemohon</label>
+                        <label className="block text-[11px] font-semibold text-gray-700">Lokasi Instalasi</label>
                         <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
                       </div>
                       <input
                         type="text"
                         required
-                        value={formData.requesting_unit}
-                        onChange={(e) => setFormData({ ...formData, requesting_unit: e.target.value })}
+                        placeholder="Masukkan lokasi instalasi"
+                        value={formData.installation_location}
+                        onChange={(e) => setFormData({ ...formData, installation_location: e.target.value })}
                         className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none focus:border-[#0A356A]"
                       />
                     </div>
@@ -978,6 +1032,7 @@ export default function UnitKerjaKatalogPage() {
                       <input
                         type="text"
                         required
+                        placeholder="Masukkan target plant"
                         value={formData.target_plant}
                         onChange={(e) => setFormData({ ...formData, target_plant: e.target.value })}
                         className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none focus:border-[#0A356A]"
@@ -987,7 +1042,7 @@ export default function UnitKerjaKatalogPage() {
 
                   {/* Row 2: Tanggal & Nilai */}
                   <div className="grid grid-cols-12 gap-3 mb-3">
-                    <div className="col-span-4">
+                    <div className="col-span-6">
                       <div className="flex justify-between items-end mb-1">
                         <label className="block text-[11px] font-semibold text-gray-700">Tgl Mulai Mobilisasi</label>
                         <span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">Wajib</span>
@@ -1000,16 +1055,7 @@ export default function UnitKerjaKatalogPage() {
                         className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none focus:border-[#0A356A] cursor-pointer"
                       />
                     </div>
-                    <div className="col-span-4">
-                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">Est. Tanggal Selesai <span className="text-gray-400 font-normal">(Ops)</span></label>
-                      <input
-                        type="date"
-                        value={formData.end_date}
-                        onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
-                        className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none focus:border-[#0A356A] cursor-pointer"
-                      />
-                    </div>
-                    <div className="col-span-4">
+                    <div className="col-span-6">
                       <label className="block text-[11px] font-semibold text-gray-700 mb-1">Est. Cost Avoidance (Rp)</label>
                       <input
                         type="text"
@@ -1036,19 +1082,19 @@ export default function UnitKerjaKatalogPage() {
                           e.target.style.height = `${e.target.scrollHeight}px`;
                           setFormData({ ...formData, justification: e.target.value });
                         }}
-                        placeholder="Jelaskan secara rinci alasan peminjaman, urgensi operasional..."
+                        placeholder="Masukkan tujuan penggunaan & justifikasi proyek"
                         className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none overflow-hidden min-h-[50px] transition-all focus:border-[#0A356A]"
                       />
                     </div>
                     <div>
-                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">Catatan Tambahan <span className="text-gray-400 font-normal">(Ops)</span></label>
+                      <label className="block text-[11px] font-semibold text-gray-700 mb-1">Catatan Tambahan <span className="text-gray-400 font-normal">(Opsional)</span></label>
                       <textarea
                         rows={2}
                         onChange={(e) => {
                           e.target.style.height = "auto";
                           e.target.style.height = `${e.target.scrollHeight}px`;
                         }}
-                        placeholder="Informasi tambahan untuk pihak Rendal..."
+                        placeholder="Masukkan catatan tambahan jika ada"
                         className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none overflow-hidden min-h-[50px] transition-all focus:border-[#0A356A]"
                       />
                     </div>
@@ -1056,28 +1102,34 @@ export default function UnitKerjaKatalogPage() {
 
                 </form>
               </div>
+
             </div>
 
-            {/* Footer Actions – matches revisi-validasi footer */}
-            <div className="px-6 py-3 border-t border-gray-200 bg-gray-50 rounded-b-xl flex justify-end gap-2.5 shrink-0">
+            {/* Footer */}
+            <div className="px-6 py-3.5 border-t border-gray-200 bg-white flex justify-end gap-3 rounded-b-xl shrink-0">
               <button
                 type="button"
                 onClick={() => setReuseModalItem(null)}
-                disabled={isSubmitting}
-                className="px-4 py-1.5 text-[13px] font-semibold text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50"
+                className="px-4 py-2 rounded-lg text-[13px] font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
               >
-                Tutup
+                Batal
               </button>
               <button
                 type="submit"
                 form="reuse-form"
                 disabled={isSubmitting}
-                className="px-5 py-1.5 text-[13px] font-bold text-white bg-[#0A356A] hover:bg-[#062854] rounded-md transition-all shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+                className="px-5 py-2 rounded-lg text-[13px] font-bold text-white bg-[#0A356A] hover:bg-[#062854] disabled:opacity-50 transition-colors flex items-center gap-2 shadow-sm"
               >
                 {isSubmitting ? (
-                  <><RefreshCw className="w-3.5 h-3.5 animate-spin" /> Mengirim Pengajuan...</>
+                  <>
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                    Mengirim...
+                  </>
                 ) : (
-                  <><Send className="w-3.5 h-3.5" /> Kirim Pengajuan Reuse</>
+                  <>
+                    <Send className="w-4 h-4" />
+                    Kirim Pengajuan Reuse
+                  </>
                 )}
               </button>
             </div>
@@ -1085,21 +1137,18 @@ export default function UnitKerjaKatalogPage() {
         </div>
       )}
 
-      {/* Image Preview Overlay Modal */}
+      {/* PREVIEW IMAGE MODAL */}
       {previewImage && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm" onClick={() => setPreviewImage(null)}>
-          <button 
-            className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded-full transition-colors"
-            onClick={(e) => { e.stopPropagation(); setPreviewImage(null); }}
-          >
-            <X className="w-6 h-6" />
-          </button>
-          <img 
-            src={previewImage} 
-            alt="Preview" 
-            className="max-w-full max-h-full object-contain rounded-lg shadow-2xl" 
-            onClick={(e) => e.stopPropagation()} 
-          />
+        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setPreviewImage(null)}>
+          <div className="relative max-w-4xl max-h-[90vh] overflow-hidden rounded-lg">
+            <img src={previewImage} alt="Preview Lampiran Foto" className="w-full h-full object-contain max-h-[85vh]" />
+            <button 
+              onClick={() => setPreviewImage(null)}
+              className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/80 transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       )}
 
