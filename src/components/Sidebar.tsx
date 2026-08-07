@@ -111,6 +111,45 @@ export function Sidebar({ role }: { role?: string }) {
         { name: "Inspeksi", href: "/inspeksi/inspeksi-berkala", icon: ClipboardCheck },
       ];
       break;
+		case "RENDAL_PEMELIHARAAN":
+			// Placeholder: Rendal Pemeliharaan
+			mainNavItems = [
+				{ name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
+				{ name: "Peralatan", href: "/rendal/idle", icon: Wrench },
+				{
+					name: "Perbaikan Alat",
+					href: "/rendal/perbaikan-alat",
+					icon: Wrench,
+				},
+				{ name: "Laporan Audit", href: "/rendal/laporan", icon: ShieldCheck },
+			];
+			break;
+
+		case "INSPEKSI_TEKNIK":
+			// Placeholder: Inspeksi Teknik
+			mainNavItems = [
+				{
+					name: "Dashboard",
+					href: "/inspeksi/dashboard",
+					icon: LayoutDashboard,
+				},
+				{
+					name: "Validasi Kelayakan",
+					href: "/inspeksi/validasi",
+					icon: Wrench,
+				},
+				{
+					name: "Revisi Validasi",
+					href: "/inspeksi/revisi-validasi",
+					icon: Edit,
+				},
+				{
+					name: "Inspeksi",
+					href: "/inspeksi/inspeksi-berkala",
+					icon: ClipboardCheck,
+				},
+			];
+			break;
 
 		case "MANAJER_RENDAL":
 			// Manajer Rendal
