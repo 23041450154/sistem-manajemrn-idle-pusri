@@ -124,14 +124,31 @@ export default function UnitKerjaKatalogPage() {
 
       const mappedEquipments: EquipmentItem[] = (rawEqList || []).map((item: any) => {
         let catName = "Peralatan Umum";
-        if (item.object_type?.name) catName = item.object_type.name;
-        else if (item.objectType?.name) catName = item.objectType.name;
+        if (typeof item.object_type?.name === "string") catName = item.object_type.name;
+        else if (typeof item.objectType?.name === "string") catName = item.objectType.name;
+        else if (typeof item.object_type_name === "string") catName = item.object_type_name;
         else if (item.object_type_id && objTypes) {
           const found = objTypes.find((o: any) => String(o.id) === String(item.object_type_id));
-          if (found) catName = found.name;
+          if (found && typeof found.name === "string") catName = found.name;
         }
 
-        const rawStatus = (item.status?.name || item.status || "").toUpperCase();
+        let plantStr = "STG & Boilers";
+        if (typeof item.plant === "string") {
+          plantStr = item.plant;
+        } else if (item.plant && typeof item.plant === "object") {
+          plantStr = item.plant.name || item.plant.plant || item.plant.description || "STG & Boilers";
+        } else if (typeof item.plant_description === "string") {
+          plantStr = item.plant_description;
+        } else if (item.plant_description && typeof item.plant_description === "object") {
+          plantStr = item.plant_description.name || item.plant_description.plant || "STG & Boilers";
+        }
+
+        let storageLoc = "Gudang Utama Pusri";
+        if (typeof item.storage_location === "string") storageLoc = item.storage_location;
+        else if (item.storage_location && typeof item.storage_location === "object") storageLoc = item.storage_location.name || "Gudang Utama Pusri";
+        else if (typeof item.location === "string") storageLoc = item.location;
+
+        const rawStatus = (typeof item.status === "object" ? item.status?.name : item.status || "").toUpperCase();
         let normalizedStatus = "IDLE";
         if (rawStatus.includes("READY") || rawStatus.includes("SIAP")) normalizedStatus = "READY_TO_REUSE";
         else if (rawStatus.includes("VALIDATED") || rawStatus.includes("VALID")) normalizedStatus = "READY_TO_REUSE";
@@ -140,29 +157,29 @@ export default function UnitKerjaKatalogPage() {
         else if (rawStatus.includes("DISPOSED") || rawStatus.includes("HAAPUS")) normalizedStatus = "DISPOSED";
         else if (rawStatus.includes("IDLE")) normalizedStatus = "IDLE";
 
-        let specText = item.specification || item.specifications || item.specs;
-        if (!specText && item.description) specText = item.description;
+        let specText = typeof item.specification === "string" ? item.specification : (typeof item.specifications === "string" ? item.specifications : item.specs);
+        if (!specText && typeof item.description === "string") specText = item.description;
 
         return {
           id: String(item.id),
-          equipment_code: item.equipment_code || `EQ-2026-${item.id}`,
-          name: item.name || item.nama || "Equipment Tanpa Nama",
-          plant: item.plant || item.plant_description || "STG & Boilers",
-          plant_description: item.plant_description || item.plant || "STG & Boilers",
-          object_type_name: catName,
+          equipment_code: String(item.equipment_code || `EQ-2026-${item.id}`),
+          name: String(item.name || item.nama || "Equipment Tanpa Nama"),
+          plant: plantStr,
+          plant_description: plantStr,
+          object_type_name: String(catName),
           status_name: normalizedStatus,
-          condition_name: item.condition?.name || item.condition || "Baik / Operasional",
-          storage_location: item.storage_location || item.location || "Gudang Utama Pusri",
-          serial_number: item.serial_number || "SN-2026-X89",
-          vendor: item.vendor || item.manufacturer || "PT Utama Engineering",
-          year_of_purchase: item.year_of_purchase || 2020,
-          book_value: item.book_value || 120000000,
-          original_value: item.original_value || 350000000,
-          estimated_reuse_value: item.estimated_reuse_value || 250000000,
-          specifications: specText || "Kapasitas 150 m3/h, Tekanan 12 Bar, Material Stainless Steel 316",
-          capacity: item.capacity || "150 m3/h",
-          notes: item.notes || "Kondisi peralatan siap operasi. Terakhir diinspeksi tim pemeliharaan.",
-          created_at: item.created_at || new Date().toISOString(),
+          condition_name: typeof item.condition === "object" ? String(item.condition?.name || "Baik") : String(item.condition || "Baik / Operasional"),
+          storage_location: String(storageLoc),
+          serial_number: String(item.serial_number || "SN-2026-X89"),
+          vendor: String(item.vendor || item.manufacturer || "PT Utama Engineering"),
+          year_of_purchase: Number(item.year_of_purchase) || 2020,
+          book_value: Number(item.book_value) || 120000000,
+          original_value: Number(item.original_value) || 350000000,
+          estimated_reuse_value: Number(item.estimated_reuse_value) || 250000000,
+          specifications: String(specText || "Kapasitas 150 m3/h, Tekanan 12 Bar, Material Stainless Steel 316"),
+          capacity: String(item.capacity || "150 m3/h"),
+          notes: String(item.notes || "Kondisi peralatan siap operasi. Terakhir diinspeksi tim pemeliharaan."),
+          created_at: String(item.created_at || new Date().toISOString()),
           raw_data: item,
         };
       });
@@ -171,25 +188,38 @@ export default function UnitKerjaKatalogPage() {
       setEquipments(mappedEquipments.filter(e => e.status_name === "IDLE" || e.status_name === "READY_TO_REUSE"));
 
       // Mapped Reuse Requests
-      const reqList: ReuseRequestItem[] = (rawRequests || []).map((r: any) => ({
-        id: String(r.id),
-        request_number: r.request_number || r.requestNumber || `REQ-REUSE-2026-${r.id}`,
-        equipment_id: String(r.equipment_id || r.equipmentId || ""),
-        equipment_code: r.equipment_code || r.equipmentCode || r.equipment?.equipment_code || "EQ-99",
-        equipment_name: r.equipment_name || r.equipmentName || r.equipment?.name || "Equipment Reuse",
-        installation_location: r.installation_location || r.installationLocation || r.requesting_unit || "Area Ammonia P-IB",
-        requesting_unit: r.requesting_unit || r.installation_location || r.installationLocation || "Area Ammonia P-IB",
-        target_plant: r.target_plant || r.targetPlant || r.requesting_plant || r.requestingPlant || "Plant PUSRI IB",
-        start_date: r.start_date || r.startDate || r.reuse_date || r.reuseDate || new Date().toISOString().split("T")[0],
-        end_date: r.end_date || r.endDate || "-",
-        justification: r.justification || "-",
-        estimated_cost_avoidance: r.estimated_cost_avoidance || r.estimatedCostAvoidance || 0,
-        contact_person: r.contact_person || r.contactPerson || "Budi Santoso",
-        contact_npp: r.contact_npp || r.contactNpp || "100002",
-        contact_phone: r.contact_phone || r.contactPhone || "0812-7890-1122",
-        status: r.status || r.approval_status || r.approvalStatus || "PENDING",
-        created_at: r.created_at || r.createdAt || r.requested_at || r.requestedAt || new Date().toISOString(),
-      }));
+      const reqList: ReuseRequestItem[] = (rawRequests || []).map((r: any) => {
+        let targetPlantStr = "Plant PUSRI IB";
+        if (typeof r.target_plant === "string") targetPlantStr = r.target_plant;
+        else if (r.target_plant && typeof r.target_plant === "object") targetPlantStr = r.target_plant.name || r.target_plant.plant || "Plant PUSRI IB";
+        else if (typeof r.targetPlant === "string") targetPlantStr = r.targetPlant;
+        else if (r.targetPlant && typeof r.targetPlant === "object") targetPlantStr = r.targetPlant.name || "Plant PUSRI IB";
+
+        let installLocStr = "Area Ammonia P-IB";
+        if (typeof r.installation_location === "string") installLocStr = r.installation_location;
+        else if (r.installation_location && typeof r.installation_location === "object") installLocStr = r.installation_location.name || "Area Ammonia P-IB";
+        else if (typeof r.installationLocation === "string") installLocStr = r.installationLocation;
+
+        return {
+          id: String(r.id),
+          request_number: String(r.request_number || r.requestNumber || `REQ-REUSE-2026-${r.id}`),
+          equipment_id: String(r.equipment_id || r.equipmentId || ""),
+          equipment_code: String(r.equipment_code || r.equipmentCode || r.equipment?.equipment_code || "EQ-99"),
+          equipment_name: String(r.equipment_name || r.equipmentName || r.equipment?.name || "Equipment Reuse"),
+          installation_location: String(installLocStr),
+          requesting_unit: String(installLocStr),
+          target_plant: String(targetPlantStr),
+          start_date: String(r.start_date || r.startDate || r.reuse_date || r.reuseDate || new Date().toISOString().split("T")[0]),
+          end_date: String(r.end_date || r.endDate || "-"),
+          justification: typeof r.justification === "string" ? r.justification : "-",
+          estimated_cost_avoidance: Number(r.estimated_cost_avoidance || r.estimatedCostAvoidance) || 0,
+          contact_person: typeof r.contact_person === "string" ? r.contact_person : "Budi Santoso",
+          contact_npp: String(r.contact_npp || r.contactNpp || "100002"),
+          contact_phone: String(r.contact_phone || r.contactPhone || "0812-7890-1122"),
+          status: (r.status || r.approval_status || r.approvalStatus || "PENDING") as any,
+          created_at: String(r.created_at || r.createdAt || r.requested_at || r.requestedAt || new Date().toISOString()),
+        };
+      });
 
       setReuseRequests(reqList);
     } catch (err: any) {
@@ -207,13 +237,17 @@ export default function UnitKerjaKatalogPage() {
   // Filter List Options
   const plantOptions = useMemo(() => {
     const set = new Set<string>();
-    equipments.forEach((eq) => set.add(eq.plant));
+    equipments.forEach((eq) => {
+      if (typeof eq.plant === "string") set.add(eq.plant);
+    });
     return ["Semua", ...Array.from(set)];
   }, [equipments]);
 
   const categoryOptions = useMemo(() => {
     const set = new Set<string>();
-    equipments.forEach((eq) => set.add(eq.object_type_name));
+    equipments.forEach((eq) => {
+      if (typeof eq.object_type_name === "string") set.add(eq.object_type_name);
+    });
     return ["Semua", ...Array.from(set)];
   }, [equipments]);
 
