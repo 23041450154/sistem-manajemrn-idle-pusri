@@ -609,58 +609,6 @@ export async function getIdleReasons() {
 	}
 }
 
-export async function createObjectType(name: string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-
-	try {
-		const res = await fetch(`${API_URL}/api/object-types`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${token}`,
-			},
-			body: JSON.stringify({ name }),
-		});
-
-		if (!res.ok) {
-			const errorData = await res.json().catch(() => null);
-			return {
-				success: false,
-				message: errorData?.message || `HTTP Error ${res.status}`,
-			};
-		}
-		return { success: true };
-	} catch (error: any) {
-		console.error("Create object type error:", error);
-		return { success: false, message: error.message };
-	}
-}
-
-export async function deleteObjectType(id: string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-
-	try {
-		const res = await fetch(`${API_URL}/api/object-types/${id}`, {
-			method: "DELETE",
-			headers: { Authorization: `Bearer ${token}` },
-		});
-
-		if (!res.ok) {
-			const errorData = await res.json().catch(() => null);
-			return {
-				success: false,
-				message: errorData?.message || `HTTP Error ${res.status}`,
-			};
-		}
-		return { success: true };
-	} catch (error: any) {
-		console.error("Delete object type error:", error);
-		return { success: false, message: error.message };
-	}
-}
-
 export async function getStorageLocations() {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
@@ -677,58 +625,6 @@ export async function getStorageLocations() {
 	} catch (error) {
 		console.error("Fetch storage locations error:", error);
 		return [];
-	}
-}
-
-export async function createStorageLocation(
-	name: string,
-	plant: string,
-	description: string,
-) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-
-	try {
-		const res = await fetch(`${API_URL}/api/storage-locations`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${token}`,
-			},
-			body: JSON.stringify({ name, plant, description }),
-		});
-		if (!res.ok) {
-			const errorData = await res.json().catch(() => null);
-			return {
-				success: false,
-				message: errorData?.message || `HTTP Error ${res.status}`,
-			};
-		}
-		return { success: true };
-	} catch (error: any) {
-		return { success: false, message: error.message };
-	}
-}
-
-export async function deleteStorageLocation(id: number | string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-
-	try {
-		const res = await fetch(`${API_URL}/api/storage-locations/${id}`, {
-			method: "DELETE",
-			headers: { Authorization: `Bearer ${token}` },
-		});
-		if (!res.ok) {
-			const errorData = await res.json().catch(() => null);
-			return {
-				success: false,
-				message: errorData?.message || `HTTP Error ${res.status}`,
-			};
-		}
-		return { success: true };
-	} catch (error: any) {
-		return { success: false, message: error.message };
 	}
 }
 
@@ -755,7 +651,7 @@ export async function getRequireActions() {
 	];
 
 	try {
-		const res = await fetch(`${API_URL}/api/require-actions`, {
+		const res = await fetch(`${API_URL}/api/require-action`, {
 			headers: { Authorization: `Bearer ${token}` },
 			cache: "no-store",
 		});
@@ -765,54 +661,6 @@ export async function getRequireActions() {
 	} catch (error) {
 		console.error("Fetch require actions error:", error);
 		return fallbackActions;
-	}
-}
-
-export async function createRequireAction(name: string, description: string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-
-	try {
-		const res = await fetch(`${API_URL}/api/require-actions`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${token}`,
-			},
-			body: JSON.stringify({ name, description }),
-		});
-		if (!res.ok) {
-			const errorData = await res.json().catch(() => null);
-			return {
-				success: false,
-				message: errorData?.message || `HTTP Error ${res.status}`,
-			};
-		}
-		return { success: true };
-	} catch (error: any) {
-		return { success: false, message: error.message };
-	}
-}
-
-export async function deleteRequireAction(id: number | string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-
-	try {
-		const res = await fetch(`${API_URL}/api/require-actions/${id}`, {
-			method: "DELETE",
-			headers: { Authorization: `Bearer ${token}` },
-		});
-		if (!res.ok) {
-			const errorData = await res.json().catch(() => null);
-			return {
-				success: false,
-				message: errorData?.message || `HTTP Error ${res.status}`,
-			};
-		}
-		return { success: true };
-	} catch (error: any) {
-		return { success: false, message: error.message };
 	}
 }
 
