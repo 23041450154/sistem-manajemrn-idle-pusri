@@ -21,6 +21,7 @@ import {
 	updateEquipment,
 	getEquipments,
 	getObjectTypes,
+	getPlants,
 	getStorageLocations,
 } from "@/action/api";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -49,6 +50,7 @@ export default function RegisterEquipmentPage() {
 	const [objectTypes, setObjectTypes] = useState<
 		{ id: number; name: string }[]
 	>([]);
+	const [plants, setPlants] = useState<{ id: number; name: string }[]>([]);
 	const [storageLocations, setStorageLocations] = useState<
 		{ id: number; name: string }[]
 	>([]);
@@ -58,35 +60,36 @@ export default function RegisterEquipmentPage() {
 		equipmentCode: "",
 		name: "",
 		funcLoc: "",
-		plant: "",
+		plantId: "",
 		objectTypeId: "",
 		vendor: "",
 		year: new Date().getFullYear().toString(),
 		originalValue: "",
-		idleReasonId: "",
+		idleReason: "",
 		storageLocationId: "",
 		notes: "",
 	});
 
 	useEffect(() => {
 		async function loadData() {
-			const [objs, locs, equipments] = await Promise.all([
+			const [objs, plantsList, equipments] = await Promise.all([
 				getObjectTypes(),
-				getStorageLocations(),
+				getPlants(),
 				editId ? getEquipments() : Promise.resolve([]),
 			]);
 			setObjectTypes(objs);
-			setStorageLocations(locs);
+			setPlants(plantsList);
 
 			// ponytail: backend equipment shape belum punya DTO frontend bersama.
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			const found = equipments.find((item: any) => String(item.id) === editId);
 			if (found) {
+				const plantId = String(found.id_plant || "");
 				setFormData({
 					equipmentCode: found.equipment_code || "",
 					name: found.name || "",
 					funcLoc: found.func_loc || found.funcloc || "",
-					plant: found.plant || "",
+					plantId,
 					objectTypeId: String(
 						found.object_type_id ||
 							found.id_object_type ||
@@ -98,9 +101,8 @@ export default function RegisterEquipmentPage() {
 					originalValue: found.original_value
 						? Number(found.original_value).toLocaleString("id-ID")
 						: "",
-					idleReasonId: String(
-						found.id_idle_reason || found.idle_reason_id || "",
-					),
+					idleReason:
+						found.idle_declaration?.idle_reason || found.idle_reason || "",
 					storageLocationId: String(
 						found.storage_location_id ||
 							found.id_storage_location ||
@@ -109,6 +111,9 @@ export default function RegisterEquipmentPage() {
 					),
 					notes: found.notes || "",
 				});
+				if (plantId) {
+					getStorageLocations(plantId).then(setStorageLocations);
+				}
 			}
 		}
 		loadData();
@@ -129,6 +134,21 @@ export default function RegisterEquipmentPage() {
 		if (name === "originalValue") {
 			const rawValue = value.replace(/\D/g, "");
 			value = rawValue ? parseInt(rawValue, 10).toLocaleString("id-ID") : "";
+		}
+
+		if (name === "plantId") {
+			setFormData((prev) => ({
+				...prev,
+				plantId: value,
+				storageLocationId: "",
+			}));
+			if (value) {
+				getStorageLocations(value).then(setStorageLocations);
+			} else {
+				setStorageLocations([]);
+			}
+			setTouched((prev) => ({ ...prev, plantId: true }));
+			return;
 		}
 
 		// Jika user mengisi form lain (misal nama), kita anggap equipmentCode otomatis "touched" agar tervalidasi
@@ -210,8 +230,8 @@ export default function RegisterEquipmentPage() {
 			!formData.equipmentCode ||
 			!formData.name ||
 			!formData.objectTypeId ||
-			!formData.plant ||
-			!formData.idleReasonId
+			!formData.plantId ||
+			!formData.idleReason
 		) {
 			setShowValidationErrors(true);
 			return;
@@ -225,7 +245,7 @@ export default function RegisterEquipmentPage() {
 				equipment_code: formData.equipmentCode,
 				name: formData.name,
 				func_loc: formData.funcLoc,
-				plant: formData.plant,
+				id_plant: Number(formData.plantId),
 				id_object_type: Number(formData.objectTypeId),
 				object_type_id: Number(formData.objectTypeId),
 				id_storage_location: Number(formData.storageLocationId),
@@ -233,7 +253,7 @@ export default function RegisterEquipmentPage() {
 				vendor: formData.vendor,
 				year: Number(formData.year) || new Date().getFullYear(),
 				original_value: Number(formData.originalValue.replace(/\./g, "")) || 0,
-				id_idle_reason: formData.idleReasonId,
+				idle_reason: formData.idleReason,
 				notes: formData.notes,
 			});
 
@@ -268,7 +288,7 @@ export default function RegisterEquipmentPage() {
 		fd.append("equipment_code", formData.equipmentCode);
 		fd.append("name", formData.name);
 		fd.append("id_object_type", formData.objectTypeId);
-		fd.append("plant", formData.plant);
+		fd.append("id_plant", formData.plantId);
 		fd.append("id_storage_location", formData.storageLocationId);
 		fd.append("func_loc", formData.funcLoc);
 		fd.append("vendor", formData.vendor);
@@ -280,7 +300,7 @@ export default function RegisterEquipmentPage() {
 			"original_value",
 			String(Number(formData.originalValue.replace(/\./g, "")) || 0),
 		);
-		fd.append("id_idle_reason", formData.idleReasonId);
+		fd.append("idle_reason", formData.idleReason);
 		fd.append("notes", formData.notes);
 		for (const file of uploadedFiles) fd.append("photo", file);
 
@@ -510,6 +530,35 @@ export default function RegisterEquipmentPage() {
 							</div>
 							<div className="space-y-1.5 lg:col-span-2">
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+									PABRIK / PLANT <span className="text-red-500">*</span>
+								</label>
+								<select
+									onBlur={handleBlur}
+									name="plantId"
+									value={formData.plantId}
+									onChange={handleChange}
+									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white ${(showValidationErrors || touched.plantId) && !formData.plantId ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.plantId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
+								>
+									<option value="" disabled>
+										Pilih Pabrik...
+									</option>
+									{plants.map((p) => (
+										<option key={p.id} value={p.id} className="text-gray-900">
+											{p.name}
+										</option>
+									))}
+								</select>
+								{(showValidationErrors || touched.plantId) &&
+									!formData.plantId && (
+										<p className="text-[10px] text-red-500 mt-1 font-medium">
+											* Pabrik / Plant wajib dipilih.
+										</p>
+									)}
+							</div>
+
+							{/* Baris 3: Area */}
+							<div className="space-y-1.5 lg:col-span-1">
+								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									LOKASI PENYIMPANAN
 								</label>
 								<select
@@ -517,10 +566,13 @@ export default function RegisterEquipmentPage() {
 									name="storageLocationId"
 									value={formData.storageLocationId}
 									onChange={handleChange}
-									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white ${!formData.storageLocationId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
+									disabled={!formData.plantId}
+									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white disabled:bg-gray-50 disabled:cursor-not-allowed ${!formData.storageLocationId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
 								>
 									<option value="" disabled>
-										Pilih Lokasi Simpan...
+										{formData.plantId
+											? "Pilih Lokasi Simpan..."
+											: "Pilih Pabrik dulu..."}
 									</option>
 									{storageLocations.map((loc: { id: number; name: string }) => (
 										<option
@@ -532,41 +584,6 @@ export default function RegisterEquipmentPage() {
 										</option>
 									))}
 								</select>
-							</div>
-
-							{/* Baris 3: Area */}
-							<div className="space-y-1.5 lg:col-span-1">
-								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-									PABRIK / PLANT <span className="text-red-500">*</span>
-								</label>
-								<select
-									onBlur={handleBlur}
-									name="plant"
-									value={formData.plant}
-									onChange={handleChange}
-									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white ${(showValidationErrors || touched.plant) && !formData.plant ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.plant ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
-								>
-									<option value="" disabled>
-										Pilih Pabrik...
-									</option>
-									<option value="P-IIB" className="text-gray-900">
-										Pusri IIB
-									</option>
-									<option value="P-III" className="text-gray-900">
-										Pusri III
-									</option>
-									<option value="P-IV" className="text-gray-900">
-										Pusri IV
-									</option>
-									<option value="UTILITY" className="text-gray-900">
-										Utility
-									</option>
-								</select>
-								{(showValidationErrors || touched.plant) && !formData.plant && (
-									<p className="text-[10px] text-red-500 mt-1 font-medium">
-										* Pabrik / Plant wajib dipilih.
-									</p>
-								)}
 							</div>
 							<div className="space-y-1.5 lg:col-span-2">
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
@@ -676,18 +693,19 @@ export default function RegisterEquipmentPage() {
 								<input
 									type="text"
 									onBlur={handleBlur}
-									name="idleReasonId"
-									value={formData.idleReasonId}
+									name="idleReason"
+									value={formData.idleReason}
 									onChange={handleChange}
 									placeholder="Masukkan Alasan Idle..."
 									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all ${
-										(showValidationErrors || touched.idleReasonId) && !formData.idleReasonId
+										(showValidationErrors || touched.idleReason) &&
+										!formData.idleReason
 											? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10 text-gray-900"
 											: "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
 									}`}
 								/>
-								{(showValidationErrors || touched.idleReasonId) &&
-									!formData.idleReasonId && (
+								{(showValidationErrors || touched.idleReason) &&
+									!formData.idleReason && (
 										<p className="text-[10px] text-red-500 mt-1.5 font-medium">
 											* Alasan idle wajib diisi.
 										</p>
