@@ -54,7 +54,27 @@ export default function PerbaikanAlatPage() {
     setIsLoading(true);
     try {
       const data = await getEquipments();
-      const completedIds: string[] = JSON.parse(localStorage.getItem("completed_maintenance_ids") || "[]");
+      const completedIdsRaw: string[] = JSON.parse(localStorage.getItem("completed_maintenance_ids") || "[]");
+
+      let completedIds = [...completedIdsRaw];
+      if (Array.isArray(data)) {
+        let cleaned = false;
+        data.forEach((item: any) => {
+          const isMaintenance =
+            item.status_id === 6 ||
+            item.status?.id === 6 ||
+            String(item.status?.name || "").toUpperCase() === "MAINTENANCE" ||
+            String(item.statusAset || "").toUpperCase() === "MAINTENANCE" ||
+            String(item.statusAset || "").toUpperCase() === "DALAM_PERBAIKAN";
+          if (isMaintenance && completedIds.includes(String(item.id))) {
+            completedIds = completedIds.filter((id) => id !== String(item.id));
+            cleaned = true;
+          }
+        });
+        if (cleaned) {
+          localStorage.setItem("completed_maintenance_ids", JSON.stringify(completedIds));
+        }
+      }
 
       let filteredData: MaintenanceEquipment[] = [];
 

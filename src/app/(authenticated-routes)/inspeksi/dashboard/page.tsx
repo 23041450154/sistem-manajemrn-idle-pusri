@@ -39,7 +39,7 @@ export default async function InspeksiDashboardPage() {
   // Basic stats processing
   const totalAssets = equipments.length;
   // Count assets where status (from backend enum) might be IDLE or condition is bad
-  const idleAssets = equipments.filter((eq: any) => eq.status?.name === "IDLE" || eq.is_utilizable === false).length; 
+  const idleAssets = equipments.filter((eq: any) => eq.status?.name === "IDLE" || eq.status?.name === "READY_TO_USE" || eq.is_utilizable === false).length; 
   
   // Pending Inspection requests
   const pendingInspeksi = approvals.filter((a: any) => a.current_step === "INSPEKSI_TEKNIK" && a.approval_status === "PENDING");

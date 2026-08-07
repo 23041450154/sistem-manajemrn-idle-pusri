@@ -31,7 +31,7 @@ export default function InspeksiAntreanPage() {
         if (result && result.length > 0) {
           let idleEqs = result.filter((eq: any) => {
             const statusStr = typeof eq.status === 'string' ? eq.status : eq.status?.name;
-            return statusStr === "IDLE";
+            return statusStr === "IDLE" || statusStr === "READY_TO_USE";
           });
           setData(idleEqs);
         } else {
