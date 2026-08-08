@@ -8,7 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: var(--font-plex-mono);
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -39,13 +39,27 @@
   --color-popover: var(--popover);
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
-  --radius-sm: calc(var(--radius) * 0.6);
-  --radius-md: calc(var(--radius) * 0.8);
+  /* DESIGN.md radius scale — LOCKED.
+     Square-leaning: 4px base. Steps stay near-square by design;
+     rounded-xl/2xl must not reintroduce pill geometry on data surfaces. */
+  --radius-sm: 2px;
+  --radius-md: 3px;
   --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
+  --radius-xl: 6px;
+  --radius-2xl: 8px;
+  --radius-3xl: 10px;
+  --radius-4xl: 12px;
+
+  /* DESIGN.md status hues — five workflow states, no sixth. */
+  --color-state-registered: #0556b3;
+  --color-state-repair: #b45309;
+  --color-state-ready: #059669;
+  --color-state-rejected: #dc2626;
+  --color-state-disposal: #475569;
+
+  /* DESIGN.md brand slots (documented exception to palette row 102). */
+  --color-brand: #0a356a;
+  --color-brand-hover: #0556b3;
 }
 
 :root {
@@ -72,7 +86,7 @@
   --chart-3: oklch(0.546 0.245 262.881);
   --chart-4: oklch(0.488 0.243 264.376);
   --chart-5: oklch(0.424 0.199 265.638);
-  --radius: 0.625rem;
+  --radius: 4px;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0.008 326);
   --sidebar-primary: oklch(0.546 0.245 262.881);
@@ -128,6 +142,29 @@
   html {
     @apply font-sans;
     overflow-x: hidden;
+  }
+
+  /* DESIGN.md accessibility: visible focus on every interactive element. */
+  :where(a, button, input, select, textarea, [tabindex]):focus-visible {
+    outline: 2px solid #334155;
+    outline-offset: 1px;
+  }
+
+  /* DESIGN.md typography: rupiah columns and equipment codes align by digit. */
+  table :where(td, th) {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* DESIGN.md motion: operational data must stay legible under reduced motion. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
