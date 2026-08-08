@@ -338,7 +338,7 @@ export default function RegisterEquipmentPage() {
 			"Pabrik (Plant)",
 			"Area (FuncLoc)",
 			"Vendor / Merk",
-			"Tahun Dibuat",
+			"Tahun Perolehan",
 			"Nilai Perolehan (Rp)",
 			"Alasan Idle",
 			"Catatan Tambahan",
@@ -619,7 +619,7 @@ export default function RegisterEquipmentPage() {
 							</div>
 							<div className="space-y-1.5">
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-									TAHUN DIBUAT
+									TAHUN PEROLEHAN
 								</label>
 								<input
 									type="number"

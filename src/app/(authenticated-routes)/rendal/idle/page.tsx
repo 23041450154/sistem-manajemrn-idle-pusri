@@ -163,7 +163,7 @@ export default function RendalIdlePage() {
 					id: item.id?.toString() || "-",
 					kodeAlat: item.equipment_code,
 					namaAlat: item.name,
-					plant: item.plant,
+					plant: item.plant?.name || "-",
 					jenisAlat: objectTypeName,
 					tanggalRegistrasi: item.created_at
 						? new Date(item.created_at).toISOString().split("T")[0]
@@ -176,7 +176,7 @@ export default function RendalIdlePage() {
 					year: item.year || "-",
 					originalValue: item.original_value || 0,
 					notes: item.notes || "-",
-					idleReason: item.idle_declaration?.idle_reason || "-",
+					idleReason: item.idle_reason || "-",
 					photos: item.attachments
 						? item.attachments
 								.filter(
@@ -805,7 +805,7 @@ export default function RendalIdlePage() {
 									</div>
 									<div>
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Tahun Dibuat
+											Tahun Perolehan
 										</p>
 										<p className="text-sm font-medium text-gray-800">
 											{detailModal.year || "-"}
@@ -876,7 +876,7 @@ export default function RendalIdlePage() {
 											Alasan Idle
 										</p>
 										<p className="text-sm font-medium text-gray-800 leading-relaxed">
-											{detailModal.idleReason || "-"}
+											{detailModal.idleReason || "Tidak ada alasan idle."}
 										</p>
 									</div>
 									<div className="col-span-2">

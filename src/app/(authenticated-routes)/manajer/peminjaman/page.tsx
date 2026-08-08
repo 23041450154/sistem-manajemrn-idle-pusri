@@ -90,112 +90,16 @@ export default function ManajerPeminjamanPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  const mockFallbackRequests: ReuseRequest[] = [
-    {
-      id: "REQ-2026-001",
-      request_number: "REQ/2026/08/001",
-      equipment_id: "EQ-1001",
-      equipment_code: "PUMP-CENT-01",
-      equipment_name: "Centrifugal Slurry Pump 45kW",
-      requesting_unit: "Unit Keramahan Lingkungan & Utilitas",
-      target_plant: "PUSRI-III",
-      start_date: "2026-08-15",
-      end_date: "2026-11-15",
-      justification: "Penggantian darurat pompa eksisting di Plant PUSRI-III yang mengalami breakdown bantalan poros utama.",
-      estimated_cost_avoidance: 145000000,
-      contact_person: "Bambang Soetjipto",
-      contact_npp: "NPP-88412",
-      contact_phone: "0812-7890-1234",
-      status: "PENDING",
-      created_at: "2026-08-05",
-      history: [
-        {
-          id: "h1",
-          title: "Pengajuan Dibuat",
-          description: "Pengajuan peminjaman didaftarkan oleh Bambang Soetjipto.",
-          timestamp: "2026-08-05T09:30:00Z",
-          user: "Bambang Soetjipto",
-        },
-      ],
-    },
-    {
-      id: "REQ-2026-002",
-      request_number: "REQ/2026/08/002",
-      equipment_id: "EQ-1002",
-      equipment_code: "COMP-TURB-02",
-      equipment_name: "Air Compressor Turbine High Pressure",
-      requesting_unit: "Unit Pemeliharaan Listrik & Instrument",
-      target_plant: "PUSRI-IIB",
-      start_date: "2026-09-01",
-      end_date: "2026-12-01",
-      justification: "Dibutuhkan sebagai unit cadangan (standby unit) selama masa Turn Around (TA) PUSRI-IIB.",
-      estimated_cost_avoidance: 320000000,
-      contact_person: "Dedi Kurniawan",
-      contact_npp: "NPP-91204",
-      contact_phone: "0813-6789-4321",
-      status: "IN_REVIEW",
-      created_at: "2026-08-04",
-      history: [
-        {
-          id: "h1",
-          title: "Pengajuan Dibuat",
-          description: "Pengajuan peminjaman didaftarkan oleh Dedi Kurniawan.",
-          timestamp: "2026-08-04T11:20:00Z",
-          user: "Dedi Kurniawan",
-        },
-      ],
-    },
-    {
-      id: "REQ-2026-003",
-      request_number: "REQ/2026/08/003",
-      equipment_id: "EQ-1003",
-      equipment_code: "VALV-CTRL-09",
-      equipment_name: "Pneumatic Control Valve 6-Inch ANSI 600",
-      requesting_unit: "Unit Operasi Amoniak STG-1",
-      target_plant: "STG-1",
-      start_date: "2026-07-20",
-      end_date: "2026-10-20",
-      justification: "Pemasangan sementara untuk stabilisasi jalur uap tekanan tinggi.",
-      estimated_cost_avoidance: 85000000,
-      contact_person: "Ahmad Rizky",
-      contact_npp: "NPP-95012",
-      contact_phone: "0811-2233-4455",
-      status: "APPROVED",
-      created_at: "2026-07-18",
-      history: [
-        {
-          id: "h1",
-          title: "Pengajuan Dibuat",
-          description: "Pengajuan dibuat oleh Ahmad Rizky.",
-          timestamp: "2026-07-18T10:00:00Z",
-          user: "Ahmad Rizky",
-        },
-        {
-          id: "h2",
-          title: "Persetujuan Manajer",
-          description: "Pengajuan telah disetujui oleh Manajer Rendal Pemeliharaan.",
-          timestamp: "2026-07-19T08:45:00Z",
-          user: "Manajer Rendal",
-        },
-      ],
-    },
-  ];
-
   const fetchRequests = async () => {
     setIsLoading(true);
     try {
       const data = await getReuseRequests();
-      if (data && data.length > 0) {
-        setRequests(data);
-        setFilteredRequests(data);
-      } else {
-        setRequests(mockFallbackRequests);
-        setFilteredRequests(mockFallbackRequests);
-      }
+      setRequests(data || []);
+      setFilteredRequests(data || []);
     } catch (e) {
       console.error("Error fetching reuse requests:", e);
-      setRequests(mockFallbackRequests);
-      setFilteredRequests(mockFallbackRequests);
+      setRequests([]);
+      setFilteredRequests([]);
     } finally {
       setIsLoading(false);
     }

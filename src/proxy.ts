@@ -62,6 +62,8 @@ export function proxy(request: NextRequest) {
         isAllowed = false;
       } else if (pathname.startsWith('/rendal') && role !== 'RENDAL_PEMELIHARAAN') {
         isAllowed = false;
+      } else if (pathname.startsWith('/pemeliharaan') && role !== 'PEMELIHARAAN_LAPANGAN') {
+        isAllowed = false;
       } else if (pathname.startsWith('/inspeksi') && role !== 'INSPEKSI_TEKNIK') {
         isAllowed = false;
       } else if (pathname.startsWith('/manajer') && role !== 'MANAJER_RENDAL') {

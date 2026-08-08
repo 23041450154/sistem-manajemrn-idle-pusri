@@ -23,7 +23,9 @@ import {
 	X,
 	ShieldCheck,
 	ChevronDown,
-	ChevronRight,
+  ChevronRight,
+	Factory,
+  Cog
 } from "lucide-react";
 import { useSidebar } from "./SidebarProvider";
 import { useState } from "react";
@@ -57,71 +59,18 @@ export function Sidebar({ role }: { role?: string }) {
 			mainNavItems = [
 				{ name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
 				{ name: "Peralatan", href: "/rendal/idle", icon: Wrench },
-				{
-					name: "Perbaikan Alat",
-					href: "/rendal/perbaikan-alat",
-					icon: Wrench,
-				},
 				{ name: "Laporan Audit", href: "/rendal/laporan", icon: ShieldCheck },
 			];
 			break;
 
-		case "INSPEKSI_TEKNIK":
-			// Placeholder: Inspeksi Teknik
+		case "PEMELIHARAAN_LAPANGAN":
+			// Pemeliharaan: hanya perbaikan alat
 			mainNavItems = [
-				{
-					name: "Dashboard",
-					href: "/inspeksi/dashboard",
-					icon: LayoutDashboard,
-				},
-				{
-					name: "Validasi Kelayakan",
-					href: "/inspeksi/validasi",
-					icon: Wrench,
-				},
-				{
-					name: "Revisi Validasi",
-					href: "/inspeksi/revisi-validasi",
-					icon: Edit,
-				},
-				{
-					name: "Inspeksi",
-					href: "/inspeksi/inspeksi-berkala",
-					icon: ClipboardCheck,
-				},
-			];
-			break;
-    case "RENDAL_PEMELIHARAAN":
-      // Placeholder: Rendal Pemeliharaan
-      mainNavItems = [
-        { name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
-        { name: "Peralatan", href: "/rendal/idle", icon: Wrench },
-        { name: "Perbaikan Alat", href: "/rendal/perbaikan-alat", icon: Wrench },
-        { name: "Verifikasi Disposal", href: "/rendal/disposal", icon: Trash2 },
-        { name: "Laporan Audit", href: "/rendal/laporan", icon: ShieldCheck },
-      ];
-      break;
-
-    case "INSPEKSI_TEKNIK":
-      // Placeholder: Inspeksi Teknik
-      mainNavItems = [
-        { name: "Dashboard", href: "/inspeksi/dashboard", icon: LayoutDashboard },
-        { name: "List Equipment", href: "/inspeksi/validasi", icon: Wrench },
-        { name: "Revisi Validasi", href: "/inspeksi/revisi-validasi", icon: Edit },
-        { name: "Inspeksi", href: "/inspeksi/inspeksi-berkala", icon: ClipboardCheck },
-      ];
-      break;
-		case "RENDAL_PEMELIHARAAN":
-			// Placeholder: Rendal Pemeliharaan
-			mainNavItems = [
-				{ name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
-				{ name: "Peralatan", href: "/rendal/idle", icon: Wrench },
 				{
 					name: "Perbaikan Alat",
-					href: "/rendal/perbaikan-alat",
+					href: "/pemeliharaan/perbaikan-alat",
 					icon: Wrench,
 				},
-				{ name: "Laporan Audit", href: "/rendal/laporan", icon: ShieldCheck },
 			];
 			break;
 
@@ -165,6 +114,11 @@ export function Sidebar({ role }: { role?: string }) {
 					icon: CheckSquare,
 				},
 				{
+					name: "Persetujuan Peminjaman",
+					href: "/manajer/peminjaman",
+					icon: Wrench,
+				},
+				{
 					name: "Persetujuan Disposal",
 					href: "/manajer/disposal",
 					icon: Trash2,
@@ -181,6 +135,11 @@ export function Sidebar({ role }: { role?: string }) {
 					name: "Dashboard",
 					href: "/unit-kerja/dashboard",
 					icon: LayoutDashboard,
+        },
+        {
+          name: "Katalog Aset",
+					href: "/unit-kerja/katalog",
+					icon: Cog,
 				},
 				// { name: "Idle Equipment", href: "/unit-kerja/idle", icon: PowerOff },
 				{

@@ -459,27 +459,69 @@ export async function getApprovalById(id: string) {
 	}
 }
 
+// getValidations mengambil daftar validasi (GET /api/validation), opsional per equipment.
+// Dipakai untuk menampilkan Nomor Pemeriksaan yang digenerate backend.
+export async function getValidations(equipmentId?: string | number) {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+
+	const url = equipmentId
+		? `${API_URL}/api/validation?equipment_id=${equipmentId}`
+		: `${API_URL}/api/validation`;
+
+	try {
+		const res = await fetch(url, {
+			headers: { Authorization: `Bearer ${token}` },
+			cache: "no-store",
+		});
+		if (!res.ok) return [];
+		const json = await res.json();
+		return json.data || [];
+	} catch (error) {
+		console.error("Fetch validations error:", error);
+		return [];
+	}
+}
+
 export async function validateEquipment(
 	id: string,
-	isUtilizable: boolean,
+	_isUtilizable: boolean,
 	conditionId: number,
 	notes: string,
+	opts?: {
+		startAt?: string;
+		endAt?: string;
+		followupRecommendation?: string;
+		photos?: File[];
+	},
 ) {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 
+	// Backend POST /api/validation menerima multipart (request.ValidationRequest),
+	// termasuk photos yang disimpan sebagai attachment reference_type "validations".
+	// Status lanjutan (VALIDATED / REPAIR / SCRAP) ditentukan backend dari condition_id.
+	const today = new Date().toISOString().split("T")[0];
+	const formData = new FormData();
+	formData.append("equipment_id", String(id));
+	formData.append("condition_id", String(conditionId));
+	formData.append("start_at", opts?.startAt || today);
+	formData.append("end_at", opts?.endAt || opts?.startAt || today);
+	formData.append("notes", notes);
+	if (opts?.followupRecommendation) {
+		formData.append("followup_recommendation", opts.followupRecommendation);
+	}
+	for (const photo of opts?.photos ?? []) {
+		formData.append("photos", photo);
+	}
+
 	try {
-		const res = await fetch(`${API_URL}/api/equipment/${id}/validate`, {
-			method: "PATCH",
+		const res = await fetch(`${API_URL}/api/validation`, {
+			method: "POST",
 			headers: {
-				"Content-Type": "application/json",
 				Authorization: `Bearer ${token}`,
 			},
-			body: JSON.stringify({
-				is_utilizable: isUtilizable,
-				id_condition: conditionId,
-				notes,
-			}),
+			body: formData,
 		});
 
 		if (!res.ok) {
@@ -490,7 +532,8 @@ export async function validateEquipment(
 			};
 		}
 
-		return { success: true };
+		const json = await res.json().catch(() => null);
+		return { success: true, data: json?.data };
 	} catch (error: any) {
 		console.error("Validate equipment error:", error);
 		return { success: false, message: error.message };
@@ -1408,18 +1451,47 @@ export async function createReuseRequest(payload: {
 
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
 
-	const installationLoc = payload.installation_location || payload.installationLocation || payload.requesting_unit || "";
+	const installationLoc =
+		payload.installation_location ||
+		payload.installationLocation ||
+		payload.requesting_unit ||
+		"";
 	const bodyData = {
-		equipmentId: Number(payload.equipment_id) || Number(payload.equipmentId) || 0,
-		requestNumber: payload.request_number || payload.requestNumber || `REQ-REUSE-${Date.now()}`,
+		equipmentId:
+			Number(payload.equipment_id) || Number(payload.equipmentId) || 0,
+		requestNumber:
+			payload.request_number ||
+			payload.requestNumber ||
+			`REQ-REUSE-${Date.now()}`,
 		requestType: "REUSE",
-		requestingProject: payload.target_plant || payload.requesting_project || payload.requestingProject || "Proyek Reuse",
-		requestingPlant: payload.target_plant || payload.requestingPlant || payload.requesting_plant || "Plant PUSRI IB",
+		requestingProject:
+			payload.target_plant ||
+			payload.requesting_project ||
+			payload.requestingProject ||
+			"Proyek Reuse",
+		requestingPlant:
+			payload.target_plant ||
+			payload.requestingPlant ||
+			payload.requesting_plant ||
+			"Plant PUSRI IB",
 		installationLocation: installationLoc,
-		reuseDate: payload.start_date || payload.reuseDate || new Date().toISOString().split("T")[0],
-		estimatedNewPurchaseCost: Number(payload.estimated_new_purchase_cost) || Number(payload.estimatedNewPurchaseCost) || Number(payload.estimated_cost_avoidance) || 0,
-		refurbishmentCost: Number(payload.refurbishment_cost) || Number(payload.refurbishmentCost) || 0,
-		estimatedCostAvoidance: Number(payload.estimated_cost_avoidance) || Number(payload.estimatedCostAvoidance) || 0,
+		reuseDate:
+			payload.start_date ||
+			payload.reuseDate ||
+			new Date().toISOString().split("T")[0],
+		estimatedNewPurchaseCost:
+			Number(payload.estimated_new_purchase_cost) ||
+			Number(payload.estimatedNewPurchaseCost) ||
+			Number(payload.estimated_cost_avoidance) ||
+			0,
+		refurbishmentCost:
+			Number(payload.refurbishment_cost) ||
+			Number(payload.refurbishmentCost) ||
+			0,
+		estimatedCostAvoidance:
+			Number(payload.estimated_cost_avoidance) ||
+			Number(payload.estimatedCostAvoidance) ||
+			0,
 		justification: payload.justification || "-",
 		notes: payload.notes || payload.justification || "-",
 	};
@@ -1457,7 +1529,6 @@ export async function createReuseRequest(payload: {
 		}
 
 		if (!res.ok) {
-			const errorData = await res.json().catch(() => null);
 			return {
 				success: true,
 				message: "Permintaan penggunaan kembali (reuse) berhasil dikirim.",
@@ -1473,7 +1544,9 @@ export async function createReuseRequest(payload: {
 		const responseData = await res.json().catch(() => null);
 		return {
 			success: true,
-			message: responseData?.message || "Permintaan penggunaan kembali (reuse) berhasil diajukan.",
+			message:
+				responseData?.message ||
+				"Permintaan penggunaan kembali (reuse) berhasil diajukan.",
 			data: responseData?.data || responseData,
 		};
 	} catch (error: any) {
@@ -1519,11 +1592,24 @@ export async function getReuseRequests() {
 		const list = json.data || json || [];
 		if (Array.isArray(list)) {
 			return list
-				.filter((item: any) => !item.request_type || item.request_type === "REUSE" || item.requestType === "REUSE")
+				.filter(
+					(item: any) =>
+						!item.request_type ||
+						item.request_type === "REUSE" ||
+						item.requestType === "REUSE",
+				)
 				.map((item: any) => ({
 					...item,
-					installation_location: item.installation_location || item.installationLocation || item.requesting_unit || "Lokasi Instalasi Utama",
-					installationLocation: item.installation_location || item.installationLocation || item.requesting_unit || "Lokasi Instalasi Utama",
+					installation_location:
+						item.installation_location ||
+						item.installationLocation ||
+						item.requesting_unit ||
+						"Lokasi Instalasi Utama",
+					installationLocation:
+						item.installation_location ||
+						item.installationLocation ||
+						item.requesting_unit ||
+						"Lokasi Instalasi Utama",
 				}));
 		}
 		return [];
@@ -1591,7 +1677,6 @@ export async function updateReuseRequestStatus(
 		});
 
 		if (!res.ok) {
-			const errorData = await res.json().catch(() => null);
 			// Fallback mock success if endpoint not active yet
 			return {
 				success: true,

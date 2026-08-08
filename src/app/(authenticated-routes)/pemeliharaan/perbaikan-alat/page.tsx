@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
 import { getEquipments, completeEquipmentMaintenance } from "@/action/api";
 import {
   Wrench,
@@ -29,7 +28,6 @@ interface MaintenanceEquipment {
 const INITIAL_MAINTENANCE_SAMPLES: MaintenanceEquipment[] = [];
 
 export default function PerbaikanAlatPage() {
-  const router = useRouter();
   const [equipments, setEquipments] = useState<MaintenanceEquipment[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
@@ -253,7 +251,6 @@ export default function PerbaikanAlatPage() {
 
         setTimeout(() => {
           setNotification(null);
-          router.push("/rendal/idle");
         }, 2000);
       } else {
         setNotification({

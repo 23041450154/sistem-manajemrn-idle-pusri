@@ -4,6 +4,7 @@
 export const ROLES = [
   "ADMIN",
   "RENDAL_PEMELIHARAAN",
+  "PEMELIHARAAN_LAPANGAN",
   "INSPEKSI_TEKNIK",
   "MANAJER_RENDAL",
   "UNIT_KERJA_OPERASI",
@@ -20,6 +21,7 @@ export const DEFAULT_ROLE: Role = "UNIT_KERJA_OPERASI";
 export const ROLE_HOME: Record<Role, string> = {
   ADMIN: "/admin/dashboard",
   RENDAL_PEMELIHARAAN: "/rendal/dashboard",
+  PEMELIHARAAN_LAPANGAN: "/pemeliharaan/perbaikan-alat",
   INSPEKSI_TEKNIK: "/inspeksi/dashboard",
   MANAJER_RENDAL: "/manajer/dashboard",
   UNIT_KERJA_OPERASI: "/unit-kerja/dashboard",
@@ -29,6 +31,7 @@ export const ROLE_HOME: Record<Role, string> = {
 export const ROLE_LABEL: Record<Role, string> = {
   ADMIN: "Administrator",
   RENDAL_PEMELIHARAAN: "Rendal Pemeliharaan",
+  PEMELIHARAAN_LAPANGAN: "Pemeliharaan Lapangan",
   INSPEKSI_TEKNIK: "Inspeksi Teknik",
   MANAJER_RENDAL: "Manajer Rendal",
   UNIT_KERJA_OPERASI: "Unit Kerja Operasi",
