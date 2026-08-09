@@ -72,7 +72,7 @@ export async function getDisposals() {
 						scrap_value: item.scrap_value || 0,
 						book_value: item.equipment?.book_value || 0,
 						original_value: item.equipment?.original_value || 0,
-						plant: item.equipment?.plant || "-",
+						plant: item.equipment?.plant?.description || item.equipment?.plant?.name || "-",
 						justification: item.justification || "-",
 						status: item.approval_status || "PENDING",
 						created_at: item.created_at || new Date().toISOString(),
@@ -178,7 +178,7 @@ export async function getDisposals() {
 				scrap_value: eq.estimated_reuse_value || 0,
 				book_value: eq.book_value || 0,
 				original_value: eq.original_value || 0,
-				plant: eq.plant_description || eq.plant || ins.equipment?.plant || "-",
+				plant: eq.plant_description || eq.plant?.description || eq.plant?.name || ins.equipment?.plant?.description || ins.equipment?.plant?.name || "-",
 				justification:
 					ins.notes ||
 					`${ins.mechanical_condition || ""} ${ins.electrical_condition || ""}`.trim() ||
@@ -216,7 +216,7 @@ export async function getDisposals() {
 							scrap_value: eq.estimated_reuse_value || 0,
 							book_value: eq.book_value || 0,
 							original_value: eq.original_value || 0,
-							plant: eq.plant_description || eq.plant || "-",
+							plant: eq.plant_description || eq.plant?.description || eq.plant?.name || "-",
 							justification: "Pengajuan usulan scrap dari Manajer Rendal.",
 							status: status,
 							created_at: app.request_date,
