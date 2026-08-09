@@ -449,3 +449,4 @@ Gradient biru dengan icon di kiri dan tombol close di kanan.
 | [rendal/idle/page.tsx](file:///C:/projek/fe/src/app/(authenticated-routes)/rendal/idle/page.tsx) | ✅ Aligned |
 | [rendal/disposal/page.tsx](file:///C:/projek/fe/src/app/(authenticated-routes)/rendal/disposal/page.tsx) | ✅ Aligned |
 | [rendal/laporan/page.tsx](file:///C:/projek/fe/src/app/(authenticated-routes)/rendal/laporan/page.tsx) | ✅ Aligned |
+| [rendal/validasi-ulang/page.tsx](file:///C:/projek/fe/src/app/(authenticated-routes)/rendal/validasi-ulang/page.tsx) | ✅ Aligned |

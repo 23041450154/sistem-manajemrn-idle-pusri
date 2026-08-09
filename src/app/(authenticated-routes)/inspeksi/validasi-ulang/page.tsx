@@ -13,6 +13,8 @@ import {
 	AlertCircle,
 	Save,
 	XCircle,
+	Wrench,
+	Trash2,
 } from "lucide-react";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -63,6 +65,13 @@ export default function ValidasiUlangPage() {
 			]);
 			setConditions(conditionsData || []);
 
+			const completedMaintenanceIds: string[] = JSON.parse(
+				localStorage.getItem("completed_maintenance_ids") || "[]",
+			);
+			const revalidatedIds: string[] = JSON.parse(
+				localStorage.getItem("revalidated_equipment_ids") || "[]",
+			);
+
 			let filtered: RevalidasiItem[] = [];
 
 			if (Array.isArray(data) && data.length > 0) {
@@ -70,11 +79,13 @@ export default function ValidasiUlangPage() {
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					.filter((item: any) => {
 						const statusName = String(item.status?.name || "").toUpperCase();
-						return (
+						const isRepairCompleted =
 							item.status_id === 4 ||
 							item.status?.id === 4 ||
-							statusName === "REPAIR_COMPLETED"
-						);
+							statusName === "REPAIR_COMPLETED";
+						const isLocallyCompleted = completedMaintenanceIds.includes(String(item.id));
+						const isNotRevalidatedYet = !revalidatedIds.includes(String(item.id));
+						return (isRepairCompleted || isLocallyCompleted) && isNotRevalidatedYet;
 					})
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					.map((item: any) => {
@@ -206,15 +217,55 @@ export default function ValidasiUlangPage() {
 		setIsSubmitting(true);
 		setModalError(null);
 		try {
+			const selectedConditionObj = conditions.find((c) => String(c.id) === String(conditionId));
+			const conditionNameUpper = String(selectedConditionObj?.name || "").toUpperCase();
+
+			const isBagus = conditionNameUpper === "BAGUS" || conditionNameUpper === "BAIK";
+			const isScrap = conditionNameUpper === "RUSAK_BERAT";
+
 			const result = await createRevalidation(selectedAsset.id, Number(conditionId), {
 				notes,
 				followupRecommendation,
 			});
+
 			if (result.success) {
-				setNotification({
-					type: "success",
-					message: `Re-validasi ${selectedAsset.kodeAlat} berhasil disimpan.`,
-				});
+				const revalidatedIds: string[] = JSON.parse(
+					localStorage.getItem("revalidated_equipment_ids") || "[]",
+				);
+				const completedMaintenanceIds: string[] = JSON.parse(
+					localStorage.getItem("completed_maintenance_ids") || "[]",
+				);
+
+				if (isBagus) {
+					// 1. BAGUS -> Naik ke REVALIDATION (menunggu persetujuan Rendal)
+					if (!revalidatedIds.includes(selectedAsset.id)) {
+						revalidatedIds.push(selectedAsset.id);
+						localStorage.setItem("revalidated_equipment_ids", JSON.stringify(revalidatedIds));
+					}
+					setNotification({
+						type: "success",
+						message: `Validasi ulang ${selectedAsset.kodeAlat} berhasil: Kondisi BAGUS, status naik ke REVALIDATION (diteruskan ke Rendal untuk persetujuan Ready to Use).`,
+					});
+				} else if (isScrap) {
+					// 2. RUSAK BERAT -> Dialihkan ke SCRAP / Disposal
+					const updatedCompleted = completedMaintenanceIds.filter((id) => id !== selectedAsset.id);
+					localStorage.setItem("completed_maintenance_ids", JSON.stringify(updatedCompleted));
+					setNotification({
+						type: "error",
+						message: `Validasi ulang ${selectedAsset.kodeAlat}: Dinyatakan RUSAK BERAT dan berstatus SCRAP (Rekomendasi Disposal).`,
+					});
+				} else {
+					// 3. RUSAK RINGAN / RUSAK SEDANG -> Kembali ke antrean REPAIR Pemeliharaan Lapangan
+					const updatedCompleted = completedMaintenanceIds.filter((id) => id !== selectedAsset.id);
+					localStorage.setItem("completed_maintenance_ids", JSON.stringify(updatedCompleted));
+					const updatedReval = revalidatedIds.filter((id) => id !== selectedAsset.id);
+					localStorage.setItem("revalidated_equipment_ids", JSON.stringify(updatedReval));
+					setNotification({
+						type: "error",
+						message: `Validasi ulang ${selectedAsset.kodeAlat}: Masih RUSAK (${selectedConditionObj?.name.replace(/_/g, " ")}), status kembali ke REPAIR untuk perbaikan ulang.`,
+					});
+				}
+
 				handleCloseModal();
 				loadData();
 			} else {
@@ -582,13 +633,75 @@ export default function ValidasiUlangPage() {
 									<option value="">— Pilih Kondisi —</option>
 									{conditions.map((c) => (
 										<option key={c.id} value={c.id}>
-											{c.name}
+											{c.name.replace(/_/g, " ").replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase())}
 										</option>
 									))}
 								</select>
-								<p className="text-[10px] text-gray-400 mt-1">
-									BAGUS → naik ke REVALIDATION (approval Manajer) · Rusak Ringan/Sedang → kembali ke REPAIR · Rusak Berat → SCRAP
-								</p>
+
+								{/* Dynamic Impact Indicator Card */}
+								{conditionId ? (
+									<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
+										{(() => {
+											const selObj = conditions.find((c) => String(c.id) === String(conditionId));
+											const nameUpper = String(selObj?.name || "").toUpperCase();
+
+											if (nameUpper === "BAGUS" || nameUpper === "BAIK") {
+												return (
+													<div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs text-emerald-900 flex items-start gap-2.5 shadow-xs">
+														<CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+														<div>
+															<p className="font-bold text-emerald-900">
+																BAGUS → Status Naik ke REVALIDATION
+															</p>
+															<p className="text-[11px] text-emerald-700 mt-0.5 leading-relaxed">
+																Perbaikan dinyatakan berhasil. Aset akan diteruskan ke <strong>Rendal Pemeliharaan</strong> untuk persetujuan status <strong>Ready to Use</strong>.
+															</p>
+														</div>
+													</div>
+												);
+											}
+
+											if (nameUpper === "RUSAK_BERAT") {
+												return (
+													<div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-900 flex items-start gap-2.5 shadow-xs">
+														<Trash2 className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+														<div>
+															<p className="font-bold text-red-900">
+																RUSAK BERAT → Status Dialihkan ke SCRAP
+															</p>
+															<p className="text-[11px] text-red-700 mt-0.5 leading-relaxed">
+																Kerusakan berat dan tidak ekonomis diperbaiki. Aset direkomendasikan untuk proses usulan <strong>Disposal / Penghapusan</strong>.
+															</p>
+														</div>
+													</div>
+												);
+											}
+
+											return (
+												<div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900 flex items-start gap-2.5 shadow-xs">
+													<Wrench className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+													<div>
+														<p className="font-bold text-amber-900">
+															RUSAK (Ringan/Sedang) → Status Kembali ke REPAIR
+														</p>
+														<p className="text-[11px] text-amber-700 mt-0.5 leading-relaxed">
+															Aset masih mengalami kendala teknis dan akan dikembalikan ke antrean perbaikan <strong>Pemeliharaan Lapangan</strong>.
+														</p>
+													</div>
+												</div>
+											);
+										})()}
+									</div>
+								) : (
+									<div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-[11px] text-gray-500 leading-normal">
+										<p className="font-semibold text-gray-700 mb-0.5">Panduan Keputusan Validasi Ulang:</p>
+										<ul className="space-y-0.5 list-disc list-inside text-[10px]">
+											<li><strong className="text-emerald-700">BAGUS</strong>: Naik ke REVALIDATION (persetujuan Rendal)</li>
+											<li><strong className="text-amber-700">Rusak Ringan/Sedang</strong>: Kembali ke REPAIR (antrean perbaikan)</li>
+											<li><strong className="text-red-700">Rusak Berat</strong>: Dialihkan ke SCRAP (usulan disposal)</li>
+										</ul>
+									</div>
+								)}
 							</div>
 
 							{/* Catatan */}

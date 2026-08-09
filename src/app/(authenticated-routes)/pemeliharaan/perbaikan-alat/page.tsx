@@ -117,15 +117,15 @@ export default function PerbaikanAlatPage() {
 								: item.created_at
 									? new Date(item.created_at).toISOString().split("T")[0]
 									: new Date().toISOString().split("T")[0],
-							statusAset: isCompletedLocally ? "READY TO REUSE" : "MAINTENANCE",
-							statusId: isCompletedLocally ? 5 : 6,
+							statusAset: isCompletedLocally ? "REPAIR_COMPLETED" : "MAINTENANCE",
+							statusId: isCompletedLocally ? 4 : 6,
 						};
 					});
 			}
 
 			const sampleItems = INITIAL_MAINTENANCE_SAMPLES.map((sample) => {
 				if (completedIds.includes(sample.id)) {
-					return { ...sample, statusAset: "READY TO REUSE", statusId: 5 };
+					return { ...sample, statusAset: "REPAIR_COMPLETED", statusId: 4 };
 				}
 				return sample;
 			}).filter((sample) => !filteredData.some((f) => f.id === sample.id));
@@ -278,7 +278,7 @@ export default function PerbaikanAlatPage() {
 			if (result.success) {
 				setNotification({
 					type: "success",
-					message: "Peralatan berhasil diselesaikan perbaikannya dan berstatus READY_TO_REUSE",
+					message: "Perbaikan peralatan berhasil dicatat. Status aset kini REPAIR_COMPLETED dan diteruskan ke Inspeksi Teknik untuk Validasi Ulang.",
 				});
 
 				const completedIds: string[] = JSON.parse(localStorage.getItem("completed_maintenance_ids") || "[]");
@@ -289,7 +289,7 @@ export default function PerbaikanAlatPage() {
 
 				setEquipments((prev) =>
 					prev.map((item) =>
-						item.id === selectedAsset.id ? { ...item, statusAset: "READY TO REUSE", statusId: 5 } : item,
+						item.id === selectedAsset.id ? { ...item, statusAset: "REPAIR_COMPLETED", statusId: 4 } : item,
 					),
 				);
 				setIsModalOpen(false);
@@ -529,10 +529,10 @@ export default function PerbaikanAlatPage() {
 										</td>
 										<td className="px-3 py-3 text-center">
 											<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
-												{asset.statusAset === "READY TO REUSE" ? (
-													<span className="inline-flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all shadow-sm">
+												{asset.statusAset === "REPAIR_COMPLETED" || asset.statusAset === "READY TO REUSE" ? (
+													<span className="inline-flex items-center justify-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all shadow-sm">
 														<CheckCircle2 className="w-3 h-3" />
-														Selesai
+														Menunggu Validasi Ulang
 													</span>
 												) : (
 													<button

@@ -51,13 +51,19 @@ export default function RiwayatPerbaikanPage() {
 				filtered = data
 					.filter((item: any) => {
 						const statusName = String(item.status?.name || "").toUpperCase();
-						const isReadyToReuse =
+						const isFinished =
+							item.status_id === 4 ||
 							item.status_id === 5 ||
+							item.status_id === 6 ||
+							item.status?.id === 4 ||
 							item.status?.id === 5 ||
+							item.status?.id === 6 ||
+							statusName === "REPAIR_COMPLETED" ||
+							statusName === "REVALIDATION" ||
 							statusName === "READY_TO_REUSE" ||
-							statusName === "READY TO REUSE";
+							statusName === "READY TO USE";
 						const isCompletedLocally = completedIds.includes(String(item.id));
-						return isReadyToReuse || isCompletedLocally;
+						return isFinished || isCompletedLocally;
 					})
 					.map((item: any) => {
 						const plantStr = typeof item.plant === "string" ? item.plant : item.plant?.name || "-";

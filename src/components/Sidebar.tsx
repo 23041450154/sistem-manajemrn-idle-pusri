@@ -57,10 +57,11 @@ export function Sidebar({ role }: { role?: string }) {
 			break;
 
 		case "RENDAL_PEMELIHARAAN":
-			// Placeholder: Rendal Pemeliharaan
+			// Rendal Pemeliharaan
 			mainNavItems = [
 				{ name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
 				{ name: "Peralatan", href: "/rendal/idle", icon: Wrench },
+				{ name: "Persetujuan Validasi Ulang", href: "/rendal/validasi-ulang", icon: CheckSquare },
 				{ name: "Laporan Audit", href: "/rendal/laporan", icon: ShieldCheck },
 			];
 			break;
