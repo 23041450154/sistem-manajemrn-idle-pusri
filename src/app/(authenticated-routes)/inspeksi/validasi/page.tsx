@@ -90,6 +90,7 @@ interface Asset {
 	vendor: string;
 	tahunDibuat: string;
 	nilaiPerolehan: string;
+	kondisi: string;
 	pemohon: string;
 }
 
@@ -163,6 +164,11 @@ export default function ManajemenInspeksi() {
 						nilaiPerolehan: item.original_value
 							? `Rp ${Number(item.original_value).toLocaleString("id-ID")}`
 							: "Rp 0",
+						kondisi: (() => {
+							const c = typeof item.condition === "string" ? item.condition : item.condition?.name;
+							if (!c) return "-";
+							return c.replace(/_/g, " ").replace(/\w\S*/g, (txt: string) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+						})(),
 						pemohon: (() => {
 							const p = item.created_by_npp || currentUserNPP;
 							return /^\d/.test(p) ? `NPP${p}` : p;
@@ -228,8 +234,7 @@ export default function ManajemenInspeksi() {
 				];
 				const finalAssets = mappedWithApproval.filter(
 					(a: any) =>
-						!excludedStatuses.includes(a.statusAset) &&
-						a.statusPersetujuan !== "NEED_REVISION",
+						!excludedStatuses.includes(a.statusAset),
 				);
 
 				setAssets(finalAssets);
@@ -1632,7 +1637,7 @@ export default function ManajemenInspeksi() {
 											</option>
 											{conditionOptions.map((condition) => (
 												<option key={condition.id} value={condition.id}>
-													{condition.name}
+													{condition.name.replace(/_/g, " ").replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase())}
 												</option>
 											))}
 										</select>
@@ -2020,7 +2025,7 @@ export default function ManajemenInspeksi() {
 										Lokasi Gudang:
 									</p>
 									<p className="text-[12px] font-bold text-gray-900">
-										Storage Area B
+										{selectedAsset.lokasiPenyimpanan}
 									</p>
 								</div>
 								<div>
@@ -2028,35 +2033,35 @@ export default function ManajemenInspeksi() {
 										Pabrikan / Vendor:
 									</p>
 									<p className="text-[12px] font-bold text-gray-900">
-										Atlas Copco
+										{selectedAsset.vendor}
 									</p>
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">
 										Tahun Pembuatan:
 									</p>
-									<p className="text-[12px] font-bold text-gray-900">2015</p>
+									<p className="text-[12px] font-bold text-gray-900">{selectedAsset.tahunDibuat}</p>
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">
 										Nilai Perolehan (IDR):
 									</p>
 									<p className="text-[12px] font-bold text-gray-900">
-										Rp 300,000,000
+										{selectedAsset.nilaiPerolehan}
 									</p>
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">
 										Kondisi Fisik:
 									</p>
-									<p className="text-[12px] font-bold text-gray-900">BAGUS</p>
+									<p className="text-[12px] font-bold text-gray-900">{selectedAsset.kondisi}</p>
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">
 										Didaftarkan Oleh:
 									</p>
 									<p className="text-[12px] font-bold text-gray-900">
-										NPP2304145
+										{selectedAsset.pemohon}
 									</p>
 								</div>
 								<div>

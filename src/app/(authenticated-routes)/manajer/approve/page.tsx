@@ -423,7 +423,7 @@ export default function ManajerApprovePage() {
 	);
 
 	return (
-		<div className="max-w-7xl mx-auto pt-6 pb-8 px-6">
+		<div className="max-w-7xl mx-auto pt-2 pb-8">
 			{/* Toast */}
 			{notification && (
 				<div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">

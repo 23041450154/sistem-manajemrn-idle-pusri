@@ -453,7 +453,7 @@ export default function RegisterEquipmentPage() {
 									name="equipmentCode"
 									value={formData.equipmentCode}
 									onChange={handleChange}
-									placeholder="P-102-MKN"
+									placeholder="Masukkan kode aset..."
 									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all ${(showValidationErrors || touched.equipmentCode) && !formData.equipmentCode ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
 								/>
 								{(showValidationErrors || touched.equipmentCode) &&
@@ -481,7 +481,7 @@ export default function RegisterEquipmentPage() {
 									name="name"
 									value={formData.name}
 									onChange={handleChange}
-									placeholder="Contoh: Centrifugal Pump P-102"
+									placeholder="Masukkan nama peralatan..."
 									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all ${(showValidationErrors || touched.name) && !formData.name ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : formData.name.length >= 150 ? "border-orange-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 bg-orange-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
 								/>
 								{(showValidationErrors || touched.name) && !formData.name && (
@@ -595,7 +595,7 @@ export default function RegisterEquipmentPage() {
 									name="funcLoc"
 									value={formData.funcLoc}
 									onChange={handleChange}
-									placeholder="Masukkan Functional Location..."
+									placeholder="Masukkan functional location..."
 									className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded outline-none transition-all focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
 								/>
 							</div>
@@ -613,7 +613,7 @@ export default function RegisterEquipmentPage() {
 									name="vendor"
 									value={formData.vendor}
 									onChange={handleChange}
-									placeholder="KSB Indonesia"
+									placeholder="Masukkan vendor / merk..."
 									className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0556B3] outline-none transition-all"
 								/>
 							</div>

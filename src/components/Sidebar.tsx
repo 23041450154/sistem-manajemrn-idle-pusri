@@ -25,7 +25,9 @@ import {
 	ChevronDown,
   ChevronRight,
 	Factory,
-  Cog
+  Cog,
+  History,
+  RefreshCw,
 } from "lucide-react";
 import { useSidebar } from "./SidebarProvider";
 import { useState } from "react";
@@ -64,12 +66,22 @@ export function Sidebar({ role }: { role?: string }) {
 			break;
 
 		case "PEMELIHARAAN_LAPANGAN":
-			// Pemeliharaan: hanya perbaikan alat
+			// Pemeliharaan: dashboard, perbaikan alat & riwayat
 			mainNavItems = [
+				{
+					name: "Dashboard",
+					href: "/pemeliharaan/dashboard",
+					icon: LayoutDashboard,
+				},
 				{
 					name: "Perbaikan Alat",
 					href: "/pemeliharaan/perbaikan-alat",
 					icon: Wrench,
+				},
+				{
+					name: "Riwayat Perbaikan",
+					href: "/pemeliharaan/riwayat-perbaikan",
+					icon: History,
 				},
 			];
 			break;
@@ -88,14 +100,14 @@ export function Sidebar({ role }: { role?: string }) {
 					icon: Wrench,
 				},
 				{
-					name: "Revisi Validasi",
-					href: "/inspeksi/revisi-validasi",
-					icon: Edit,
-				},
-				{
 					name: "Inspeksi",
 					href: "/inspeksi/inspeksi-berkala",
 					icon: ClipboardCheck,
+				},
+				{
+					name: "Validasi Ulang",
+					href: "/inspeksi/validasi-ulang",
+					icon: RefreshCw,
 				},
 			];
 			break;

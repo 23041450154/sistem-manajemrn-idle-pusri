@@ -8,6 +8,19 @@ const API_URL =
 	process.env.API_URL ||
 	"https://api.testing.naufal.me";
 
+/** Safely extract a string from a value that may be a nested object. */
+function str(val: unknown): string | undefined {
+	if (val == null) return undefined;
+	if (typeof val === "string") return val;
+	if (typeof val === "number") return String(val);
+	if (typeof val === "object" && val !== null) {
+		const obj = val as Record<string, unknown>;
+		if (typeof obj.name === "string") return obj.name;
+		if (typeof obj.description === "string") return obj.description;
+	}
+	return String(val);
+}
+
 export type MasterItem = {
 	id: number;
 	name: string;
@@ -47,9 +60,12 @@ export async function getMasterItems(slug: string): Promise<MasterItem[]> {
 		if (!res.ok) return [];
 		const json = await res.json();
 		// idle_reason memakai reason_name; normalisasi ke `name` untuk UI.
+		// Defensively coerce name/description to strings — the API sometimes
+		// returns nested relation objects instead of scalars.
 		return (json.data || []).map((row: Record<string, unknown>) => ({
 			...row,
-			name: row[entity.nameField] ?? row.name,
+			name: str(row[entity.nameField] ?? row.name) ?? "",
+			description: str(row.description),
 		}));
 	} catch (error) {
 		console.error(`Fetch master ${slug} error:`, error);

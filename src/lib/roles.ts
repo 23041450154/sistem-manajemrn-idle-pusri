@@ -21,7 +21,7 @@ export const DEFAULT_ROLE: Role = "UNIT_KERJA_OPERASI";
 export const ROLE_HOME: Record<Role, string> = {
   ADMIN: "/admin/dashboard",
   RENDAL_PEMELIHARAAN: "/rendal/dashboard",
-  PEMELIHARAAN_LAPANGAN: "/pemeliharaan/perbaikan-alat",
+  PEMELIHARAAN_LAPANGAN: "/pemeliharaan/dashboard",
   INSPEKSI_TEKNIK: "/inspeksi/dashboard",
   MANAJER_RENDAL: "/manajer/dashboard",
   UNIT_KERJA_OPERASI: "/unit-kerja/dashboard",

@@ -540,6 +540,59 @@ export async function validateEquipment(
 	}
 }
 
+export async function createRevalidation(
+	equipmentId: string,
+	conditionId: number,
+	opts: {
+		startAt?: string;
+		endAt?: string;
+		notes?: string;
+		followupRecommendation?: string;
+		photos?: File[];
+	},
+) {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+
+	const today = new Date().toISOString().split("T")[0];
+	const formData = new FormData();
+	formData.append("equipment_id", String(equipmentId));
+	formData.append("condition_id", String(conditionId));
+	formData.append("start_at", opts?.startAt || today);
+	formData.append("end_at", opts?.endAt || opts?.startAt || today);
+	if (opts?.notes) formData.append("notes", opts.notes);
+	if (opts?.followupRecommendation) {
+		formData.append("followup_recommendation", opts.followupRecommendation);
+	}
+	for (const photo of opts?.photos ?? []) {
+		formData.append("photos", photo);
+	}
+
+	try {
+		const res = await fetch(`${API_URL}/api/revalidation`, {
+			method: "POST",
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+			body: formData,
+		});
+
+		if (!res.ok) {
+			const errorData = await res.json().catch(() => null);
+			return {
+				success: false,
+				message: errorData?.message || `HTTP Error ${res.status}`,
+			};
+		}
+
+		const json = await res.json().catch(() => null);
+		return { success: true, data: json?.data };
+	} catch (error: any) {
+		console.error("Create revalidation error:", error);
+		return { success: false, message: error.message };
+	}
+}
+
 export async function reviewApproval(
 	id: string,
 	action: string,
