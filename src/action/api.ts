@@ -288,7 +288,7 @@ export async function getDisposals() {
 					{
 						id: "att-3",
 						file_url:
-							"https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=600&q=80",
+							"https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80",
 						caption: "Nameplate Air Compressor",
 					},
 				],
