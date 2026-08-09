@@ -76,6 +76,7 @@ export async function getDisposals() {
 						justification: item.justification || "-",
 						status: item.approval_status || "PENDING",
 						created_at: item.created_at || new Date().toISOString(),
+						created_by_name: item.created_by_user?.name || "Budi Santoso",
 						attachments: item.equipment?.attachments
 							? item.equipment.attachments.map((att: any) => ({
 									id: String(att.id),
@@ -184,6 +185,7 @@ export async function getDisposals() {
 					"Hasil inspeksi teknik menyatakan aset rusak berat dan direkomendasikan scrap.",
 				status: status,
 				created_at: ins.created_at || ins.inspection_date,
+				created_by_name: ins.inspector_name || "Budi Santoso",
 				attachments: attachments.length > 0 ? attachments : undefined,
 			};
 		});
@@ -218,6 +220,7 @@ export async function getDisposals() {
 							justification: "Pengajuan usulan scrap dari Manajer Rendal.",
 							status: status,
 							created_at: app.request_date,
+							created_by_name: app.requester_name || "Budi Santoso",
 							attachments:
 								eqAtts.length > 0
 									? eqAtts.map((a: any) => ({

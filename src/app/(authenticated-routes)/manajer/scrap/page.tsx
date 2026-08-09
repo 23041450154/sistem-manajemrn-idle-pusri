@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import { 
   Eye, X, CheckCircle2, RefreshCw, XCircle, 
-  Trash2, AlertTriangle, Loader2, Check, DollarSign, Tag, Search
+  Trash2, AlertTriangle, Loader2, Check, DollarSign, Tag, Search,
+  FileText, Clock
 } from "lucide-react";
 import { getDisposals, approveDisposal } from "@/action/api";
 
@@ -22,6 +23,7 @@ interface DisposalItem {
   status: string; // PENDING, DISPOSED, REJECTED
   created_at: string;
   attachments?: { id?: string; file_url: string; caption?: string }[];
+  created_by_name?: string;
 }
 
 export default function ManajerScrapPage() {
@@ -445,8 +447,34 @@ export default function ManajerScrapPage() {
                 <div>
                   <p className="text-[13px] font-bold">Usulan Permintaan Scrap Aset</p>
                   <p className="text-[12px] text-amber-800 mt-0.5 leading-relaxed">
-                    Aset ini telah dinyatakan <strong>&quot;Rusak Berat&quot;</strong> oleh tim teknik dan diusulkan untuk scrap oleh Staf Rendal. Penandatanganan digital Manajer Rendal diperlukan untuk legalitas.
+                    Aset ini telah dinyatakan <strong>&quot;Rusak Berat&quot;</strong> berdasarkan hasil inspeksi teknik dan telah diajukan oleh Rendal Pemeliharaan untuk proses scrap. Persetujuan Manajer Rendal diperlukan sebelum usulan dapat diproses lebih lanjut.
                   </p>
+                </div>
+              </div>
+
+              {/* Informasi Pengajuan */}
+              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-4">
+                  <FileText className="w-4 h-4 text-[#0A356A]" />
+                  <h3 className="text-[14px] font-bold text-gray-900">Informasi Pengajuan</h3>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase">No. Pengajuan</p>
+                    <p className="text-[13px] font-bold text-gray-900 mt-0.5">{selectedDisposal.disposal_number}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase">Tanggal Pengajuan</p>
+                    <p className="text-[13px] font-bold text-gray-900 mt-0.5">{formatDate(selectedDisposal.created_at)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase">Diajukan Oleh</p>
+                    <p className="text-[13px] font-bold text-gray-900 mt-0.5">{selectedDisposal.created_by_name || "Budi Santoso"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase">Jabatan</p>
+                    <p className="text-[13px] font-bold text-gray-900 mt-0.5">Rendal Pemeliharaan</p>
+                  </div>
                 </div>
               </div>
 
@@ -493,10 +521,52 @@ export default function ManajerScrapPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-[12px] font-bold text-gray-700 mb-1.5">Justifikasi / Alasan Permintaan Scrap:</p>
+                  <p className="text-[12px] font-bold text-gray-700 mb-1.5">Alasan/Justifikasi Usulan Scrap:</p>
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-[13px] text-gray-800 leading-relaxed italic">
                     &quot;{selectedDisposal.justification || "Tidak ada rincian justifikasi."}&quot;
                   </div>
+                </div>
+              </div>
+
+              {/* Dasar Rekomendasi / History */}
+              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-4">
+                  <Clock className="w-4 h-4 text-[#0A356A]" />
+                  <h3 className="text-[14px] font-bold text-gray-900">Dasar Rekomendasi & Riwayat Proses</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-[12px]">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-gray-400 font-semibold uppercase tracking-wider">
+                        <th className="pb-2">Tahapan</th>
+                        <th className="pb-2">Oleh</th>
+                        <th className="pb-2">Hasil / Tindakan</th>
+                        <th className="pb-2">Tanggal</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 text-gray-700">
+                      <tr>
+                        <td className="py-2.5 font-bold">Inspeksi Teknik</td>
+                        <td className="py-2.5">Tim Inspeksi Teknik</td>
+                        <td className="py-2.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100">
+                            Rusak Berat
+                          </span>
+                        </td>
+                        <td className="py-2.5">{formatDate(selectedDisposal.created_at)}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 font-bold">Pengajuan Scrap</td>
+                        <td className="py-2.5">{selectedDisposal.created_by_name || "Budi Santoso"} (Rendal Pemeliharaan)</td>
+                        <td className="py-2.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                            Diajukan
+                          </span>
+                        </td>
+                        <td className="py-2.5">{formatDate(selectedDisposal.created_at)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -551,7 +621,7 @@ export default function ManajerScrapPage() {
                     className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[13px] font-bold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
                   >
                     <XCircle className="w-4 h-4" />
-                    Tolak Permintaan
+                    Tolak Pengajuan
                   </button>
 
                   <button
@@ -581,11 +651,20 @@ export default function ManajerScrapPage() {
               <CheckCircle2 className="w-7 h-7" />
             </div>
 
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Konfirmasi Persetujuan Scrap</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Setujui Pengajuan Scrap?</h3>
 
-            <p className="text-[13px] text-gray-600 mb-6 leading-relaxed">
-              Apakah Anda yakin ingin menyetujui permohonan scrap aset ini? Status aset di inventaris akan diubah menjadi <strong className="text-emerald-700 font-bold font-mono">SCRAP</strong>.
-            </p>
+            <div className="text-[13px] text-gray-600 mb-6 leading-relaxed text-left w-full bg-gray-50 p-4 rounded-xl space-y-2 border border-gray-100">
+              <p>Anda akan menyetujui usulan scrap untuk:</p>
+              <div className="font-bold text-gray-900">
+                <p>{selectedDisposal.equipment_code}</p>
+                <p>{selectedDisposal.equipment_name}</p>
+              </div>
+              <div className="pt-2 border-t border-gray-200 mt-2">
+                <p className="text-[11px] uppercase text-gray-400 font-semibold">Estimasi Nilai Scrap</p>
+                <p className="text-[16px] font-extrabold text-emerald-700">{formatCurrency(selectedDisposal.scrap_value)}</p>
+              </div>
+              <p className="text-[11px] text-gray-400 italic pt-1">Setelah disetujui, pengajuan akan diteruskan ke proses berikutnya.</p>
+            </div>
 
             <div className="flex items-center gap-3 w-full justify-center">
               <button
@@ -606,7 +685,7 @@ export default function ManajerScrapPage() {
                     <span>Memproses...</span>
                   </>
                 ) : (
-                  "Ya, Setujui"
+                  "Setujui Scrap"
                 )}
               </button>
             </div>
@@ -628,23 +707,23 @@ export default function ManajerScrapPage() {
                 <XCircle className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-gray-900">Tolak Permintaan Scrap</h3>
+                <h3 className="text-base font-bold text-gray-900">Tolak Pengajuan Scrap?</h3>
                 <p className="text-[12px] text-gray-500 font-medium">{selectedDisposal.equipment_code}</p>
               </div>
             </div>
 
             <p className="text-[13px] text-gray-600 mb-4 leading-relaxed">
-              Silakan tuliskan alasan penolakan secara jelas. Catatan ini akan dikirimkan kepada tim Rendal.
+              Pengajuan scrap untuk aset <strong className="text-gray-900">{selectedDisposal.equipment_code} – {selectedDisposal.equipment_name}</strong> akan ditolak.
             </p>
 
             <div className="mb-6">
               <label className="block text-[12px] font-bold text-gray-800 mb-1.5">
-                Alasan Penolakan <span className="text-red-500">* (Wajib diisi)</span>
+                Alasan Penolakan <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Tulis alasan penolakan permintaan scrap di sini..."
+                placeholder="Tulis alasan penolakan pengajuan scrap di sini..."
                 rows={4}
                 className="w-full p-3 border border-gray-300 rounded-xl text-[13px] focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-colors resize-none placeholder:text-gray-400 text-gray-800"
               />
@@ -675,7 +754,7 @@ export default function ManajerScrapPage() {
                     <span>Mengirim...</span>
                   </>
                 ) : (
-                  "Kirim Penolakan"
+                  "Tolak Pengajuan"
                 )}
               </button>
             </div>
