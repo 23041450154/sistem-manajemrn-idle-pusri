@@ -241,14 +241,9 @@ export default function PemeliharaanDashboardPage() {
 	];
 
 	return (
-		<div className="max-w-[1400px] mx-auto pt-2 pb-8 px-4 sm:px-6 lg:px-8 font-sans flex flex-col gap-6">
+		<div className="max-w-7xl mx-auto pt-2 pb-8 flex flex-col gap-6">
 			{/* ===== Header ===== */}
 			<div className="border-b border-gray-200 pb-5">
-				<div className="flex items-center gap-2 text-sm text-gray-500 mb-2">
-					<span>Pemeliharaan Lapangan</span>
-					<ChevronRight className="w-4 h-4" />
-					<span className="text-[#0A356A] font-semibold">Dashboard</span>
-				</div>
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
 					<div>
 						<h1 className="text-2xl font-bold text-[#0A356A] tracking-tight flex items-center gap-2.5">

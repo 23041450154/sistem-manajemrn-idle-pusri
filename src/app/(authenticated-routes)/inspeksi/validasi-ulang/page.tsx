@@ -65,34 +65,25 @@ export default function ValidasiUlangPage() {
 			]);
 			setConditions(conditionsData || []);
 
-			const completedMaintenanceIds: string[] = JSON.parse(
-				localStorage.getItem("completed_maintenance_ids") || "[]",
-			);
-			const revalidatedIds: string[] = JSON.parse(
-				localStorage.getItem("revalidated_equipment_ids") || "[]",
-			);
-
 			let filtered: RevalidasiItem[] = [];
 
 			if (Array.isArray(data) && data.length > 0) {
 				filtered = data
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					.filter((item: any) => {
-						const statusName = String(item.status?.name || "").toUpperCase();
+						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
 						const isRepairCompleted =
 							item.status_id === 4 ||
 							item.status?.id === 4 ||
 							statusName === "REPAIR_COMPLETED";
-						const isLocallyCompleted = completedMaintenanceIds.includes(String(item.id));
-						const isNotRevalidatedYet = !revalidatedIds.includes(String(item.id));
-						return (isRepairCompleted || isLocallyCompleted) && isNotRevalidatedYet;
+						return isRepairCompleted;
 					})
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					.map((item: any) => {
 						const plantStr =
 							typeof item.plant === "string"
 								? item.plant
-								: item.plant?.name || "-";
+								: item.plant?.name || item.plant?.description || "-";
 						const storageStr =
 							typeof item.storage_location === "string"
 								? item.storage_location
@@ -108,11 +99,11 @@ export default function ValidasiUlangPage() {
 
 						return {
 							id: String(item.id),
-							kodeAlat: item.equipment_code || "-",
+							kodeAlat: item.equipment_code || item.kodeAlat || "-",
 							namaAlat:
 								typeof item.name === "string"
 									? item.name
-									: item.name?.name || "-",
+									: item.name?.name || item.namaAlat || "-",
 							tipeObjek: objectTypeStr,
 							plant: plantStr,
 							lokasiPenyimpanan: storageStr,
@@ -121,7 +112,7 @@ export default function ValidasiUlangPage() {
 								? new Date(item.updated_at).toISOString().split("T")[0]
 								: item.created_at
 									? new Date(item.created_at).toISOString().split("T")[0]
-									: "-",
+									: new Date().toISOString().split("T")[0],
 						};
 					});
 			}
@@ -150,6 +141,7 @@ export default function ValidasiUlangPage() {
 			].sort(),
 		[items],
 	);
+
 	const tipeObjekOptions = useMemo(
 		() =>
 			[
@@ -157,15 +149,6 @@ export default function ValidasiUlangPage() {
 			].sort(),
 		[items],
 	);
-
-	const handleSearch = () => setSearchQuery(searchInput);
-
-	const handleReset = () => {
-		setSearchInput("");
-		setSearchQuery("");
-		setFilterPlant("");
-		setFilterTipeObjek("");
-	};
 
 	const filteredItems = useMemo(() => {
 		let result = items;
@@ -193,6 +176,15 @@ export default function ValidasiUlangPage() {
 		return filteredItems.slice(start, start + ITEMS_PER_PAGE);
 	}, [filteredItems, currentPage]);
 
+	const handleSearch = () => setSearchQuery(searchInput);
+
+	const handleReset = () => {
+		setSearchInput("");
+		setSearchQuery("");
+		setFilterPlant("");
+		setFilterTipeObjek("");
+	};
+
 	const handleOpenModal = (asset: RevalidasiItem) => {
 		setSelectedAsset(asset);
 		setConditionId("");
@@ -203,15 +195,20 @@ export default function ValidasiUlangPage() {
 	};
 
 	const handleCloseModal = () => {
-		if (isSubmitting) return;
 		setIsModalOpen(false);
-		setTimeout(() => setSelectedAsset(null), 200);
+		setSelectedAsset(null);
+		setConditionId("");
+		setNotes("");
+		setFollowupRecommendation("");
+		setModalError(null);
 	};
 
-	const handleSubmit = async () => {
-		if (!selectedAsset) return;
-		if (!conditionId) {
-			setModalError("Silakan pilih kondisi hasil pemeriksaan ulang.");
+	const handleSubmit = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!selectedAsset || !conditionId || isSubmitting) return;
+
+		if (!notes.trim()) {
+			setModalError("Catatan / temuan inspeksi wajib diisi.");
 			return;
 		}
 		setIsSubmitting(true);
@@ -229,50 +226,30 @@ export default function ValidasiUlangPage() {
 			});
 
 			if (result.success) {
-				const revalidatedIds: string[] = JSON.parse(
-					localStorage.getItem("revalidated_equipment_ids") || "[]",
-				);
-				const completedMaintenanceIds: string[] = JSON.parse(
-					localStorage.getItem("completed_maintenance_ids") || "[]",
-				);
-
 				if (isBagus) {
-					// 1. BAGUS -> Naik ke REVALIDATION (menunggu persetujuan Rendal)
-					if (!revalidatedIds.includes(selectedAsset.id)) {
-						revalidatedIds.push(selectedAsset.id);
-						localStorage.setItem("revalidated_equipment_ids", JSON.stringify(revalidatedIds));
-					}
 					setNotification({
 						type: "success",
-						message: `Validasi ulang ${selectedAsset.kodeAlat} berhasil: Kondisi BAGUS, status naik ke REVALIDATION (diteruskan ke Rendal untuk persetujuan Ready to Use).`,
+						message: `Validasi ulang ${selectedAsset.kodeAlat} berhasil disimpan: Kondisi BAGUS, status naik ke REVALIDATION (menunggu persetujuan Rendal).`,
 					});
 				} else if (isScrap) {
-					// 2. RUSAK BERAT -> Dialihkan ke SCRAP / Disposal
-					const updatedCompleted = completedMaintenanceIds.filter((id) => id !== selectedAsset.id);
-					localStorage.setItem("completed_maintenance_ids", JSON.stringify(updatedCompleted));
 					setNotification({
 						type: "error",
-						message: `Validasi ulang ${selectedAsset.kodeAlat}: Dinyatakan RUSAK BERAT dan berstatus SCRAP (Rekomendasi Disposal).`,
+						message: `Validasi ulang ${selectedAsset.kodeAlat} berhasil disimpan: Dinyatakan RUSAK BERAT dan berstatus SCRAP (Rekomendasi Scrap).`,
 					});
 				} else {
-					// 3. RUSAK RINGAN / RUSAK SEDANG -> Kembali ke antrean REPAIR Pemeliharaan Lapangan
-					const updatedCompleted = completedMaintenanceIds.filter((id) => id !== selectedAsset.id);
-					localStorage.setItem("completed_maintenance_ids", JSON.stringify(updatedCompleted));
-					const updatedReval = revalidatedIds.filter((id) => id !== selectedAsset.id);
-					localStorage.setItem("revalidated_equipment_ids", JSON.stringify(updatedReval));
 					setNotification({
 						type: "error",
-						message: `Validasi ulang ${selectedAsset.kodeAlat}: Masih RUSAK (${selectedConditionObj?.name.replace(/_/g, " ")}), status kembali ke REPAIR untuk perbaikan ulang.`,
+						message: `Validasi ulang ${selectedAsset.kodeAlat} berhasil disimpan: Masih RUSAK (${selectedConditionObj?.name.replace(/_/g, " ")}), status kembali ke REPAIR untuk perbaikan ulang.`,
 					});
 				}
 
 				handleCloseModal();
-				loadData();
+				await loadData();
 			} else {
-				setModalError(result.message || "Gagal menyimpan re-validasi.");
+				setModalError(result.message || "Gagal menyimpan re-validasi ke database.");
 			}
 		} catch (err: any) {
-			setModalError(err.message || "Terjadi kesalahan.");
+			setModalError(err.message || "Terjadi kesalahan koneksi ke database.");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -311,11 +288,11 @@ export default function ValidasiUlangPage() {
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
 					<span>Inspeksi Teknik</span>
 					<ChevronRight className="w-3.5 h-3.5" />
-					<span className="text-[#0A356A] font-semibold">Validasi Ulang</span>
+					<span className="text-[#0A356A] font-semibold">Validasi Perbaikan Alat</span>
 				</div>
 				<div className="flex items-center justify-between">
 					<h1 className="text-xl font-bold text-gray-900 tracking-tight">
-						Validasi Ulang
+						Validasi Perbaikan Alat
 					</h1>
 					<button
 						onClick={loadData}
@@ -460,7 +437,7 @@ export default function ValidasiUlangPage() {
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
-												Tidak Ada Aset untuk Validasi Ulang
+												Tidak Ada Aset untuk Validasi Perbaikan Alat
 											</p>
 											<p className="text-[11px] text-gray-500 mt-1">
 												Aset yang selesai diperbaiki akan muncul di sini.
@@ -511,7 +488,7 @@ export default function ValidasiUlangPage() {
 													<button
 														onClick={() => handleOpenModal(asset)}
 														className="inline-flex items-center gap-1.5 bg-[#0A356A] hover:bg-[#062854] text-white px-3 py-1.5 rounded-md text-[13px] font-bold transition-all shadow-sm"
-														title="Validasi Ulang"
+														title="Validasi Perbaikan Alat"
 													>
 														<ClipboardCheck className="w-3.5 h-3.5" />
 														Validasi
@@ -575,7 +552,7 @@ export default function ValidasiUlangPage() {
 				</div>
 			</div>
 
-			{/* Modal Validasi Ulang */}
+			{/* Modal Validasi Perbaikan Alat */}
 			{isModalOpen && selectedAsset && (
 				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
 					<div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
@@ -586,7 +563,7 @@ export default function ValidasiUlangPage() {
 									<ClipboardCheck className="w-5 h-5 text-white" />
 								</div>
 								<div>
-									<h2 className="text-base font-bold text-white">Validasi Ulang</h2>
+									<h2 className="text-base font-bold text-white">Validasi Perbaikan Alat</h2>
 									<p className="text-xs text-blue-100">{selectedAsset.kodeAlat} — {selectedAsset.namaAlat}</p>
 								</div>
 							</div>
@@ -670,7 +647,7 @@ export default function ValidasiUlangPage() {
 																RUSAK BERAT → Status Dialihkan ke SCRAP
 															</p>
 															<p className="text-[11px] text-red-700 mt-0.5 leading-relaxed">
-																Kerusakan berat dan tidak ekonomis diperbaiki. Aset direkomendasikan untuk proses usulan <strong>Disposal / Penghapusan</strong>.
+																Kerusakan berat dan tidak ekonomis diperbaiki. Aset direkomendasikan untuk proses usulan <strong>Scrap / Penghapusan</strong>.
 															</p>
 														</div>
 													</div>
@@ -694,11 +671,11 @@ export default function ValidasiUlangPage() {
 									</div>
 								) : (
 									<div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-[11px] text-gray-500 leading-normal">
-										<p className="font-semibold text-gray-700 mb-0.5">Panduan Keputusan Validasi Ulang:</p>
+										<p className="font-semibold text-gray-700 mb-0.5">Panduan Keputusan Validasi Perbaikan Alat:</p>
 										<ul className="space-y-0.5 list-disc list-inside text-[10px]">
 											<li><strong className="text-emerald-700">BAGUS</strong>: Naik ke REVALIDATION (persetujuan Rendal)</li>
 											<li><strong className="text-amber-700">Rusak Ringan/Sedang</strong>: Kembali ke REPAIR (antrean perbaikan)</li>
-											<li><strong className="text-red-700">Rusak Berat</strong>: Dialihkan ke SCRAP (usulan disposal)</li>
+											<li><strong className="text-red-700">Rusak Berat</strong>: Dialihkan ke SCRAP (usulan scrap)</li>
 										</ul>
 									</div>
 								)}

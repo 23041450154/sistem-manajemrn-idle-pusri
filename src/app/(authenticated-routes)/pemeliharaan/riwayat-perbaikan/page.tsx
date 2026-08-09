@@ -41,16 +41,12 @@ export default function RiwayatPerbaikanPage() {
 		setIsLoading(true);
 		try {
 			const data = await getEquipments();
-			const completedIds: string[] = JSON.parse(
-				localStorage.getItem("completed_maintenance_ids") || "[]",
-			);
-
 			let filtered: RiwayatItem[] = [];
 
 			if (Array.isArray(data) && data.length > 0) {
 				filtered = data
 					.filter((item: any) => {
-						const statusName = String(item.status?.name || "").toUpperCase();
+						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
 						const isFinished =
 							item.status_id === 4 ||
 							item.status_id === 5 ||
@@ -62,8 +58,7 @@ export default function RiwayatPerbaikanPage() {
 							statusName === "REVALIDATION" ||
 							statusName === "READY_TO_REUSE" ||
 							statusName === "READY TO USE";
-						const isCompletedLocally = completedIds.includes(String(item.id));
-						return isFinished || isCompletedLocally;
+						return isFinished;
 					})
 					.map((item: any) => {
 						const plantStr = typeof item.plant === "string" ? item.plant : item.plant?.name || "-";

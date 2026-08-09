@@ -193,7 +193,7 @@ export default function FormInspeksiPage() {
 		{
 			value: "DISPOSAL",
 			title: "Tidak Layak",
-			desc: "Rekomendasi disposal",
+			desc: "Rekomendasi scrap",
 			color: "red",
 		},
 	];
@@ -367,7 +367,7 @@ export default function FormInspeksiPage() {
 							<div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 animate-in fade-in duration-200">
 								<AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
 								<p className="text-[12px] text-amber-800 font-medium">
-									Aset akan diajukan sebagai rekomendasi disposal dan memerlukan persetujuan Manajer Rendal.
+									Aset akan diajukan sebagai rekomendasi scrap dan memerlukan persetujuan Manajer Rendal.
 								</p>
 							</div>
 						)}

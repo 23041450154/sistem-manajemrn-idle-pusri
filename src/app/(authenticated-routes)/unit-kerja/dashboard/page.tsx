@@ -213,9 +213,9 @@ export default function UnitKerjaDashboardPage() {
 						/>
 						Muat Ulang
 					</button>
-					<Link href="/unit-kerja/permintaan" className={styles.btnPrimary}>
+					<Link href="/unit-kerja/katalog" className={styles.btnPrimary}>
 						<Package className="w-4 h-4" />
-						Katalog Aset Idle
+						Katalog Aset
 					</Link>
 				</div>
 			</div>
@@ -261,10 +261,10 @@ export default function UnitKerjaDashboardPage() {
 							</p>
 						</div>
 						<Link
-							href="/unit-kerja/permintaan"
+							href="/unit-kerja/riwayat-permintaan"
 							className="text-[12px] font-medium text-[#0A356A] hover:text-[#0556B3] inline-flex items-center gap-1"
 						>
-							Lihat semua ({reuseRequests.length})
+							Lihat riwayat
 							<ArrowRight className="w-3.5 h-3.5" />
 						</Link>
 					</div>
@@ -304,7 +304,7 @@ export default function UnitKerjaDashboardPage() {
 												Belum ada pengajuan reuse
 											</p>
 											<Link
-												href="/unit-kerja/permintaan"
+												href="/unit-kerja/katalog"
 												className="text-[12px] font-medium text-[#0A356A] hover:text-[#0556B3] mt-1 inline-block"
 											>
 												Buka katalog aset idle
@@ -349,7 +349,7 @@ export default function UnitKerjaDashboardPage() {
 							Aset Idle ({equipments.length})
 						</h2>
 						<Link
-							href="/unit-kerja/permintaan"
+							href="/unit-kerja/katalog"
 							className="text-[12px] font-medium text-[#0A356A] hover:text-[#0556B3]"
 						>
 							Lihat semua
@@ -383,7 +383,7 @@ export default function UnitKerjaDashboardPage() {
 										</p>
 									</div>
 									<Link
-										href="/unit-kerja/permintaan"
+										href="/unit-kerja/katalog"
 										className="shrink-0 inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-[4px] border border-[#E6E8EA] text-[12px] font-medium text-[#334155] hover:bg-[#F2F3F4] transition-colors"
 									>
 										<Send className="w-3.5 h-3.5" />

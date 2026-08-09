@@ -4,7 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect, useState, useMemo } from "react";
-import { getEquipments, getApprovals, reviewApproval, updateEquipment } from "@/action/api";
+import { getEquipments, getApprovals, approveRevalidationEquipment } from "@/action/api";
 import {
 	CheckCircle2,
 	Search,
@@ -66,13 +66,6 @@ export default function RendalValidasiUlangPage() {
 				getApprovals().catch(() => []),
 			]);
 
-			const revalidatedIds: string[] = JSON.parse(
-				localStorage.getItem("revalidated_equipment_ids") || "[]",
-			);
-			const approvedIds: string[] = JSON.parse(
-				localStorage.getItem("approved_revalidasi_ids") || "[]",
-			);
-
 			const approvalsList = Array.isArray(approvalsData)
 				? approvalsData
 				: (approvalsData as any)?.data || [];
@@ -82,19 +75,22 @@ export default function RendalValidasiUlangPage() {
 			if (Array.isArray(data) && data.length > 0) {
 				filtered = data
 					.filter((item: any) => {
-						const statusName = String(item.status?.name || "").toUpperCase();
+						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
 						const isRevalidation =
 							item.status_id === 5 ||
 							item.status?.id === 5 ||
 							statusName === "REVALIDATION" ||
-							statusName === "REVALIDASI" ||
-							revalidatedIds.includes(String(item.id));
-						const isApprovedLocally = approvedIds.includes(String(item.id));
-						return isRevalidation || isApprovedLocally;
+							statusName === "REVALIDASI";
+						const isReadyToUse =
+							item.status_id === 6 ||
+							item.status?.id === 6 ||
+							statusName === "READY_TO_USE" ||
+							statusName === "READY TO USE";
+						return isRevalidation || isReadyToUse;
 					})
 					.map((item: any) => {
 						const plantStr =
-							typeof item.plant === "string" ? item.plant : item.plant?.name || "-";
+							typeof item.plant === "string" ? item.plant : item.plant?.name || item.plant?.description || "-";
 						const storageStr =
 							typeof item.storage_location === "string"
 								? item.storage_location
@@ -108,7 +104,12 @@ export default function RendalValidasiUlangPage() {
 								? item.condition
 								: item.condition?.name || "BAGUS";
 
-						const isApprovedLocally = approvedIds.includes(String(item.id));
+						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+						const isReady =
+							item.status_id === 6 ||
+							item.status?.id === 6 ||
+							statusName === "READY_TO_USE" ||
+							statusName === "READY TO USE";
 
 						const matchingApproval = approvalsList.find(
 							(a: any) =>
@@ -118,9 +119,9 @@ export default function RendalValidasiUlangPage() {
 
 						return {
 							id: String(item.id),
-							kodeAlat: item.equipment_code || "-",
+							kodeAlat: item.equipment_code || item.kodeAlat || "-",
 							namaAlat:
-								typeof item.name === "string" ? item.name : item.name?.name || "-",
+								typeof item.name === "string" ? item.name : item.name?.name || item.namaAlat || "-",
 							tipeObjek: objectTypeStr,
 							plant: plantStr,
 							lokasiPenyimpanan: storageStr,
@@ -129,35 +130,19 @@ export default function RendalValidasiUlangPage() {
 								? new Date(item.updated_at).toISOString().split("T")[0]
 								: item.created_at
 									? new Date(item.created_at).toISOString().split("T")[0]
-									: "-",
-							statusAset: isApprovedLocally ? "READY TO USE" : "REVALIDATION",
-							statusId: isApprovedLocally ? 6 : 5,
+									: new Date().toISOString().split("T")[0],
+							statusAset: isReady ? "READY TO USE" : "REVALIDATION",
+							statusId: isReady ? 6 : 5,
 							approvalId: matchingApproval?.id ? String(matchingApproval.id) : undefined,
 							catatanInspeksi: item.notes || "Hasil validasi ulang menunjukkan kondisi alat siap pakai.",
 						};
 					});
 			}
 
-			const sampleList = SAMPLE_ITEMS.map((sample) => {
-				if (approvedIds.includes(sample.id)) {
-					return { ...sample, statusAset: "READY TO USE", statusId: 6 };
-				}
-				return sample;
-			}).filter((sample) => !filtered.some((f) => f.id === sample.id));
-
-			setItems([...filtered, ...sampleList]);
+			setItems(filtered);
 		} catch (err) {
 			console.error("Error loading validasi ulang data in rendal:", err);
-			const approvedIds: string[] = JSON.parse(
-				localStorage.getItem("approved_revalidasi_ids") || "[]",
-			);
-			setItems(
-				SAMPLE_ITEMS.map((s) =>
-					approvedIds.includes(s.id)
-						? { ...s, statusAset: "READY TO USE", statusId: 6 }
-						: s,
-				),
-			);
+			setItems([]);
 		} finally {
 			setIsLoading(false);
 		}
@@ -256,44 +241,24 @@ export default function RendalValidasiUlangPage() {
 
 		setIsSubmitting(true);
 		try {
-			// 1. If there's an approval request ID, call reviewApproval API
-			if (selectedAsset.approvalId) {
-				await reviewApproval(
-					selectedAsset.approvalId,
-					"APPROVE",
-					approvalNotes || "Disetujui oleh Rendal Pemeliharaan menjadi READY TO USE.",
-				).catch((e) => console.warn("reviewApproval warning:", e));
-			}
-
-			// 2. Also update equipment status to READY_TO_USE / status_id 6
-			await updateEquipment(selectedAsset.id, {
-				status_id: 6,
-				notes: approvalNotes || selectedAsset.catatanInspeksi,
-			}).catch((e) => console.warn("updateEquipment warning:", e));
-
-			// 3. Persist in local storage
-			const approvedIds: string[] = JSON.parse(
-				localStorage.getItem("approved_revalidasi_ids") || "[]",
-			);
-			if (!approvedIds.includes(selectedAsset.id)) {
-				approvedIds.push(selectedAsset.id);
-				localStorage.setItem("approved_revalidasi_ids", JSON.stringify(approvedIds));
-			}
-
-			// 4. Update UI State
-			setItems((prev) =>
-				prev.map((it) =>
-					it.id === selectedAsset.id
-						? { ...it, statusAset: "READY TO USE", statusId: 6 }
-						: it,
-				),
+			const result = await approveRevalidationEquipment(
+				selectedAsset.id,
+				approvalNotes || selectedAsset.catatanInspeksi,
 			);
 
-			setNotification({
-				type: "success",
-				message: `Peralatan ${selectedAsset.kodeAlat} berhasil disetujui menjadi READY TO USE!`,
-			});
-			handleCloseModal();
+			if (result.success) {
+				setNotification({
+					type: "success",
+					message: `Peralatan ${selectedAsset.kodeAlat} berhasil disetujui menjadi READY TO USE di database!`,
+				});
+				handleCloseModal();
+				await loadData();
+			} else {
+				setNotification({
+					type: "error",
+					message: `Gagal menyetujui validasi ulang: ${result.message || "Terjadi kesalahan"}`,
+				});
+			}
 			setTimeout(() => setNotification(null), 3000);
 		} catch (err: any) {
 			console.error(err);
@@ -332,15 +297,15 @@ export default function RendalValidasiUlangPage() {
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
 					<span>Rendal Pemeliharaan</span>
 					<ChevronRight className="w-3.5 h-3.5" />
-					<span className="text-[#0A356A] font-semibold">Persetujuan Validasi Ulang</span>
+					<span className="text-[#0A356A] font-semibold">Persetujuan Perbaikan</span>
 				</div>
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 					<div>
 						<h1 className="text-xl font-bold text-gray-900 tracking-tight">
-							Persetujuan Validasi Ulang
+							Persetujuan Perbaikan
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar peralatan yang telah selesai diperiksa ulang oleh Inspeksi Teknik dan menunggu persetujuan Rendal untuk status Ready to Use.
+							Daftar peralatan yang telah selesai diperbaiki dan divalidasi ulang oleh Inspeksi Teknik untuk disetujui menjadi Ready to Use.
 						</p>
 					</div>
 					<button
@@ -625,7 +590,7 @@ export default function RendalValidasiUlangPage() {
 									<ClipboardCheck className="w-5 h-5 text-white" />
 								</div>
 								<div>
-									<h2 className="text-base font-bold text-white">Persetujuan Validasi Ulang</h2>
+									<h2 className="text-base font-bold text-white">Persetujuan Perbaikan</h2>
 									<p className="text-xs text-blue-100">
 										{selectedAsset.kodeAlat} - {selectedAsset.namaAlat}
 									</p>

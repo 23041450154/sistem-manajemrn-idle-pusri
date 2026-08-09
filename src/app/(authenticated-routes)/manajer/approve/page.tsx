@@ -13,6 +13,7 @@ import {
 	RefreshCw,
 	XCircle,
 	Download,
+	Search,
 } from "lucide-react";
 import {
 	getApprovals,
@@ -77,11 +78,12 @@ const CONDITION_RESULT: Record<string, string> = {
 	BAGUS: "Layak Digunakan",
 	RUSAK_RINGAN: "Perbaikan Ringan",
 	RUSAK_SEDANG: "Perbaikan Sedang",
-	RUSAK_BERAT: "Disposal (Rusak Berat)",
+	RUSAK_BERAT: "Scrap (Rusak Berat)",
 };
 
 export default function ManajerApprovePage() {
 	const [search, setSearch] = useState("");
+	const [searchInput, setSearchInput] = useState("");
 	const [plant, setPlant] = useState("Semua Plant");
 	const [status, setStatus] = useState("Semua Status");
 	const [startDate, setStartDate] = useState("");
@@ -353,11 +355,12 @@ export default function ManajerApprovePage() {
 	};
 
 	const handleCari = () => {
+		const query = searchInput || search;
 		const result = requests.filter((req) => {
-			const matchSearch = search
-				? req.nomorRequest.toLowerCase().includes(search.toLowerCase()) ||
-					req.kodeAset.toLowerCase().includes(search.toLowerCase()) ||
-					req.namaAset.toLowerCase().includes(search.toLowerCase())
+			const matchSearch = query
+				? req.nomorRequest.toLowerCase().includes(query.toLowerCase()) ||
+					req.kodeAset.toLowerCase().includes(query.toLowerCase()) ||
+					req.namaAset.toLowerCase().includes(query.toLowerCase())
 				: true;
 			const matchPlant =
 				plant !== "Semua Plant" ? req.plant?.name === plant : true;
@@ -369,6 +372,8 @@ export default function ManajerApprovePage() {
 				const reqDate = new Date(req.tanggalPengajuan);
 				matchDate =
 					reqDate >= new Date(startDate) && reqDate <= new Date(endDate);
+			} else if (startDate) {
+				matchDate = req.tanggalPengajuan.startsWith(startDate);
 			}
 			return matchSearch && matchPlant && matchStatus && matchDate;
 		});
@@ -376,7 +381,12 @@ export default function ManajerApprovePage() {
 		setCurrentPage(1);
 	};
 
+	useEffect(() => {
+		handleCari();
+	}, [search, searchInput, plant, status, startDate, endDate, requests]);
+
 	const handleReset = () => {
+		setSearchInput("");
 		setSearch("");
 		setPlant("Semua Plant");
 		setStatus("Semua Status");
@@ -445,30 +455,40 @@ export default function ManajerApprovePage() {
 				</h1>
 			</div>
 
-			{/* Filter Section */}
-			<div className="bg-white border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">
-				<div className="flex flex-wrap items-end gap-4">
-					<div className="flex-1 min-w-[220px]">
-						<label className="block text-[12px] font-semibold text-gray-700 mb-1.5">
-							Cari Pengajuan
-						</label>
-						<input
-							type="text"
-							placeholder="No. Request / Kode / Nama..."
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-							className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
-						/>
+			{/* Table Section */}
+			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+				{/* Toolbar / Filters (Identik dengan halaman Inspeksi Validasi) */}
+				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
+					{/* Search */}
+					<div className="flex w-full lg:w-auto gap-2">
+						<div className="relative flex-1 lg:w-72">
+							<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+							<input
+								type="text"
+								placeholder="Cari request, kode, atau nama..."
+								value={searchInput}
+								onChange={(e) => {
+									setSearchInput(e.target.value);
+									setSearch(e.target.value);
+								}}
+								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400 font-medium"
+							/>
+						</div>
+						<button
+							type="button"
+							onClick={handleCari}
+							className="px-3.5 py-1.5 bg-[#0A356A] text-white text-[13px] font-semibold rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-xs cursor-pointer"
+						>
+							Cari
+						</button>
 					</div>
 
-					<div className="w-[150px]">
-						<label className="block text-[12px] font-semibold text-gray-700 mb-1.5">
-							Pabrik (Plant)
-						</label>
+					{/* Filter Group */}
+					<div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
 						<select
 							value={plant}
 							onChange={(e) => setPlant(e.target.value)}
-							className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer font-medium"
 						>
 							<option value="Semua Plant">Semua Plant</option>
 							{plants.map((p: any) => (
@@ -477,16 +497,11 @@ export default function ManajerApprovePage() {
 								</option>
 							))}
 						</select>
-					</div>
 
-					<div className="w-[170px]">
-						<label className="block text-[12px] font-semibold text-gray-700 mb-1.5">
-							Status Persetujuan
-						</label>
 						<select
 							value={status}
 							onChange={(e) => setStatus(e.target.value)}
-							className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[140px] cursor-pointer font-medium"
 						>
 							<option value="Semua Status">Semua Status</option>
 							<option value="PENDING">Menunggu Review</option>
@@ -494,51 +509,28 @@ export default function ManajerApprovePage() {
 							<option value="REVISION_REQUIRED">Perlu Revisi</option>
 							<option value="APPROVED">Disetujui</option>
 						</select>
-					</div>
 
-					<div className="w-[160px]">
-						<label className="block text-[12px] font-semibold text-gray-700 mb-1.5">
-							Tanggal Mulai
-						</label>
 						<input
 							type="date"
 							value={startDate}
 							onChange={(e) => setStartDate(e.target.value)}
-							className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-600 cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer font-medium"
 						/>
-					</div>
 
-					<div className="w-[160px]">
-						<label className="block text-[12px] font-semibold text-gray-700 mb-1.5">
-							Tanggal Akhir
-						</label>
-						<input
-							type="date"
-							value={endDate}
-							onChange={(e) => setEndDate(e.target.value)}
-							className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-600 cursor-pointer"
-						/>
-					</div>
+						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
 
-					<div className="flex items-center gap-2">
+						{/* Reset Button */}
 						<button
-							onClick={handleCari}
-							className="bg-[#0A356A] text-white px-5 py-2 rounded-lg text-[13px] font-semibold hover:bg-[#0556B3] transition-colors whitespace-nowrap h-[38px]"
-						>
-							Cari
-						</button>
-						<button
+							type="button"
 							onClick={handleReset}
-							className="bg-white border border-gray-300 text-gray-700 px-5 py-2 rounded-lg text-[13px] font-semibold hover:bg-gray-50 transition-colors whitespace-nowrap h-[38px]"
+							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+							title="Reset semua filter"
 						>
+							<RefreshCw className="w-3.5 h-3.5" />
 							Reset
 						</button>
 					</div>
 				</div>
-			</div>
-
-			{/* Table Section */}
-			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
 				<div className="overflow-x-auto">
 					<table className="w-full text-left border-collapse">
 						<thead className="bg-gray-50 border-b border-gray-200">

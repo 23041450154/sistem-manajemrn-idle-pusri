@@ -1,5 +1,5 @@
-import UnitKerjaKatalogPage from "../idle/page";
+import { redirect } from "next/navigation";
 
 export default function UnitKerjaPermintaanPage() {
-  return <UnitKerjaKatalogPage />;
+  redirect("/unit-kerja/riwayat-permintaan");
 }

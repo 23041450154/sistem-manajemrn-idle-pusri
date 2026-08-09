@@ -1881,11 +1881,7 @@ export default function ManajemenInspeksi() {
 																	className="relative border border-gray-200 rounded overflow-hidden aspect-video bg-gray-50"
 																>
 																	<img
-																		src={
-																			att.file_url.startsWith("http")
-																				? att.file_url
-																				: `${process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080"}/${att.file_url}`
-																		}
+																		src={att.file_url || att.url}
 																		className="w-full h-full object-cover"
 																		alt="Foto Lama"
 																	/>

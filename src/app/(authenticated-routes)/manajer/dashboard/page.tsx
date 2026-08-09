@@ -15,9 +15,9 @@ export default function ManajerDashboardPage() {
           </p>
         </div>
         <div className={styles.headerActions}>
-          <Link href="/manajer/disposal" className={styles.btnOutline}>
+          <Link href="/manajer/scrap" className={styles.btnOutline}>
             <Trash2 className="w-4 h-4 text-red-600" />
-            Persetujuan Disposal
+            Persetujuan Scrap
           </Link>
           <Link href="/manajer/approve" className={styles.btnPrimary}>
             <CheckSquare className="w-4 h-4" />

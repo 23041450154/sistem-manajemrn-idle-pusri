@@ -61,8 +61,8 @@ export function Sidebar({ role }: { role?: string }) {
 			mainNavItems = [
 				{ name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
 				{ name: "Peralatan", href: "/rendal/idle", icon: Wrench },
-				{ name: "Persetujuan Validasi Ulang", href: "/rendal/validasi-ulang", icon: CheckSquare },
-				{ name: "Laporan Audit", href: "/rendal/laporan", icon: ShieldCheck },
+				{ name: "Persetujuan Perbaikan", href: "/rendal/validasi-ulang", icon: CheckSquare },
+				{ name: "Permintaan Scrap", href: "/rendal/scrap", icon: Trash2 },
 			];
 			break;
 
@@ -106,7 +106,7 @@ export function Sidebar({ role }: { role?: string }) {
 					icon: ClipboardCheck,
 				},
 				{
-					name: "Validasi Ulang",
+					name: "Validasi Perbaikan Alat",
 					href: "/inspeksi/validasi-ulang",
 					icon: RefreshCw,
 				},
@@ -132,35 +132,32 @@ export function Sidebar({ role }: { role?: string }) {
 					icon: Wrench,
 				},
 				{
-					name: "Persetujuan Disposal",
-					href: "/manajer/disposal",
+					name: "Persetujuan Scrap",
+					href: "/manajer/scrap",
 					icon: Trash2,
 				},
-				{ name: "Laporan", href: "/manajer/laporan", icon: FileText },
 			];
 			break;
 
 		case "UNIT_KERJA_OPERASI":
 		default:
-			// Placeholder: Unit Kerja Operasi (role default / user sebenarnya)
+			// Unit Kerja Operasi
 			mainNavItems = [
 				{
 					name: "Dashboard",
 					href: "/unit-kerja/dashboard",
 					icon: LayoutDashboard,
-        },
-        {
-          name: "Katalog Aset",
+				},
+				{
+					name: "Katalog Aset",
 					href: "/unit-kerja/katalog",
 					icon: Cog,
 				},
-				// { name: "Idle Equipment", href: "/unit-kerja/idle", icon: PowerOff },
 				{
-					name: "Permintaan",
-					href: "/unit-kerja/permintaan",
-					icon: FileQuestion,
+					name: "Riwayat Permintaan",
+					href: "/unit-kerja/riwayat-permintaan",
+					icon: History,
 				},
-				{ name: "Laporan", href: "/unit-kerja/laporan", icon: FileText },
 			];
 			break;
 	}

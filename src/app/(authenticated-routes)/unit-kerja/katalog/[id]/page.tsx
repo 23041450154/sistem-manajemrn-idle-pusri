@@ -4,6 +4,7 @@ import { ArrowLeft, MapPin, Factory, Wrench } from "lucide-react";
 import { getEquipmentById } from "@/action/api";
 import { normalizeEquipment, STATE_STYLE, formatRupiah } from "../shared";
 import Gallery from "./gallery";
+import RequestModalButton from "./request-modal-button";
 
 export default async function KatalogDetailPage({
   params,
@@ -91,12 +92,7 @@ export default async function KatalogDetailPage({
             </section>
           )}
 
-          <Link
-            href={`/unit-kerja/idle?equipment=${eq.id}`}
-            className="flex h-11 items-center justify-center rounded-[4px] bg-[#0A356A] px-4 text-[14px] font-semibold text-white transition-colors duration-140 hover:bg-[#0556B3] focus-visible:ring-2 focus-visible:ring-[#334155] focus-visible:ring-offset-1 focus-visible:outline-none"
-          >
-            Ajukan permintaan pemakaian
-          </Link>
+          <RequestModalButton eq={eq} />
         </div>
       </div>
     </div>

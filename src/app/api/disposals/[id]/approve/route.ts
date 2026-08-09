@@ -41,7 +41,7 @@ export async function PATCH(
       if (isApproved) {
         return NextResponse.json({
           success: true,
-          message: "Pengajuan disposal berhasil disetujui, status aset berubah menjadi DISPOSED.",
+          message: "Permintaan scrap berhasil disetujui, status aset berubah menjadi SCRAP.",
           data: { id, status: "DISPOSED" }
         }, { status: 200 });
       } else {

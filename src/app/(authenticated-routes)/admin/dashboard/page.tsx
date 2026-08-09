@@ -11,7 +11,7 @@ import { getEquipments, getObjectTypes, getStorageLocations, getDisposals } from
 const MODULES = [
   { href: "/admin/equipment", icon: Wrench, title: "Manajemen Peralatan", desc: "Kelola inventarisasi & status aset" },
   { href: "/admin/master", icon: Database, title: "Master Data Referensi", desc: "ObjectType, StorageLocation, RequireAction" },
-  { href: "/manajer/disposal", icon: Trash2, title: "Persetujuan Disposal", desc: "Antrean usulan penghapusan aset" },
+  { href: "/manajer/scrap", icon: Trash2, title: "Persetujuan Scrap", desc: "Antrean usulan penghapusan aset" },
   { href: "/manajer/approve", icon: ShieldCheck, title: "Persetujuan Validasi", desc: "Verifikasi kelayakan aset idle" },
 ];
 
@@ -155,17 +155,22 @@ export default function AdminDashboardPage() {
             ) : recentEquipments.length === 0 ? (
               <div className="px-5 py-8 text-center text-xs text-slate-400">Belum ada data peralatan.</div>
             ) : (
-              recentEquipments.map((item, idx) => (
-                <div key={item.id || idx} className="px-5 py-3 flex items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors">
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-slate-800 truncate">{item.name}</p>
-                    <p className="text-[11px] text-slate-500 font-mono mt-0.5">{item.equipment_code} · {item.plant}</p>
+              recentEquipments.map((item, idx) => {
+                const nameStr = typeof item.name === "string" ? item.name : item.name?.name || "-";
+                const plantStr = typeof item.plant === "string" ? item.plant : item.plant?.name || item.plant?.description || "-";
+                const statusStr = typeof item.status === "string" ? item.status : item.status?.name || "REGISTERED";
+                return (
+                  <div key={item.id || idx} className="px-5 py-3 flex items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors">
+                    <div className="min-w-0">
+                      <p className="text-xs font-bold text-slate-800 truncate">{nameStr}</p>
+                      <p className="text-[11px] text-slate-500 font-mono mt-0.5">{item.equipment_code || "-"} · {plantStr}</p>
+                    </div>
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
+                      {statusStr}
+                    </span>
                   </div>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
-                    {item.status?.name || "REGISTERED"}
-                  </span>
-                </div>
-              ))
+                );
+              })
             )}
           </div>
         </div>

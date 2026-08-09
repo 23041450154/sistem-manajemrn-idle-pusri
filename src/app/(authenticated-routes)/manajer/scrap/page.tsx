@@ -2,8 +2,8 @@
 
 import React, { useState, useEffect } from "react";
 import { 
-  Eye, X, Shield, FileText, CheckCircle2, RefreshCw, XCircle, 
-  Trash2, AlertTriangle, Loader2, Check, DollarSign, Calendar, Tag, Building2, Search
+  Eye, X, CheckCircle2, RefreshCw, XCircle, 
+  Trash2, AlertTriangle, Loader2, Check, DollarSign, Tag, Search
 } from "lucide-react";
 import { getDisposals, approveDisposal } from "@/action/api";
 
@@ -24,14 +24,14 @@ interface DisposalItem {
   attachments?: { id?: string; file_url: string; caption?: string }[];
 }
 
-export default function DisposalInboxPage() {
+export default function ManajerScrapPage() {
   const [activeTab, setActiveTab] = useState<"inbox" | "history">("inbox");
   const [disposals, setDisposals] = useState<DisposalItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   // Filter states
   const [search, setSearch] = useState("");
-  const [methodFilter, setMethodFilter] = useState("Semua Metode");
+  const [methodFilter] = useState("Semua Metode");
 
   // Modal detail states
   const [selectedDisposal, setSelectedDisposal] = useState<DisposalItem | null>(null);
@@ -124,17 +124,16 @@ export default function DisposalInboxPage() {
       if (res.success) {
         showToast(
           "success",
-          res.message || "Permintaan scrap berhasil disetujui, status aset berubah menjadi SCRAP."
+          res.message || "Permintaan scrap berhasil disetujui!"
         );
         setIsApproveConfirmOpen(false);
         handleCloseDetail();
-        // Refresh table & remove approved item from queue
         await fetchDisposalsData();
       } else {
-        showToast("error", res.message || "Gagal menyetujui pengajuan disposal.");
+        showToast("error", res.message || "Gagal menyetujui permintaan scrap.");
       }
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan server saat menyetujui disposal.";
+      const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan server saat menyetujui scrap.";
       showToast("error", errMsg);
     } finally {
       setIsSubmitting(false);
@@ -153,17 +152,16 @@ export default function DisposalInboxPage() {
       });
 
       if (res.success) {
-        showToast("success", res.message || "Pengajuan disposal berhasil ditolak.");
+        showToast("success", res.message || "Permintaan scrap berhasil ditolak.");
         setIsRejectModalOpen(false);
         setRejectionReason("");
         handleCloseDetail();
-        // Refresh table & remove rejected item from queue
         await fetchDisposalsData();
       } else {
-        showToast("error", res.message || "Gagal menolak pengajuan disposal.");
+        showToast("error", res.message || "Gagal menolak permintaan scrap.");
       }
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan server saat menolak disposal.";
+      const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan server saat menolak scrap.";
       showToast("error", errMsg);
     } finally {
       setIsSubmitting(false);
@@ -220,7 +218,7 @@ export default function DisposalInboxPage() {
 
       {/* Main Table */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-        {/* Toolbar / Filters (Identik dengan halaman Inspeksi Validasi) */}
+        {/* Toolbar / Filters */}
         <div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
           {/* Tabs */}
           <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl border border-gray-200">
@@ -302,18 +300,18 @@ export default function DisposalInboxPage() {
                 <tr>
                   <td colSpan={activeTab === "history" ? 7 : 6} className="px-6 py-12 text-center text-gray-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0A356A]" />
-                    <span className="text-xs font-medium">Memuat antrean usulan disposal...</span>
+                    <span className="text-xs font-medium">Memuat antrean usulan scrap...</span>
                   </td>
                 </tr>
               ) : filteredDisposals.length === 0 ? (
                 <tr>
                   <td colSpan={activeTab === "history" ? 7 : 6} className="px-6 py-12 text-center text-gray-400">
                     <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-400 opacity-60" />
-                    <p className="text-sm font-semibold text-gray-600">Tidak ada pengajuan disposal dalam antrean</p>
+                    <p className="text-sm font-semibold text-gray-600">Tidak ada permintaan scrap dalam antrean</p>
                     <p className="text-xs text-gray-400 mt-1">
                       {activeTab === "inbox"
-                        ? "Semua berkas usulan pembuangan aset telah selesai ditinjau."
-                        : "Belum ada riwayat persetujuan disposal."}
+                        ? "Semua berkas usulan scrap telah selesai ditinjau."
+                        : "Belum ada riwayat persetujuan scrap."}
                     </p>
                   </td>
                 </tr>
@@ -354,10 +352,10 @@ export default function DisposalInboxPage() {
                     <td className="px-4 py-3.5 text-center whitespace-nowrap">
                       <button
                         onClick={() => handleOpenDetail(item)}
-                        className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3.5 py-1.5 rounded-lg text-[12px] font-bold hover:bg-[#0556B3] transition-colors shadow-sm"
+                        className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3.5 py-1.5 rounded-lg text-[12px] font-bold hover:bg-[#0556B3] transition-colors shadow-sm cursor-pointer"
                       >
                         <Eye className="w-3.5 h-3.5" />
-                        {activeTab === "history" ? "Detail" : "Tinjau Pengajuan"}
+                        {activeTab === "history" ? "Detail" : "Tinjau Permintaan"}
                       </button>
                     </td>
                   </tr>
@@ -425,7 +423,7 @@ export default function DisposalInboxPage() {
                   <Trash2 className="w-5 h-5" />
                 </div>
                 <div>
-                  <h2 className="text-lg font-bold text-gray-900">Detail Peninjauan Disposal Aset</h2>
+                  <h2 className="text-lg font-bold text-gray-900">Detail Peninjauan Permintaan Scrap Aset</h2>
                   <p className="text-[12px] text-gray-500 font-medium">
                     No. Pengajuan: <span className="font-bold text-[#0A356A]">{selectedDisposal.disposal_number}</span>
                   </p>
@@ -445,9 +443,9 @@ export default function DisposalInboxPage() {
               <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-900">
                 <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-[13px] font-bold">Usulan Penghapusan Buku Aset (Disposal)</p>
+                  <p className="text-[13px] font-bold">Usulan Permintaan Scrap Aset</p>
                   <p className="text-[12px] text-amber-800 mt-0.5 leading-relaxed">
-                    Aset ini telah dinyatakan <strong>&quot;Rusak Berat&quot;</strong> oleh tim teknik dan diusulkan untuk dihapus dari inventaris oleh Staf Rendal. Penandatanganan digital Manajer Rendal diperlukan untuk legalitas.
+                    Aset ini telah dinyatakan <strong>&quot;Rusak Berat&quot;</strong> oleh tim teknik dan diusulkan untuk scrap oleh Staf Rendal. Penandatanganan digital Manajer Rendal diperlukan untuk legalitas.
                   </p>
                 </div>
               </div>
@@ -486,7 +484,7 @@ export default function DisposalInboxPage() {
               <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
                 <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-4">
                   <DollarSign className="w-4 h-4 text-[#0A356A]" />
-                  <h3 className="text-[14px] font-bold text-gray-900">Rincian Usulan Pembuangan</h3>
+                  <h3 className="text-[14px] font-bold text-gray-900">Rincian Permintaan Scrap</h3>
                 </div>
                 <div className="grid grid-cols-1 gap-4 mb-4">
                   <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3.5">
@@ -495,7 +493,7 @@ export default function DisposalInboxPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-[12px] font-bold text-gray-700 mb-1.5">Justifikasi / Alasan Pembuangan:</p>
+                  <p className="text-[12px] font-bold text-gray-700 mb-1.5">Justifikasi / Alasan Permintaan Scrap:</p>
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-[13px] text-gray-800 leading-relaxed italic">
                     &quot;{selectedDisposal.justification || "Tidak ada rincian justifikasi."}&quot;
                   </div>
@@ -550,18 +548,18 @@ export default function DisposalInboxPage() {
                       setRejectionReason("");
                       setIsRejectModalOpen(true);
                     }}
-                    className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[13px] font-bold transition-colors shadow-sm flex items-center gap-1.5"
+                    className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[13px] font-bold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
                   >
                     <XCircle className="w-4 h-4" />
-                    Tolak Usulan
+                    Tolak Permintaan
                   </button>
 
                   <button
                     onClick={() => setIsApproveConfirmOpen(true)}
-                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[13px] font-bold transition-colors shadow-sm flex items-center gap-1.5"
+                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[13px] font-bold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
                   >
                     <Check className="w-4 h-4" />
-                    Setujui Disposal
+                    Setujui Scrap
                   </button>
                 </div>
               )}
@@ -583,7 +581,7 @@ export default function DisposalInboxPage() {
               <CheckCircle2 className="w-7 h-7" />
             </div>
 
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Konfirmasi Persetujuan Disposal</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Konfirmasi Persetujuan Scrap</h3>
 
             <p className="text-[13px] text-gray-600 mb-6 leading-relaxed">
               Apakah Anda yakin ingin menyetujui permohonan scrap aset ini? Status aset di inventaris akan diubah menjadi <strong className="text-emerald-700 font-bold font-mono">SCRAP</strong>.
@@ -600,7 +598,7 @@ export default function DisposalInboxPage() {
               <button
                 disabled={isSubmitting}
                 onClick={handleConfirmApprove}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[13px] font-bold transition-colors w-[140px] flex items-center justify-center gap-2 disabled:opacity-50"
+                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[13px] font-bold transition-colors w-[140px] flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
@@ -630,7 +628,7 @@ export default function DisposalInboxPage() {
                 <XCircle className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-gray-900">Tolak Usulan Disposal</h3>
+                <h3 className="text-base font-bold text-gray-900">Tolak Permintaan Scrap</h3>
                 <p className="text-[12px] text-gray-500 font-medium">{selectedDisposal.equipment_code}</p>
               </div>
             </div>
@@ -646,7 +644,7 @@ export default function DisposalInboxPage() {
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Tulis alasan penolakan usulan disposal di sini..."
+                placeholder="Tulis alasan penolakan permintaan scrap di sini..."
                 rows={4}
                 className="w-full p-3 border border-gray-300 rounded-xl text-[13px] focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-colors resize-none placeholder:text-gray-400 text-gray-800"
               />
@@ -669,7 +667,7 @@ export default function DisposalInboxPage() {
               <button
                 disabled={!rejectionReason.trim() || isSubmitting}
                 onClick={handleConfirmReject}
-                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[13px] font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[13px] font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>

@@ -210,10 +210,10 @@ export default function EquipmentManagementPage() {
                       {item.equipment_code}
                     </td>
                     <td className="px-6 py-4 text-xs font-semibold text-slate-900">
-                      {item.name}
+                      {typeof item.name === "string" ? item.name : item.name?.name || "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-slate-500">
-                      {item.plant || "-"}
+                      {typeof item.plant === "string" ? item.plant : item.plant?.name || item.plant?.description || "-"}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(item.status, item.status_id)}

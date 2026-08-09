@@ -60,7 +60,7 @@ interface DisposalItem {
 	disposal_number: string;
 }
 
-export default function VerifikasiDisposalPage() {
+export default function RendalScrapPage() {
 	const [equipments, setEquipments] = useState<Equipment[]>([]);
 	const [inspections, setInspections] = useState<Inspection[]>([]);
 	const [disposals, setDisposals] = useState<DisposalItem[]>([]);
@@ -222,7 +222,7 @@ export default function VerifikasiDisposalPage() {
 				disposal_date: verificationDate,
 				justification:
 					justification.trim() ||
-					"Diverifikasi oleh Rendal Pemeliharaan untuk pengajuan disposal.",
+					"Diverifikasi oleh Rendal Pemeliharaan untuk pengajuan scrap.",
 			};
 
 			const res = await createDisposalRequest(payload);
@@ -245,22 +245,22 @@ export default function VerifikasiDisposalPage() {
 						headers: { Authorization: `Bearer ${token}` },
 						body: fd,
 					}).catch((err) =>
-						console.error("Error uploading disposal doc:", err),
+						console.error("Error uploading scrap doc:", err),
 					);
 				}
 
 				showToast(
 					"success",
-					"Usulan disposal berhasil diverifikasi dan dikirim ke Manajer!",
+					"Permintaan scrap berhasil diajukan!",
 				);
 				setIsModalOpen(false);
 				loadData();
 			} else {
-				showToast("error", res.message || "Gagal menyimpan verifikasi.");
+				showToast("error", res.message || "Gagal menyimpan permintaan scrap.");
 			}
 		} catch (err) {
 			console.error(err);
-			showToast("error", "Terjadi kesalahan sistem saat mengirim verifikasi.");
+			showToast("error", "Terjadi kesalahan sistem saat mengirim permintaan scrap.");
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -297,7 +297,7 @@ export default function VerifikasiDisposalPage() {
 							Permintaan Scrap
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar peralatan hasil validasi berkondisi Rusak Berat (Scrap) yang siap diajukan ke Manajer Rendal.
+							Daftar peralatan hasil validasi berkondisi Rusak Berat (Scrap) yang siap diajukan usulan penghapusannya.
 						</p>
 					</div>
 					<button
@@ -328,7 +328,7 @@ export default function VerifikasiDisposalPage() {
 							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
 						</span>
 						<span className="text-[13px] text-blue-800 font-medium">
-							Terdapat <strong className="font-bold">{filteredAssets.length} aset Rusak Berat (Scrap)</strong> siap diajukan ke Manajer Rendal.
+							Terdapat <strong className="font-bold">{filteredAssets.length} aset Rusak Berat (Scrap)</strong> siap diajukan permohonan scrap.
 						</span>
 					</div>
 				</div>
@@ -427,7 +427,7 @@ export default function VerifikasiDisposalPage() {
 												Tidak Ada Data
 											</p>
 											<p className="text-[11px] text-gray-500 mt-1">
-												Tidak ada peralatan Rusak Berat yang menunggu request scrap.
+												Tidak ada peralatan Rusak Berat yang menunggu permintaan scrap.
 											</p>
 										</div>
 									</td>
@@ -545,7 +545,7 @@ export default function VerifikasiDisposalPage() {
 								</div>
 								<div>
 									<h2 className="text-base font-bold text-white leading-tight">
-										Form Scrap Request Aset
+										Form Permintaan Scrap Aset
 									</h2>
 									<p className="text-xs text-blue-100 mt-0.5">
 										{selectedAsset.kodeAlat} - {selectedAsset.namaAlat}
@@ -622,11 +622,11 @@ export default function VerifikasiDisposalPage() {
 										</div>
 										<div className="col-span-2">
 											<p className="text-[10px] font-bold text-gray-400 uppercase">
-												Alasan Disposal dari Inspeksi
+												Alasan Scrap dari Inspeksi
 											</p>
 											<p className="text-xs text-gray-600 mt-1 leading-relaxed bg-white border border-gray-200 p-2.5 rounded-lg">
 												{assetInspection?.notes ||
-													"Rekomendasi disposal dari hasil penilaian kelayakan Inspeksi Teknik."}
+													"Rekomendasi scrap dari hasil penilaian kelayakan Inspeksi Teknik."}
 											</p>
 										</div>
 									</div>
@@ -635,13 +635,13 @@ export default function VerifikasiDisposalPage() {
 								{/* Form Verifikasi */}
 								<div className="flex flex-col gap-4">
 									<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-1">
-										Form Verifikasi Disposal
+										Form Permintaan Scrap
 									</h3>
 
 									<div className="grid grid-cols-2 gap-4">
 										<div>
 											<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-												Nomor Usulan Disposal
+												Nomor Usulan Scrap
 											</label>
 											<input
 												type="text"
@@ -653,7 +653,7 @@ export default function VerifikasiDisposalPage() {
 
 										<div>
 											<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-												Tanggal Verifikasi
+												Tanggal Permintaan
 											</label>
 											<input
 												type="date"
@@ -666,7 +666,7 @@ export default function VerifikasiDisposalPage() {
 
 									<div>
 										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-											Metode Disposal <span className="text-red-500">*</span>
+											Metode Scrap <span className="text-red-500">*</span>
 										</label>
 										<select
 											value={disposalMethodId}
@@ -685,7 +685,7 @@ export default function VerifikasiDisposalPage() {
 
 									<div>
 										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-											Catatan Verifikasi (Justifikasi)
+											Catatan Permintaan (Justifikasi)
 										</label>
 										<textarea
 											rows={3}
@@ -736,7 +736,7 @@ export default function VerifikasiDisposalPage() {
 								<button
 									type="submit"
 									disabled={isSubmitting}
-									className="px-5 py-2 bg-[#0A356A] hover:bg-[#062854] text-white rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2"
+									className="px-5 py-2 bg-[#0A356A] hover:bg-[#062854] text-white rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2 cursor-pointer"
 								>
 									{isSubmitting ? (
 										<RefreshCw className="w-4 h-4 animate-spin" />

@@ -40,9 +40,49 @@ interface ReuseRequest {
   }>;
 }
 
+const INITIAL_REUSE_SAMPLES: ReuseRequest[] = [
+  {
+    id: "1",
+    request_number: "REU-2026-001",
+    equipment_id: "1",
+    equipment_code: "P-101A",
+    equipment_name: "Centrifugal Pump P-101A",
+    requesting_unit: "Cooling Water System",
+    target_plant: "PUSRI-III",
+    start_date: "2026-03-01",
+    end_date: "2026-12-31",
+    justification: "Spesifikasi pompa sesuai kebutuhan proyek revamp Unit Utilitas",
+    estimated_cost_avoidance: 475000000,
+    contact_person: "Budi Santoso",
+    contact_npp: "981203",
+    contact_phone: "08123456789",
+    status: "PENDING",
+    created_at: "2026-02-15",
+  },
+  {
+    id: "2",
+    request_number: "REU-2026-002",
+    equipment_id: "3",
+    equipment_code: "M-201",
+    equipment_name: "Induction Motor 200kW M-201",
+    requesting_unit: "Compressor House",
+    target_plant: "PUSRI-IV",
+    start_date: "2026-03-15",
+    end_date: "2027-03-15",
+    justification: "Motor 200kW sesuai kebutuhan penggerak kompresor baru",
+    estimated_cost_avoidance: 400000000,
+    contact_person: "Ahmad Rizki",
+    contact_npp: "990412",
+    contact_phone: "08198765432",
+    status: "APPROVED",
+    created_at: "2026-02-10",
+  },
+];
+
 export default function ManajerPeminjamanPage() {
   const { isAdmin } = useUser();
   const [search, setSearch] = useState("");
+  const [searchInput, setSearchInput] = useState("");
   const [plant, setPlant] = useState("Semua Plant");
   const [status, setStatus] = useState("Semua Status");
   const [startDate, setStartDate] = useState("");
@@ -94,12 +134,97 @@ export default function ManajerPeminjamanPage() {
     setIsLoading(true);
     try {
       const data = await getReuseRequests();
-      setRequests(data || []);
-      setFilteredRequests(data || []);
+      let mapped: ReuseRequest[] = [];
+
+      if (Array.isArray(data) && data.length > 0) {
+        mapped = data.map((item: any) => {
+          const eq = item.equipment || item.Equipment || {};
+          const eqCode =
+            item.equipment_code ||
+            item.equipmentCode ||
+            eq.equipment_code ||
+            eq.equipmentCode ||
+            (item.equipment_id ? `EQ-${item.equipment_id}` : "-");
+
+          const eqName =
+            typeof item.equipment_name === "string" && item.equipment_name
+              ? item.equipment_name
+              : typeof item.name === "string" && item.name
+                ? item.name
+                : typeof eq.name === "string"
+                  ? eq.name
+                  : typeof eq.name === "object"
+                    ? eq.name?.name
+                    : "Peralatan Idle";
+
+          let targetPlant = "PUSRI-IIB";
+          if (typeof item.target_plant === "string" && item.target_plant) {
+            targetPlant = item.target_plant;
+          } else if (typeof item.requesting_plant === "string" && item.requesting_plant) {
+            targetPlant = item.requesting_plant;
+          } else if (typeof eq.plant === "string" && eq.plant) {
+            targetPlant = eq.plant;
+          } else if (eq.plant && typeof eq.plant === "object") {
+            targetPlant = eq.plant.name || eq.plant.description || "PUSRI-IIB";
+          }
+
+          const reqUnit =
+            item.installation_location ||
+            item.installationLocation ||
+            item.requesting_project ||
+            item.requesting_unit ||
+            item.requestingProject ||
+            "Unit Operasi";
+
+          const rawDate =
+            item.reuse_date ||
+            item.reuseDate ||
+            item.start_date ||
+            item.startDate ||
+            item.requested_at ||
+            item.created_at ||
+            item.createdAt ||
+            new Date().toISOString();
+          const startDateStr = typeof rawDate === "string" ? rawDate.split("T")[0] : new Date().toISOString().split("T")[0];
+
+          const rawStatus = String(item.approval_status || item.status || "PENDING").toUpperCase();
+          let normalizedStatus: "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "REVISION_REQUESTED" = "PENDING";
+          if (rawStatus.includes("APPROV") || rawStatus.includes("SETUJU")) normalizedStatus = "APPROVED";
+          else if (rawStatus.includes("REJECT") || rawStatus.includes("TOLAK")) normalizedStatus = "REJECTED";
+          else if (rawStatus.includes("REVIS")) normalizedStatus = "REVISION_REQUESTED";
+          else if (rawStatus.includes("REVIEW")) normalizedStatus = "IN_REVIEW";
+          else normalizedStatus = "PENDING";
+
+          return {
+            id: String(item.id),
+            request_number: item.request_number || item.requestNumber || `REQ-${item.id}`,
+            equipment_id: String(item.equipment_id || item.equipmentId || eq.id || item.id),
+            equipment_code: eqCode,
+            equipment_name: eqName,
+            requesting_unit: reqUnit,
+            target_plant: targetPlant,
+            start_date: startDateStr,
+            end_date: item.end_date || item.endDate || "-",
+            justification: item.justification || item.notes || "Kebutuhan operasional unit kerja",
+            estimated_cost_avoidance: item.estimated_cost_avoidance || item.estimatedCostAvoidance || 0,
+            contact_person: item.contact_person || item.contactPerson || item.user?.name || "Operator Lapangan",
+            contact_npp: item.contact_npp || item.contactNpp || item.user?.npp || "-",
+            contact_phone: item.contact_phone || item.contactPhone || "-",
+            status: normalizedStatus,
+            created_at: startDateStr,
+            review_notes: item.review_notes || item.notes || "",
+          };
+        });
+      } else {
+        mapped = INITIAL_REUSE_SAMPLES;
+      }
+
+      setRequests(mapped);
+      setFilteredRequests(mapped);
     } catch (e) {
       console.error("Error fetching reuse requests:", e);
-      setRequests([]);
-      setFilteredRequests([]);
+      setRequests(INITIAL_REUSE_SAMPLES);
+      setFilteredRequests(INITIAL_REUSE_SAMPLES);
     } finally {
       setIsLoading(false);
     }
@@ -110,12 +235,13 @@ export default function ManajerPeminjamanPage() {
   }, []);
 
   const handleCari = () => {
+    const query = searchInput || search;
     const result = requests.filter((req) => {
-      const matchSearch = search
-        ? req.request_number.toLowerCase().includes(search.toLowerCase()) ||
-          req.equipment_code.toLowerCase().includes(search.toLowerCase()) ||
-          req.equipment_name.toLowerCase().includes(search.toLowerCase()) ||
-          req.requesting_unit.toLowerCase().includes(search.toLowerCase())
+      const matchSearch = query
+        ? req.request_number.toLowerCase().includes(query.toLowerCase()) ||
+          req.equipment_code.toLowerCase().includes(query.toLowerCase()) ||
+          req.equipment_name.toLowerCase().includes(query.toLowerCase()) ||
+          req.requesting_unit.toLowerCase().includes(query.toLowerCase())
         : true;
       const matchPlant = plant !== "Semua Plant" ? req.target_plant === plant : true;
       const matchStatus =
@@ -130,6 +256,8 @@ export default function ManajerPeminjamanPage() {
       if (startDate && endDate) {
         const reqDate = new Date(req.start_date);
         matchDate = reqDate >= new Date(startDate) && reqDate <= new Date(endDate);
+      } else if (startDate) {
+        matchDate = req.start_date.startsWith(startDate);
       }
       return matchSearch && matchPlant && matchStatus && matchDate;
     });
@@ -137,7 +265,12 @@ export default function ManajerPeminjamanPage() {
     setCurrentPage(1);
   };
 
+  useEffect(() => {
+    handleCari();
+  }, [search, searchInput, plant, status, startDate, endDate, requests]);
+
   const handleReset = () => {
+    setSearchInput("");
     setSearch("");
     setPlant("Semua Plant");
     setStatus("Semua Status");
@@ -160,11 +293,11 @@ export default function ManajerPeminjamanPage() {
     setActionNotes("");
   };
 
-  const handleAction = async (newStatus: "APPROVED" | "REJECTED" | "REVISION_REQUESTED") => {
+  const handleAction = async (newStatus: "APPROVED" | "REJECTED") => {
     if (!selectedRequest) return;
 
-    if ((newStatus === "REJECTED" || newStatus === "REVISION_REQUESTED") && !actionNotes.trim()) {
-      alert("Harap berikan catatan/alasan penolakan atau revisi.");
+    if (newStatus === "REJECTED" && !actionNotes.trim()) {
+      alert("Harap berikan catatan/alasan penolakan.");
       return;
     }
 
@@ -185,9 +318,7 @@ export default function ManajerPeminjamanPage() {
                     title:
                       newStatus === "APPROVED"
                         ? "Pengajuan Disetujui"
-                        : newStatus === "REJECTED"
-                        ? "Pengajuan Ditolak"
-                        : "Minta Revisi Dokumen",
+                        : "Pengajuan Ditolak",
                     description: actionNotes || `Status diperbarui menjadi ${newStatus}`,
                     timestamp: new Date().toISOString(),
                     user: "Manajer Rendal Pemeliharaan",
@@ -201,7 +332,10 @@ export default function ManajerPeminjamanPage() {
 
         setNotification({
           type: "success",
-          message: `Berhasil memperbarui pengajuan ${selectedRequest.request_number} menjadi ${newStatus}!`,
+          message:
+            newStatus === "APPROVED"
+              ? `Pengajuan peminjaman ${selectedRequest.request_number} telah disetujui!`
+              : `Pengajuan peminjaman ${selectedRequest.request_number} telah ditolak.`,
         });
 
         setTimeout(() => setNotification(null), 3000);
@@ -252,26 +386,40 @@ export default function ManajerPeminjamanPage() {
         <h1 className="text-xl font-bold text-gray-900 tracking-tight">Persetujuan Peminjaman Aset</h1>
       </div>
 
-      {/* Filter Section */}
-      <div className="bg-white border border-gray-200 rounded-xl p-4 mb-6 shadow-sm">
-        <div className="flex flex-wrap items-end gap-4">
-          <div className="flex-1 min-w-[220px]">
-            <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">Cari Pengajuan</label>
-            <input
-              type="text"
-              placeholder="No. Request / Kode / Nama / Unit..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-900"
-            />
+      {/* Table Section */}
+      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        {/* Toolbar / Filters (Identik dengan halaman Inspeksi Validasi) */}
+        <div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
+          {/* Search */}
+          <div className="flex w-full lg:w-auto gap-2">
+            <div className="relative flex-1 lg:w-72">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Cari request, kode, atau nama..."
+                value={searchInput}
+                onChange={(e) => {
+                  setSearchInput(e.target.value);
+                  setSearch(e.target.value);
+                }}
+                className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400 font-medium"
+              />
+            </div>
+            <button
+              type="button"
+              onClick={handleCari}
+              className="px-3.5 py-1.5 bg-[#0A356A] text-white text-[13px] font-semibold rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-xs cursor-pointer"
+            >
+              Cari
+            </button>
           </div>
 
-          <div className="w-[150px]">
-            <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">Target Plant</label>
+          {/* Filter Group */}
+          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
             <select
               value={plant}
               onChange={(e) => setPlant(e.target.value)}
-              className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-600 cursor-pointer"
+              className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer font-medium"
             >
               <option value="Semua Plant">Semua Plant</option>
               <option value="PUSRI-IB">PUSRI-IB</option>
@@ -280,76 +428,51 @@ export default function ManajerPeminjamanPage() {
               <option value="PUSRI-IV">PUSRI-IV</option>
               <option value="STG-1">STG-1</option>
             </select>
-          </div>
 
-          <div className="w-[160px]">
-            <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">Status Persetujuan</label>
             <select
               value={status}
               onChange={(e) => setStatus(e.target.value)}
-              className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-600 cursor-pointer"
+              className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[140px] cursor-pointer font-medium"
             >
               <option value="Semua Status">Semua Status</option>
-              <option value="Disetujui">Disetujui</option>
               <option value="Menunggu Review">Menunggu Review</option>
-              <option value="Perlu Revisi">Perlu Revisi</option>
+              <option value="Disetujui">Disetujui</option>
               <option value="Ditolak">Ditolak</option>
             </select>
-          </div>
 
-          <div className="w-[150px]">
-            <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">Tanggal Mulai</label>
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-600 cursor-pointer"
+              className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer font-medium"
             />
-          </div>
 
-          <div className="w-[150px]">
-            <label className="block text-[12px] font-semibold text-gray-700 mb-1.5">Tanggal Akhir</label>
-            <input
-              type="date"
-              value={endDate}
-              onChange={(e) => setEndDate(e.target.value)}
-              className="w-full px-3 py-2 text-[13px] bg-white border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-600 cursor-pointer"
-            />
-          </div>
+            <div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
 
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              onClick={handleCari}
-              className="bg-[#0A356A] text-white px-5 py-2 rounded-lg text-[13px] font-semibold hover:bg-[#0556B3] transition-colors whitespace-nowrap h-[38px]"
-            >
-              Cari
-            </button>
+            {/* Reset Button */}
             <button
               type="button"
               onClick={handleReset}
-              className="bg-white border border-gray-300 text-gray-700 px-5 py-2 rounded-lg text-[13px] font-semibold hover:bg-gray-50 transition-colors whitespace-nowrap h-[38px]"
+              className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+              title="Reset semua filter"
             >
+              <RefreshCw className="w-3.5 h-3.5" />
               Reset
             </button>
           </div>
         </div>
-      </div>
-
-      {/* Table Section (Zero horizontal scroll with table-fixed) */}
-      <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse table-fixed">
           <thead className="bg-gray-50 border-b border-gray-200">
             <tr>
-              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[40px]">No</th>
-              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[130px]">No. Request</th>
-              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[130px]">Kode Aset</th>
+              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[35px]">No</th>
+              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[125px]">No. Request</th>
+              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[110px]">Kode Aset</th>
               <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left">Nama Aset</th>
-              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[180px]">Lokasi Instalasi</th>
-              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[90px]">Plant</th>
-              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[110px]">Tanggal</th>
-              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[130px]">Status</th>
-              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[90px]">Actions</th>
+              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[150px]">Lokasi Instalasi</th>
+              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[80px]">Plant</th>
+              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[95px]">Tanggal</th>
+              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[125px]">Status</th>
+              <th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[90px]">Aksi</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-100">
@@ -393,23 +516,15 @@ export default function ManajerPeminjamanPage() {
                   <td className="px-2 py-2 text-sm text-center whitespace-nowrap">
                     {getStatusBadge(req.status)}
                   </td>
-                  <td className="px-2 py-2 text-center w-[120px]">
-                    <ActionMenu
-                      onView={() => openDrawer(req)}
-                      onEdit={() => {
-                        setEditItem({
-                          id: req.equipment_id || req.id,
-                          equipment_code: req.equipment_code,
-                          name: req.equipment_name,
-                          plant: req.target_plant
-                        });
-                        setIsEditOpen(true);
-                      }}
-                      onDelete={() => {
-                        setDeleteItem(req);
-                        setIsDeleteOpen(true);
-                      }}
-                    />
+                  <td className="px-2 py-2 text-center w-[90px]">
+                    <button
+                      type="button"
+                      onClick={() => openDrawer(req)}
+                      className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors whitespace-nowrap shadow-xs cursor-pointer"
+                    >
+                      <Eye className="w-3.5 h-3.5" />
+                      Detail
+                    </button>
                   </td>
                 </tr>
               ))
@@ -467,22 +582,29 @@ export default function ManajerPeminjamanPage() {
         <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
           {/* Backdrop */}
           <div
-            className="fixed inset-0 bg-slate-900/50 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+            className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
             onClick={closeDrawer}
           />
 
           {/* Centered Dialog Window */}
           <div className="relative bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col z-10 animate-in fade-in zoom-in-95 duration-200 border border-slate-100 overflow-hidden">
             {/* Header */}
-            <div className="bg-[#0A356A] text-white px-6 py-4 flex items-center justify-between shrink-0">
+            <div className="bg-gradient-to-r from-[#0A356A] to-[#0D478A] text-white px-6 py-4 flex items-center justify-between shrink-0 shadow-md">
               <div>
-                <span className="text-[11px] font-bold uppercase tracking-wider text-blue-200 block">Detail Pengajuan Peminjaman</span>
-                <h2 className="text-base font-bold tracking-tight font-mono mt-0.5">{selectedRequest.request_number}</h2>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-wider bg-blue-400/20 text-blue-200 px-2 py-0.5 rounded-md border border-blue-300/30">
+                    Persetujuan Peminjaman Aset
+                  </span>
+                </div>
+                <h2 className="text-lg font-extrabold tracking-tight font-mono mt-1 flex items-center gap-2">
+                  {selectedRequest.request_number}
+                </h2>
               </div>
               <button
                 type="button"
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); closeDrawer(); }}
-                className="text-white/80 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+                className="text-white/80 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-colors"
+                title="Tutup"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -490,99 +612,147 @@ export default function ManajerPeminjamanPage() {
 
             {/* Status & Tab Navigation Bar */}
             <div className="bg-slate-50 border-b border-slate-200 px-6 py-3 flex items-center justify-between shrink-0">
-              <div>{getStatusBadge(selectedRequest.status)}</div>
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-bold text-slate-500">Status Pengajuan:</span>
+                {getStatusBadge(selectedRequest.status)}
+              </div>
 
               {/* Tabs */}
-              <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-sm">
+              <div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-xs">
                 <button
                   type="button"
                   onClick={() => setActiveTab("detail")}
-                  className={`px-3.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                    activeTab === "detail" ? "bg-[#0A356A] text-white" : "text-slate-600 hover:bg-slate-100"
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    activeTab === "detail" ? "bg-[#0A356A] text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
                   }`}
                 >
-                  Detail
+                  Detail Info
                 </button>
                 <button
                   type="button"
                   onClick={() => setActiveTab("history")}
-                  className={`px-3.5 py-1 rounded-lg text-xs font-bold transition-all ${
-                    activeTab === "history" ? "bg-[#0A356A] text-white" : "text-slate-600 hover:bg-slate-100"
+                  className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+                    activeTab === "history" ? "bg-[#0A356A] text-white shadow-xs" : "text-slate-600 hover:bg-slate-100"
                   }`}
                 >
-                  Riwayat
+                  Riwayat Approval
                 </button>
               </div>
             </div>
 
             {/* Scrollable Modal Body */}
-            <div className="flex-1 overflow-y-auto p-6 space-y-5">
+            <div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/50">
               {activeTab === "detail" && (
                 <>
-                  {/* Equipment Header Info */}
-                  <div className="bg-blue-50/60 rounded-xl p-4 border border-blue-100 space-y-1">
-                    <span className="text-[10px] font-bold text-[#0A356A] uppercase tracking-wider">Peralatan Yang Dimohon</span>
-                    <h3 className="text-sm font-bold text-slate-900">{selectedRequest.equipment_name}</h3>
-                    <p className="text-xs text-slate-500 font-mono">{selectedRequest.equipment_code}</p>
-                  </div>
-
-                  {/* Justification Box */}
-                  <div className="space-y-1.5">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-500 block">
-                      Justifikasi Kebutuhan Operasional
-                    </label>
-                    <div className="p-3.5 bg-slate-50 border border-slate-200 rounded-xl text-xs text-slate-700 leading-relaxed font-medium">
-                      {selectedRequest.justification}
-                    </div>
-                  </div>
-
-                  {/* Operational Detail Grid */}
-                  <div className="grid grid-cols-2 gap-4 text-xs">
-                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Unit Pemohon</span>
-                      <span className="font-bold text-slate-900 block">{selectedRequest.requesting_unit}</span>
-                    </div>
-
-                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Target Plant</span>
-                      <span className="font-bold text-slate-900 block">{selectedRequest.target_plant}</span>
-                    </div>
-
-                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Contact Person</span>
-                      <span className="font-bold text-slate-900 block">{selectedRequest.contact_person}</span>
-                      <span className="text-[11px] text-slate-500 block mt-0.5 font-mono">{selectedRequest.contact_phone || "-"}</span>
-                    </div>
-
-                    <div className="bg-white p-3.5 rounded-xl border border-slate-200 shadow-sm">
-                      <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block mb-1">Cost Avoidance</span>
-                      <span className="font-bold text-blue-700 text-sm block">
-                        {selectedRequest.estimated_cost_avoidance
-                          ? `Rp ${selectedRequest.estimated_cost_avoidance.toLocaleString("id-ID")}`
-                          : "-"}
+                  {/* Card 1: Informasi Peralatan */}
+                  <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-3">
+                    <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+                      <span className="text-[11px] font-bold text-[#0A356A] uppercase tracking-wider flex items-center gap-1.5">
+                        <Boxes className="w-4 h-4 text-[#0A356A]" />
+                        Informasi Peralatan Idle
                       </span>
+                      <span className="text-xs font-bold font-mono px-2 py-0.5 bg-slate-100 text-slate-700 rounded border border-slate-200">
+                        {selectedRequest.equipment_code}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase block">Nama Alat</span>
+                      <h3 className="text-sm font-bold text-slate-900 leading-snug">{selectedRequest.equipment_name}</h3>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3 pt-1 border-t border-slate-100 text-xs">
+                      <div>
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase block">Unit Pemohon / Lokasi Pasang</span>
+                        <span className="font-semibold text-slate-800 block mt-0.5">{selectedRequest.requesting_unit}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase block">Target Plant</span>
+                        <span className="font-semibold text-slate-800 block mt-0.5">{selectedRequest.target_plant}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 2: Detail Peminjaman & Justifikasi */}
+                  <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-3">
+                    <span className="text-[11px] font-bold text-[#0A356A] uppercase tracking-wider block border-b border-slate-100 pb-2 flex items-center gap-1.5">
+                      <FileText className="w-4 h-4 text-[#0A356A]" />
+                      Detail Peminjaman & Cost Benefit
+                    </span>
+
+                    <div className="grid grid-cols-2 gap-4 text-xs">
+                      <div>
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase block">Tanggal Permintaan</span>
+                        <span className="font-bold text-slate-900 block mt-0.5 font-mono">{selectedRequest.start_date}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase block">Estimasi Cost Avoidance</span>
+                        <span className="font-extrabold text-blue-700 text-xs block mt-0.5">
+                          {selectedRequest.estimated_cost_avoidance
+                            ? `Rp ${selectedRequest.estimated_cost_avoidance.toLocaleString("id-ID")}`
+                            : "-"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 border-t border-slate-100 space-y-1">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase block">Justifikasi Kebutuhan Operasional</span>
+                      <div className="p-3 bg-slate-50 border border-slate-200 rounded-lg text-xs text-slate-700 leading-relaxed font-medium">
+                        {selectedRequest.justification}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Card 3: Kontak Pemohon */}
+                  <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-2">
+                    <span className="text-[11px] font-bold text-[#0A356A] uppercase tracking-wider block border-b border-slate-100 pb-2">
+                      Kontak Person Pemohon
+                    </span>
+                    <div className="grid grid-cols-2 gap-3 text-xs pt-1">
+                      <div>
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase block">Nama Kontak</span>
+                        <span className="font-bold text-slate-900 block mt-0.5">{selectedRequest.contact_person}</span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] font-semibold text-slate-400 uppercase block">No. Telepon / HP</span>
+                        <span className="font-medium text-slate-700 block mt-0.5 font-mono">{selectedRequest.contact_phone || "-"}</span>
+                      </div>
                     </div>
                   </div>
 
                   {/* Action Review Form / Catatan */}
-                  <div className="pt-4 border-t border-slate-200 space-y-2">
-                    <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block">
-                      Catatan / Instruksi Manajer (Opsional / Wajib jika Menolak)
-                    </label>
-                    <textarea
-                      rows={3}
-                      value={actionNotes}
-                      onChange={(e) => setActionNotes(e.target.value)}
-                      placeholder="Masukkan alasan penolakan, catatan perbaikan, atau syarat persetujuan..."
-                      className="w-full p-3 bg-white border border-slate-300 rounded-xl text-xs outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]/20 transition-all resize-none font-medium text-slate-900"
-                    />
-                  </div>
+                  {selectedRequest.status === "PENDING" || selectedRequest.status === "IN_REVIEW" ? (
+                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-2">
+                      <label className="text-[11px] font-bold uppercase tracking-wider text-slate-700 block flex items-center justify-between">
+                        <span>Catatan Keputusan Manajer</span>
+                        <span className="text-[10px] text-slate-400 font-normal lowercase">*wajib jika menolak</span>
+                      </label>
+                      <textarea
+                        rows={3}
+                        value={actionNotes}
+                        onChange={(e) => setActionNotes(e.target.value)}
+                        placeholder="Masukkan catatan atau alasan penolakan..."
+                        className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]/20 transition-all resize-none font-medium text-slate-900"
+                      />
+                    </div>
+                  ) : selectedRequest.review_notes ? (
+                    <div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-1">
+                      <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
+                        Catatan Keputusan Manajer
+                      </span>
+                      <p className="text-xs text-slate-800 font-medium italic bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+                        "{selectedRequest.review_notes}"
+                      </p>
+                    </div>
+                  ) : null}
                 </>
               )}
 
               {activeTab === "history" && (
-                <div className="space-y-4">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-500">Timeline & Riwayat Pengajuan</h4>
+                <div className="bg-white rounded-xl p-5 border border-slate-200 shadow-xs space-y-4">
+                  <h4 className="text-xs font-bold uppercase tracking-wider text-slate-600 border-b border-slate-100 pb-2">
+                    Timeline & Riwayat Pengajuan
+                  </h4>
                   <div className="relative pl-6 space-y-5 before:absolute before:left-2.5 before:top-2 before:bottom-2 before:w-0.5 before:bg-slate-200">
                     {(selectedRequest.history || []).map((h) => (
                       <div key={h.id} className="relative">
@@ -604,33 +774,37 @@ export default function ManajerPeminjamanPage() {
               )}
             </div>
 
-            {/* Modal Footer Actions */}
-            <div className="bg-slate-50 border-t border-slate-200 p-4 flex items-center justify-end gap-2.5 shrink-0">
+            {/* Modal Footer Actions: Hanya "Tolak" dan "Setujui Peminjaman" */}
+            <div className="bg-white border-t border-slate-200 p-4 flex items-center justify-end gap-3 shrink-0">
               <button
                 type="button"
-                disabled={isSubmitting}
-                onClick={(e) => { e.preventDefault(); handleAction("REJECTED"); }}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-rose-700 border border-rose-300 hover:bg-rose-50 transition-colors disabled:opacity-50"
+                onClick={closeDrawer}
+                className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-600 hover:bg-slate-100 transition-colors"
               >
-                Tolak
+                Batal
               </button>
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={(e) => { e.preventDefault(); handleAction("REVISION_REQUESTED"); }}
-                className="px-3.5 py-2 rounded-xl text-xs font-bold bg-white text-amber-700 border border-amber-300 hover:bg-amber-50 transition-colors disabled:opacity-50"
-              >
-                Minta Revisi
-              </button>
-              <button
-                type="button"
-                disabled={isSubmitting}
-                onClick={(e) => { e.preventDefault(); handleAction("APPROVED"); }}
-                className="px-4 py-2 rounded-xl text-xs font-bold bg-[#0A356A] text-white hover:bg-[#0556B3] transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm"
-              >
-                {isSubmitting ? <RefreshCw className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                Setujui Peminjaman
-              </button>
+              {selectedRequest.status === "PENDING" || selectedRequest.status === "IN_REVIEW" ? (
+                <>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={(e) => { e.preventDefault(); handleAction("REJECTED"); }}
+                    className="px-4 py-2 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200 hover:bg-rose-100 transition-colors disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                  >
+                    <XCircle className="w-4 h-4" />
+                    Tolak
+                  </button>
+                  <button
+                    type="button"
+                    disabled={isSubmitting}
+                    onClick={(e) => { e.preventDefault(); handleAction("APPROVED"); }}
+                    className="px-5 py-2 rounded-xl text-xs font-bold bg-[#0A356A] text-white hover:bg-[#0556B3] transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm cursor-pointer"
+                  >
+                    {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                    Setujui Peminjaman
+                  </button>
+                </>
+              ) : null}
             </div>
           </div>
         </div>

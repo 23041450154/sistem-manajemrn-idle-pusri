@@ -58,51 +58,37 @@ export default function PerbaikanAlatPage() {
 		setIsLoading(true);
 		try {
 			const data = await getEquipments();
-			const completedIdsRaw: string[] = JSON.parse(localStorage.getItem("completed_maintenance_ids") || "[]");
-
-			let completedIds = [...completedIdsRaw];
-			if (Array.isArray(data)) {
-				let cleaned = false;
-				data.forEach((item: any) => {
-					const isMaintenance =
-						item.status_id === 6 ||
-						item.status?.id === 6 ||
-						String(item.status?.name || "").toUpperCase() === "MAINTENANCE" ||
-						String(item.statusAset || "").toUpperCase() === "MAINTENANCE" ||
-						String(item.statusAset || "").toUpperCase() === "DALAM_PERBAIKAN";
-					if (isMaintenance && completedIds.includes(String(item.id))) {
-						completedIds = completedIds.filter((id) => id !== String(item.id));
-						cleaned = true;
-					}
-				});
-				if (cleaned) {
-					localStorage.setItem("completed_maintenance_ids", JSON.stringify(completedIds));
-				}
-			}
-
 			let filteredData: MaintenanceEquipment[] = [];
 
 			if (Array.isArray(data) && data.length > 0) {
 				filteredData = data
 					.filter((item: any) => {
-						const isMaintenance =
-							item.status_id === 6 ||
-							item.status?.id === 6 ||
-							String(item.status?.name || "").toUpperCase() === "MAINTENANCE" ||
-							String(item.statusAset || "").toUpperCase() === "MAINTENANCE" ||
-							String(item.statusAset || "").toUpperCase() === "DALAM_PERBAIKAN";
-						const isCompletedLocally = completedIds.includes(String(item.id));
-						return isMaintenance || isCompletedLocally;
+						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+						const isRepair =
+							item.status_id === 3 ||
+							item.status?.id === 3 ||
+							statusName === "REPAIR" ||
+							statusName === "MAINTENANCE" ||
+							statusName === "DALAM_PERBAIKAN";
+						const isRepairCompleted =
+							item.status_id === 4 ||
+							item.status?.id === 4 ||
+							statusName === "REPAIR_COMPLETED";
+						return isRepair || isRepairCompleted;
 					})
 					.map((item: any) => {
-						const plantStr = typeof item.plant === "string" ? item.plant : item.plant?.name || "-";
+						const plantStr = typeof item.plant === "string" ? item.plant : item.plant?.name || item.plant?.description || "-";
 						const storageStr =
 							typeof item.storage_location === "string" ? item.storage_location : item.storage_location?.name || "-";
 						const objectTypeStr =
 							typeof item.object_type === "string" ? item.object_type : item.object_type?.name || "-";
 						const conditionStr = typeof item.condition === "string" ? item.condition : item.condition?.name || "-";
 
-						const isCompletedLocally = completedIds.includes(String(item.id));
+						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+						const isCompleted =
+							item.status_id === 4 ||
+							item.status?.id === 4 ||
+							statusName === "REPAIR_COMPLETED";
 
 						return {
 							id: String(item.id),
@@ -117,25 +103,16 @@ export default function PerbaikanAlatPage() {
 								: item.created_at
 									? new Date(item.created_at).toISOString().split("T")[0]
 									: new Date().toISOString().split("T")[0],
-							statusAset: isCompletedLocally ? "REPAIR_COMPLETED" : "MAINTENANCE",
-							statusId: isCompletedLocally ? 4 : 6,
+							statusAset: isCompleted ? "REPAIR_COMPLETED" : "MAINTENANCE",
+							statusId: isCompleted ? 4 : (item.status_id || 3),
 						};
 					});
 			}
 
-			const sampleItems = INITIAL_MAINTENANCE_SAMPLES.map((sample) => {
-				if (completedIds.includes(sample.id)) {
-					return { ...sample, statusAset: "REPAIR_COMPLETED", statusId: 4 };
-				}
-				return sample;
-			}).filter((sample) => !filteredData.some((f) => f.id === sample.id));
-
-			const finalEquipmentList = [...filteredData, ...sampleItems];
-			setEquipments(finalEquipmentList);
+			setEquipments(filteredData);
 		} catch (err) {
 			console.error("Error loading equipment maintenance data:", err);
-			const completedIds: string[] = JSON.parse(localStorage.getItem("completed_maintenance_ids") || "[]");
-			setEquipments(INITIAL_MAINTENANCE_SAMPLES.filter((s) => !completedIds.includes(s.id)));
+			setEquipments([]);
 		} finally {
 			setIsLoading(false);
 		}
@@ -278,26 +255,16 @@ export default function PerbaikanAlatPage() {
 			if (result.success) {
 				setNotification({
 					type: "success",
-					message: "Perbaikan peralatan berhasil dicatat. Status aset kini REPAIR_COMPLETED dan diteruskan ke Inspeksi Teknik untuk Validasi Ulang.",
+					message: "Perbaikan peralatan berhasil disimpan ke database. Status aset kini REPAIR_COMPLETED.",
 				});
 
-				const completedIds: string[] = JSON.parse(localStorage.getItem("completed_maintenance_ids") || "[]");
-				if (!completedIds.includes(selectedAsset.id)) {
-					completedIds.push(selectedAsset.id);
-					localStorage.setItem("completed_maintenance_ids", JSON.stringify(completedIds));
-				}
-
-				setEquipments((prev) =>
-					prev.map((item) =>
-						item.id === selectedAsset.id ? { ...item, statusAset: "REPAIR_COMPLETED", statusId: 4 } : item,
-					),
-				);
 				setIsModalOpen(false);
 				setSelectedAsset(null);
+				await loadEquipments();
 
 				setTimeout(() => {
 					setNotification(null);
-				}, 2000);
+				}, 3000);
 			} else {
 				setNotification({
 					type: "error",
@@ -644,39 +611,39 @@ export default function PerbaikanAlatPage() {
 							</div>
 
 							{/* Grid: Kondisi & Preservasi */}
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-								<div>
-									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Kondisi Aset Setelah Perbaikan <span className="text-red-500">*</span>
+							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
+								<div className="flex flex-col">
+									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5 min-h-[32px] flex items-end">
+										<span>Kondisi Aset Setelah Perbaikan <span className="text-red-500">*</span></span>
 									</label>
 									<select
 										value={conditionId}
 										onChange={(e) => setConditionId(e.target.value)}
-										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium text-gray-800 cursor-pointer"
+										className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium text-gray-800 cursor-pointer"
 									>
 										<option value="">-- Pilih Kondisi --</option>
 										<option value="1">Bagus</option>
 										<option value="2">Rusak Ringan</option>
 									</select>
-									<p className="text-[11px] text-gray-500 mt-1 leading-tight">
+									<p className="text-[11px] text-gray-500 mt-1.5 leading-tight">
 										Pilih kondisi fisik aktual aset setelah perbaikan selesai.
 									</p>
 								</div>
 
-								<div>
-									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Status Preservasi Terbaru <span className="text-red-500">*</span>
+								<div className="flex flex-col">
+									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5 min-h-[32px] flex items-end">
+										<span>Status Preservasi Terbaru <span className="text-red-500">*</span></span>
 									</label>
 									<select
 										value={preservationStatus}
 										onChange={(e) => setPreservationStatus(e.target.value)}
-										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium text-gray-800 cursor-pointer"
+										className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium text-gray-800 cursor-pointer"
 									>
 										<option value="">-- Pilih Preservasi --</option>
 										<option value="Preserved">Preserved</option>
 										<option value="Not Preserved">Not Preserved</option>
 									</select>
-									<p className="text-[11px] text-gray-500 mt-1 leading-tight">
+									<p className="text-[11px] text-gray-500 mt-1.5 leading-tight">
 										Pilih apakah aset masih memerlukan preservasi setelah perbaikan.
 									</p>
 								</div>
