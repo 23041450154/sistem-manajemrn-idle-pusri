@@ -213,7 +213,7 @@ export default function DisposalInboxPage() {
             <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Persetujuan Scrap Aset</h1>
           </div>
           <p className="text-xs text-gray-500 mt-1 font-medium">
-            Peninjauan dan persetujuan digital usulan pembuangan/penghapusan aset berstatus Rusak Berat.
+            Peninjauan dan persetujuan usulan scrap aset.
           </p>
         </div>
       </div>
