@@ -649,16 +649,25 @@ export default function ManajerScrapPage() {
 
             <h3 className="text-lg font-bold text-gray-900 mb-2">Setujui Pengajuan Scrap?</h3>
 
-            <div className="text-[13px] text-gray-600 mb-6 leading-relaxed text-left w-full bg-gray-50 p-4 rounded-xl space-y-2 border border-gray-100">
-              <p>Anda akan menyetujui usulan scrap untuk:</p>
-              <div className="font-bold text-gray-900">
-                <p>{selectedDisposal.equipment_code}</p>
-                <p>{selectedDisposal.equipment_name}</p>
+            <div className="text-[13px] text-gray-600 mb-6 leading-relaxed text-left w-full bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-100">
+              <p>Anda akan menyetujui pengajuan scrap untuk aset berikut:</p>
+              
+              <div>
+                <p className="text-[11px] uppercase text-gray-400 font-semibold mb-0.5">No. Pengajuan</p>
+                <p className="font-bold text-[#0A356A]">{selectedDisposal.disposal_number}</p>
               </div>
-              <div className="pt-2 border-t border-gray-200 mt-2">
-                <p className="text-[11px] uppercase text-gray-400 font-semibold">Estimasi Nilai Scrap</p>
+
+              <div>
+                <p className="text-[11px] uppercase text-gray-400 font-semibold mb-0.5">Kode & Nama Aset</p>
+                <p className="font-bold text-gray-900">{selectedDisposal.equipment_code}</p>
+                <p className="font-semibold text-gray-700">{selectedDisposal.equipment_name}</p>
+              </div>
+
+              <div className="pt-2 border-t border-gray-200">
+                <p className="text-[11px] uppercase text-gray-400 font-semibold mb-0.5">Estimasi Nilai Scrap</p>
                 <p className="text-[16px] font-extrabold text-emerald-700">{formatCurrency(selectedDisposal.scrap_value)}</p>
               </div>
+
               <p className="text-[11px] text-gray-400 italic pt-1">Setelah disetujui, pengajuan akan diteruskan ke proses berikutnya.</p>
             </div>
 
