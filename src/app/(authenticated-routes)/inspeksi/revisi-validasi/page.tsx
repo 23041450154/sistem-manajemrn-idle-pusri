@@ -361,7 +361,7 @@ export default function RevisiValidasiPage() {
 						);
 						const token = tokenMatch ? tokenMatch[2] : "";
 						const API_URL =
-							process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+							process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "https://api.testing.naufal.me";
 
 						for (const file of uploadedFiles) {
 							const fd = new FormData();

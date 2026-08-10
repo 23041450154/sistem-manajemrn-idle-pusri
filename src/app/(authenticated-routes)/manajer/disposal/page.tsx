@@ -22,6 +22,8 @@ interface DisposalItem {
   status: string; // PENDING, DISPOSED, REJECTED
   created_at: string;
   attachments?: { id?: string; file_url: string; caption?: string }[];
+  created_by_name?: string;
+  notes?: string;
 }
 
 export default function DisposalInboxPage() {

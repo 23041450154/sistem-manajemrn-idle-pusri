@@ -6,7 +6,7 @@ export async function PATCH(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params;
-  const API_URL = process.env.API_URL || "http://localhost:8080";
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "https://api.testing.naufal.me";
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;
 

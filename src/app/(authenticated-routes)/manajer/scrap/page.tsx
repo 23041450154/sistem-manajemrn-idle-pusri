@@ -24,6 +24,7 @@ interface DisposalItem {
   created_at: string;
   attachments?: { id?: string; file_url: string; caption?: string }[];
   created_by_name?: string;
+  notes?: string;
 }
 
 export default function ManajerScrapPage() {
