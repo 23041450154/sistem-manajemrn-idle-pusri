@@ -70,8 +70,8 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
     return {
       status: false,
       message: error.name === 'AbortError' 
-        ? "Koneksi ke backend lambat atau tidak merespons (Timeout)" 
-        : "Terjadi kesalahan saat terhubung ke backend",
+        ? "Koneksi lambat atau tidak merespons. Silakan coba kembali beberapa saat lagi." 
+        : "Terjadi kendala saat masuk ke sistem. Silakan coba kembali.",
       token: null
     }
   }
