@@ -321,10 +321,13 @@ export async function approveDisposal(
 	};
 
 	try {
-		const res = await fetch(`${API_URL}/api/disposals/${id}/approve`, {
+		const res = await fetch(`${API_URL}/api/disposal/${id}`, {
 			method: "PATCH",
 			headers,
-			body: JSON.stringify(payload),
+			body: JSON.stringify({
+				status: payload.status === "DISPOSED" ? "Approved" : "Rejected",
+				notes: payload.rejection_reason || (payload.status === "DISPOSED" ? "Approved by Manager" : "Rejected by Manager"),
+			}),
 		});
 
 		const json = await res.json().catch(() => null);
@@ -332,7 +335,7 @@ export async function approveDisposal(
 		if (res.ok && json?.success !== false) {
 			return {
 				success: true,
-				message: json?.message || "Pengajuan disposal berhasil diproses.",
+				message: json?.message || "Pengajuan scrap berhasil diproses.",
 			};
 		}
 	} catch (error) {

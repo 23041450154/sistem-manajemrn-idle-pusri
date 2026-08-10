@@ -121,6 +121,8 @@ export default function ManajerScrapPage() {
 
     setIsSubmitting(true);
     try {
+      // Delay for smooth loading state animation
+      await new Promise((resolve) => setTimeout(resolve, 800));
       const res = await approveDisposal(selectedDisposal.id, { status: "DISPOSED" });
 
       if (res.success) {
@@ -148,6 +150,8 @@ export default function ManajerScrapPage() {
 
     setIsSubmitting(true);
     try {
+      // Delay for smooth loading state animation
+      await new Promise((resolve) => setTimeout(resolve, 800));
       const res = await approveDisposal(selectedDisposal.id, {
         status: "REJECTED",
         rejection_reason: rejectionReason.trim(),
