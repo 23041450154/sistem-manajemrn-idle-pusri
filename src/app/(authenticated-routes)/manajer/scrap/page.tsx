@@ -138,11 +138,11 @@ export default function ManajerScrapPage() {
         handleCloseDetail();
         await fetchDisposalsData();
       } else {
-        setModalError(res.message || "Gagal menyetujui permintaan scrap.");
+        setModalError(res.message || "Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.");
       }
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan server saat menyetujui scrap.";
-      setModalError(errMsg);
+      console.error("Approve scrap error:", err);
+      setModalError("Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.");
     } finally {
       setIsSubmitting(false);
     }
@@ -170,11 +170,11 @@ export default function ManajerScrapPage() {
         handleCloseDetail();
         await fetchDisposalsData();
       } else {
-        setModalError(res.message || "Gagal menolak permintaan scrap.");
+        setModalError(res.message || "Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.");
       }
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan server saat menolak scrap.";
-      setModalError(errMsg);
+      console.error("Reject scrap error:", err);
+      setModalError("Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.");
     } finally {
       setIsSubmitting(false);
     }

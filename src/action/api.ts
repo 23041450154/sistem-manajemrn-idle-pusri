@@ -346,7 +346,7 @@ export async function approveDisposal(
 			} else {
 				return {
 					success: false,
-					message: json?.message || "Terjadi kendala pada koneksi sistem. Silakan coba kembali.",
+					message: json?.message || "Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.",
 				};
 			}
 		}
@@ -354,7 +354,7 @@ export async function approveDisposal(
 		console.error("Approve direct disposal endpoint error:", error);
 		return {
 			success: false,
-			message: "Terjadi kendala pada koneksi sistem. Silakan coba kembali.",
+			message: "Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.",
 		};
 	}
 
