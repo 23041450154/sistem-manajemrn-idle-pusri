@@ -22,6 +22,8 @@ interface DisposalItem {
   status: string; // PENDING, DISPOSED, REJECTED
   created_at: string;
   attachments?: { id?: string; file_url: string; caption?: string }[];
+  created_by_name?: string;
+  notes?: string;
 }
 
 export default function DisposalInboxPage() {
@@ -474,10 +476,6 @@ export default function DisposalInboxPage() {
                   <div>
                     <p className="text-[11px] font-semibold text-gray-400 uppercase">Nilai Perolehan Awal</p>
                     <p className="text-[13px] font-bold text-gray-900 mt-0.5">{formatCurrency(selectedDisposal.original_value)}</p>
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-semibold text-gray-400 uppercase">Nilai Buku (Book Value)</p>
-                    <p className="text-[13px] font-bold text-gray-900 mt-0.5">{formatCurrency(selectedDisposal.book_value)}</p>
                   </div>
                 </div>
               </div>
