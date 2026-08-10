@@ -101,14 +101,39 @@ export default function VerifikasiDisposalPage() {
 				getDisposalMethods(),
 			]);
 
+			// Build a set of equipment IDs that have a disposal-recommending inspection
+			const inspArr: any[] = insData || [];
+			const disposalInspectedIds = new Set<string>();
+			inspArr.forEach((ins: any) => {
+				const isDisposal =
+					ins.is_utilizable === false ||
+					String(ins.require_action_id) === "4" ||
+					ins.require_action?.name?.toLowerCase().includes("disposal") ||
+					ins.condition?.name?.toUpperCase() === "RUSAK_BERAT" ||
+					ins.condition?.name?.toUpperCase() === "RUSAK BERAT";
+				if (isDisposal && ins.equipment_id) {
+					disposalInspectedIds.add(String(ins.equipment_id));
+				}
+			});
+
 			const mappedEq = (eqData || []).map((item: any) => {
 				const rawStatus =
 					(typeof item.status === "string" ? item.status : item.status?.name) ||
 					"";
 				const objectTypeName =
 					item.object_type?.name || item.objectType?.name || "Belum Ditentukan";
+
+				// Normalize status: replace spaces with underscores, uppercase
+				let normalizedStatus = rawStatus.toUpperCase().replace(/\s+/g, "_");
+
+				// If equipment has a disposal-recommending inspection, override status
+				const eqId = item.id?.toString() || "-";
+				if (disposalInspectedIds.has(eqId) && !["DISPOSAL_RECOMMENDED", "SCRAP", "RUSAK_BERAT"].includes(normalizedStatus)) {
+					normalizedStatus = "DISPOSAL_RECOMMENDED";
+				}
+
 				return {
-					id: item.id?.toString() || "-",
+					id: eqId,
 					kodeAlat: item.equipment_code || "-",
 					namaAlat: item.name || "-",
 					plant: item.plant?.name || "-",
@@ -116,7 +141,7 @@ export default function VerifikasiDisposalPage() {
 					tanggalRegistrasi: item.created_at
 						? new Date(item.created_at).toISOString().split("T")[0]
 						: "-",
-					statusAset: rawStatus.toUpperCase(),
+					statusAset: normalizedStatus,
 					storageLocation: item.storage_location?.name || "-",
 					funcLoc: item.func_loc || "-",
 					vendor: item.vendor || "-",
@@ -155,11 +180,20 @@ export default function VerifikasiDisposalPage() {
 	const filteredAssets = useMemo(() => {
 		const submittedIds = new Set(disposals.map((d) => String(d.equipment_id)));
 		const query = search.toLowerCase().trim();
+		const disposalStatuses = new Set([
+			"DISPOSAL_RECOMMENDED",
+			"DISPOSAL RECOMMENDED",
+			"SCRAP",
+			"RUSAK_BERAT",
+			"RUSAK BERAT",
+			"CONDEMNED",
+			"DISPOSED",
+		]);
 		return equipments.filter((eq) => {
+			const normalized = eq.statusAset.replace(/\s+/g, "_");
 			const isRecommended =
-				eq.statusAset === "DISPOSAL_RECOMMENDED" ||
-				eq.statusAset === "SCRAP" ||
-				eq.statusAset === "RUSAK_BERAT";
+				disposalStatuses.has(eq.statusAset) ||
+				disposalStatuses.has(normalized);
 			const isNotSubmitted = !submittedIds.has(eq.id);
 			const matchSearch =
 				!query ||

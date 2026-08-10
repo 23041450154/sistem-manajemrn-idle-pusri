@@ -234,6 +234,50 @@ export async function getDisposals() {
 			});
 		}
 
+		// Include equipments that are directly marked as SCRAP in the DB
+		if (Array.isArray(eqList)) {
+			eqList.forEach((eq: any) => {
+				const isScrap =
+					String(eq.status_id) === "8" ||
+					eq.status?.name?.toUpperCase() === "SCRAP" ||
+					eq.status?.name?.toUpperCase() === "DISPOSAL_RECOMMENDED";
+				
+				if (isScrap) {
+					const alreadyAdded = dbDisposalItems.some(
+						(item) => item.equipment_id === String(eq.id),
+					);
+					if (!alreadyAdded) {
+						const eqAtts = attMap.get(Number(eq.id)) || [];
+						dbDisposalItems.push({
+							id: `EQ-${eq.id}`,
+							disposal_number: `DSP-2026-${String(eq.id).padStart(3, "0")}`,
+							equipment_id: String(eq.id),
+							equipment_code: eq.equipment_code || "-",
+							equipment_name: eq.name || "-",
+							disposal_method: "Scrap (Besi Tua)",
+							scrap_value: eq.estimated_reuse_value || 0,
+							book_value: eq.book_value || 0,
+							original_value: eq.original_value || 0,
+							plant: eq.plant_description || eq.plant || "-",
+							justification: "Disposal diajukan via pembaruan status aset.",
+							status: "PENDING",
+							created_at: eq.updated_at || eq.created_at || new Date().toISOString(),
+							attachments:
+								eqAtts.length > 0
+									? eqAtts.map((a: any) => ({
+											id: String(a.id),
+											file_url: a.file_path
+												? `${API_URL}/${a.file_path.replace(/^\//, "")}`
+												: a.file_url || "",
+											caption: a.caption || a.file_name || "Foto Dokumentasi",
+										}))
+									: undefined,
+						});
+					}
+				}
+			});
+		}
+
 		// Default mock data to complement demo items if needed
 		const mockDisposals = [
 			{
@@ -396,89 +440,145 @@ export async function createDisposalRequest(payload: {
 		Authorization: `Bearer ${token}`,
 	};
 
-	try {
-		// 1. Fetch statuses to align equipment status_id with VPS backend expectation
-		const statusRes = await fetch(`${API_URL}/api/status`, {
-			headers,
-			cache: "no-store",
-		}).catch(() => null);
+	const cleanPayload = {
+		disposal_number: payload.disposal_number,
+		equipment_id: Number(payload.equipment_id),
+		disposal_method_id: Number(payload.disposal_method_id),
+		scrap_value: Number(payload.scrap_value) || 0,
+		disposal_date: payload.disposal_date
+			? payload.disposal_date.split("T")[0]
+			: new Date().toISOString().split("T")[0],
+		justification:
+			payload.justification || "Permintaan scrap dari Rendal Pemeliharaan.",
+	};
 
-		let targetStatusId: number | null = null;
+	// POST /api/disposal hanya menerima aset yang status_id-nya sudah sama dengan
+	// status scrap di master data, jadi status harus diselaraskan lebih dulu.
+	// Kalau POST gagal, status dikembalikan ke nilai semula supaya aset tidak
+	// tertinggal di SCRAP tanpa punya baris disposal.
+	let previousStatusId: number | null = null;
+	let patchedStatusId: number | null = null;
+
+	try {
+		const [statusRes, eqRes] = await Promise.all([
+			fetch(`${API_URL}/api/status`, { headers, cache: "no-store" }).catch(
+				() => null,
+			),
+			fetch(`${API_URL}/api/equipment/${cleanPayload.equipment_id}`, {
+				headers,
+				cache: "no-store",
+			}).catch(() => null),
+		]);
+
+		let scrapStatusId: number | null = null;
 		if (statusRes?.ok) {
 			const statusJson = await statusRes.json().catch(() => null);
-			const statuses: any[] = statusJson?.data || (Array.isArray(statusJson) ? statusJson : []);
-			const match = statuses.find(
-				(s: any) =>
-					s.name === "DISPOSAL_RECOMMENDED" ||
-					s.name === "SCRAP" ||
-					s.name === "RUSAK_BERAT",
-			);
-			if (match?.id) {
-				targetStatusId = Number(match.id);
-			}
+			const statuses: any[] =
+				statusJson?.data || (Array.isArray(statusJson) ? statusJson : []);
+			const normalize = (s: any) =>
+				(s?.name || "").toUpperCase().replace(/\s+/g, "_");
+			// SCRAP adalah nama resmi di master data setelah rename dari disposal.
+			const match =
+				statuses.find((s) => normalize(s) === "SCRAP") ||
+				statuses.find((s) => normalize(s) === "DISPOSAL_RECOMMENDED");
+			if (match?.id) scrapStatusId = Number(match.id);
 		}
 
-		// 2. Align equipment status_id before calling POST /api/disposal
-		if (targetStatusId) {
-			await fetch(`${API_URL}/api/equipment/${payload.equipment_id}`, {
-				method: "PATCH",
-				headers,
-				body: JSON.stringify({ status_id: targetStatusId }),
-			}).catch(() => null);
+		if (!scrapStatusId) {
+			return {
+				success: false,
+				message:
+					"Status SCRAP tidak ditemukan di master data. Hubungi admin untuk menambahkannya.",
+			};
 		}
 
-		// 3. Post to /api/disposal on VPS database
-		let res = await fetch(`${API_URL}/api/disposal`, {
-			method: "POST",
-			headers,
-			body: JSON.stringify(payload),
-		});
+		if (eqRes?.ok) {
+			const eqJson = await eqRes.json().catch(() => null);
+			const currentStatusId = Number(eqJson?.data?.status_id);
+			if (Number.isFinite(currentStatusId)) previousStatusId = currentStatusId;
+		}
 
-		let json = await res.json().catch(() => null);
-
-		// 4. If status mismatch occurs, auto-retry with status IDs to force GORM db.Create
-		if (!res.ok && json?.error && (json.error.includes("status") || res.status === 400)) {
-			console.warn("Auto-aligning equipment status_id to retry /api/disposal on VPS DB...");
-			for (const tryStatusId of [4, 5, 6, 7, 3, 2, 1]) {
-				await fetch(`${API_URL}/api/equipment/${payload.equipment_id}`, {
+		if (previousStatusId !== scrapStatusId) {
+			const patchRes = await fetch(
+				`${API_URL}/api/equipment/${cleanPayload.equipment_id}`,
+				{
 					method: "PATCH",
 					headers,
-					body: JSON.stringify({ status_id: tryStatusId }),
-				}).catch(() => null);
+					body: JSON.stringify({ status_id: scrapStatusId }),
+				},
+			).catch(() => null);
 
-				const retryRes = await fetch(`${API_URL}/api/disposal`, {
-					method: "POST",
-					headers,
-					body: JSON.stringify(payload),
-				});
-
-				if (retryRes.ok) {
-					res = retryRes;
-					json = await retryRes.json().catch(() => null);
-					break;
-				}
+			if (!patchRes?.ok) {
+				const patchJson = await patchRes?.json().catch(() => null);
+				return {
+					success: false,
+					message:
+						patchJson?.message ||
+						patchJson?.error ||
+						"Gagal menyelaraskan status aset sebelum mengajukan scrap.",
+				};
 			}
+			patchedStatusId = scrapStatusId;
 		}
+
+		const res = await fetch(`${API_URL}/api/disposal`, {
+			method: "POST",
+			headers,
+			body: JSON.stringify(cleanPayload),
+		});
+		const json = await res.json().catch(() => null);
 
 		if (res.ok) {
 			return {
 				success: true,
 				message:
-					json?.message || "Permintaan scrap berhasil disimpan ke database dan dikirim ke Manajer.",
+					json?.message ||
+					"Permintaan scrap berhasil disimpan dan dikirim ke Manajer.",
 				data: json?.data,
 			};
 		}
 
+		// Gagal: kembalikan status aset supaya antrean tetap mencerminkan keadaan asli.
+		if (patchedStatusId !== null && previousStatusId !== null) {
+			await fetch(`${API_URL}/api/equipment/${cleanPayload.equipment_id}`, {
+				method: "PATCH",
+				headers,
+				body: JSON.stringify({ status_id: previousStatusId }),
+			}).catch(() => null);
+		}
+
+		const serverError = json?.error || json?.message || res.statusText;
+		console.error("Create disposal request failed:", res.status, serverError);
+
+		// Master data sudah benar (SCRAP). Yang belum ikut rename adalah kode
+		// backend: masih mencari nama status lama yang memang sengaja dihapus.
+		// Jangan tambahkan status apa pun untuk mengakali error ini.
+		if (typeof serverError === "string" && serverError.includes("disposal status not found")) {
+			return {
+				success: false,
+				message:
+					"Server belum bisa memproses permintaan scrap. Master data sudah benar, perbaikan ada di sisi backend. Hubungi tim backend.",
+			};
+		}
+
 		return {
-			success: true,
-			message: "Permintaan scrap berhasil dikirim ke Manajer.",
-			data: { id: payload.equipment_id },
+			success: false,
+			message: `Gagal menyimpan permintaan scrap: ${serverError}`,
 		};
 	} catch (error) {
 		console.error("Create disposal request error:", error);
+
+		if (patchedStatusId !== null && previousStatusId !== null) {
+			await fetch(`${API_URL}/api/equipment/${cleanPayload.equipment_id}`, {
+				method: "PATCH",
+				headers,
+				body: JSON.stringify({ status_id: previousStatusId }),
+			}).catch(() => null);
+		}
+
 		return {
-			success: true,
-			message: "Permintaan scrap berhasil dikirim ke Manajer.",
+			success: false,
+			message: "Terjadi kesalahan koneksi ke server.",
 		};
 	}
 }

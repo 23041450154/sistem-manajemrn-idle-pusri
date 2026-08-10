@@ -1,0 +1,3527 @@
+{
+  "nodes": [
+    {
+      "id": "src_action_api_getequipments",
+      "label": "getEquipments",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getdisposals",
+      "label": "getDisposals",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L51",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_approvedisposal",
+      "label": "approveDisposal",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L353",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_createdisposalrequest",
+      "label": "createDisposalRequest",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L428",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getapprovals",
+      "label": "getApprovals",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L593",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getapprovalbyid",
+      "label": "getApprovalById",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L611",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getvalidations",
+      "label": "getValidations",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L631",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_validateequipment",
+      "label": "validateEquipment",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L653",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_createrevalidation",
+      "label": "createRevalidation",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L710",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_reviewapproval",
+      "label": "reviewApproval",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L807",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_startreviewapproval",
+      "label": "startReviewApproval",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L840",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getinspections",
+      "label": "getInspections",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L869",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_createinspection",
+      "label": "createInspection",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L887",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_submitinspectiondata",
+      "label": "submitInspectionData",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L934",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getconditions",
+      "label": "getConditions",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L938",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getobjecttypes",
+      "label": "getObjectTypes",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L956",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getidlereasons",
+      "label": "getIdleReasons",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L986",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getplants",
+      "label": "getPlants",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1004",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getstoragelocations",
+      "label": "getStorageLocations",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1022",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getrequireactions",
+      "label": "getRequireActions",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1041",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getareas",
+      "label": "getAreas",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1077",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_createequipment",
+      "label": "createEquipment",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1113",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getequipmentbyid",
+      "label": "getEquipmentById",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1141",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_updateequipment",
+      "label": "updateEquipment",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1175",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_uploadequipmentattachment",
+      "label": "uploadEquipmentAttachment",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1204",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_uploadequipmentattachmentbase64",
+      "label": "uploadEquipmentAttachmentBase64",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1264",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getattachments",
+      "label": "getAttachments",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1328",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getattachmentsbyequipmentid",
+      "label": "getAttachmentsByEquipmentId",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1363",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getidledeclarations",
+      "label": "getIdleDeclarations",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1472",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getidledeclarationbyid",
+      "label": "getIdleDeclarationById",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1488",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getmaintenance",
+      "label": "getMaintenance",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1505",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_createmaintenance",
+      "label": "createMaintenance",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1521",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getmaintenancebyid",
+      "label": "getMaintenanceById",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1549",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_deletemaintenance",
+      "label": "deleteMaintenance",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1565",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_deleteequipment",
+      "label": "deleteEquipment",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1588",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_completeequipmentmaintenance",
+      "label": "completeEquipmentMaintenance",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1617",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_resubmitapproval",
+      "label": "resubmitApproval",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1742",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_createreuserequest",
+      "label": "createReuseRequest",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1770",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getreuserequests",
+      "label": "getReuseRequests",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1881",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getfunctionallocations",
+      "label": "getFunctionalLocations",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1929",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_getdisposalmethods",
+      "label": "getDisposalMethods",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1948",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_updatereuserequeststatus",
+      "label": "updateReuseRequestStatus",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L1967",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_api_approverevalidationequipment",
+      "label": "approveRevalidationEquipment",
+      "file_type": "code",
+      "source_file": "src/action/api.ts",
+      "source_location": "L2046",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_auth_login",
+      "label": "login",
+      "file_type": "code",
+      "source_file": "src/action/auth.ts",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_auth_loginaction",
+      "label": "loginAction",
+      "file_type": "code",
+      "source_file": "src/action/auth.ts",
+      "source_location": "L82",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_auth_getcurrentuseraction",
+      "label": "getCurrentUserAction",
+      "file_type": "code",
+      "source_file": "src/action/auth.ts",
+      "source_location": "L110",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_auth_logoutaction",
+      "label": "logoutAction",
+      "file_type": "code",
+      "source_file": "src/action/auth.ts",
+      "source_location": "L154",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_master_masteritem",
+      "label": "MasterItem",
+      "file_type": "code",
+      "source_file": "src/action/master.ts",
+      "source_location": "L24",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_master_getmasteritems",
+      "label": "getMasterItems",
+      "file_type": "code",
+      "source_file": "src/action/master.ts",
+      "source_location": "L53",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_master_createmasteritem",
+      "label": "createMasterItem",
+      "file_type": "code",
+      "source_file": "src/action/master.ts",
+      "source_location": "L76",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_master_updatemasteritem",
+      "label": "updateMasterItem",
+      "file_type": "code",
+      "source_file": "src/action/master.ts",
+      "source_location": "L106",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_action_master_deletemasteritem",
+      "label": "deleteMasterItem",
+      "file_type": "code",
+      "source_file": "src/action/master.ts",
+      "source_location": "L133",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_auth_login_loginform_loginform",
+      "label": "LoginForm",
+      "file_type": "code",
+      "source_file": "src/app/(auth)/login/LoginForm.tsx",
+      "source_location": "L15",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_auth_login_page_loginpage",
+      "label": "LoginPage",
+      "file_type": "code",
+      "source_file": "src/app/(auth)/login/page.tsx",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_auth_logout_page_logoutpage",
+      "label": "LogoutPage",
+      "file_type": "code",
+      "source_file": "src/app/(auth)/logout/page.tsx",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_admin_dashboard_page_admindashboardpage",
+      "label": "AdminDashboardPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/admin/dashboard/page.tsx",
+      "source_location": "L18",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_admin_equipment_page_equipmentmanagementpage",
+      "label": "EquipmentManagementPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/admin/equipment/page.tsx",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_admin_layout_adminlayout",
+      "label": "AdminLayout",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/admin/layout.tsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_admin_master_slug_page_generatestaticparams",
+      "label": "generateStaticParams",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/admin/master/[slug]/page.tsx",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_admin_master_slug_page_masterentitypage",
+      "label": "MasterEntityPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/admin/master/[slug]/page.tsx",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_admin_master_page_masterdatapage",
+      "label": "MasterDataPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/admin/master/page.tsx",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_inspeksi_dashboard_page_inspeksidashboardpage",
+      "label": "InspeksiDashboardPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/dashboard/page.tsx",
+      "source_location": "L19",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_inspeksi_equipment_page_inspeksiequipmentpage",
+      "label": "InspeksiEquipmentPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/equipment/page.tsx",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_forminspeksi_page_forminspeksipage",
+      "label": "FormInspeksiPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/inspeksi-berkala/formInspeksi/page.tsx",
+      "source_location": "L23",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page_inspeksiantreanpage",
+      "label": "InspeksiAntreanPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/inspeksi-berkala/page.tsx",
+      "source_location": "L35",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_inspeksi_layout_inspeksilayout",
+      "label": "InspeksiLayout",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/layout.tsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_inspeksi_manajemen_inspeksidashboard_inspeksidashboard",
+      "label": "InspeksiDashboard",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/manajemen/InspeksiDashboard.tsx",
+      "source_location": "L25",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_inspeksi_manajemen_page_inspeksidashboard",
+      "label": "InspeksiDashboard",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/manajemen/page.tsx",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_inspeksi_revisi_validasi_page_revisivalidasipage",
+      "label": "RevisiValidasiPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/revisi-validasi/page.tsx",
+      "source_location": "L71",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_validasiulangpage",
+      "label": "ValidasiUlangPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
+      "source_location": "L32",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_inspeksi_validasi_page_manajemeninspeksi",
+      "label": "ManajemenInspeksi",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L97",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_layout_authenticatedlayout",
+      "label": "AuthenticatedLayout",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/layout.tsx",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_manajer_approve_page_manajerapprovepage",
+      "label": "ManajerApprovePage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+      "source_location": "L84",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_manajer_dashboard_page_manajerdashboardpage",
+      "label": "ManajerDashboardPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/manajer/dashboard/page.tsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_manajer_disposal_page_disposalinboxpage",
+      "label": "DisposalInboxPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/manajer/disposal/page.tsx",
+      "source_location": "L27",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_manajer_layout_manajerlayout",
+      "label": "ManajerLayout",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/manajer/layout.tsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_manajer_peminjaman_page_manajerpeminjamanpage",
+      "label": "ManajerPeminjamanPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
+      "source_location": "L82",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_manajer_scrap_page_manajerscrappage",
+      "label": "ManajerScrapPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/manajer/scrap/page.tsx",
+      "source_location": "L27",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_pemeliharaan_dashboard_page_pemeliharaandashboardpage",
+      "label": "PemeliharaanDashboardPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/pemeliharaan/dashboard/page.tsx",
+      "source_location": "L87",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_pemeliharaan_layout_pemeliharaanlayout",
+      "label": "PemeliharaanLayout",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/pemeliharaan/layout.tsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_pemeliharaan_perbaikan_alat_page_perbaikanalatpage",
+      "label": "PerbaikanAlatPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/pemeliharaan/perbaikan-alat/page.tsx",
+      "source_location": "L35",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_pemeliharaan_riwayat_perbaikan_page_riwayatperbaikanpage",
+      "label": "RiwayatPerbaikanPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/pemeliharaan/riwayat-perbaikan/page.tsx",
+      "source_location": "L30",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_rendal_dashboard_page_rendaldashboard",
+      "label": "RendalDashboard",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/rendal/dashboard/page.tsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_rendal_disposal_page_verifikasidisposalpage",
+      "label": "VerifikasiDisposalPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/rendal/disposal/page.tsx",
+      "source_location": "L63",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_rendal_idle_page_rendalidlepage",
+      "label": "RendalIdlePage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/rendal/idle/page.tsx",
+      "source_location": "L65",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_rendal_laporan_page_audittrailpage",
+      "label": "AuditTrailPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/rendal/laporan/page.tsx",
+      "source_location": "L181",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_rendal_layout_rendallayout",
+      "label": "RendalLayout",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/rendal/layout.tsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_rendal_register_equipment_layout_registerequipmentlayout",
+      "label": "RegisterEquipmentLayout",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/rendal/register-equipment/layout.tsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_rendal_register_equipment_page_registerequipmentpage",
+      "label": "RegisterEquipmentPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/rendal/register-equipment/page.tsx",
+      "source_location": "L29",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_rendal_scrap_page_rendalscrappage",
+      "label": "RendalScrapPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/rendal/scrap/page.tsx",
+      "source_location": "L73",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_rendal_validasi_ulang_page_rendalvalidasiulangpage",
+      "label": "RendalValidasiUlangPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/rendal/validasi-ulang/page.tsx",
+      "source_location": "L38",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_unitkerjadashboardpage",
+      "label": "UnitKerjaDashboardPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/dashboard/page.tsx",
+      "source_location": "L69",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_equipment_page_unitkerjaequipmentpage",
+      "label": "UnitKerjaEquipmentPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/equipment/page.tsx",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_idle_page_unitkerjakatalogpage",
+      "label": "UnitKerjaKatalogPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/idle/page.tsx",
+      "source_location": "L55",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_katalog_id_gallery_gallery",
+      "label": "Gallery",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/gallery.tsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_katalog_id_page_katalogdetailpage",
+      "label": "KatalogDetailPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/page.tsx",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button_requestmodalbutton",
+      "label": "RequestModalButton",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/request-modal-button.tsx",
+      "source_location": "L17",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client_katalogclient",
+      "label": "KatalogClient",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
+      "source_location": "L11",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_katalog_page_katalogpage",
+      "label": "KatalogPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/page.tsx",
+      "source_location": "L7",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_katalog_shared_formatrupiah",
+      "label": "formatRupiah",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/shared.tsx",
+      "source_location": "L17",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_katalog_shared_tostate",
+      "label": "toState",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/shared.tsx",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_katalog_shared_normalizeequipment",
+      "label": "normalizeEquipment",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/shared.tsx",
+      "source_location": "L66",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_katalog_shared_equipmentthumb",
+      "label": "EquipmentThumb",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/shared.tsx",
+      "source_location": "L105",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_katalog_types_equipmentstate",
+      "label": "EquipmentState",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/types.ts",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_katalog_types_katalogitem",
+      "label": "KatalogItem",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/types.ts",
+      "source_location": "L11",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_katalog_types_katalogdetail",
+      "label": "KatalogDetail",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/types.ts",
+      "source_location": "L25",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_layout_unitkerjalayout",
+      "label": "UnitKerjaLayout",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/layout.tsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_permintaan_page_unitkerjapermintaanpage",
+      "label": "UnitKerjaPermintaanPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/permintaan/page.tsx",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page_riwayatpermintaanpage",
+      "label": "RiwayatPermintaanPage",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/riwayat-permintaan/page.tsx",
+      "source_location": "L706",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_api_debug_route_get",
+      "label": "GET",
+      "file_type": "code",
+      "source_file": "src/app/api/debug/route.ts",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_api_disposals_id_approve_route_patch",
+      "label": "PATCH",
+      "file_type": "code",
+      "source_file": "src/app/api/disposals/[id]/approve/route.ts",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_api_disposals_route_get",
+      "label": "GET",
+      "file_type": "code",
+      "source_file": "src/app/api/disposals/route.ts",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_api_equipment_id_maintenance_complete_route_patch",
+      "label": "PATCH",
+      "file_type": "code",
+      "source_file": "src/app/api/equipment/[id]/maintenance-complete/route.ts",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_api_test_attachments_route_get",
+      "label": "GET",
+      "file_type": "code",
+      "source_file": "src/app/api/test-attachments/route.ts",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_api_upload_route_post",
+      "label": "POST",
+      "file_type": "code",
+      "source_file": "src/app/api/upload/route.ts",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_layout_rootlayout",
+      "label": "RootLayout",
+      "file_type": "code",
+      "source_file": "src/app/layout.tsx",
+      "source_location": "L46",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_loading_globalloading",
+      "label": "GlobalLoading",
+      "file_type": "code",
+      "source_file": "src/app/loading.tsx",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_app_page_home",
+      "label": "Home",
+      "file_type": "code",
+      "source_file": "src/app/page.tsx",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_actionmenu_customactionitem",
+      "label": "CustomActionItem",
+      "file_type": "code",
+      "source_file": "src/components/ActionMenu.tsx",
+      "source_location": "L11",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_actionmenu_actionmenuprops",
+      "label": "ActionMenuProps",
+      "file_type": "code",
+      "source_file": "src/components/ActionMenu.tsx",
+      "source_location": "L23",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_actionmenu_actionmenu",
+      "label": "ActionMenu",
+      "file_type": "code",
+      "source_file": "src/components/ActionMenu.tsx",
+      "source_location": "L46",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_analogtimepicker_analogtimepicker",
+      "label": "AnalogTimePicker",
+      "file_type": "code",
+      "source_file": "src/components/AnalogTimePicker.tsx",
+      "source_location": "L11",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_chartsection_chartsection",
+      "label": "ChartSection",
+      "file_type": "code",
+      "source_file": "src/components/ChartSection.tsx",
+      "source_location": "L20",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_costavoidancesection_costavoidancesection",
+      "label": "CostAvoidanceSection",
+      "file_type": "code",
+      "source_file": "src/components/CostAvoidanceSection.tsx",
+      "source_location": "L61",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_dashboards_rendaldashboard_rendaldashboard",
+      "label": "RendalDashboard",
+      "file_type": "code",
+      "source_file": "src/components/Dashboards/RendalDashboard.tsx",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_dashboards_unitkerjadashboard_unitkerjadashboard",
+      "label": "UnitKerjaDashboard",
+      "file_type": "code",
+      "source_file": "src/components/Dashboards/UnitKerjaDashboard.tsx",
+      "source_location": "L31",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_deleteconfirmdialog_deleteconfirmdialog",
+      "label": "DeleteConfirmDialog",
+      "file_type": "code",
+      "source_file": "src/components/DeleteConfirmDialog.tsx",
+      "source_location": "L15",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_detailequipmentdialog_detailequipmentdialog",
+      "label": "DetailEquipmentDialog",
+      "file_type": "code",
+      "source_file": "src/components/DetailEquipmentDialog.tsx",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_editequipmentdialog_editequipmentdialog",
+      "label": "EditEquipmentDialog",
+      "file_type": "code",
+      "source_file": "src/components/EditEquipmentDialog.tsx",
+      "source_location": "L22",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_header_header",
+      "label": "Header",
+      "file_type": "code",
+      "source_file": "src/components/Header.tsx",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_loginpage_loginpage_loginpage",
+      "label": "LoginPage",
+      "file_type": "code",
+      "source_file": "src/components/LoginPage/LoginPage.tsx",
+      "source_location": "L8",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_manajemeninspeksi_manajemeninspeksi",
+      "label": "ManajemenInspeksi",
+      "file_type": "code",
+      "source_file": "src/components/ManajemenInspeksi.tsx",
+      "source_location": "L72",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_masterdatatable_masterdatatable",
+      "label": "MasterDataTable",
+      "file_type": "code",
+      "source_file": "src/components/MasterDataTable.tsx",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_recentactivities_recentactivities",
+      "label": "RecentActivities",
+      "file_type": "code",
+      "source_file": "src/components/RecentActivities.tsx",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_sidebar_sidebar",
+      "label": "Sidebar",
+      "file_type": "code",
+      "source_file": "src/components/Sidebar.tsx",
+      "source_location": "L35",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_sidebarprovider_sidebarprovider",
+      "label": "SidebarProvider",
+      "file_type": "code",
+      "source_file": "src/components/SidebarProvider.tsx",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_sidebarprovider_usesidebar",
+      "label": "useSidebar",
+      "file_type": "code",
+      "source_file": "src/components/SidebarProvider.tsx",
+      "source_location": "L26",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_statcard_statcard",
+      "label": "StatCard",
+      "file_type": "code",
+      "source_file": "src/components/StatCard.tsx",
+      "source_location": "L12",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_upcominginspections_upcominginspections",
+      "label": "UpcomingInspections",
+      "file_type": "code",
+      "source_file": "src/components/UpcomingInspections.tsx",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_userprovider_userprovider",
+      "label": "UserProvider",
+      "file_type": "code",
+      "source_file": "src/components/UserProvider.tsx",
+      "source_location": "L22",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_userprovider_useuser",
+      "label": "useUser",
+      "file_type": "code",
+      "source_file": "src/components/UserProvider.tsx",
+      "source_location": "L57",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_components_ui_tooltip_tooltip",
+      "label": "Tooltip",
+      "file_type": "code",
+      "source_file": "src/components/ui/tooltip.tsx",
+      "source_location": "L10",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_config_rbac_role",
+      "label": "Role",
+      "file_type": "code",
+      "source_file": "src/config/rbac.ts",
+      "source_location": "L3",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_config_rbac_actiontype",
+      "label": "ActionType",
+      "file_type": "code",
+      "source_file": "src/config/rbac.ts",
+      "source_location": "L5",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_config_rbac_haspermission",
+      "label": "hasPermission",
+      "file_type": "code",
+      "source_file": "src/config/rbac.ts",
+      "source_location": "L33",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_config_rbac_getallowedactions",
+      "label": "getAllowedActions",
+      "file_type": "code",
+      "source_file": "src/config/rbac.ts",
+      "source_location": "L43",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_hooks_usedebounce_usedebounce",
+      "label": "useDebounce",
+      "file_type": "code",
+      "source_file": "src/hooks/useDebounce.ts",
+      "source_location": "L8",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_lib_master_entities_masterentity",
+      "label": "MasterEntity",
+      "file_type": "code",
+      "source_file": "src/lib/master-entities.ts",
+      "source_location": "L6",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_lib_master_entities_findmasterentity",
+      "label": "findMasterEntity",
+      "file_type": "code",
+      "source_file": "src/lib/master-entities.ts",
+      "source_location": "L82",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_lib_roles_role",
+      "label": "Role",
+      "file_type": "code",
+      "source_file": "src/lib/roles.ts",
+      "source_location": "L13",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_lib_roles_normalizerole",
+      "label": "normalizeRole",
+      "file_type": "code",
+      "source_file": "src/lib/roles.ts",
+      "source_location": "L42",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_lib_roles_homepathforrole",
+      "label": "homePathForRole",
+      "file_type": "code",
+      "source_file": "src/lib/roles.ts",
+      "source_location": "L51",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_lib_roles_labelforrole",
+      "label": "labelForRole",
+      "file_type": "code",
+      "source_file": "src/lib/roles.ts",
+      "source_location": "L56",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_lib_utils_cn",
+      "label": "cn",
+      "file_type": "code",
+      "source_file": "src/lib/utils.ts",
+      "source_location": "L4",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_proxy_proxy",
+      "label": "proxy",
+      "file_type": "code",
+      "source_file": "src/proxy.ts",
+      "source_location": "L9",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_types_auth_user",
+      "label": "User",
+      "file_type": "code",
+      "source_file": "src/types/Auth.ts",
+      "source_location": "L1",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_types_auth_loginrequest",
+      "label": "LoginRequest",
+      "file_type": "code",
+      "source_file": "src/types/Auth.ts",
+      "source_location": "L11",
+      "_origin": "ast"
+    },
+    {
+      "id": "src_types_auth_loginresponse",
+      "label": "LoginResponse",
+      "file_type": "code",
+      "source_file": "src/types/Auth.ts",
+      "source_location": "L16",
+      "_origin": "ast"
+    }
+  ],
+  "edges": [
+    {
+      "source": "src_action_auth",
+      "target": "src_types_auth_loginrequest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/action/auth.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_action_auth",
+      "target": "src_types_auth_loginresponse",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/action/auth.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_action_auth",
+      "target": "src_types_auth_user",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/action/auth.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_action_auth",
+      "target": "src_lib_roles_homepathforrole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/action/auth.ts",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_action_master",
+      "target": "src_lib_master_entities_findmasterentity",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/action/master.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_action_master",
+      "target": "src_lib_master_entities_masterentity",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/action/master.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_auth_login_loginform",
+      "target": "src_action_auth_loginaction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/login/LoginForm.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_auth_login_loginform",
+      "target": "src_types_auth_loginresponse",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/login/LoginForm.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_auth_login_page",
+      "target": "src_app_auth_login_loginform_loginform",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/login/page.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_auth_logout_page",
+      "target": "src_action_auth_logoutaction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/logout/page.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_admin_dashboard_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/admin/dashboard/page.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_admin_dashboard_page",
+      "target": "src_action_api_getobjecttypes",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/admin/dashboard/page.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_admin_dashboard_page",
+      "target": "src_action_api_getstoragelocations",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/admin/dashboard/page.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_admin_dashboard_page",
+      "target": "src_action_api_getdisposals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/admin/dashboard/page.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_admin_equipment_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/admin/equipment/page.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_admin_equipment_page",
+      "target": "src_action_api_deleteequipment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/admin/equipment/page.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_admin_layout",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/admin/layout.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_admin_layout",
+      "target": "src_lib_roles_normalizerole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/admin/layout.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_admin_master_slug_page",
+      "target": "src_components_masterdatatable_masterdatatable",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/admin/master/[slug]/page.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_admin_master_slug_page",
+      "target": "src_lib_master_entities_findmasterentity",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/admin/master/[slug]/page.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_dashboard_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/dashboard/page.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_dashboard_page",
+      "target": "src_action_api_getapprovals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/dashboard/page.tsx",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_forminspeksi_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/inspeksi-berkala/formInspeksi/page.tsx",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_forminspeksi_page",
+      "target": "src_action_api_submitinspectiondata",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/inspeksi-berkala/formInspeksi/page.tsx",
+      "source_location": "L21",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/inspeksi-berkala/page.tsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_layout",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/layout.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_layout",
+      "target": "src_lib_roles_normalizerole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/layout.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_manajemen_page",
+      "target": "src_action_api_getinspections",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/manajemen/page.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_revisi_validasi_page",
+      "target": "src_components_analogtimepicker_analogtimepicker",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/revisi-validasi/page.tsx",
+      "source_location": "L29",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_revisi_validasi_page",
+      "target": "src_action_api_getconditions",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/revisi-validasi/page.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_revisi_validasi_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/revisi-validasi/page.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_revisi_validasi_page",
+      "target": "src_action_api_validateequipment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/revisi-validasi/page.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_revisi_validasi_page",
+      "target": "src_action_api_getobjecttypes",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/revisi-validasi/page.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_revisi_validasi_page",
+      "target": "src_action_api_getapprovals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/revisi-validasi/page.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_revisi_validasi_page",
+      "target": "src_action_api_getattachmentsbyequipmentid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/revisi-validasi/page.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_revisi_validasi_page",
+      "target": "src_action_api_uploadequipmentattachment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/revisi-validasi/page.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_revisi_validasi_page",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/revisi-validasi/page.tsx",
+      "source_location": "L40",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
+      "target": "src_action_api_createrevalidation",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
+      "target": "src_action_api_getconditions",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_components_analogtimepicker_analogtimepicker",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_action_api_validateequipment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_action_api_getobjecttypes",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_action_api_getapprovals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_action_api_getattachmentsbyequipmentid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_action_api_getinspections",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_action_api_getvalidations",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_action_api_getrequireactions",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_action_api_getapprovalbyid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_action_api_getconditions",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_action_api_resubmitapproval",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_inspeksi_validasi_page",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
+      "source_location": "L43",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_layout",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/layout.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_layout",
+      "target": "src_components_sidebar_sidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/layout.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_layout",
+      "target": "src_components_header_header",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/layout.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_layout",
+      "target": "src_components_sidebarprovider_sidebarprovider",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/layout.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_approve_page",
+      "target": "src_action_api_getapprovals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_approve_page",
+      "target": "src_action_api_reviewapproval",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_approve_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_approve_page",
+      "target": "src_action_api_startreviewapproval",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_approve_page",
+      "target": "src_action_api_getapprovalbyid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_approve_page",
+      "target": "src_action_api_getattachmentsbyequipmentid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_approve_page",
+      "target": "src_action_api_getplants",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_approve_page",
+      "target": "src_action_api_getequipmentbyid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_approve_page",
+      "target": "src_action_api_getvalidations",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_approve_page",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+      "source_location": "L29",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_dashboard_page",
+      "target": "src_components_costavoidancesection_costavoidancesection",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/dashboard/page.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_disposal_page",
+      "target": "src_action_api_getdisposals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/disposal/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_disposal_page",
+      "target": "src_action_api_approvedisposal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/disposal/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_layout",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/layout.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_layout",
+      "target": "src_lib_roles_normalizerole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/layout.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_peminjaman_page",
+      "target": "src_action_api_getreuserequests",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_peminjaman_page",
+      "target": "src_action_api_updatereuserequeststatus",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_peminjaman_page",
+      "target": "src_action_api_deleteequipment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_peminjaman_page",
+      "target": "src_components_actionmenu_actionmenu",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_peminjaman_page",
+      "target": "src_components_userprovider_useuser",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_peminjaman_page",
+      "target": "src_components_editequipmentdialog_editequipmentdialog",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_peminjaman_page",
+      "target": "src_components_deleteconfirmdialog_deleteconfirmdialog",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
+      "source_location": "L12",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_peminjaman_page",
+      "target": "src_components_ui_tooltip_tooltip",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
+      "source_location": "L13",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_scrap_page",
+      "target": "src_action_api_getdisposals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/scrap/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_manajer_scrap_page",
+      "target": "src_action_api_approvedisposal",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/manajer/scrap/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_pemeliharaan_dashboard_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/pemeliharaan/dashboard/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_pemeliharaan_layout",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/pemeliharaan/layout.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_pemeliharaan_layout",
+      "target": "src_lib_roles_normalizerole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/pemeliharaan/layout.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_pemeliharaan_perbaikan_alat_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/pemeliharaan/perbaikan-alat/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_pemeliharaan_perbaikan_alat_page",
+      "target": "src_action_api_completeequipmentmaintenance",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/pemeliharaan/perbaikan-alat/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_pemeliharaan_riwayat_perbaikan_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/pemeliharaan/riwayat-perbaikan/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_dashboard_page",
+      "target": "src_components_costavoidancesection_costavoidancesection",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/dashboard/page.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_disposal_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/disposal/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_disposal_page",
+      "target": "src_action_api_getdisposals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/disposal/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_disposal_page",
+      "target": "src_action_api_getinspections",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/disposal/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_disposal_page",
+      "target": "src_action_api_getdisposalmethods",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/disposal/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_disposal_page",
+      "target": "src_action_api_createdisposalrequest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/disposal/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_idle_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/idle/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_idle_page",
+      "target": "src_action_api_getobjecttypes",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/idle/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_laporan_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/laporan/page.tsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_laporan_page",
+      "target": "src_action_api_getapprovals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/laporan/page.tsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_laporan_page",
+      "target": "src_action_api_getinspections",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/laporan/page.tsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_laporan_page",
+      "target": "src_action_api_getdisposals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/laporan/page.tsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_layout",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/layout.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_layout",
+      "target": "src_lib_roles_normalizerole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/layout.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_register_equipment_layout",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/register-equipment/layout.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_register_equipment_layout",
+      "target": "src_lib_roles_normalizerole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/register-equipment/layout.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_register_equipment_page",
+      "target": "src_action_api_createequipment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/register-equipment/page.tsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_register_equipment_page",
+      "target": "src_action_api_updateequipment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/register-equipment/page.tsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_register_equipment_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/register-equipment/page.tsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_register_equipment_page",
+      "target": "src_action_api_getobjecttypes",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/register-equipment/page.tsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_register_equipment_page",
+      "target": "src_action_api_getplants",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/register-equipment/page.tsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_register_equipment_page",
+      "target": "src_action_api_getstoragelocations",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/register-equipment/page.tsx",
+      "source_location": "L19",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_scrap_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/scrap/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_scrap_page",
+      "target": "src_action_api_getdisposals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/scrap/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_scrap_page",
+      "target": "src_action_api_getinspections",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/scrap/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_scrap_page",
+      "target": "src_action_api_getdisposalmethods",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/scrap/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_scrap_page",
+      "target": "src_action_api_createdisposalrequest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/scrap/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_validasi_ulang_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/validasi-ulang/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_validasi_ulang_page",
+      "target": "src_action_api_getapprovals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/validasi-ulang/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_rendal_validasi_ulang_page",
+      "target": "src_action_api_approverevalidationequipment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/rendal/validasi-ulang/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_dashboard_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/dashboard/page.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_dashboard_page",
+      "target": "src_action_api_getreuserequests",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/dashboard/page.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_equipment_page",
+      "target": "src_app_authenticated_routes_unit_kerja_idle_page_unitkerjakatalogpage",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/equipment/page.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_idle_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/idle/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_idle_page",
+      "target": "src_action_api_getobjecttypes",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/idle/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_idle_page",
+      "target": "src_action_api_createreuserequest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/idle/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_idle_page",
+      "target": "src_action_api_getreuserequests",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/idle/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_idle_page",
+      "target": "src_action_api_getattachmentsbyequipmentid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/idle/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_id_gallery",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_equipmentthumb",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/gallery.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_id_page",
+      "target": "src_action_api_getequipmentbyid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/page.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_id_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_normalizeequipment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/page.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_id_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_formatrupiah",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/page.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_id_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_id_gallery_gallery",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/page.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_id_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button_requestmodalbutton",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button",
+      "target": "src_action_api_createreuserequest",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/request-modal-button.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_types_katalogitem",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_equipmentthumb",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_formatrupiah",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_page",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/page.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client_katalogclient",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/page.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_normalizeequipment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/page.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_shared_check",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_normalizeequipment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/shared.check.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_shared_check",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_tostate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/shared.check.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_shared_check",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_formatrupiah",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/shared.check.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_shared",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_types_equipmentstate",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/shared.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_shared",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_types_katalogdetail",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/shared.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_layout",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/layout.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_layout",
+      "target": "src_lib_roles_normalizerole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/layout.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page",
+      "target": "src_action_api_getreuserequests",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/riwayat-permintaan/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_api_test_attachments_route",
+      "target": "src_action_api_getattachmentsbyequipmentid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/api/test-attachments/route.ts",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_layout",
+      "target": "src_lib_utils_cn",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/layout.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_page",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/page.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_page",
+      "target": "src_lib_roles_homepathforrole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/page.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_actionmenu",
+      "target": "src_components_userprovider_useuser",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ActionMenu.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_actionmenu",
+      "target": "src_config_rbac_actiontype",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ActionMenu.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_actionmenu",
+      "target": "src_components_ui_tooltip_tooltip",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ActionMenu.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_chartsection",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ChartSection.tsx",
+      "source_location": "L18",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_costavoidancesection",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/CostAvoidanceSection.tsx",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_costavoidancesection",
+      "target": "src_action_api_getdisposals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/CostAvoidanceSection.tsx",
+      "source_location": "L28",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_dashboards_rendaldashboard",
+      "target": "src_components_statcard_statcard",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Dashboards/RendalDashboard.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_dashboards_rendaldashboard",
+      "target": "src_components_chartsection_chartsection",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Dashboards/RendalDashboard.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_dashboards_rendaldashboard",
+      "target": "src_components_upcominginspections_upcominginspections",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Dashboards/RendalDashboard.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_dashboards_rendaldashboard",
+      "target": "src_components_recentactivities_recentactivities",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Dashboards/RendalDashboard.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_dashboards_rendaldashboard",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Dashboards/RendalDashboard.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_dashboards_unitkerjadashboard",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Dashboards/UnitKerjaDashboard.tsx",
+      "source_location": "L29",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_editequipmentdialog",
+      "target": "src_action_api_getequipmentbyid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/EditEquipmentDialog.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_editequipmentdialog",
+      "target": "src_action_api_updateequipment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/EditEquipmentDialog.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_editequipmentdialog",
+      "target": "src_action_api_getstoragelocations",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/EditEquipmentDialog.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_editequipmentdialog",
+      "target": "src_action_api_getobjecttypes",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/EditEquipmentDialog.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_header",
+      "target": "src_action_auth_logoutaction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Header.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_header",
+      "target": "src_lib_roles_labelforrole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Header.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_header",
+      "target": "src_components_sidebarprovider_usesidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Header.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_manajemeninspeksi",
+      "target": "src_components_analogtimepicker_analogtimepicker",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ManajemenInspeksi.tsx",
+      "source_location": "L29",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_manajemeninspeksi",
+      "target": "src_action_api_getconditions",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ManajemenInspeksi.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_manajemeninspeksi",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ManajemenInspeksi.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_manajemeninspeksi",
+      "target": "src_action_api_validateequipment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ManajemenInspeksi.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_manajemeninspeksi",
+      "target": "src_action_api_getobjecttypes",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ManajemenInspeksi.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_manajemeninspeksi",
+      "target": "src_action_api_getapprovals",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ManajemenInspeksi.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_manajemeninspeksi",
+      "target": "src_action_api_getattachmentsbyequipmentid",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ManajemenInspeksi.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_manajemeninspeksi",
+      "target": "src_action_api_uploadequipmentattachment",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ManajemenInspeksi.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_manajemeninspeksi",
+      "target": "src_action_api_uploadequipmentattachmentbase64",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ManajemenInspeksi.tsx",
+      "source_location": "L31",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_manajemeninspeksi",
+      "target": "src_action_auth_getcurrentuseraction",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ManajemenInspeksi.tsx",
+      "source_location": "L41",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_masterdatatable",
+      "target": "src_action_master_getmasteritems",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/MasterDataTable.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_masterdatatable",
+      "target": "src_action_master_createmasteritem",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/MasterDataTable.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_masterdatatable",
+      "target": "src_action_master_updatemasteritem",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/MasterDataTable.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_masterdatatable",
+      "target": "src_action_master_deletemasteritem",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/MasterDataTable.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_masterdatatable",
+      "target": "src_action_master_masteritem",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/MasterDataTable.tsx",
+      "source_location": "L15",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_masterdatatable",
+      "target": "src_lib_master_entities_masterentity",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/MasterDataTable.tsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_recentactivities",
+      "target": "src_action_api_getequipments",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/RecentActivities.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_sidebar",
+      "target": "src_lib_roles_normalizerole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Sidebar.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_sidebar",
+      "target": "src_components_sidebarprovider_usesidebar",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Sidebar.tsx",
+      "source_location": "L32",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_upcominginspections",
+      "target": "src_action_api_getinspections",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/UpcomingInspections.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_upcominginspections",
+      "target": "src_action_api_getobjecttypes",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/UpcomingInspections.tsx",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_userprovider",
+      "target": "src_config_rbac_actiontype",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/UserProvider.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_userprovider",
+      "target": "src_config_rbac_haspermission",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/UserProvider.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_ui_button",
+      "target": "src_lib_utils_cn",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ui/button.tsx",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_proxy",
+      "target": "src_lib_roles_normalizerole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/proxy.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_proxy",
+      "target": "src_lib_roles_homepathforrole",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/proxy.ts",
+      "source_location": "L3",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_proxy",
+      "target": "src_lib_roles_role",
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/proxy.ts",
+      "source_location": "L4",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_action_master",
+      "target": "src_lib_master_entities_findmasterentity",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/action/master.ts",
+      "source_location": "L40",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_formatrupiah",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
+      "source_location": "L149",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page",
+      "target": "src_action_api_getreuserequests",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/riwayat-permintaan/page.tsx",
+      "source_location": "L97",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_ui_button",
+      "target": "src_lib_utils_cn",
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ui/button.tsx",
+      "source_location": "L52",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_types_katalogdetail",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_types_katalogitem",
+      "relation": "inherits",
+      "context": "type",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/types.ts",
+      "source_location": "L25",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_actionmenu_customactionitem",
+      "target": "src_config_rbac_actiontype",
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ActionMenu.tsx",
+      "source_location": "L20",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_actionmenu_actionmenuprops",
+      "target": "src_config_rbac_actiontype",
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/ActionMenu.tsx",
+      "source_location": "L41",
+      "weight": 1.0,
+      "_origin": "ast"
+    },
+    {
+      "source": "src_components_userprovider_usercontexttype",
+      "target": "src_config_rbac_actiontype",
+      "relation": "references",
+      "context": "field",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/UserProvider.tsx",
+      "source_location": "L11",
+      "weight": 1.0,
+      "_origin": "ast"
+    }
+  ],
+  "input_tokens": 0,
+  "output_tokens": 0
+}
