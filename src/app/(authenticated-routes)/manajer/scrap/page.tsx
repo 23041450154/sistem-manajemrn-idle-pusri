@@ -342,7 +342,7 @@ export default function ManajerScrapPage() {
                     </td>
                     {activeTab === "history" && (
                       <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                        {item.status === "DISPOSED" ? (
+                        {item.status === "DISPOSED" || item.status === "APPROVED" || item.status === "Approved" ? (
                           <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-full text-[10px] font-bold">
                             <CheckCircle2 className="w-3 h-3" />
                             Disetujui
