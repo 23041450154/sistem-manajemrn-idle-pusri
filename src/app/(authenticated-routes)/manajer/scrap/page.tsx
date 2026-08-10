@@ -764,9 +764,16 @@ export default function ManajerScrapPage() {
             </div>
 
             {modalError && (
-              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12px] font-semibold flex items-center gap-2 text-left w-full">
-                <AlertCircle className="w-4.5 h-4.5 text-rose-600 shrink-0 mt-0.5" />
-                <span className="flex-1 leading-normal font-medium">{modalError}</span>
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12px] flex items-start gap-2.5 text-left w-full">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-extrabold text-[12px] text-rose-900 leading-normal">
+                    Pengajuan belum dapat diproses
+                  </p>
+                  <p className="mt-0.5 font-medium leading-relaxed">
+                    {modalError}
+                  </p>
+                </div>
               </div>
             )}
 
@@ -791,6 +798,8 @@ export default function ManajerScrapPage() {
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Memproses...</span>
                   </>
+                ) : modalError ? (
+                  "Coba Lagi"
                 ) : (
                   "Setujui Scrap"
                 )}
@@ -850,9 +859,16 @@ export default function ManajerScrapPage() {
             </div>
 
             {modalError && (
-              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12px] font-semibold flex items-center gap-2 text-left w-full">
-                <AlertCircle className="w-4.5 h-4.5 text-rose-600 shrink-0 mt-0.5" />
-                <span className="flex-1 leading-normal font-medium">{modalError}</span>
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12px] flex items-start gap-2.5 text-left w-full">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-extrabold text-[12px] text-rose-900 leading-normal">
+                    Pengajuan belum dapat diproses
+                  </p>
+                  <p className="mt-0.5 font-medium leading-relaxed">
+                    {modalError}
+                  </p>
+                </div>
               </div>
             )}
 
@@ -878,6 +894,8 @@ export default function ManajerScrapPage() {
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Mengirim...</span>
                   </>
+                ) : modalError ? (
+                  "Coba Lagi"
                 ) : (
                   "Tolak Pengajuan"
                 )}

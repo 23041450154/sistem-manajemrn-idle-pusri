@@ -346,16 +346,15 @@ export async function approveDisposal(
 			} else {
 				return {
 					success: false,
-					message: json?.message || `Gagal memproses pengajuan (Status ${res.status}).`,
+					message: json?.message || "Terjadi kendala pada koneksi sistem. Silakan coba kembali.",
 				};
 			}
 		}
 	} catch (error) {
 		console.error("Approve direct disposal endpoint error:", error);
-		const errMsg = error instanceof Error ? error.message : "Tidak dapat terhubung ke server backend.";
 		return {
 			success: false,
-			message: `Gagal menghubungkan ke server: ${errMsg}. Silakan periksa apakah server backend sedang berjalan.`,
+			message: "Terjadi kendala pada koneksi sistem. Silakan coba kembali.",
 		};
 	}
 
