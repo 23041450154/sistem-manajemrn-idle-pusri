@@ -476,7 +476,7 @@ export default function ManajerScrapPage() {
                   <div>
                     <p className="text-[13px] font-bold">Pengajuan Scrap Ditolak</p>
                     <p className="text-[12px] text-rose-800 mt-0.5 leading-relaxed">
-                      Pengajuan scrap ini telah ditolak oleh Manajer Rendal. Status aset dikembalikan menjadi <strong>IDLE</strong>.
+                      Pengajuan scrap ini telah ditolak oleh Manajer Rendal. Status aset dikembalikan menjadi <strong>READY_TO_REUSE</strong>.
                     </p>
                   </div>
                 </div>
