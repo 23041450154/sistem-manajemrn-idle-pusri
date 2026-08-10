@@ -197,20 +197,8 @@ export default function ManajerScrapPage() {
 
   return (
     <div className="max-w-7xl mx-auto pt-2 pb-8">
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed top-6 right-6 z-[100] max-w-md bg-gray-900 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 border border-gray-700">
-          {toast.type === "success" ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          ) : (
-            <XCircle className="w-5 h-5 text-red-400 shrink-0" />
-          )}
-          <span className="text-[13px] font-medium leading-snug">{toast.message}</span>
-        </div>
-      )}
-
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div>
           <div className="flex items-center gap-2">
             <Trash2 className="w-6 h-6 text-[#0A356A]" />
@@ -221,6 +209,35 @@ export default function ManajerScrapPage() {
           </p>
         </div>
       </div>
+
+      {/* Inline Notification Banner */}
+      {toast && (
+        <div className={`mb-5 p-4 rounded-xl border flex items-center gap-3 transition-all duration-300 animate-in fade-in slide-in-from-top-2 ${
+          toast.type === "success"
+            ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+            : "bg-rose-50 border-rose-200 text-rose-800"
+        }`}>
+          {toast.type === "success" ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+          ) : (
+            <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+          )}
+          <div className="flex-1">
+            <p className="text-[13px] font-bold">
+              {toast.type === "success" ? "Transaksi Berhasil" : "Transaksi Gagal"}
+            </p>
+            <p className="text-[12px] mt-0.5 leading-relaxed font-semibold">
+              {toast.message}
+            </p>
+          </div>
+          <button
+            onClick={() => setToast(null)}
+            className="text-[11px] font-bold text-gray-400 hover:text-gray-600 cursor-pointer"
+          >
+            Tutup
+          </button>
+        </div>
+      )}
 
       {/* Main Table */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
