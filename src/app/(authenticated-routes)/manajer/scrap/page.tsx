@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { 
-  Eye, X, CheckCircle2, RefreshCw, XCircle, 
+  Eye, X, CheckCircle2, RefreshCw, XCircle, AlertCircle,
   Trash2, AlertTriangle, Loader2, Check, DollarSign, Tag, Search,
   FileText, Clock
 } from "lucide-react";
@@ -48,6 +48,7 @@ export default function ManajerScrapPage() {
   // Toast notification
   const [toast, setToast] = useState<{ type: "success" | "error" | "reject"; message: string } | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -113,6 +114,7 @@ export default function ManajerScrapPage() {
     setIsDetailOpen(false);
     setSelectedDisposal(null);
     setPreviewImage(null);
+    setModalError(null);
   };
 
   // Submit Approval (Green Button)
@@ -120,6 +122,7 @@ export default function ManajerScrapPage() {
     if (!selectedDisposal || isSubmitting) return;
 
     setIsSubmitting(true);
+    setModalError(null);
     try {
       // Delay for smooth loading state animation
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -131,14 +134,15 @@ export default function ManajerScrapPage() {
           res.message || "Permintaan scrap berhasil disetujui!"
         );
         setIsApproveConfirmOpen(false);
+        setModalError(null);
         handleCloseDetail();
         await fetchDisposalsData();
       } else {
-        showToast("error", res.message || "Gagal menyetujui permintaan scrap.");
+        setModalError(res.message || "Gagal menyetujui permintaan scrap.");
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan server saat menyetujui scrap.";
-      showToast("error", errMsg);
+      setModalError(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -149,6 +153,7 @@ export default function ManajerScrapPage() {
     if (!selectedDisposal || isSubmitting || !rejectionReason.trim()) return;
 
     setIsSubmitting(true);
+    setModalError(null);
     try {
       // Delay for smooth loading state animation
       await new Promise((resolve) => setTimeout(resolve, 800));
@@ -161,14 +166,15 @@ export default function ManajerScrapPage() {
         showToast("reject", `Pengajuan ${selectedDisposal.disposal_number} untuk ${selectedDisposal.equipment_code} berhasil ditolak.`);
         setIsRejectModalOpen(false);
         setRejectionReason("");
+        setModalError(null);
         handleCloseDetail();
         await fetchDisposalsData();
       } else {
-        showToast("error", res.message || "Gagal menolak permintaan scrap.");
+        setModalError(res.message || "Gagal menolak permintaan scrap.");
       }
     } catch (err: unknown) {
       const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan server saat menolak scrap.";
-      showToast("error", errMsg);
+      setModalError(errMsg);
     } finally {
       setIsSubmitting(false);
     }
@@ -720,7 +726,12 @@ export default function ManajerScrapPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div
             className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
-            onClick={() => !isSubmitting && setIsApproveConfirmOpen(false)}
+            onClick={() => {
+              if (!isSubmitting) {
+                setIsApproveConfirmOpen(false);
+                setModalError(null);
+              }
+            }}
           />
 
           <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200 border border-gray-100">
@@ -752,10 +763,20 @@ export default function ManajerScrapPage() {
               <p className="text-[11px] text-gray-400 italic pt-1">Setelah disetujui, pengajuan akan diteruskan ke proses berikutnya.</p>
             </div>
 
+            {modalError && (
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12px] font-semibold flex items-center gap-2 text-left w-full">
+                <AlertCircle className="w-4.5 h-4.5 text-rose-600 shrink-0 mt-0.5" />
+                <span className="flex-1 leading-normal font-medium">{modalError}</span>
+              </div>
+            )}
+
             <div className="flex items-center gap-3 w-full justify-center">
               <button
                 disabled={isSubmitting}
-                onClick={() => setIsApproveConfirmOpen(false)}
+                onClick={() => {
+                  setIsApproveConfirmOpen(false);
+                  setModalError(null);
+                }}
                 className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl text-[13px] font-semibold hover:bg-gray-50 transition-colors w-[120px] disabled:opacity-50"
               >
                 Batal
@@ -784,7 +805,12 @@ export default function ManajerScrapPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div
             className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
-            onClick={() => !isSubmitting && setIsRejectModalOpen(false)}
+            onClick={() => {
+              if (!isSubmitting) {
+                setIsRejectModalOpen(false);
+                setModalError(null);
+              }
+            }}
           />
 
           <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 flex flex-col animate-in zoom-in-95 duration-200 border border-gray-100">
@@ -823,10 +849,20 @@ export default function ManajerScrapPage() {
               )}
             </div>
 
+            {modalError && (
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12px] font-semibold flex items-center gap-2 text-left w-full">
+                <AlertCircle className="w-4.5 h-4.5 text-rose-600 shrink-0 mt-0.5" />
+                <span className="flex-1 leading-normal font-medium">{modalError}</span>
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-3 w-full">
               <button
                 disabled={isSubmitting}
-                onClick={() => setIsRejectModalOpen(false)}
+                onClick={() => {
+                  setIsRejectModalOpen(false);
+                  setModalError(null);
+                }}
                 className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl text-[13px] font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Batal
