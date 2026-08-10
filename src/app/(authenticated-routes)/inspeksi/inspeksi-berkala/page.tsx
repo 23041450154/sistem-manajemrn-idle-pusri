@@ -14,9 +14,11 @@ import {
 	ClipboardCheck,
 	Loader2,
 	ChevronRight,
+	CheckCircle2,
+	Eye,
 } from "lucide-react";
 import Link from "next/link";
-import { getEquipments } from "@/action/api";
+import { getEquipments, getInspections } from "@/action/api";
 
 interface Equipment {
 	id: string | number;
@@ -32,9 +34,27 @@ interface Equipment {
 	created_at?: string;
 }
 
+interface InspectionItem {
+	id: string | number;
+	equipment_id: string | number;
+	equipment_code?: string;
+	equipment_name?: string;
+	plant?: string;
+	object_type?: string;
+	inspection_date?: string;
+	created_at?: string;
+	notes?: string;
+	condition_name?: string;
+	require_action_name?: string;
+	status_name?: string;
+}
+
 export default function InspeksiAntreanPage() {
-	const [data, setData] = useState<Equipment[]>([]);
+	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
+	const [antreanData, setAntreanData] = useState<Equipment[]>([]);
+	const [riwayatData, setRiwayatData] = useState<InspectionItem[]>([]);
 	const [loading, setLoading] = useState(true);
+
 	const [searchInput, setSearchInput] = useState("");
 	const [search, setSearch] = useState("");
 	const [filterPlant, setFilterPlant] = useState("");
@@ -47,56 +67,98 @@ export default function InspeksiAntreanPage() {
 		direction: "asc" | "desc";
 	} | null>(null);
 
-	useEffect(() => {
-		const fetchData = async () => {
-			try {
-				const result = await getEquipments();
-				if (result && result.length > 0) {
-					let idleEqs = result.filter((eq: any) => {
-						const statusStr = typeof eq.status === "string" ? eq.status : eq.status?.name;
-						return statusStr === "IDLE" || statusStr === "READY_TO_USE" || statusStr === "READY TO USE";
-					});
-					setData(idleEqs);
-				} else {
-					setData([]);
-				}
-			} catch (err) {
-				console.error("Gagal mengambil data peralatan:", err);
-				setData([]);
-			} finally {
-				setLoading(false);
+	const fetchData = async () => {
+		setLoading(true);
+		try {
+			const [resultEq, resultInsp] = await Promise.all([
+				getEquipments().catch(() => []),
+				getInspections().catch(() => []),
+			]);
+
+			if (Array.isArray(resultEq) && resultEq.length > 0) {
+				const idleEqs = resultEq.filter((eq: any) => {
+					const statusStr = typeof eq.status === "string" ? eq.status : eq.status?.name;
+					return statusStr === "IDLE" || statusStr === "READY_TO_USE" || statusStr === "READY TO USE";
+				});
+				setAntreanData(idleEqs);
+			} else {
+				setAntreanData([]);
 			}
-		};
+
+			if (Array.isArray(resultInsp) && resultInsp.length > 0) {
+				const mappedInspections: InspectionItem[] = resultInsp.map((ins: any) => {
+					const eq = ins.equipment || {};
+					let plantStr = "-";
+					if (typeof eq.plant === "string") plantStr = eq.plant;
+					else if (eq.plant?.name) plantStr = eq.plant.name;
+					else if (eq.plant_description) plantStr = String(eq.plant_description);
+
+					let typeStr = "-";
+					if (typeof eq.object_type === "string") typeStr = eq.object_type;
+					else if (eq.object_type?.name) typeStr = eq.object_type.name;
+					else if (ins.object_type_name) typeStr = ins.object_type_name;
+
+					return {
+						id: ins.id,
+						equipment_id: ins.equipment_id,
+						equipment_code: ins.equipment_code || eq.equipment_code || `EQ-${ins.equipment_id}`,
+						equipment_name: ins.equipment_name || eq.name || "Equipment Tanpa Nama",
+						plant: plantStr,
+						object_type: typeStr,
+						inspection_date: ins.inspection_date || ins.created_at || new Date().toISOString(),
+						notes: ins.notes || ins.summary || "Inspeksi berkala selesai.",
+						condition_name: ins.condition?.name || ins.condition_name || "Baik",
+						require_action_name: ins.require_action?.name || ins.require_action_name || "-",
+						status_name: "Selesai",
+					};
+				});
+				setRiwayatData(mappedInspections);
+			} else {
+				setRiwayatData([]);
+			}
+		} catch (err) {
+			console.error("Gagal mengambil data inspeksi berkala:", err);
+			setAntreanData([]);
+			setRiwayatData([]);
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	useEffect(() => {
 		fetchData();
 	}, []);
 
 	useEffect(() => {
 		setCurrentPage(1);
-	}, [search, filterPlant, filterTipeObjek]);
+	}, [search, filterPlant, filterTipeObjek, activeTab]);
+
+	const currentRawData = activeTab === "antrean" ? antreanData : riwayatData;
 
 	const plantOptions = useMemo(
 		() =>
 			[
 				...new Set(
-					data
+					antreanData
 						.map((e) => (typeof e.plant === "string" ? e.plant : e.plant?.name))
 						.filter((v) => v && v !== "-"),
 				),
 			].sort(),
-		[data],
+		[antreanData],
 	);
+
 	const tipeObjekOptions = useMemo(
 		() =>
 			[
 				...new Set(
-					data
+					antreanData
 						.map((e) =>
 							typeof e.object_type === "string" ? e.object_type : e.object_type?.name,
 						)
 						.filter((v) => v && v !== "-"),
 				),
 			].sort(),
-		[data],
+		[antreanData],
 	);
 
 	const handleReset = () => {
@@ -108,8 +170,8 @@ export default function InspeksiAntreanPage() {
 		setSortConfig(null);
 	};
 
-	const filteredData = useMemo(() => {
-		let filtered = data.filter((row) => {
+	const filteredAntrean = useMemo(() => {
+		let filtered = antreanData.filter((row) => {
 			if (!search.trim()) return true;
 			const query = search.toLowerCase().trim();
 			const code = row.equipment_code?.toLowerCase() || "";
@@ -155,14 +217,26 @@ export default function InspeksiAntreanPage() {
 		}
 
 		return filtered;
-	}, [data, search, filterPlant, filterTipeObjek, sortConfig]);
+	}, [antreanData, search, filterPlant, filterTipeObjek, sortConfig]);
+
+	const filteredRiwayat = useMemo(() => {
+		return riwayatData.filter((row) => {
+			if (!search.trim()) return true;
+			const query = search.toLowerCase().trim();
+			const code = row.equipment_code?.toLowerCase() || "";
+			const name = row.equipment_name?.toLowerCase() || "";
+			return code.includes(query) || name.includes(query);
+		});
+	}, [riwayatData, search]);
+
+	const displayList = activeTab === "antrean" ? filteredAntrean : filteredRiwayat;
 
 	const paginatedAssets = useMemo(() => {
 		const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-		return filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-	}, [filteredData, currentPage]);
+		return displayList.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+	}, [displayList, currentPage]);
 
-	const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE) || 1;
+	const totalPages = Math.ceil(displayList.length / ITEMS_PER_PAGE) || 1;
 
 	const handleSort = (key: string) => {
 		let direction: "asc" | "desc" = "asc";
@@ -194,34 +268,80 @@ export default function InspeksiAntreanPage() {
 					<ChevronRight className="w-3.5 h-3.5" />
 					<span className="text-[#0A356A] font-semibold">Inspeksi</span>
 				</div>
-				<h1 className="text-xl font-bold text-gray-900 tracking-tight">
-					Inspeksi Berkala
-				</h1>
-				<p className="text-[13px] text-gray-500 mt-1">
-					Daftar peralatan idle yang membutuhkan inspeksi fisik berkala.
-				</p>
+				<div className="flex items-center justify-between">
+					<div>
+						<h1 className="text-xl font-bold text-gray-900 tracking-tight">
+							Inspeksi Berkala
+						</h1>
+						<p className="text-[13px] text-gray-500 mt-1">
+							Daftar peralatan idle yang membutuhkan dan telah menjalani inspeksi fisik berkala.
+						</p>
+					</div>
+					<button
+						onClick={fetchData}
+						disabled={loading}
+						className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
+					>
+						<RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
+						Muat Ulang
+					</button>
+				</div>
 			</div>
 
-			{/* Notification Banner */}
-			{!loading && filteredData.length > 0 && (
-				<div className="mb-4 flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
-					<div className="flex items-center gap-3">
-						<span className="flex h-2.5 w-2.5 relative">
-							<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
-						</span>
-						<span className="text-[13px] text-blue-800 font-medium">
-							Terdapat <strong className="font-bold">{filteredData.length} aset</strong> idle yang siap untuk inspeksi berkala.
-						</span>
-					</div>
-				</div>
-			)}
-
-			{/* Main Content Area (Tabel) */}
+			{/* Main Content Card Container */}
 			<div
 				id="inspeksi-table-container"
 				className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4"
 			>
+				{/* Navigation Tabs */}
+				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
+					<button
+						onClick={() => {
+							setActiveTab("antrean");
+							setCurrentPage(1);
+						}}
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+							activeTab === "antrean"
+								? "text-[#0A356A] border-b-2 border-[#0A356A]"
+								: "text-gray-500 hover:text-gray-700"
+						}`}
+					>
+						<span>Antrean Inspeksi</span>
+						<span
+							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+								activeTab === "antrean"
+									? "bg-[#0A356A] text-white"
+									: "bg-gray-100 text-gray-600"
+							}`}
+						>
+							{antreanData.length}
+						</span>
+					</button>
+
+					<button
+						onClick={() => {
+							setActiveTab("riwayat");
+							setCurrentPage(1);
+						}}
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+							activeTab === "riwayat"
+								? "text-[#0A356A] border-b-2 border-[#0A356A]"
+								: "text-gray-500 hover:text-gray-700"
+						}`}
+					>
+						<span>Riwayat Inspeksi</span>
+						<span
+							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+								activeTab === "riwayat"
+									? "bg-[#0A356A] text-white"
+									: "bg-gray-100 text-gray-600"
+							}`}
+						>
+							{riwayatData.length}
+						</span>
+					</button>
+				</div>
+
 				{/* Toolbar / Filters */}
 				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
 					{/* Search */}
@@ -249,33 +369,37 @@ export default function InspeksiAntreanPage() {
 
 					{/* Filter Group */}
 					<div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
-						<select
-							value={filterPlant}
-							onChange={(e) => setFilterPlant(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
-						>
-							<option value="">Semua Plant</option>
-							{plantOptions.map((p) => (
-								<option key={p} value={p}>
-									{p}
-								</option>
-							))}
-						</select>
+						{activeTab === "antrean" && (
+							<>
+								<select
+									value={filterPlant}
+									onChange={(e) => setFilterPlant(e.target.value)}
+									className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+								>
+									<option value="">Semua Plant</option>
+									{plantOptions.map((p) => (
+										<option key={p} value={p}>
+											{p}
+										</option>
+									))}
+								</select>
 
-						<select
-							value={filterTipeObjek}
-							onChange={(e) => setFilterTipeObjek(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
-						>
-							<option value="">Semua Tipe</option>
-							{tipeObjekOptions.map((t) => (
-								<option key={t} value={t}>
-									{t}
-								</option>
-							))}
-						</select>
+								<select
+									value={filterTipeObjek}
+									onChange={(e) => setFilterTipeObjek(e.target.value)}
+									className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+								>
+									<option value="">Semua Tipe</option>
+									{tipeObjekOptions.map((t) => (
+										<option key={t} value={t}>
+											{t}
+										</option>
+									))}
+								</select>
 
-						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
+								<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
+							</>
+						)}
 
 						<button
 							onClick={handleReset}
@@ -289,16 +413,15 @@ export default function InspeksiAntreanPage() {
 				</div>
 
 				{/* Table */}
-				<div className="overflow-x-auto">
+				<div className="overflow-x-auto lg:overflow-x-hidden">
 					<table className="w-full text-left border-collapse">
 						<thead className="bg-gray-50/95 backdrop-blur-sm">
 							<tr className="border-b border-gray-300">
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center w-12 whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
 									No
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
-									title="Klik untuk mengurutkan"
+									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
 									onClick={() => handleSort("equipment_code")}
 								>
 									<div className="flex items-center justify-start">
@@ -306,41 +429,54 @@ export default function InspeksiAntreanPage() {
 									</div>
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
-									title="Klik untuk mengurutkan"
+									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
 									onClick={() => handleSort("name")}
 								>
 									<div className="flex items-center justify-start">
 										Nama Peralatan {getSortIcon("name")}
 									</div>
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Tipe Objek
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
-									title="Klik untuk mengurutkan"
+									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
 									onClick={() => handleSort("plant")}
 								>
 									<div className="flex items-center justify-start">
 										Plant {getSortIcon("plant")}
 									</div>
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
-									Lokasi
-								</th>
-								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
-									title="Klik untuk mengurutkan"
-									onClick={() => handleSort("date")}
-								>
-									<div className="flex items-center justify-start">
-										Tgl Idle {getSortIcon("date")}
-									</div>
-								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
-									Tindakan
-								</th>
+								{activeTab === "antrean" ? (
+									<>
+										<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+											Lokasi
+										</th>
+										<th
+											className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+											onClick={() => handleSort("date")}
+										>
+											<div className="flex items-center justify-start">
+												Tgl Idle {getSortIcon("date")}
+											</div>
+										</th>
+										<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+											Aksi
+										</th>
+									</>
+								) : (
+									<>
+										<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+											Tgl Inspeksi
+										</th>
+										<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left">
+											Hasil / Catatan
+										</th>
+										<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+											Status
+										</th>
+									</>
+								)}
 							</tr>
 						</thead>
 						<tbody className="bg-white">
@@ -362,13 +498,15 @@ export default function InspeksiAntreanPage() {
 												Data Tidak Ditemukan
 											</p>
 											<p className="text-[11px] text-gray-500 mt-1">
-												Tidak ada aset IDLE untuk diinspeksi.
+												{activeTab === "antrean"
+													? "Tidak ada aset IDLE yang siap diinspeksi."
+													: "Belum ada riwayat inspeksi berkala."}
 											</p>
 										</div>
 									</td>
 								</tr>
-							) : (
-								paginatedAssets.map((row, index) => {
+							) : activeTab === "antrean" ? (
+								(paginatedAssets as Equipment[]).map((row, index) => {
 									const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
 									const idleDateStr = row.updated_at || row.created_at || new Date().toISOString();
 									const idleDate = new Date(idleDateStr);
@@ -381,39 +519,78 @@ export default function InspeksiAntreanPage() {
 											key={row.id}
 											className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
 										>
-											<td className="px-3 py-3 text-[15px] text-gray-500 font-medium text-center">
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-500 font-medium text-center">
 												{rowNum}
 											</td>
-											<td className="px-3 py-3 text-[15px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
+											<td className="px-2.5 py-2.5 text-[13px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
 												{row.equipment_code}
 											</td>
-											<td className="px-3 py-3 text-[15px] font-semibold text-gray-800 text-left" title={row.name}>
-												<span className="leading-tight line-clamp-2 block text-left">
-													{row.name}
-												</span>
+											<td className="px-2.5 py-2.5 text-[13px] font-medium text-gray-900 text-left">
+												{row.name}
 											</td>
-											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{typeStr}
 											</td>
-											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{plantStr}
 											</td>
-											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left">
 												{lokasiStr}
 											</td>
-											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left whitespace-nowrap">
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{idleDate.toISOString().split("T")[0]}
 											</td>
-											<td className="px-3 py-3 text-left">
-												<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
-													<Link
-														href={`/inspeksi/inspeksi-berkala/formInspeksi?equipmentId=${row.id}`}
-														className="inline-flex items-center gap-1.5 bg-[#0A356A] hover:bg-[#062854] text-white px-3 py-1.5 rounded-md text-[13px] font-bold transition-all shadow-sm"
-													>
-														<ClipboardCheck className="w-3.5 h-3.5" />
-														Inspeksi
-													</Link>
-												</div>
+											<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
+												<Link
+													href={`/inspeksi/inspeksi-berkala/formInspeksi?equipmentId=${row.id}`}
+													className="inline-flex items-center gap-1 bg-[#0A356A] hover:bg-[#062854] text-white px-2.5 py-1 rounded-lg text-[12px] font-bold transition-all shadow-sm"
+												>
+													<ClipboardCheck className="w-3.5 h-3.5" />
+													Form Inspeksi
+												</Link>
+											</td>
+										</tr>
+									);
+								})
+							) : (
+								(paginatedAssets as InspectionItem[]).map((row, index) => {
+									const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
+									const dateStr = row.inspection_date
+										? new Date(row.inspection_date).toISOString().split("T")[0]
+										: "-";
+
+									return (
+										<tr
+											key={row.id}
+											className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
+										>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-500 font-medium text-center">
+												{rowNum}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
+												{row.equipment_code}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] font-medium text-gray-900 text-left">
+												{row.equipment_name}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
+												{row.object_type}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
+												{row.plant}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
+												{dateStr}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left">
+												<span className="font-semibold text-gray-800 block">Kondisi: {row.condition_name}</span>
+												<span className="text-gray-500 text-[11px] block">{row.notes}</span>
+											</td>
+											<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
+												<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+													<CheckCircle2 className="w-3 h-3" />
+													{row.status_name}
+												</span>
 											</td>
 										</tr>
 									);
@@ -424,44 +601,38 @@ export default function InspeksiAntreanPage() {
 				</div>
 
 				{/* Pagination Footer */}
-				<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
-					<span className="text-[11px] font-medium text-gray-500">
+				<div className="px-4 py-3 border-t border-gray-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 text-[13px] text-gray-500">
+					<div>
 						Menampilkan{" "}
-						{filteredData.length === 0
-							? 0
-							: (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
-						- {Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)}{" "}
-						dari {filteredData.length} data ({ITEMS_PER_PAGE} baris/halaman)
-					</span>
-					<div className="flex items-center gap-1.5">
+						<span className="font-semibold text-gray-800">
+							{displayList.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}
+						</span>{" "}
+						-{" "}
+						<span className="font-semibold text-gray-800">
+							{Math.min(currentPage * ITEMS_PER_PAGE, displayList.length)}
+						</span>{" "}
+						dari <span className="font-semibold text-gray-800">{displayList.length}</span> data
+					</div>
+
+					<div className="flex items-center gap-1">
 						<button
 							onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
 							disabled={currentPage === 1}
-							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+							className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors text-[13px]"
 						>
-							Prev
+							Sebelumnya
 						</button>
-						<div className="flex items-center gap-1">
-							{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map((page) => (
-								<button
-									key={page}
-									onClick={() => setCurrentPage(page)}
-									className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
-										currentPage === page
-											? "bg-[#0A356A] text-white"
-											: "text-gray-600 hover:bg-gray-100"
-									}`}
-								>
-									{page}
-								</button>
-							))}
-						</div>
+
+						<span className="px-3 py-1 font-medium text-gray-800">
+							{currentPage} / {totalPages}
+						</span>
+
 						<button
-							onClick={() => setCurrentPage((p) => Math.min(Math.max(1, totalPages), p + 1))}
-							disabled={currentPage === Math.max(1, totalPages)}
-							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+							onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+							disabled={currentPage === totalPages}
+							className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors text-[13px]"
 						>
-							Next
+							Selanjutnya
 						</button>
 					</div>
 				</div>
