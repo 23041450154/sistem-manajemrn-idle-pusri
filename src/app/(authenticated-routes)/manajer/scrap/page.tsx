@@ -158,7 +158,7 @@ export default function ManajerScrapPage() {
       });
 
       if (res.success) {
-        showToast("success", res.message || "Permintaan scrap berhasil ditolak.");
+        showToast("success", `Pengajuan ${selectedDisposal.disposal_number} untuk ${selectedDisposal.equipment_code} berhasil ditolak.`);
         setIsRejectModalOpen(false);
         setRejectionReason("");
         handleCloseDetail();
@@ -788,13 +788,16 @@ export default function ManajerScrapPage() {
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Tulis alasan penolakan pengajuan scrap di sini..."
+                placeholder="Tuliskan alasan penolakan pengajuan scrap..."
                 rows={4}
                 className="w-full p-3 border border-gray-300 rounded-xl text-[13px] focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-colors resize-none placeholder:text-gray-400 text-gray-800"
               />
+              <p className="text-[11px] text-gray-400 mt-1.5 font-medium leading-normal">
+                Contoh: Aset masih dapat diperbaiki dan digunakan kembali.
+              </p>
               {!rejectionReason.trim() && (
-                <p className="text-[11px] text-red-500 mt-1 font-medium">
-                  * Kolom alasan wajib diisi sebelum tombol Kirim diaktifkan.
+                <p className="text-[11px] text-red-500 mt-1 font-semibold">
+                  * Alasan wajib diisi untuk menolak pengajuan.
                 </p>
               )}
             </div>
