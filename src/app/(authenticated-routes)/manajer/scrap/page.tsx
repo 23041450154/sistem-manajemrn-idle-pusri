@@ -482,15 +482,11 @@ export default function ManajerScrapPage() {
                 </div>
               )}
 
-              {/* Catatan Keputusan Manajer (jika ada) */}
-              {selectedDisposal.status !== "PENDING" && selectedDisposal.notes && (
-                <div className={`border rounded-xl p-4 flex flex-col gap-1.5 ${
-                  selectedDisposal.status === "REJECTED" || selectedDisposal.status === "Rejected"
-                    ? "bg-rose-50/50 border-rose-200 text-rose-900"
-                    : "bg-emerald-50/50 border-emerald-200 text-emerald-900"
-                }`}>
+              {/* Catatan Keputusan Manajer (jika ditolak) */}
+              {(selectedDisposal.status === "REJECTED" || selectedDisposal.status === "Rejected") && selectedDisposal.notes && (
+                <div className="border rounded-xl p-4 flex flex-col gap-1.5 bg-rose-50/50 border-rose-200 text-rose-900">
                   <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-500">
-                    Catatan {selectedDisposal.status === "REJECTED" || selectedDisposal.status === "Rejected" ? "Penolakan" : "Persetujuan"} Manajer
+                    Catatan Penolakan Manajer
                   </h4>
                   <p className="text-[13px] font-medium italic text-gray-800">
                     &quot;{selectedDisposal.notes}&quot;
