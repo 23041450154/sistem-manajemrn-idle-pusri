@@ -75,6 +75,7 @@ export async function getDisposals() {
 						plant: item.equipment?.plant?.description || item.equipment?.plant?.name || "-",
 						justification: item.justification || "-",
 						status: item.approval_status || "PENDING",
+						notes: item.notes || "",
 						created_at: item.created_at || new Date().toISOString(),
 						created_by_name: item.created_by_user?.name || "Budi Santoso",
 						attachments: item.equipment?.attachments

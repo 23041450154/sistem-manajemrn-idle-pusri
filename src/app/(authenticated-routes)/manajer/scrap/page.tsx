@@ -446,15 +446,57 @@ export default function ManajerScrapPage() {
             {/* Content Body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 bg-gray-50/50 space-y-6">
               {/* Alert Status */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-900">
-                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-[13px] font-bold">Usulan Permintaan Scrap Aset</p>
-                  <p className="text-[12px] text-amber-800 mt-0.5 leading-relaxed">
-                    Aset ini telah dinyatakan <strong>&quot;Rusak Berat&quot;</strong> berdasarkan hasil inspeksi teknik dan telah diajukan oleh Rendal Pemeliharaan untuk proses scrap. Persetujuan Manajer Rendal diperlukan sebelum usulan dapat diproses lebih lanjut.
+              {selectedDisposal.status === "PENDING" && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-900">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[13px] font-bold">Usulan Permintaan Scrap Aset</p>
+                    <p className="text-[12px] text-amber-800 mt-0.5 leading-relaxed">
+                      Aset ini telah dinyatakan <strong>&quot;Rusak Berat&quot;</strong> berdasarkan hasil inspeksi teknik dan telah diajukan oleh Rendal Pemeliharaan untuk proses scrap. Persetujuan Manajer Rendal diperlukan sebelum usulan dapat diproses lebih lanjut.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {(selectedDisposal.status === "APPROVED" || selectedDisposal.status === "Approved" || selectedDisposal.status === "DISPOSED") && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 text-emerald-900">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[13px] font-bold">Pengajuan Scrap Disetujui</p>
+                    <p className="text-[12px] text-emerald-800 mt-0.5 leading-relaxed">
+                      Pengajuan scrap ini telah disetujui oleh Manajer Rendal. Status aset di inventaris telah diperbarui menjadi <strong>DISPOSAL_VERIFIED</strong> (Scrap).
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {(selectedDisposal.status === "REJECTED" || selectedDisposal.status === "Rejected") && (
+                <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3 text-rose-900">
+                  <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[13px] font-bold">Pengajuan Scrap Ditolak</p>
+                    <p className="text-[12px] text-rose-800 mt-0.5 leading-relaxed">
+                      Pengajuan scrap ini telah ditolak oleh Manajer Rendal. Status aset dikembalikan menjadi <strong>IDLE</strong>.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Catatan Keputusan Manajer (jika ada) */}
+              {selectedDisposal.status !== "PENDING" && selectedDisposal.notes && (
+                <div className={`border rounded-xl p-4 flex flex-col gap-1.5 ${
+                  selectedDisposal.status === "REJECTED" || selectedDisposal.status === "Rejected"
+                    ? "bg-rose-50/50 border-rose-200 text-rose-900"
+                    : "bg-emerald-50/50 border-emerald-200 text-emerald-900"
+                }`}>
+                  <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-500">
+                    Catatan {selectedDisposal.status === "REJECTED" || selectedDisposal.status === "Rejected" ? "Penolakan" : "Persetujuan"} Manajer
+                  </h4>
+                  <p className="text-[13px] font-medium italic text-gray-800">
+                    &quot;{selectedDisposal.notes}&quot;
                   </p>
                 </div>
-              </div>
+              )}
 
               {/* Informasi Pengajuan */}
               <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
@@ -565,6 +607,24 @@ export default function ManajerScrapPage() {
                         </td>
                         <td className="py-2.5">{formatDate(selectedDisposal.created_at)}</td>
                       </tr>
+                      {selectedDisposal.status !== "PENDING" && (
+                        <tr>
+                          <td className="py-2.5 font-bold">Keputusan Manajer</td>
+                          <td className="py-2.5">Ahmad Fauzi (Manajer Rendal)</td>
+                          <td className="py-2.5">
+                            {selectedDisposal.status === "APPROVED" || selectedDisposal.status === "Approved" || selectedDisposal.status === "DISPOSED" ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100">
+                                Disetujui
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-100">
+                                Ditolak
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5">{formatDate(selectedDisposal.created_at)}</td>
+                        </tr>
+                      )}
                     </tbody>
                   </table>
                 </div>
