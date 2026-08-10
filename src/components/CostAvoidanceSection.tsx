@@ -169,7 +169,7 @@ export function CostAvoidanceSection() {
 		},
 		{ name: "Dalam Perbaikan", value: dalamPerbaikanCount, color: "#ef4444" },
 		{ name: "Siap Re-use / Idle", value: readyCount, color: "#10b981" },
-		{ name: "Disposal", value: disposalCount, color: "#8b5cf6" },
+		{ name: "Scrap", value: disposalCount, color: "#8b5cf6" },
 	].filter((item) => item.value > 0);
 
 	if (pieData.length === 0) {
@@ -282,7 +282,7 @@ export function CostAvoidanceSection() {
 			icon: CheckCircle,
 		},
 		{
-			label: "Menunggu Disposal",
+			label: "Menunggu Scrap",
 			value: disposalCount,
 			caption: "Proses penghapusan aset",
 			rule: "#475569",
@@ -368,9 +368,9 @@ export function CostAvoidanceSection() {
 									/>
 									<div>
 										<span className="font-semibold text-[#0F172A]">
-											{disposalCount} disposal menunggu approval
+											{disposalCount} scrap menunggu approval
 										</span>
-										. Tindak lanjuti usulan pelelangan.
+										. Tindak lanjuti usulan scrap.
 									</div>
 								</div>
 							)}
