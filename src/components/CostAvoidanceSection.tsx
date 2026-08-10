@@ -80,13 +80,11 @@ export function CostAvoidanceSection() {
 	}, []);
 
 	// --- Dynamic Operational Counts ---
-	// Menunggu Validasi (REGISTERED or VALIDATED)
+	// Menunggu Validasi (REGISTERED only)
 	const menungguValidasiCount = equipments.filter(
 		(e: Equipment) =>
 			e.status?.name === "REGISTERED" ||
-			e.status?.name === "VALIDATED" ||
-			e.statusAset === "REGISTERED" ||
-			e.statusAset === "VALIDATED",
+			e.statusAset === "REGISTERED",
 	).length;
 
 	// Dalam Perbaikan (REJECTED or DALAM_PERBAIKAN or REPAIR)

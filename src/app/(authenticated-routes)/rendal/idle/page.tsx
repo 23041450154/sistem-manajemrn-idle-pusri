@@ -303,10 +303,6 @@ export default function RendalIdlePage() {
 		};
 		let displayStatus = status.replace(/_/g, " ");
 		if (status === "IDLE") displayStatus = "READY TO USE";
-		else if (status === "REGISTERED") displayStatus = "Menunggu Validasi";
-		else if (status === "VALIDATED") displayStatus = "Tervalidasi";
-		else if (status === "DISPOSAL_RECOMMENDED") displayStatus = "Rekomendasi Scrap";
-		else if (status === "DISPOSAL_VERIFIED") displayStatus = "Scrap Selesai";
 
 		const style =
 			styles[status] ||
@@ -435,14 +431,14 @@ export default function RendalIdlePage() {
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
 						>
 							<option value="Semua">Semua Status</option>
-							<option value="REGISTERED">Menunggu Validasi</option>
-							<option value="VALIDATED">Tervalidasi</option>
+							<option value="REGISTERED">REGISTERED</option>
+							<option value="VALIDATED">VALIDATED</option>
 							<option value="READY TO USE">READY TO USE</option>
 							<option value="DALAM_PERBAIKAN">DALAM PERBAIKAN</option>
 							<option value="READY_TO_REUSE">READY TO REUSE</option>
 							<option value="REJECTED">REJECTED</option>
-							<option value="DISPOSAL_RECOMMENDED">Rekomendasi Scrap</option>
-							<option value="DISPOSAL_VERIFIED">Scrap Selesai</option>
+							<option value="DISPOSAL_RECOMMENDED">DISPOSAL RECOMMENDED</option>
+							<option value="DISPOSAL_VERIFIED">DISPOSAL VERIFIED</option>
 						</select>
 
 						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
