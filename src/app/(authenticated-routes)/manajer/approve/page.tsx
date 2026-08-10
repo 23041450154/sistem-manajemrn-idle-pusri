@@ -397,21 +397,23 @@ export default function ManajerApprovePage() {
 	};
 
 	const getStatusAsetBadge = (status: string) => {
+		let displayStatus = (status || "").replace(/_/g, " ");
+		if (displayStatus === "IDLE" || displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
+			displayStatus = "READY TO USE";
+		}
 		if (
 			status === "VALIDATED" ||
-			status === "READY TO USE" ||
-			status === "READY_TO_USE" ||
-			status === "READY_TO_REUSE"
+			displayStatus === "READY TO USE"
 		) {
 			return (
 				<span className="bg-[#DCFCE7] text-[#16A34A] px-3 py-1 rounded-full text-[11px] font-semibold">
-					{status}
+					{displayStatus}
 				</span>
 			);
 		}
 		return (
 			<span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[11px] font-semibold">
-				{status}
+				{displayStatus}
 			</span>
 		);
 	};

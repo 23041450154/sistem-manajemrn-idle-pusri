@@ -272,7 +272,7 @@ export default function VerifikasiDisposalPage() {
 					);
 					const token = tokenMatch ? tokenMatch[2] : "";
 					const API_URL =
-						process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+						process.env.NEXT_PUBLIC_API_URL || "https://api.testing.naufal.me";
 
 					await fetch(`${API_URL}/api/attachments/upload`, {
 						method: "POST",

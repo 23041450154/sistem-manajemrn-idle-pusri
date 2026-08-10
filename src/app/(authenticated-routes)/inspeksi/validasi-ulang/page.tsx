@@ -27,6 +27,8 @@ interface RevalidasiItem {
 	lokasiPenyimpanan: string;
 	kondisiSebelumnya: string;
 	tanggalSelesai: string;
+	statusAset?: string;
+	statusId?: number;
 }
 
 export default function ValidasiUlangPage() {
@@ -35,6 +37,7 @@ export default function ValidasiUlangPage() {
 		Array<{ id: number; name: string }>
 	>([]);
 	const [isLoading, setIsLoading] = useState(true);
+	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [filterPlant, setFilterPlant] = useState("");
@@ -76,7 +79,23 @@ export default function ValidasiUlangPage() {
 							item.status_id === 4 ||
 							item.status?.id === 4 ||
 							statusName === "REPAIR_COMPLETED";
-						return isRepairCompleted;
+						const isRevalidation =
+							item.status_id === 5 ||
+							item.status?.id === 5 ||
+							statusName === "REVALIDATION" ||
+							statusName === "REVALIDASI";
+						const isReadyToUse =
+							item.status_id === 6 ||
+							item.status?.id === 6 ||
+							statusName === "READY_TO_USE" ||
+							statusName === "READY TO USE";
+						const isScrap =
+							item.status_id === 8 ||
+							item.status?.id === 8 ||
+							statusName === "SCRAP" ||
+							statusName === "DISPOSAL_VERIFIED";
+
+						return isRepairCompleted || isRevalidation || isReadyToUse || isScrap;
 					})
 					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 					.map((item: any) => {
@@ -96,6 +115,7 @@ export default function ValidasiUlangPage() {
 							typeof item.condition === "string"
 								? item.condition
 								: item.condition?.name || "-";
+						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
 
 						return {
 							id: String(item.id),
@@ -113,6 +133,8 @@ export default function ValidasiUlangPage() {
 								: item.created_at
 									? new Date(item.created_at).toISOString().split("T")[0]
 									: new Date().toISOString().split("T")[0],
+							statusAset: statusName,
+							statusId: item.status_id || item.status?.id || 4,
 						};
 					});
 			}
@@ -132,7 +154,7 @@ export default function ValidasiUlangPage() {
 
 	useEffect(() => {
 		setCurrentPage(1);
-	}, [searchQuery, filterPlant, filterTipeObjek]);
+	}, [activeTab, searchQuery, filterPlant, filterTipeObjek]);
 
 	const plantOptions = useMemo(
 		() =>
@@ -150,8 +172,26 @@ export default function ValidasiUlangPage() {
 		[items],
 	);
 
+	const antreanCount = useMemo(() => {
+		return items.filter(
+			(item) => item.statusId === 4 || item.statusAset === "REPAIR_COMPLETED",
+		).length;
+	}, [items]);
+
+	const riwayatCount = useMemo(() => {
+		return items.filter(
+			(item) => !(item.statusId === 4 || item.statusAset === "REPAIR_COMPLETED"),
+		).length;
+	}, [items]);
+
 	const filteredItems = useMemo(() => {
 		let result = items;
+
+		result = result.filter((item) => {
+			const isAntrean = item.statusId === 4 || item.statusAset === "REPAIR_COMPLETED";
+			return activeTab === "antrean" ? isAntrean : !isAntrean;
+		});
+
 		if (searchQuery.trim()) {
 			const q = searchQuery.toLowerCase();
 			result = result.filter(
@@ -167,7 +207,7 @@ export default function ValidasiUlangPage() {
 		if (filterTipeObjek)
 			result = result.filter((item) => item.tipeObjek === filterTipeObjek);
 		return result;
-	}, [items, searchQuery, filterPlant, filterTipeObjek]);
+	}, [items, activeTab, searchQuery, filterPlant, filterTipeObjek]);
 
 	const ITEMS_PER_PAGE = 10;
 	const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
@@ -308,24 +348,58 @@ export default function ValidasiUlangPage() {
 				</p>
 			</div>
 
-			{/* Action Notification Banner */}
-			{filteredItems.length > 0 && (
-				<div className="mb-4 flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
-					<div className="flex items-center gap-3">
-						<span className="flex h-2.5 w-2.5 relative">
-							<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
-						</span>
-						<span className="text-[13px] text-blue-800 font-medium">
-							Terdapat <strong className="font-bold">{filteredItems.length} aset</strong> yang
-							membutuhkan validasi ulang setelah perbaikan selesai.
-						</span>
-					</div>
-				</div>
-			)}
 
 			{/* Main Content Area (Tabel) */}
 			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4">
+				{/* Navigation Tabs */}
+				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
+					<button
+						onClick={() => {
+							setActiveTab("antrean");
+							setCurrentPage(1);
+						}}
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+							activeTab === "antrean"
+								? "text-[#0A356A] border-b-2 border-[#0A356A]"
+								: "text-gray-500 hover:text-gray-700"
+						}`}
+					>
+						<span>Antrean Validasi Perbaikan</span>
+						<span
+							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+								activeTab === "antrean"
+									? "bg-[#0A356A] text-white"
+									: "bg-gray-100 text-gray-600"
+							}`}
+						>
+							{antreanCount}
+						</span>
+					</button>
+
+					<button
+						onClick={() => {
+							setActiveTab("riwayat");
+							setCurrentPage(1);
+						}}
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+							activeTab === "riwayat"
+								? "text-[#0A356A] border-b-2 border-[#0A356A]"
+								: "text-gray-500 hover:text-gray-700"
+						}`}
+					>
+						<span>Riwayat Validasi Perbaikan</span>
+						<span
+							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+								activeTab === "riwayat"
+									? "bg-[#0A356A] text-white"
+									: "bg-gray-100 text-gray-600"
+							}`}
+						>
+							{riwayatCount}
+						</span>
+					</button>
+				</div>
+
 				{/* Toolbar / Filters */}
 				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
 					{/* Search */}
@@ -388,35 +462,35 @@ export default function ValidasiUlangPage() {
 				</div>
 
 				{/* Table */}
-				<div className="overflow-x-auto">
+				<div className="overflow-x-auto lg:overflow-x-hidden">
 					<table className="w-full text-left border-collapse">
 						<thead className="bg-gray-50/95 backdrop-blur-sm">
 							<tr className="border-b border-gray-300">
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center w-12 whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
 									No
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Kode Alat
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left">
 									Nama Peralatan
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Tipe Objek
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Plant
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left">
 									Lokasi
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 									Kondisi
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 									Tgl Selesai
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 									Tindakan
 								</th>
 							</tr>
@@ -437,10 +511,18 @@ export default function ValidasiUlangPage() {
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
-												Tidak Ada Aset untuk Validasi Perbaikan Alat
+												{searchQuery || filterPlant || filterTipeObjek
+													? "Hasil Pencarian Tidak Ditemukan"
+													: activeTab === "antrean"
+														? "Tidak Ada Antrean Validasi Perbaikan"
+														: "Belum Ada Riwayat Validasi Perbaikan"}
 											</p>
 											<p className="text-[11px] text-gray-500 mt-1">
-												Aset yang selesai diperbaiki akan muncul di sini.
+												{searchQuery || filterPlant || filterTipeObjek
+													? "Coba sesuaikan kata kunci atau filter pencarian Anda."
+													: activeTab === "antrean"
+														? "Aset yang telah selesai diperbaiki oleh Pemeliharaan Lapangan akan muncul di sini."
+														: "Peralatan yang telah selesai divalidasi ulang akan muncul di sini."}
 											</p>
 										</div>
 									</td>
@@ -448,6 +530,7 @@ export default function ValidasiUlangPage() {
 							) : (
 								paginatedItems.map((asset, index) => {
 									const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
+									const isAntreanRow = asset.statusId === 4 || asset.statusAset === "REPAIR_COMPLETED";
 									return (
 										<tr
 											key={asset.id}
@@ -485,14 +568,21 @@ export default function ValidasiUlangPage() {
 											</td>
 											<td className="px-3 py-3 text-left">
 												<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
-													<button
-														onClick={() => handleOpenModal(asset)}
-														className="inline-flex items-center gap-1.5 bg-[#0A356A] hover:bg-[#062854] text-white px-3 py-1.5 rounded-md text-[13px] font-bold transition-all shadow-sm"
-														title="Validasi Perbaikan Alat"
-													>
-														<ClipboardCheck className="w-3.5 h-3.5" />
-														Validasi
-													</button>
+													{isAntreanRow ? (
+														<button
+															onClick={() => handleOpenModal(asset)}
+															className="inline-flex items-center gap-1.5 bg-[#0A356A] hover:bg-[#062854] text-white px-3 py-1.5 rounded-md text-[13px] font-bold transition-all shadow-sm"
+															title="Validasi Perbaikan Alat"
+														>
+															<ClipboardCheck className="w-3.5 h-3.5" />
+															Validasi
+														</button>
+													) : (
+														<span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded text-[11px] font-bold shadow-sm">
+															<CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+															Selesai Validasi
+														</span>
+													)}
 												</div>
 											</td>
 										</tr>

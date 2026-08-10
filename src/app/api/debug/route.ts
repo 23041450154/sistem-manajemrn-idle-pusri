@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 
 export async function GET() {
-  const API_URL = process.env.API_URL || "http://localhost:8080";
+  const API_URL = process.env.API_URL || process.env.NEXT_PUBLIC_API_URL || "https://api.testing.naufal.me";
   const NEXT_PUBLIC_API_URL = process.env.NEXT_PUBLIC_API_URL;
   const cookieStore = await cookies();
   const token = cookieStore.get("token")?.value;

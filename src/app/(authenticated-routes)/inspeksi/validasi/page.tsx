@@ -100,6 +100,7 @@ export default function ManajemenInspeksi() {
 		Array<{ id: number; name: string }>
 	>([]);
 	const [isLoading, setIsLoading] = useState(true);
+	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -181,40 +182,43 @@ export default function ManajemenInspeksi() {
 					let statusAset = item.statusAset?.toUpperCase() || "REGISTERED";
 					let statusPersetujuan: ApprovalState = "NONE";
 
-					if (statusAset === "REGISTERED") {
-						statusPersetujuan = "NONE";
-					} else if (statusAset === "VALIDATED") {
-						// Cek status dari API approvals jika ada
-						const app = approvalsData.find(
-							(a: any) =>
-								a.equipment_id === Number(item.id) ||
-								a.equipment?.id === Number(item.id),
-						);
-						if (app) {
-							if (app.approval_status === "REVISION_REQUIRED") {
-								statusPersetujuan = "NEED_REVISION";
-							} else if (app.approval_status === "IN_REVIEW") {
-								statusPersetujuan = "IN_REVIEW";
-							} else if (app.approval_status === "APPROVED") {
-								statusPersetujuan = "APPROVED";
-								statusAset = "READY TO USE";
-							} else if (app.approval_status === "REJECTED") {
-								statusPersetujuan = "REJECTED";
-								statusAset = "REJECTED";
-							} else {
-								statusPersetujuan = "PENDING_REVIEW";
-							}
+					const app = approvalsData.find(
+						(a: any) =>
+							a.equipment_id === Number(item.id) ||
+							a.equipment?.id === Number(item.id),
+					);
+
+					if (app) {
+						if (app.approval_status === "REVISION_REQUIRED") {
+							statusPersetujuan = "NEED_REVISION";
+						} else if (app.approval_status === "IN_REVIEW") {
+							statusPersetujuan = "IN_REVIEW";
+						} else if (app.approval_status === "APPROVED") {
+							statusPersetujuan = "APPROVED";
+							if (statusAset === "VALIDATED") statusAset = "READY TO USE";
+						} else if (app.approval_status === "REJECTED") {
+							statusPersetujuan = "REJECTED";
+							statusAset = "REJECTED";
 						} else {
 							statusPersetujuan = "PENDING_REVIEW";
 						}
-					} else if (
-						statusAset === "IDLE" ||
-						statusAset === "READY TO USE" ||
-						statusAset === "READY_TO_USE"
-					) {
-						statusPersetujuan = "APPROVED";
-					} else if (statusAset === "REJECTED" || statusAset === "SCRAP") {
-						statusPersetujuan = "REJECTED";
+					} else {
+						if (statusAset === "REGISTERED") {
+							statusPersetujuan = "NONE";
+						} else if (
+							statusAset === "IDLE" ||
+							statusAset === "READY TO USE" ||
+							statusAset === "READY_TO_USE" ||
+							statusAset === "DISPOSAL_VERIFIED" ||
+							statusAset === "DISPOSAL VERIFIED" ||
+							statusAset === "SCRAP VERIFIED"
+						) {
+							statusPersetujuan = "APPROVED";
+						} else if (statusAset === "VALIDATED") {
+							statusPersetujuan = "PENDING_REVIEW";
+						} else if (statusAset === "REJECTED" || statusAset === "SCRAP") {
+							statusPersetujuan = "REJECTED";
+						}
 					}
 
 					return { ...item, statusAset, statusPersetujuan };
@@ -225,19 +229,7 @@ export default function ManajemenInspeksi() {
 					(a: any, b: any) => Number(b.id) - Number(a.id),
 				);
 
-				const excludedStatuses = [
-					"READY_TO_USE",
-					"READY TO USE",
-					"MAINTENANCE",
-					"DISPOSAL_RECOMMENDED",
-					"DISPOSAL",
-				];
-				const finalAssets = mappedWithApproval.filter(
-					(a: any) =>
-						!excludedStatuses.includes(a.statusAset),
-				);
-
-				setAssets(finalAssets);
+				setAssets(mappedWithApproval);
 			} catch (err) {
 				console.error(err);
 			} finally {
@@ -687,9 +679,43 @@ export default function ManajemenInspeksi() {
 		setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
 	};
 
+	// Helper untuk mengecek apakah proses validasi/persetujuan aset sudah final (selesai)
+	const isFinalStatus = (asset: Asset) => {
+		const normStatus = (asset.statusAset || "").toUpperCase();
+		const isReady =
+			normStatus === "READY TO USE" ||
+			normStatus === "READY_TO_USE" ||
+			normStatus === "IDLE" ||
+			normStatus === "REUSED" ||
+			normStatus === "READY TO REUSE" ||
+			normStatus === "READY_TO_REUSE";
+		const isScrap =
+			normStatus === "SCRAP" ||
+			normStatus === "SCRAP VERIFIED" ||
+			normStatus === "DISPOSAL_VERIFIED" ||
+			normStatus === "DISPOSAL VERIFIED";
+		const isRejected = normStatus === "REJECTED" || asset.statusPersetujuan === "REJECTED";
+
+		return isReady || isScrap || isRejected;
+	};
+
+	// Counts untuk tab navigation
+	const antreanCount = useMemo(() => {
+		return assets.filter((a) => !isFinalStatus(a)).length;
+	}, [assets]);
+
+	const riwayatCount = useMemo(() => {
+		return assets.filter((a) => isFinalStatus(a)).length;
+	}, [assets]);
+
 	// Filter & Sort Data
 	const filteredAssets = useMemo(() => {
 		const filtered = assets.filter((a) => {
+			const finalState = isFinalStatus(a);
+
+			if (activeTab === "antrean" && finalState) return false;
+			if (activeTab === "riwayat" && !finalState) return false;
+
 			const matchSearch =
 				a.kodeAlat.toLowerCase().includes(search.toLowerCase()) ||
 				a.namaAlat.toLowerCase().includes(search.toLowerCase());
@@ -726,7 +752,7 @@ export default function ManajemenInspeksi() {
 		}
 
 		return filtered;
-	}, [assets, search, plantFilter, statusFilter, dateFilter, sortConfig]);
+	}, [assets, activeTab, search, plantFilter, statusFilter, dateFilter, sortConfig]);
 
 	const paginatedAssets = useMemo(() => {
 		const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -748,7 +774,7 @@ export default function ManajemenInspeksi() {
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect
 		setCurrentPage(1);
-	}, [search, plantFilter, statusFilter, dateFilter]);
+	}, [activeTab, search, plantFilter, statusFilter, dateFilter]);
 
 	// UI Helpers
 	const getStatusAsetBadge = (status: AssetState | string) => {
@@ -757,17 +783,28 @@ export default function ManajemenInspeksi() {
 			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
 			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
+			"SCRAP VERIFIED": "bg-[#FEE2E2] text-[#DC2626]",
+			"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
+			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
 			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
 			REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
 			IDLE: "bg-[#E0E7FF] text-[#4F46E5]",
 			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
 			READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
+			"READY TO REUSE": "bg-[#E0E7FF] text-[#4F46E5]",
+			READY_TO_REUSE: "bg-[#E0E7FF] text-[#4F46E5]",
 		};
-		const displayStatus = status === "IDLE" ? "READY TO USE" : status;
+		let displayStatus = (status || "").replace(/_/g, " ");
+		if (displayStatus === "IDLE" || displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
+			displayStatus = "READY TO USE";
+		}
+		if (displayStatus.includes("DISPOSAL")) {
+			displayStatus = displayStatus.replace(/DISPOSAL/g, "SCRAP");
+		}
 		return (
 			<span
-				className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${styles[status] || styles["READY TO USE"]}`}
+				className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${styles[displayStatus] || styles[status] || styles["SCRAP"]}`}
 			>
 				{displayStatus}
 			</span>
@@ -801,31 +838,35 @@ export default function ManajemenInspeksi() {
 	};
 
 	const getActionButton = (asset: Asset) => {
+		const showInspeksi =
+			asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE";
+		const showUbah =
+			asset.statusAset === "VALIDATED" && asset.statusPersetujuan === "PENDING_REVIEW";
+		const showRevisi = asset.statusPersetujuan === "NEED_REVISION";
+
 		return (
 			<div className="flex items-center gap-1.5 justify-center">
-				{asset.statusAset === "REGISTERED" &&
-					asset.statusPersetujuan === "NONE" && (
-						<button
-							title="Inspeksi"
-							onClick={() => openModal(asset, "VALIDASI")}
-							className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1"
-						>
-							<Check className="w-3.5 h-3.5" />
-							<span className="text-[11px] font-bold">Inspeksi</span>
-						</button>
-					)}
-				{asset.statusAset === "VALIDATED" &&
-					asset.statusPersetujuan === "PENDING_REVIEW" && (
-						<button
-							title="Ubah Inspeksi"
-							onClick={() => openModal(asset, "VALIDASI")}
-							className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1"
-						>
-							<Edit className="w-3.5 h-3.5" />
-							<span className="text-[11px] font-bold">Ubah Inspeksi</span>
-						</button>
-					)}
-				{asset.statusPersetujuan === "NEED_REVISION" && (
+				{showInspeksi && (
+					<button
+						title="Inspeksi"
+						onClick={() => openModal(asset, "VALIDASI")}
+						className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+					>
+						<Check className="w-3.5 h-3.5" />
+						<span className="text-[11px] font-bold">Inspeksi</span>
+					</button>
+				)}
+				{showUbah && (
+					<button
+						title="Ubah Inspeksi"
+						onClick={() => openModal(asset, "VALIDASI")}
+						className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+					>
+						<Edit className="w-3.5 h-3.5" />
+						<span className="text-[11px] font-bold">Ubah Inspeksi</span>
+					</button>
+				)}
+				{showRevisi && (
 					<button
 						title="Revisi Inspeksi"
 						onClick={() => openModal(asset, "VALIDASI")}
@@ -835,10 +876,7 @@ export default function ManajemenInspeksi() {
 						<span className="text-[11px] font-bold">Revisi Inspeksi</span>
 					</button>
 				)}
-				{(asset.statusPersetujuan === "IN_REVIEW" ||
-					asset.statusAset === "IDLE" ||
-					asset.statusAset === "REJECTED" ||
-					asset.statusAset === "SCRAP") && (
+				{!showInspeksi && !showUbah && !showRevisi && (
 					<button
 						title="Detail Info"
 						onClick={() => openModal(asset, "DETAIL")}
@@ -941,34 +979,61 @@ export default function ManajemenInspeksi() {
       </div>
       */}
 
-			{/* Action Notification Banner */}
-			{pendingCount > 0 && (
-				<div className="mb-4 flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
-					<div className="flex items-center gap-3">
-						<span className="flex h-2.5 w-2.5 relative">
-							<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
-						</span>
-						<span className="text-[13px] text-blue-800 font-medium">
-							Terdapat{" "}
-							<strong className="font-bold">{pendingCount} aset</strong> yang
-							membutuhkan tindakan Inspeksi atau Revisi dari Anda.
-						</span>
-					</div>
-					<button
-						onClick={() => setStatusFilter("ACTION_NEEDED")}
-						className="text-[11px] font-bold text-blue-700 hover:text-blue-900 bg-white px-3 py-1.5 rounded-md border border-blue-200 shadow-sm transition-colors uppercase tracking-wide"
-					>
-						Lihat Semua
-					</button>
-				</div>
-			)}
 
 			{/* Main Content Area (Tabel) */}
 			<div
 				id="validasi-table-container"
 				className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4"
 			>
+				{/* Tab Navigation */}
+				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
+					<button
+						onClick={() => {
+							setActiveTab("antrean");
+							setCurrentPage(1);
+						}}
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+							activeTab === "antrean"
+								? "text-[#0A356A] border-b-2 border-[#0A356A]"
+								: "text-gray-500 hover:text-gray-700"
+						}`}
+					>
+						<span>Antrean Validasi</span>
+						<span
+							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+								activeTab === "antrean"
+									? "bg-[#0A356A] text-white"
+									: "bg-gray-100 text-gray-600"
+							}`}
+						>
+							{antreanCount}
+						</span>
+					</button>
+
+					<button
+						onClick={() => {
+							setActiveTab("riwayat");
+							setCurrentPage(1);
+						}}
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+							activeTab === "riwayat"
+								? "text-[#0A356A] border-b-2 border-[#0A356A]"
+								: "text-gray-500 hover:text-gray-700"
+						}`}
+					>
+						<span>Riwayat Validasi</span>
+						<span
+							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+								activeTab === "riwayat"
+									? "bg-[#0A356A] text-white"
+									: "bg-gray-100 text-gray-600"
+							}`}
+						>
+							{riwayatCount}
+						</span>
+					</button>
+				</div>
+
 				{/* Toolbar / Filters */}
 				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
 					{/* Search */}
@@ -1046,7 +1111,7 @@ export default function ManajemenInspeksi() {
 
 				{/* Table */}
 				<div className="overflow-x-auto">
-					<table className="w-full text-left border-collapse">
+					<table className="w-full text-center border-collapse">
 						<thead className="bg-gray-50/95 backdrop-blur-sm">
 							<tr className="border-b border-gray-300">
 								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center w-12 whitespace-nowrap">
@@ -1062,42 +1127,42 @@ export default function ManajemenInspeksi() {
 									</div>
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("plant")}
 								>
-									<div className="flex items-center justify-start">
+									<div className="flex items-center justify-center">
 										Plant {getSortIcon("plant")}
 									</div>
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("jenisAlat")}
 								>
-									<div className="flex items-center justify-start">
+									<div className="flex items-center justify-center">
 										Jenis {getSortIcon("jenisAlat")}
 									</div>
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("statusAset")}
 								>
-									<div className="flex items-center justify-start">
+									<div className="flex items-center justify-center">
 										Aset {getSortIcon("statusAset")}
 									</div>
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("statusPersetujuan")}
 								>
-									<div className="flex items-center justify-start">
+									<div className="flex items-center justify-center">
 										Persetujuan {getSortIcon("statusPersetujuan")}
 									</div>
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 									Tindakan
 								</th>
 							</tr>
@@ -1119,13 +1184,35 @@ export default function ManajemenInspeksi() {
 										className="px-5 py-12 text-center text-gray-500"
 									>
 										<div className="flex flex-col items-center">
-											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
-											<p className="text-[13px] font-medium text-gray-900">
-												Data Tidak Ditemukan
-											</p>
-											<p className="text-[11px] text-gray-500 mt-1">
-												Coba sesuaikan filter pencarian Anda.
-											</p>
+											<AlertCircle className="w-7 h-7 text-gray-300 mb-2" />
+											{search || plantFilter !== "Semua" || statusFilter !== "Semua" || dateFilter ? (
+												<>
+													<p className="text-[14px] font-semibold text-gray-800">
+														Hasil Pencarian Tidak Ditemukan
+													</p>
+													<p className="text-[12px] text-gray-500 mt-1">
+														Tidak ada data yang cocok dengan kriteria filter pencarian Anda.
+													</p>
+												</>
+											) : activeTab === "antrean" ? (
+												<>
+													<p className="text-[14px] font-semibold text-gray-800">
+														Tidak Ada Antrean Validasi
+													</p>
+													<p className="text-[12px] text-gray-500 mt-1">
+														Saat ini belum ada peralatan yang membutuhkan tindakan inspeksi atau revisi dari Anda.
+													</p>
+												</>
+											) : (
+												<>
+													<p className="text-[14px] font-semibold text-gray-800">
+														Belum Ada Riwayat Validasi
+													</p>
+													<p className="text-[12px] text-gray-500 mt-1">
+														Peralatan yang telah selesai diinspeksi dan diproses akan muncul di sini.
+													</p>
+												</>
+											)}
 										</div>
 									</td>
 								</tr>
@@ -1148,24 +1235,24 @@ export default function ManajemenInspeksi() {
 													{asset.namaAlat}
 												</span>
 											</td>
-											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
+											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center">
 												{asset.plant}
 											</td>
-											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
+											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center">
 												{asset.jenisAlat}
 											</td>
-											<td className="px-3 py-3 text-[15px] text-left">
-												<div className="flex justify-start">
+											<td className="px-3 py-3 text-[15px] text-center">
+												<div className="flex justify-center">
 													{getStatusAsetBadge(asset.statusAset)}
 												</div>
 											</td>
-											<td className="px-3 py-3 text-[15px] text-left">
-												<div className="flex justify-start">
+											<td className="px-3 py-3 text-[15px] text-center">
+												<div className="flex justify-center">
 													{getApprovalBadge(asset.statusPersetujuan)}
 												</div>
 											</td>
-											<td className="px-3 py-3 text-left">
-												<div className="flex justify-start opacity-90 group-hover:opacity-100 transition-opacity">
+											<td className="px-3 py-3 text-center">
+												<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
 													{getActionButton(asset)}
 												</div>
 											</td>

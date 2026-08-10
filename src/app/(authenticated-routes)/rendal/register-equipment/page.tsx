@@ -143,7 +143,15 @@ export default function RegisterEquipmentPage() {
 				storageLocationId: "",
 			}));
 			if (value) {
-				getStorageLocations(value).then(setStorageLocations);
+				getStorageLocations(value).then((locs) => {
+					setStorageLocations(locs);
+					if (locs && locs.length > 0) {
+						setFormData((prev) => ({
+							...prev,
+							storageLocationId: String(locs[0].id),
+						}));
+					}
+				});
 			} else {
 				setStorageLocations([]);
 			}
@@ -407,16 +415,7 @@ export default function RegisterEquipmentPage() {
 							: "Daftarkan aset atau peralatan yang saat ini tidak digunakan."}
 					</p>
 				</div>
-				<div className="relative md:mt-8">
-					<button
-						type="button"
-						onClick={() => setShowImportModal(true)}
-						className="bg-white border border-gray-300 hover:bg-gray-50 text-gray-800 px-4 py-2 rounded text-sm font-semibold flex items-center gap-2 transition-all shadow-sm focus:outline-none"
-					>
-						<FileSpreadsheet className="w-4 h-4 text-[#0556B3]" />
-						<span>Import dari Excel</span>
-					</button>
-				</div>
+				{/* Hidden import excel button */}
 			</div>
 
 			<form

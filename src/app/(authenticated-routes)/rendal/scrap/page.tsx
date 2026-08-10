@@ -306,7 +306,7 @@ export default function RendalScrapPage() {
 					);
 					const token = tokenMatch ? tokenMatch[2] : "";
 					const API_URL =
-						process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+						process.env.NEXT_PUBLIC_API_URL || "https://api.testing.naufal.me";
 
 					await fetch(`${API_URL}/api/attachments/upload`, {
 						method: "POST",
@@ -317,12 +317,44 @@ export default function RendalScrapPage() {
 					);
 				}
 
+				// Update local state so item instantly moves from Inbox to History with PENDING status
+				const selectedMethod = methods.find(
+					(m) => String(m.id) === String(disposalMethodId),
+				);
+				const newDisposalItem: DisposalItem = {
+					id: String(res.data?.id || `DSP-${Date.now()}`),
+					disposal_number: disposalNumber,
+					equipment_id: String(selectedAsset.id),
+					equipment_code: selectedAsset.kodeAlat,
+					equipment_name: selectedAsset.namaAlat,
+					disposal_method: selectedMethod?.name || "Scrap (Besi Tua)",
+					scrap_value: 0,
+					plant: selectedAsset.plant,
+					justification:
+						justification.trim() ||
+						"Diverifikasi oleh Rendal Pemeliharaan untuk pengajuan scrap.",
+					status: "PENDING",
+					created_at: new Date().toISOString(),
+				};
+
+				setDisposals((prev) => [newDisposalItem, ...prev]);
+
+				// Update equipment status in state
+				setEquipments((prev) =>
+					prev.map((eq) =>
+						eq.id === selectedAsset.id
+							? { ...eq, statusAset: "DISPOSAL_VERIFIED" }
+							: eq,
+					),
+				);
+
 				showToast(
 					"success",
-					"Permintaan scrap berhasil diajukan!",
+					"Permintaan scrap berhasil diajukan dan dikirim ke Manajer!",
 				);
 				setIsModalOpen(false);
-				loadData();
+				setActiveTab("history");
+				await loadData();
 			} else {
 				showToast("error", res.message || "Gagal menyimpan permintaan scrap.");
 			}

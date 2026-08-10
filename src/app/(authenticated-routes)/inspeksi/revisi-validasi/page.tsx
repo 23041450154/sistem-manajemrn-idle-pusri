@@ -361,7 +361,7 @@ export default function RevisiValidasiPage() {
 						);
 						const token = tokenMatch ? tokenMatch[2] : "";
 						const API_URL =
-							process.env.NEXT_PUBLIC_API_URL || "http://localhost:8080";
+							process.env.NEXT_PUBLIC_API_URL || "https://api.testing.naufal.me";
 
 						for (const file of uploadedFiles) {
 							const fd = new FormData();
@@ -539,18 +539,23 @@ export default function RevisiValidasiPage() {
 		setCurrentPage(1);
 	}, [search, plantFilter, dateFilter]);
 
-	const getStatusAsetBadge = (status: AssetState) => {
-		const styles = {
+	const getStatusAsetBadge = (status: AssetState | string) => {
+		const styles: Record<string, string> = {
 			REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
 			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
 			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 			IDLE: "bg-[#E0E7FF] text-[#4F46E5]",
+			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
 		};
+		let displayStatus = (status || "").replace(/_/g, " ");
+		if (displayStatus === "IDLE" || displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
+			displayStatus = "READY TO USE";
+		}
 		return (
 			<span
-				className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[status]}`}
+				className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[displayStatus] || styles[status] || styles["READY TO USE"]}`}
 			>
-				{status}
+				{displayStatus}
 			</span>
 		);
 	};

@@ -30,7 +30,8 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useSidebar } from "./SidebarProvider";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getEquipments, getApprovals } from "@/action/api";
 
 export function Sidebar({ role }: { role?: string }) {
 	const pathname = usePathname();
@@ -38,6 +39,77 @@ export function Sidebar({ role }: { role?: string }) {
 	const [masterDataOpen, setMasterDataOpen] = useState(
 		pathname.startsWith("/admin/master"),
 	);
+	const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({});
+
+	useEffect(() => {
+		let isMounted = true;
+		const checkPending = async () => {
+			try {
+				const [data, approvalsData] = await Promise.all([
+					getEquipments(),
+					getApprovals().catch(() => []),
+				]);
+				if (!Array.isArray(data) || !isMounted) return;
+
+				const approvalsList = Array.isArray(approvalsData)
+					? approvalsData
+					: (approvalsData as any)?.data || [];
+
+				// Validasi Kelayakan (/inspeksi/validasi): HANYA aset yang butuh tindakan Inspeksi (REGISTERED / REVISION_REQUIRED)
+				const validasiAntrean = data.filter((item: any) => {
+					const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+					const statusId = item.status_id || item.status?.id;
+
+					const matchingApproval = approvalsList.find(
+						(a: any) =>
+							String(a.equipment_id) === String(item.id) ||
+							String(a.equipment?.id) === String(item.id),
+					);
+
+					const isRevisionRequired = matchingApproval?.approval_status === "REVISION_REQUIRED";
+					const isRegistered = statusId === 1 || statusName === "REGISTERED";
+
+					return isRegistered || isRevisionRequired;
+				}).length;
+
+				// Validasi Perbaikan Alat (/inspeksi/validasi-ulang):
+				const validasiUlangAntrean = data.filter((item: any) => {
+					const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+					const statusId = item.status_id || item.status?.id;
+					return (
+						statusId === 4 ||
+						statusName === "REPAIR_COMPLETED" ||
+						statusName === "REPAIR COMPLETED"
+					);
+				}).length;
+
+				// Persetujuan Perbaikan (/rendal/validasi-ulang):
+				const rendalValidasiUlangAntrean = data.filter((item: any) => {
+					const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+					const statusId = item.status_id || item.status?.id;
+					return statusId === 5 || statusName === "REVALIDATION" || statusName === "REVALIDASI";
+				}).length;
+
+				// Perbaikan Alat (/pemeliharaan/perbaikan-alat):
+				const perbaikanAntrean = data.filter((item: any) => {
+					const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+					const statusId = item.status_id || item.status?.id;
+					return statusId === 3 || statusName === "REPAIR" || statusName === "MAINTENANCE" || statusName === "DALAM_PERBAIKAN";
+				}).length;
+
+				setPendingCounts({
+					"/inspeksi/validasi": validasiAntrean,
+					"/inspeksi/validasi-ulang": validasiUlangAntrean,
+					"/rendal/validasi-ulang": rendalValidasiUlangAntrean,
+					"/pemeliharaan/perbaikan-alat": perbaikanAntrean,
+				});
+			} catch (err) {
+				console.error("Error checking sidebar pending badges:", err);
+			}
+		};
+
+		checkPending();
+	}, [pathname]);
 
 	// --- MENU ITEMS UNTUK MASING-MASING ROLE ---
 	// Setiap role punya konten sidebar sendiri yang menunjuk ke folder rutenya.
@@ -67,7 +139,7 @@ export function Sidebar({ role }: { role?: string }) {
 			break;
 
 		case "PEMELIHARAAN_LAPANGAN":
-			// Pemeliharaan: dashboard, perbaikan alat & riwayat
+			// Pemeliharaan: dashboard & perbaikan alat
 			mainNavItems = [
 				{
 					name: "Dashboard",
@@ -78,11 +150,6 @@ export function Sidebar({ role }: { role?: string }) {
 					name: "Perbaikan Alat",
 					href: "/pemeliharaan/perbaikan-alat",
 					icon: Wrench,
-				},
-				{
-					name: "Riwayat Perbaikan",
-					href: "/pemeliharaan/riwayat-perbaikan",
-					icon: History,
 				},
 			];
 			break;
@@ -101,14 +168,14 @@ export function Sidebar({ role }: { role?: string }) {
 					icon: Wrench,
 				},
 				{
-					name: "Inspeksi",
-					href: "/inspeksi/inspeksi-berkala",
-					icon: ClipboardCheck,
-				},
-				{
 					name: "Validasi Perbaikan Alat",
 					href: "/inspeksi/validasi-ulang",
 					icon: RefreshCw,
+				},
+				{
+					name: "Inspeksi",
+					href: "/inspeksi/inspeksi-berkala",
+					icon: ClipboardCheck,
 				},
 			];
 			break;
@@ -147,6 +214,11 @@ export function Sidebar({ role }: { role?: string }) {
 					name: "Dashboard",
 					href: "/unit-kerja/dashboard",
 					icon: LayoutDashboard,
+				},
+				{
+					name: "Daftar Aset",
+					href: "/unit-kerja/daftar-aset",
+					icon: Wrench,
 				},
 				{
 					name: "Katalog Aset",
@@ -210,18 +282,31 @@ export function Sidebar({ role }: { role?: string }) {
 									pathname.startsWith(item.href + "/") ||
 									(item.href === "/rendal/idle" &&
 										pathname === "/rendal/register-equipment");
+								const pendingCount = pendingCounts[item.href] || 0;
+
 								return (
 									<li key={item.name}>
 										<Link
 											href={item.href}
-											className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+											className={`flex items-center justify-between px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
 												isActive
 													? "bg-blue-500/20 text-white border-l-4 border-white"
 													: "text-blue-100 hover:bg-[#10488f] hover:text-white border-l-4 border-transparent"
 											}`}
 										>
-											<item.icon className="w-4 h-4" />
-											{item.name}
+											<div className="flex items-center gap-3">
+												<item.icon className="w-4 h-4" />
+												<span>{item.name}</span>
+											</div>
+											{pendingCount > 0 && (
+												<span
+													className="flex h-2.5 w-2.5 relative shrink-0"
+													title={`Terdapat ${pendingCount} peralatan menunggu di antrean`}
+												>
+													<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
+													<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+												</span>
+											)}
 										</Link>
 									</li>
 								);

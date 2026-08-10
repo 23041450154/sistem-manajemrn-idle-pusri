@@ -1,5 +1,5 @@
-import UnitKerjaKatalogPage from "../idle/page";
+import DaftarAsetPage from "../daftar-aset/page";
 
 export default function UnitKerjaEquipmentPage() {
-  return <UnitKerjaKatalogPage />;
+  return <DaftarAsetPage />;
 }

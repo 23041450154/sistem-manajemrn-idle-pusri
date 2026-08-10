@@ -38,6 +38,7 @@ const SAMPLE_ITEMS: ValidasiUlangItem[] = [];
 export default function RendalValidasiUlangPage() {
 	const [items, setItems] = useState<ValidasiUlangItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
+	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [filterPlant, setFilterPlant] = useState("");
@@ -117,6 +118,13 @@ export default function RendalValidasiUlangPage() {
 								String(a.equipment?.id) === String(item.id),
 						);
 
+						let displayStatus = "REVALIDATION";
+						let displayStatusId = 5;
+						if (isReady) {
+							displayStatus = "READY TO USE";
+							displayStatusId = 6;
+						}
+
 						return {
 							id: String(item.id),
 							kodeAlat: item.equipment_code || item.kodeAlat || "-",
@@ -131,8 +139,8 @@ export default function RendalValidasiUlangPage() {
 								: item.created_at
 									? new Date(item.created_at).toISOString().split("T")[0]
 									: new Date().toISOString().split("T")[0],
-							statusAset: isReady ? "READY TO USE" : "REVALIDATION",
-							statusId: isReady ? 6 : 5,
+							statusAset: displayStatus,
+							statusId: displayStatusId,
 							approvalId: matchingApproval?.id ? String(matchingApproval.id) : undefined,
 							catatanInspeksi: item.notes || "Hasil validasi ulang menunjukkan kondisi alat siap pakai.",
 						};
@@ -154,7 +162,7 @@ export default function RendalValidasiUlangPage() {
 
 	useEffect(() => {
 		setCurrentPage(1);
-	}, [searchQuery, filterPlant, filterTipeObjek]);
+	}, [activeTab, searchQuery, filterPlant, filterTipeObjek]);
 
 	const plantOptions = useMemo(
 		() => [...new Set(items.map((e) => e.plant).filter((v) => v && v !== "-"))].sort(),
@@ -166,6 +174,14 @@ export default function RendalValidasiUlangPage() {
 			[...new Set(items.map((e) => e.tipeObjek).filter((v) => v && v !== "-"))].sort(),
 		[items],
 	);
+
+	const antreanCount = useMemo(() => {
+		return items.filter((item) => item.statusAset !== "READY TO USE").length;
+	}, [items]);
+
+	const riwayatCount = useMemo(() => {
+		return items.filter((item) => item.statusAset === "READY TO USE").length;
+	}, [items]);
 
 	const handleSearch = () => setSearchQuery(searchInput);
 
@@ -180,6 +196,12 @@ export default function RendalValidasiUlangPage() {
 
 	const filteredItems = useMemo(() => {
 		let result = items;
+
+		result = result.filter((item) => {
+			const isReady = item.statusAset === "READY TO USE";
+			return activeTab === "antrean" ? !isReady : isReady;
+		});
+
 		if (searchQuery.trim()) {
 			const q = searchQuery.toLowerCase();
 			result = result.filter(
@@ -206,7 +228,7 @@ export default function RendalValidasiUlangPage() {
 		}
 
 		return result;
-	}, [items, searchQuery, filterPlant, filterTipeObjek, sortConfig]);
+	}, [items, activeTab, searchQuery, filterPlant, filterTipeObjek, sortConfig]);
 
 	const ITEMS_PER_PAGE = 10;
 	const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
@@ -247,6 +269,17 @@ export default function RendalValidasiUlangPage() {
 			);
 
 			if (result.success) {
+				setItems((prev) =>
+					prev.map((item) =>
+						item.id === selectedAsset.id
+							? {
+									...item,
+									statusAset: "READY TO USE",
+									statusId: 6,
+								}
+							: item,
+					),
+				);
 				setNotification({
 					type: "success",
 					message: `Peralatan ${selectedAsset.kodeAlat} berhasil disetujui menjadi READY TO USE di database!`,
@@ -293,16 +326,16 @@ export default function RendalValidasiUlangPage() {
 			)}
 
 			{/* Page Header */}
-			<div className="mb-4">
+			<div className="mb-2">
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
 					<span>Rendal Pemeliharaan</span>
 					<ChevronRight className="w-3.5 h-3.5" />
-					<span className="text-[#0A356A] font-semibold">Persetujuan Perbaikan</span>
+					<span className="text-[#0A356A] font-semibold">Persetujuan Perbaikan Alat</span>
 				</div>
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 					<div>
 						<h1 className="text-xl font-bold text-gray-900 tracking-tight">
-							Persetujuan Perbaikan
+							Persetujuan Perbaikan Alat
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
 							Daftar peralatan yang telah selesai diperbaiki dan divalidasi ulang oleh Inspeksi Teknik untuk disetujui menjadi Ready to Use.
@@ -319,23 +352,58 @@ export default function RendalValidasiUlangPage() {
 				</div>
 			</div>
 
-			{/* Notification Banner */}
-			{!isLoading && filteredItems.length > 0 && (
-				<div className="mb-4 flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
-					<div className="flex items-center gap-3">
-						<span className="flex h-2.5 w-2.5 relative">
-							<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-blue-400 opacity-75"></span>
-							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
-						</span>
-						<span className="text-[13px] text-blue-800 font-medium">
-							Terdapat <strong className="font-bold">{filteredItems.filter((i) => i.statusAset !== "READY TO USE").length} peralatan</strong> hasil validasi ulang yang menunggu persetujuan Ready to Use.
-						</span>
-					</div>
-				</div>
-			)}
 
 			{/* Unified Table Card */}
 			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4">
+				{/* Navigation Tabs */}
+				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
+					<button
+						onClick={() => {
+							setActiveTab("antrean");
+							setCurrentPage(1);
+						}}
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+							activeTab === "antrean"
+								? "text-[#0A356A] border-b-2 border-[#0A356A]"
+								: "text-gray-500 hover:text-gray-700"
+						}`}
+					>
+						<span>Antrean Persetujuan</span>
+						<span
+							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+								activeTab === "antrean"
+									? "bg-[#0A356A] text-white"
+									: "bg-gray-100 text-gray-600"
+							}`}
+						>
+							{antreanCount}
+						</span>
+					</button>
+
+					<button
+						onClick={() => {
+							setActiveTab("riwayat");
+							setCurrentPage(1);
+						}}
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+							activeTab === "riwayat"
+								? "text-[#0A356A] border-b-2 border-[#0A356A]"
+								: "text-gray-500 hover:text-gray-700"
+						}`}
+					>
+						<span>Riwayat Persetujuan</span>
+						<span
+							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+								activeTab === "riwayat"
+									? "bg-[#0A356A] text-white"
+									: "bg-gray-100 text-gray-600"
+							}`}
+						>
+							{riwayatCount}
+						</span>
+					</button>
+				</div>
+
 				{/* Toolbar */}
 				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
 					{/* Search */}
@@ -401,44 +469,44 @@ export default function RendalValidasiUlangPage() {
 				</div>
 
 				{/* Table */}
-				<div className="overflow-x-auto">
+				<div className="overflow-x-auto lg:overflow-x-hidden">
 					<table className="w-full text-left border-collapse">
 						<thead className="bg-gray-50/95 backdrop-blur-sm">
 							<tr className="border-b border-gray-300">
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center w-12 whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
 									No
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
 									onClick={() => handleSort("kodeAlat")}
 								>
 									Kode Alat
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
 									onClick={() => handleSort("namaAlat")}
 								>
 									Nama Peralatan
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Tipe Objek
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
 									onClick={() => handleSort("plant")}
 								>
 									Plant
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 									Kondisi
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 									Tgl Re-Validasi
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 									Status
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 									Aksi
 								</th>
 							</tr>
@@ -459,10 +527,18 @@ export default function RendalValidasiUlangPage() {
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
-												Tidak Ada Data
+												{searchQuery || filterPlant || filterTipeObjek
+													? "Hasil Pencarian Tidak Ditemukan"
+													: activeTab === "antrean"
+														? "Tidak Ada Antrean Persetujuan"
+														: "Belum Ada Riwayat Persetujuan"}
 											</p>
 											<p className="text-[11px] text-gray-500 mt-1">
-												Belum ada peralatan hasil validasi ulang yang menunggu persetujuan.
+												{searchQuery || filterPlant || filterTipeObjek
+													? "Coba sesuaikan kata kunci atau filter pencarian Anda."
+													: activeTab === "antrean"
+														? "Peralatan yang divalidasi ulang oleh Inspeksi Teknik akan muncul di sini."
+														: "Peralatan yang telah disetujui Ready to Use akan muncul di sini."}
 											</p>
 										</div>
 									</td>

@@ -10,8 +10,12 @@ import { useSidebar } from "./SidebarProvider";
 export function Header({ user }: { user?: any }) {
   const [showDropdown, setShowDropdown] = useState(false);
   const { toggleSidebar } = useSidebar();
-  const name = user?.name || "Profil Saya";
-  const role = labelForRole(user?.role);
+  
+  const currentUser = user?.user || user;
+  const name = currentUser?.name || "Profil Saya";
+  const rawNpp = currentUser?.npp || currentUser?.contact_npp || currentUser?.contactNpp || "";
+  const npp = rawNpp ? (String(rawNpp).toUpperCase().startsWith("NPP") ? String(rawNpp) : `NPP: ${rawNpp}`) : "";
+  const role = labelForRole(currentUser?.role);
   const initial = name.charAt(0).toUpperCase();
 
   return (
@@ -45,10 +49,14 @@ export function Header({ user }: { user?: any }) {
             className="flex items-center gap-2 md:gap-3 text-left focus:outline-none hover:bg-gray-50 p-1 md:p-1.5 rounded-lg transition-colors"
           >
             <div className="text-right hidden sm:block">
-              <div className="text-sm font-semibold text-gray-700">{name}</div>
-              <div className="text-[11px] text-gray-500">{role}</div>
+              <div className="text-sm font-semibold text-gray-800 leading-snug">{name}</div>
+              {npp && (
+                <div className="text-[11px] text-gray-500">
+                  {npp}
+                </div>
+              )}
             </div>
-            <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden border border-gray-300">
+            <div className="w-9 h-9 rounded-full bg-gray-200 overflow-hidden border border-gray-300 shrink-0">
               {/* Fallback avatar */}
               <div className="w-full h-full bg-[#0556B3] text-white flex items-center justify-center font-bold text-sm">
                 {initial}
@@ -57,10 +65,18 @@ export function Header({ user }: { user?: any }) {
           </button>
 
           {showDropdown && (
-            <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg border border-gray-200 py-1 z-50">
+            <div className="absolute right-0 mt-2 w-56 bg-white rounded-xl shadow-xl border border-gray-100 py-1.5 z-50 animate-in fade-in slide-in-from-top-2 duration-150">
+              <div className="px-4 py-2 border-b border-gray-100 mb-1">
+                <p className="text-xs font-bold text-gray-800 truncate">{name}</p>
+                {npp && (
+                  <p className="text-[11px] text-gray-500 truncate mt-0.5">
+                    {npp}
+                  </p>
+                )}
+              </div>
               <button 
                 onClick={() => logoutAction()}
-                className="flex items-center w-full gap-2 px-4 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors"
+                className="flex items-center w-full gap-2 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
                 <span>Keluar (Log Out)</span>
