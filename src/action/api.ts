@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { cookies } from "next/headers";
+import { logoutAction } from "./auth";
 
 const API_URL =
 	process.env.NEXT_PUBLIC_API_URL ||
@@ -58,6 +59,10 @@ export async function getDisposals() {
 			headers: { Authorization: `Bearer ${token}` },
 			cache: "no-store",
 		});
+		if (res.status === 401) {
+			await logoutAction();
+			return [];
+		}
 		if (res.ok) {
 			const json = await res.json();
 			if (Array.isArray(json.data) && json.data.length > 0) {
@@ -332,6 +337,14 @@ export async function approveDisposal(
 				notes: payload.rejection_reason || (payload.status === "DISPOSED" ? "Approved by Manager" : "Rejected by Manager"),
 			}),
 		});
+
+		if (res.status === 401) {
+			await logoutAction();
+			return {
+				success: false,
+				message: "Sesi Anda telah berakhir. Silakan masuk kembali.",
+			};
+		}
 
 		const json = await res.json().catch(() => null);
 
