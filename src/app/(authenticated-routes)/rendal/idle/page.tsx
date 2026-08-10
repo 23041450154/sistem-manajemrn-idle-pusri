@@ -297,9 +297,17 @@ export default function RendalIdlePage() {
 			"READY TO USE": "bg-indigo-50 text-indigo-700 border-indigo-200",
 			DALAM_PERBAIKAN: "bg-amber-50 text-amber-700 border-amber-200",
 			READY_TO_REUSE: "bg-teal-50 text-teal-700 border-teal-200",
+			DISPOSAL_RECOMMENDED: "bg-purple-50 text-purple-700 border-purple-200",
+			DISPOSAL_VERIFIED: "bg-red-50 text-red-700 border-red-200",
+			SCRAP: "bg-red-50 text-red-700 border-red-200",
 		};
-		const displayStatus =
-			status === "IDLE" ? "READY TO USE" : status.replace(/_/g, " ");
+		let displayStatus = status.replace(/_/g, " ");
+		if (status === "IDLE") displayStatus = "READY TO USE";
+		else if (status === "REGISTERED") displayStatus = "Menunggu Validasi";
+		else if (status === "VALIDATED") displayStatus = "Tervalidasi";
+		else if (status === "DISPOSAL_RECOMMENDED") displayStatus = "Rekomendasi Scrap";
+		else if (status === "DISPOSAL_VERIFIED") displayStatus = "Scrap Selesai";
+
 		const style =
 			styles[status] ||
 			styles["READY TO USE"] ||
@@ -427,12 +435,14 @@ export default function RendalIdlePage() {
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
 						>
 							<option value="Semua">Semua Status</option>
-							<option value="REGISTERED">REGISTERED</option>
-							<option value="VALIDATED">VALIDATED</option>
+							<option value="REGISTERED">Menunggu Validasi</option>
+							<option value="VALIDATED">Tervalidasi</option>
 							<option value="READY TO USE">READY TO USE</option>
 							<option value="DALAM_PERBAIKAN">DALAM PERBAIKAN</option>
 							<option value="READY_TO_REUSE">READY TO REUSE</option>
 							<option value="REJECTED">REJECTED</option>
+							<option value="DISPOSAL_RECOMMENDED">Rekomendasi Scrap</option>
+							<option value="DISPOSAL_VERIFIED">Scrap Selesai</option>
 						</select>
 
 						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
