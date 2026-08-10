@@ -321,6 +321,8 @@ export async function approveDisposal(
 		Authorization: `Bearer ${token}`,
 	};
 
+	let is404 = false;
+
 	try {
 		const res = await fetch(`${API_URL}/api/disposal/${id}`, {
 			method: "PATCH",
@@ -339,7 +341,9 @@ export async function approveDisposal(
 				message: json?.message || "Pengajuan scrap berhasil diproses.",
 			};
 		} else {
-			if (res.status !== 404) {
+			if (res.status === 404) {
+				is404 = true;
+			} else {
 				return {
 					success: false,
 					message: json?.message || `Gagal memproses pengajuan (Status ${res.status}).`,
@@ -348,50 +352,73 @@ export async function approveDisposal(
 		}
 	} catch (error) {
 		console.error("Approve direct disposal endpoint error:", error);
+		const errMsg = error instanceof Error ? error.message : "Tidak dapat terhubung ke server backend.";
+		return {
+			success: false,
+			message: `Gagal menghubungkan ke server: ${errMsg}. Silakan periksa apakah server backend sedang berjalan.`,
+		};
 	}
 
-	// Fallback: If direct /api/disposals/:id/approve endpoint returns 404, check matching approval in /api/approvals
-	try {
-		const action = payload.status === "DISPOSED" ? "APPROVE" : "REJECT";
-		const notes =
-			payload.rejection_reason ||
-			(payload.status === "DISPOSED"
-				? "Disetujui oleh Manajer Rendal"
-				: "Ditolak oleh Manajer Rendal");
+	// Fallback: ONLY run if the direct endpoint explicitly returned 404 (route not found)
+	if (is404) {
+		try {
+			const action = payload.status === "DISPOSED" ? "APPROVE" : "REJECT";
+			const notes =
+				payload.rejection_reason ||
+				(payload.status === "DISPOSED"
+					? "Disetujui oleh Manajer Rendal"
+					: "Ditolak oleh Manajer Rendal");
 
-		const appRes = await fetch(`${API_URL}/api/approvals`, {
-			headers: { Authorization: `Bearer ${token}` },
-			cache: "no-store",
-		});
-		if (appRes.ok) {
-			const appJson = await appRes.json();
-			const approvals = appJson.data || [];
-			const matchingApp = approvals.find(
-				(a: any) =>
-					String(a.id) === String(id) ||
-					(a.request_type === "DISPOSAL" &&
-						String(a.equipment_id) === String(id)) ||
-					(a.request_type === "DISPOSAL" &&
-						String(a.reference_id) === String(id)),
-			);
-			if (matchingApp) {
-				await fetch(`${API_URL}/api/approvals/${matchingApp.id}/review`, {
-					method: "PATCH",
-					headers,
-					body: JSON.stringify({ action, notes }),
-				});
+			const appRes = await fetch(`${API_URL}/api/approvals`, {
+				headers: { Authorization: `Bearer ${token}` },
+				cache: "no-store",
+			});
+			if (appRes.ok) {
+				const appJson = await appRes.json();
+				const approvals = appJson.data || [];
+				const matchingApp = approvals.find(
+					(a: any) =>
+						String(a.id) === String(id) ||
+						(a.request_type === "DISPOSAL" &&
+							String(a.equipment_id) === String(id)) ||
+						(a.request_type === "DISPOSAL" &&
+							String(a.reference_id) === String(id)),
+				);
+				if (matchingApp) {
+					const reviewRes = await fetch(`${API_URL}/api/approvals/${matchingApp.id}/review`, {
+						method: "PATCH",
+						headers,
+						body: JSON.stringify({ action, notes }),
+					});
+					const reviewJson = await reviewRes.json().catch(() => null);
+					if (reviewRes.ok && reviewJson?.status !== "error") {
+						const isApproved = payload.status === "DISPOSED";
+						return {
+							success: true,
+							message: isApproved
+								? "Pengajuan scrap berhasil disetujui, status aset berubah menjadi SCRAP."
+								: "Pengajuan scrap berhasil ditolak.",
+						};
+					} else {
+						return {
+							success: false,
+							message: reviewJson?.message || `Gagal memproses via fallback (Status ${reviewRes.status}).`,
+						};
+					}
+				}
 			}
+		} catch (e) {
+			console.error("Approval review fallback error:", e);
+			return {
+				success: false,
+				message: "Gagal memproses pengajuan melalui alur persetujuan umum.",
+			};
 		}
-	} catch (e) {
-		console.error("Approval review fallback error:", e);
 	}
 
-	const isApproved = payload.status === "DISPOSED";
 	return {
-		success: true,
-		message: isApproved
-			? "Pengajuan scrap berhasil disetujui, status aset berubah menjadi SCRAP."
-			: "Pengajuan scrap berhasil ditolak.",
+		success: false,
+		message: "Pengajuan tidak ditemukan atau tidak dapat diproses.",
 	};
 }
 
