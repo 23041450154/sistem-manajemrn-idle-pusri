@@ -333,11 +333,18 @@ export async function approveDisposal(
 
 		const json = await res.json().catch(() => null);
 
-		if (res.ok && json?.success !== false) {
+		if (res.ok && json?.status !== "error") {
 			return {
 				success: true,
 				message: json?.message || "Pengajuan scrap berhasil diproses.",
 			};
+		} else {
+			if (res.status !== 404) {
+				return {
+					success: false,
+					message: json?.message || `Gagal memproses pengajuan (Status ${res.status}).`,
+				};
+			}
 		}
 	} catch (error) {
 		console.error("Approve direct disposal endpoint error:", error);

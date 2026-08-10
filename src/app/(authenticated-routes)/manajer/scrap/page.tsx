@@ -46,7 +46,7 @@ export default function ManajerScrapPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Toast notification
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [toast, setToast] = useState<{ type: "success" | "error" | "reject"; message: string } | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
 
   // Pagination State
@@ -75,9 +75,9 @@ export default function ManajerScrapPage() {
     fetchDisposalsData();
   }, []);
 
-  const showToast = (type: "success" | "error", message: string) => {
+  const showToast = (type: "success" | "error" | "reject", message: string) => {
     setToast({ type, message });
-    setTimeout(() => setToast(null), 4000);
+    setTimeout(() => setToast(null), 5000);
   };
 
   // Pending inbox items
@@ -158,7 +158,7 @@ export default function ManajerScrapPage() {
       });
 
       if (res.success) {
-        showToast("success", `Pengajuan ${selectedDisposal.disposal_number} untuk ${selectedDisposal.equipment_code} berhasil ditolak.`);
+        showToast("reject", `Pengajuan ${selectedDisposal.disposal_number} untuk ${selectedDisposal.equipment_code} berhasil ditolak.`);
         setIsRejectModalOpen(false);
         setRejectionReason("");
         handleCloseDetail();
@@ -224,7 +224,11 @@ export default function ManajerScrapPage() {
           )}
           <div className="flex-1">
             <p className="text-[13px] font-bold">
-              {toast.type === "success" ? "Transaksi Berhasil" : "Transaksi Gagal"}
+              {toast.type === "success"
+                ? "Persetujuan Berhasil"
+                : toast.type === "reject"
+                ? "Penolakan Berhasil"
+                : "Transaksi Gagal"}
             </p>
             <p className="text-[12px] mt-0.5 leading-relaxed font-semibold">
               {toast.message}
