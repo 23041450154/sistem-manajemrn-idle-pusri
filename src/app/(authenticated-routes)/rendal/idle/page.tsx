@@ -91,7 +91,7 @@ export default function RendalIdlePage() {
 		setTimeout(() => {
 			setIsSubmittingRepair(false);
 			alert(
-				"Berhasil! Hasil perbaikan dan bukti biaya telah disimpan. Status alat berubah menjadi Ready to Reuse.",
+				"Berhasil! Hasil perbaikan dan bukti biaya telah disimpan. Status alat berubah menjadi Ready to Use.",
 			);
 			setRepairModal(null);
 		}, 1500);
@@ -241,7 +241,12 @@ export default function RendalIdlePage() {
 				item.namaAlat?.toLowerCase().includes(query);
 			const matchPlant = plantFilter === "Semua" || item.plant === plantFilter;
 			const matchStatus =
-				statusFilter === "Semua" || item.statusAset === statusFilter;
+				statusFilter === "Semua" ||
+				item.statusAset === statusFilter ||
+				((statusFilter === "READY TO USE" || statusFilter === "READY_TO_REUSE") &&
+					((item.statusAset as string) === "READY_TO_REUSE" ||
+						(item.statusAset as string) === "READY TO REUSE" ||
+						item.statusAset === "READY TO USE"));
 			return matchSearch && matchPlant && matchStatus;
 		});
 
@@ -299,7 +304,7 @@ export default function RendalIdlePage() {
 			READY_TO_REUSE: "bg-teal-50 text-teal-700 border-teal-200",
 		};
 		const displayStatus =
-			status === "IDLE" ? "READY TO USE" : status.replace(/_/g, " ");
+			status === "IDLE" || status === "READY_TO_REUSE" ? "READY TO USE" : status.replace(/_/g, " ");
 		const style =
 			styles[status] ||
 			styles["READY TO USE"] ||
@@ -431,7 +436,7 @@ export default function RendalIdlePage() {
 							<option value="VALIDATED">VALIDATED</option>
 							<option value="READY TO USE">READY TO USE</option>
 							<option value="DALAM_PERBAIKAN">DALAM PERBAIKAN</option>
-							<option value="READY_TO_REUSE">READY TO REUSE</option>
+							<option value="READY_TO_REUSE">READY TO USE</option>
 							<option value="REJECTED">REJECTED</option>
 						</select>
 
@@ -694,7 +699,7 @@ export default function RendalIdlePage() {
 							<div className="bg-gray-50 rounded-lg p-3 border border-gray-200 text-xs text-gray-600 leading-normal">
 								Unggah bukti biaya dan deskripsi tindakan perbaikan di bawah ini
 								untuk merubah status peralatan menjadi{" "}
-								<strong className="text-[#0A356A]">Ready to Reuse</strong>.
+								<strong className="text-[#0A356A]">Ready to Use</strong>.
 							</div>
 
 							<div>

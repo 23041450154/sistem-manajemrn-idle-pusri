@@ -92,8 +92,8 @@ export default function EquipmentManagementPage() {
   };
 
   const getStatusBadge = (statusObj: any, statusId: number) => {
-    let name = (statusObj?.name || (statusId === 2 ? "VALIDATED" : statusId === 3 ? "REJECTED" : statusId === 4 ? "READY TO USE" : statusId === 6 ? "MAINTENANCE" : statusId === 5 ? "READY TO REUSE" : "REGISTERED")).toUpperCase();
-    if (name === "IDLE") name = "READY TO USE";
+    let name = (statusObj?.name || (statusId === 2 ? "VALIDATED" : statusId === 3 ? "REJECTED" : statusId === 4 ? "READY TO USE" : statusId === 6 ? "MAINTENANCE" : statusId === 5 ? "READY TO USE" : "REGISTERED")).toUpperCase();
+    if (name === "IDLE" || name === "READY TO REUSE") name = "READY TO USE";
 
     const styles: Record<string, string> = {
       REGISTERED: "bg-slate-100 text-slate-600 border-slate-200",
@@ -101,7 +101,7 @@ export default function EquipmentManagementPage() {
       REJECTED: "bg-red-50 text-red-700 border-red-200",
       "READY TO USE": "bg-[#0A356A]/10 text-[#0A356A] border-[#0A356A]/20",
       MAINTENANCE: "bg-amber-50 text-amber-800 border-amber-200",
-      "READY TO REUSE": "bg-emerald-50 text-emerald-700 border-emerald-200",
+      "READY TO REUSE": "bg-[#0A356A]/10 text-[#0A356A] border-[#0A356A]/20",
     };
 
     return (

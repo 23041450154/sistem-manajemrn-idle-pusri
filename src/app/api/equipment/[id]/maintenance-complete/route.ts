@@ -26,7 +26,7 @@ export async function PATCH(
       const data = await backendRes.json().catch(() => ({}));
       return NextResponse.json({
         success: true,
-        message: data.message || "Peralatan berhasil diselesaikan perbaikannya dan berstatus READY_TO_REUSE",
+        message: data.message || "Peralatan berhasil diselesaikan perbaikannya dan berstatus READY TO USE",
         data: data.data || data,
       }, { status: 200 });
     }
@@ -43,7 +43,7 @@ export async function PATCH(
       if (actualCost && conditionId && preservationStatus) {
         return NextResponse.json({
           success: true,
-          message: "Peralatan berhasil diselesaikan perbaikannya dan berstatus READY_TO_REUSE",
+          message: "Peralatan berhasil diselesaikan perbaikannya dan berstatus READY TO USE",
           data: {
             id,
             actual_cost: parseFloat(String(actualCost)),
@@ -65,7 +65,7 @@ export async function PATCH(
     // If backend is unreachable, simulate success response if basic form fields are valid
     return NextResponse.json({
       success: true,
-      message: "Peralatan berhasil diselesaikan perbaikannya dan berstatus READY_TO_REUSE",
+      message: "Peralatan berhasil diselesaikan perbaikannya dan berstatus READY TO USE",
       data: { id, status: "READY_TO_REUSE" }
     }, { status: 200 });
   }

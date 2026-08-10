@@ -98,7 +98,7 @@ export function CostAvoidanceSection() {
 			e.statusAset === "REJECTED",
 	).length;
 
-	// Ready to Reuse (READY_TO_REUSE or IDLE)
+	// Ready to Use (READY_TO_REUSE, READY TO USE, or IDLE)
 	const readyCount = equipments.filter(
 		(e: Equipment) =>
 			e.status?.name === "READY_TO_REUSE" ||
@@ -131,8 +131,8 @@ export function CostAvoidanceSection() {
 			text = `Peralatan ${name} (${tag}) baru diregistrasi oleh Rendal`;
 		} else if (status === "VALIDATED") {
 			text = `Inspeksi selesai: ${name} (${tag}) tervalidasi & menunggu approval`;
-		} else if (status === "READY_TO_REUSE") {
-			text = `Peralatan ${name} (${tag}) siap digunakan kembali (Ready to Reuse)`;
+		} else if (status === "READY_TO_REUSE" || status === "READY TO USE" || status === "READY TO REUSE") {
+			text = `Peralatan ${name} (${tag}) siap digunakan kembali (Ready to Use)`;
 		} else if (status === "REJECTED") {
 			text = `Peralatan ${name} (${tag}) selesai diinspeksi dengan status ditolak/revisi`;
 		} else if (status === "IDLE") {
@@ -275,7 +275,7 @@ export function CostAvoidanceSection() {
 			icon: Wrench,
 		},
 		{
-			label: "Ready to Reuse",
+			label: "Ready to Use",
 			value: readyCount,
 			caption: "Siap digunakan kembali",
 			rule: "#059669",

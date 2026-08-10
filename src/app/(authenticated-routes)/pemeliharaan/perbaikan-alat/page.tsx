@@ -496,7 +496,7 @@ export default function PerbaikanAlatPage() {
 										</td>
 										<td className="px-3 py-3 text-center">
 											<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
-												{asset.statusAset === "REPAIR_COMPLETED" || asset.statusAset === "READY TO REUSE" ? (
+												{asset.statusAset === "REPAIR_COMPLETED" || asset.statusAset === "READY TO USE" || (asset.statusAset as string) === "READY TO REUSE" ? (
 													<span className="inline-flex items-center justify-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all shadow-sm">
 														<CheckCircle2 className="w-3 h-3" />
 														Menunggu Validasi Ulang
@@ -593,7 +593,7 @@ export default function PerbaikanAlatPage() {
 							{/* Info box */}
 							<div className="bg-gray-50 rounded-lg p-3 border border-gray-200 text-xs text-gray-600 leading-normal">
 								Lengkapi detail realisasi perbaikan di bawah ini untuk mengubah status peralatan menjadi{" "}
-								<strong className="text-[#0A356A]">Ready to Reuse</strong>.
+								<strong className="text-[#0A356A]">Ready to Use</strong>.
 							</div>
 
 							{/* Biaya Aktual */}

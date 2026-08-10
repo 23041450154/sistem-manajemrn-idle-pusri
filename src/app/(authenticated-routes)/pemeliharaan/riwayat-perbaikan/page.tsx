@@ -176,7 +176,7 @@ export default function RiwayatPerbaikanPage() {
 					<div>
 						<h1 className="text-xl font-bold text-gray-900 tracking-tight">Riwayat Perbaikan</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar peralatan yang telah selesai diperbaiki dan berstatus Ready to Reuse.
+							Daftar peralatan yang telah selesai diperbaiki dan berstatus Ready to Use.
 						</p>
 					</div>
 					<button
@@ -199,7 +199,7 @@ export default function RiwayatPerbaikanPage() {
 							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
 						</span>
 						<span className="text-[13px] text-emerald-800 font-medium">
-							<strong className="font-bold">{filteredItems.length} peralatan</strong> telah selesai diperbaiki dan berstatus Ready to Reuse.
+							<strong className="font-bold">{filteredItems.length} peralatan</strong> telah selesai diperbaiki dan berstatus Ready to Use.
 						</span>
 					</div>
 				</div>
