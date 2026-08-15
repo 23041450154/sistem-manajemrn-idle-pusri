@@ -159,16 +159,28 @@ export default function ManajemenInspeksi() {
 							item.storage_location?.name ||
 							item.storageLocation?.name ||
 							"Belum ditentukan",
-						area: item.func_loc || item.funcloc || "-",
+						area:
+							typeof item.func_loc === "string"
+								? item.func_loc
+								: item.func_loc?.name || item.funcloc?.name || "-",
 						vendor: item.vendor || "-",
 						tahunDibuat: item.year?.toString() || "-",
 						nilaiPerolehan: item.original_value
 							? `Rp ${Number(item.original_value).toLocaleString("id-ID")}`
 							: "Rp 0",
 						kondisi: (() => {
-							const c = typeof item.condition === "string" ? item.condition : item.condition?.name;
+							const c =
+								typeof item.condition === "string"
+									? item.condition
+									: item.condition?.name;
 							if (!c) return "-";
-							return c.replace(/_/g, " ").replace(/\w\S*/g, (txt: string) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase());
+							return c
+								.replace(/_/g, " ")
+								.replace(
+									/\w\S*/g,
+									(txt: string) =>
+										txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(),
+								);
 						})(),
 						pemohon: (() => {
 							const p = item.created_by_npp || currentUserNPP;
@@ -694,7 +706,8 @@ export default function ManajemenInspeksi() {
 			normStatus === "SCRAP VERIFIED" ||
 			normStatus === "DISPOSAL_VERIFIED" ||
 			normStatus === "DISPOSAL VERIFIED";
-		const isRejected = normStatus === "REJECTED" || asset.statusPersetujuan === "REJECTED";
+		const isRejected =
+			normStatus === "REJECTED" || asset.statusPersetujuan === "REJECTED";
 
 		return isReady || isScrap || isRejected;
 	};
@@ -752,7 +765,15 @@ export default function ManajemenInspeksi() {
 		}
 
 		return filtered;
-	}, [assets, activeTab, search, plantFilter, statusFilter, dateFilter, sortConfig]);
+	}, [
+		assets,
+		activeTab,
+		search,
+		plantFilter,
+		statusFilter,
+		dateFilter,
+		sortConfig,
+	]);
 
 	const paginatedAssets = useMemo(() => {
 		const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -796,7 +817,11 @@ export default function ManajemenInspeksi() {
 			READY_TO_REUSE: "bg-[#E0E7FF] text-[#4F46E5]",
 		};
 		let displayStatus = (status || "").replace(/_/g, " ");
-		if (displayStatus === "IDLE" || displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
+		if (
+			displayStatus === "IDLE" ||
+			displayStatus === "READY TO REUSE" ||
+			displayStatus === "REUSED"
+		) {
 			displayStatus = "READY TO USE";
 		}
 		if (displayStatus.includes("DISPOSAL")) {
@@ -841,7 +866,8 @@ export default function ManajemenInspeksi() {
 		const showInspeksi =
 			asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE";
 		const showUbah =
-			asset.statusAset === "VALIDATED" && asset.statusPersetujuan === "PENDING_REVIEW";
+			asset.statusAset === "VALIDATED" &&
+			asset.statusPersetujuan === "PENDING_REVIEW";
 		const showRevisi = asset.statusPersetujuan === "NEED_REVISION";
 
 		return (
@@ -978,7 +1004,6 @@ export default function ManajemenInspeksi() {
         <p className="text-[13px] text-gray-500 mt-1">Daftar peralatan idle yang membutuhkan verifikasi teknis sebelum di-utilisasi.</p>
       </div>
       */}
-
 
 			{/* Main Content Area (Tabel) */}
 			<div
@@ -1185,13 +1210,17 @@ export default function ManajemenInspeksi() {
 									>
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-7 h-7 text-gray-300 mb-2" />
-											{search || plantFilter !== "Semua" || statusFilter !== "Semua" || dateFilter ? (
+											{search ||
+											plantFilter !== "Semua" ||
+											statusFilter !== "Semua" ||
+											dateFilter ? (
 												<>
 													<p className="text-[14px] font-semibold text-gray-800">
 														Hasil Pencarian Tidak Ditemukan
 													</p>
 													<p className="text-[12px] text-gray-500 mt-1">
-														Tidak ada data yang cocok dengan kriteria filter pencarian Anda.
+														Tidak ada data yang cocok dengan kriteria filter
+														pencarian Anda.
 													</p>
 												</>
 											) : activeTab === "antrean" ? (
@@ -1200,7 +1229,8 @@ export default function ManajemenInspeksi() {
 														Tidak Ada Antrean Validasi
 													</p>
 													<p className="text-[12px] text-gray-500 mt-1">
-														Saat ini belum ada peralatan yang membutuhkan tindakan inspeksi atau revisi dari Anda.
+														Saat ini belum ada peralatan yang membutuhkan
+														tindakan inspeksi atau revisi dari Anda.
 													</p>
 												</>
 											) : (
@@ -1209,7 +1239,8 @@ export default function ManajemenInspeksi() {
 														Belum Ada Riwayat Validasi
 													</p>
 													<p className="text-[12px] text-gray-500 mt-1">
-														Peralatan yang telah selesai diinspeksi dan diproses akan muncul di sini.
+														Peralatan yang telah selesai diinspeksi dan diproses
+														akan muncul di sini.
 													</p>
 												</>
 											)}
@@ -1724,7 +1755,14 @@ export default function ManajemenInspeksi() {
 											</option>
 											{conditionOptions.map((condition) => (
 												<option key={condition.id} value={condition.id}>
-													{condition.name.replace(/_/g, " ").replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase())}
+													{condition.name
+														.replace(/_/g, " ")
+														.replace(
+															/\w\S*/g,
+															(txt) =>
+																txt.charAt(0).toUpperCase() +
+																txt.substr(1).toLowerCase(),
+														)}
 												</option>
 											))}
 										</select>
@@ -2123,7 +2161,9 @@ export default function ManajemenInspeksi() {
 									<p className="text-[11px] text-gray-500 mb-0.5">
 										Tahun Pembuatan:
 									</p>
-									<p className="text-[12px] font-bold text-gray-900">{selectedAsset.tahunDibuat}</p>
+									<p className="text-[12px] font-bold text-gray-900">
+										{selectedAsset.tahunDibuat}
+									</p>
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">
@@ -2137,7 +2177,9 @@ export default function ManajemenInspeksi() {
 									<p className="text-[11px] text-gray-500 mb-0.5">
 										Kondisi Fisik:
 									</p>
-									<p className="text-[12px] font-bold text-gray-900">{selectedAsset.kondisi}</p>
+									<p className="text-[12px] font-bold text-gray-900">
+										{selectedAsset.kondisi}
+									</p>
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">

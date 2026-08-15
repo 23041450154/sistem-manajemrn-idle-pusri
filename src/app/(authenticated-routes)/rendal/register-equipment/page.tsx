@@ -88,7 +88,10 @@ export default function RegisterEquipmentPage() {
 				setFormData({
 					equipmentCode: found.equipment_code || "",
 					name: found.name || "",
-					funcLoc: found.func_loc || found.funcloc || "",
+					funcLoc:
+						typeof found.func_loc === "string"
+							? found.func_loc
+							: found.func_loc?.name || found.funcloc?.name || "",
 					plantId,
 					objectTypeId: String(
 						found.object_type_id ||

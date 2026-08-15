@@ -136,7 +136,10 @@ export default function ManajemenInspeksi() {
 							item.storage_location?.name ||
 							item.storageLocation?.name ||
 							"Belum ditentukan",
-						area: item.func_loc || item.funcloc || "-",
+						area:
+							typeof item.func_loc === "string"
+								? item.func_loc
+								: item.func_loc?.name || item.funcloc?.name || "-",
 						vendor: item.vendor || "-",
 						tahunDibuat: item.year?.toString() || "-",
 						nilaiPerolehan: item.original_value

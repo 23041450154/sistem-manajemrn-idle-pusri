@@ -135,7 +135,10 @@ export default function RevisiValidasiPage() {
 							item.storage_location?.name ||
 							item.storageLocation?.name ||
 							"Belum ditentukan",
-						area: item.func_loc || item.funcloc || "-",
+						area:
+							typeof item.func_loc === "string"
+								? item.func_loc
+								: item.func_loc?.name || item.funcloc?.name || "-",
 						vendor: item.vendor || "-",
 						tahunDibuat: item.year?.toString() || "-",
 						nilaiPerolehan: item.original_value
@@ -361,7 +364,8 @@ export default function RevisiValidasiPage() {
 						);
 						const token = tokenMatch ? tokenMatch[2] : "";
 						const API_URL =
-							process.env.NEXT_PUBLIC_API_URL || "https://api.testing.naufal.me";
+							process.env.NEXT_PUBLIC_API_URL ||
+							"https://api.testing.naufal.me";
 
 						for (const file of uploadedFiles) {
 							const fd = new FormData();
@@ -548,7 +552,11 @@ export default function RevisiValidasiPage() {
 			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
 		};
 		let displayStatus = (status || "").replace(/_/g, " ");
-		if (displayStatus === "IDLE" || displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
+		if (
+			displayStatus === "IDLE" ||
+			displayStatus === "READY TO REUSE" ||
+			displayStatus === "REUSED"
+		) {
 			displayStatus = "READY TO USE";
 		}
 		return (
