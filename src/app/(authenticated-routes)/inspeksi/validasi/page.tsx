@@ -48,6 +48,10 @@ type AssetState =
 	| "VALIDATED"
 	| "REJECTED"
 	| "SCRAP"
+	| "SCRAP RECOMMENDED"
+	| "SCRAP_RECOMMENDED"
+	| "REVALIDATION"
+	| "REVALIDASI"
 	| "REPAIR"
 	| "REPAIR_COMPLETED"
 	| "REUSED"
@@ -226,9 +230,16 @@ export default function ManajemenInspeksi() {
 							statusAset === "SCRAP VERIFIED"
 						) {
 							statusPersetujuan = "APPROVED";
-						} else if (statusAset === "VALIDATED") {
+						} else if (
+							statusAset === "VALIDATED" ||
+							statusAset === "REVALIDATION" ||
+							statusAset === "REVALIDASI" ||
+							statusAset === "SCRAP" ||
+							statusAset === "SCRAP RECOMMENDED" ||
+							statusAset === "SCRAP_RECOMMENDED"
+						) {
 							statusPersetujuan = "PENDING_REVIEW";
-						} else if (statusAset === "REJECTED" || statusAset === "SCRAP") {
+						} else if (statusAset === "REJECTED") {
 							statusPersetujuan = "REJECTED";
 						}
 					}
@@ -241,7 +252,14 @@ export default function ManajemenInspeksi() {
 					(a: any, b: any) => Number(b.id) - Number(a.id),
 				);
 
-				setAssets(mappedWithApproval);
+				// Revalidation items belong strictly in /inspeksi/validasi-ulang, exclude from /inspeksi/validasi
+				const validasiOnly = mappedWithApproval.filter(
+					(a: any) =>
+						a.statusAset !== "REVALIDATION" &&
+						a.statusAset !== "REVALIDASI",
+				);
+
+				setAssets(validasiOnly);
 			} catch (err) {
 				console.error(err);
 			} finally {
@@ -691,9 +709,17 @@ export default function ManajemenInspeksi() {
 		setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
 	};
 
-	// Helper untuk mengecek apakah proses validasi/persetujuan aset sudah final (selesai)
+	// Helper untuk mengecek apakah aset masuk ke Riwayat Validasi vs Antrean Validasi.
+	// Antrean Validasi HANYA untuk aset yang memerlukan tindakan aktif dari Inspeksi (Inspeksi baru, Revisi Inspeksi, Ubah Inspeksi).
+	// Semua aset dengan status REVALIDATION, SCRAP / SCRAP RECOMMENDED, atau yang sedang dalam review (IN_REVIEW / PENDING_REVIEW)
+	// dan hanya memiliki tombol 'Detail Info' dipindahkan ke Riwayat Validasi.
 	const isFinalStatus = (asset: Asset) => {
 		const normStatus = (asset.statusAset || "").toUpperCase();
+		const normApproval = (asset.statusPersetujuan || "").toUpperCase();
+
+		const isNeedRevision = normApproval === "NEED_REVISION";
+		if (isNeedRevision) return false;
+
 		const isReady =
 			normStatus === "READY TO USE" ||
 			normStatus === "READY_TO_USE" ||
@@ -702,14 +728,19 @@ export default function ManajemenInspeksi() {
 			normStatus === "READY TO REUSE" ||
 			normStatus === "READY_TO_REUSE";
 		const isScrap =
-			normStatus === "SCRAP" ||
-			normStatus === "SCRAP VERIFIED" ||
-			normStatus === "DISPOSAL_VERIFIED" ||
-			normStatus === "DISPOSAL VERIFIED";
-		const isRejected =
-			normStatus === "REJECTED" || asset.statusPersetujuan === "REJECTED";
+			normStatus.includes("SCRAP") ||
+			normStatus.includes("DISPOSAL");
+		const isRevalidation =
+			normStatus.includes("REVALIDATION") ||
+			normStatus.includes("REVALIDASI");
+		const isRejected = normStatus === "REJECTED" || normApproval === "REJECTED";
 
-		return isReady || isScrap || isRejected;
+		const isUnderReview = normApproval === "IN_REVIEW" || normApproval === "PENDING_REVIEW";
+
+		if (isRevalidation || isScrap) return true;
+		if (isUnderReview && normStatus !== "REGISTERED" && normStatus !== "VALIDATED") return true;
+
+		return isReady || isRejected;
 	};
 
 	// Counts untuk tab navigation
@@ -743,6 +774,15 @@ export default function ManajemenInspeksi() {
 					a.statusPersetujuan === "NEED_REVISION";
 			else if (statusFilter === "NEED_REVISION")
 				matchStatus = a.statusPersetujuan === "NEED_REVISION";
+			else if (statusFilter === "SCRAP")
+				matchStatus =
+					a.statusAset === "SCRAP" ||
+					a.statusAset === "SCRAP RECOMMENDED" ||
+					a.statusAset === "SCRAP_RECOMMENDED";
+			else if (statusFilter === "REVALIDATION")
+				matchStatus =
+					a.statusAset === "REVALIDATION" ||
+					a.statusAset === "REVALIDASI";
 			else matchStatus = a.statusAset === statusFilter;
 
 			const matchDate = !dateFilter || a.tanggalRegistrasi === dateFilter;
