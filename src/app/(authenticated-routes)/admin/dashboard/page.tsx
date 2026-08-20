@@ -6,7 +6,8 @@ import {
   Wrench, Database, Trash2, ArrowRight, ShieldCheck,
   MapPin, Layers, FileText, RefreshCw
 } from "lucide-react";
-import { getEquipments, getObjectTypes, getStorageLocations, getDisposals } from "@/action/api";
+import { getEquipments, getDisposals } from "@/action/api";
+import { getMasterItems } from "@/action/master";
 
 const MODULES = [
   { href: "/admin/equipment", icon: Wrench, title: "Manajemen Peralatan", desc: "Kelola inventarisasi & status aset" },
@@ -33,21 +34,23 @@ export default function AdminDashboardPage() {
     async function loadAdminMetrics() {
       setIsLoading(true);
       try {
+        // Gunakan sumber data yang sama dengan tabel MasterDataTable agar KPI
+        // tidak berbeda ketika payload API memiliki bentuk/nama field yang bervariasi.
         const [eqList, objTypes, storageLocs, disposals] = await Promise.all([
           getEquipments(),
-          getObjectTypes(),
-          getStorageLocations(),
+          getMasterItems("object-type"),
+          getMasterItems("storage-location"),
           getDisposals(),
         ]);
 
         setStats({
-          totalEquipment: eqList.length,
-          totalCategories: objTypes.length,
-          totalStorage: storageLocs.length,
-          totalDisposals: disposals.length,
+          totalEquipment: Array.isArray(eqList) ? eqList.length : 0,
+          totalCategories: Array.isArray(objTypes) ? objTypes.length : 0,
+          totalStorage: Array.isArray(storageLocs) ? storageLocs.length : 0,
+          totalDisposals: Array.isArray(disposals) ? disposals.length : 0,
         });
 
-        setRecentEquipments(eqList.slice(0, 5));
+        setRecentEquipments(Array.isArray(eqList) ? eqList.slice(0, 5) : []);
       } catch (err) {
         console.error("Error loading admin metrics:", err);
       } finally {

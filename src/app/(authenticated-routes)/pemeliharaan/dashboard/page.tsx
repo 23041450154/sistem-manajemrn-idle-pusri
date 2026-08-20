@@ -36,7 +36,7 @@ interface Equipment {
 	id: number;
 	name: string;
 	equipment_code: string;
-	status?: { id: number; name: string };
+	status?: { id: number; name: string } | string;
 	status_id?: number;
 	condition?: { id: number; name: string };
 	plant?: { id: number; name: string } | string;
@@ -64,7 +64,12 @@ function str(val: unknown): string {
 }
 
 function statusName(eq: Equipment): string {
+	if (typeof eq.status === "string") return eq.status.toUpperCase();
 	return (eq.status?.name || "").toUpperCase();
+}
+
+function statusId(eq: Equipment): number | undefined {
+	return eq.status_id ?? (typeof eq.status === "object" ? eq.status?.id : undefined);
 }
 
 function relativeTime(dateStr?: string): string {
@@ -110,17 +115,19 @@ export default function PemeliharaanDashboardPage() {
 	const stats = useMemo(() => {
 		const maintenance = equipments.filter(
 			(e) =>
-				e.status_id === 6 ||
-				e.status?.id === 6 ||
-				statusName(e) === "MAINTENANCE" ||
-				statusName(e) === "DALAM_PERBAIKAN",
+				statusId(e) === 3 ||
+				(statusId(e) !== 6 &&
+					(statusName(e) === "REPAIR" ||
+						statusName(e) === "MAINTENANCE" ||
+						statusName(e) === "DALAM_PERBAIKAN")),
 		);
 
 		const readyToReuse = equipments.filter(
 			(e) =>
 				statusName(e) === "READY_TO_REUSE" ||
-				e.status_id === 5 ||
-				e.status?.id === 5,
+				statusName(e) === "READY_TO_USE" ||
+				statusName(e) === "READY TO USE" ||
+				statusId(e) === 6,
 		);
 
 		const repair = equipments.filter(

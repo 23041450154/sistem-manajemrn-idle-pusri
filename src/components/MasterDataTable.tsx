@@ -184,7 +184,7 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 				)}
 			</div>
 
-			<div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[420px]">
+			<div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
 				{isLoading ? (
 					<div className="flex flex-col items-center justify-center h-64">
 						<Loader2 className="w-8 h-8 text-[#0A356A] animate-spin mb-3" />

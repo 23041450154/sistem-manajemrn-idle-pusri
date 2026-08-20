@@ -40,16 +40,6 @@ export default function InspeksiDashboard() {
     return matchesSearch && matchesStatus;
   });
 
-  const fallbackData: Inspection[] = [
-    { id: 1, equipment: { equipment_code: "C-102", name: "Centrifugal Pump C-102" }, inspection_date: "2023-10-24T00:00:00Z", require_action: { name: "KHUSUS" }, inspector: "Budi Santoso", status: "Terlambat", notes: "" },
-    { id: 2, equipment: { equipment_code: "HE-205", name: "Heat Exchanger HE-205" }, inspection_date: "2023-11-15T00:00:00Z", require_action: { name: "RUTIN" }, inspector: "Anita Wijaya", status: "Mendatang", notes: "" },
-    { id: 3, equipment: { equipment_code: "V-409", name: "Pressure Vessel V-409" }, inspection_date: "2023-11-02T00:00:00Z", require_action: { name: "RUTIN" }, inspector: "Dedi Kurniawan", status: "Selesai", notes: "" },
-    { id: 4, equipment: { equipment_code: "T-552", name: "Steam Turbine T-552" }, inspection_date: "2023-11-18T00:00:00Z", require_action: { name: "KHUSUS" }, inspector: "Budi Santoso", status: "Mendatang", notes: "" },
-    { id: 5, equipment: { equipment_code: "K-901", name: "Compressor K-901" }, inspection_date: "2023-10-29T00:00:00Z", require_action: { name: "RUTIN" }, inspector: "Hadi Siswoyo", status: "Selesai", notes: "" },
-    { id: 6, equipment: { equipment_code: "P-101", name: "Feed Pump P-101" }, inspection_date: "2023-11-20T00:00:00Z", require_action: { name: "RUTIN" }, inspector: "Rudi Hartono", status: "Mendatang", notes: "" },
-    { id: 7, equipment: { equipment_code: "E-302", name: "Cooler E-302" }, inspection_date: "2023-10-15T00:00:00Z", require_action: { name: "RUTIN" }, inspector: "Siti Aminah", status: "Selesai", notes: "" },
-  ];
-
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -58,7 +48,7 @@ export default function InspeksiDashboard() {
           const json = await res.json();
           if (json.data && json.data.length > 0) {
             const mapped = json.data.map((item: any) => {
-              let inspectorStr = "Siti Rahayu (100003)";
+              let inspectorStr = "-";
               if (typeof item.inspector === 'string' && item.inspector.trim() !== '') {
                 inspectorStr = item.inspector;
               } else if (item.inspector && typeof item.inspector === 'object' && item.inspector.name) {
@@ -79,10 +69,10 @@ export default function InspeksiDashboard() {
             return;
           }
         }
-        setData(fallbackData);
+        setData([]);
         setLoading(false);
       } catch (err) {
-        setData(fallbackData);
+        setData([]);
         setLoading(false);
       }
     };

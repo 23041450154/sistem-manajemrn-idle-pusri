@@ -4,8 +4,8 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
-import { getEquipments, getObjectTypes, getAttachmentsByEquipmentId } from "@/action/api";
+import { getEquipments, getObjectTypes, getAttachmentsByEquipmentId, createReuseRequest } from "@/action/api";
+import RequestModalButton from "../katalog/[id]/request-modal-button";
 import {
 	Search,
 	RefreshCw,
@@ -37,8 +37,9 @@ interface EquipmentItem {
 	storage_location: string;
 	serial_number: string;
 	vendor: string;
-	year_of_purchase: number;
-	book_value: number;
+	year_of_purchase?: number;
+	book_value?: number;
+	estimated_reuse_value?: number;
 	specifications: string;
 	capacity: string;
 	notes?: string;
@@ -61,6 +62,20 @@ export default function DaftarAsetPage() {
 	const [isDetailOpen, setIsDetailOpen] = useState(false);
 	const [attachments, setAttachments] = useState<any[]>([]);
 	const [isLoadingAttachments, setIsLoadingAttachments] = useState(false);
+	const [isRequestMode, setIsRequestMode] = useState(false);
+	const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
+	const [requestError, setRequestError] = useState<string | null>(null);
+	const [requestForm, setRequestForm] = useState({
+		installation_location: "",
+		target_plant: "",
+		start_date: "",
+		end_date: "",
+		justification: "",
+		estimated_cost_avoidance: "",
+		contact_person: "",
+		contact_npp: "",
+		contact_phone: "",
+	});
 
 	const loadData = async () => {
 		setIsLoading(true);
@@ -125,11 +140,12 @@ export default function DaftarAsetPage() {
 						status_name: normalizedStatus,
 						condition_name: conditionStr.replace(/_/g, " "),
 						storage_location: String(storageLoc),
-						serial_number: String(item.serial_number || "SN-2026-X89"),
-						vendor: String(item.vendor || item.manufacturer || "PT Utama Engineering"),
-						year_of_purchase: Number(item.year_of_purchase) || 2020,
-						book_value: Number(item.book_value) || 120000000,
-						specifications: String(item.specifications || item.specification || item.description || "Spesifikasi standar operasional pabrik"),
+						serial_number: String(item.serial_number || "-"),
+						vendor: String(item.vendor || item.manufacturer || "-"),
+						year_of_purchase: item.year_of_purchase ? Number(item.year_of_purchase) : undefined,
+						book_value: item.book_value != null ? Number(item.book_value) : undefined,
+						estimated_reuse_value: item.estimated_reuse_value != null ? Number(item.estimated_reuse_value) : undefined,
+						specifications: String(item.specifications || item.specification || item.description || "-"),
 						capacity: String(item.capacity || "-"),
 						notes: item.notes || "-",
 						created_at: item.created_at || "-",
@@ -228,6 +244,8 @@ export default function DaftarAsetPage() {
 	const openDetailModal = async (item: EquipmentItem) => {
 		setSelectedAsset(item);
 		setIsDetailOpen(true);
+		setIsRequestMode(false);
+		setRequestError(null);
 		setIsLoadingAttachments(true);
 		try {
 			const res = await getAttachmentsByEquipmentId(item.id).catch(() => []);
@@ -236,6 +254,61 @@ export default function DaftarAsetPage() {
 			setAttachments([]);
 		} finally {
 			setIsLoadingAttachments(false);
+		}
+	};
+
+	const openRequestModal = async (item: EquipmentItem) => {
+		await openDetailModal(item);
+		setIsRequestMode(true);
+		setRequestForm({
+			installation_location: "",
+			target_plant: item.plant === "-" ? "" : item.plant,
+			start_date: new Date().toISOString().split("T")[0],
+			end_date: "",
+			justification: "",
+			estimated_cost_avoidance: item.estimated_reuse_value ? String(item.estimated_reuse_value) : "",
+			contact_person: "",
+			contact_npp: "",
+			contact_phone: "",
+		});
+	};
+
+	const handleRequestSubmit = async (event: React.FormEvent) => {
+		event.preventDefault();
+		if (!selectedAsset || isSubmittingRequest) return;
+		if (!requestForm.installation_location.trim() || !requestForm.start_date || !requestForm.justification.trim()) {
+			setRequestError("Lokasi penggunaan, tanggal mulai, dan alasan kebutuhan wajib diisi.");
+			return;
+		}
+
+		setIsSubmittingRequest(true);
+		setRequestError(null);
+		try {
+			const result = await createReuseRequest({
+				equipment_id: selectedAsset.id,
+				request_number: `REQ-REUSE-${Date.now().toString().slice(-6)}`,
+				target_plant: requestForm.target_plant,
+				installation_location: requestForm.installation_location,
+				requesting_unit: requestForm.installation_location,
+				start_date: requestForm.start_date,
+				end_date: requestForm.end_date || undefined,
+				justification: requestForm.justification,
+				estimated_cost_avoidance: Number(requestForm.estimated_cost_avoidance) || 0,
+				contact_person: requestForm.contact_person,
+				contact_npp: requestForm.contact_npp,
+				contact_phone: requestForm.contact_phone,
+			});
+			if (!result?.success) {
+				setRequestError(result?.message || "Gagal menyimpan permintaan.");
+				return;
+			}
+			setIsDetailOpen(false);
+			setIsRequestMode(false);
+			await loadData();
+		} catch (error: any) {
+			setRequestError(error?.message || "Terjadi kesalahan saat menyimpan permintaan.");
+		} finally {
+			setIsSubmittingRequest(false);
 		}
 	};
 
@@ -543,13 +616,7 @@ export default function DaftarAsetPage() {
 													<Eye className="w-4 h-4" />
 												</button>
 
-												<Link
-													href={`/unit-kerja/permintaan?equipment_id=${asset.id}`}
-													className="flex items-center gap-1 px-2.5 py-1 bg-[#0A356A] text-white text-[12px] font-semibold rounded-lg hover:bg-[#062854] transition-colors shadow-sm"
-												>
-													<Send className="w-3 h-3" />
-													<span>Permintaan</span>
-												</Link>
+								<RequestModalButton eq={{ id: asset.id, code: asset.equipment_code, name: asset.name, plant: asset.plant, objectType: asset.object_type_name, estimatedReuseValue: asset.estimated_reuse_value }} compact />
 											</div>
 										</td>
 									</tr>
@@ -620,6 +687,31 @@ export default function DaftarAsetPage() {
 						</div>
 
 						<div className="p-6 max-h-[75vh] overflow-y-auto space-y-5">
+							{isRequestMode && (
+								<form onSubmit={handleRequestSubmit} className="bg-blue-50/60 border border-blue-200 rounded-lg p-4 space-y-3">
+									<h3 className="font-bold text-[#0A356A] text-sm">Form Permintaan Pemakaian</h3>
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 bg-white border border-blue-100 rounded p-3">
+										<div><span className="text-[11px] text-gray-500 block">Peralatan</span><span className="font-bold text-gray-900">{selectedAsset.name}</span></div>
+										<div><span className="text-[11px] text-gray-500 block">Kategori</span><span className="font-semibold text-gray-800">{selectedAsset.object_type_name}</span></div>
+									</div>
+									{requestError && <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded p-2">{requestError}</p>}
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+										<label className="text-xs font-semibold text-gray-700">Plant Tujuan *<input required value={requestForm.target_plant} onChange={(e) => setRequestForm((p) => ({ ...p, target_plant: e.target.value }))} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 font-normal outline-none focus:border-[#0A356A]" /></label>
+										<label className="text-xs font-semibold text-gray-700">Lokasi Pemasangan *<input required value={requestForm.installation_location} onChange={(e) => setRequestForm((p) => ({ ...p, installation_location: e.target.value }))} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 font-normal outline-none focus:border-[#0A356A]" /></label>
+										<label className="text-xs font-semibold text-gray-700">Tanggal Mulai Pemakaian *<input required type="date" value={requestForm.start_date} onChange={(e) => setRequestForm((p) => ({ ...p, start_date: e.target.value }))} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 font-normal outline-none focus:border-[#0A356A]" /></label>
+										<label className="text-xs font-semibold text-gray-700">Estimasi Cost Avoidance (Rp)<input type="number" min="0" value={requestForm.estimated_cost_avoidance} onChange={(e) => setRequestForm((p) => ({ ...p, estimated_cost_avoidance: e.target.value }))} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 font-normal outline-none focus:border-[#0A356A]" /></label>
+									</div>
+									<label className="text-xs font-semibold text-gray-700 block">Alasan Kebutuhan &amp; Justifikasi *<textarea required value={requestForm.justification} onChange={(e) => setRequestForm((p) => ({ ...p, justification: e.target.value }))} rows={3} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 font-normal outline-none focus:border-[#0A356A]" /></label>
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+										<label className="text-xs font-semibold text-gray-700">Nama Penanggung Jawab<input value={requestForm.contact_person} onChange={(e) => setRequestForm((p) => ({ ...p, contact_person: e.target.value }))} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 font-normal outline-none focus:border-[#0A356A]" /></label>
+										<label className="text-xs font-semibold text-gray-700">NPP<input value={requestForm.contact_npp} onChange={(e) => setRequestForm((p) => ({ ...p, contact_npp: e.target.value }))} className="mt-1 w-full rounded border border-gray-300 px-2.5 py-2 font-normal outline-none focus:border-[#0A356A]" /></label>
+									</div>
+									<div className="flex justify-end gap-2">
+										<button type="button" onClick={() => setIsRequestMode(false)} className="px-3 py-2 text-xs font-semibold rounded border border-gray-300 bg-white">Kembali ke detail</button>
+										<button type="submit" disabled={isSubmittingRequest} className="px-3 py-2 text-xs font-semibold rounded bg-[#0A356A] text-white disabled:opacity-50">{isSubmittingRequest ? "Menyimpan..." : "Kirim Permintaan"}</button>
+									</div>
+								</form>
+							)}
 							{/* Core Info Box */}
 							<div className="bg-gray-50 border border-gray-200 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-[13px]">
 								<div>
@@ -712,13 +804,7 @@ export default function DaftarAsetPage() {
 								Tutup
 							</button>
 
-							<Link
-								href={`/unit-kerja/permintaan?equipment_id=${selectedAsset.id}`}
-								className="flex items-center gap-1.5 px-4 py-2 bg-[#0A356A] text-white text-xs font-bold rounded-lg hover:bg-[#062854] transition-colors shadow-sm"
-							>
-								<Send className="w-3.5 h-3.5" />
-								<span>Ajukan Permintaan Aset Ini</span>
-							</Link>
+							<RequestModalButton eq={{ id: selectedAsset.id, code: selectedAsset.equipment_code, name: selectedAsset.name, plant: selectedAsset.plant, objectType: selectedAsset.object_type_name, estimatedReuseValue: selectedAsset.estimated_reuse_value }} />
 						</div>
 					</div>
 				</div>

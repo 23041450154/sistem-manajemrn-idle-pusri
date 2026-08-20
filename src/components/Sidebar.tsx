@@ -39,6 +39,9 @@ export function Sidebar({ role }: { role?: string }) {
 	const [masterDataOpen, setMasterDataOpen] = useState(
 		pathname.startsWith("/admin/master"),
 	);
+	const [roleDataOpen, setRoleDataOpen] = useState(
+		pathname.startsWith("/admin/manage"),
+	);
 	const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({});
 
 	useEffect(() => {
@@ -312,8 +315,8 @@ export function Sidebar({ role }: { role?: string }) {
 								);
 							})}
 
-							{userRole === "ADMIN" && (
-								<li>
+			{userRole === "ADMIN" && (
+				<li>
 									<button
 										onClick={() => setMasterDataOpen(!masterDataOpen)}
 										className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
@@ -334,7 +337,7 @@ export function Sidebar({ role }: { role?: string }) {
 									</button>
 									{masterDataOpen && (
 										<ul className="mt-1 ml-4 space-y-1">
-											{MASTER_ENTITIES.map((entity) => {
+											{MASTER_ENTITIES.filter((entity) => !entity.hidden).map((entity) => {
 												const childActive =
 													pathname === `/admin/master/${entity.slug}`;
 												return (
@@ -354,8 +357,51 @@ export function Sidebar({ role }: { role?: string }) {
 											})}
 										</ul>
 									)}
-								</li>
-							)}
+				</li>
+			)}
+
+			{userRole === "ADMIN" && (
+				<li>
+					<button
+						onClick={() => setRoleDataOpen(!roleDataOpen)}
+						className={`w-full flex items-center justify-between gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors ${
+							pathname.startsWith("/admin/manage")
+								? "bg-blue-500/20 text-white border-l-4 border-white"
+								: "text-blue-100 hover:bg-[#10488f] hover:text-white border-l-4 border-transparent"
+						}`}
+					>
+						<span className="flex items-center gap-3">
+							<Settings className="w-4 h-4" />
+							Kelola Status
+						</span>
+						{roleDataOpen ? <ChevronDown className="w-4 h-4" /> : <ChevronRight className="w-4 h-4" />}
+					</button>
+					{roleDataOpen && (
+						<ul className="mt-1 ml-4 space-y-1">
+							<li>
+								<p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-blue-300">Inspeksi</p>
+								{[
+									["Validasi Kelayakan", "validasi"],
+									["Validasi Perbaikan", "revalidasi"],
+									["Inspeksi Berkala", "berkala"],
+								].map(([label, slug]) => (
+									<Link key={slug} href={`/admin/manage/inspeksi/${slug}`} className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${pathname === `/admin/manage/inspeksi/${slug}` ? "bg-blue-500/20 text-white" : "text-blue-200 hover:bg-[#10488f] hover:text-white"}`}>
+										{label}
+									</Link>
+								))}
+							</li>
+							<li>
+								<p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-blue-300">Pemeliharaan</p>
+								<Link href="/admin/manage/pemeliharaan/perbaikan" className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${pathname === "/admin/manage/pemeliharaan/perbaikan" ? "bg-blue-500/20 text-white" : "text-blue-200 hover:bg-[#10488f] hover:text-white"}`}>Perbaikan Alat</Link>
+							</li>
+							<li>
+								<p className="px-3 pt-2 pb-1 text-[10px] font-bold uppercase tracking-wider text-blue-300">Rendal</p>
+								<Link href="/admin/manage/rendal/persetujuan" className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-medium transition-colors ${pathname === "/admin/manage/rendal/persetujuan" ? "bg-blue-500/20 text-white" : "text-blue-200 hover:bg-[#10488f] hover:text-white"}`}>Persetujuan Perbaikan</Link>
+							</li>
+						</ul>
+					)}
+				</li>
+			)}
 						</ul>
 					</div>
 				</div>

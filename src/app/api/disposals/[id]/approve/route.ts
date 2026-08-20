@@ -35,24 +35,6 @@ export async function PATCH(
 
     const errorData = await backendRes.json().catch(() => null);
 
-    // Fallback simulation if backend endpoint is unavailable (404 / 500 / offline)
-    if (backendRes.status === 404 || backendRes.status === 502 || backendRes.status === 503 || backendRes.status === 500) {
-      const isApproved = status === "DISPOSED" || action === "APPROVE" || action === "DISPOSED";
-      if (isApproved) {
-        return NextResponse.json({
-          success: true,
-          message: "Permintaan scrap berhasil disetujui, status aset berubah menjadi SCRAP.",
-          data: { id, status: "DISPOSED" }
-        }, { status: 200 });
-      } else {
-        return NextResponse.json({
-          success: true,
-          message: "Pengajuan disposal berhasil ditolak.",
-          data: { id, status: "REJECTED", rejection_reason: rejection_reason || notes }
-        }, { status: 200 });
-      }
-    }
-
     return NextResponse.json({
       success: false,
       message: errorData?.error || errorData?.message || `Gagal memproses persetujuan disposal (HTTP ${backendRes.status})`,
@@ -60,11 +42,9 @@ export async function PATCH(
 
   } catch (error: any) {
     console.error("API Route /api/disposals/[id]/approve error:", error);
-    // Offline simulation fallback
     return NextResponse.json({
-      success: true,
-      message: "Pengajuan disposal berhasil diproses.",
-      data: { id }
-    }, { status: 200 });
+      success: false,
+      message: "Gagal terhubung ke backend saat memproses persetujuan disposal.",
+    }, { status: 502 });
   }
 }

@@ -23,8 +23,11 @@ import {
 	getObjectTypes,
 	getPlants,
 	getStorageLocations,
+	getFunctionalLocations,
 } from "@/action/api";
 import { useRouter, useSearchParams } from "next/navigation";
+
+type FunctionalLocationOption = { id: string; label: string };
 
 export default function RegisterEquipmentPage() {
 	const router = useRouter();
@@ -54,6 +57,7 @@ export default function RegisterEquipmentPage() {
 	const [storageLocations, setStorageLocations] = useState<
 		{ id: number; name: string }[]
 	>([]);
+	const [functionalLocations, setFunctionalLocations] = useState<FunctionalLocationOption[]>([]);
 
 	// UX Improvement: Semua nilai dropdown & radio di-set kosong ("") di awal
 	const [formData, setFormData] = useState({
@@ -70,15 +74,33 @@ export default function RegisterEquipmentPage() {
 		notes: "",
 	});
 
+	const getFuncLocValue = (item: any): string => {
+		const value = item?.func_loc ?? item?.funcLoc ?? item?.functional_location ?? item?.functionalLocation ?? item?.funcloc;
+		if (typeof value === "string" || typeof value === "number") return String(value);
+		if (value && typeof value === "object") return String(value.code ?? value.name ?? value.id ?? "");
+		return "";
+	};
+
 	useEffect(() => {
 		async function loadData() {
 			const [objs, plantsList, equipments] = await Promise.all([
 				getObjectTypes(),
 				getPlants(),
-				editId ? getEquipments() : Promise.resolve([]),
+				getEquipments(),
 			]);
 			setObjectTypes(objs);
 			setPlants(plantsList);
+			const functionalLocationData = await getFunctionalLocations().catch(() => []);
+			const locations: FunctionalLocationOption[] = (functionalLocationData || [])
+				.map((item: any) => {
+					const id = item?.id ?? item?.ID;
+					const label = item?.code ?? item?.name ?? item?.description ?? id;
+					return id != null && label ? { id: String(id), label: String(label) } : null;
+				})
+				.filter((item: FunctionalLocationOption | null): item is FunctionalLocationOption => item !== null)
+				.filter((item: FunctionalLocationOption, index: number, list: FunctionalLocationOption[]) => list.findIndex((candidate: FunctionalLocationOption) => candidate.id === item.id) === index)
+				.sort((a: FunctionalLocationOption, b: FunctionalLocationOption) => a.label.localeCompare(b.label));
+			setFunctionalLocations(locations);
 
 			// ponytail: backend equipment shape belum punya DTO frontend bersama.
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,10 +110,7 @@ export default function RegisterEquipmentPage() {
 				setFormData({
 					equipmentCode: found.equipment_code || "",
 					name: found.name || "",
-					funcLoc:
-						typeof found.func_loc === "string"
-							? found.func_loc
-							: found.func_loc?.name || found.funcloc?.name || "",
+					funcLoc: String(found.func_loc_id || locations.find((location) => location.label === getFuncLocValue(found))?.id || getFuncLocValue(found)),
 					plantId,
 					objectTypeId: String(
 						found.object_type_id ||
@@ -242,9 +261,16 @@ export default function RegisterEquipmentPage() {
 			!formData.name ||
 			!formData.objectTypeId ||
 			!formData.plantId ||
-			!formData.idleReason
+			!formData.idleReason ||
+			!formData.funcLoc
 		) {
 			setShowValidationErrors(true);
+			if (!formData.funcLoc) {
+				setNotification({
+					type: "error",
+					message: "Functional location belum tersedia dari API. Pilih FUNCLOC yang valid terlebih dahulu.",
+				});
+			}
 			return;
 		}
 
@@ -256,6 +282,8 @@ export default function RegisterEquipmentPage() {
 				equipment_code: formData.equipmentCode,
 				name: formData.name,
 				func_loc: formData.funcLoc,
+				func_loc_id: Number(formData.funcLoc) || formData.funcLoc,
+				id_func_loc: Number(formData.funcLoc) || formData.funcLoc,
 				id_plant: Number(formData.plantId),
 				id_object_type: Number(formData.objectTypeId),
 				object_type_id: Number(formData.objectTypeId),
@@ -302,6 +330,8 @@ export default function RegisterEquipmentPage() {
 		fd.append("id_plant", formData.plantId);
 		fd.append("id_storage_location", formData.storageLocationId);
 		fd.append("func_loc", formData.funcLoc);
+		fd.append("func_loc_id", formData.funcLoc);
+		fd.append("id_func_loc", formData.funcLoc);
 		fd.append("vendor", formData.vendor);
 		fd.append(
 			"year",
@@ -591,15 +621,19 @@ export default function RegisterEquipmentPage() {
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									AREA (FUNCLOC)
 								</label>
-								<input
-									type="text"
+								<select
 									onBlur={handleBlur}
 									name="funcLoc"
 									value={formData.funcLoc}
 									onChange={handleChange}
-									placeholder="Masukkan functional location..."
-									className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded outline-none transition-all focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
-								/>
+									className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded outline-none transition-all focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3] bg-white"
+								>
+									<option value="">Pilih functional location...</option>
+					{functionalLocations.map((location) => (
+						<option key={location.id} value={location.id}>{location.label}</option>
+									))}
+								</select>
+								<p className="text-[10px] text-gray-400 mt-1">Pilihan mengikuti functional location yang sudah terdaftar di database.</p>
 							</div>
 
 							{/* Garis Pemisah Visual */}

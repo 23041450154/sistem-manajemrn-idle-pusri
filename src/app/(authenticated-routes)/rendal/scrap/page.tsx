@@ -115,21 +115,6 @@ export default function RendalScrapPage() {
 				getDisposalMethods(),
 			]);
 
-			// Build a set of equipment IDs that have a disposal-recommending inspection
-			const inspArr: any[] = insData || [];
-			const disposalInspectedIds = new Set<string>();
-			inspArr.forEach((ins: any) => {
-				const isDisposal =
-					ins.is_utilizable === false ||
-					String(ins.require_action_id) === "4" ||
-					ins.require_action?.name?.toLowerCase().includes("disposal") ||
-					ins.condition?.name?.toUpperCase() === "RUSAK_BERAT" ||
-					ins.condition?.name?.toUpperCase() === "RUSAK BERAT";
-				if (isDisposal && ins.equipment_id) {
-					disposalInspectedIds.add(String(ins.equipment_id));
-				}
-			});
-
 			const mappedEq = (eqData || []).map((item: any) => {
 				const rawStatus =
 					(typeof item.status === "string" ? item.status : item.status?.name) ||
@@ -137,17 +122,12 @@ export default function RendalScrapPage() {
 				const objectTypeName =
 					item.object_type?.name || item.objectType?.name || "Belum Ditentukan";
 
-				// Normalize status: replace spaces with underscores, uppercase
-				let normalizedStatus = rawStatus.toUpperCase().replace(/\s+/g, "_");
-
-				// If equipment has a disposal-recommending inspection, override status
-				const eqId = item.id?.toString() || "-";
-				if (disposalInspectedIds.has(eqId) && !["DISPOSAL_RECOMMENDED", "SCRAP", "RUSAK_BERAT"].includes(normalizedStatus)) {
-					normalizedStatus = "DISPOSAL_RECOMMENDED";
-				}
+				// Status harus mengikuti status equipment dari database.
+				// Backend hanya menerima pengajuan bila statusnya DISPOSAL_RECOMMENDED.
+				const normalizedStatus = rawStatus.toUpperCase().replace(/\s+/g, "_");
 
 				return {
-					id: eqId,
+					id: item.id?.toString() || "-",
 					kodeAlat: item.equipment_code || "-",
 					namaAlat: item.name || "-",
 					plant: item.plant?.name || "-",
@@ -197,20 +177,9 @@ export default function RendalScrapPage() {
 	const pendingAssets = useMemo(() => {
 		const submittedIds = new Set(disposals.map((d) => String(d.equipment_id)));
 		const query = search.toLowerCase().trim();
-		const disposalStatuses = new Set([
-			"DISPOSAL_RECOMMENDED",
-			"DISPOSAL RECOMMENDED",
-			"SCRAP",
-			"RUSAK_BERAT",
-			"RUSAK BERAT",
-			"CONDEMNED",
-			"DISPOSED",
-		]);
 		return equipments.filter((eq) => {
-			const normalized = eq.statusAset.replace(/\s+/g, "_");
-			const isRecommended =
-				disposalStatuses.has(eq.statusAset) ||
-				disposalStatuses.has(normalized);
+			const normalized = eq.statusAset.replace(/\s+/g, "_").toUpperCase();
+			const isRecommended = normalized === "DISPOSAL_RECOMMENDED";
 			const isNotSubmitted = !submittedIds.has(eq.id);
 			const matchSearch =
 				!query ||

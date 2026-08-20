@@ -30,6 +30,7 @@ interface DisposalItem {
 export default function ManajerScrapPage() {
   const [activeTab, setActiveTab] = useState<"inbox" | "history">("inbox");
   const [disposals, setDisposals] = useState<DisposalItem[]>([]);
+  const [processedDisposalIds, setProcessedDisposalIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
 
   // Filter states
@@ -83,11 +84,24 @@ export default function ManajerScrapPage() {
   };
 
   // Pending inbox items
-  const pendingDisposals = disposals.filter((item) => item.status === "PENDING");
+  const pendingDisposals = disposals.filter((item) =>
+    !processedDisposalIds.has(String(item.id)) &&
+    ["PENDING", "IN_REVIEW", "IN REVIEW"].includes(String(item.status || "").toUpperCase())
+  );
   // Processed history items
-  const historyDisposals = disposals.filter((item) => item.status !== "PENDING");
+  const historyDisposals = disposals.filter((item) =>
+    processedDisposalIds.has(String(item.id)) ||
+    String(item.status || "").toUpperCase() !== "PENDING"
+  );
 
-  const currentList = activeTab === "inbox" ? pendingDisposals : historyDisposals;
+  const currentList = (activeTab === "inbox" ? pendingDisposals : historyDisposals)
+    .slice()
+    .sort((a, b) => {
+      const aTime = new Date(a.created_at || 0).getTime();
+      const bTime = new Date(b.created_at || 0).getTime();
+      if (bTime !== aTime) return bTime - aTime;
+      return String(b.id).localeCompare(String(a.id), undefined, { numeric: true });
+    });
 
   const filteredDisposals = currentList.filter((item) => {
     const matchSearch =
@@ -127,9 +141,17 @@ export default function ManajerScrapPage() {
     try {
       // Delay for smooth loading state animation
       await new Promise((resolve) => setTimeout(resolve, 800));
-      const res = await approveDisposal(selectedDisposal.id, { status: "DISPOSED" });
+      const res = await approveDisposal(selectedDisposal.id, { status: "DISPOSED", equipment_id: selectedDisposal.equipment_id, approval_id: (selectedDisposal as any).approval_id });
 
       if (res.success) {
+        setProcessedDisposalIds((current) => {
+          const next = new Set(current);
+          next.add(String(selectedDisposal.id));
+          return next;
+        });
+        setDisposals((current) => current.map((item) =>
+          item.id === selectedDisposal.id ? { ...item, status: "DISPOSED" } : item,
+        ));
         showToast(
           "success",
           res.message || "Permintaan scrap berhasil disetujui!"
@@ -138,8 +160,27 @@ export default function ManajerScrapPage() {
         setModalError(null);
         handleCloseDetail();
         await fetchDisposalsData();
+        setDisposals((current) => current.map((item) =>
+          item.id === selectedDisposal.id ? { ...item, status: "DISPOSED" } : item,
+        ));
+        setActiveTab("history");
       } else {
-        setModalError(res.message || "Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.");
+        const alreadyApproved = String(res.message || "").toLowerCase().includes("sudah disetujui");
+        if (alreadyApproved) {
+          setProcessedDisposalIds((current) => {
+            const next = new Set(current);
+            next.add(String(selectedDisposal.id));
+            return next;
+          });
+          setDisposals((current) => current.map((item) =>
+            item.id === selectedDisposal.id ? { ...item, status: "DISPOSED" } : item,
+          ));
+          setIsApproveConfirmOpen(false);
+          handleCloseDetail();
+          setActiveTab("history");
+        } else {
+          setModalError(res.message || "Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.");
+        }
       }
     } catch (err: unknown) {
       console.error("Approve scrap error:", err);
@@ -161,15 +202,29 @@ export default function ManajerScrapPage() {
       const res = await approveDisposal(selectedDisposal.id, {
         status: "REJECTED",
         rejection_reason: rejectionReason.trim(),
+        equipment_id: selectedDisposal.equipment_id,
+        approval_id: (selectedDisposal as any).approval_id,
       });
 
       if (res.success) {
+        setProcessedDisposalIds((current) => {
+          const next = new Set(current);
+          next.add(String(selectedDisposal.id));
+          return next;
+        });
+        setDisposals((current) => current.map((item) =>
+          item.id === selectedDisposal.id ? { ...item, status: "REJECTED" } : item,
+        ));
         showToast("reject", `Pengajuan ${selectedDisposal.disposal_number} untuk ${selectedDisposal.equipment_code} berhasil ditolak.`);
         setIsRejectModalOpen(false);
         setRejectionReason("");
         setModalError(null);
         handleCloseDetail();
         await fetchDisposalsData();
+        setDisposals((current) => current.map((item) =>
+          item.id === selectedDisposal.id ? { ...item, status: "REJECTED" } : item,
+        ));
+        setActiveTab("history");
       } else {
         setModalError(res.message || "Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.");
       }

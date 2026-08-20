@@ -54,14 +54,41 @@ export async function getDisposals() {
 	const headers = { Authorization: `Bearer ${token}` };
 
 	try {
-		const [dispRes, eqRes, attRes] = await Promise.all([
+		const [dispRes, eqRes, attRes, approvalRes, approvalAllRes] = await Promise.all([
 			fetch(`${API_URL}/api/disposal`, { headers, cache: "no-store" }).catch(() => null),
 			fetch(`${API_URL}/api/equipment`, { headers, cache: "no-store" }).catch(() => null),
 			fetch(`${API_URL}/api/attachments`, { headers, cache: "no-store" }).catch(() => null),
+			fetch(`${API_URL}/api/approvals/disposal`, { headers, cache: "no-store" }).catch(() => null),
+			fetch(`${API_URL}/api/approvals`, { headers, cache: "no-store" }).catch(() => null),
 		]);
 
 		const eqList = eqRes?.ok ? (await eqRes.json()).data || [] : [];
 		const attList = attRes?.ok ? (await attRes.json()).data || [] : [];
+		const approvalJson = approvalRes?.ok ? await approvalRes.json().catch(() => null) : null;
+		const approvalList = Array.isArray(approvalJson)
+			? approvalJson
+			: Array.isArray(approvalJson?.data)
+				? approvalJson.data
+				: Array.isArray(approvalJson?.data?.data)
+					? approvalJson.data.data
+					: Array.isArray(approvalJson?.data?.items)
+						? approvalJson.data.items
+						: Array.isArray(approvalJson?.items)
+							? approvalJson.items
+							: [];
+		const approvalAllJson = approvalAllRes?.ok ? await approvalAllRes.json().catch(() => null) : null;
+		const approvalAllList = Array.isArray(approvalAllJson)
+			? approvalAllJson
+			: Array.isArray(approvalAllJson?.data)
+				? approvalAllJson.data
+				: Array.isArray(approvalAllJson?.data?.data)
+					? approvalAllJson.data.data
+					: Array.isArray(approvalAllJson?.data?.items)
+						? approvalAllJson.data.items
+						: Array.isArray(approvalAllJson?.items)
+							? approvalAllJson.items
+							: [];
+		const allApprovalRecords = [...approvalList, ...approvalAllList];
 
 		const eqMap = new Map();
 		if (Array.isArray(eqList)) {
@@ -79,8 +106,19 @@ export async function getDisposals() {
 
 		if (dispRes?.ok) {
 			const json = await dispRes.json();
-			const dispData = json?.data || (Array.isArray(json) ? json : []);
-			if (Array.isArray(dispData) && dispData.length > 0) {
+			const dispData = Array.isArray(json)
+				? json
+				: Array.isArray(json?.data)
+					? json.data
+					: Array.isArray(json?.data?.data)
+						? json.data.data
+						: Array.isArray(json?.items)
+							? json.items
+							: [];
+			// Jika endpoint disposal berhasil dan mengembalikan array kosong,
+			// jangan membuat record sintetis dari equipment/inspeksi. Persetujuan
+			// membutuhkan ID disposal_request yang benar-benar ada di database.
+			if (Array.isArray(dispData)) {
 				return dispData.map((item: any) => {
 					const eq = eqMap.get(Number(item.equipment_id)) || item.equipment || {};
 					const eqAtts = attMap.get(Number(item.equipment_id)) || [];
@@ -90,11 +128,30 @@ export async function getDisposals() {
 					else if (eq.plant && typeof eq.plant === "object") plantStr = eq.plant.name || eq.plant.description || "-";
 					else if (eq.plant_description) plantStr = String(eq.plant_description);
 
-					let statusStr = (item.approval_status || item.status || "PENDING").toUpperCase();
-					if (statusStr === "APPROVED") statusStr = "DISPOSED";
+					const relatedApproval = allApprovalRecords.find((approval: any) =>
+						String(approval.reference_id || approval.referenceId || approval.disposal_id || approval.disposalId || approval.reference?.id || approval.disposal?.id || approval.disposal_request?.id) === String(item.id) ||
+						(String(approval.equipment_id || approval.equipmentId) === String(item.equipment_id))
+					);
+					let statusStr = (
+						relatedApproval?.approval_status ||
+						relatedApproval?.approvalStatus ||
+						relatedApproval?.status ||
+						item.approval?.approval_status ||
+						item.approval?.status ||
+						item.approval_request?.approval_status ||
+						item.approval_request?.status ||
+						item.approval_status ||
+						item.approvalStatus ||
+						item.disposal_status ||
+						item.status ||
+						"PENDING"
+					).toUpperCase();
+					if (statusStr === "APPROVED" || statusStr === "APPROVAL_APPROVED") statusStr = "DISPOSED";
+					if (statusStr === "REVISION" || statusStr === "REVISION_REQUESTED" || statusStr === "REJECT") statusStr = "REJECTED";
 
 					return {
 						id: String(item.id),
+						approval_id: item.approval_id || item.approvalId || item.approval_request_id || item.approvalRequestId || item.approval?.id || item.approval_request?.id || relatedApproval?.id,
 						disposal_number: item.disposal_number || `DSP-2026-${String(item.id).padStart(3, "0")}`,
 						equipment_id: String(item.equipment_id),
 						equipment_code: eq.equipment_code || item.equipment?.equipment_code || "-",
@@ -118,11 +175,13 @@ export async function getDisposals() {
 				});
 			}
 		}
+		if (!dispRes?.ok) return [];
 	} catch (error) {
 		console.error("Fetch direct disposals error:", error);
+		return [];
 	}
 
-	// Fallback: Aggregate disposal data from real database records (inspections, approvals, equipment, attachments)
+	// Endpoint disposal berhasil tetapi tidak mengembalikan data yang dapat diproses.
 	try {
 		const [eqRes, insRes, appRes, attRes] = await Promise.all([
 			fetch(`${API_URL}/api/equipment`, { headers, cache: "no-store" }).catch(
@@ -180,7 +239,7 @@ export async function getDisposals() {
 			let status = "PENDING";
 			if (app) {
 				if (app.approval_status === "APPROVED") status = "DISPOSED";
-				else if (app.approval_status === "REJECTED") status = "REJECTED";
+				else if (["REJECTED", "REVISION", "REVISION_REQUESTED", "REJECT"].includes(String(app.approval_status || "").toUpperCase())) status = "REJECTED";
 			} else if (eq.status?.name === "DISPOSED" || eq.status_id === 9) {
 				status = "DISPOSED";
 			}
@@ -230,7 +289,7 @@ export async function getDisposals() {
 						const eq = eqMap.get(Number(app.equipment_id)) || {};
 						let status = "PENDING";
 						if (app.approval_status === "APPROVED") status = "DISPOSED";
-						else if (app.approval_status === "REJECTED") status = "REJECTED";
+						else if (["REJECTED", "REVISION", "REVISION_REQUESTED", "REJECT"].includes(String(app.approval_status || "").toUpperCase())) status = "REJECTED";
 
 						const eqAtts = attMap.get(Number(app.equipment_id)) || [];
 						dbDisposalItems.push({
@@ -309,71 +368,6 @@ export async function getDisposals() {
 			});
 		}
 
-		// Default mock data to complement demo items if needed
-		const mockDisposals = [
-			{
-				id: "DSP-MOCK-001",
-				disposal_number: "DSP-2026-001",
-				equipment_id: "101",
-				equipment_code: "PMP-001-P2B",
-				equipment_name: "Centrifugal Pump Heavy Duty A",
-				disposal_method: "Scrap (Besi Tua)",
-				scrap_value: 12500000,
-				book_value: 45000000,
-				original_value: 250000000,
-				plant: "Pusri IIB (P-IIB)",
-				justification:
-					"Hasil inspeksi teknik menyatakan unit mengalami korosi berat dan keretakan struktural pada casing utama (Rusak Berat). Biaya perbaikan melebihi 80% harga unit baru.",
-				status: "PENDING",
-				created_at: "2026-08-01T09:30:00Z",
-				attachments: [
-					{
-						id: "att-1",
-						file_url:
-							"https://images.unsplash.com/photo-1581092160607-ee22621dd758?auto=format&fit=crop&w=600&q=80",
-						caption: "Foto Nameplate Alat",
-					},
-					{
-						id: "att-2",
-						file_url:
-							"https://images.unsplash.com/photo-1504328345606-18bbc8c9d7d1?auto=format&fit=crop&w=600&q=80",
-						caption: "Kerusakan Fisik Casing",
-					},
-				],
-			},
-			{
-				id: "DSP-MOCK-002",
-				disposal_number: "DSP-2026-002",
-				equipment_id: "102",
-				equipment_code: "CMP-004-P3",
-				equipment_name: "Air Compressor High Pressure B",
-				disposal_method: "Lelang",
-				scrap_value: 35000000,
-				book_value: 75000000,
-				original_value: 420000000,
-				plant: "Pusri III (P-III)",
-				justification:
-					"Rotor dan komponen internal meledak dan tidak dapat diperbaiki. Diusulkan untuk dihapus dari inventaris via skema Lelang terbuka.",
-				status: "PENDING",
-				created_at: "2026-08-01T14:15:00Z",
-				attachments: [
-					{
-						id: "att-3",
-						file_url:
-							"https://images.unsplash.com/photo-1581092335397-9583fe92d232?auto=format&fit=crop&w=600&q=80",
-						caption: "Nameplate Air Compressor",
-					},
-				],
-			},
-		];
-
-		const existingCodes = new Set(dbDisposalItems.map((i) => i.equipment_code));
-		mockDisposals.forEach((m) => {
-			if (!existingCodes.has(m.equipment_code)) {
-				dbDisposalItems.push(m);
-			}
-		});
-
 		return dbDisposalItems;
 	} catch (error) {
 		console.error("Fetch aggregated disposals error:", error);
@@ -383,7 +377,7 @@ export async function getDisposals() {
 
 export async function approveDisposal(
 	id: string,
-	payload: { status: string; rejection_reason?: string },
+	payload: { status: string; rejection_reason?: string; equipment_id?: string; approval_id?: string },
 ) {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
@@ -393,67 +387,99 @@ export async function approveDisposal(
 	};
 
 	try {
-		const res = await fetch(`${API_URL}/api/disposals/${id}/approve`, {
-			method: "PATCH",
-			headers,
-			body: JSON.stringify(payload),
-		});
-
-		const json = await res.json().catch(() => null);
-
-		if (res.ok && json?.success !== false) {
-			return {
-				success: true,
-				message: json?.message || "Pengajuan disposal berhasil diproses.",
-			};
-		}
-	} catch (error) {
-		console.error("Approve direct disposal endpoint error:", error);
-	}
-
-	// Fallback: If direct /api/disposals/:id/approve endpoint returns 404, check matching approval in /api/approvals
-	try {
-		const action = payload.status === "DISPOSED" ? "APPROVE" : "REJECT";
-		const notes =
-			payload.rejection_reason ||
-			(payload.status === "DISPOSED"
-				? "Disetujui oleh Manajer Rendal"
-				: "Ditolak oleh Manajer Rendal");
-
-		const appRes = await fetch(`${API_URL}/api/approvals`, {
-			headers: { Authorization: `Bearer ${token}` },
-			cache: "no-store",
-		});
-		if (appRes.ok) {
-			const appJson = await appRes.json();
-			const approvals = appJson.data || [];
-			const matchingApp = approvals.find(
-				(a: any) =>
-					String(a.id) === String(id) ||
-					(a.request_type === "DISPOSAL" &&
-						String(a.equipment_id) === String(id)) ||
-					(a.request_type === "DISPOSAL" &&
-						String(a.reference_id) === String(id)),
-			);
-			if (matchingApp) {
-				await fetch(`${API_URL}/api/approvals/${matchingApp.id}/review`, {
-					method: "PATCH",
-					headers,
-					body: JSON.stringify({ action, notes }),
-				});
+		// Endpoint review membutuhkan approval.id, sedangkan tabel disposal
+		// menampilkan disposal_request.id. Resolusi relasi dilakukan sebelum review.
+		let approvalId = String(payload.approval_id || id);
+		const approvalEndpoints = [
+			`${API_URL}/api/approvals/disposal`,
+			`${API_URL}/api/approvals`,
+		];
+		let approvals: any[] = [];
+		for (const endpoint of approvalEndpoints) {
+			const approvalsRes = await fetch(endpoint, {
+				headers: { Authorization: `Bearer ${token}` },
+				cache: "no-store",
+			});
+			if (!approvalsRes.ok) continue;
+			const approvalsJson = await approvalsRes.json().catch(() => null);
+			const list = Array.isArray(approvalsJson)
+				? approvalsJson
+				: Array.isArray(approvalsJson?.data)
+					? approvalsJson.data
+					: Array.isArray(approvalsJson?.data?.data)
+						? approvalsJson.data.data
+						: Array.isArray(approvalsJson?.data?.items)
+							? approvalsJson.data.items
+							: Array.isArray(approvalsJson?.data?.rows)
+								? approvalsJson.data.rows
+						: Array.isArray(approvalsJson?.items)
+							? approvalsJson.items
+							: Array.isArray(approvalsJson?.results)
+								? approvalsJson.results
+							: [];
+			if (list.length > 0) {
+				approvals = list;
+				break;
 			}
 		}
-	} catch (e) {
-		console.error("Approval review fallback error:", e);
-	}
+		if (approvals.length > 0) {
+			const matchingApproval = approvals.find((approval: any) => {
+				const type = String(approval.request_type || approval.requestType || approval.type || "").toUpperCase();
+				const isDisposal = !type || type.includes("DISPOSAL");
+				const matchesReference =
+					String(approval.reference_id || approval.referenceId) === String(id) ||
+					String(approval.disposal_id || approval.disposalId) === String(id) ||
+					String(approval.reference?.id || approval.disposal?.id || approval.disposal_request?.id) === String(id);
+				const matchesEquipment = payload.equipment_id && String(approval.equipment_id || approval.equipmentId) === String(payload.equipment_id);
+				return isDisposal && (matchesReference || matchesEquipment);
+			});
+			if (matchingApproval?.id != null) approvalId = String(matchingApproval.id);
+		}
 
-	const isApproved = payload.status === "DISPOSED";
-	return {
-		success: true,
-		message: isApproved
-			? "Pengajuan scrap berhasil disetujui, status aset berubah menjadi SCRAP."
-			: "Pengajuan scrap berhasil ditolak.",
-	};
+		// Backend aktif: PATCH /api/approvals/disposal/:id/review.
+		const isApproved = payload.status === "DISPOSED" || payload.status === "APPROVED";
+		const notes = payload.rejection_reason || (isApproved
+			? "Disetujui oleh Manajer Rendal"
+			: "Ditolak oleh Manajer Rendal");
+		let res = await fetch(`${API_URL}/api/approvals/disposal/${approvalId}/review`, {
+			method: "PATCH",
+			headers,
+			body: JSON.stringify({
+				action: isApproved ? "APPROVE" : "REVISION",
+				notes,
+			}),
+		});
+
+		let json = await res.json().catch(() => null);
+		// Kompatibilitas deployment lama.
+		if (!res.ok && (res.status === 404 || res.status === 405)) {
+			res = await fetch(`${API_URL}/api/disposals/${id}/approve`, {
+				method: "PATCH",
+				headers,
+				body: JSON.stringify({
+					status: isApproved ? "DISPOSED" : "REJECTED",
+					rejection_reason: payload.rejection_reason,
+					notes,
+				}),
+			});
+			json = await res.json().catch(() => null);
+		}
+		if (!res.ok) {
+			return {
+				success: false,
+				message: json?.message || json?.error || `Gagal memperbarui disposal (HTTP ${res.status}).`,
+			};
+		}
+		return {
+			success: true,
+			message: json?.message || (isApproved
+				? "Pengajuan scrap berhasil disetujui."
+				: "Pengajuan scrap berhasil ditolak."),
+		};
+	} catch (error: any) {
+		console.error("Approve disposal error:", error);
+		return { success: false, message: error?.message || "Gagal terhubung ke server." };
+	}
 }
 
 export async function createDisposalRequest(payload: {
@@ -728,23 +754,9 @@ export async function createRevalidation(
 		return { success: true, data: json?.data };
 	} catch (error: any) {
 		console.error("Create revalidation error:", error);
-		const condNum = Number(conditionId);
-		const targetStatusId = condNum === 1 ? 5 : condNum === 4 ? 8 : 3;
-
-		await updateEquipment(String(equipmentId), {
-			condition_id: condNum,
-			status_id: targetStatusId,
-			notes: opts?.notes,
-		}).catch(() => null);
-
 		return {
-			success: true,
-			message: "Re-validasi berhasil disimpan (offline fallback)",
-			data: {
-				id: equipmentId,
-				condition_id: condNum,
-				status_id: targetStatusId,
-			},
+			success: false,
+			message: "Gagal terhubung ke backend saat menyimpan re-validasi.",
 		};
 	}
 }
@@ -963,28 +975,17 @@ export async function getObjectTypes() {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 
-	// ponytail: fallback dipertahankan supaya form tetap terbuka saat backend down.
-	// Hapus begitu /api/object-types dijamin punya seed data.
-	const fallback = [
-		{ id: 1, name: "Rotary Equipment" },
-		{ id: 2, name: "Static Equipment" },
-		{ id: 3, name: "Electrical" },
-		{ id: 4, name: "Instrument" },
-		{ id: 5, name: "Peralatan Umum" },
-		{ id: 6, name: "Valve" },
-	];
-
 	try {
 		const res = await fetch(`${API_URL}/api/object-types`, {
 			headers: { Authorization: `Bearer ${token}` },
 			cache: "no-store",
 		});
-		if (!res.ok) return fallback;
+		if (!res.ok) return [];
 		const json = await res.json();
-		return json.data?.length ? json.data : fallback;
+		return json.data || [];
 	} catch (error) {
 		console.error("Fetch object types error:", error);
-		return fallback;
+		return [];
 	}
 }
 
@@ -1048,35 +1049,17 @@ export async function getRequireActions() {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 
-	const fallbackActions = [
-		{
-			id: 1,
-			name: "Re-use Langsung",
-			description: "Dapat langsung dipasang tanpa perbaikan",
-		},
-		{
-			id: 2,
-			name: "Perlu Perbaikan / Refurbish",
-			description: "Membutuhkan pemeliharaan sebelum dikirim",
-		},
-		{
-			id: 3,
-			name: "Rekomendasi Scrap",
-			description: "Kerusakan berat tidak layak dipelihara",
-		},
-	];
-
 	try {
 		const res = await fetch(`${API_URL}/api/require-action`, {
 			headers: { Authorization: `Bearer ${token}` },
 			cache: "no-store",
 		});
-		if (!res.ok) return fallbackActions;
+		if (!res.ok) return [];
 		const json = await res.json();
-		return json.data && json.data.length > 0 ? json.data : fallbackActions;
+		return json.data || [];
 	} catch (error) {
 		console.error("Fetch require actions error:", error);
-		return fallbackActions;
+		return [];
 	}
 }
 
@@ -1084,30 +1067,22 @@ export async function getAreas() {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 
-	const fallbackAreas = [
-		{ id: 1, name: "Ammonia Area" },
-		{ id: 2, name: "Urea Area" },
-		{ id: 3, name: "Utility Area" },
-		{ id: 4, name: "Offsite Area" },
-	];
-
 	try {
 		const res = await fetch(`${API_URL}/api/areas`, {
 			headers: { Authorization: `Bearer ${token}` },
 			cache: "no-store",
 		});
 		if (!res.ok) {
-			// Fallback if endpoint doesn't exist yet
-			return fallbackAreas;
+			return [];
 		}
 		const json = await res.json();
 		if (!json.data || json.data.length === 0) {
-			return fallbackAreas;
+			return [];
 		}
 		return json.data;
 	} catch (error) {
 		console.error("Fetch areas error:", error);
-		return fallbackAreas;
+		return [];
 	}
 }
 
@@ -1942,7 +1917,15 @@ export async function getFunctionalLocations() {
 		});
 		if (!res.ok) return [];
 		const json = await res.json();
-		return json.data || [];
+		return Array.isArray(json)
+			? json
+			: Array.isArray(json?.data)
+				? json.data
+				: Array.isArray(json?.data?.data)
+					? json.data.data
+					: Array.isArray(json?.items)
+						? json.items
+						: [];
 	} catch (error) {
 		console.error("Fetch functional locations error:", error);
 		return [];
@@ -1988,10 +1971,9 @@ export async function updateReuseRequestStatus(
 		});
 
 		if (!res.ok) {
-			// Fallback mock success if endpoint not active yet
 			return {
-				success: true,
-				message: `Status pengajuan peminjaman berhasil diperbarui menjadi ${status}.`,
+				success: false,
+				message: `Gagal memperbarui status pengajuan peminjaman (HTTP ${res.status}).`,
 			};
 		}
 		const json = await res.json().catch(() => null);
@@ -2004,129 +1986,30 @@ export async function updateReuseRequestStatus(
 	} catch (error: any) {
 		console.error("Update reuse request status error:", error);
 		return {
-			success: true,
-			message: `Status pengajuan peminjaman berhasil diperbarui menjadi ${status} (simulated).`,
+			success: false,
+			message: "Gagal terhubung ke backend saat memperbarui status pengajuan peminjaman.",
 		};
 	}
 }
 
 async function getApproverToken(): Promise<string | null> {
-	try {
-		const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
-		// 1. Try Rendal Pemeliharaan (100002)
-		const resRendal = await fetch(`${baseUrl}/api/auth/login`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				npp: "100002",
-				password: "password123",
-			}),
-			cache: "no-store",
-		});
-		if (resRendal.ok) {
-			const json = await resRendal.json();
-			if (json?.data?.token) return json.data.token;
-		}
-
-		// 2. Try Manajer Rendal (100005)
-		const resManager = await fetch(`${baseUrl}/api/auth/login`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				npp: "100005",
-				password: "password123",
-			}),
-			cache: "no-store",
-		});
-		if (resManager.ok) {
-			const json = await resManager.json();
-			if (json?.data?.token) return json.data.token;
-		}
-
-		// 3. Fallback to Admin (100001)
-		const resAdmin = await fetch(`${baseUrl}/api/auth/login`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				npp: "100001",
-				password: "password123",
-			}),
-			cache: "no-store",
-		});
-		if (resAdmin.ok) {
-			const jsonAdmin = await resAdmin.json();
-			return jsonAdmin?.data?.token || null;
-		}
-	} catch (e) {
-		console.warn("Failed to get approver token:", e);
-	}
-	return null;
+	const cookieStore = await cookies();
+	return cookieStore.get("token")?.value || null;
 }
 
 async function getInspectorToken(): Promise<string | null> {
-	try {
-		const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
-		const res = await fetch(`${baseUrl}/api/auth/login`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				npp: "100003",
-				password: "password123",
-			}),
-			cache: "no-store",
-		});
-		if (res.ok) {
-			const json = await res.json();
-			return json?.data?.token || null;
-		}
-	} catch (e) {
-		console.warn("Failed to get inspector token:", e);
-	}
-	return null;
+	const cookieStore = await cookies();
+	return cookieStore.get("token")?.value || null;
 }
 
 async function getMaintenanceToken(): Promise<string | null> {
-	try {
-		const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
-		const res = await fetch(`${baseUrl}/api/auth/login`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				npp: "100004",
-				password: "password123",
-			}),
-			cache: "no-store",
-		});
-		if (res.ok) {
-			const json = await res.json();
-			return json?.data?.token || null;
-		}
-	} catch (e) {
-		console.warn("Failed to get maintenance token:", e);
-	}
-	return null;
+	const cookieStore = await cookies();
+	return cookieStore.get("token")?.value || null;
 }
 
 async function getManagerRendalToken(): Promise<string | null> {
-	try {
-		const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
-		const res = await fetch(`${baseUrl}/api/auth/login`, {
-			method: "POST",
-			headers: { "Content-Type": "application/json" },
-			body: JSON.stringify({
-				npp: "100005",
-				password: "password123",
-			}),
-			cache: "no-store",
-		});
-		if (res.ok) {
-			const json = await res.json();
-			return json?.data?.token || null;
-		}
-	} catch (e) {
-		console.warn("Failed to get manager rendal token:", e);
-	}
-	return null;
+	const cookieStore = await cookies();
+	return cookieStore.get("token")?.value || null;
 }
 
 export async function approveRevalidationEquipment(

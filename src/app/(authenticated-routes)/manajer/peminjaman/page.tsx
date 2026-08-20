@@ -40,45 +40,6 @@ interface ReuseRequest {
   }>;
 }
 
-const INITIAL_REUSE_SAMPLES: ReuseRequest[] = [
-  {
-    id: "1",
-    request_number: "REU-2026-001",
-    equipment_id: "1",
-    equipment_code: "P-101A",
-    equipment_name: "Centrifugal Pump P-101A",
-    requesting_unit: "Cooling Water System",
-    target_plant: "PUSRI-III",
-    start_date: "2026-03-01",
-    end_date: "2026-12-31",
-    justification: "Spesifikasi pompa sesuai kebutuhan proyek revamp Unit Utilitas",
-    estimated_cost_avoidance: 475000000,
-    contact_person: "Budi Santoso",
-    contact_npp: "981203",
-    contact_phone: "08123456789",
-    status: "PENDING",
-    created_at: "2026-02-15",
-  },
-  {
-    id: "2",
-    request_number: "REU-2026-002",
-    equipment_id: "3",
-    equipment_code: "M-201",
-    equipment_name: "Induction Motor 200kW M-201",
-    requesting_unit: "Compressor House",
-    target_plant: "PUSRI-IV",
-    start_date: "2026-03-15",
-    end_date: "2027-03-15",
-    justification: "Motor 200kW sesuai kebutuhan penggerak kompresor baru",
-    estimated_cost_avoidance: 400000000,
-    contact_person: "Ahmad Rizki",
-    contact_npp: "990412",
-    contact_phone: "08198765432",
-    status: "APPROVED",
-    created_at: "2026-02-10",
-  },
-];
-
 export default function ManajerPeminjamanPage() {
   const { isAdmin } = useUser();
   const [search, setSearch] = useState("");
@@ -215,16 +176,14 @@ export default function ManajerPeminjamanPage() {
             review_notes: item.review_notes || item.notes || "",
           };
         });
-      } else {
-        mapped = INITIAL_REUSE_SAMPLES;
       }
 
       setRequests(mapped);
       setFilteredRequests(mapped);
     } catch (e) {
       console.error("Error fetching reuse requests:", e);
-      setRequests(INITIAL_REUSE_SAMPLES);
-      setFilteredRequests(INITIAL_REUSE_SAMPLES);
+      setRequests([]);
+      setFilteredRequests([]);
     } finally {
       setIsLoading(false);
     }
