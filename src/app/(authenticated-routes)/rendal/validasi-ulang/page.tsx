@@ -3,8 +3,12 @@
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useEffect, useState, useMemo } from "react";
-import { getEquipments, getApprovals, approveRevalidationEquipment } from "@/action/api";
+import React, { useEffect, useState, useMemo, useCallback } from "react";
+import {
+	getEquipments,
+	getApprovals,
+	approveRevalidationEquipment,
+} from "@/action/api";
 import {
 	CheckCircle2,
 	Search,
@@ -15,7 +19,6 @@ import {
 	ClipboardCheck,
 	AlertCircle,
 	XCircle,
-	FileText,
 } from "lucide-react";
 
 interface ValidasiUlangItem {
@@ -33,8 +36,6 @@ interface ValidasiUlangItem {
 	catatanInspeksi?: string;
 }
 
-const SAMPLE_ITEMS: ValidasiUlangItem[] = [];
-
 export default function RendalValidasiUlangPage() {
 	const [items, setItems] = useState<ValidasiUlangItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -50,7 +51,9 @@ export default function RendalValidasiUlangPage() {
 	} | null>(null);
 
 	// Modal State
-	const [selectedAsset, setSelectedAsset] = useState<ValidasiUlangItem | null>(null);
+	const [selectedAsset, setSelectedAsset] = useState<ValidasiUlangItem | null>(
+		null,
+	);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [approvalNotes, setApprovalNotes] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -59,12 +62,13 @@ export default function RendalValidasiUlangPage() {
 		message: string;
 	} | null>(null);
 
-	const loadData = async () => {
+	const loadData = useCallback(async () => {
 		setIsLoading(true);
 		try {
 			const [data, approvalsData] = await Promise.all([
 				getEquipments(),
-				getApprovals().catch(() => []),
+				// Halaman ini menangani validasi ulang -> approval jenis REVALIDATION.
+				getApprovals("revalidation").catch(() => []),
 			]);
 
 			const approvalsList = Array.isArray(approvalsData)
@@ -76,7 +80,9 @@ export default function RendalValidasiUlangPage() {
 			if (Array.isArray(data) && data.length > 0) {
 				filtered = data
 					.filter((item: any) => {
-						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+						const statusName = String(
+							item.status?.name || item.statusAset || "",
+						).toUpperCase();
 						const isRevalidation =
 							item.status_id === 5 ||
 							item.status?.id === 5 ||
@@ -91,7 +97,9 @@ export default function RendalValidasiUlangPage() {
 					})
 					.map((item: any) => {
 						const plantStr =
-							typeof item.plant === "string" ? item.plant : item.plant?.name || item.plant?.description || "-";
+							typeof item.plant === "string"
+								? item.plant
+								: item.plant?.name || item.plant?.description || "-";
 						const storageStr =
 							typeof item.storage_location === "string"
 								? item.storage_location
@@ -105,7 +113,9 @@ export default function RendalValidasiUlangPage() {
 								? item.condition
 								: item.condition?.name || "BAGUS";
 
-						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+						const statusName = String(
+							item.status?.name || item.statusAset || "",
+						).toUpperCase();
 						const isReady =
 							item.status_id === 6 ||
 							item.status?.id === 6 ||
@@ -129,7 +139,9 @@ export default function RendalValidasiUlangPage() {
 							id: String(item.id),
 							kodeAlat: item.equipment_code || item.kodeAlat || "-",
 							namaAlat:
-								typeof item.name === "string" ? item.name : item.name?.name || item.namaAlat || "-",
+								typeof item.name === "string"
+									? item.name
+									: item.name?.name || item.namaAlat || "-",
 							tipeObjek: objectTypeStr,
 							plant: plantStr,
 							lokasiPenyimpanan: storageStr,
@@ -141,8 +153,12 @@ export default function RendalValidasiUlangPage() {
 									: new Date().toISOString().split("T")[0],
 							statusAset: displayStatus,
 							statusId: displayStatusId,
-							approvalId: matchingApproval?.id ? String(matchingApproval.id) : undefined,
-							catatanInspeksi: item.notes || "Hasil validasi ulang menunjukkan kondisi alat siap pakai.",
+							approvalId: matchingApproval?.id
+								? String(matchingApproval.id)
+								: undefined,
+							catatanInspeksi:
+								item.notes ||
+								"Hasil validasi ulang menunjukkan kondisi alat siap pakai.",
 						};
 					});
 			}
@@ -154,24 +170,26 @@ export default function RendalValidasiUlangPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	};
-
-	useEffect(() => {
-		loadData();
 	}, []);
 
 	useEffect(() => {
-		setCurrentPage(1);
-	}, [activeTab, searchQuery, filterPlant, filterTipeObjek]);
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data awal saat mount
+		void loadData();
+	}, [loadData]);
 
 	const plantOptions = useMemo(
-		() => [...new Set(items.map((e) => e.plant).filter((v) => v && v !== "-"))].sort(),
+		() =>
+			[
+				...new Set(items.map((e) => e.plant).filter((v) => v && v !== "-")),
+			].sort(),
 		[items],
 	);
 
 	const tipeObjekOptions = useMemo(
 		() =>
-			[...new Set(items.map((e) => e.tipeObjek).filter((v) => v && v !== "-"))].sort(),
+			[
+				...new Set(items.map((e) => e.tipeObjek).filter((v) => v && v !== "-")),
+			].sort(),
 		[items],
 	);
 
@@ -213,7 +231,8 @@ export default function RendalValidasiUlangPage() {
 					item.lokasiPenyimpanan.toLowerCase().includes(q),
 			);
 		}
-		if (filterPlant) result = result.filter((item) => item.plant === filterPlant);
+		if (filterPlant)
+			result = result.filter((item) => item.plant === filterPlant);
 		if (filterTipeObjek)
 			result = result.filter((item) => item.tipeObjek === filterTipeObjek);
 
@@ -232,14 +251,21 @@ export default function RendalValidasiUlangPage() {
 
 	const ITEMS_PER_PAGE = 10;
 	const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
+	// Halaman dijepit ke rentang valid supaya perubahan filter/tab tidak perlu
+	// me-reset currentPage lewat effect.
+	const page = Math.min(currentPage, totalPages);
 	const paginatedItems = useMemo(() => {
-		const start = (currentPage - 1) * ITEMS_PER_PAGE;
+		const start = (page - 1) * ITEMS_PER_PAGE;
 		return filteredItems.slice(start, start + ITEMS_PER_PAGE);
-	}, [filteredItems, currentPage]);
+	}, [filteredItems, page]);
 
 	const handleSort = (key: keyof ValidasiUlangItem) => {
 		let direction: "asc" | "desc" = "asc";
-		if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
+		if (
+			sortConfig &&
+			sortConfig.key === key &&
+			sortConfig.direction === "asc"
+		) {
 			direction = "desc";
 		}
 		setSortConfig({ key, direction });
@@ -264,7 +290,7 @@ export default function RendalValidasiUlangPage() {
 		setIsSubmitting(true);
 		try {
 			const result = await approveRevalidationEquipment(
-				selectedAsset.id,
+				selectedAsset.approvalId,
 				approvalNotes || selectedAsset.catatanInspeksi,
 			);
 
@@ -310,7 +336,9 @@ export default function RendalValidasiUlangPage() {
 			{notification && (
 				<div
 					className={`fixed top-6 right-6 z-[100] px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 max-w-md ${
-						notification.type === "success" ? "bg-gray-900 text-white" : "bg-red-950 text-white"
+						notification.type === "success"
+							? "bg-gray-900 text-white"
+							: "bg-red-950 text-white"
 					}`}
 				>
 					{notification.type === "success" ? (
@@ -318,8 +346,13 @@ export default function RendalValidasiUlangPage() {
 					) : (
 						<XCircle className="w-4 h-4 text-red-400 shrink-0" />
 					)}
-					<span className="text-[13px] font-medium">{notification.message}</span>
-					<button onClick={() => setNotification(null)} className="text-gray-400 hover:text-white ml-2">
+					<span className="text-[13px] font-medium">
+						{notification.message}
+					</span>
+					<button
+						onClick={() => setNotification(null)}
+						className="text-gray-400 hover:text-white ml-2"
+					>
 						<X className="w-3.5 h-3.5" />
 					</button>
 				</div>
@@ -330,7 +363,9 @@ export default function RendalValidasiUlangPage() {
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
 					<span>Rendal Pemeliharaan</span>
 					<ChevronRight className="w-3.5 h-3.5" />
-					<span className="text-[#0A356A] font-semibold">Persetujuan Perbaikan Alat</span>
+					<span className="text-[#0A356A] font-semibold">
+						Persetujuan Perbaikan Alat
+					</span>
 				</div>
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 					<div>
@@ -338,7 +373,8 @@ export default function RendalValidasiUlangPage() {
 							Persetujuan Perbaikan Alat
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar peralatan yang telah selesai diperbaiki dan divalidasi ulang oleh Inspeksi Teknik untuk disetujui menjadi Ready to Use.
+							Daftar peralatan yang telah selesai diperbaiki dan divalidasi
+							ulang oleh Inspeksi Teknik untuk disetujui menjadi Ready to Use.
 						</p>
 					</div>
 					<button
@@ -346,12 +382,13 @@ export default function RendalValidasiUlangPage() {
 						disabled={isLoading}
 						className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
 					>
-						<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+						<RefreshCw
+							className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`}
+						/>
 						Muat Ulang
 					</button>
 				</div>
 			</div>
-
 
 			{/* Unified Table Card */}
 			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4">
@@ -514,7 +551,10 @@ export default function RendalValidasiUlangPage() {
 						<tbody className="bg-white">
 							{isLoading ? (
 								<tr>
-									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
+									<td
+										colSpan={9}
+										className="px-5 py-12 text-center text-gray-500"
+									>
 										<div className="flex flex-col items-center">
 											<Loader2 className="w-5 h-5 text-[#0A356A] animate-spin mb-2" />
 											<p className="text-[13px] font-medium">Memuat data...</p>
@@ -523,7 +563,10 @@ export default function RendalValidasiUlangPage() {
 								</tr>
 							) : paginatedItems.length === 0 ? (
 								<tr>
-									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
+									<td
+										colSpan={9}
+										className="px-5 py-12 text-center text-gray-500"
+									>
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -550,12 +593,15 @@ export default function RendalValidasiUlangPage() {
 										className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
 									>
 										<td className="px-3 py-3 text-[15px] text-gray-500 font-medium text-center">
-											{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+											{(page - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
 										<td className="px-3 py-3 text-[15px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
 											{asset.kodeAlat}
 										</td>
-										<td className="px-3 py-3 text-[15px] font-semibold text-gray-800 text-left" title={asset.namaAlat}>
+										<td
+											className="px-3 py-3 text-[15px] font-semibold text-gray-800 text-left"
+											title={asset.namaAlat}
+										>
 											<span className="leading-tight line-clamp-2 block text-left">
 												{asset.namaAlat}
 											</span>
@@ -616,27 +662,30 @@ export default function RendalValidasiUlangPage() {
 					<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
 						<span className="text-[11px] font-medium text-gray-500">
 							Menampilkan{" "}
-							{filteredItems.length === 0
-								? 0
-								: (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
-							- {Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)}{" "}
-							dari {filteredItems.length} data ({ITEMS_PER_PAGE} baris/halaman)
+							{filteredItems.length === 0 ? 0 : (page - 1) * ITEMS_PER_PAGE + 1}{" "}
+							- {Math.min(page * ITEMS_PER_PAGE, filteredItems.length)} dari{" "}
+							{filteredItems.length} data ({ITEMS_PER_PAGE} baris/halaman)
 						</span>
 						<div className="flex items-center gap-1.5">
 							<button
 								onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-								disabled={currentPage === 1}
+								disabled={page === 1}
 								className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
 							>
 								Prev
 							</button>
 							<div className="flex items-center gap-1">
-								{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map((page) => (
+								{Array.from(
+									{ length: Math.max(1, totalPages) },
+									(_, i) => i + 1,
+								).map((page) => (
 									<button
 										key={page}
 										onClick={() => setCurrentPage(page)}
 										className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
-											currentPage === page ? "bg-[#0A356A] text-white" : "text-gray-600 hover:bg-gray-100"
+											currentPage === page
+												? "bg-[#0A356A] text-white"
+												: "text-gray-600 hover:bg-gray-100"
 										}`}
 									>
 										{page}
@@ -644,8 +693,12 @@ export default function RendalValidasiUlangPage() {
 								))}
 							</div>
 							<button
-								onClick={() => setCurrentPage((p) => Math.min(Math.max(1, totalPages), p + 1))}
-								disabled={currentPage === Math.max(1, totalPages)}
+								onClick={() =>
+									setCurrentPage((p) =>
+										Math.min(Math.max(1, totalPages), p + 1),
+									)
+								}
+								disabled={page === Math.max(1, totalPages)}
 								className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
 							>
 								Next
@@ -666,7 +719,9 @@ export default function RendalValidasiUlangPage() {
 									<ClipboardCheck className="w-5 h-5 text-white" />
 								</div>
 								<div>
-									<h2 className="text-base font-bold text-white">Persetujuan Perbaikan</h2>
+									<h2 className="text-base font-bold text-white">
+										Persetujuan Perbaikan
+									</h2>
 									<p className="text-xs text-blue-100">
 										{selectedAsset.kodeAlat} - {selectedAsset.namaAlat}
 									</p>
@@ -682,32 +737,55 @@ export default function RendalValidasiUlangPage() {
 						</div>
 
 						{/* Form */}
-						<form onSubmit={handleApprove} className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+						<form
+							onSubmit={handleApprove}
+							className="px-6 py-5 space-y-4 overflow-y-auto flex-1"
+						>
 							{/* Info box */}
 							<div className="bg-blue-50/70 rounded-lg p-3.5 border border-blue-100 text-xs text-blue-900 leading-normal">
-								Peralatan ini telah selesai diperbaiki dan telah dinyatakan <strong>{selectedAsset.kondisi}</strong> pada pemeriksaan ulang oleh Inspeksi Teknik.
+								Peralatan ini telah selesai diperbaiki dan telah dinyatakan{" "}
+								<strong>{selectedAsset.kondisi}</strong> pada pemeriksaan ulang
+								oleh Inspeksi Teknik.
 								<div className="mt-1 text-gray-700">
-									Menyetujui tindakan ini akan mengubah status aset secara resmi menjadi <strong className="text-[#0A356A]">Ready to Use</strong>.
+									Menyetujui tindakan ini akan mengubah status aset secara resmi
+									menjadi{" "}
+									<strong className="text-[#0A356A]">Ready to Use</strong>.
 								</div>
 							</div>
 
 							{/* Detail Ringkasan */}
 							<div className="bg-gray-50 rounded-lg p-3.5 border border-gray-200 grid grid-cols-2 gap-3 text-xs">
 								<div>
-									<p className="text-[10px] font-bold text-gray-400 uppercase">Kode Alat</p>
-									<p className="font-semibold text-gray-800 mt-0.5">{selectedAsset.kodeAlat}</p>
+									<p className="text-[10px] font-bold text-gray-400 uppercase">
+										Kode Alat
+									</p>
+									<p className="font-semibold text-gray-800 mt-0.5">
+										{selectedAsset.kodeAlat}
+									</p>
 								</div>
 								<div>
-									<p className="text-[10px] font-bold text-gray-400 uppercase">Plant & Lokasi</p>
-									<p className="font-semibold text-gray-800 mt-0.5">{selectedAsset.plant} - {selectedAsset.lokasiPenyimpanan}</p>
+									<p className="text-[10px] font-bold text-gray-400 uppercase">
+										Plant & Lokasi
+									</p>
+									<p className="font-semibold text-gray-800 mt-0.5">
+										{selectedAsset.plant} - {selectedAsset.lokasiPenyimpanan}
+									</p>
 								</div>
 								<div>
-									<p className="text-[10px] font-bold text-gray-400 uppercase">Kondisi Fisik</p>
-									<p className="font-bold text-emerald-700 mt-0.5">{selectedAsset.kondisi}</p>
+									<p className="text-[10px] font-bold text-gray-400 uppercase">
+										Kondisi Fisik
+									</p>
+									<p className="font-bold text-emerald-700 mt-0.5">
+										{selectedAsset.kondisi}
+									</p>
 								</div>
 								<div>
-									<p className="text-[10px] font-bold text-gray-400 uppercase">Tgl Re-Validasi</p>
-									<p className="font-semibold text-gray-800 mt-0.5">{selectedAsset.tanggalRevalidasi}</p>
+									<p className="text-[10px] font-bold text-gray-400 uppercase">
+										Tgl Re-Validasi
+									</p>
+									<p className="font-semibold text-gray-800 mt-0.5">
+										{selectedAsset.tanggalRevalidasi}
+									</p>
 								</div>
 							</div>
 
@@ -745,7 +823,9 @@ export default function RendalValidasiUlangPage() {
 									) : (
 										<CheckCircle2 className="w-4 h-4" />
 									)}
-									{isSubmitting ? "Menyetujui..." : "Setujui Menjadi Ready To Use"}
+									{isSubmitting
+										? "Menyetujui..."
+										: "Setujui Menjadi Ready To Use"}
 								</button>
 							</div>
 						</form>

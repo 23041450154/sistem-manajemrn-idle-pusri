@@ -23,6 +23,7 @@ import {
 	getObjectTypes,
 	getPlants,
 	getStorageLocations,
+	getFunctionalLocations,
 } from "@/action/api";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -54,12 +55,13 @@ export default function RegisterEquipmentPage() {
 	const [storageLocations, setStorageLocations] = useState<
 		{ id: number; name: string }[]
 	>([]);
+	const [funcLocs, setFuncLocs] = useState<{ id: number; name: string }[]>([]);
 
 	// UX Improvement: Semua nilai dropdown & radio di-set kosong ("") di awal
 	const [formData, setFormData] = useState({
 		equipmentCode: "",
 		name: "",
-		funcLoc: "",
+		funcLocId: "",
 		plantId: "",
 		objectTypeId: "",
 		vendor: "",
@@ -72,13 +74,15 @@ export default function RegisterEquipmentPage() {
 
 	useEffect(() => {
 		async function loadData() {
-			const [objs, plantsList, equipments] = await Promise.all([
+			const [objs, plantsList, funcLocList, equipments] = await Promise.all([
 				getObjectTypes(),
 				getPlants(),
+				getFunctionalLocations(),
 				editId ? getEquipments() : Promise.resolve([]),
 			]);
 			setObjectTypes(objs);
 			setPlants(plantsList);
+			setFuncLocs(funcLocList);
 
 			// ponytail: backend equipment shape belum punya DTO frontend bersama.
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -88,10 +92,9 @@ export default function RegisterEquipmentPage() {
 				setFormData({
 					equipmentCode: found.equipment_code || "",
 					name: found.name || "",
-					funcLoc:
-						typeof found.func_loc === "string"
-							? found.func_loc
-							: found.func_loc?.name || found.funcloc?.name || "",
+					funcLocId: String(
+						found.func_loc_id || found.id_func_loc || found.func_loc?.id || "",
+					),
 					plantId,
 					objectTypeId: String(
 						found.object_type_id ||
@@ -255,7 +258,7 @@ export default function RegisterEquipmentPage() {
 			const res = await updateEquipment(editId, {
 				equipment_code: formData.equipmentCode,
 				name: formData.name,
-				func_loc: formData.funcLoc,
+				id_func_loc: Number(formData.funcLocId) || undefined,
 				id_plant: Number(formData.plantId),
 				id_object_type: Number(formData.objectTypeId),
 				object_type_id: Number(formData.objectTypeId),
@@ -301,7 +304,7 @@ export default function RegisterEquipmentPage() {
 		fd.append("id_object_type", formData.objectTypeId);
 		fd.append("id_plant", formData.plantId);
 		fd.append("id_storage_location", formData.storageLocationId);
-		fd.append("func_loc", formData.funcLoc);
+		fd.append("id_func_loc", formData.funcLocId);
 		fd.append("vendor", formData.vendor);
 		fd.append(
 			"year",
@@ -591,15 +594,20 @@ export default function RegisterEquipmentPage() {
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									AREA (FUNCLOC)
 								</label>
-								<input
-									type="text"
+								<select
 									onBlur={handleBlur}
-									name="funcLoc"
-									value={formData.funcLoc}
+									name="funcLocId"
+									value={formData.funcLocId}
 									onChange={handleChange}
-									placeholder="Masukkan functional location..."
-									className="w-full px-3 py-2 text-sm text-gray-900 border border-gray-300 rounded outline-none transition-all focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
-								/>
+									className={`w-full px-3 py-2 text-sm border border-gray-300 rounded outline-none transition-all bg-white focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3] ${formData.funcLocId ? "text-gray-900" : "text-gray-400"}`}
+								>
+									<option value="">Pilih functional location...</option>
+									{funcLocs.map((fl) => (
+										<option key={fl.id} value={fl.id} className="text-gray-900">
+											{fl.name}
+										</option>
+									))}
+								</select>
 							</div>
 
 							{/* Garis Pemisah Visual */}

@@ -57,9 +57,12 @@ export default function FormInspeksiPage() {
 
 	const showToast = (type: "success" | "error", message: string) => {
 		setToast({ show: true, type, message });
-		setTimeout(() => {
-			setToast((prev) => ({ ...prev, show: false }));
-		}, 5000);
+		// Modal sukses dibiarkan tampil sampai redirect; hanya error yang auto-dismiss.
+		if (type === "error") {
+			setTimeout(() => {
+				setToast((prev) => ({ ...prev, show: false }));
+			}, 5000);
+		}
 	};
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -67,13 +70,15 @@ export default function FormInspeksiPage() {
 
 		setFileError("");
 		const selectedFiles = Array.from(e.target.files);
-		let validFiles: File[] = [];
+		const validFiles: File[] = [];
 		let hasError = false;
 
 		for (const file of selectedFiles) {
 			const validTypes = ["image/jpeg", "image/jpg", "image/png"];
 			if (!validTypes.includes(file.type)) {
-				setFileError("Format file tidak didukung. Harap gunakan JPG, JPEG, atau PNG.");
+				setFileError(
+					"Format file tidak didukung. Harap gunakan JPG, JPEG, atau PNG.",
+				);
 				hasError = true;
 				break;
 			}
@@ -103,16 +108,15 @@ export default function FormInspeksiPage() {
 
 	const isNotesEmpty = !notes || notes.trim() === "";
 	const isKelayakanNotSelected = hasilInspeksi === "";
-	const isPerbaikanKhususNotSelected = hasilInspeksi === "REPAIR" && jenisPerbaikan === "";
-	const isKondisiEmpty = !mechanicalCondition.trim() || !electricalCondition.trim();
-	const isFilesNotEnough = files.length < 2;
-
+	const isPerbaikanKhususNotSelected =
+		hasilInspeksi === "REPAIR" && jenisPerbaikan === "";
+	const isKondisiEmpty =
+		!mechanicalCondition.trim() || !electricalCondition.trim();
 	const isSubmitDisabled =
 		isKelayakanNotSelected ||
 		isPerbaikanKhususNotSelected ||
 		isKondisiEmpty ||
 		isNotesEmpty ||
-		isFilesNotEnough ||
 		loading;
 
 	const handleSubmit = async (e: React.FormEvent) => {
@@ -200,18 +204,49 @@ export default function FormInspeksiPage() {
 
 	return (
 		<div className="max-w-5xl mx-auto pt-2 pb-8 px-4 sm:px-6 lg:px-8">
-			{/* Toast */}
-			{toast.show && (
-				<div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
-					{toast.type === "success" ? (
-						<CheckCircle2 className="w-4 h-4 text-emerald-400" />
-					) : (
-						<XCircle className="w-4 h-4 text-red-400" />
-					)}
+			{/* Toast
+			    Sukses = modal center + overlay: konfirmasi bahwa inspeksi sudah tercatat,
+			    sekaligus mengunci form selama redirect berjalan.
+			    Error = toast sudut, agar inspektor tetap bisa membaca & memperbaiki form. */}
+			{toast.show && toast.type === "success" && (
+				<div
+					className="fixed inset-0 z-[70] flex items-center justify-center bg-gray-900/50 px-4 animate-in fade-in duration-200"
+					role="alertdialog"
+					aria-modal="true"
+					aria-labelledby="inspeksi-toast-title"
+				>
+					<div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center animate-in zoom-in-95 duration-200">
+						<div className="mx-auto w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-5">
+							<CheckCircle2 className="w-9 h-9 text-emerald-600" />
+						</div>
+						<h2
+							id="inspeksi-toast-title"
+							className="text-xl font-bold text-gray-900 mb-2"
+						>
+							Inspeksi Tersimpan
+						</h2>
+						<p className="text-[14px] text-gray-600 leading-relaxed">
+							{toast.message}
+						</p>
+						<p className="text-[13px] text-gray-400 mt-4">
+							Mengalihkan ke daftar inspeksi...
+						</p>
+					</div>
+				</div>
+			)}
+
+			{toast.show && toast.type === "error" && (
+				<div
+					className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300"
+					role="alert"
+				>
+					<XCircle className="w-4 h-4 text-red-400" />
 					<span className="text-[13px] font-medium">{toast.message}</span>
 					<button
+						type="button"
 						onClick={() => setToast((prev) => ({ ...prev, show: false }))}
 						className="text-gray-400 hover:text-white ml-2"
+						aria-label="Tutup notifikasi"
 					>
 						<X className="w-3.5 h-3.5" />
 					</button>
@@ -257,36 +292,57 @@ export default function FormInspeksiPage() {
 				</div>
 				<div className="p-5 grid grid-cols-2 md:grid-cols-4 gap-4">
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Kode Aset</p>
-						<p className="text-[14px] font-bold text-[#0A356A]">{equipment?.equipment_code || "Memuat..."}</p>
-					</div>
-					<div>
-						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Nama Aset</p>
-						<p className="text-[14px] font-bold text-gray-800">{equipment?.name || "Memuat..."}</p>
-					</div>
-					<div>
-						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Plant</p>
-						<p className="text-[14px] font-medium text-gray-700">
-							{(typeof equipment?.plant === "string" ? equipment.plant : equipment?.plant?.name) || "-"}
+						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+							Kode Aset
+						</p>
+						<p className="text-[14px] font-bold text-[#0A356A]">
+							{equipment?.equipment_code || "Memuat..."}
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Lokasi Penyimpanan</p>
+						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+							Nama Aset
+						</p>
+						<p className="text-[14px] font-bold text-gray-800">
+							{equipment?.name || "Memuat..."}
+						</p>
+					</div>
+					<div>
+						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+							Plant
+						</p>
+						<p className="text-[14px] font-medium text-gray-700">
+							{(typeof equipment?.plant === "string"
+								? equipment.plant
+								: equipment?.plant?.name) || "-"}
+						</p>
+					</div>
+					<div>
+						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+							Lokasi Penyimpanan
+						</p>
 						<p className="text-[14px] font-medium text-gray-700">
 							{equipment?.storage_location?.name || equipment?.location?.name || "-"}
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Status Saat Ini</p>
+						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+							Status Saat Ini
+						</p>
 						<span className="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
 							{(() => {
-								const s = typeof equipment?.status === "string" ? equipment.status : equipment?.status?.name || "READY TO USE";
+								const s =
+									typeof equipment?.status === "string"
+										? equipment.status
+										: equipment?.status?.name || "READY TO USE";
 								return s === "IDLE" ? "READY TO USE" : s;
 							})()}
 						</span>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">Tanggal Inspeksi</p>
+						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+							Tanggal Inspeksi
+						</p>
 						<p className="text-[14px] font-medium text-gray-700">
 							{new Date().toISOString().split("T")[0]}
 						</p>
@@ -295,7 +351,10 @@ export default function FormInspeksiPage() {
 			</div>
 
 			{/* Form Card */}
-			<form onSubmit={handleSubmit} className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+			<form
+				onSubmit={handleSubmit}
+				className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden"
+			>
 				{/* Form Header */}
 				<div className="px-5 py-3 border-b border-gray-200 bg-gray-50/95 flex items-center justify-between">
 					<h2 className="text-[14px] font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
@@ -314,7 +373,10 @@ export default function FormInspeksiPage() {
 						<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
 							{hasilOptions.map((opt) => {
 								const isSelected = hasilInspeksi === opt.value;
-								const colorMap: Record<string, { selected: string; hover: string; ring: string }> = {
+								const colorMap: Record<
+									string,
+									{ selected: string; hover: string; ring: string }
+								> = {
 									emerald: {
 										selected: "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-200",
 										hover: "hover:border-emerald-300",
@@ -349,14 +411,22 @@ export default function FormInspeksiPage() {
 											className="sr-only"
 										/>
 										<div className="flex items-center gap-2">
-											<div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? `${c.ring} border-current` : "border-gray-300"}`}>
-												{isSelected && <div className={`w-2 h-2 rounded-full ${c.ring} bg-current`} />}
+											<div
+												className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? `${c.ring} border-current` : "border-gray-300"}`}
+											>
+												{isSelected && (
+													<div className={`w-2 h-2 rounded-full ${c.ring} bg-current`} />
+												)}
 											</div>
-											<span className={`text-[14px] font-bold ${isSelected ? "text-gray-900" : "text-gray-700"} group-hover:text-gray-900 transition-colors`}>
+											<span
+												className={`text-[14px] font-bold ${isSelected ? "text-gray-900" : "text-gray-700"} group-hover:text-gray-900 transition-colors`}
+											>
 												{opt.title}
 											</span>
 										</div>
-										<p className="text-[11px] text-gray-500 font-medium pl-6">{opt.desc}</p>
+										<p className="text-[11px] text-gray-500 font-medium pl-6">
+											{opt.desc}
+										</p>
 									</label>
 								);
 							})}
@@ -367,7 +437,8 @@ export default function FormInspeksiPage() {
 							<div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 animate-in fade-in duration-200">
 								<AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
 								<p className="text-[12px] text-amber-800 font-medium">
-									Aset akan diajukan sebagai rekomendasi scrap dan memerlukan persetujuan Manajer Rendal.
+									Aset akan diajukan sebagai rekomendasi scrap dan memerlukan persetujuan
+									Manajer Rendal.
 								</p>
 							</div>
 						)}
@@ -381,8 +452,16 @@ export default function FormInspeksiPage() {
 							</label>
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 								{[
-									{ value: "RINGAN", title: "Perbaikan Ringan", desc: "Perbaikan minor, tidak memerlukan dismantling" },
-									{ value: "OVERHAUL", title: "Overhaul", desc: "Perbaikan besar, memerlukan dismantling menyeluruh" },
+									{
+										value: "RINGAN",
+										title: "Perbaikan Ringan",
+										desc: "Perbaikan minor, tidak memerlukan dismantling",
+									},
+									{
+										value: "OVERHAUL",
+										title: "Overhaul",
+										desc: "Perbaikan besar, memerlukan dismantling menyeluruh",
+									},
 								].map((opt) => {
 									const isSelected = jenisPerbaikan === opt.value;
 									return (
@@ -399,14 +478,22 @@ export default function FormInspeksiPage() {
 												className="sr-only"
 											/>
 											<div className="flex items-center gap-2">
-												<div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? "border-[#0A356A]" : "border-gray-300"}`}>
-													{isSelected && <div className="w-2 h-2 rounded-full bg-[#0A356A]" />}
+												<div
+													className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? "border-[#0A356A]" : "border-gray-300"}`}
+												>
+													{isSelected && (
+														<div className="w-2 h-2 rounded-full bg-[#0A356A]" />
+													)}
 												</div>
-												<span className={`text-[14px] font-bold ${isSelected ? "text-gray-900" : "text-gray-700"} group-hover:text-gray-900 transition-colors`}>
+												<span
+													className={`text-[14px] font-bold ${isSelected ? "text-gray-900" : "text-gray-700"} group-hover:text-gray-900 transition-colors`}
+												>
 													{opt.title}
 												</span>
 											</div>
-											<p className="text-[11px] text-gray-500 font-medium pl-6">{opt.desc}</p>
+											<p className="text-[11px] text-gray-500 font-medium pl-6">
+												{opt.desc}
+											</p>
 										</label>
 									);
 								})}
@@ -453,7 +540,7 @@ export default function FormInspeksiPage() {
 					{/* Section: Catatan */}
 					<div>
 						<label className="block text-[13px] font-bold text-gray-700 uppercase tracking-wider mb-2">
-							Temuan Fisik / Catatan Inspeksi <span className="text-red-500">*</span>
+							Catatan Inspeksi <span className="text-red-500">*</span>
 						</label>
 						<textarea
 							value={notes}
@@ -462,18 +549,19 @@ export default function FormInspeksiPage() {
 							rows={5}
 							className="w-full px-3 py-2.5 text-[13px] border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
 						/>
-						<p className="text-[11px] text-gray-500 mt-1.5 font-medium">Wajib diisi dan tidak boleh hanya berupa spasi kosong.</p>
+						<p className="text-[11px] text-gray-500 mt-1.5 font-medium">
+							Wajib diisi dan tidak boleh hanya berupa spasi kosong.
+						</p>
 					</div>
 
 					{/* Section: Upload Foto */}
 					<div>
 						<div className="flex items-center justify-between mb-2">
 							<label className="block text-[13px] font-bold text-gray-700 uppercase tracking-wider">
-								Foto Bukti Lapangan <span className="text-red-500">*</span>
-								<span className="ml-2 text-[11px] font-bold text-red-500 normal-case">(minimal 2 foto)</span>
+								Foto Bukti Lapangan
 							</label>
 							{files.length > 0 && (
-								<span className={`text-[11px] font-bold ${files.length >= 2 ? "text-emerald-600" : "text-red-500"}`}>
+								<span className="text-[11px] font-bold text-gray-500">
 									{files.length} berkas
 								</span>
 							)}
@@ -486,14 +574,21 @@ export default function FormInspeksiPage() {
 							{files.length === 0 ? (
 								<>
 									<UploadCloud className="w-7 h-7 text-gray-400 mb-2" />
-									<p className="text-[13px] font-bold text-[#0A356A] text-center">Klik atau Seret Berkas</p>
-									<p className="text-[11px] text-gray-500 mt-1 text-center font-medium">JPG, PNG maks 5 MB</p>
+									<p className="text-[13px] font-bold text-[#0A356A] text-center">
+										Klik atau Seret Berkas
+									</p>
+									<p className="text-[11px] text-gray-500 mt-1 text-center font-medium">
+										JPG, PNG maks 5 MB
+									</p>
 								</>
 							) : (
 								<div className="w-full">
 									<div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2 w-full mb-3">
 										{files.map((file, idx) => (
-											<div key={idx} className="relative group rounded-md overflow-hidden border border-gray-200 aspect-square bg-gray-100">
+											<div
+												key={idx}
+												className="relative group rounded-md overflow-hidden border border-gray-200 aspect-square bg-gray-100"
+											>
 												<img
 													src={URL.createObjectURL(file)}
 													alt={`Preview ${idx}`}

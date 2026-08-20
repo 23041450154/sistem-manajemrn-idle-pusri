@@ -3,16 +3,14 @@
 /* ponytail: payload API legacy tetap untyped sampai backend mengekspor DTO bersama. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
 	Eye,
 	X,
 	Shield,
-	FileText,
 	CheckCircle2,
 	RefreshCw,
 	XCircle,
-	Download,
 	Search,
 } from "lucide-react";
 import {
@@ -90,7 +88,6 @@ export default function ManajerApprovePage() {
 	const [endDate, setEndDate] = useState("");
 
 	const [requests, setRequests] = useState<RequestAsset[]>([]);
-	const [filteredRequests, setFilteredRequests] = useState<RequestAsset[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [selectedAsset, setSelectedAsset] = useState<RequestAsset | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -114,12 +111,6 @@ export default function ManajerApprovePage() {
 	// Pagination State
 	const [currentPage, setCurrentPage] = useState(1);
 	const ITEMS_PER_PAGE = 10;
-
-	const totalPages = Math.ceil(filteredRequests.length / ITEMS_PER_PAGE);
-	const paginatedRequests = filteredRequests.slice(
-		(currentPage - 1) * ITEMS_PER_PAGE,
-		currentPage * ITEMS_PER_PAGE,
-	);
 
 	useEffect(() => {
 		const fetchData = async () => {
@@ -188,7 +179,6 @@ export default function ManajerApprovePage() {
 				});
 
 				setRequests(mappedData);
-				setFilteredRequests(mappedData);
 			} catch (error) {
 				console.error(error);
 			} finally {
@@ -255,7 +245,6 @@ export default function ManajerApprovePage() {
 						}
 					: req;
 			setRequests(requests.map(toInReview));
-			setFilteredRequests(filteredRequests.map(toInReview));
 
 			// Update selected asset state so UI re-renders immediately
 			setSelectedAsset({
@@ -296,7 +285,6 @@ export default function ManajerApprovePage() {
 							}
 						: req;
 				setRequests(requests.map(toApproved));
-				setFilteredRequests(filteredRequests.map(toApproved));
 				setIsConfirmOpen(false);
 				closeModal();
 				setTimeout(() => setNotification(null), 3000);
@@ -338,7 +326,6 @@ export default function ManajerApprovePage() {
 							}
 						: req;
 				setRequests(requests.map(toRevision));
-				setFilteredRequests(filteredRequests.map(toRevision));
 				setIsRevisiOpen(false);
 				closeModal();
 				setTimeout(() => setNotification(null), 3000);
@@ -354,9 +341,11 @@ export default function ManajerApprovePage() {
 		}
 	};
 
-	const handleCari = () => {
+	// Daftar hasil filter diturunkan langsung dari state filter, bukan disalin ke
+	// state terpisah lewat effect.
+	const filteredRequests = useMemo(() => {
 		const query = searchInput || search;
-		const result = requests.filter((req) => {
+		return requests.filter((req) => {
 			const matchSearch = query
 				? req.nomorRequest.toLowerCase().includes(query.toLowerCase()) ||
 					req.kodeAset.toLowerCase().includes(query.toLowerCase()) ||
@@ -377,13 +366,15 @@ export default function ManajerApprovePage() {
 			}
 			return matchSearch && matchPlant && matchStatus && matchDate;
 		});
-		setFilteredRequests(result);
-		setCurrentPage(1);
-	};
+	}, [requests, search, searchInput, plant, status, startDate, endDate]);
 
-	useEffect(() => {
-		handleCari();
-	}, [search, searchInput, plant, status, startDate, endDate, requests]);
+	const totalPages = Math.ceil(filteredRequests.length / ITEMS_PER_PAGE);
+	// Halaman dijepit ke rentang valid agar filter tidak menyisakan halaman kosong.
+	const page = Math.min(currentPage, Math.max(totalPages, 1));
+	const paginatedRequests = filteredRequests.slice(
+		(page - 1) * ITEMS_PER_PAGE,
+		page * ITEMS_PER_PAGE,
+	);
 
 	const handleReset = () => {
 		setSearchInput("");
@@ -392,19 +383,19 @@ export default function ManajerApprovePage() {
 		setStatus("Semua Status");
 		setStartDate("");
 		setEndDate("");
-		setFilteredRequests(requests);
 		setCurrentPage(1);
 	};
 
 	const getStatusAsetBadge = (status: string) => {
 		let displayStatus = (status || "").replace(/_/g, " ");
-		if (displayStatus === "IDLE" || displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
+		if (
+			displayStatus === "IDLE" ||
+			displayStatus === "READY TO REUSE" ||
+			displayStatus === "REUSED"
+		) {
 			displayStatus = "READY TO USE";
 		}
-		if (
-			status === "VALIDATED" ||
-			displayStatus === "READY TO USE"
-		) {
+		if (status === "VALIDATED" || displayStatus === "READY TO USE") {
 			return (
 				<span className="bg-[#DCFCE7] text-[#16A34A] px-3 py-1 rounded-full text-[11px] font-semibold">
 					{displayStatus}
@@ -478,7 +469,7 @@ export default function ManajerApprovePage() {
 						</div>
 						<button
 							type="button"
-							onClick={handleCari}
+							onClick={() => setSearch(searchInput)}
 							className="px-3.5 py-1.5 bg-[#0A356A] text-white text-[13px] font-semibold rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-xs cursor-pointer"
 						>
 							Cari
@@ -567,46 +558,66 @@ export default function ManajerApprovePage() {
 							</tr>
 						</thead>
 						<tbody className="bg-white divide-y divide-gray-100">
-							{paginatedRequests.map((req, index) => (
-								<tr
-									key={req.id}
-									className="hover:bg-blue-50/30 transition-colors"
-								>
-									<td className="px-2 py-2 text-[12px] text-gray-500 font-medium text-center">
-										{index + 1 + (currentPage - 1) * ITEMS_PER_PAGE}
-									</td>
-									<td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug text-center">
-										{req.nomorRequest}
-									</td>
-									<td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900 text-center">
-										{req.kodeAset}
-									</td>
-									<td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug text-center">
-										{req.namaAset}
-									</td>
-									<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-center">
-										{req.plant?.name ?? "-"}
-									</td>
-									<td className="px-2 py-2 text-[11px] text-gray-600 font-medium leading-snug text-center whitespace-nowrap">
-										{req.tanggalPengajuan}
-									</td>
-									<td className="px-2 py-2 whitespace-nowrap text-center">
-										{getStatusAsetBadge(req.statusAset)}
-									</td>
-									<td className="px-2 py-2 text-center">
-										{getApprovalBadge(req.approvalStatus, req.statusLabel)}
-									</td>
-									<td className="px-2 py-2 text-center w-[80px]">
-										<button
-											onClick={() => openModal(req)}
-											className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors w-full"
-										>
-											<Eye className="w-3.5 h-3.5" />
-											Detail
-										</button>
+							{isLoading ? (
+								<tr>
+									<td
+										colSpan={9}
+										className="px-4 py-8 text-center text-[13px] text-gray-500"
+									>
+										Memuat data pengajuan...
 									</td>
 								</tr>
-							))}
+							) : paginatedRequests.length === 0 ? (
+								<tr>
+									<td
+										colSpan={9}
+										className="px-4 py-8 text-center text-[13px] text-gray-500"
+									>
+										Tidak ada pengajuan validasi.
+									</td>
+								</tr>
+							) : (
+								paginatedRequests.map((req, index) => (
+									<tr
+										key={req.id}
+										className="hover:bg-blue-50/30 transition-colors"
+									>
+										<td className="px-2 py-2 text-[12px] text-gray-500 font-medium text-center">
+											{index + 1 + (page - 1) * ITEMS_PER_PAGE}
+										</td>
+										<td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug text-center">
+											{req.nomorRequest}
+										</td>
+										<td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900 text-center">
+											{req.kodeAset}
+										</td>
+										<td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug text-center">
+											{req.namaAset}
+										</td>
+										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-center">
+											{req.plant?.name ?? "-"}
+										</td>
+										<td className="px-2 py-2 text-[11px] text-gray-600 font-medium leading-snug text-center whitespace-nowrap">
+											{req.tanggalPengajuan}
+										</td>
+										<td className="px-2 py-2 whitespace-nowrap text-center">
+											{getStatusAsetBadge(req.statusAset)}
+										</td>
+										<td className="px-2 py-2 text-center">
+											{getApprovalBadge(req.approvalStatus, req.statusLabel)}
+										</td>
+										<td className="px-2 py-2 text-center w-[80px]">
+											<button
+												onClick={() => openModal(req)}
+												className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors w-full"
+											>
+												<Eye className="w-3.5 h-3.5" />
+												Detail
+											</button>
+										</td>
+									</tr>
+								))
+							)}
 						</tbody>
 					</table>
 				</div>
@@ -617,16 +628,15 @@ export default function ManajerApprovePage() {
 							Menampilkan{" "}
 							{filteredRequests.length === 0
 								? 0
-								: (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
-							-{" "}
-							{Math.min(currentPage * ITEMS_PER_PAGE, filteredRequests.length)}{" "}
-							dari {filteredRequests.length} data (10 baris/halaman)
+								: (page - 1) * ITEMS_PER_PAGE + 1}{" "}
+							- {Math.min(page * ITEMS_PER_PAGE, filteredRequests.length)} dari{" "}
+							{filteredRequests.length} data (10 baris/halaman)
 						</span>
 						{totalPages > 1 && (
 							<div className="flex items-center gap-1.5">
 								<button
 									onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-									disabled={currentPage === 1}
+									disabled={page === 1}
 									className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
 								>
 									Prev
@@ -652,7 +662,7 @@ export default function ManajerApprovePage() {
 									onClick={() =>
 										setCurrentPage((p) => Math.min(totalPages, p + 1))
 									}
-									disabled={currentPage === totalPages}
+									disabled={page === totalPages}
 									className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
 								>
 									Next
@@ -808,6 +818,40 @@ export default function ManajerApprovePage() {
 										)}
 									</div>
 								</div>
+
+								{/* Foto Dokumentasi Aset */}
+								{attachments.length > 0 && (
+									<div className="mt-4">
+										<p className="text-[12px] text-gray-500 font-medium mb-2">
+											Foto Dokumentasi:
+									</p>
+										<div className="grid grid-cols-3 gap-3">
+											{attachments.map((att: any, idx: number) => (
+												<div
+													key={idx}
+													className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-square"
+													onClick={() => setPreviewImage(att.file_url || att.url)}
+												>
+													<img
+														src={att.file_url || att.url}
+														alt={att.description || att.file_name || `Foto ${idx + 1}`}
+														className="w-full h-full object-cover transition-transform group-hover:scale-105"
+													/>
+													<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+														<Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+													</div>
+													{att.description && (
+														<div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-1.5">
+															<p className="text-[10px] text-white font-medium truncate">
+																{att.description}
+															</p>
+														</div>
+													)}
+												</div>
+											))}
+										</div>
+									</div>
+								)}
 							</div>
 
 							{/* Section 2: Informasi Finansial */}

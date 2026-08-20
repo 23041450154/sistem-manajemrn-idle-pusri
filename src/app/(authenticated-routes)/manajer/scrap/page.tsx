@@ -1,31 +1,14 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { 
+import { useState, useEffect, useCallback } from "react";
+import {
   Eye, X, CheckCircle2, RefreshCw, XCircle, AlertCircle,
   Trash2, AlertTriangle, Loader2, Check, DollarSign, Tag, Search,
   FileText, Clock
 } from "lucide-react";
-import { getDisposals, approveDisposal } from "@/action/api";
+import { getDisposals, approveDisposal, type DisposalItemDTO } from "@/action/api";
 
-interface DisposalItem {
-  id: string;
-  disposal_number: string;
-  equipment_id: string;
-  equipment_code: string;
-  equipment_name: string;
-  disposal_method: string;
-  scrap_value: number;
-  book_value: number;
-  original_value: number;
-  plant: string;
-  justification: string;
-  status: string; // PENDING, DISPOSED, REJECTED
-  created_at: string;
-  attachments?: { id?: string; file_url: string; caption?: string }[];
-  created_by_name?: string;
-  notes?: string;
-}
+type DisposalItem = DisposalItemDTO;
 
 export default function ManajerScrapPage() {
   const [activeTab, setActiveTab] = useState<"inbox" | "history">("inbox");
@@ -34,7 +17,6 @@ export default function ManajerScrapPage() {
 
   // Filter states
   const [search, setSearch] = useState("");
-  const [methodFilter] = useState("Semua Metode");
 
   // Modal detail states
   const [selectedDisposal, setSelectedDisposal] = useState<DisposalItem | null>(null);
@@ -55,13 +37,20 @@ export default function ManajerScrapPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  useEffect(() => {
+  // Filter berubah -> balik ke halaman 1, dilakukan di setter agar effect tidak
+  // memanggil setState secara sinkron.
+  const changeSearch = (value: string) => {
+    setSearch(value);
     setCurrentPage(1);
-  }, [search, methodFilter, activeTab]);
+  };
+  const changeTab = (tab: "inbox" | "history") => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
 
-  const fetchDisposalsData = async () => {
+  // isLoading sudah true saat mount, jadi tidak perlu di-set lagi di sini.
+  const fetchDisposalsData = useCallback(async () => {
     try {
-      setIsLoading(true);
       const data = await getDisposals();
       if (Array.isArray(data)) {
         setDisposals(data);
@@ -71,11 +60,12 @@ export default function ManajerScrapPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchDisposalsData();
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data awal saat mount
+    void fetchDisposalsData();
+  }, [fetchDisposalsData]);
 
   const showToast = (type: "success" | "error" | "reject", message: string) => {
     setToast({ type, message });
@@ -90,14 +80,12 @@ export default function ManajerScrapPage() {
   const currentList = activeTab === "inbox" ? pendingDisposals : historyDisposals;
 
   const filteredDisposals = currentList.filter((item) => {
-    const matchSearch =
-      item.disposal_number.toLowerCase().includes(search.toLowerCase()) ||
-      item.equipment_code.toLowerCase().includes(search.toLowerCase()) ||
-      item.equipment_name.toLowerCase().includes(search.toLowerCase());
-    const matchMethod =
-      methodFilter === "Semua Metode" ||
-      item.disposal_method.toLowerCase().includes(methodFilter.toLowerCase());
-    return matchSearch && matchMethod;
+    const q = search.toLowerCase();
+    return (
+      item.disposal_number.toLowerCase().includes(q) ||
+      item.equipment_code.toLowerCase().includes(q) ||
+      item.equipment_name.toLowerCase().includes(q)
+    );
   });
 
   const totalPages = Math.ceil(filteredDisposals.length / ITEMS_PER_PAGE);
@@ -127,7 +115,7 @@ export default function ManajerScrapPage() {
     try {
       // Delay for smooth loading state animation
       await new Promise((resolve) => setTimeout(resolve, 800));
-      const res = await approveDisposal(selectedDisposal.id, { status: "DISPOSED" });
+      const res = await approveDisposal(selectedDisposal.approval_id, { status: "DISPOSED" });
 
       if (res.success) {
         showToast(
@@ -158,7 +146,7 @@ export default function ManajerScrapPage() {
     try {
       // Delay for smooth loading state animation
       await new Promise((resolve) => setTimeout(resolve, 800));
-      const res = await approveDisposal(selectedDisposal.id, {
+      const res = await approveDisposal(selectedDisposal.approval_id, {
         status: "REJECTED",
         rejection_reason: rejectionReason.trim(),
       });
@@ -257,7 +245,7 @@ export default function ManajerScrapPage() {
           {/* Tabs */}
           <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl border border-gray-200">
             <button
-              onClick={() => setActiveTab("inbox")}
+              onClick={() => changeTab("inbox")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeTab === "inbox"
                   ? "bg-[#0A356A] text-white shadow-xs"
@@ -267,7 +255,7 @@ export default function ManajerScrapPage() {
               Antrean Pending
             </button>
             <button
-              onClick={() => setActiveTab("history")}
+              onClick={() => changeTab("history")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeTab === "history"
                   ? "bg-[#0A356A] text-white shadow-xs"
@@ -286,7 +274,7 @@ export default function ManajerScrapPage() {
                 type="text"
                 placeholder="Cari no. pengajuan, kode, atau nama..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => changeSearch(e.target.value)}
                 className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400 font-medium"
               />
             </div>
@@ -370,7 +358,7 @@ export default function ManajerScrapPage() {
                     </td>
                     {activeTab === "history" && (
                       <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                        {item.status === "DISPOSED" || item.status === "APPROVED" || item.status === "Approved" ? (
+                        {item.status === "DISPOSED" ? (
                           <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-full text-[10px] font-bold">
                             <CheckCircle2 className="w-3 h-3" />
                             Disetujui
@@ -486,7 +474,7 @@ export default function ManajerScrapPage() {
                 </div>
               )}
 
-              {(selectedDisposal.status === "APPROVED" || selectedDisposal.status === "Approved" || selectedDisposal.status === "DISPOSED") && (
+              {selectedDisposal.status === "DISPOSED" && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 text-emerald-900">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
@@ -498,7 +486,7 @@ export default function ManajerScrapPage() {
                 </div>
               )}
 
-              {(selectedDisposal.status === "REJECTED" || selectedDisposal.status === "Rejected") && (
+              {selectedDisposal.status === "REJECTED" && (
                 <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3 text-rose-900">
                   <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                   <div>
@@ -511,7 +499,7 @@ export default function ManajerScrapPage() {
               )}
 
               {/* Catatan Keputusan Manajer (jika ditolak) */}
-              {(selectedDisposal.status === "REJECTED" || selectedDisposal.status === "Rejected") && selectedDisposal.notes && (
+              {selectedDisposal.status === "REJECTED" && selectedDisposal.notes && (
                 <div className="border rounded-xl p-4 flex flex-col gap-1.5 bg-rose-50/50 border-rose-200 text-rose-900">
                   <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-500">
                     Catatan Penolakan Manajer
@@ -636,7 +624,7 @@ export default function ManajerScrapPage() {
                           <td className="py-2.5 font-bold">Keputusan Manajer</td>
                           <td className="py-2.5">Ahmad Fauzi (Manajer Rendal)</td>
                           <td className="py-2.5">
-                            {selectedDisposal.status === "APPROVED" || selectedDisposal.status === "Approved" || selectedDisposal.status === "DISPOSED" ? (
+                            {selectedDisposal.status === "DISPOSED" ? (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100">
                                 Disetujui
                               </span>

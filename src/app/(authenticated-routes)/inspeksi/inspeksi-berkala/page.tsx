@@ -3,7 +3,7 @@
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
 	Search,
 	RefreshCw,
@@ -15,12 +15,15 @@ import {
 	Loader2,
 	ChevronRight,
 	CheckCircle2,
-	Eye,
 } from "lucide-react";
 import Link from "next/link";
 import { getEquipments, getInspections } from "@/action/api";
+import {
+	inspectionQueue,
+	type LastInspection,
+} from "@/lib/inspection-schedule";
 
-interface Equipment {
+interface Equipment extends Partial<LastInspection> {
 	id: string | number;
 	equipment_code: string;
 	name: string;
@@ -67,51 +70,56 @@ export default function InspeksiAntreanPage() {
 		direction: "asc" | "desc";
 	} | null>(null);
 
-	const fetchData = async () => {
-		setLoading(true);
+	const fetchData = useCallback(async () => {
 		try {
 			const [resultEq, resultInsp] = await Promise.all([
 				getEquipments().catch(() => []),
 				getInspections().catch(() => []),
 			]);
 
+			const allInspections = Array.isArray(resultInsp) ? resultInsp : [];
+
 			if (Array.isArray(resultEq) && resultEq.length > 0) {
-				const idleEqs = resultEq.filter((eq: any) => {
-					const statusStr = typeof eq.status === "string" ? eq.status : eq.status?.name;
-					return statusStr === "IDLE" || statusStr === "READY_TO_USE" || statusStr === "READY TO USE";
-				});
-				setAntreanData(idleEqs);
+				// Semua aset READY_TO_USE tetap terdaftar; yang berubah setelah diinspeksi
+				// hanyalah kolom "Inspeksi Terakhir". Interval berbeda per equipment, jadi
+				// tidak ada aset yang dibuang otomatis dari daftar.
+				setAntreanData(inspectionQueue(resultEq as Equipment[], allInspections));
 			} else {
 				setAntreanData([]);
 			}
 
-			if (Array.isArray(resultInsp) && resultInsp.length > 0) {
-				const mappedInspections: InspectionItem[] = resultInsp.map((ins: any) => {
-					const eq = ins.equipment || {};
-					let plantStr = "-";
-					if (typeof eq.plant === "string") plantStr = eq.plant;
-					else if (eq.plant?.name) plantStr = eq.plant.name;
-					else if (eq.plant_description) plantStr = String(eq.plant_description);
+			if (allInspections.length > 0) {
+				const mappedInspections: InspectionItem[] = allInspections.map(
+					(ins: any) => {
+						const eq = ins.equipment || {};
+						let plantStr = "-";
+						if (typeof eq.plant === "string") plantStr = eq.plant;
+						else if (eq.plant?.name) plantStr = eq.plant.name;
+						else if (eq.plant_description) plantStr = String(eq.plant_description);
 
-					let typeStr = "-";
-					if (typeof eq.object_type === "string") typeStr = eq.object_type;
-					else if (eq.object_type?.name) typeStr = eq.object_type.name;
-					else if (ins.object_type_name) typeStr = ins.object_type_name;
+						let typeStr = "-";
+						if (typeof eq.object_type === "string") typeStr = eq.object_type;
+						else if (eq.object_type?.name) typeStr = eq.object_type.name;
+						else if (ins.object_type_name) typeStr = ins.object_type_name;
 
-					return {
-						id: ins.id,
-						equipment_id: ins.equipment_id,
-						equipment_code: ins.equipment_code || eq.equipment_code || `EQ-${ins.equipment_id}`,
-						equipment_name: ins.equipment_name || eq.name || "Equipment Tanpa Nama",
-						plant: plantStr,
-						object_type: typeStr,
-						inspection_date: ins.inspection_date || ins.created_at || new Date().toISOString(),
-						notes: ins.notes || ins.summary || "Inspeksi berkala selesai.",
-						condition_name: ins.condition?.name || ins.condition_name || "Baik",
-						require_action_name: ins.require_action?.name || ins.require_action_name || "-",
-						status_name: "Selesai",
-					};
-				});
+						return {
+							id: ins.id,
+							equipment_id: ins.equipment_id,
+							equipment_code:
+								ins.equipment_code || eq.equipment_code || `EQ-${ins.equipment_id}`,
+							equipment_name: ins.equipment_name || eq.name || "Equipment Tanpa Nama",
+							plant: plantStr,
+							object_type: typeStr,
+							inspection_date:
+								ins.inspection_date || ins.created_at || new Date().toISOString(),
+							notes: ins.notes || ins.summary || "Inspeksi berkala selesai.",
+							condition_name: ins.condition?.name || ins.condition_name || "Baik",
+							require_action_name:
+								ins.require_action?.name || ins.require_action_name || "-",
+							status_name: "Selesai",
+						};
+					},
+				);
 				setRiwayatData(mappedInspections);
 			} else {
 				setRiwayatData([]);
@@ -123,17 +131,25 @@ export default function InspeksiAntreanPage() {
 		} finally {
 			setLoading(false);
 		}
-	};
-
-	useEffect(() => {
-		fetchData();
 	}, []);
 
-	useEffect(() => {
-		setCurrentPage(1);
-	}, [search, filterPlant, filterTipeObjek, activeTab]);
+	// setLoading(true) dipisah dari fetchData: state awal sudah true, jadi mount tidak
+	// perlu setState sinkron di dalam effect (react-hooks/set-state-in-effect).
+	const reload = useCallback(() => {
+		setLoading(true);
+		void fetchData();
+	}, [fetchData]);
 
-	const currentRawData = activeTab === "antrean" ? antreanData : riwayatData;
+	useEffect(() => {
+		// ponytail: client-fetch on mount, pola yang sama dipakai di semua halaman inspeksi.
+		// Rule ini statis dan tidak melihat bahwa setState terjadi setelah await.
+		// Upgrade path: pindahkan fetch ke server component + Suspense (Next 16) kalau
+		// halaman ini di-refactor.
+		// eslint-disable-next-line react-hooks/set-state-in-effect
+		void fetchData();
+	}, [fetchData]);
+
+	// Halaman di-reset lewat handler filter (bukan effect) agar tak memicu cascading render.
 
 	const plantOptions = useMemo(
 		() =>
@@ -181,14 +197,18 @@ export default function InspeksiAntreanPage() {
 
 		if (filterPlant) {
 			filtered = filtered.filter((row) => {
-				const plantStr = typeof row.plant === "string" ? row.plant : row.plant?.name;
+				const plantStr =
+					typeof row.plant === "string" ? row.plant : row.plant?.name;
 				return plantStr === filterPlant;
 			});
 		}
 
 		if (filterTipeObjek) {
 			filtered = filtered.filter((row) => {
-				const typeStr = typeof row.object_type === "string" ? row.object_type : row.object_type?.name;
+				const typeStr =
+					typeof row.object_type === "string"
+						? row.object_type
+						: row.object_type?.name;
 				return typeStr === filterTipeObjek;
 			});
 		}
@@ -204,11 +224,23 @@ export default function InspeksiAntreanPage() {
 					valA = a.equipment_code.toLowerCase();
 					valB = b.equipment_code.toLowerCase();
 				} else if (sortConfig.key === "plant") {
-					valA = ((typeof a.plant === "string" ? a.plant : a.plant?.name) || a.area?.name || "").toLowerCase();
-					valB = ((typeof b.plant === "string" ? b.plant : b.plant?.name) || b.area?.name || "").toLowerCase();
+					valA = (
+						(typeof a.plant === "string" ? a.plant : a.plant?.name) ||
+						a.area?.name ||
+						""
+					).toLowerCase();
+					valB = (
+						(typeof b.plant === "string" ? b.plant : b.plant?.name) ||
+						b.area?.name ||
+						""
+					).toLowerCase();
 				} else if (sortConfig.key === "date") {
 					valA = a.updated_at || a.created_at || "";
 					valB = b.updated_at || b.created_at || "";
+				} else if (sortConfig.key === "last") {
+					// Belum pernah diinspeksi = prioritas, jadi string kosong diurutkan paling awal.
+					valA = a.last_inspection_date || "";
+					valB = b.last_inspection_date || "";
 				}
 				if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
 				if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
@@ -229,7 +261,8 @@ export default function InspeksiAntreanPage() {
 		});
 	}, [riwayatData, search]);
 
-	const displayList = activeTab === "antrean" ? filteredAntrean : filteredRiwayat;
+	const displayList =
+		activeTab === "antrean" ? filteredAntrean : filteredRiwayat;
 
 	const paginatedAssets = useMemo(() => {
 		const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -274,11 +307,12 @@ export default function InspeksiAntreanPage() {
 							Inspeksi Berkala
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar peralatan idle yang membutuhkan dan telah menjalani inspeksi fisik berkala.
+							Daftar peralatan berstatus READY_TO_USE beserta tanggal inspeksi fisik
+							terakhirnya.
 						</p>
 					</div>
 					<button
-						onClick={fetchData}
+						onClick={reload}
 						disabled={loading}
 						className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
 					>
@@ -355,12 +389,16 @@ export default function InspeksiAntreanPage() {
 								onChange={(e) => {
 									setSearchInput(e.target.value);
 									setSearch(e.target.value);
+									setCurrentPage(1);
 								}}
 								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
 							/>
 						</div>
 						<button
-							onClick={() => setSearch(searchInput)}
+							onClick={() => {
+								setSearch(searchInput);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
 						>
 							Cari
@@ -373,7 +411,10 @@ export default function InspeksiAntreanPage() {
 							<>
 								<select
 									value={filterPlant}
-									onChange={(e) => setFilterPlant(e.target.value)}
+									onChange={(e) => {
+										setFilterPlant(e.target.value);
+										setCurrentPage(1);
+									}}
 									className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 								>
 									<option value="">Semua Plant</option>
@@ -386,7 +427,10 @@ export default function InspeksiAntreanPage() {
 
 								<select
 									value={filterTipeObjek}
-									onChange={(e) => setFilterTipeObjek(e.target.value)}
+									onChange={(e) => {
+										setFilterTipeObjek(e.target.value);
+										setCurrentPage(1);
+									}}
 									className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 								>
 									<option value="">Semua Tipe</option>
@@ -460,6 +504,14 @@ export default function InspeksiAntreanPage() {
 												Tgl Idle {getSortIcon("date")}
 											</div>
 										</th>
+										<th
+											className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+											onClick={() => handleSort("last")}
+										>
+											<div className="flex items-center justify-start">
+												Inspeksi Terakhir {getSortIcon("last")}
+											</div>
+										</th>
 										<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 											Aksi
 										</th>
@@ -482,7 +534,7 @@ export default function InspeksiAntreanPage() {
 						<tbody className="bg-white">
 							{loading ? (
 								<tr>
-									<td colSpan={8} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<Loader2 className="w-5 h-5 text-[#0A356A] animate-spin mb-2" />
 											<p className="text-[13px] font-medium">Memuat data...</p>
@@ -491,7 +543,7 @@ export default function InspeksiAntreanPage() {
 								</tr>
 							) : paginatedAssets.length === 0 ? (
 								<tr>
-									<td colSpan={8} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -499,7 +551,7 @@ export default function InspeksiAntreanPage() {
 											</p>
 											<p className="text-[11px] text-gray-500 mt-1">
 												{activeTab === "antrean"
-													? "Tidak ada aset IDLE yang siap diinspeksi."
+													? "Tidak ada aset berstatus READY_TO_USE untuk diinspeksi."
 													: "Belum ada riwayat inspeksi berkala."}
 											</p>
 										</div>
@@ -508,11 +560,23 @@ export default function InspeksiAntreanPage() {
 							) : activeTab === "antrean" ? (
 								(paginatedAssets as Equipment[]).map((row, index) => {
 									const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
-									const idleDateStr = row.updated_at || row.created_at || new Date().toISOString();
+									const idleDateStr =
+										row.updated_at || row.created_at || new Date().toISOString();
 									const idleDate = new Date(idleDateStr);
-									const plantStr = (typeof row.plant === "string" ? row.plant : row.plant?.name) || row.area?.name || "-";
-									const typeStr = typeof row.object_type === "string" ? row.object_type : row.object_type?.name || "-";
-									const lokasiStr = row.storage_location?.name || (typeof row.location === "string" ? row.location : row.location?.name) || "-";
+									const plantStr =
+										(typeof row.plant === "string" ? row.plant : row.plant?.name) ||
+										row.area?.name ||
+										"-";
+									const typeStr =
+										typeof row.object_type === "string"
+											? row.object_type
+											: row.object_type?.name || "-";
+									const lokasiStr =
+										row.storage_location?.name ||
+										(typeof row.location === "string"
+											? row.location
+											: row.location?.name) ||
+										"-";
 
 									return (
 										<tr
@@ -539,6 +603,17 @@ export default function InspeksiAntreanPage() {
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{idleDate.toISOString().split("T")[0]}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-left whitespace-nowrap">
+												{row.last_inspection_date ? (
+													<span className="text-gray-600">
+														{row.last_inspection_date.split("T")[0]}
+													</span>
+												) : (
+													<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800">
+														Belum pernah
+													</span>
+												)}
 											</td>
 											<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
 												<Link
@@ -583,7 +658,9 @@ export default function InspeksiAntreanPage() {
 												{dateStr}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left">
-												<span className="font-semibold text-gray-800 block">Kondisi: {row.condition_name}</span>
+												<span className="font-semibold text-gray-800 block">
+													Kondisi: {row.condition_name}
+												</span>
 												<span className="text-gray-500 text-[11px] block">{row.notes}</span>
 											</td>
 											<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
@@ -611,7 +688,9 @@ export default function InspeksiAntreanPage() {
 						<span className="font-semibold text-gray-800">
 							{Math.min(currentPage * ITEMS_PER_PAGE, displayList.length)}
 						</span>{" "}
-						dari <span className="font-semibold text-gray-800">{displayList.length}</span> data
+						dari{" "}
+						<span className="font-semibold text-gray-800">{displayList.length}</span>{" "}
+						data
 					</div>
 
 					<div className="flex items-center gap-1">

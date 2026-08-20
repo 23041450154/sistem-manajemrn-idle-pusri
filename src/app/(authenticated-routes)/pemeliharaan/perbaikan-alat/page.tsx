@@ -4,7 +4,12 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect, useState, useMemo } from "react";
-import { getEquipments, completeEquipmentMaintenance } from "@/action/api";
+import { getEquipments, completeEquipmentRepair } from "@/action/api";
+import {
+	repairFlowStatus,
+	REPAIR_STATUS_LABEL,
+	type RepairFlowStatus,
+} from "@/lib/equipment-status";
 import {
 	Wrench,
 	Search,
@@ -15,8 +20,9 @@ import {
 	Loader2,
 	ChevronRight,
 	AlertCircle,
-	ClipboardCheck,
+	ImageOff,
 } from "lucide-react";
+import styles from "@/app/(authenticated-routes)/dashboard.module.css";
 
 interface MaintenanceEquipment {
 	id: string;
@@ -27,16 +33,87 @@ interface MaintenanceEquipment {
 	lokasiPenyimpanan: string;
 	kondisi: string;
 	terakhirDiperbarui: string;
-	statusAset: string;
-	statusId: number;
+	status: RepairFlowStatus;
+	// Detail aset — sudah ikut di payload GET /api/equipment (Preload lengkap di backend).
+	funcLoc: string;
+	vendor: string;
+	tahun: number;
+	nilaiPerolehan: number;
+	nilaiBuku: number;
+	estimasiNilaiGunaUlang: number;
+	idleSejak: string;
+	alasanIdle: string;
+	catatan: string;
+	foto: string[];
 }
 
-const INITIAL_MAINTENANCE_SAMPLES: MaintenanceEquipment[] = [];
+const rupiah = (value: number) =>
+	value > 0 ? `Rp ${new Intl.NumberFormat("id-ID").format(value)}` : "—";
+
+/** Lampiran equipment bisa berupa dokumen; galeri hanya menampilkan berkas gambar. */
+const IMAGE_FILE = /\.(png|jpe?g|webp|gif|avif)$/i;
+
+const TABS: RepairFlowStatus[] = [
+	"REPAIR",
+	"REPAIR_COMPLETED",
+	"REVALIDATION",
+	"READY_TO_USE",
+];
+
+const EMPTY_HINT: Record<RepairFlowStatus, string> = {
+	REPAIR: "Belum ada peralatan yang membutuhkan perbaikan.",
+	REPAIR_COMPLETED: "Belum ada hasil perbaikan yang menunggu validasi ulang.",
+	REVALIDATION: "Belum ada aset yang menunggu persetujuan Rendal.",
+	READY_TO_USE: "Belum ada aset yang selesai sampai tahap siap digunakan.",
+	SCRAP: "Belum ada aset yang direkomendasikan scrap.",
+};
+
+/** DESIGN.md status hues — five workflow states, no sixth. */
+const STATUS_HUE: Record<RepairFlowStatus, string> = {
+	REPAIR: "#B45309",
+	REPAIR_COMPLETED: "#0556B3",
+	REVALIDATION: "#475569",
+	READY_TO_USE: "#059669",
+	SCRAP: "#DC2626",
+};
+
+/** DESIGN.md status badge: 2px radius, transparent fill, 1px border + text in state hue. */
+function StatusBadge({ status }: { status: RepairFlowStatus }) {
+	return (
+		<span
+			className="inline-flex items-center rounded-[2px] border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap"
+			style={{ color: STATUS_HUE[status], borderColor: STATUS_HUE[status] }}
+		>
+			{REPAIR_STATUS_LABEL[status]}
+		</span>
+	);
+}
+
+/**
+ * DESIGN.md pagination: windowed — first, last, current ±1, with gaps.
+ * Rendering every page button emitted 40 buttons at 400 rows.
+ */
+export function pageWindow(current: number, total: number): (number | "gap")[] {
+	if (total <= 7) return Array.from({ length: total }, (_, i) => i + 1);
+	const wanted = [1, total, current - 1, current, current + 1]
+		.filter((p) => p >= 1 && p <= total)
+		.sort((a, b) => a - b);
+	const out: (number | "gap")[] = [];
+	for (const page of wanted) {
+		const prev = out.at(-1);
+		if (typeof prev === "number") {
+			if (prev === page) continue;
+			if (page - prev > 1) out.push("gap");
+		}
+		out.push(page);
+	}
+	return out;
+}
 
 export default function PerbaikanAlatPage() {
 	const [equipments, setEquipments] = useState<MaintenanceEquipment[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
-	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
+	const [activeTab, setActiveTab] = useState<RepairFlowStatus>("REPAIR");
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [filterPlant, setFilterPlant] = useState("");
@@ -44,17 +121,26 @@ export default function PerbaikanAlatPage() {
 	const [filterKondisi, setFilterKondisi] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
 
-	const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+	const [notification, setNotification] = useState<{
+		type: "success" | "error";
+		message: string;
+	} | null>(null);
 
-	const [selectedAsset, setSelectedAsset] = useState<MaintenanceEquipment | null>(null);
+	const [selectedAsset, setSelectedAsset] =
+		useState<MaintenanceEquipment | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [previewImage, setPreviewImage] = useState<string | null>(null);
+
+	const today = () => new Date().toISOString().split("T")[0];
 
 	const [actualCost, setActualCost] = useState("0");
 	const [displayCost, setDisplayCost] = useState("Rp 0");
-	const [conditionId, setConditionId] = useState("");
+	const [startAt, setStartAt] = useState(today);
+	const [endAt, setEndAt] = useState(today);
+	const [workDescription, setWorkDescription] = useState("");
+	const [notes, setNotes] = useState("");
 	const [preservationStatus, setPreservationStatus] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [modalError, setModalError] = useState<string | null>(null);
 
 	const loadEquipments = async () => {
 		setIsLoading(true);
@@ -62,69 +148,47 @@ export default function PerbaikanAlatPage() {
 			const data = await getEquipments();
 			let filteredData: MaintenanceEquipment[] = [];
 
-			if (Array.isArray(data) && data.length > 0) {
-				filteredData = data
-					.filter((item: any) => {
-						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
-						const isRepair =
-							item.status_id === 3 ||
-							item.status?.id === 3 ||
-							statusName === "REPAIR" ||
-							statusName === "MAINTENANCE" ||
-							statusName === "DALAM_PERBAIKAN";
-						const isRepairCompleted =
-							item.status_id === 4 ||
-							item.status_id === 5 ||
-							item.status_id === 6 ||
-							item.status?.id === 4 ||
-							item.status?.id === 5 ||
-							item.status?.id === 6 ||
-							statusName === "REPAIR_COMPLETED" ||
-							statusName === "REVALIDATION" ||
-							statusName === "READY_TO_USE" ||
-							statusName === "READY TO USE" ||
-							statusName === "READY_TO_REUSE";
-						return isRepair || isRepairCompleted;
-					})
-					.map((item: any) => {
-						const plantStr = typeof item.plant === "string" ? item.plant : item.plant?.name || item.plant?.description || "-";
-						const storageStr =
-							typeof item.storage_location === "string" ? item.storage_location : item.storage_location?.name || "-";
-						const objectTypeStr =
-							typeof item.object_type === "string" ? item.object_type : item.object_type?.name || "-";
-						const conditionStr = typeof item.condition === "string" ? item.condition : item.condition?.name || "-";
+			if (Array.isArray(data)) {
+				filteredData = data.flatMap((item: any) => {
+					const status = repairFlowStatus(item);
+					if (!status) return [];
 
-						const rawStatusId = item.status_id || item.status?.id || 3;
-						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+					const pick = (val: any, fallback = "-") =>
+						typeof val === "string" ? val : val?.name || val?.description || fallback;
 
-						let displayStatusName = "MAINTENANCE";
-						if (rawStatusId === 6 || statusName === "READY_TO_USE" || statusName === "READY TO USE") {
-							displayStatusName = "READY_TO_USE";
-						} else if (rawStatusId === 5 || statusName === "REVALIDATION" || statusName === "REVALIDASI") {
-							displayStatusName = "REVALIDATION";
-						} else if (rawStatusId === 4 || statusName === "REPAIR_COMPLETED") {
-							displayStatusName = "REPAIR_COMPLETED";
-						} else if (rawStatusId === 8 || statusName === "SCRAP") {
-							displayStatusName = "SCRAP";
-						}
+					const stamp = item.updated_at || item.created_at;
+					const money = (val: any) => Number(val) || 0;
+					const dateOnly = (val: any) =>
+						val ? new Date(val).toISOString().split("T")[0] : "—";
 
-						return {
+					return [
+						{
 							id: String(item.id),
-							kodeAlat: item.equipment_code || item.kodeAlat || "-",
-							namaAlat: typeof item.name === "string" ? item.name : item.name?.name || item.namaAlat || "-",
-							tipeObjek: objectTypeStr,
-							plant: plantStr,
-							lokasiPenyimpanan: storageStr,
-							kondisi: conditionStr,
-							terakhirDiperbarui: item.updated_at
-								? new Date(item.updated_at).toISOString().split("T")[0]
-								: item.created_at
-									? new Date(item.created_at).toISOString().split("T")[0]
-									: new Date().toISOString().split("T")[0],
-							statusAset: displayStatusName,
-							statusId: rawStatusId,
-						};
-					});
+							kodeAlat: item.equipment_code || "-",
+							namaAlat: pick(item.name),
+							tipeObjek: pick(item.object_type),
+							plant: pick(item.plant),
+							lokasiPenyimpanan: pick(item.storage_location),
+							kondisi: pick(item.condition),
+							terakhirDiperbarui: (stamp ? new Date(stamp) : new Date())
+								.toISOString()
+								.split("T")[0],
+							status,
+							funcLoc: pick(item.func_loc),
+							vendor: pick(item.vendor),
+							tahun: Number(item.year) || 0,
+							nilaiPerolehan: money(item.original_value),
+							nilaiBuku: money(item.book_value),
+							estimasiNilaiGunaUlang: money(item.estimated_reuse_value),
+							idleSejak: dateOnly(item.idle_since),
+							alasanIdle: pick(item.idle_reason),
+							catatan: pick(item.notes, ""),
+							foto: (Array.isArray(item.attachments) ? item.attachments : [])
+								.map((a: any) => a?.file_url || a?.fileUrl || a?.url || "")
+								.filter((url: string) => IMAGE_FILE.test(url)),
+						},
+					];
+				});
 			}
 
 			setEquipments(filteredData);
@@ -137,33 +201,50 @@ export default function PerbaikanAlatPage() {
 	};
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data awal saat mount
 		loadEquipments();
 	}, []);
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- reset paginasi saat filter berubah
 		setCurrentPage(1);
 	}, [activeTab, searchQuery, filterPlant, filterTipeObjek, filterKondisi]);
 
 	const plantOptions = useMemo(
-		() => [...new Set(equipments.map((e) => e.plant).filter((v) => v && v !== "-"))].sort(),
+		() =>
+			[
+				...new Set(equipments.map((e) => e.plant).filter((v) => v && v !== "-")),
+			].sort(),
 		[equipments],
 	);
 	const tipeObjekOptions = useMemo(
-		() => [...new Set(equipments.map((e) => e.tipeObjek).filter((v) => v && v !== "-"))].sort(),
+		() =>
+			[
+				...new Set(
+					equipments.map((e) => e.tipeObjek).filter((v) => v && v !== "-"),
+				),
+			].sort(),
 		[equipments],
 	);
 	const kondisiOptions = useMemo(
-		() => [...new Set(equipments.map((e) => e.kondisi).filter((v) => v && v !== "-"))].sort(),
+		() =>
+			[
+				...new Set(equipments.map((e) => e.kondisi).filter((v) => v && v !== "-")),
+			].sort(),
 		[equipments],
 	);
 
-	const antreanCount = useMemo(() => {
-		return equipments.filter((item) => item.statusAset === "MAINTENANCE" || item.statusId === 3).length;
+	const countByStatus = useMemo(() => {
+		const counts = {} as Record<RepairFlowStatus, number>;
+		for (const item of equipments) {
+			counts[item.status] = (counts[item.status] ?? 0) + 1;
+		}
+		return counts;
 	}, [equipments]);
 
-	const riwayatCount = useMemo(() => {
-		return equipments.filter((item) => item.statusAset !== "MAINTENANCE" && item.statusId !== 3).length;
-	}, [equipments]);
+	const hasActiveFilter = Boolean(
+		searchQuery || filterPlant || filterTipeObjek || filterKondisi,
+	);
 
 	const handleSearch = () => {
 		setSearchQuery(searchInput);
@@ -180,10 +261,7 @@ export default function PerbaikanAlatPage() {
 	const filteredEquipments = useMemo(() => {
 		let result = equipments;
 
-		result = result.filter((item) => {
-			const isAntrean = item.statusAset === "MAINTENANCE" || item.statusId === 3;
-			return activeTab === "antrean" ? isAntrean : !isAntrean;
-		});
+		result = result.filter((item) => item.status === activeTab);
 
 		if (searchQuery.trim()) {
 			const q = searchQuery.toLowerCase();
@@ -209,7 +287,14 @@ export default function PerbaikanAlatPage() {
 		}
 
 		return result;
-	}, [equipments, activeTab, searchQuery, filterPlant, filterTipeObjek, filterKondisi]);
+	}, [
+		equipments,
+		activeTab,
+		searchQuery,
+		filterPlant,
+		filterTipeObjek,
+		filterKondisi,
+	]);
 
 	const ITEMS_PER_PAGE = 10;
 
@@ -239,9 +324,11 @@ export default function PerbaikanAlatPage() {
 		setSelectedAsset(asset);
 		setActualCost("0");
 		setDisplayCost("Rp 0");
-		setConditionId("");
+		setStartAt(today());
+		setEndAt(today());
+		setWorkDescription("");
+		setNotes("");
 		setPreservationStatus("");
-		setModalError(null);
 		setIsModalOpen(true);
 	};
 
@@ -249,24 +336,25 @@ export default function PerbaikanAlatPage() {
 		if (isSubmitting) return;
 		setIsModalOpen(false);
 		setSelectedAsset(null);
-		setModalError(null);
 	};
 
+	// Backend: actual_cost validate:"required,gt=0" — nol ditolak.
 	const isCostValid = useMemo(() => {
-		if (!actualCost) return false;
-		const num = parseFloat(actualCost);
-		return !isNaN(num) && num >= 0 && /^\d+$/.test(actualCost);
+		return /^\d+$/.test(actualCost) && parseInt(actualCost, 10) > 0;
 	}, [actualCost]);
 
-	const isConditionValid = useMemo(() => {
-		return conditionId === "1" || conditionId === "2";
-	}, [conditionId]);
+	const isDateRangeValid = useMemo(() => {
+		return Boolean(startAt && endAt) && endAt >= startAt;
+	}, [startAt, endAt]);
 
 	const isPreservationValid = useMemo(() => {
-		return preservationStatus === "Preserved" || preservationStatus === "Not Preserved";
+		return (
+			preservationStatus === "Preserved" || preservationStatus === "Not Preserved"
+		);
 	}, [preservationStatus]);
 
-	const isFormInvalid = !isCostValid || !isConditionValid || !isPreservationValid;
+	const isFormInvalid =
+		!isCostValid || !isDateRangeValid || !isPreservationValid;
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -276,12 +364,14 @@ export default function PerbaikanAlatPage() {
 		setNotification(null);
 
 		try {
-			const formData = new FormData();
-			formData.append("actual_cost", actualCost);
-			formData.append("condition_id", conditionId);
-			formData.append("preservation_status", preservationStatus);
-
-			const result = await completeEquipmentMaintenance(selectedAsset.id, formData);
+			const result = await completeEquipmentRepair(selectedAsset.id, {
+				start_at: startAt,
+				end_at: endAt,
+				actual_cost: parseInt(actualCost, 10),
+				preservation_status: preservationStatus,
+				work_description: workDescription.trim(),
+				notes: notes.trim(),
+			});
 
 			if (result.success) {
 				setEquipments((prev) =>
@@ -289,8 +379,7 @@ export default function PerbaikanAlatPage() {
 						item.id === selectedAsset.id
 							? {
 									...item,
-									statusAset: "REPAIR_COMPLETED",
-									statusId: 4,
+									status: "REPAIR_COMPLETED" as RepairFlowStatus,
 									terakhirDiperbarui: new Date().toISOString().split("T")[0],
 								}
 							: item,
@@ -327,121 +416,118 @@ export default function PerbaikanAlatPage() {
 	};
 
 	return (
-		<div className="max-w-7xl mx-auto pt-2 pb-8">
+		<div className={styles.pageContainer}>
 			{/* Toast */}
 			{notification && (
 				<div
-					className={`fixed top-6 right-6 z-[70] px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 max-w-md ${
-						notification.type === "success" ? "bg-gray-900 text-white" : "bg-red-950 text-white"
+					role="status"
+					className={`fixed top-6 right-6 z-[70] px-5 py-3 rounded-[4px] flex items-center gap-3 animate-in fade-in slide-in-from-top-2 duration-200 max-w-md text-white shadow-[0_8px_24px_-4px_rgb(15_23_42_/_0.12)] ${
+						notification.type === "success" ? "bg-[#0F172A]" : "bg-[#DC2626]"
 					}`}
 				>
 					{notification.type === "success" ? (
-						<CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
+						<CheckCircle2 className="w-4 h-4 shrink-0" aria-hidden="true" />
 					) : (
-						<XCircle className="w-4 h-4 text-red-400 shrink-0" />
+						<XCircle className="w-4 h-4 shrink-0" aria-hidden="true" />
 					)}
-					<span className="text-[13px] font-medium">{notification.message}</span>
-					<button onClick={() => setNotification(null)} className="text-gray-400 hover:text-white ml-2">
-						<X className="w-3.5 h-3.5" />
+					<span className="text-[13px]">{notification.message}</span>
+					<button
+						onClick={() => setNotification(null)}
+						aria-label="Tutup notifikasi"
+						className="ml-2 p-1 text-white/70 hover:text-white transition-colors duration-[140ms] ease-out"
+					>
+						<X className="w-3.5 h-3.5" aria-hidden="true" />
 					</button>
 				</div>
 			)}
 
 			{/* Header */}
-			<div className="mb-4">
-				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
-					<span>Pemeliharaan Lapangan</span>
-					<ChevronRight className="w-3.5 h-3.5" />
-					<span className="text-[#0A356A] font-semibold">Perbaikan Alat</span>
+			<div className={styles.pageHeader}>
+				<div>
+					<nav
+						aria-label="Breadcrumb"
+						className="flex items-center gap-1.5 text-[12px] text-[#64748B] mb-1"
+					>
+						<span>Pemeliharaan Lapangan</span>
+						<ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+						<span className="text-[#0F172A] font-medium">Perbaikan Alat</span>
+					</nav>
+					<h1 className={styles.pageTitle}>Daftar Perbaikan Aset</h1>
+					<p className={styles.pageSubtitle}>
+						Catat hasil perbaikan agar aset lanjut ke validasi ulang Inspeksi Teknik.
+					</p>
 				</div>
-				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-					<div>
-						<h1 className="text-xl font-bold text-gray-900 tracking-tight">Daftar Perbaikan Aset</h1>
-						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar peralatan yang saat ini berada dalam proses perbaikan (MAINTENANCE).
-						</p>
-					</div>
+				<div className={styles.headerActions}>
 					<button
 						onClick={loadEquipments}
 						disabled={isLoading}
-						className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
+						className={styles.btnOutline}
 					>
-						<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+						<RefreshCw
+							className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
+							aria-hidden="true"
+						/>
 						Muat Ulang
 					</button>
 				</div>
 			</div>
 
-
-			{/* Main Card */}
-			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4">
-				{/* Navigation Tabs */}
-				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
-					<button
-						onClick={() => {
-							setActiveTab("antrean");
-							setCurrentPage(1);
-						}}
-						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
-							activeTab === "antrean"
-								? "text-[#0A356A] border-b-2 border-[#0A356A]"
-								: "text-gray-500 hover:text-gray-700"
-						}`}
-					>
-						<span>Antrean Perbaikan</span>
-						<span
-							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
-								activeTab === "antrean"
-									? "bg-[#0A356A] text-white"
-									: "bg-gray-100 text-gray-600"
-							}`}
-						>
-							{antreanCount}
-						</span>
-					</button>
-
-					<button
-						onClick={() => {
-							setActiveTab("riwayat");
-							setCurrentPage(1);
-						}}
-						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
-							activeTab === "riwayat"
-								? "text-[#0A356A] border-b-2 border-[#0A356A]"
-								: "text-gray-500 hover:text-gray-700"
-						}`}
-					>
-						<span>Riwayat Perbaikan</span>
-						<span
-							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
-								activeTab === "riwayat"
-									? "bg-[#0A356A] text-white"
-									: "bg-gray-100 text-gray-600"
-							}`}
-						>
-							{riwayatCount}
-						</span>
-					</button>
+			{/* Main panel */}
+			<div className="bg-white border border-[#E6E8EA] rounded-[4px] overflow-hidden scroll-mt-4">
+				{/* Tab per tahap alur perbaikan */}
+				<div
+					role="tablist"
+					aria-label="Tahap alur perbaikan"
+					className="flex items-center border-b border-[#E6E8EA] px-5 gap-5 overflow-x-auto"
+				>
+					{TABS.map((stage) => {
+						const isActive = activeTab === stage;
+						return (
+							<button
+								key={stage}
+								role="tab"
+								aria-selected={isActive}
+								onClick={() => {
+									setActiveTab(stage);
+									setCurrentPage(1);
+								}}
+								className={`min-h-[44px] flex items-center gap-2 whitespace-nowrap text-[13px] transition-colors duration-[140ms] ease-out border-b-2 -mb-px ${
+									isActive
+										? "text-[#0A356A] font-semibold border-[#0A356A]"
+										: "text-[#64748B] font-medium border-transparent hover:text-[#0F172A]"
+								}`}
+							>
+								<span>{REPAIR_STATUS_LABEL[stage]}</span>
+								<span className="text-[12px] tabular-nums text-[#64748B]">
+									{countByStatus[stage] ?? 0}
+								</span>
+							</button>
+						);
+					})}
 				</div>
 
 				{/* Toolbar */}
-				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
+				<div className="p-3 border-b border-[#E6E8EA] flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
 					{/* Search */}
 					<div className="flex w-full lg:w-auto gap-2">
 						<div className="relative flex-1 lg:w-72">
-							<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+							<Search
+								className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[#64748B]"
+								aria-hidden="true"
+							/>
 							<input
 								type="text"
+								aria-label="Cari kode atau nama alat"
 								placeholder="Cari kode atau nama alat..."
 								value={searchInput}
 								onChange={(e) => setSearchInput(e.target.value)}
 								onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
+								className="w-full h-9 pl-9 pr-4 text-[13px] text-[#0F172A] bg-white border border-[#E6E8EA] rounded-[4px] focus:border-[#334155] focus:ring-2 focus:ring-[#334155] focus:ring-offset-1 outline-none transition-colors duration-[140ms] ease-out placeholder:text-[#64748B]"
 							/>
 						</div>
 						<button
 							onClick={handleSearch}
-							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
+							className="px-3.5 h-9 bg-[#0A356A] text-white text-[13px] font-medium rounded-[4px] hover:bg-[#0556B3] transition-colors duration-[140ms] ease-out whitespace-nowrap"
 						>
 							Cari
 						</button>
@@ -452,7 +538,7 @@ export default function PerbaikanAlatPage() {
 						<select
 							value={filterPlant}
 							onChange={(e) => setFilterPlant(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-[4px] focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Plant</option>
 							{plantOptions.map((p) => (
@@ -465,7 +551,7 @@ export default function PerbaikanAlatPage() {
 						<select
 							value={filterTipeObjek}
 							onChange={(e) => setFilterTipeObjek(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-[4px] focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Tipe</option>
 							{tipeObjekOptions.map((t) => (
@@ -478,7 +564,7 @@ export default function PerbaikanAlatPage() {
 						<select
 							value={filterKondisi}
 							onChange={(e) => setFilterKondisi(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-[4px] focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Kondisi</option>
 							{kondisiOptions.map((k) => (
@@ -492,7 +578,7 @@ export default function PerbaikanAlatPage() {
 
 						<button
 							onClick={handleReset}
-							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
+							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-[4px] transition-colors whitespace-nowrap"
 							title="Reset semua filter"
 						>
 							<RefreshCw className="w-3.5 h-3.5" />
@@ -506,15 +592,33 @@ export default function PerbaikanAlatPage() {
 					<table className="w-full text-left border-collapse">
 						<thead className="bg-gray-50/95 backdrop-blur-sm">
 							<tr className="border-b border-gray-300">
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">No</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">Kode Alat</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left">Nama Peralatan</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">Tipe Objek</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">Plant</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left">Lokasi</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">Kondisi</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">Tgl Diperbarui</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">Aksi</th>
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
+									No
+								</th>
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+									Kode Alat
+								</th>
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left">
+									Nama Peralatan
+								</th>
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+									Tipe Objek
+								</th>
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+									Plant
+								</th>
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left">
+									Lokasi
+								</th>
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+									Kondisi
+								</th>
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+									Tgl Diperbarui
+								</th>
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+									Aksi
+								</th>
 							</tr>
 						</thead>
 						<tbody className="bg-white">
@@ -533,33 +637,37 @@ export default function PerbaikanAlatPage() {
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
-												{searchQuery || filterPlant || filterTipeObjek || filterKondisi
+												{hasActiveFilter
 													? "Hasil Pencarian Tidak Ditemukan"
-													: activeTab === "antrean"
-														? "Tidak Ada Antrean Perbaikan"
-														: "Belum Ada Riwayat Perbaikan"}
+													: `Tidak Ada Data — ${REPAIR_STATUS_LABEL[activeTab]}`}
 											</p>
 											<p className="text-[11px] text-gray-500 mt-1">
-												{searchQuery || filterPlant || filterTipeObjek || filterKondisi
+												{hasActiveFilter
 													? "Coba sesuaikan kata kunci atau filter pencarian Anda."
-													: activeTab === "antrean"
-														? "Saat ini belum ada peralatan yang membutuhkan perbaikan."
-														: "Peralatan yang telah selesai diperbaiki akan muncul di sini."}
+													: EMPTY_HINT[activeTab]}
 											</p>
 										</div>
 									</td>
 								</tr>
 							) : (
 								paginatedEquipments.map((asset, index) => (
-									<tr key={asset.id} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
+									<tr
+										key={asset.id}
+										className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
+									>
 										<td className="px-3 py-3 text-[15px] text-gray-500 font-medium text-center">
 											{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
 										<td className="px-3 py-3 text-[15px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
 											{asset.kodeAlat}
 										</td>
-										<td className="px-3 py-3 text-[15px] font-semibold text-gray-800 text-left" title={asset.namaAlat}>
-											<span className="leading-tight line-clamp-2 block text-left">{asset.namaAlat}</span>
+										<td
+											className="px-3 py-3 text-[15px] font-semibold text-gray-800 text-left"
+											title={asset.namaAlat}
+										>
+											<span className="leading-tight line-clamp-2 block text-left">
+												{asset.namaAlat}
+											</span>
 										</td>
 										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
 											{asset.tipeObjek}
@@ -588,35 +696,17 @@ export default function PerbaikanAlatPage() {
 										</td>
 										<td className="px-3 py-3 text-center">
 											<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
-												{asset.statusAset === "READY_TO_USE" ? (
-													<span className="inline-flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all shadow-sm">
-														<CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-														Selesai
-													</span>
-												) : asset.statusAset === "REVALIDATION" ? (
-													<span className="inline-flex items-center justify-center gap-1.5 bg-blue-50 text-[#0A356A] border border-blue-200 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all shadow-sm">
-														<ClipboardCheck className="w-3.5 h-3.5 text-[#0A356A]" />
-														Menunggu Persetujuan Rendal
-													</span>
-												) : asset.statusAset === "REPAIR_COMPLETED" ? (
-													<span className="inline-flex items-center justify-center gap-1.5 bg-amber-50 text-amber-700 border border-amber-200 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all shadow-sm">
-														<RefreshCw className="w-3.5 h-3.5 text-amber-600" />
-														Menunggu Validasi Ulang
-													</span>
-												) : asset.statusAset === "SCRAP" ? (
-													<span className="inline-flex items-center justify-center gap-1.5 bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-md text-[11px] font-bold transition-all shadow-sm">
-														<XCircle className="w-3.5 h-3.5 text-red-600" />
-														Rekomendasi Scrap
-													</span>
-												) : (
+												{asset.status === "REPAIR" ? (
 													<button
 														onClick={() => handleOpenModal(asset)}
-														className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] hover:bg-[#062854] text-white px-3 py-1.5 rounded-md text-[13px] font-bold transition-all shadow-sm"
-														title="Selesaikan Perbaikan"
+														className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] hover:bg-[#062854] text-white px-3 py-1.5 rounded-[4px] text-[13px] font-bold transition-all shadow-sm"
+														title="Catat hasil perbaikan"
 													>
 														<Wrench className="w-3.5 h-3.5" />
 														Selesaikan
 													</button>
+												) : (
+													<StatusBadge status={asset.status} />
 												)}
 											</div>
 										</td>
@@ -634,34 +724,40 @@ export default function PerbaikanAlatPage() {
 						{filteredEquipments.length === 0
 							? 0
 							: (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
-						- {Math.min(currentPage * ITEMS_PER_PAGE, filteredEquipments.length)}{" "}
-						dari {filteredEquipments.length} data ({ITEMS_PER_PAGE} baris/halaman)
+						- {Math.min(currentPage * ITEMS_PER_PAGE, filteredEquipments.length)} dari{" "}
+						{filteredEquipments.length} data ({ITEMS_PER_PAGE} baris/halaman)
 					</span>
 					<div className="flex items-center gap-1.5">
 						<button
 							onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
 							disabled={currentPage === 1}
-							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-[4px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
 						>
 							Prev
 						</button>
 						<div className="flex items-center gap-1">
-							{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map((page) => (
-								<button
-									key={page}
-									onClick={() => setCurrentPage(page)}
-									className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
-										currentPage === page ? "bg-[#0A356A] text-white" : "text-gray-600 hover:bg-gray-100"
-									}`}
-								>
-									{page}
-								</button>
-							))}
+							{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map(
+								(page) => (
+									<button
+										key={page}
+										onClick={() => setCurrentPage(page)}
+										className={`w-6 h-6 rounded-[4px] text-[11px] font-bold flex items-center justify-center transition-colors ${
+											currentPage === page
+												? "bg-[#0A356A] text-white"
+												: "text-gray-600 hover:bg-gray-100"
+										}`}
+									>
+										{page}
+									</button>
+								),
+							)}
 						</div>
 						<button
-							onClick={() => setCurrentPage((p) => Math.min(Math.max(1, totalPages), p + 1))}
+							onClick={() =>
+								setCurrentPage((p) => Math.min(Math.max(1, totalPages), p + 1))
+							}
 							disabled={currentPage === Math.max(1, totalPages)}
-							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-[4px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
 						>
 							Next
 						</button>
@@ -671,117 +767,310 @@ export default function PerbaikanAlatPage() {
 
 			{/* Modal */}
 			{isModalOpen && selectedAsset && (
-				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-					<div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0F172A]/50 animate-in fade-in duration-200">
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-label={`Pencatatan hasil perbaikan ${selectedAsset.kodeAlat}`}
+						className="bg-white rounded-[4px] shadow-[0_8px_24px_-4px_rgb(15_23_42_/_0.12)] w-full max-w-4xl overflow-hidden border border-[#E6E8EA] flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+					>
 						{/* Modal Header */}
-						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
+						<div className="flex items-center justify-between px-5 py-4 border-b border-[#E6E8EA] bg-[#0A356A]">
 							<div className="flex items-center gap-3">
-								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
-									<Wrench className="w-5 h-5 text-white" />
+								<div className="w-9 h-9 rounded-[4px] bg-white/10 flex items-center justify-center">
+									<Wrench className="w-4 h-4 text-white" aria-hidden="true" />
 								</div>
 								<div>
-									<h2 className="text-base font-bold text-white">Pencatatan Hasil Perbaikan</h2>
-									<p className="text-xs text-blue-100">
-										{selectedAsset.kodeAlat} - {selectedAsset.namaAlat}
+									<h2 className="text-[14px] font-semibold text-white">
+										Pencatatan Hasil Perbaikan
+									</h2>
+									<p className="text-[12px] text-white/70">
+										{selectedAsset.kodeAlat} · {selectedAsset.namaAlat}
 									</p>
 								</div>
 							</div>
 							<button
 								onClick={handleCloseModal}
 								disabled={isSubmitting}
-								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50"
+								aria-label="Tutup dialog"
+								className="text-white/70 hover:text-white p-1.5 rounded-[4px] hover:bg-white/10 transition-colors duration-[140ms] ease-out disabled:opacity-50"
 							>
-								<X className="w-5 h-5" />
+								<X className="w-4 h-4" aria-hidden="true" />
 							</button>
 						</div>
 
-						{/* Form */}
-						<form onSubmit={handleSubmit} className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
-							{/* Info box */}
-							<div className="bg-gray-50 rounded-lg p-3 border border-gray-200 text-xs text-gray-600 leading-normal">
-								Lengkapi detail realisasi perbaikan di bawah ini untuk mengubah status peralatan menjadi{" "}
-								<strong className="text-[#0A356A]">Ready to Use</strong>.
-							</div>
+						<div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] overflow-y-auto flex-1 divide-y lg:divide-y-0 lg:divide-x divide-[#E6E8EA]">
+							{/* Detail Equipment */}
+							<aside className="p-5 space-y-4 bg-[#F8FAFC]">
+								<h3 className="text-[13px] font-semibold text-[#0F172A]">
+									Detail Peralatan
+								</h3>
 
-							{/* Biaya Aktual */}
-							<div>
-								<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-									Biaya Aktual Perbaikan (Rupiah) <span className="text-red-500">*</span>
-								</label>
-								<input
-									type="text"
-									value={displayCost}
-									onChange={handleCostChange}
-									className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-mono"
-								/>
-								<p className="text-[11px] text-gray-500 mt-1">Format ketikan otomatis menjadi mata uang Rupiah.</p>
-							</div>
+								{/* Foto */}
+								{selectedAsset.foto.length > 0 ? (
+									<div className="space-y-2">
+										<button
+											type="button"
+											onClick={() => setPreviewImage(selectedAsset.foto[0])}
+											className="block w-full aspect-[4/3] overflow-hidden rounded-[4px] border border-[#E6E8EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#334155] focus:ring-offset-1"
+											aria-label="Perbesar foto utama peralatan"
+										>
+											{/* eslint-disable-next-line @next/next/no-img-element -- file_url berasal dari host backend dinamis, tidak terdaftar di images.remotePatterns */}
+											<img
+												src={selectedAsset.foto[0]}
+												alt={`Foto peralatan ${selectedAsset.namaAlat}`}
+												className="w-full h-full object-cover"
+											/>
+										</button>
+										{selectedAsset.foto.length > 1 && (
+											<div className="grid grid-cols-4 gap-2">
+												{selectedAsset.foto.slice(1, 5).map((url, i) => (
+													<button
+														key={url}
+														type="button"
+														onClick={() => setPreviewImage(url)}
+														className="aspect-square overflow-hidden rounded-[4px] border border-[#E6E8EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#334155] focus:ring-offset-1"
+														aria-label={`Perbesar foto peralatan ${i + 2}`}
+													>
+														{/* eslint-disable-next-line @next/next/no-img-element -- lihat catatan foto utama */}
+														<img src={url} alt="" className="w-full h-full object-cover" />
+													</button>
+												))}
+											</div>
+										)}
+									</div>
+								) : (
+									<div className="aspect-[4/3] rounded-[4px] border border-[#E6E8EA] bg-white flex flex-col items-center justify-center gap-1.5 text-[#64748B]">
+										<ImageOff className="w-5 h-5" aria-hidden="true" />
+										<p className="text-[12px]">Belum ada foto peralatan.</p>
+									</div>
+								)}
 
-							{/* Grid: Kondisi & Preservasi */}
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-4 items-start">
-								<div className="flex flex-col">
-									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5 min-h-[32px] flex items-end">
-										<span>Kondisi Aset Setelah Perbaikan <span className="text-red-500">*</span></span>
-									</label>
-									<select
-										value={conditionId}
-										onChange={(e) => setConditionId(e.target.value)}
-										className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium text-gray-800 cursor-pointer"
-									>
-										<option value="">-- Pilih Kondisi --</option>
-										<option value="1">Bagus</option>
-										<option value="2">Rusak Ringan</option>
-									</select>
-									<p className="text-[11px] text-gray-500 mt-1.5 leading-tight">
-										Pilih kondisi fisik aktual aset setelah perbaikan selesai.
-									</p>
+								<dl className="divide-y divide-[#E6E8EA] border-t border-[#E6E8EA]">
+									{[
+										["Kode Alat", selectedAsset.kodeAlat],
+										["Tipe Objek", selectedAsset.tipeObjek],
+										["Plant", selectedAsset.plant],
+										["Lokasi Simpan", selectedAsset.lokasiPenyimpanan],
+										["Functional Location", selectedAsset.funcLoc],
+										["Vendor", selectedAsset.vendor],
+										["Tahun", selectedAsset.tahun > 0 ? selectedAsset.tahun : "—"],
+										["Kondisi", selectedAsset.kondisi],
+										["Idle Sejak", selectedAsset.idleSejak],
+										["Alasan Idle", selectedAsset.alasanIdle],
+										["Nilai Perolehan", rupiah(selectedAsset.nilaiPerolehan)],
+										["Nilai Buku", rupiah(selectedAsset.nilaiBuku)],
+										[
+											"Estimasi Nilai Guna Ulang",
+											rupiah(selectedAsset.estimasiNilaiGunaUlang),
+										],
+										["Terakhir Diperbarui", selectedAsset.terakhirDiperbarui],
+									].map(([label, value]) => (
+										<div
+											key={label}
+											className="flex items-baseline justify-between gap-3 py-2"
+										>
+											<dt className="text-[12px] font-medium text-[#64748B] shrink-0">
+												{label}
+											</dt>
+											<dd className="text-[13px] text-[#0F172A] text-right tabular-nums">
+												{value}
+											</dd>
+										</div>
+									))}
+								</dl>
+
+								{selectedAsset.catatan && (
+									<div className="border-t border-[#E6E8EA] pt-3">
+										<p className="text-[12px] font-medium text-[#64748B] mb-1">
+											Catatan Aset
+										</p>
+										<p className="text-[13px] text-[#0F172A] leading-relaxed">
+											{selectedAsset.catatan}
+										</p>
+									</div>
+								)}
+							</aside>
+
+							{/* Form */}
+							<form onSubmit={handleSubmit} className="flex flex-col">
+								<div className="px-5 py-5 space-y-4 flex-1">
+									<h3 className="text-[13px] font-semibold text-[#0F172A]">
+										Realisasi Perbaikan
+									</h3>
+
+									{/* Periode Perbaikan */}
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+										<div>
+											<label
+												htmlFor="repair-start"
+												className="text-[12px] font-medium text-[#64748B] block mb-1.5"
+											>
+												Tanggal Mulai <span className="text-[#DC2626]">*</span>
+											</label>
+											<input
+												id="repair-start"
+												type="date"
+												value={startAt}
+												max={endAt || undefined}
+												onChange={(e) => setStartAt(e.target.value)}
+												className="w-full h-10 px-3 text-[13px] text-[#0F172A] bg-white border border-[#E6E8EA] rounded-[4px] focus:border-[#334155] focus:ring-2 focus:ring-[#334155] focus:ring-offset-1 outline-none transition-colors duration-[140ms] ease-out"
+											/>
+										</div>
+										<div>
+											<label
+												htmlFor="repair-end"
+												className="text-[12px] font-medium text-[#64748B] block mb-1.5"
+											>
+												Tanggal Selesai <span className="text-[#DC2626]">*</span>
+											</label>
+											<input
+												id="repair-end"
+												type="date"
+												value={endAt}
+												min={startAt || undefined}
+												aria-invalid={!isDateRangeValid}
+												onChange={(e) => setEndAt(e.target.value)}
+												className="w-full h-10 px-3 text-[13px] text-[#0F172A] bg-white border border-[#E6E8EA] rounded-[4px] focus:border-[#334155] focus:ring-2 focus:ring-[#334155] focus:ring-offset-1 outline-none transition-colors duration-[140ms] ease-out"
+											/>
+											{!isDateRangeValid && (
+												<p className="text-[12px] text-[#DC2626] mt-1">
+													Tanggal selesai tidak boleh sebelum tanggal mulai.
+												</p>
+											)}
+										</div>
+									</div>
+
+									{/* Biaya Aktual */}
+									<div>
+										<label
+											htmlFor="repair-cost"
+											className="text-[12px] font-medium text-[#64748B] block mb-1.5"
+										>
+											Biaya Aktual Perbaikan <span className="text-[#DC2626]">*</span>
+										</label>
+										<input
+											id="repair-cost"
+											type="text"
+											inputMode="numeric"
+											value={displayCost}
+											aria-invalid={!isCostValid}
+											onChange={handleCostChange}
+											className="w-full h-10 px-3 text-[13px] text-[#0F172A] bg-white border border-[#E6E8EA] rounded-[4px] focus:border-[#334155] focus:ring-2 focus:ring-[#334155] focus:ring-offset-1 outline-none transition-colors duration-[140ms] ease-out tabular-nums"
+										/>
+										<p className="text-[12px] text-[#64748B] mt-1">
+											Wajib lebih dari Rp 0. Estimasi awal:{" "}
+											{rupiah(selectedAsset.estimasiNilaiGunaUlang)}.
+										</p>
+									</div>
+
+									{/* Status Preservasi */}
+									<div>
+										<label
+											htmlFor="repair-preservation"
+											className="text-[12px] font-medium text-[#64748B] block mb-1.5"
+										>
+											Status Preservasi Terbaru <span className="text-[#DC2626]">*</span>
+										</label>
+										<select
+											id="repair-preservation"
+											value={preservationStatus}
+											onChange={(e) => setPreservationStatus(e.target.value)}
+											className="w-full h-10 px-3 text-[13px] text-[#0F172A] bg-white border border-[#E6E8EA] rounded-[4px] focus:border-[#334155] focus:ring-2 focus:ring-[#334155] focus:ring-offset-1 outline-none transition-colors duration-[140ms] ease-out cursor-pointer"
+										>
+											<option value="">Pilih status preservasi</option>
+											<option value="Preserved">Preserved</option>
+											<option value="Not Preserved">Not Preserved</option>
+										</select>
+										<p className="text-[12px] text-[#64748B] mt-1.5">
+											Pilih apakah aset masih memerlukan preservasi setelah perbaikan.
+										</p>
+									</div>
+
+									{/* Deskripsi Pekerjaan & Catatan */}
+									<div>
+										<label
+											htmlFor="repair-work"
+											className="text-[12px] font-medium text-[#64748B] block mb-1.5"
+										>
+											Deskripsi Pekerjaan
+										</label>
+										<textarea
+											id="repair-work"
+											value={workDescription}
+											rows={3}
+											onChange={(e) => setWorkDescription(e.target.value)}
+											placeholder="Pekerjaan perbaikan yang dilakukan..."
+											className="w-full px-3 py-2 text-[13px] text-[#0F172A] bg-white border border-[#E6E8EA] rounded-[4px] focus:border-[#334155] focus:ring-2 focus:ring-[#334155] focus:ring-offset-1 outline-none transition-colors duration-[140ms] ease-out resize-none"
+										/>
+									</div>
+
+									<div>
+										<label
+											htmlFor="repair-notes"
+											className="text-[12px] font-medium text-[#64748B] block mb-1.5"
+										>
+											Catatan
+										</label>
+										<textarea
+											id="repair-notes"
+											value={notes}
+											rows={3}
+											onChange={(e) => setNotes(e.target.value)}
+											placeholder="Catatan tambahan (opsional)..."
+											className="w-full px-3 py-2 text-[13px] text-[#0F172A] bg-white border border-[#E6E8EA] rounded-[4px] focus:border-[#334155] focus:ring-2 focus:ring-[#334155] focus:ring-offset-1 outline-none transition-colors duration-[140ms] ease-out resize-none"
+										/>
+									</div>
 								</div>
 
-								<div className="flex flex-col">
-									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5 min-h-[32px] flex items-end">
-										<span>Status Preservasi Terbaru <span className="text-red-500">*</span></span>
-									</label>
-									<select
-										value={preservationStatus}
-										onChange={(e) => setPreservationStatus(e.target.value)}
-										className="w-full h-10 px-3 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium text-gray-800 cursor-pointer"
+								{/* Footer */}
+								<div className="px-5 py-4 border-t border-[#E6E8EA] bg-[#F8FAFC] flex justify-end gap-3">
+									<button
+										type="button"
+										disabled={isSubmitting}
+										onClick={handleCloseModal}
+										className="min-h-[44px] px-4 text-[13px] font-medium text-[#334155] bg-white border border-[#E6E8EA] rounded-[4px] hover:bg-[#F2F3F4] transition-colors duration-[140ms] ease-out disabled:opacity-50"
 									>
-										<option value="">-- Pilih Preservasi --</option>
-										<option value="Preserved">Preserved</option>
-										<option value="Not Preserved">Not Preserved</option>
-									</select>
-									<p className="text-[11px] text-gray-500 mt-1.5 leading-tight">
-										Pilih apakah aset masih memerlukan preservasi setelah perbaikan.
-									</p>
+										Batal
+									</button>
+									<button
+										type="submit"
+										disabled={isFormInvalid || isSubmitting}
+										className="min-h-[44px] flex items-center gap-2 px-5 text-[13px] font-semibold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-[4px] transition-colors duration-[140ms] ease-out disabled:opacity-50 disabled:cursor-not-allowed"
+									>
+										{isSubmitting ? (
+											<Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+										) : (
+											<CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+										)}
+										{isSubmitting ? "Menyimpan..." : "Selesai Perbaikan"}
+									</button>
 								</div>
-							</div>
-
-							{/* Footer */}
-							<div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 -mx-6 -mb-5 mt-4">
-								<button
-									type="button"
-									disabled={isSubmitting}
-									onClick={handleCloseModal}
-									className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-								>
-									Batal
-								</button>
-								<button
-									type="submit"
-									disabled={isFormInvalid || isSubmitting}
-									className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
-								>
-									{isSubmitting ? (
-										<Loader2 className="w-4 h-4 animate-spin" />
-									) : (
-										<CheckCircle2 className="w-4 h-4" />
-									)}
-									{isSubmitting ? "Menyimpan..." : "Selesai Perbaikan"}
-								</button>
-							</div>
-						</form>
+							</form>
+						</div>
 					</div>
 				</div>
+			)}
+
+			{/* Lightbox foto peralatan */}
+			{previewImage && (
+				<button
+					type="button"
+					aria-label="Tutup pratinjau foto"
+					onClick={() => setPreviewImage(null)}
+					className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-[#0F172A]/80 animate-in fade-in duration-200"
+				>
+					{/* eslint-disable-next-line @next/next/no-img-element -- file_url berasal dari host backend dinamis */}
+					<img
+						src={previewImage}
+						alt="Pratinjau foto peralatan"
+						className="max-w-full max-h-full object-contain rounded-[4px] border border-white/20"
+					/>
+					<X
+						className="absolute top-5 right-5 w-5 h-5 text-white/80"
+						aria-hidden="true"
+					/>
+				</button>
 			)}
 		</div>
 	);

@@ -10,6 +10,7 @@ import {
 	getInspections,
 	getDisposalMethods,
 	createDisposalRequest,
+	getValidations,
 } from "@/action/api";
 import {
 	Trash2,
@@ -48,6 +49,9 @@ interface Inspection {
 	equipment_id: number;
 	notes: string;
 	is_utilizable?: boolean;
+	condition?: { name?: string };
+	require_action?: { name?: string };
+	followup_recommendation?: string;
 }
 
 interface DisposalMethod {
@@ -89,15 +93,17 @@ export default function RendalScrapPage() {
 	// Modal State
 	const [selectedAsset, setSelectedAsset] = useState<Equipment | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
-	const [selectedHistoryItem, setSelectedHistoryItem] = useState<DisposalItem | null>(null);
+	const [selectedHistoryItem, setSelectedHistoryItem] =
+		useState<DisposalItem | null>(null);
 	const [isDetailOpen, setIsDetailOpen] = useState(false);
 
 	// Form Fields State
-	const [disposalNumber, setDisposalNumber] = useState("");
 	const [verificationDate, setVerificationDate] = useState("");
 	const [disposalMethodId, setDisposalMethodId] = useState("");
 	const [justification, setJustification] = useState("");
 	const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+	// Hasil validasi teknik (GET /api/validation) — sumber alasan & rekomendasi scrap.
+	const [assetValidation, setAssetValidation] = useState<any>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [notification, setNotification] = useState<{
 		type: "success" | "error";
@@ -132,8 +138,7 @@ export default function RendalScrapPage() {
 
 			const mappedEq = (eqData || []).map((item: any) => {
 				const rawStatus =
-					(typeof item.status === "string" ? item.status : item.status?.name) ||
-					"";
+					(typeof item.status === "string" ? item.status : item.status?.name) || "";
 				const objectTypeName =
 					item.object_type?.name || item.objectType?.name || "Belum Ditentukan";
 
@@ -142,7 +147,12 @@ export default function RendalScrapPage() {
 
 				// If equipment has a disposal-recommending inspection, override status
 				const eqId = item.id?.toString() || "-";
-				if (disposalInspectedIds.has(eqId) && !["DISPOSAL_RECOMMENDED", "SCRAP", "RUSAK_BERAT"].includes(normalizedStatus)) {
+				if (
+					disposalInspectedIds.has(eqId) &&
+					!["DISPOSAL_RECOMMENDED", "SCRAP", "RUSAK_BERAT"].includes(
+						normalizedStatus,
+					)
+				) {
 					normalizedStatus = "DISPOSAL_RECOMMENDED";
 				}
 
@@ -209,8 +219,7 @@ export default function RendalScrapPage() {
 		return equipments.filter((eq) => {
 			const normalized = eq.statusAset.replace(/\s+/g, "_");
 			const isRecommended =
-				disposalStatuses.has(eq.statusAset) ||
-				disposalStatuses.has(normalized);
+				disposalStatuses.has(eq.statusAset) || disposalStatuses.has(normalized);
 			const isNotSubmitted = !submittedIds.has(eq.id);
 			const matchSearch =
 				!query ||
@@ -226,14 +235,17 @@ export default function RendalScrapPage() {
 		return disposals.filter((item) => {
 			const matchSearch =
 				!query ||
-				(item.disposal_number && item.disposal_number.toLowerCase().includes(query)) ||
-				(item.equipment_code && item.equipment_code.toLowerCase().includes(query)) ||
+				(item.disposal_number &&
+					item.disposal_number.toLowerCase().includes(query)) ||
+				(item.equipment_code &&
+					item.equipment_code.toLowerCase().includes(query)) ||
 				(item.equipment_name && item.equipment_name.toLowerCase().includes(query));
 			return matchSearch;
 		});
 	}, [disposals, search]);
 
-	const currentListLength = activeTab === "inbox" ? pendingAssets.length : historyRequests.length;
+	const currentListLength =
+		activeTab === "inbox" ? pendingAssets.length : historyRequests.length;
 
 	const paginatedAssets = useMemo(() => {
 		const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -247,13 +259,9 @@ export default function RendalScrapPage() {
 
 	const totalPages = Math.ceil(currentListLength / ITEMS_PER_PAGE) || 1;
 
-	const handleOpenVerification = (asset: Equipment) => {
+	const handleOpenVerification = async (asset: Equipment) => {
 		setSelectedAsset(asset);
-
-		const currentYear = new Date().getFullYear();
-		const count = disposals.length + 1;
-		const autoNumber = `DSP-${currentYear}-${String(count).padStart(4, "0")}`;
-		setDisposalNumber(autoNumber);
+		setAssetValidation(null);
 
 		const todayStr = new Date().toISOString().split("T")[0];
 		setVerificationDate(todayStr);
@@ -267,6 +275,11 @@ export default function RendalScrapPage() {
 		setJustification("");
 		setUploadedFile(null);
 		setIsModalOpen(true);
+
+		const validations = await getValidations(asset.id);
+		if (Array.isArray(validations) && validations.length > 0) {
+			setAssetValidation(validations[0]);
+		}
 	};
 
 	// Find latest inspection details for selected asset
@@ -279,6 +292,32 @@ export default function RendalScrapPage() {
 		);
 	}, [selectedAsset, inspections]);
 
+	// Hasil inspeksi & alasan scrap: validasi teknik lebih otoritatif dari inspeksi berkala.
+	const inspectionResult = useMemo(() => {
+		const source = assetValidation || assetInspection;
+		if (!source) return null;
+		const condition = source.condition?.name || source.condition_name;
+		const action = source.require_action?.name;
+		const utilizable = source.is_utilizable;
+		const label =
+			utilizable === false
+				? "Tidak Layak"
+				: utilizable === true
+					? "Layak"
+					: condition || null;
+		if (!label) return null;
+		return action ? `${label} (${action})` : label;
+	}, [assetValidation, assetInspection]);
+
+	const scrapReason = useMemo(
+		() =>
+			assetValidation?.followup_recommendation ||
+			assetValidation?.notes ||
+			assetInspection?.notes ||
+			null,
+		[assetValidation, assetInspection],
+	);
+
 	const handleSubmitVerification = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!selectedAsset) return;
@@ -286,7 +325,6 @@ export default function RendalScrapPage() {
 		setIsSubmitting(true);
 		try {
 			const payload = {
-				disposal_number: disposalNumber,
 				equipment_id: Number(selectedAsset.id),
 				disposal_method_id: Number(disposalMethodId),
 				scrap_value: 0,
@@ -304,9 +342,7 @@ export default function RendalScrapPage() {
 					fd.append("file", uploadedFile);
 					fd.append("category", "disposal_attachment");
 
-					const tokenMatch = document.cookie.match(
-						/(^|;)\s*token\s*=\s*([^;]+)/,
-					);
+					const tokenMatch = document.cookie.match(/(^|;)\s*token\s*=\s*([^;]+)/);
 					const token = tokenMatch ? tokenMatch[2] : "";
 					const API_URL =
 						process.env.NEXT_PUBLIC_API_URL || "https://api.testing.naufal.me";
@@ -315,9 +351,7 @@ export default function RendalScrapPage() {
 						method: "POST",
 						headers: { Authorization: `Bearer ${token}` },
 						body: fd,
-					}).catch((err) =>
-						console.error("Error uploading scrap doc:", err),
-					);
+					}).catch((err) => console.error("Error uploading scrap doc:", err));
 				}
 
 				// Update local state so item instantly moves from Inbox to History with PENDING status
@@ -326,7 +360,8 @@ export default function RendalScrapPage() {
 				);
 				const newDisposalItem: DisposalItem = {
 					id: String(res.data?.id || `DSP-${Date.now()}`),
-					disposal_number: disposalNumber,
+					// Nomor usulan berasal dari backend (DISP-<tahun>-<seq>).
+					disposal_number: res.data?.disposal_number || "-",
 					equipment_id: String(selectedAsset.id),
 					equipment_code: selectedAsset.kodeAlat,
 					equipment_name: selectedAsset.namaAlat,
@@ -363,7 +398,10 @@ export default function RendalScrapPage() {
 			}
 		} catch (err) {
 			console.error(err);
-			showToast("error", "Terjadi kesalahan sistem saat mengirim permintaan scrap.");
+			showToast(
+				"error",
+				"Terjadi kesalahan sistem saat mengirim permintaan scrap.",
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -379,9 +417,7 @@ export default function RendalScrapPage() {
 					) : (
 						<XCircle className="w-4 h-4 text-red-400" />
 					)}
-					<span className="text-[13px] font-medium">
-						{notification.message}
-					</span>
+					<span className="text-[13px] font-medium">{notification.message}</span>
 				</div>
 			)}
 
@@ -390,9 +426,7 @@ export default function RendalScrapPage() {
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
 					<span>Rendal Pemeliharaan</span>
 					<ChevronRight className="w-3.5 h-3.5" />
-					<span className="text-[#0A356A] font-semibold">
-						Permintaan Scrap
-					</span>
+					<span className="text-[#0A356A] font-semibold">Permintaan Scrap</span>
 				</div>
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 					<div>
@@ -400,7 +434,8 @@ export default function RendalScrapPage() {
 							Permintaan Scrap
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Kelola antrean permohonan scrap peralatan Rusak Berat serta pantau riwayat persetujuan Manajer Rendal.
+							Kelola antrean permohonan scrap peralatan Rusak Berat serta pantau
+							riwayat persetujuan Manajer Rendal.
 						</p>
 					</div>
 					<button
@@ -431,7 +466,11 @@ export default function RendalScrapPage() {
 							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
 						</span>
 						<span className="text-[13px] text-blue-800 font-medium">
-							Terdapat <strong className="font-bold">{pendingAssets.length} aset Rusak Berat (Scrap)</strong> siap diajukan permohonan scrap ke Manajer.
+							Terdapat{" "}
+							<strong className="font-bold">
+								{pendingAssets.length} aset Rusak Berat (Scrap)
+							</strong>{" "}
+							siap diajukan permohonan scrap ke Manajer.
 						</span>
 					</div>
 				</div>
@@ -540,7 +579,10 @@ export default function RendalScrapPage() {
 							<tbody className="bg-white divide-y divide-gray-100">
 								{isLoading ? (
 									<tr>
-										<td colSpan={8} className="px-4 py-8 text-center text-xs text-gray-500">
+										<td
+											colSpan={8}
+											className="px-4 py-8 text-center text-xs text-gray-500"
+										>
 											<div className="flex flex-col items-center">
 												<Loader2 className="w-5 h-5 text-[#0A356A] animate-spin mb-2" />
 												<p className="font-medium">Memuat data...</p>
@@ -549,12 +591,13 @@ export default function RendalScrapPage() {
 									</tr>
 								) : paginatedAssets.length === 0 ? (
 									<tr>
-										<td colSpan={8} className="px-4 py-8 text-center text-xs text-gray-500">
+										<td
+											colSpan={8}
+											className="px-4 py-8 text-center text-xs text-gray-500"
+										>
 											<div className="flex flex-col items-center">
 												<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
-												<p className="font-bold text-gray-900">
-													Tidak Ada Data
-												</p>
+												<p className="font-bold text-gray-900">Tidak Ada Data</p>
 												<p className="text-[11px] text-gray-500 mt-1">
 													Tidak ada peralatan Rusak Berat yang menunggu permintaan scrap.
 												</p>
@@ -570,10 +613,16 @@ export default function RendalScrapPage() {
 											<td className="px-2 py-2 text-xs text-gray-500 font-medium text-center">
 												{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
 											</td>
-											<td className="px-2 py-2 text-xs font-bold text-[#0A356A] text-center truncate" title={asset.kodeAlat}>
+											<td
+												className="px-2 py-2 text-xs font-bold text-[#0A356A] text-center truncate"
+												title={asset.kodeAlat}
+											>
 												{asset.kodeAlat}
 											</td>
-											<td className="px-2 py-2 text-xs font-semibold text-gray-800 text-left truncate" title={asset.namaAlat}>
+											<td
+												className="px-2 py-2 text-xs font-semibold text-gray-800 text-left truncate"
+												title={asset.namaAlat}
+											>
 												<span className="leading-tight line-clamp-2 block text-left">
 													{asset.namaAlat}
 												</span>
@@ -581,10 +630,16 @@ export default function RendalScrapPage() {
 											<td className="px-2 py-2 text-xs text-gray-600 font-medium text-center truncate">
 												{asset.plant}
 											</td>
-											<td className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate" title={asset.storageLocation}>
+											<td
+												className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate"
+												title={asset.storageLocation}
+											>
 												{asset.storageLocation}
 											</td>
-											<td className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate" title={asset.jenisAlat}>
+											<td
+												className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate"
+												title={asset.jenisAlat}
+											>
 												{asset.jenisAlat}
 											</td>
 											<td className="px-2 py-2 text-center whitespace-nowrap">
@@ -638,7 +693,10 @@ export default function RendalScrapPage() {
 							<tbody className="bg-white divide-y divide-gray-100">
 								{isLoading ? (
 									<tr>
-										<td colSpan={7} className="px-4 py-8 text-center text-xs text-gray-500">
+										<td
+											colSpan={7}
+											className="px-4 py-8 text-center text-xs text-gray-500"
+										>
 											<div className="flex flex-col items-center">
 												<Loader2 className="w-5 h-5 text-[#0A356A] animate-spin mb-2" />
 												<p className="font-medium">Memuat data riwayat...</p>
@@ -647,12 +705,13 @@ export default function RendalScrapPage() {
 									</tr>
 								) : paginatedHistory.length === 0 ? (
 									<tr>
-										<td colSpan={7} className="px-4 py-8 text-center text-xs text-gray-500">
+										<td
+											colSpan={7}
+											className="px-4 py-8 text-center text-xs text-gray-500"
+										>
 											<div className="flex flex-col items-center">
 												<Clock className="w-6 h-6 text-gray-300 mb-2" />
-												<p className="font-bold text-gray-900">
-													Belum Ada Riwayat
-												</p>
+												<p className="font-bold text-gray-900">Belum Ada Riwayat</p>
 												<p className="text-[11px] text-gray-500 mt-1">
 													Belum ada permohonan scrap yang pernah diajukan.
 												</p>
@@ -674,7 +733,10 @@ export default function RendalScrapPage() {
 											<td className="px-2 py-2 text-xs font-bold text-gray-900 text-center truncate">
 												{item.equipment_code || "-"}
 											</td>
-											<td className="px-2 py-2 text-xs font-semibold text-gray-800 text-left truncate" title={item.equipment_name}>
+											<td
+												className="px-2 py-2 text-xs font-semibold text-gray-800 text-left truncate"
+												title={item.equipment_name}
+											>
 												<span className="leading-tight line-clamp-2 block text-left">
 													{item.equipment_name || "-"}
 												</span>
@@ -726,11 +788,9 @@ export default function RendalScrapPage() {
 					<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
 						<span className="text-[11px] font-medium text-gray-500">
 							Menampilkan{" "}
-							{currentListLength === 0
-								? 0
-								: (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
-							- {Math.min(currentPage * ITEMS_PER_PAGE, currentListLength)}{" "}
-							dari {currentListLength} data ({ITEMS_PER_PAGE} baris/halaman)
+							{currentListLength === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} -{" "}
+							{Math.min(currentPage * ITEMS_PER_PAGE, currentListLength)} dari{" "}
+							{currentListLength} data ({ITEMS_PER_PAGE} baris/halaman)
 						</span>
 						<div className="flex items-center gap-1.5">
 							<button
@@ -741,19 +801,21 @@ export default function RendalScrapPage() {
 								Prev
 							</button>
 							<div className="flex items-center gap-1">
-								{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map((page) => (
-									<button
-										key={page}
-										onClick={() => setCurrentPage(page)}
-										className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors cursor-pointer ${
-											currentPage === page
-												? "bg-[#0A356A] text-white"
-												: "text-gray-600 hover:bg-gray-100"
-										}`}
-									>
-										{page}
-									</button>
-								))}
+								{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map(
+									(page) => (
+										<button
+											key={page}
+											onClick={() => setCurrentPage(page)}
+											className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors cursor-pointer ${
+												currentPage === page
+													? "bg-[#0A356A] text-white"
+													: "text-gray-600 hover:bg-gray-100"
+											}`}
+										>
+											{page}
+										</button>
+									),
+								)}
 							</div>
 							<button
 								onClick={() =>
@@ -857,17 +919,26 @@ export default function RendalScrapPage() {
 											<p className="text-[10px] font-bold text-gray-400 uppercase">
 												Hasil Inspeksi
 											</p>
-											<p className="text-sm font-bold text-red-600">
-												Tidak Layak (Rekomendasi Scrap)
-											</p>
+											{inspectionResult ? (
+												<p className="text-sm font-bold text-red-600">{inspectionResult}</p>
+											) : (
+												<p className="text-sm font-medium text-gray-400 italic">
+													Belum ada hasil inspeksi
+												</p>
+											)}
 										</div>
 										<div className="col-span-2">
 											<p className="text-[10px] font-bold text-gray-400 uppercase">
 												Alasan Scrap dari Inspeksi
 											</p>
-											<p className="text-xs text-gray-600 mt-1 leading-relaxed bg-white border border-gray-200 p-2.5 rounded-lg">
-												{assetInspection?.notes ||
-													"Rekomendasi scrap dari hasil penilaian kelayakan Inspeksi Teknik."}
+											<p className="text-xs mt-1 leading-relaxed bg-white border border-gray-200 p-2.5 rounded-lg">
+												{scrapReason ? (
+													<span className="text-gray-600">{scrapReason}</span>
+												) : (
+													<span className="text-gray-400 italic">
+														Inspeksi Teknik belum mengisi alasan/rekomendasi scrap.
+													</span>
+												)}
 											</p>
 										</div>
 									</div>
@@ -886,9 +957,9 @@ export default function RendalScrapPage() {
 											</label>
 											<input
 												type="text"
-												value={disposalNumber}
+												value="Digenerate otomatis oleh sistem"
 												readOnly
-												className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 font-semibold text-gray-700 cursor-not-allowed"
+												className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 italic text-gray-500 cursor-not-allowed"
 											/>
 										</div>
 
@@ -945,9 +1016,7 @@ export default function RendalScrapPage() {
 											<input
 												type="file"
 												accept=".pdf,.png,.jpg,.jpeg"
-												onChange={(e) =>
-													setUploadedFile(e.target.files?.[0] || null)
-												}
+												onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
 												className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 											/>
 											<Upload className="w-6 h-6 text-gray-400 mb-1.5" />
@@ -979,9 +1048,7 @@ export default function RendalScrapPage() {
 									disabled={isSubmitting}
 									className="px-5 py-2 bg-[#0A356A] hover:bg-[#062854] text-white rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2 cursor-pointer"
 								>
-									{isSubmitting ? (
-										<RefreshCw className="w-4 h-4 animate-spin" />
-									) : null}
+									{isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
 									{isSubmitting ? "Mengirim..." : "Kirim ke Manajer"}
 								</button>
 							</div>
@@ -1027,29 +1094,54 @@ export default function RendalScrapPage() {
 							<div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-3">
 								<div className="grid grid-cols-2 gap-3">
 									<div>
-										<p className="text-[10px] font-bold text-gray-400 uppercase">Kode Alat</p>
-										<p className="text-sm font-bold text-[#0A356A]">{selectedHistoryItem.equipment_code || "-"}</p>
+										<p className="text-[10px] font-bold text-gray-400 uppercase">
+											Kode Alat
+										</p>
+										<p className="text-sm font-bold text-[#0A356A]">
+											{selectedHistoryItem.equipment_code || "-"}
+										</p>
 									</div>
 									<div>
-										<p className="text-[10px] font-bold text-gray-400 uppercase">Nama Alat</p>
-										<p className="text-sm font-semibold text-gray-800">{selectedHistoryItem.equipment_name || "-"}</p>
+										<p className="text-[10px] font-bold text-gray-400 uppercase">
+											Nama Alat
+										</p>
+										<p className="text-sm font-semibold text-gray-800">
+											{selectedHistoryItem.equipment_name || "-"}
+										</p>
 									</div>
 									<div>
 										<p className="text-[10px] font-bold text-gray-400 uppercase">Plant</p>
-										<p className="text-xs font-medium text-gray-700">{selectedHistoryItem.plant || "-"}</p>
+										<p className="text-xs font-medium text-gray-700">
+											{selectedHistoryItem.plant || "-"}
+										</p>
 									</div>
 									<div>
-										<p className="text-[10px] font-bold text-gray-400 uppercase">Metode Scrap</p>
-										<p className="text-xs font-semibold text-gray-800">{selectedHistoryItem.disposal_method || "Scrap"}</p>
+										<p className="text-[10px] font-bold text-gray-400 uppercase">
+											Metode Scrap
+										</p>
+										<p className="text-xs font-semibold text-gray-800">
+											{selectedHistoryItem.disposal_method || "Scrap"}
+										</p>
 									</div>
 									<div>
-										<p className="text-[10px] font-bold text-gray-400 uppercase">Tanggal Permintaan</p>
-										<p className="text-xs text-gray-700">{selectedHistoryItem.created_at ? new Date(selectedHistoryItem.created_at).toLocaleDateString("id-ID") : "-"}</p>
+										<p className="text-[10px] font-bold text-gray-400 uppercase">
+											Tanggal Permintaan
+										</p>
+										<p className="text-xs text-gray-700">
+											{selectedHistoryItem.created_at
+												? new Date(selectedHistoryItem.created_at).toLocaleDateString(
+														"id-ID",
+													)
+												: "-"}
+										</p>
 									</div>
 									<div>
-										<p className="text-[10px] font-bold text-gray-400 uppercase">Status Persetujuan</p>
+										<p className="text-[10px] font-bold text-gray-400 uppercase">
+											Status Persetujuan
+										</p>
 										<span className="inline-block mt-0.5">
-											{selectedHistoryItem.status === "DISPOSED" || selectedHistoryItem.status === "APPROVED" ? (
+											{selectedHistoryItem.status === "DISPOSED" ||
+											selectedHistoryItem.status === "APPROVED" ? (
 												<span className="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
 													<CheckCircle2 className="w-3 h-3" /> Disetujui Manajer
 												</span>
@@ -1066,9 +1158,14 @@ export default function RendalScrapPage() {
 									</div>
 								</div>
 								<div>
-									<p className="text-[10px] font-bold text-gray-400 uppercase">Justifikasi / Catatan</p>
+									<p className="text-[10px] font-bold text-gray-400 uppercase">
+										Justifikasi / Catatan
+									</p>
 									<p className="text-xs text-gray-700 mt-1 bg-white p-2.5 rounded-lg border border-gray-200 leading-relaxed italic">
-										&quot;{selectedHistoryItem.justification || "Tidak ada rincian justifikasi."}&quot;
+										&quot;
+										{selectedHistoryItem.justification ||
+											"Tidak ada rincian justifikasi."}
+										&quot;
 									</p>
 								</div>
 							</div>

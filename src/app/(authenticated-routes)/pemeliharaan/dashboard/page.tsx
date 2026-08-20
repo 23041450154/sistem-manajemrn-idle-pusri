@@ -1,541 +1,447 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
-import { getEquipments } from "@/action/api";
+import Link from "next/link";
+import { getEquipments, getEquipmentRepairs } from "@/action/api";
 import {
-	LayoutDashboard,
-	Wrench,
-	CheckCircle2,
-	Clock,
-	AlertTriangle,
 	Loader2,
 	RefreshCw,
+	ArrowRight,
 	ChevronRight,
-	Activity,
-	TrendingUp,
-	BarChart3,
+	Check,
 } from "lucide-react";
 import {
-	PieChart,
-	Pie,
-	Cell,
-	Tooltip,
 	ResponsiveContainer,
 	BarChart,
 	Bar,
 	XAxis,
 	YAxis,
 	CartesianGrid,
+	Tooltip,
 } from "recharts";
-
-/* ------------------------------------------------------------------ */
-/*  Types                                                              */
-/* ------------------------------------------------------------------ */
+import {
+	repairFlowStatus,
+	REPAIR_STATUS_LABEL,
+	rupiah,
+	type RepairFlowStatus,
+} from "@/lib/equipment-status";
+import styles from "@/app/(authenticated-routes)/dashboard.module.css";
 
 interface Equipment {
 	id: number;
-	name: string;
-	equipment_code: string;
+	name?: string;
+	equipment_code?: string;
 	status?: { id: number; name: string };
-	status_id?: number;
 	condition?: { id: number; name: string };
 	plant?: { id: number; name: string } | string;
 	plant_description?: string;
 	storage_location?: { id: number; name: string } | string;
 	updated_at?: string;
 	created_at?: string;
-	actual_cost?: number;
-	original_value?: number;
-	estimated_reuse_value?: number;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Helpers                                                            */
-/* ------------------------------------------------------------------ */
+interface Repair {
+	id: number;
+	equipment_id?: number;
+	actual_cost?: number;
+	start_at?: string;
+	end_at?: string;
+}
 
 function str(val: unknown): string {
 	if (val == null) return "-";
 	if (typeof val === "string") return val;
-	if (typeof val === "object" && val !== null) {
-		const obj = val as Record<string, unknown>;
-		if (typeof obj.name === "string") return obj.name;
+	if (typeof val === "object") {
+		const name = (val as Record<string, unknown>).name;
+		if (typeof name === "string") return name;
 	}
 	return String(val);
 }
 
-function statusName(eq: Equipment): string {
-	return (eq.status?.name || "").toUpperCase();
-}
-
 function relativeTime(dateStr?: string): string {
 	if (!dateStr) return "-";
-	const now = new Date();
-	const d = new Date(dateStr);
-	const diffMs = now.getTime() - d.getTime();
-	const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-	if (diffDays === 0) return "Hari ini";
+	const diffDays = Math.floor(
+		(Date.now() - new Date(dateStr).getTime()) / 86_400_000,
+	);
+	if (diffDays <= 0) return "Hari ini";
 	if (diffDays === 1) return "Kemarin";
 	if (diffDays < 7) return `${diffDays} hari lalu`;
 	if (diffDays < 30) return `${Math.floor(diffDays / 7)} minggu lalu`;
 	return `${Math.floor(diffDays / 30)} bulan lalu`;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Component                                                          */
-/* ------------------------------------------------------------------ */
+/** DESIGN.md status hues — five workflow states, no sixth. */
+const STATUS_COLOR: Record<RepairFlowStatus, string> = {
+	REPAIR: "#B45309",
+	REPAIR_COMPLETED: "#0556B3",
+	REVALIDATION: "#475569",
+	READY_TO_USE: "#059669",
+	SCRAP: "#DC2626",
+};
+
+/** Siapa yang memegang aset di tiap tahap — alasan utama halaman ini dibuka. */
+const STAGE_OWNER: Record<RepairFlowStatus, string> = {
+	REPAIR: "Pemeliharaan Lapangan",
+	REPAIR_COMPLETED: "Inspeksi Teknik",
+	REVALIDATION: "Rendal Pemeliharaan",
+	READY_TO_USE: "Selesai",
+	SCRAP: "Rendal Pemeliharaan",
+};
+
+/** DESIGN.md KPI card: 2px left rule in state hue, value-dominant, no icon tile, no gradient. */
+function KpiCard({
+	label,
+	value,
+	caption,
+	rule,
+}: {
+	label: string;
+	value: string;
+	caption: string;
+	rule: string;
+}) {
+	return (
+		<div
+			className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2"
+			style={{ borderLeftColor: rule }}
+		>
+			<p className="text-[12px] font-medium text-[#64748B]">{label}</p>
+			<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-1">
+				{value}
+			</p>
+			<p className="text-[12px] text-[#64748B] mt-1">{caption}</p>
+		</div>
+	);
+}
 
 export default function PemeliharaanDashboardPage() {
 	const [equipments, setEquipments] = useState<Equipment[]>([]);
+	const [repairs, setRepairs] = useState<Repair[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
 	const loadData = async () => {
 		setIsLoading(true);
 		try {
-			const data = await getEquipments();
-			setEquipments(Array.isArray(data) ? data : []);
+			const [eq, rp] = await Promise.all([getEquipments(), getEquipmentRepairs()]);
+			setEquipments(Array.isArray(eq) ? eq : []);
+			setRepairs(Array.isArray(rp) ? rp : []);
 		} catch (err) {
-			console.error("Failed to load equipments:", err);
+			console.error("Failed to load dashboard data:", err);
 			setEquipments([]);
+			setRepairs([]);
 		} finally {
 			setIsLoading(false);
 		}
 	};
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data awal saat mount
 		loadData();
 	}, []);
 
-	/* ---- Computed stats ---- */
-
-	const stats = useMemo(() => {
-		const maintenance = equipments.filter(
-			(e) =>
-				e.status_id === 6 ||
-				e.status?.id === 6 ||
-				statusName(e) === "MAINTENANCE" ||
-				statusName(e) === "DALAM_PERBAIKAN",
-		);
-
-		const readyToReuse = equipments.filter(
-			(e) =>
-				statusName(e) === "READY_TO_REUSE" ||
-				e.status_id === 5 ||
-				e.status?.id === 5,
-		);
-
-		const repair = equipments.filter(
-			(e) => statusName(e) === "REPAIR" || statusName(e) === "REJECTED",
-		);
-
-		const totalCost = maintenance.reduce(
-			(sum, e) => sum + (Number(e.actual_cost) || 0),
-			0,
-		);
-
-		return { maintenance, readyToReuse, repair, totalCost };
+	const groups = useMemo(() => {
+		const byStatus = new Map<RepairFlowStatus, Equipment[]>();
+		for (const eq of equipments) {
+			const status = repairFlowStatus(eq);
+			if (!status) continue;
+			const bucket = byStatus.get(status);
+			if (bucket) bucket.push(eq);
+			else byStatus.set(status, [eq]);
+		}
+		const of = (s: RepairFlowStatus) => byStatus.get(s) ?? [];
+		return {
+			antrean: of("REPAIR"),
+			menungguValidasi: of("REPAIR_COMPLETED"),
+			menungguRendal: of("REVALIDATION"),
+			selesai: of("READY_TO_USE"),
+			scrap: of("SCRAP"),
+		};
 	}, [equipments]);
 
-	/* ---- Donut chart data ---- */
+	// Biaya nyata dari tabel repair — equipment tidak punya kolom actual_cost.
+	const costSummary = useMemo(() => {
+		const total = repairs.reduce(
+			(sum, r) => sum + (Number(r.actual_cost) || 0),
+			0,
+		);
+		return {
+			total,
+			count: repairs.length,
+			avg: repairs.length ? total / repairs.length : 0,
+		};
+	}, [repairs]);
 
-	const donutData = useMemo(() => {
-		const items = [
-			{
-				name: "Dalam Perbaikan",
-				value: stats.maintenance.length,
-				color: "#F59E0B",
-			},
-			{
-				name: "Selesai (Ready)",
-				value: stats.readyToReuse.length,
-				color: "#10B981",
-			},
-			{
-				name: "Perlu Perhatian",
-				value: stats.repair.length,
-				color: "#EF4444",
-			},
-		].filter((d) => d.value > 0);
-		return items.length > 0
-			? items
-			: [{ name: "Belum ada data", value: 1, color: "#CBD5E1" }];
-	}, [stats]);
+	// Alur perbaikan itu berurutan, jadi dirender sebagai rail terurut —
+	// bukan donut, yang justru membuang urutan tahapnya.
+	const stages = useMemo(() => {
+		const flow: [RepairFlowStatus, Equipment[]][] = [
+			["REPAIR", groups.antrean],
+			["REPAIR_COMPLETED", groups.menungguValidasi],
+			["REVALIDATION", groups.menungguRendal],
+			["READY_TO_USE", groups.selesai],
+		];
+		return flow.map(([status, items]) => ({
+			status,
+			count: items.length,
+			label: REPAIR_STATUS_LABEL[status],
+			owner: STAGE_OWNER[status],
+			hue: STATUS_COLOR[status],
+		}));
+	}, [groups]);
 
-	/* ---- Bar chart: maintenance per plant ---- */
+	const totalInFlow = useMemo(
+		() => stages.reduce((sum, s) => sum + s.count, 0),
+		[stages],
+	);
 
 	const plantBarData = useMemo(() => {
-		const map = new Map<string, { plant: string; count: number }>();
-		stats.maintenance.forEach((eq) => {
-			const plant = str(eq.plant) || str(eq.plant_description) || "Lainnya";
-			const entry = map.get(plant) || { plant, count: 0 };
-			entry.count += 1;
-			map.set(plant, entry);
-		});
-		return Array.from(map.values())
+		const map = new Map<string, number>();
+		for (const eq of groups.antrean) {
+			const plant =
+				str(eq.plant) !== "-" ? str(eq.plant) : str(eq.plant_description);
+			map.set(plant, (map.get(plant) ?? 0) + 1);
+		}
+		return [...map.entries()]
+			.map(([plant, count]) => ({ plant, count }))
 			.sort((a, b) => b.count - a.count)
 			.slice(0, 6);
-	}, [stats.maintenance]);
-
-	/* ---- Recent activity ---- */
+	}, [groups.antrean]);
 
 	const recentActivity = useMemo(() => {
-		return [...stats.maintenance, ...stats.readyToReuse]
+		return equipments
+			.filter((eq) => repairFlowStatus(eq) !== null)
 			.sort(
 				(a, b) =>
 					new Date(b.updated_at || b.created_at || 0).getTime() -
 					new Date(a.updated_at || a.created_at || 0).getTime(),
 			)
-			.slice(0, 5);
-	}, [stats.maintenance, stats.readyToReuse]);
-
-	/* ---- Render ---- */
+			.slice(0, 8);
+	}, [equipments]);
 
 	if (isLoading) {
 		return (
 			<div className="flex flex-col items-center justify-center h-[60vh]">
-				<Loader2 className="w-8 h-8 text-[#0A356A] animate-spin mb-3" />
-				<p className="text-sm font-semibold text-slate-500">
-					Memuat data dashboard...
-				</p>
+				<Loader2
+					className="w-5 h-5 text-[#0A356A] animate-spin mb-3"
+					aria-hidden="true"
+				/>
+				<p className="text-[13px] text-[#64748B]">Memuat data dashboard...</p>
 			</div>
 		);
 	}
 
-	const kpiCards = [
-		{
-			label: "Dalam Perbaikan",
-			value: stats.maintenance.length,
-			icon: Wrench,
-			color: "#F59E0B",
-			bgColor: "bg-amber-50",
-			textColor: "text-amber-700",
-			borderColor: "border-amber-300",
-		},
-		{
-			label: "Selesai Diperbaiki",
-			value: stats.readyToReuse.length,
-			icon: CheckCircle2,
-			color: "#10B981",
-			bgColor: "bg-emerald-50",
-			textColor: "text-emerald-700",
-			borderColor: "border-emerald-300",
-		},
-		{
-			label: "Perlu Perhatian",
-			value: stats.repair.length,
-			icon: AlertTriangle,
-			color: "#EF4444",
-			bgColor: "bg-red-50",
-			textColor: "text-red-700",
-			borderColor: "border-red-300",
-		},
-		{
-			label: "Total Biaya Perbaikan",
-			value: `Rp ${new Intl.NumberFormat("id-ID").format(stats.totalCost)}`,
-			icon: TrendingUp,
-			color: "#0A356A",
-			bgColor: "bg-blue-50",
-			textColor: "text-[#0A356A]",
-			borderColor: "border-blue-300",
-			isText: true,
-		},
-	];
-
 	return (
-		<div className="max-w-7xl mx-auto pt-2 pb-8 flex flex-col gap-6">
-			{/* ===== Header ===== */}
-			<div className="border-b border-gray-200 pb-5">
-				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-					<div>
-						<h1 className="text-2xl font-bold text-[#0A356A] tracking-tight flex items-center gap-2.5">
-							<LayoutDashboard className="w-6 h-6" />
-							Dashboard Pemeliharaan
-						</h1>
-						<p className="text-sm text-gray-500 mt-1">
-							Ringkasan status perbaikan dan pemeliharaan peralatan.
-						</p>
-					</div>
-					<button
-						onClick={loadData}
-						className="flex items-center justify-center gap-2 px-4 py-2 bg-white border border-gray-300 rounded text-sm font-medium text-gray-700 hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm"
-					>
-						<RefreshCw className="w-4 h-4" />
-						Refresh Data
+		<div className={styles.pageContainer}>
+			{/* Header */}
+			<div className={styles.pageHeader}>
+				<div>
+					<h1 className={styles.pageTitle}>Dashboard Pemeliharaan Lapangan</h1>
+					<p className={styles.pageSubtitle}>
+						Posisi setiap aset dalam alur perbaikan, dari antrean sampai siap
+						digunakan.
+					</p>
+				</div>
+				<div className={styles.headerActions}>
+					<button onClick={loadData} className={styles.btnOutline}>
+						<RefreshCw className="w-4 h-4" aria-hidden="true" />
+						Muat Ulang
 					</button>
+					<Link href="/pemeliharaan/perbaikan-alat" className={styles.btnPrimary}>
+						Kerjakan Antrean
+						<ArrowRight className="w-4 h-4" aria-hidden="true" />
+					</Link>
 				</div>
 			</div>
 
-			{/* ===== KPI Cards ===== */}
+			{/* KPI strip */}
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-				{kpiCards.map((card) => (
-					<div
-						key={card.label}
-						className={`bg-white rounded border border-[#E6E8EA] p-4 flex flex-col gap-3 relative overflow-hidden border-l-2 ${card.borderColor}`}
-					>
-						<div className="flex items-center justify-between">
-							<span className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-								{card.label}
-							</span>
-							<div
-								className={`w-8 h-8 rounded-lg ${card.bgColor} flex items-center justify-center`}
-							>
-								<card.icon className="w-4 h-4" style={{ color: card.color }} />
-							</div>
-						</div>
-						<div>
-							<span
-								className={`${card.isText ? "text-lg" : "text-2xl"} font-bold ${card.textColor}`}
-							>
-								{card.value}
-							</span>
-							{!card.isText && (
-								<span className="text-xs text-gray-400 ml-1 font-medium">
-									unit
-								</span>
-							)}
-						</div>
-					</div>
-				))}
+				<KpiCard
+					label="Antrean perbaikan"
+					value={String(groups.antrean.length)}
+					caption="Milik Pemeliharaan, belum dikerjakan"
+					rule={STATUS_COLOR.REPAIR}
+				/>
+				<KpiCard
+					label="Menunggu validasi ulang"
+					value={String(groups.menungguValidasi.length)}
+					caption="Sudah diperbaiki, di Inspeksi Teknik"
+					rule={STATUS_COLOR.REPAIR_COMPLETED}
+				/>
+				<KpiCard
+					label="Siap digunakan"
+					value={String(groups.selesai.length)}
+					caption="Lolos validasi dan persetujuan Rendal"
+					rule={STATUS_COLOR.READY_TO_USE}
+				/>
+				<KpiCard
+					label="Biaya perbaikan tercatat"
+					value={rupiah(costSummary.total)}
+					caption={`${costSummary.count} pekerjaan, rata-rata ${rupiah(costSummary.avg)}`}
+					rule="#475569"
+				/>
 			</div>
 
-			{/* ===== Charts Row ===== */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-				{/* Donut Chart */}
-				<div className="bg-white rounded border border-[#E6E8EA] p-5">
-					<div className="flex items-center gap-2 mb-4">
-						<Activity className="w-4 h-4 text-[#0A356A]" />
-						<h3 className="text-sm font-bold text-gray-800">
-							Distribusi Status Pemeliharaan
-						</h3>
+			{/* Stage rail — urutan tahap adalah informasinya, jadi dirender berurutan. */}
+			<div className="bg-white border border-[#E6E8EA] rounded-[4px]">
+				<div className="flex items-baseline justify-between gap-4 px-5 py-4 border-b border-[#E6E8EA]">
+					<div>
+						<h2 className="text-[14px] font-semibold text-[#0F172A]">
+							Alur Perbaikan
+						</h2>
+						<p className="text-[12px] text-[#64748B] mt-0.5">
+							Empat tahap berurutan. Angka besar menandai tahap yang menahan aset.
+						</p>
 					</div>
+					<p className="text-[12px] text-[#64748B] tabular-nums shrink-0">
+						{totalInFlow} aset dalam alur
+					</p>
+				</div>
 
-					<div className="flex items-center justify-center">
-						<div className="relative w-full max-w-[250px]">
+				<ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-[#E6E8EA]">
+					{stages.map((stage, i) => (
+						<li key={stage.status} className="p-5">
+							<div
+								className="h-0.5 w-8 mb-3"
+								style={{ backgroundColor: stage.hue }}
+								aria-hidden="true"
+							/>
+							<p className="text-[12px] text-[#64748B] tabular-nums">Tahap {i + 1}</p>
+							<p className="text-[13px] font-semibold text-[#0F172A] mt-0.5">
+								{stage.label}
+							</p>
+							<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-2">
+								{stage.count}
+							</p>
+							<p className="text-[12px] text-[#64748B] mt-1">
+								Ditangani {stage.owner}
+							</p>
+						</li>
+					))}
+				</ol>
+
+				{groups.scrap.length > 0 && (
+					<p className="px-5 py-3 border-t border-[#E6E8EA] text-[13px] text-[#475569]">
+						<span
+							className="inline-block w-0.5 h-3 mr-2 align-middle"
+							style={{ backgroundColor: STATUS_COLOR.SCRAP }}
+							aria-hidden="true"
+						/>
+						<span className="font-semibold text-[#0F172A] tabular-nums">
+							{groups.scrap.length} aset
+						</span>{" "}
+						keluar dari alur ini dengan rekomendasi scrap.
+					</p>
+				)}
+			</div>
+
+			{/* Antrean per plant + aktivitas */}
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+				<div className="lg:col-span-2 bg-white border border-[#E6E8EA] rounded-[4px]">
+					<div className="px-5 py-4 border-b border-[#E6E8EA]">
+						<h2 className="text-[14px] font-semibold text-[#0F172A]">
+							Antrean Perbaikan per Plant
+						</h2>
+						<p className="text-[12px] text-[#64748B] mt-0.5">
+							Enam plant dengan antrean terbanyak. Menentukan ke mana tim dikirim lebih
+							dulu.
+						</p>
+					</div>
+					<div className="p-5">
+						{plantBarData.length === 0 ? (
+							<div className="flex items-center gap-2 py-10 justify-center text-[13px] text-[#475569]">
+								<Check className="w-4 h-4 text-[#059669] shrink-0" aria-hidden="true" />
+								Antrean kosong. Tidak ada aset berstatus REPAIR.
+							</div>
+						) : (
 							<ResponsiveContainer width="100%" height={220}>
-								<PieChart>
-									<Pie
-										data={donutData}
-										cx="50%"
-										cy="50%"
-										innerRadius={60}
-										outerRadius={90}
-										paddingAngle={3}
-										dataKey="value"
-										stroke="none"
-									>
-										{donutData.map((entry, idx) => (
-											<Cell key={idx} fill={entry.color} />
-										))}
-									</Pie>
+								<BarChart
+									data={plantBarData}
+									margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
+								>
+									<CartesianGrid
+										strokeDasharray="3 3"
+										stroke="#E6E8EA"
+										vertical={false}
+									/>
+									<XAxis
+										dataKey="plant"
+										tick={{ fontSize: 12, fill: "#64748B" }}
+										tickLine={false}
+										axisLine={{ stroke: "#E6E8EA" }}
+									/>
+									<YAxis
+										tick={{ fontSize: 12, fill: "#64748B" }}
+										tickLine={false}
+										axisLine={false}
+										allowDecimals={false}
+										width={32}
+									/>
 									<Tooltip
 										contentStyle={{
 											fontSize: "12px",
-											borderRadius: "8px",
+											borderRadius: "4px",
 											border: "1px solid #E6E8EA",
+											boxShadow: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
 										}}
+										formatter={(value) => [`${value} aset`, "Antrean"]}
 									/>
-								</PieChart>
+									<Bar
+										dataKey="count"
+										name="Antrean"
+										fill={STATUS_COLOR.REPAIR}
+										maxBarSize={32}
+									/>
+								</BarChart>
 							</ResponsiveContainer>
-
-							{/* Center label */}
-							<div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-								<span className="text-2xl font-bold text-gray-800">
-									{stats.maintenance.length +
-										stats.readyToReuse.length +
-										stats.repair.length}
-								</span>
-								<span className="text-[10px] text-gray-400 font-medium">
-									Total Unit
-								</span>
-							</div>
-						</div>
-
-						{/* Legend */}
-						<div className="flex flex-col gap-2.5 ml-4">
-							{donutData.map((d, i) => (
-								<div key={i} className="flex items-center gap-2">
-									<div
-										className="w-2.5 h-2.5 rounded-full shrink-0"
-										style={{ backgroundColor: d.color }}
-									/>
-									<div>
-										<p className="text-xs font-medium text-gray-700">
-											{d.name}
-										</p>
-										<p className="text-[10px] text-gray-400">{d.value} unit</p>
-									</div>
-								</div>
-							))}
-						</div>
-					</div>
-				</div>
-
-				{/* Bar Chart - per Plant */}
-				<div className="bg-white rounded border border-[#E6E8EA] p-5">
-					<div className="flex items-center gap-2 mb-4">
-						<BarChart3 className="w-4 h-4 text-[#0A356A]" />
-						<h3 className="text-sm font-bold text-gray-800">
-							Perbaikan per Plant
-						</h3>
-					</div>
-
-					{plantBarData.length === 0 ? (
-						<div className="flex flex-col items-center justify-center h-[200px] text-center">
-							<p className="text-xs text-gray-400 font-medium">
-								Belum ada data perbaikan per plant.
-							</p>
-						</div>
-					) : (
-						<ResponsiveContainer width="100%" height={220}>
-							<BarChart
-								data={plantBarData}
-								margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
-							>
-								<CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />
-								<XAxis
-									dataKey="plant"
-									tick={{ fontSize: 10, fill: "#94A3B8" }}
-									tickLine={false}
-									axisLine={{ stroke: "#E2E8F0" }}
-								/>
-								<YAxis
-									tick={{ fontSize: 10, fill: "#94A3B8" }}
-									tickLine={false}
-									axisLine={false}
-									allowDecimals={false}
-								/>
-								<Tooltip
-									contentStyle={{
-										fontSize: "12px",
-										borderRadius: "8px",
-										border: "1px solid #E6E8EA",
-									}}
-								/>
-								<Bar
-									dataKey="count"
-									name="Jumlah"
-									fill="#0A356A"
-									radius={[4, 4, 0, 0]}
-									maxBarSize={40}
-								/>
-							</BarChart>
-						</ResponsiveContainer>
-					)}
-				</div>
-			</div>
-
-			{/* ===== Bottom Row: Actions + Activity ===== */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-				{/* Perlu Tindakan */}
-				<div className="bg-white rounded border border-[#E6E8EA] p-5">
-					<div className="flex items-center gap-2 mb-4">
-						<AlertTriangle className="w-4 h-4 text-amber-500" />
-						<h3 className="text-sm font-bold text-gray-800">
-							Perlu Tindakan
-						</h3>
-					</div>
-
-					<div className="space-y-2.5">
-						{stats.maintenance.length > 0 && (
-							<div className="flex items-start gap-3 p-3 bg-amber-50/60 border border-amber-100 rounded-lg">
-								<Wrench className="w-4 h-4 text-amber-600 mt-0.5 shrink-0" />
-								<div>
-									<p className="text-xs font-semibold text-gray-800">
-										{stats.maintenance.length} aset sedang dalam proses
-										perbaikan
-									</p>
-									<p className="text-[10px] text-gray-500 mt-0.5">
-										Pastikan semua proses perbaikan diselesaikan tepat waktu.
-									</p>
-								</div>
-							</div>
-						)}
-
-						{stats.repair.length > 0 && (
-							<div className="flex items-start gap-3 p-3 bg-red-50/60 border border-red-100 rounded-lg">
-								<AlertTriangle className="w-4 h-4 text-red-500 mt-0.5 shrink-0" />
-								<div>
-									<p className="text-xs font-semibold text-gray-800">
-										{stats.repair.length} aset memerlukan perhatian khusus
-									</p>
-									<p className="text-[10px] text-gray-500 mt-0.5">
-										Aset dalam status ditolak / perlu perbaikan ulang.
-									</p>
-								</div>
-							</div>
-						)}
-
-						{stats.maintenance.length === 0 && stats.repair.length === 0 && (
-							<div className="flex flex-col items-center justify-center py-8 text-center">
-								<CheckCircle2 className="w-8 h-8 text-emerald-400 mb-2" />
-								<p className="text-xs font-semibold text-gray-600">
-									Tidak ada tindakan mendesak
-								</p>
-								<p className="text-[10px] text-gray-400 mt-0.5">
-									Semua aset dalam kondisi baik.
-								</p>
-							</div>
 						)}
 					</div>
 				</div>
 
-				{/* Aktivitas Terbaru */}
-				<div className="bg-white rounded border border-[#E6E8EA] p-5">
-					<div className="flex items-center gap-2 mb-4">
-						<Clock className="w-4 h-4 text-[#0A356A]" />
-						<h3 className="text-sm font-bold text-gray-800">
-							Aktivitas Terbaru
-						</h3>
+				<div className="bg-white border border-[#E6E8EA] rounded-[4px]">
+					<div className="px-5 py-4 border-b border-[#E6E8EA]">
+						<h2 className="text-[14px] font-semibold text-[#0F172A]">
+							Perubahan Terakhir
+						</h2>
+						<p className="text-[12px] text-[#64748B] mt-0.5">
+							Aset yang statusnya paling baru berubah.
+						</p>
 					</div>
-
 					{recentActivity.length === 0 ? (
-						<div className="flex flex-col items-center justify-center py-8 text-center">
-							<p className="text-xs text-gray-400 font-medium">
-								Belum ada aktivitas.
-							</p>
-						</div>
+						<p className="px-5 py-8 text-[13px] text-[#64748B]">
+							Belum ada perubahan status.
+						</p>
 					) : (
-						<div className="space-y-2">
+						<ul className="divide-y divide-[#E6E8EA]">
 							{recentActivity.map((eq) => {
-								const st = statusName(eq);
-								const isMaintenance =
-									st === "MAINTENANCE" || st === "DALAM_PERBAIKAN";
+								const status = repairFlowStatus(eq) ?? "REPAIR";
 								return (
-									<div
-										key={eq.id}
-										className="flex items-center gap-3 p-2.5 rounded-lg hover:bg-gray-50 transition-colors"
-									>
-										<div
-											className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${
-												isMaintenance
-													? "bg-amber-50 text-amber-600"
-													: "bg-emerald-50 text-emerald-600"
-											}`}
-										>
-											{isMaintenance ? (
-												<Wrench className="w-3.5 h-3.5" />
-											) : (
-												<CheckCircle2 className="w-3.5 h-3.5" />
-											)}
-										</div>
-										<div className="flex-1 min-w-0">
-											<p className="text-xs font-semibold text-gray-800 truncate">
-												{eq.equipment_code || "-"} — {str(eq.name)}
+									<li key={eq.id} className="flex items-start gap-3 px-5 py-3">
+										<span
+											className="w-0.5 self-stretch shrink-0"
+											style={{ backgroundColor: STATUS_COLOR[status] }}
+											aria-hidden="true"
+										/>
+										<div className="min-w-0 flex-1">
+											<p className="text-[13px] font-semibold text-[#0F172A] truncate">
+												{eq.equipment_code || "-"} {str(eq.name)}
 											</p>
-											<p className="text-[10px] text-gray-400 mt-0.5">
-												{isMaintenance
-													? "Dalam perbaikan"
-													: "Selesai diperbaiki"}{" "}
-												· {str(eq.plant)}
+											<p className="text-[12px] text-[#64748B] mt-0.5 truncate">
+												{REPAIR_STATUS_LABEL[status]} ·{" "}
+												{relativeTime(eq.updated_at || eq.created_at)}
 											</p>
 										</div>
-										<span className="text-[10px] text-gray-400 font-medium shrink-0">
-											{relativeTime(eq.updated_at || eq.created_at)}
-										</span>
-									</div>
+									</li>
 								);
 							})}
-						</div>
+						</ul>
 					)}
+					<Link
+						href="/pemeliharaan/perbaikan-alat"
+						className="flex items-center justify-between px-5 py-3 border-t border-[#E6E8EA] text-[13px] font-medium text-[#0A356A] hover:bg-[#F2F3F4] transition-colors duration-[140ms] ease-out"
+					>
+						Buka daftar perbaikan
+						<ChevronRight className="w-4 h-4" aria-hidden="true" />
+					</Link>
 				</div>
 			</div>
 		</div>

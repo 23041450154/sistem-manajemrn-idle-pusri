@@ -1,30 +1,13 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { 
-  Eye, X, Shield, FileText, CheckCircle2, RefreshCw, XCircle, 
-  Trash2, AlertTriangle, Loader2, Check, DollarSign, Calendar, Tag, Building2, Search
+import { useState, useEffect, useCallback } from "react";
+import {
+  Eye, X, CheckCircle2, RefreshCw, XCircle,
+  Trash2, AlertTriangle, Loader2, Check, DollarSign, Tag, Search
 } from "lucide-react";
-import { getDisposals, approveDisposal } from "@/action/api";
+import { getDisposals, approveDisposal, type DisposalItemDTO } from "@/action/api";
 
-interface DisposalItem {
-  id: string;
-  disposal_number: string;
-  equipment_id: string;
-  equipment_code: string;
-  equipment_name: string;
-  disposal_method: string;
-  scrap_value: number;
-  book_value: number;
-  original_value: number;
-  plant: string;
-  justification: string;
-  status: string; // PENDING, DISPOSED, REJECTED
-  created_at: string;
-  attachments?: { id?: string; file_url: string; caption?: string }[];
-  created_by_name?: string;
-  notes?: string;
-}
+type DisposalItem = DisposalItemDTO;
 
 export default function DisposalInboxPage() {
   const [activeTab, setActiveTab] = useState<"inbox" | "history">("inbox");
@@ -33,7 +16,6 @@ export default function DisposalInboxPage() {
 
   // Filter states
   const [search, setSearch] = useState("");
-  const [methodFilter, setMethodFilter] = useState("Semua Metode");
 
   // Modal detail states
   const [selectedDisposal, setSelectedDisposal] = useState<DisposalItem | null>(null);
@@ -53,13 +35,22 @@ export default function DisposalInboxPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const ITEMS_PER_PAGE = 10;
 
-  useEffect(() => {
+  // Filter berubah -> balik ke halaman 1. Dilakukan di setter, bukan di effect,
+  // supaya tidak memicu render bertingkat.
+  const changeSearch = (value: string) => {
+    setSearch(value);
     setCurrentPage(1);
-  }, [search, methodFilter, activeTab]);
+  };
+  const changeTab = (tab: "inbox" | "history") => {
+    setActiveTab(tab);
+    setCurrentPage(1);
+  };
 
-  const fetchDisposalsData = async () => {
+  // Tidak memanggil setIsLoading(true) di sini: state awal sudah true, dan
+  // refresh setelah approve/reject sudah punya indikator isSubmitting sendiri.
+  // Ini juga menjaga effect di bawah bebas dari setState sinkron.
+  const fetchDisposalsData = useCallback(async () => {
     try {
-      setIsLoading(true);
       const data = await getDisposals();
       if (Array.isArray(data)) {
         setDisposals(data);
@@ -69,11 +60,12 @@ export default function DisposalInboxPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
-    fetchDisposalsData();
-  }, []);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data awal saat mount
+    void fetchDisposalsData();
+  }, [fetchDisposalsData]);
 
   const showToast = (type: "success" | "error", message: string) => {
     setToast({ type, message });
@@ -88,14 +80,12 @@ export default function DisposalInboxPage() {
   const currentList = activeTab === "inbox" ? pendingDisposals : historyDisposals;
 
   const filteredDisposals = currentList.filter((item) => {
-    const matchSearch =
-      item.disposal_number.toLowerCase().includes(search.toLowerCase()) ||
-      item.equipment_code.toLowerCase().includes(search.toLowerCase()) ||
-      item.equipment_name.toLowerCase().includes(search.toLowerCase());
-    const matchMethod =
-      methodFilter === "Semua Metode" ||
-      item.disposal_method.toLowerCase().includes(methodFilter.toLowerCase());
-    return matchSearch && matchMethod;
+    const q = search.toLowerCase();
+    return (
+      item.disposal_number.toLowerCase().includes(q) ||
+      item.equipment_code.toLowerCase().includes(q) ||
+      item.equipment_name.toLowerCase().includes(q)
+    );
   });
 
   const totalPages = Math.ceil(filteredDisposals.length / ITEMS_PER_PAGE);
@@ -121,7 +111,7 @@ export default function DisposalInboxPage() {
 
     setIsSubmitting(true);
     try {
-      const res = await approveDisposal(selectedDisposal.id, { status: "DISPOSED" });
+      const res = await approveDisposal(selectedDisposal.approval_id, { status: "DISPOSED" });
 
       if (res.success) {
         showToast(
@@ -227,7 +217,7 @@ export default function DisposalInboxPage() {
           {/* Tabs */}
           <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl border border-gray-200">
             <button
-              onClick={() => setActiveTab("inbox")}
+              onClick={() => changeTab("inbox")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeTab === "inbox"
                   ? "bg-[#0A356A] text-white shadow-xs"
@@ -237,7 +227,7 @@ export default function DisposalInboxPage() {
               Antrean Pending
             </button>
             <button
-              onClick={() => setActiveTab("history")}
+              onClick={() => changeTab("history")}
               className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
                 activeTab === "history"
                   ? "bg-[#0A356A] text-white shadow-xs"
@@ -256,7 +246,7 @@ export default function DisposalInboxPage() {
                 type="text"
                 placeholder="Cari no. pengajuan, kode, atau nama..."
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) => changeSearch(e.target.value)}
                 className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400 font-medium"
               />
             </div>

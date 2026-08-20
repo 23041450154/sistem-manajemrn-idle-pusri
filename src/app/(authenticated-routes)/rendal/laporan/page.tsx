@@ -3,15 +3,13 @@
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import {
 	Search,
 	RefreshCw,
 	Download,
 	ChevronRight,
 	FileText,
-	Filter,
-	X,
 	Plus,
 	Edit3,
 	AlertCircle,
@@ -171,7 +169,9 @@ const actionTypeConfig: Record<string, { badge: string }> = {
 	CREATE: { badge: "bg-blue-50 text-blue-700 border border-blue-200" },
 	UPDATE: { badge: "bg-amber-50 text-amber-700 border border-amber-200" },
 	DELETE: { badge: "bg-red-50 text-red-700 border border-red-200" },
-	APPROVE: { badge: "bg-emerald-50 text-emerald-700 border border-emerald-200" },
+	APPROVE: {
+		badge: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+	},
 	REJECT: { badge: "bg-purple-50 text-purple-700 border border-purple-200" },
 	INSPECT: { badge: "bg-cyan-50 text-cyan-700 border border-cyan-200" },
 	UPLOAD: { badge: "bg-indigo-50 text-indigo-700 border border-indigo-200" },
@@ -188,15 +188,33 @@ export default function AuditTrailPage() {
 	const [currentPage, setCurrentPage] = useState(1);
 	const ITEMS_PER_PAGE = 10;
 
-	const fetchAuditData = async () => {
+	const fetchAuditData = useCallback(async () => {
 		setIsLoading(true);
 		try {
-			const [eq, apps, ins, disps] = await Promise.all([
+			const [
+				eq,
+				validationApps,
+				revalApps,
+				disposalApps,
+				reuseApps,
+				ins,
+				disps,
+			] = await Promise.all([
 				getEquipments(),
-				getApprovals(),
+				// Audit trail mencakup semua jenis approval, jadi keempat grup diambil.
+				getApprovals("validation"),
+				getApprovals("revalidation"),
+				getApprovals("disposal"),
+				getApprovals("reuse"),
 				getInspections(),
 				getDisposals(),
 			]);
+			const apps = [
+				...validationApps,
+				...revalApps,
+				...disposalApps,
+				...reuseApps,
+			];
 			const auditLogs = buildAuditLogs(
 				eq || [],
 				apps || [],
@@ -209,11 +227,12 @@ export default function AuditTrailPage() {
 		} finally {
 			setIsLoading(false);
 		}
-	};
+	}, []);
 
 	useEffect(() => {
-		fetchAuditData();
-	}, []);
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data awal saat mount
+		void fetchAuditData();
+	}, [fetchAuditData]);
 
 	const filteredLogs = useMemo(() => {
 		const query = search.toLowerCase().trim();
@@ -233,14 +252,13 @@ export default function AuditTrailPage() {
 	}, [logs, search, moduleFilter, actionFilter]);
 
 	const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE) || 1;
+	// Halaman dijepit ke rentang valid, jadi filter tidak perlu me-reset
+	// currentPage lewat effect.
+	const page = Math.min(currentPage, totalPages);
 	const paginatedLogs = useMemo(() => {
-		const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+		const startIndex = (page - 1) * ITEMS_PER_PAGE;
 		return filteredLogs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-	}, [filteredLogs, currentPage]);
-
-	useEffect(() => {
-		setCurrentPage(1);
-	}, [search, moduleFilter, actionFilter]);
+	}, [filteredLogs, page]);
 
 	const handleReset = () => {
 		setSearch("");
@@ -339,7 +357,8 @@ export default function AuditTrailPage() {
 							Laporan Log Audit Trail
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Pelacakan seluruh aktivitas perubahan data aset secara transparan dan terverifikasi.
+							Pelacakan seluruh aktivitas perubahan data aset secara transparan
+							dan terverifikasi.
 						</p>
 					</div>
 					<div className="flex items-center gap-2">
@@ -509,7 +528,10 @@ export default function AuditTrailPage() {
 						<tbody className="bg-white">
 							{isLoading ? (
 								<tr>
-									<td colSpan={6} className="px-5 py-12 text-center text-gray-500">
+									<td
+										colSpan={6}
+										className="px-5 py-12 text-center text-gray-500"
+									>
 										<div className="flex flex-col items-center">
 											<Loader2 className="w-5 h-5 text-[#0A356A] animate-spin mb-2" />
 											<p className="text-[13px] font-medium">
@@ -520,7 +542,10 @@ export default function AuditTrailPage() {
 								</tr>
 							) : paginatedLogs.length === 0 ? (
 								<tr>
-									<td colSpan={6} className="px-5 py-12 text-center text-gray-500">
+									<td
+										colSpan={6}
+										className="px-5 py-12 text-center text-gray-500"
+									>
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -629,14 +654,14 @@ export default function AuditTrailPage() {
 				{!isLoading && filteredLogs.length > 0 && (
 					<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
 						<span className="text-[11px] font-medium text-gray-500">
-							Menampilkan {(currentPage - 1) * ITEMS_PER_PAGE + 1} -{" "}
-							{Math.min(currentPage * ITEMS_PER_PAGE, filteredLogs.length)} dari{" "}
+							Menampilkan {(page - 1) * ITEMS_PER_PAGE + 1} -{" "}
+							{Math.min(page * ITEMS_PER_PAGE, filteredLogs.length)} dari{" "}
 							{filteredLogs.length} data ({ITEMS_PER_PAGE} baris/halaman)
 						</span>
 						<div className="flex items-center gap-1.5">
 							<button
 								onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-								disabled={currentPage === 1}
+								disabled={page === 1}
 								className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
 							>
 								Prev
@@ -662,7 +687,7 @@ export default function AuditTrailPage() {
 								onClick={() =>
 									setCurrentPage((p) => Math.min(totalPages, p + 1))
 								}
-								disabled={currentPage === totalPages}
+								disabled={page === totalPages}
 								className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
 							>
 								Next

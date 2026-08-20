@@ -10,6 +10,7 @@ import {
 	getInspections,
 	getDisposalMethods,
 	createDisposalRequest,
+	getValidations,
 } from "@/action/api";
 import {
 	Trash2,
@@ -46,6 +47,9 @@ interface Inspection {
 	equipment_id: number;
 	notes: string;
 	is_utilizable?: boolean;
+	condition?: { name?: string };
+	require_action?: { name?: string };
+	followup_recommendation?: string;
 }
 
 interface DisposalMethod {
@@ -84,6 +88,8 @@ export default function VerifikasiDisposalPage() {
 	const [disposalMethodId, setDisposalMethodId] = useState("");
 	const [justification, setJustification] = useState("");
 	const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+	// Hasil validasi teknik (GET /api/validation) — sumber alasan & rekomendasi disposal.
+	const [assetValidation, setAssetValidation] = useState<any>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [notification, setNotification] = useState<{
 		type: "success" | "error";
@@ -118,8 +124,7 @@ export default function VerifikasiDisposalPage() {
 
 			const mappedEq = (eqData || []).map((item: any) => {
 				const rawStatus =
-					(typeof item.status === "string" ? item.status : item.status?.name) ||
-					"";
+					(typeof item.status === "string" ? item.status : item.status?.name) || "";
 				const objectTypeName =
 					item.object_type?.name || item.objectType?.name || "Belum Ditentukan";
 
@@ -128,7 +133,12 @@ export default function VerifikasiDisposalPage() {
 
 				// If equipment has a disposal-recommending inspection, override status
 				const eqId = item.id?.toString() || "-";
-				if (disposalInspectedIds.has(eqId) && !["DISPOSAL_RECOMMENDED", "SCRAP", "RUSAK_BERAT"].includes(normalizedStatus)) {
+				if (
+					disposalInspectedIds.has(eqId) &&
+					!["DISPOSAL_RECOMMENDED", "SCRAP", "RUSAK_BERAT"].includes(
+						normalizedStatus,
+					)
+				) {
 					normalizedStatus = "DISPOSAL_RECOMMENDED";
 				}
 
@@ -195,8 +205,7 @@ export default function VerifikasiDisposalPage() {
 		return equipments.filter((eq) => {
 			const normalized = eq.statusAset.replace(/\s+/g, "_");
 			const isRecommended =
-				disposalStatuses.has(eq.statusAset) ||
-				disposalStatuses.has(normalized);
+				disposalStatuses.has(eq.statusAset) || disposalStatuses.has(normalized);
 			const isNotSubmitted = !submittedIds.has(eq.id);
 			const matchSearch =
 				!query ||
@@ -213,8 +222,9 @@ export default function VerifikasiDisposalPage() {
 
 	const totalPages = Math.ceil(filteredAssets.length / ITEMS_PER_PAGE) || 1;
 
-	const handleOpenVerification = (asset: Equipment) => {
+	const handleOpenVerification = async (asset: Equipment) => {
 		setSelectedAsset(asset);
+		setAssetValidation(null);
 
 		const currentYear = new Date().getFullYear();
 		const count = disposals.length + 1;
@@ -233,6 +243,11 @@ export default function VerifikasiDisposalPage() {
 		setJustification("");
 		setUploadedFile(null);
 		setIsModalOpen(true);
+
+		const validations = await getValidations(asset.id);
+		if (Array.isArray(validations) && validations.length > 0) {
+			setAssetValidation(validations[0]);
+		}
 	};
 
 	// Find latest inspection details for selected asset
@@ -244,6 +259,32 @@ export default function VerifikasiDisposalPage() {
 				.sort((a, b) => b.id - a.id)[0] || null
 		);
 	}, [selectedAsset, inspections]);
+
+	// Hasil inspeksi & alasan disposal: validasi teknik lebih otoritatif dari inspeksi berkala.
+	const inspectionResult = useMemo(() => {
+		const source = assetValidation || assetInspection;
+		if (!source) return null;
+		const condition = source.condition?.name || source.condition_name;
+		const action = source.require_action?.name;
+		const utilizable = source.is_utilizable;
+		const label =
+			utilizable === false
+				? "Tidak Layak"
+				: utilizable === true
+					? "Layak"
+					: condition || null;
+		if (!label) return null;
+		return action ? `${label} (${action})` : label;
+	}, [assetValidation, assetInspection]);
+
+	const disposalReason = useMemo(
+		() =>
+			assetValidation?.followup_recommendation ||
+			assetValidation?.notes ||
+			assetInspection?.notes ||
+			null,
+		[assetValidation, assetInspection],
+	);
 
 	const handleSubmitVerification = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -270,9 +311,7 @@ export default function VerifikasiDisposalPage() {
 					fd.append("file", uploadedFile);
 					fd.append("category", "disposal_attachment");
 
-					const tokenMatch = document.cookie.match(
-						/(^|;)\s*token\s*=\s*([^;]+)/,
-					);
+					const tokenMatch = document.cookie.match(/(^|;)\s*token\s*=\s*([^;]+)/);
 					const token = tokenMatch ? tokenMatch[2] : "";
 					const API_URL =
 						process.env.NEXT_PUBLIC_API_URL || "https://api.testing.naufal.me";
@@ -281,9 +320,7 @@ export default function VerifikasiDisposalPage() {
 						method: "POST",
 						headers: { Authorization: `Bearer ${token}` },
 						body: fd,
-					}).catch((err) =>
-						console.error("Error uploading disposal doc:", err),
-					);
+					}).catch((err) => console.error("Error uploading disposal doc:", err));
 				}
 
 				showToast(
@@ -313,9 +350,7 @@ export default function VerifikasiDisposalPage() {
 					) : (
 						<XCircle className="w-4 h-4 text-red-400" />
 					)}
-					<span className="text-[13px] font-medium">
-						{notification.message}
-					</span>
+					<span className="text-[13px] font-medium">{notification.message}</span>
 				</div>
 			)}
 
@@ -324,9 +359,7 @@ export default function VerifikasiDisposalPage() {
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
 					<span>Rendal Pemeliharaan</span>
 					<ChevronRight className="w-3.5 h-3.5" />
-					<span className="text-[#0A356A] font-semibold">
-						Permintaan Scrap
-					</span>
+					<span className="text-[#0A356A] font-semibold">Permintaan Scrap</span>
 				</div>
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 					<div>
@@ -334,7 +367,8 @@ export default function VerifikasiDisposalPage() {
 							Permintaan Scrap
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar peralatan hasil validasi berkondisi Rusak Berat (Scrap) yang siap diajukan ke Manajer Rendal.
+							Daftar peralatan hasil validasi berkondisi Rusak Berat (Scrap) yang siap
+							diajukan ke Manajer Rendal.
 						</p>
 					</div>
 					<button
@@ -365,7 +399,11 @@ export default function VerifikasiDisposalPage() {
 							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
 						</span>
 						<span className="text-[13px] text-blue-800 font-medium">
-							Terdapat <strong className="font-bold">{filteredAssets.length} aset Rusak Berat (Scrap)</strong> siap diajukan ke Manajer Rendal.
+							Terdapat{" "}
+							<strong className="font-bold">
+								{filteredAssets.length} aset Rusak Berat (Scrap)
+							</strong>{" "}
+							siap diajukan ke Manajer Rendal.
 						</span>
 					</div>
 				</div>
@@ -448,7 +486,10 @@ export default function VerifikasiDisposalPage() {
 						<tbody className="bg-white divide-y divide-gray-100">
 							{isLoading ? (
 								<tr>
-									<td colSpan={8} className="px-4 py-8 text-center text-xs text-gray-500">
+									<td
+										colSpan={8}
+										className="px-4 py-8 text-center text-xs text-gray-500"
+									>
 										<div className="flex flex-col items-center">
 											<Loader2 className="w-5 h-5 text-[#0A356A] animate-spin mb-2" />
 											<p className="font-medium">Memuat data...</p>
@@ -457,12 +498,13 @@ export default function VerifikasiDisposalPage() {
 								</tr>
 							) : paginatedAssets.length === 0 ? (
 								<tr>
-									<td colSpan={8} className="px-4 py-8 text-center text-xs text-gray-500">
+									<td
+										colSpan={8}
+										className="px-4 py-8 text-center text-xs text-gray-500"
+									>
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
-											<p className="font-bold text-gray-900">
-												Tidak Ada Data
-											</p>
+											<p className="font-bold text-gray-900">Tidak Ada Data</p>
 											<p className="text-[11px] text-gray-500 mt-1">
 												Tidak ada peralatan Rusak Berat yang menunggu request scrap.
 											</p>
@@ -478,10 +520,16 @@ export default function VerifikasiDisposalPage() {
 										<td className="px-2 py-2 text-xs text-gray-500 font-medium text-center">
 											{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
-										<td className="px-2 py-2 text-xs font-bold text-[#0A356A] text-center truncate" title={asset.kodeAlat}>
+										<td
+											className="px-2 py-2 text-xs font-bold text-[#0A356A] text-center truncate"
+											title={asset.kodeAlat}
+										>
 											{asset.kodeAlat}
 										</td>
-										<td className="px-2 py-2 text-xs font-semibold text-gray-800 text-left truncate" title={asset.namaAlat}>
+										<td
+											className="px-2 py-2 text-xs font-semibold text-gray-800 text-left truncate"
+											title={asset.namaAlat}
+										>
 											<span className="leading-tight line-clamp-2 block text-left">
 												{asset.namaAlat}
 											</span>
@@ -489,10 +537,16 @@ export default function VerifikasiDisposalPage() {
 										<td className="px-2 py-2 text-xs text-gray-600 font-medium text-center truncate">
 											{asset.plant}
 										</td>
-										<td className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate" title={asset.storageLocation}>
+										<td
+											className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate"
+											title={asset.storageLocation}
+										>
 											{asset.storageLocation}
 										</td>
-										<td className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate" title={asset.jenisAlat}>
+										<td
+											className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate"
+											title={asset.jenisAlat}
+										>
 											{asset.jenisAlat}
 										</td>
 										<td className="px-2 py-2 text-center whitespace-nowrap">
@@ -525,8 +579,8 @@ export default function VerifikasiDisposalPage() {
 							{filteredAssets.length === 0
 								? 0
 								: (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
-							- {Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length)}{" "}
-							dari {filteredAssets.length} data ({ITEMS_PER_PAGE} baris/halaman)
+							- {Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length)} dari{" "}
+							{filteredAssets.length} data ({ITEMS_PER_PAGE} baris/halaman)
 						</span>
 						<div className="flex items-center gap-1.5">
 							<button
@@ -537,19 +591,21 @@ export default function VerifikasiDisposalPage() {
 								Prev
 							</button>
 							<div className="flex items-center gap-1">
-								{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map((page) => (
-									<button
-										key={page}
-										onClick={() => setCurrentPage(page)}
-										className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
-											currentPage === page
-												? "bg-[#0A356A] text-white"
-												: "text-gray-600 hover:bg-gray-100"
-										}`}
-									>
-										{page}
-									</button>
-								))}
+								{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map(
+									(page) => (
+										<button
+											key={page}
+											onClick={() => setCurrentPage(page)}
+											className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
+												currentPage === page
+													? "bg-[#0A356A] text-white"
+													: "text-gray-600 hover:bg-gray-100"
+											}`}
+										>
+											{page}
+										</button>
+									),
+								)}
 							</div>
 							<button
 								onClick={() =>
@@ -653,17 +709,26 @@ export default function VerifikasiDisposalPage() {
 											<p className="text-[10px] font-bold text-gray-400 uppercase">
 												Hasil Inspeksi
 											</p>
-											<p className="text-sm font-bold text-red-600">
-												Tidak Layak (Rekomendasi Scrap)
-											</p>
+											{inspectionResult ? (
+												<p className="text-sm font-bold text-red-600">{inspectionResult}</p>
+											) : (
+												<p className="text-sm font-medium text-gray-400 italic">
+													Belum ada hasil inspeksi
+												</p>
+											)}
 										</div>
 										<div className="col-span-2">
 											<p className="text-[10px] font-bold text-gray-400 uppercase">
 												Alasan Disposal dari Inspeksi
 											</p>
-											<p className="text-xs text-gray-600 mt-1 leading-relaxed bg-white border border-gray-200 p-2.5 rounded-lg">
-												{assetInspection?.notes ||
-													"Rekomendasi disposal dari hasil penilaian kelayakan Inspeksi Teknik."}
+											<p className="text-xs mt-1 leading-relaxed bg-white border border-gray-200 p-2.5 rounded-lg">
+												{disposalReason ? (
+													<span className="text-gray-600">{disposalReason}</span>
+												) : (
+													<span className="text-gray-400 italic">
+														Inspeksi Teknik belum mengisi alasan/rekomendasi disposal.
+													</span>
+												)}
 											</p>
 										</div>
 									</div>
@@ -741,9 +806,7 @@ export default function VerifikasiDisposalPage() {
 											<input
 												type="file"
 												accept=".pdf,.png,.jpg,.jpeg"
-												onChange={(e) =>
-													setUploadedFile(e.target.files?.[0] || null)
-												}
+												onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
 												className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 											/>
 											<Upload className="w-6 h-6 text-gray-400 mb-1.5" />
@@ -775,9 +838,7 @@ export default function VerifikasiDisposalPage() {
 									disabled={isSubmitting}
 									className="px-5 py-2 bg-[#0A356A] hover:bg-[#062854] text-white rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2"
 								>
-									{isSubmitting ? (
-										<RefreshCw className="w-4 h-4 animate-spin" />
-									) : null}
+									{isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
 									{isSubmitting ? "Mengirim..." : "Kirim ke Manajer"}
 								</button>
 							</div>
