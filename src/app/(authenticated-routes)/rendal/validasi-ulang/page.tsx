@@ -33,8 +33,6 @@ interface ValidasiUlangItem {
 	catatanInspeksi?: string;
 }
 
-const SAMPLE_ITEMS: ValidasiUlangItem[] = [];
-
 export default function RendalValidasiUlangPage() {
 	const [items, setItems] = useState<ValidasiUlangItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);

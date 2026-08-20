@@ -1,8 +1,9 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Trash2, AlertTriangle, CheckCircle2, XCircle, Loader2, Database, Search, Wrench, RefreshCw, Filter } from "lucide-react";
-import { getEquipments, deleteEquipment } from "@/action/api";
+import { Trash2, AlertTriangle, CheckCircle2, XCircle, Loader2, Database, Search, Wrench, RefreshCw, Filter, Pencil } from "lucide-react";
+import { getEquipments, deleteEquipment, updateEquipment } from "@/action/api";
+import { getMasterItems, type MasterItem } from "@/action/master";
 
 export default function EquipmentManagementPage() {
   const [equipments, setEquipments] = useState<any[]>([]);
@@ -13,12 +14,17 @@ export default function EquipmentManagementPage() {
   
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedItem, setSelectedItem] = useState<any>(null);
+  const [editingItem, setEditingItem] = useState<any>(null);
+  const [editName, setEditName] = useState("");
+  const [editStatusId, setEditStatusId] = useState<number | "">("");
+  const [statusOptions, setStatusOptions] = useState<MasterItem[]>([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
   const [notification, setNotification] = useState<{type: "success"|"error", message: string} | null>(null);
 
   useEffect(() => {
     fetchData();
+    getMasterItems("status").then(setStatusOptions);
   }, []);
 
   const fetchData = async () => {
@@ -89,6 +95,31 @@ export default function EquipmentManagementPage() {
       setNotification({ type: "error", message: "Gagal menghapus aset: " + (res.message || "Silakan coba lagi.") });
       setTimeout(() => setNotification(null), 3000);
     }
+  };
+
+  const openEdit = (item: any) => {
+    setEditingItem(item);
+    setEditName(typeof item.name === "string" ? item.name : item.name?.name || "");
+    setEditStatusId(item.status_id ?? item.status?.id ?? "");
+  };
+
+  const handleEdit = async (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!editingItem || !editName.trim() || isSubmitting) return;
+    setIsSubmitting(true);
+    const result = await updateEquipment(String(editingItem.id || editingItem.ID || editingItem.equipment_id), {
+      name: editName.trim(),
+      ...(editStatusId !== "" ? { status_id: Number(editStatusId) } : {}),
+    });
+    setIsSubmitting(false);
+    if (result.success) {
+      setEditingItem(null);
+      setNotification({ type: "success", message: "Data peralatan berhasil diperbarui." });
+      fetchData();
+    } else {
+      setNotification({ type: "error", message: result.message || "Gagal memperbarui data peralatan." });
+    }
+    setTimeout(() => setNotification(null), 3000);
   };
 
   const getStatusBadge = (statusObj: any, statusId: number) => {
@@ -219,17 +250,16 @@ export default function EquipmentManagementPage() {
                       {getStatusBadge(item.status, item.status_id)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right">
-                      <button
-                        onClick={() => {
-                          setSelectedItem(item);
-                          setIsDeleteOpen(true);
-                        }}
-                        className="inline-flex items-center justify-center gap-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-                        title="Hapus Data Aset"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                        Hapus
-                      </button>
+                      <div className="inline-flex items-center gap-1">
+                        <button onClick={() => openEdit(item)} className="inline-flex items-center justify-center gap-1.5 text-slate-400 hover:bg-blue-50 hover:text-[#0A356A] border border-transparent hover:border-blue-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-all" title="Ubah Data Aset">
+                          <Pencil className="w-3.5 h-3.5" />
+                          Ubah
+                        </button>
+                        <button onClick={() => { setSelectedItem(item); setIsDeleteOpen(true); }} className="inline-flex items-center justify-center gap-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-all" title="Hapus Data Aset">
+                          <Trash2 className="w-3.5 h-3.5" />
+                          Hapus
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
@@ -279,6 +309,32 @@ export default function EquipmentManagementPage() {
           </div>
         )}
       </div>
+
+      {editingItem && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={() => !isSubmitting && setEditingItem(null)} />
+          <form onSubmit={handleEdit} className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 border border-slate-100">
+            <div className="flex items-center gap-2 border-b border-slate-100 pb-4 mb-5">
+              <Pencil className="w-5 h-5 text-[#0A356A]" />
+              <h3 className="text-base font-bold text-slate-900">Ubah Data Peralatan</h3>
+            </div>
+            <label htmlFor="admin-equipment-name" className="block text-xs font-bold text-slate-700 mb-1.5">Nama Peralatan</label>
+            <input id="admin-equipment-name" required value={editName} onChange={(e) => setEditName(e.target.value)} className="w-full px-3.5 py-2.5 mb-4 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none" />
+            <label htmlFor="admin-equipment-status" className="block text-xs font-bold text-slate-700 mb-1.5">Status Aset</label>
+            <select id="admin-equipment-status" value={editStatusId} onChange={(e) => setEditStatusId(e.target.value ? Number(e.target.value) : "")} className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none">
+              <option value="">Pertahankan status saat ini</option>
+              {statusOptions.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
+            </select>
+            <div className="flex justify-end gap-3 mt-6 pt-4 border-t border-slate-100">
+              <button type="button" onClick={() => setEditingItem(null)} disabled={isSubmitting} className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50">Batal</button>
+              <button type="submit" disabled={isSubmitting || !editName.trim()} className="px-5 py-2.5 bg-[#0A356A] text-white rounded-xl text-xs font-bold hover:bg-[#0556B3] disabled:opacity-60 flex items-center gap-2">
+                {isSubmitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <CheckCircle2 className="w-4 h-4" />}
+                {isSubmitting ? "Menyimpan..." : "Simpan Perubahan"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
 
       {/* Modal Hapus (Konfirmasi) */}
       {isDeleteOpen && selectedItem && (

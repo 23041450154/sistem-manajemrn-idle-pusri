@@ -123,7 +123,7 @@ export default function UnitKerjaKatalogPage() {
       ]);
 
       const mappedEquipments: EquipmentItem[] = (rawEqList || []).map((item: any) => {
-        let catName = "Peralatan Umum";
+         let catName = "-";
         if (typeof item.object_type?.name === "string") catName = item.object_type.name;
         else if (typeof item.objectType?.name === "string") catName = item.objectType.name;
         else if (typeof item.object_type_name === "string") catName = item.object_type_name;
@@ -132,24 +132,24 @@ export default function UnitKerjaKatalogPage() {
           if (found && typeof found.name === "string") catName = found.name;
         }
 
-        let plantStr = "STG & Boilers";
+         let plantStr = "-";
         if (typeof item.plant === "string") {
           plantStr = item.plant;
         } else if (item.plant && typeof item.plant === "object") {
-          plantStr = item.plant.name || item.plant.plant || item.plant.description || "STG & Boilers";
+           plantStr = item.plant.name || item.plant.plant || item.plant.description || "-";
         } else if (typeof item.plant_description === "string") {
           plantStr = item.plant_description;
         } else if (item.plant_description && typeof item.plant_description === "object") {
-          plantStr = item.plant_description.name || item.plant_description.plant || "STG & Boilers";
+           plantStr = item.plant_description.name || item.plant_description.plant || "-";
         }
 
-        let storageLoc = "Gudang Utama Pusri";
+         let storageLoc = "-";
         if (typeof item.storage_location === "string") storageLoc = item.storage_location;
-        else if (item.storage_location && typeof item.storage_location === "object") storageLoc = item.storage_location.name || "Gudang Utama Pusri";
+         else if (item.storage_location && typeof item.storage_location === "object") storageLoc = item.storage_location.name || "-";
         else if (typeof item.location === "string") storageLoc = item.location;
 
         const rawStatus = (typeof item.status === "object" ? item.status?.name : item.status || "").toUpperCase();
-        let normalizedStatus = "IDLE";
+         let normalizedStatus = "";
         if (rawStatus.includes("READY") || rawStatus.includes("SIAP")) normalizedStatus = "READY_TO_REUSE";
         else if (rawStatus.includes("VALIDATED") || rawStatus.includes("VALID")) normalizedStatus = "READY_TO_REUSE";
         else if (rawStatus.includes("REGISTERED")) normalizedStatus = "REGISTERED";
@@ -168,17 +168,17 @@ export default function UnitKerjaKatalogPage() {
           plant_description: plantStr,
           object_type_name: String(catName),
           status_name: normalizedStatus,
-          condition_name: typeof item.condition === "object" ? String(item.condition?.name || "Baik") : String(item.condition || "Baik / Operasional"),
+           condition_name: typeof item.condition === "object" ? String(item.condition?.name || "-") : String(item.condition || "-"),
           storage_location: String(storageLoc),
-          serial_number: String(item.serial_number || "SN-2026-X89"),
-          vendor: String(item.vendor || item.manufacturer || "PT Utama Engineering"),
-          year_of_purchase: Number(item.year_of_purchase) || 2020,
-          book_value: Number(item.book_value) || 120000000,
-          original_value: Number(item.original_value) || 350000000,
-          estimated_reuse_value: Number(item.estimated_reuse_value) || 250000000,
-          specifications: String(specText || "Kapasitas 150 m3/h, Tekanan 12 Bar, Material Stainless Steel 316"),
-          capacity: String(item.capacity || "150 m3/h"),
-          notes: String(item.notes || "Kondisi peralatan siap operasi. Terakhir diinspeksi tim pemeliharaan."),
+           serial_number: String(item.serial_number || "-"),
+           vendor: String(item.vendor || item.manufacturer || "-"),
+           year_of_purchase: item.year_of_purchase ? Number(item.year_of_purchase) : null,
+           book_value: item.book_value != null ? Number(item.book_value) : null,
+           original_value: item.original_value != null ? Number(item.original_value) : null,
+           estimated_reuse_value: item.estimated_reuse_value != null ? Number(item.estimated_reuse_value) : null,
+           specifications: String(specText || "-"),
+           capacity: String(item.capacity || "-"),
+           notes: String(item.notes || "-"),
           created_at: String(item.created_at || new Date().toISOString()),
           raw_data: item,
         };

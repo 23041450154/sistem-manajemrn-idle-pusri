@@ -31,8 +31,6 @@ interface MaintenanceEquipment {
 	statusId: number;
 }
 
-const INITIAL_MAINTENANCE_SAMPLES: MaintenanceEquipment[] = [];
-
 export default function PerbaikanAlatPage() {
 	const [equipments, setEquipments] = useState<MaintenanceEquipment[]>([]);
 	const [isLoading, setIsLoading] = useState(true);

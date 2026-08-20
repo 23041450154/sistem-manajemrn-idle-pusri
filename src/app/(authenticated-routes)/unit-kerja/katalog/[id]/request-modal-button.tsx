@@ -14,7 +14,7 @@ interface KatalogItemMinimal {
 	estimatedReuseValue?: number;
 }
 
-export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
+export default function RequestModalButton({ eq, className = "", compact = false }: { eq: KatalogItemMinimal; className?: string; compact?: boolean }) {
 	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -98,15 +98,17 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 			<button
 				type="button"
 				onClick={handleOpen}
-				className="flex h-11 w-full items-center justify-center gap-2 rounded-[4px] bg-[#0A356A] px-4 text-[14px] font-semibold text-white transition-colors duration-140 hover:bg-[#0556B3] focus-visible:ring-2 focus-visible:ring-[#334155] focus-visible:ring-offset-1 focus-visible:outline-none shadow-sm"
-			>
-				<Send className="w-4 h-4" />
-				Ajukan Permintaan Pemakaian
+			className={compact
+				? `flex items-center gap-1 px-2.5 py-1 bg-[#0A356A] text-white text-[12px] font-semibold rounded-lg hover:bg-[#062854] transition-colors shadow-sm ${className}`
+				: `flex h-11 w-full items-center justify-center gap-2 rounded-[4px] bg-[#0A356A] px-4 text-[14px] font-semibold text-white transition-colors duration-140 hover:bg-[#0556B3] focus-visible:ring-2 focus-visible:ring-[#334155] focus-visible:outline-none shadow-sm ${className}`}
+		>
+				<Send className={compact ? "w-3 h-3" : "w-4 h-4"} />
+				Permintaan
 			</button>
 
 			{isOpen && (
 				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-					<div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+					<div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 text-left">
 						{/* Header */}
 						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
 							<div className="flex items-center gap-3">
@@ -114,7 +116,7 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 									<Send className="w-5 h-5 text-white" />
 								</div>
 								<div>
-									<h2 className="text-base font-bold text-white">Ajukan Permintaan Pemakaian</h2>
+									<h2 className="text-base font-bold text-white">Permintaan</h2>
 									<p className="text-xs text-blue-100">
 										{eq.code} — {eq.name}
 									</p>
@@ -130,7 +132,7 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 						</div>
 
 						{/* Form */}
-						<form onSubmit={handleSubmit} className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+						<form onSubmit={handleSubmit} className="px-6 py-5 space-y-4 overflow-y-auto flex-1 text-left">
 							{error && (
 								<div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700 flex items-center gap-2">
 									<AlertCircle className="w-4 h-4 shrink-0 text-red-500" />

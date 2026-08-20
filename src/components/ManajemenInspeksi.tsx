@@ -92,7 +92,7 @@ export default function ManajemenInspeksi() {
 				const approvalsData = Array.isArray(approvalsRes)
 					? approvalsRes
 					: approvalsRes?.data || [];
-				const currentUserNPP = user?.user?.npp || "NPP2304145";
+			const currentUserNPP = user?.user?.npp || "-";
 				const mappedData = data.map((item: any) => {
 					let objectTypeName = "Belum Ditentukan";
 					if (item.object_type?.name) {
@@ -136,7 +136,10 @@ export default function ManajemenInspeksi() {
 							item.storage_location?.name ||
 							item.storageLocation?.name ||
 							"Belum ditentukan",
-						area: item.func_loc || item.funcloc || "-",
+						area:
+							typeof item.func_loc === "string"
+								? item.func_loc
+								: item.func_loc?.name || item.funcloc?.name || "-",
 						vendor: item.vendor || "-",
 						tahunDibuat: item.year?.toString() || "-",
 						nilaiPerolehan: item.original_value
@@ -323,17 +326,13 @@ export default function ManajemenInspeksi() {
 			setJamSelesai("09:00");
 			setTglPemeriksaan(new Date().toISOString().split("T")[0]);
 		} else {
-			// Jika statusnya Ubah Validasi atau Perlu Revisi, muat data yang sudah pernah diisi
-			setHasilPemeriksaan(
-				asset.statusAset === "REJECTED" ? "Tidak Layak" : "Layak",
-			);
-			setCatatan(
-				"Visual fisik aman, tidak ada kebocoran, performa motor stabil.",
-			);
-			setRekomendasi("Dapat dimobilisasi segera ke area yang membutuhkan.");
-			setLokasi("Area Unit P-IB"); // Default mock data yang sesuai opsi dropdown
-			setJamMulai("09:00");
-			setJamSelesai("10:30");
+			// Data inspeksi sebelumnya harus dimuat dari backend sebelum mengisi form.
+			setHasilPemeriksaan("");
+			setCatatan("");
+			setRekomendasi("");
+			setLokasi("");
+			setJamMulai("");
+			setJamSelesai("");
 			setTglPemeriksaan(new Date().toISOString().split("T")[0]);
 		}
 		setIsModalOpen(true);

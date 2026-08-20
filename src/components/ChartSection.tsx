@@ -48,21 +48,19 @@ export function ChartSection() {
   const repairPct = totalAset > 0 ? Math.round((repairCount / totalAset) * 100) : 0;
 
   const pieData = [
-    { name: "Siap Digunakan", value: readyPct || 61, color: "#10b981" },
-    { name: "Idle (Standby)", value: idlePct || 33, color: "#2563eb" },
-    { name: "Butuh Perbaikan", value: repairPct || 4, color: "#ef4444" },
-  ];
+    { name: "Siap Digunakan", value: readyPct, color: "#10b981" },
+    { name: "Idle (Standby)", value: idlePct, color: "#2563eb" },
+    { name: "Butuh Perbaikan", value: repairPct, color: "#ef4444" },
+  ].filter((item) => item.value > 0);
 
-  // Dummy line data since real timeline data might need grouping by month
-  // But we will use the same for visual purposes if no logic for it
-  const months = ["Mei", "Jun", "Jul", "Agu", "Sep", "Okt"];
-  // eslint-disable-next-line react-hooks/purity
-  const lineData = months.map(m => ({ name: m, value: 50 }));
-  
-  // Try to group by created_at month if possible
-  if (totalAset > 0) {
-     // A simple fallback to real data if any (just demoing dynamic behavior)
-  }
+  const registrationByMonth = new Map<string, number>();
+  data.forEach((equipment: any) => {
+    const date = equipment.created_at ? new Date(equipment.created_at) : null;
+    if (!date || Number.isNaN(date.getTime())) return;
+    const month = date.toLocaleDateString("id-ID", { month: "short" });
+    registrationByMonth.set(month, (registrationByMonth.get(month) || 0) + 1);
+  });
+  const lineData = Array.from(registrationByMonth, ([name, value]) => ({ name, value }));
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -76,7 +74,7 @@ export function ChartSection() {
           </button>
         </div>
         <div className="h-64">
-          <ResponsiveContainer width="100%" height="100%">
+          {lineData.length === 0 ? <p className="h-full flex items-center justify-center text-sm text-gray-400">Belum ada data registrasi.</p> : <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={lineData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
@@ -100,7 +98,7 @@ export function ChartSection() {
                 activeDot={{ r: 6, fill: "#0556B3", stroke: "#fff", strokeWidth: 2 }}
               />
             </AreaChart>
-          </ResponsiveContainer>
+          </ResponsiveContainer>}
         </div>
       </div>
 
@@ -108,7 +106,7 @@ export function ChartSection() {
       <div className="bg-white rounded-xl border border-gray-100 p-6 shadow-sm">
         <h3 className="text-lg font-bold text-gray-800 mb-2">Distribusi Status</h3>
         <div className="relative h-48 flex justify-center items-center">
-          <ResponsiveContainer width="100%" height="100%">
+          {pieData.length === 0 ? <p className="h-full flex items-center justify-center text-sm text-gray-400">Belum ada data status.</p> : <ResponsiveContainer width="100%" height="100%">
             <PieChart>
               <Pie
                 data={pieData}
@@ -126,7 +124,7 @@ export function ChartSection() {
               </Pie>
               <Tooltip />
             </PieChart>
-          </ResponsiveContainer>
+          </ResponsiveContainer>}
           <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
             <span className="text-2xl font-bold text-gray-800">{totalAset}</span>
             <span className="text-[10px] text-gray-500 uppercase tracking-wide">Total Unit</span>

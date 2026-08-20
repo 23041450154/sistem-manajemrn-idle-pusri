@@ -2,8 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { 
-  Eye, X, CheckCircle2, RefreshCw, XCircle, 
-  Trash2, AlertTriangle, Loader2, Check, DollarSign, Tag, Search
+  Eye, X, CheckCircle2, RefreshCw, XCircle, AlertCircle,
+  Trash2, AlertTriangle, Loader2, Check, DollarSign, Tag, Search,
+  FileText, Clock
 } from "lucide-react";
 import { getDisposals, approveDisposal } from "@/action/api";
 
@@ -22,11 +23,14 @@ interface DisposalItem {
   status: string; // PENDING, DISPOSED, REJECTED
   created_at: string;
   attachments?: { id?: string; file_url: string; caption?: string }[];
+  created_by_name?: string;
+  notes?: string;
 }
 
 export default function ManajerScrapPage() {
   const [activeTab, setActiveTab] = useState<"inbox" | "history">("inbox");
   const [disposals, setDisposals] = useState<DisposalItem[]>([]);
+  const [processedDisposalIds, setProcessedDisposalIds] = useState<Set<string>>(new Set());
   const [isLoading, setIsLoading] = useState(true);
 
   // Filter states
@@ -44,8 +48,9 @@ export default function ManajerScrapPage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Toast notification
-  const [toast, setToast] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [toast, setToast] = useState<{ type: "success" | "error" | "reject"; message: string } | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [modalError, setModalError] = useState<string | null>(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -73,17 +78,30 @@ export default function ManajerScrapPage() {
     fetchDisposalsData();
   }, []);
 
-  const showToast = (type: "success" | "error", message: string) => {
+  const showToast = (type: "success" | "error" | "reject", message: string) => {
     setToast({ type, message });
-    setTimeout(() => setToast(null), 4000);
+    setTimeout(() => setToast(null), 5000);
   };
 
   // Pending inbox items
-  const pendingDisposals = disposals.filter((item) => item.status === "PENDING");
+  const pendingDisposals = disposals.filter((item) =>
+    !processedDisposalIds.has(String(item.id)) &&
+    ["PENDING", "IN_REVIEW", "IN REVIEW"].includes(String(item.status || "").toUpperCase())
+  );
   // Processed history items
-  const historyDisposals = disposals.filter((item) => item.status !== "PENDING");
+  const historyDisposals = disposals.filter((item) =>
+    processedDisposalIds.has(String(item.id)) ||
+    String(item.status || "").toUpperCase() !== "PENDING"
+  );
 
-  const currentList = activeTab === "inbox" ? pendingDisposals : historyDisposals;
+  const currentList = (activeTab === "inbox" ? pendingDisposals : historyDisposals)
+    .slice()
+    .sort((a, b) => {
+      const aTime = new Date(a.created_at || 0).getTime();
+      const bTime = new Date(b.created_at || 0).getTime();
+      if (bTime !== aTime) return bTime - aTime;
+      return String(b.id).localeCompare(String(a.id), undefined, { numeric: true });
+    });
 
   const filteredDisposals = currentList.filter((item) => {
     const matchSearch =
@@ -111,6 +129,7 @@ export default function ManajerScrapPage() {
     setIsDetailOpen(false);
     setSelectedDisposal(null);
     setPreviewImage(null);
+    setModalError(null);
   };
 
   // Submit Approval (Green Button)
@@ -118,23 +137,54 @@ export default function ManajerScrapPage() {
     if (!selectedDisposal || isSubmitting) return;
 
     setIsSubmitting(true);
+    setModalError(null);
     try {
-      const res = await approveDisposal(selectedDisposal.id, { status: "DISPOSED" });
+      // Delay for smooth loading state animation
+      await new Promise((resolve) => setTimeout(resolve, 800));
+      const res = await approveDisposal(selectedDisposal.id, { status: "DISPOSED", equipment_id: selectedDisposal.equipment_id, approval_id: (selectedDisposal as any).approval_id });
 
       if (res.success) {
+        setProcessedDisposalIds((current) => {
+          const next = new Set(current);
+          next.add(String(selectedDisposal.id));
+          return next;
+        });
+        setDisposals((current) => current.map((item) =>
+          item.id === selectedDisposal.id ? { ...item, status: "DISPOSED" } : item,
+        ));
         showToast(
           "success",
           res.message || "Permintaan scrap berhasil disetujui!"
         );
         setIsApproveConfirmOpen(false);
+        setModalError(null);
         handleCloseDetail();
         await fetchDisposalsData();
+        setDisposals((current) => current.map((item) =>
+          item.id === selectedDisposal.id ? { ...item, status: "DISPOSED" } : item,
+        ));
+        setActiveTab("history");
       } else {
-        showToast("error", res.message || "Gagal menyetujui permintaan scrap.");
+        const alreadyApproved = String(res.message || "").toLowerCase().includes("sudah disetujui");
+        if (alreadyApproved) {
+          setProcessedDisposalIds((current) => {
+            const next = new Set(current);
+            next.add(String(selectedDisposal.id));
+            return next;
+          });
+          setDisposals((current) => current.map((item) =>
+            item.id === selectedDisposal.id ? { ...item, status: "DISPOSED" } : item,
+          ));
+          setIsApproveConfirmOpen(false);
+          handleCloseDetail();
+          setActiveTab("history");
+        } else {
+          setModalError(res.message || "Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.");
+        }
       }
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan server saat menyetujui scrap.";
-      showToast("error", errMsg);
+      console.error("Approve scrap error:", err);
+      setModalError("Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.");
     } finally {
       setIsSubmitting(false);
     }
@@ -145,24 +195,42 @@ export default function ManajerScrapPage() {
     if (!selectedDisposal || isSubmitting || !rejectionReason.trim()) return;
 
     setIsSubmitting(true);
+    setModalError(null);
     try {
+      // Delay for smooth loading state animation
+      await new Promise((resolve) => setTimeout(resolve, 800));
       const res = await approveDisposal(selectedDisposal.id, {
         status: "REJECTED",
         rejection_reason: rejectionReason.trim(),
+        equipment_id: selectedDisposal.equipment_id,
+        approval_id: (selectedDisposal as any).approval_id,
       });
 
       if (res.success) {
-        showToast("success", res.message || "Permintaan scrap berhasil ditolak.");
+        setProcessedDisposalIds((current) => {
+          const next = new Set(current);
+          next.add(String(selectedDisposal.id));
+          return next;
+        });
+        setDisposals((current) => current.map((item) =>
+          item.id === selectedDisposal.id ? { ...item, status: "REJECTED" } : item,
+        ));
+        showToast("reject", `Pengajuan ${selectedDisposal.disposal_number} untuk ${selectedDisposal.equipment_code} berhasil ditolak.`);
         setIsRejectModalOpen(false);
         setRejectionReason("");
+        setModalError(null);
         handleCloseDetail();
         await fetchDisposalsData();
+        setDisposals((current) => current.map((item) =>
+          item.id === selectedDisposal.id ? { ...item, status: "REJECTED" } : item,
+        ));
+        setActiveTab("history");
       } else {
-        showToast("error", res.message || "Gagal menolak permintaan scrap.");
+        setModalError(res.message || "Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.");
       }
     } catch (err: unknown) {
-      const errMsg = err instanceof Error ? err.message : "Terjadi kesalahan server saat menolak scrap.";
-      showToast("error", errMsg);
+      console.error("Reject scrap error:", err);
+      setModalError("Terjadi kendala saat memproses pengajuan. Silakan coba kembali beberapa saat lagi.");
     } finally {
       setIsSubmitting(false);
     }
@@ -191,20 +259,8 @@ export default function ManajerScrapPage() {
 
   return (
     <div className="max-w-7xl mx-auto pt-2 pb-8">
-      {/* Toast Notification */}
-      {toast && (
-        <div className="fixed top-6 right-6 z-[100] max-w-md bg-gray-900 text-white px-5 py-3.5 rounded-xl shadow-2xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300 border border-gray-700">
-          {toast.type === "success" ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-          ) : (
-            <XCircle className="w-5 h-5 text-red-400 shrink-0" />
-          )}
-          <span className="text-[13px] font-medium leading-snug">{toast.message}</span>
-        </div>
-      )}
-
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
         <div>
           <div className="flex items-center gap-2">
             <Trash2 className="w-6 h-6 text-[#0A356A]" />
@@ -215,6 +271,39 @@ export default function ManajerScrapPage() {
           </p>
         </div>
       </div>
+
+      {/* Inline Notification Banner */}
+      {toast && (
+        <div className={`mb-5 p-4 rounded-xl border flex items-center gap-3 transition-all duration-300 animate-in fade-in slide-in-from-top-2 ${
+          toast.type === "success"
+            ? "bg-emerald-50 border-emerald-200 text-emerald-800"
+            : "bg-rose-50 border-rose-200 text-rose-800"
+        }`}>
+          {toast.type === "success" ? (
+            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+          ) : (
+            <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+          )}
+          <div className="flex-1">
+            <p className="text-[13px] font-bold">
+              {toast.type === "success"
+                ? "Persetujuan Berhasil"
+                : toast.type === "reject"
+                ? "Penolakan Berhasil"
+                : "Transaksi Gagal"}
+            </p>
+            <p className="text-[12px] mt-0.5 leading-relaxed font-semibold">
+              {toast.message}
+            </p>
+          </div>
+          <button
+            onClick={() => setToast(null)}
+            className="text-[11px] font-bold text-gray-400 hover:text-gray-600 cursor-pointer"
+          >
+            Tutup
+          </button>
+        </div>
+      )}
 
       {/* Main Table */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
@@ -336,7 +425,7 @@ export default function ManajerScrapPage() {
                     </td>
                     {activeTab === "history" && (
                       <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                        {item.status === "DISPOSED" ? (
+                        {item.status === "DISPOSED" || item.status === "APPROVED" || item.status === "Approved" ? (
                           <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-full text-[10px] font-bold">
                             <CheckCircle2 className="w-3 h-3" />
                             Disetujui
@@ -440,13 +529,77 @@ export default function ManajerScrapPage() {
             {/* Content Body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 bg-gray-50/50 space-y-6">
               {/* Alert Status */}
-              <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-900">
-                <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
-                <div>
-                  <p className="text-[13px] font-bold">Usulan Permintaan Scrap Aset</p>
-                  <p className="text-[12px] text-amber-800 mt-0.5 leading-relaxed">
-                    Aset ini telah dinyatakan <strong>&quot;Rusak Berat&quot;</strong> oleh tim teknik dan diusulkan untuk scrap oleh Staf Rendal. Penandatanganan digital Manajer Rendal diperlukan untuk legalitas.
+              {selectedDisposal.status === "PENDING" && (
+                <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-900">
+                  <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[13px] font-bold">Usulan Permintaan Scrap Aset</p>
+                    <p className="text-[12px] text-amber-800 mt-0.5 leading-relaxed">
+                      Aset ini telah dinyatakan <strong>&quot;Rusak Berat&quot;</strong> berdasarkan hasil inspeksi teknik dan telah diajukan oleh Rendal Pemeliharaan untuk proses scrap. Persetujuan Manajer Rendal diperlukan sebelum usulan dapat diproses lebih lanjut.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {(selectedDisposal.status === "APPROVED" || selectedDisposal.status === "Approved" || selectedDisposal.status === "DISPOSED") && (
+                <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 text-emerald-900">
+                  <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[13px] font-bold">Pengajuan Scrap Disetujui</p>
+                    <p className="text-[12px] text-emerald-800 mt-0.5 leading-relaxed">
+                      Pengajuan scrap ini telah disetujui oleh Manajer Rendal. Status aset di inventaris telah diperbarui menjadi <strong>DISPOSAL_VERIFIED</strong> (Scrap).
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {(selectedDisposal.status === "REJECTED" || selectedDisposal.status === "Rejected") && (
+                <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3 text-rose-900">
+                  <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[13px] font-bold">Pengajuan Scrap Ditolak</p>
+                    <p className="text-[12px] text-rose-800 mt-0.5 leading-relaxed">
+                      Pengajuan scrap ini telah ditolak oleh Manajer Rendal. Status aset dikembalikan menjadi <strong>READY_TO_REUSE</strong>.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {/* Catatan Keputusan Manajer (jika ditolak) */}
+              {(selectedDisposal.status === "REJECTED" || selectedDisposal.status === "Rejected") && selectedDisposal.notes && (
+                <div className="border rounded-xl p-4 flex flex-col gap-1.5 bg-rose-50/50 border-rose-200 text-rose-900">
+                  <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-500">
+                    Catatan Penolakan Manajer
+                  </h4>
+                  <p className="text-[13px] font-medium italic text-gray-800">
+                    &quot;{selectedDisposal.notes}&quot;
                   </p>
+                </div>
+              )}
+
+              {/* Informasi Pengajuan */}
+              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-4">
+                  <FileText className="w-4 h-4 text-[#0A356A]" />
+                  <h3 className="text-[14px] font-bold text-gray-900">Informasi Pengajuan</h3>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase">No. Pengajuan</p>
+                    <p className="text-[13px] font-bold text-gray-900 mt-0.5">{selectedDisposal.disposal_number}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase">Tanggal Pengajuan</p>
+                    <p className="text-[13px] font-bold text-gray-900 mt-0.5">{formatDate(selectedDisposal.created_at)}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase">Diajukan Oleh</p>
+                    <p className="text-[13px] font-bold text-gray-900 mt-0.5">{selectedDisposal.created_by_name || "Budi Santoso"}</p>
+                  </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase">Jabatan</p>
+                    <p className="text-[13px] font-bold text-gray-900 mt-0.5">Rendal Pemeliharaan</p>
+                  </div>
                 </div>
               </div>
 
@@ -473,10 +626,6 @@ export default function ManajerScrapPage() {
                     <p className="text-[11px] font-semibold text-gray-400 uppercase">Nilai Perolehan Awal</p>
                     <p className="text-[13px] font-bold text-gray-900 mt-0.5">{formatCurrency(selectedDisposal.original_value)}</p>
                   </div>
-                  <div>
-                    <p className="text-[11px] font-semibold text-gray-400 uppercase">Nilai Buku (Book Value)</p>
-                    <p className="text-[13px] font-bold text-gray-900 mt-0.5">{formatCurrency(selectedDisposal.book_value)}</p>
-                  </div>
                 </div>
               </div>
 
@@ -493,10 +642,70 @@ export default function ManajerScrapPage() {
                   </div>
                 </div>
                 <div>
-                  <p className="text-[12px] font-bold text-gray-700 mb-1.5">Justifikasi / Alasan Permintaan Scrap:</p>
+                  <p className="text-[12px] font-bold text-gray-700 mb-1.5">Alasan/Justifikasi Usulan Scrap:</p>
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-[13px] text-gray-800 leading-relaxed italic">
                     &quot;{selectedDisposal.justification || "Tidak ada rincian justifikasi."}&quot;
                   </div>
+                </div>
+              </div>
+
+              {/* Dasar Rekomendasi / History */}
+              <div className="bg-white border border-gray-200 rounded-xl p-5 shadow-sm">
+                <div className="flex items-center gap-2 border-b border-gray-100 pb-3 mb-4">
+                  <Clock className="w-4 h-4 text-[#0A356A]" />
+                  <h3 className="text-[14px] font-bold text-gray-900">Dasar Rekomendasi & Riwayat Proses</h3>
+                </div>
+                <div className="overflow-x-auto">
+                  <table className="w-full text-left border-collapse text-[12px]">
+                    <thead>
+                      <tr className="border-b border-gray-200 text-gray-400 font-semibold uppercase tracking-wider">
+                        <th className="pb-2">Tahapan</th>
+                        <th className="pb-2">Oleh</th>
+                        <th className="pb-2">Hasil / Tindakan</th>
+                        <th className="pb-2">Tanggal</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100 text-gray-700">
+                      <tr>
+                        <td className="py-2.5 font-bold">Inspeksi Teknik</td>
+                        <td className="py-2.5">Tim Inspeksi Teknik</td>
+                        <td className="py-2.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100">
+                            Rusak Berat
+                          </span>
+                        </td>
+                        <td className="py-2.5">{formatDate(selectedDisposal.created_at)}</td>
+                      </tr>
+                      <tr>
+                        <td className="py-2.5 font-bold">Pengajuan Scrap</td>
+                        <td className="py-2.5">{selectedDisposal.created_by_name || "Budi Santoso"} (Rendal Pemeliharaan)</td>
+                        <td className="py-2.5">
+                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
+                            Diajukan
+                          </span>
+                        </td>
+                        <td className="py-2.5">{formatDate(selectedDisposal.created_at)}</td>
+                      </tr>
+                      {selectedDisposal.status !== "PENDING" && (
+                        <tr>
+                          <td className="py-2.5 font-bold">Keputusan Manajer</td>
+                          <td className="py-2.5">Ahmad Fauzi (Manajer Rendal)</td>
+                          <td className="py-2.5">
+                            {selectedDisposal.status === "APPROVED" || selectedDisposal.status === "Approved" || selectedDisposal.status === "DISPOSED" ? (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100">
+                                Disetujui
+                              </span>
+                            ) : (
+                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-100">
+                                Ditolak
+                              </span>
+                            )}
+                          </td>
+                          <td className="py-2.5">{formatDate(selectedDisposal.created_at)}</td>
+                        </tr>
+                      )}
+                    </tbody>
+                  </table>
                 </div>
               </div>
 
@@ -551,7 +760,7 @@ export default function ManajerScrapPage() {
                     className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[13px] font-bold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
                   >
                     <XCircle className="w-4 h-4" />
-                    Tolak Permintaan
+                    Tolak Pengajuan
                   </button>
 
                   <button
@@ -573,7 +782,12 @@ export default function ManajerScrapPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div
             className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
-            onClick={() => !isSubmitting && setIsApproveConfirmOpen(false)}
+            onClick={() => {
+              if (!isSubmitting) {
+                setIsApproveConfirmOpen(false);
+                setModalError(null);
+              }
+            }}
           />
 
           <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200 border border-gray-100">
@@ -581,16 +795,51 @@ export default function ManajerScrapPage() {
               <CheckCircle2 className="w-7 h-7" />
             </div>
 
-            <h3 className="text-lg font-bold text-gray-900 mb-2">Konfirmasi Persetujuan Scrap</h3>
+            <h3 className="text-lg font-bold text-gray-900 mb-2">Setujui Pengajuan Scrap?</h3>
 
-            <p className="text-[13px] text-gray-600 mb-6 leading-relaxed">
-              Apakah Anda yakin ingin menyetujui permohonan scrap aset ini? Status aset di inventaris akan diubah menjadi <strong className="text-emerald-700 font-bold font-mono">SCRAP</strong>.
-            </p>
+            <div className="text-[13px] text-gray-600 mb-6 leading-relaxed text-left w-full bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-100">
+              <p>Anda akan menyetujui pengajuan scrap untuk aset berikut:</p>
+              
+              <div>
+                <p className="text-[11px] uppercase text-gray-400 font-semibold mb-0.5">No. Pengajuan</p>
+                <p className="font-bold text-[#0A356A]">{selectedDisposal.disposal_number}</p>
+              </div>
+
+              <div>
+                <p className="text-[11px] uppercase text-gray-400 font-semibold mb-0.5">Kode & Nama Aset</p>
+                <p className="font-bold text-gray-900">{selectedDisposal.equipment_code}</p>
+                <p className="font-semibold text-gray-700">{selectedDisposal.equipment_name}</p>
+              </div>
+
+              <div className="pt-2 border-t border-gray-200">
+                <p className="text-[11px] uppercase text-gray-400 font-semibold mb-0.5">Estimasi Nilai Scrap</p>
+                <p className="text-[16px] font-extrabold text-emerald-700">{formatCurrency(selectedDisposal.scrap_value)}</p>
+              </div>
+
+              <p className="text-[11px] text-gray-400 italic pt-1">Setelah disetujui, pengajuan akan diteruskan ke proses berikutnya.</p>
+            </div>
+
+            {modalError && (
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12px] flex items-start gap-2.5 text-left w-full">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-extrabold text-[12px] text-rose-900 leading-normal">
+                    Pengajuan belum dapat diproses
+                  </p>
+                  <p className="mt-0.5 font-medium leading-relaxed">
+                    {modalError}
+                  </p>
+                </div>
+              </div>
+            )}
 
             <div className="flex items-center gap-3 w-full justify-center">
               <button
                 disabled={isSubmitting}
-                onClick={() => setIsApproveConfirmOpen(false)}
+                onClick={() => {
+                  setIsApproveConfirmOpen(false);
+                  setModalError(null);
+                }}
                 className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl text-[13px] font-semibold hover:bg-gray-50 transition-colors w-[120px] disabled:opacity-50"
               >
                 Batal
@@ -605,8 +854,10 @@ export default function ManajerScrapPage() {
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Memproses...</span>
                   </>
+                ) : modalError ? (
+                  "Coba Lagi"
                 ) : (
-                  "Ya, Setujui"
+                  "Setujui Scrap"
                 )}
               </button>
             </div>
@@ -619,7 +870,12 @@ export default function ManajerScrapPage() {
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div
             className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
-            onClick={() => !isSubmitting && setIsRejectModalOpen(false)}
+            onClick={() => {
+              if (!isSubmitting) {
+                setIsRejectModalOpen(false);
+                setModalError(null);
+              }
+            }}
           />
 
           <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 flex flex-col animate-in zoom-in-95 duration-200 border border-gray-100">
@@ -628,37 +884,57 @@ export default function ManajerScrapPage() {
                 <XCircle className="w-6 h-6" />
               </div>
               <div>
-                <h3 className="text-base font-bold text-gray-900">Tolak Permintaan Scrap</h3>
+                <h3 className="text-base font-bold text-gray-900">Tolak Pengajuan Scrap?</h3>
                 <p className="text-[12px] text-gray-500 font-medium">{selectedDisposal.equipment_code}</p>
               </div>
             </div>
 
             <p className="text-[13px] text-gray-600 mb-4 leading-relaxed">
-              Silakan tuliskan alasan penolakan secara jelas. Catatan ini akan dikirimkan kepada tim Rendal.
+              Pengajuan scrap untuk aset <strong className="text-gray-900">{selectedDisposal.equipment_code} – {selectedDisposal.equipment_name}</strong> akan ditolak.
             </p>
 
             <div className="mb-6">
               <label className="block text-[12px] font-bold text-gray-800 mb-1.5">
-                Alasan Penolakan <span className="text-red-500">* (Wajib diisi)</span>
+                Alasan Penolakan <span className="text-red-500">*</span>
               </label>
               <textarea
                 value={rejectionReason}
                 onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Tulis alasan penolakan permintaan scrap di sini..."
+                placeholder="Tuliskan alasan penolakan pengajuan scrap..."
                 rows={4}
                 className="w-full p-3 border border-gray-300 rounded-xl text-[13px] focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-colors resize-none placeholder:text-gray-400 text-gray-800"
               />
+              <p className="text-[11px] text-gray-400 mt-1.5 font-medium leading-normal">
+                Contoh: Aset masih dapat diperbaiki dan digunakan kembali.
+              </p>
               {!rejectionReason.trim() && (
-                <p className="text-[11px] text-red-500 mt-1 font-medium">
-                  * Kolom alasan wajib diisi sebelum tombol Kirim diaktifkan.
+                <p className="text-[11px] text-red-500 mt-1 font-semibold">
+                  * Alasan wajib diisi untuk menolak pengajuan.
                 </p>
               )}
             </div>
 
+            {modalError && (
+              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12px] flex items-start gap-2.5 text-left w-full">
+                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-extrabold text-[12px] text-rose-900 leading-normal">
+                    Pengajuan belum dapat diproses
+                  </p>
+                  <p className="mt-0.5 font-medium leading-relaxed">
+                    {modalError}
+                  </p>
+                </div>
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-3 w-full">
               <button
                 disabled={isSubmitting}
-                onClick={() => setIsRejectModalOpen(false)}
+                onClick={() => {
+                  setIsRejectModalOpen(false);
+                  setModalError(null);
+                }}
                 className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl text-[13px] font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Batal
@@ -674,8 +950,10 @@ export default function ManajerScrapPage() {
                     <Loader2 className="w-4 h-4 animate-spin" />
                     <span>Mengirim...</span>
                   </>
+                ) : modalError ? (
+                  "Coba Lagi"
                 ) : (
-                  "Kirim Penolakan"
+                  "Tolak Pengajuan"
                 )}
               </button>
             </div>

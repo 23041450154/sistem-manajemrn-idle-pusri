@@ -34,27 +34,6 @@ export async function PATCH(
     // Extract error from backend
     const errorData = await backendRes.json().catch(() => null);
     
-    // Fallback: If backend server is not reachable or endpoint doesn't exist yet (404/502/503), return simulated success if valid payload was received
-    if (backendRes.status === 404 || backendRes.status === 502 || backendRes.status === 503) {
-      const actualCost = formData.get("actual_cost");
-      const conditionId = formData.get("condition_id");
-      const preservationStatus = formData.get("preservation_status");
-
-      if (actualCost && conditionId && preservationStatus) {
-        return NextResponse.json({
-          success: true,
-          message: "Peralatan berhasil diselesaikan perbaikannya dan berstatus READY TO USE",
-          data: {
-            id,
-            actual_cost: parseFloat(String(actualCost)),
-            condition_id: parseInt(String(conditionId), 10),
-            preservation_status: String(preservationStatus),
-            status: "READY_TO_REUSE"
-          }
-        }, { status: 200 });
-      }
-    }
-
     return NextResponse.json({
       success: false,
       message: errorData?.error || errorData?.message || `Gagal memproses perbaikan (HTTP ${backendRes.status})`,
@@ -62,11 +41,9 @@ export async function PATCH(
 
   } catch (error: any) {
     console.error("API Route maintenance-complete error:", error);
-    // If backend is unreachable, simulate success response if basic form fields are valid
     return NextResponse.json({
-      success: true,
-      message: "Peralatan berhasil diselesaikan perbaikannya dan berstatus READY TO USE",
-      data: { id, status: "READY_TO_REUSE" }
-    }, { status: 200 });
+      success: false,
+      message: "Gagal terhubung ke backend saat menyelesaikan perbaikan.",
+    }, { status: 502 });
   }
 }

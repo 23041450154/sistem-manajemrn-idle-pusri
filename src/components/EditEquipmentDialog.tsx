@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { X, Save, Loader2 } from "lucide-react";
-import { getEquipmentById, updateEquipment, getStorageLocations, getObjectTypes } from "@/action/api";
+import { getEquipmentById, updateEquipment, getStorageLocations, getObjectTypes, getPlants } from "@/action/api";
 
 interface EditEquipmentDialogProps {
   open: boolean;
@@ -34,6 +34,7 @@ export function EditEquipmentDialog({ open, onClose, onSaved, equipment }: EditE
 
   const [storageOptions, setStorageOptions] = useState<any[]>([]);
   const [objectTypes, setObjectTypes] = useState<any[]>([]);
+  const [plantOptions, setPlantOptions] = useState<any[]>([]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -71,6 +72,10 @@ export function EditEquipmentDialog({ open, onClose, onSaved, equipment }: EditE
         setObjectTypes(types);
       }
     }).catch((e) => console.error("Error fetching object types:", e));
+
+    getPlants().then((plants) => {
+      if (isMounted && Array.isArray(plants)) setPlantOptions(plants);
+    }).catch((e) => console.error("Error fetching plants:", e));
 
     // 3. Non-blocking background fetch for full API detail
     const targetId = equipment.id || equipment.ID || equipment.equipment_id || equipment.equipmentId;
@@ -206,11 +211,9 @@ export function EditEquipmentDialog({ open, onClose, onSaved, equipment }: EditE
                   className="w-full bg-white border border-gray-300 rounded-lg px-3 py-2 text-[13px] text-gray-900 outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]/20 transition-colors cursor-pointer"
                 >
                   <option value="">-- Pilih Plant --</option>
-                  <option value="PUSRI-IB">PUSRI-IB</option>
-                  <option value="PUSRI-IIB">PUSRI-IIB</option>
-                  <option value="PUSRI-III">PUSRI-III</option>
-                  <option value="PUSRI-IV">PUSRI-IV</option>
-                  <option value="STG-1">STG-1 (Utilitas)</option>
+                  {plantOptions.map((plant) => (
+                    <option key={plant.id} value={plant.name}>{plant.name}</option>
+                  ))}
                 </select>
               </div>
 

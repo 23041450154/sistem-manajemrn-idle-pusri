@@ -53,16 +53,12 @@ export default function UnitKerjaDashboard() {
   const rusakCount = data.filter(a => a.status?.name === 'DALAM_PERBAIKAN').length || 0;
   const othersCount = totalAset - activeCount - idleCount - rusakCount;
 
-  // Let's assume if there are no ACTIVE, we just show others as ACTIVE for display purposes if the status names don't match perfectly. But it's better to stick to real counts.
   const pieData = [
     { name: 'Aktif', value: activeCount + othersCount, color: '#10B981' },
     { name: 'Idle', value: idleCount, color: '#F59E0B' },
     { name: 'Rusak', value: rusakCount, color: '#EF4444' },
   ].filter(p => p.value > 0);
   
-  // If no pieData, supply a dummy one for empty state
-  if (pieData.length === 0) pieData.push({ name: 'Belum Ada Data', value: 1, color: '#E5E7EB' });
-
   // Group by plant
   const plants = data.reduce((acc: any, curr: any) => {
     const plant = curr.plant || 'Lainnya';

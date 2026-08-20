@@ -87,7 +87,7 @@ export function normalizeEquipment(raw: Record<string, unknown>): KatalogDetail 
     statusLabel: status ?? "—",
     state: toState(status, condition),
     storageLocation: relName(storage),
-    funcLoc: str(raw.func_loc),
+    funcLoc: relName(raw.func_loc),
     idleReason: str(raw.idle_reason),
     idleSince: str(raw.idle_since),
     vendor: str(raw.vendor),

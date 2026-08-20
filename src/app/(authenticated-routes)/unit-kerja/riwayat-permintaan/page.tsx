@@ -441,11 +441,11 @@ function RiwayatPermintaanContent() {
 				<table className="w-full text-left border-collapse table-fixed">
 					<thead className="bg-gray-50/95 backdrop-blur-sm">
 						<tr className="border-b border-gray-300">
-							<th className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
+							<th className="px-2.5 py-2 text-[10px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
 								No
 							</th>
 							<th
-								className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[140px]"
+								className="px-2.5 py-2 text-[10px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[140px]"
 								onClick={() => handleSort("request_number")}
 							>
 								<div className="flex items-center justify-start">
@@ -453,7 +453,7 @@ function RiwayatPermintaanContent() {
 								</div>
 							</th>
 							<th
-								className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+								className="px-2.5 py-2 text-[10px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
 								onClick={() => handleSort("equipment_name")}
 							>
 								<div className="flex items-center justify-start">
@@ -461,7 +461,7 @@ function RiwayatPermintaanContent() {
 								</div>
 							</th>
 							<th
-								className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[100px]"
+								className="px-2.5 py-2 text-[10px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[100px]"
 								onClick={() => handleSort("target_plant")}
 							>
 								<div className="flex items-center justify-start">
@@ -469,17 +469,17 @@ function RiwayatPermintaanContent() {
 								</div>
 							</th>
 							<th
-								className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center w-[100px]"
+								className="px-2.5 py-2 text-[10px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center w-[100px]"
 								onClick={() => handleSort("start_date")}
 							>
 								<div className="flex items-center justify-center">
 									Tgl Permintaan {getSortIcon("start_date")}
 								</div>
 							</th>
-							<th className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-center w-[140px]">
+							<th className="px-2.5 py-2 text-[10px] font-bold text-gray-600 uppercase tracking-wider text-center w-[140px]">
 								Status
 							</th>
-							<th className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-center w-[90px]">
+							<th className="px-2.5 py-2 text-[10px] font-bold text-gray-600 uppercase tracking-wider text-center w-[90px]">
 								Aksi
 							</th>
 						</tr>
@@ -514,27 +514,27 @@ function RiwayatPermintaanContent() {
 										key={item.id}
 										className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
 									>
-										<td className="px-3 py-3 text-[13px] text-gray-500 font-medium text-center">
+										<td className="px-2.5 py-2 text-[12px] text-gray-500 font-medium text-center">
 											{rowNum}
 										</td>
-										<td className="px-3 py-3 text-[13px] font-semibold text-[#0A356A] text-left break-all">
+										<td className="px-2.5 py-2 text-[12px] font-semibold text-[#0A356A] text-left break-all">
 											{item.request_number}
 										</td>
-										<td className="px-3 py-3 text-[13px] font-semibold text-gray-800 text-left" title={item.equipment_name}>
+										<td className="px-2.5 py-2 text-[12px] font-semibold text-gray-800 text-left" title={item.equipment_name}>
 											<span className="leading-tight line-clamp-2 block">
 												{item.equipment_name}
 											</span>
 										</td>
-										<td className="px-3 py-3 text-[13px] text-gray-600 font-medium text-left">
+										<td className="px-2.5 py-2 text-[12px] text-gray-600 font-medium text-left">
 											<span className="line-clamp-2 block">{item.target_plant}</span>
 										</td>
-										<td className="px-3 py-3 text-[13px] text-gray-600 font-medium text-center whitespace-nowrap">
+										<td className="px-2.5 py-2 text-[12px] text-gray-600 font-medium text-center whitespace-nowrap">
 											{item.start_date}
 										</td>
-										<td className="px-3 py-3 text-center">
+										<td className="px-2.5 py-2 text-center">
 											{getStatusBadge(item.status)}
 										</td>
-										<td className="px-3 py-3 text-center whitespace-nowrap">
+										<td className="px-2.5 py-2 text-center whitespace-nowrap">
 											<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
 												<button
 													title="Detail Info"

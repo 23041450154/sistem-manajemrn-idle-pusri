@@ -6,6 +6,8 @@
 export type MasterEntity = {
 	slug: string;
 	label: string;
+	/** Sembunyikan dari navigasi sampai endpoint backend siap. */
+	hidden?: boolean;
 	/** GET publik (list) */
 	listPath: string;
 	/** Basis CRUD admin. null = backend belum menyediakan tulis (read-only). */
@@ -76,6 +78,33 @@ export const MASTER_ENTITIES: MasterEntity[] = [
 		adminPath: "/api/admin/require-action",
 		nameField: "name",
 		placeholder: "Contoh: Perlu Overhaul Total",
+	},
+	{
+		slug: "idle-reason",
+		label: "Idle Reason",
+		hidden: true,
+		listPath: "/api/idle-reason",
+		adminPath: "/api/admin/idle-reason",
+		nameField: "reason_name",
+		placeholder: "Contoh: Tidak Digunakan",
+	},
+	{
+		slug: "area",
+		label: "Area",
+		hidden: true,
+		listPath: "/api/areas",
+		adminPath: "/api/admin/area",
+		nameField: "name",
+		placeholder: "Contoh: Area Pabrik Utama",
+	},
+	{
+		slug: "functional-location",
+		label: "Functional Location",
+		hidden: true,
+		listPath: "/api/functional-locations",
+		adminPath: "/api/admin/functional-location",
+		nameField: "name",
+		placeholder: "Contoh: P-III/AREA-01",
 	},
 ];
 

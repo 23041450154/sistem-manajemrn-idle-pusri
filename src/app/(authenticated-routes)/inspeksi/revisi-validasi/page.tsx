@@ -30,6 +30,8 @@ import AnalogTimePicker from "@/components/AnalogTimePicker";
 
 import {
 	getConditions,
+	getAreas,
+	getPlants,
 	getEquipments,
 	validateEquipment,
 	getObjectTypes,
@@ -73,25 +75,24 @@ export default function RevisiValidasiPage() {
 	const [conditions, setConditions] = useState<
 		Array<{ id: number; name: string }>
 	>([]);
+	const [areas, setAreas] = useState<Array<{ id: number; name: string }>>([]);
+	const [plants, setPlants] = useState<Array<{ id: number; name: string }>>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
 	useEffect(() => {
 		const fetchData = async () => {
 			try {
 				setIsLoading(true);
-				const [data, objTypes, approvalsRes, user, conditionsData] =
-					await Promise.all([
-						getEquipments(),
-						getObjectTypes(),
-						getApprovals(),
-						getCurrentUserAction(),
-						getConditions(),
-					]);
+				const [data, objTypes, approvalsRes, user, conditionsData, areasData, plantsData] = await Promise.all([
+					getEquipments(), getObjectTypes(), getApprovals(), getCurrentUserAction(), getConditions(), getAreas(), getPlants(),
+				]);
 				setConditions(conditionsData);
+				setAreas(Array.isArray(areasData) ? areasData : []);
+				setPlants(Array.isArray(plantsData) ? plantsData : []);
 				const approvalsData = Array.isArray(approvalsRes)
 					? approvalsRes
 					: approvalsRes?.data || [];
-				const currentUserNPP = user?.user?.npp || "NPP2304145";
+				const currentUserNPP = user?.user?.npp || "-";
 				const mappedData = data.map((item: any) => {
 					let objectTypeName = "Belum Ditentukan";
 					if (item.object_type?.name) {
@@ -135,7 +136,10 @@ export default function RevisiValidasiPage() {
 							item.storage_location?.name ||
 							item.storageLocation?.name ||
 							"Belum ditentukan",
-						area: item.func_loc || item.funcloc || "-",
+						area:
+							typeof item.func_loc === "string"
+								? item.func_loc
+								: item.func_loc?.name || item.funcloc?.name || "-",
 						vendor: item.vendor || "-",
 						tahunDibuat: item.year?.toString() || "-",
 						nilaiPerolehan: item.original_value
@@ -318,17 +322,13 @@ export default function RevisiValidasiPage() {
 			console.error(err);
 		}
 
-		setHasilPemeriksaan(
-			asset.statusAset === "REJECTED" ? "Tidak Layak" : "Layak",
-		);
+		setHasilPemeriksaan("");
 		setConditionId("");
-		setCatatan(
-			"Visual fisik aman, tidak ada kebocoran, performa motor stabil.",
-		);
-		setRekomendasi("Dapat dimobilisasi segera ke area yang membutuhkan.");
-		setLokasi("Area Unit P-IB");
-		setJamMulai("09:00");
-		setJamSelesai("10:30");
+		setCatatan("");
+		setRekomendasi("");
+		setLokasi("");
+		setJamMulai("");
+		setJamSelesai("");
 		setTglPemeriksaan(new Date().toISOString().split("T")[0]);
 	};
 
@@ -361,7 +361,8 @@ export default function RevisiValidasiPage() {
 						);
 						const token = tokenMatch ? tokenMatch[2] : "";
 						const API_URL =
-							process.env.NEXT_PUBLIC_API_URL || "https://api.testing.naufal.me";
+							process.env.NEXT_PUBLIC_API_URL ||
+							"https://api.testing.naufal.me";
 
 						for (const file of uploadedFiles) {
 							const fd = new FormData();
@@ -548,7 +549,11 @@ export default function RevisiValidasiPage() {
 			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
 		};
 		let displayStatus = (status || "").replace(/_/g, " ");
-		if (displayStatus === "IDLE" || displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
+		if (
+			displayStatus === "IDLE" ||
+			displayStatus === "READY TO REUSE" ||
+			displayStatus === "REUSED"
+		) {
 			displayStatus = "READY TO USE";
 		}
 		return (
@@ -699,10 +704,9 @@ export default function RevisiValidasiPage() {
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="Semua">Semua Plant</option>
-							<option value="P-1">Plant 1</option>
-							<option value="P-2">Plant 2</option>
-							<option value="P-3">Plant 3</option>
-							<option value="P-4">Plant 4</option>
+							{plants.map((plant) => (
+								<option key={plant.id} value={plant.name}>{plant.name}</option>
+							))}
 						</select>
 
 						<input
@@ -1074,13 +1078,9 @@ export default function RevisiValidasiPage() {
 											<option value="" disabled>
 												Pilih Lokasi...
 											</option>
-											<option value="Area Unit 1B">Area Unit 1B</option>
-											<option value="Area Unit P-IB">Area Unit P-IB</option>
-											<option value="Area Ammonia">Area Ammonia</option>
-											<option value="Area Urea">Area Urea</option>
-											<option value="Area Utilitas">Area Utilitas</option>
-											<option value="Gudang Utama">Gudang Utama</option>
-											<option value="Bengkel Mekanik">Bengkel Mekanik</option>
+							{areas.map((area) => (
+								<option key={area.id} value={area.name}>{area.name}</option>
+							))}
 										</select>
 										{showValidationErrors && !lokasi && (
 											<p className="text-[10px] text-red-500 mt-0.5 font-medium">

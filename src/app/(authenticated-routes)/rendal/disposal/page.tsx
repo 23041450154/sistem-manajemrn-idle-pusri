@@ -143,7 +143,10 @@ export default function VerifikasiDisposalPage() {
 						: "-",
 					statusAset: normalizedStatus,
 					storageLocation: item.storage_location?.name || "-",
-					funcLoc: item.func_loc || "-",
+					funcLoc:
+						typeof item.func_loc === "string"
+							? item.func_loc
+							: item.func_loc?.name || "-",
 					vendor: item.vendor || "-",
 					year: item.year || "-",
 					originalValue: item.original_value || 0,
