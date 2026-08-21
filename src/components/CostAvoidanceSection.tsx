@@ -43,18 +43,43 @@ export function CostAvoidanceSection() {
 	}, []);
 
 	// --- Dynamic Operational Counts ---
-	// Menunggu Validasi (status_id 1 or REGISTERED or PENDING_REVIEW)
-	const menungguValidasiCount = equipments.filter((e: Equipment) => {
-		const st = (typeof e.status === "object" ? e.status?.name : e.status || e.statusAset || "").toUpperCase();
-		const id = Number(e.status_id || e.status?.id || 0);
-		return id === 1 || st === "REGISTERED" || st === "PENDING_REVIEW" || st === "NONE";
-	}).length;
+	// Set ID aset yang ada di daftar disposals
+	const disposalEquipmentIds = new Set(
+		disposals
+			.map((d: Equipment) => String(d.equipment_id || d.equipment?.id || d.id))
+			.filter(Boolean),
+	);
 
-	// Dalam Perbaikan (status_id 3, 4, 5 or REPAIR, DALAM_PERBAIKAN, MAINTENANCE, REVALIDATION)
-	const dalamPerbaikanCount = equipments.filter((e: Equipment) => {
-		const st = (typeof e.status === "object" ? e.status?.name : e.status || e.statusAset || "").toUpperCase();
+	// Kategorisasi setiap aset secara eksklusif dan lengkap (exhaustive)
+	let menungguValidasiCount = 0;
+	let dalamPerbaikanCount = 0;
+	let readyCount = 0;
+	let scrapCount = 0;
+
+	equipments.forEach((e: Equipment) => {
+		const st = (
+			typeof e.status === "object" ? e.status?.name : e.status || e.statusAset || ""
+		)
+			.toUpperCase()
+			.trim();
 		const id = Number(e.status_id || e.status?.id || 0);
-		return (
+		const eqId = String(e.id || "");
+
+		// 1. Scrap / Disposal
+		if (
+			id === 8 ||
+			st.includes("SCRAP") ||
+			st.includes("DISPOS") ||
+			st.includes("TIDAK LAYAK") ||
+			st.includes("CONDEMNED") ||
+			st.includes("RUSAK_BERAT") ||
+			st.includes("RUSAK BERAT") ||
+			(eqId && disposalEquipmentIds.has(eqId))
+		) {
+			scrapCount++;
+		}
+		// 2. Dalam Perbaikan
+		else if (
 			id === 3 ||
 			id === 4 ||
 			id === 5 ||
@@ -64,27 +89,27 @@ export function CostAvoidanceSection() {
 			st.includes("REVALIDATION") ||
 			st.includes("REVALIDASI") ||
 			st === "REJECTED"
-		);
-	}).length;
-
-	// Ready to Use (status_id 6, 2 or READY_TO_USE, READY_TO_REUSE, READY, VALIDATED, IDLE)
-	const readyCount = equipments.filter((e: Equipment) => {
-		const st = (typeof e.status === "object" ? e.status?.name : e.status || e.statusAset || "").toUpperCase();
-		const id = Number(e.status_id || e.status?.id || 0);
-		return (
+		) {
+			dalamPerbaikanCount++;
+		}
+		// 3. Ready to Use / Idle / Validated
+		else if (
 			id === 6 ||
 			id === 2 ||
+			id === 7 ||
 			st.includes("READY") ||
 			st.includes("VALID") ||
 			st === "IDLE"
-		);
-	}).length;
+		) {
+			readyCount++;
+		}
+		// 4. Menunggu Validasi (Status awal / Registered / Pending)
+		else {
+			menungguValidasiCount++;
+		}
+	});
 
-	// Menunggu Disposal
-	const disposalCount = disposals.filter((d: Equipment) => {
-		const st = (typeof d.status === "object" ? d.status?.name : d.status || "").toUpperCase();
-		return !st.includes("COMPLETED") && !st.includes("DISPOSED");
-	}).length;
+	const totalUnit = equipments.length;
 
 	// --- Dynamic Recent Activities ---
 	const sortedEquipments = [...equipments].sort(
@@ -143,7 +168,7 @@ export function CostAvoidanceSection() {
 		},
 		{ name: "Dalam Perbaikan", value: dalamPerbaikanCount, color: "#ef4444" },
 		{ name: "Siap Re-use / Idle", value: readyCount, color: "#10b981" },
-		{ name: "Scrap", value: disposalCount, color: "#8b5cf6" },
+		{ name: "Scrap", value: scrapCount, color: "#8b5cf6" },
 	].filter((item) => item.value > 0);
 
 	if (pieData.length === 0) {
@@ -176,7 +201,7 @@ export function CostAvoidanceSection() {
 		},
 		{
 			label: "Menunggu Scrap",
-			value: disposalCount,
+			value: scrapCount,
 			caption: "Proses penghapusan aset",
 			rule: "#475569",
 			icon: Recycle,
@@ -253,7 +278,7 @@ export function CostAvoidanceSection() {
 									</div>
 								</div>
 							)}
-							{disposalCount > 0 && (
+							{scrapCount > 0 && (
 								<div className="flex items-start gap-2.5 text-[13px] text-[#475569] py-2.5">
 									<span
 										className="w-0.5 self-stretch shrink-0 bg-[#475569]"
@@ -261,7 +286,7 @@ export function CostAvoidanceSection() {
 									/>
 									<div>
 										<span className="font-semibold text-[#0F172A]">
-											{disposalCount} scrap menunggu approval
+											{scrapCount} aset menunggu proses scrap
 										</span>
 										. Tindak lanjuti usulan scrap.
 									</div>
@@ -269,7 +294,7 @@ export function CostAvoidanceSection() {
 							)}
 							{menungguValidasiCount === 0 &&
 								dalamPerbaikanCount === 0 &&
-								disposalCount === 0 && (
+								scrapCount === 0 && (
 									<div className="flex items-center gap-2 text-[13px] text-[#475569] py-3">
 										<Check
 											className="w-4 h-4 text-[#059669] shrink-0"
@@ -353,7 +378,7 @@ export function CostAvoidanceSection() {
 						</ResponsiveContainer>
 						<div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
 							<span className="text-2xl font-extrabold text-gray-800">
-								{equipments.length}
+								{totalUnit}
 							</span>
 							<span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
 								Total Unit
@@ -378,7 +403,10 @@ export function CostAvoidanceSection() {
 								</div>
 								<span className="font-bold text-gray-800 bg-gray-50 px-2 py-0.5 rounded border border-[#E6E8EA] text-xs">
 									{item.value} Unit (
-									{Math.round((item.value / (equipments.length || 1)) * 100)}%)
+									{totalUnit > 0
+										? Math.round((item.value / totalUnit) * 100)
+										: 0}
+									%)
 								</span>
 							</div>
 						))}

@@ -1442,7 +1442,7 @@ export async function resubmitApproval(id: string, formData: FormData) {
 }
 
 export async function createReuseRequest(payload: {
-	equipment_id: string;
+	equipment_id: string | number;
 	request_number?: string;
 	requesting_unit?: string;
 	installation_location?: string;
@@ -1462,52 +1462,90 @@ export async function createReuseRequest(payload: {
 
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
 
-	const installationLoc =
+	const eqId = Number(payload.equipment_id) || Number(payload.equipmentId) || 0;
+	const reqNum =
+		payload.request_number || payload.requestNumber || `REQ-REUSE-${Date.now()}`;
+	const targetPlant =
+		payload.target_plant ||
+		payload.targetPlant ||
+		payload.requesting_plant ||
+		payload.requestingPlant ||
+		payload.requesting_project ||
+		payload.requestingProject ||
+		"Plant PUSRI IB";
+	const installLoc =
 		payload.installation_location ||
 		payload.installationLocation ||
 		payload.requesting_unit ||
-		"";
-	const bodyData = {
-		equipmentId: Number(payload.equipment_id) || Number(payload.equipmentId) || 0,
-		requestNumber:
-			payload.request_number || payload.requestNumber || `REQ-REUSE-${Date.now()}`,
+		"Area Pabrik Utama";
+	const reuseDate =
+		payload.start_date ||
+		payload.startDate ||
+		payload.reuse_date ||
+		payload.reuseDate ||
+		new Date().toISOString().split("T")[0];
+	const costAvoidance =
+		Number(payload.estimated_cost_avoidance) ||
+		Number(payload.estimatedCostAvoidance) ||
+		Number(payload.estimated_new_purchase_cost) ||
+		Number(payload.estimatedNewPurchaseCost) ||
+		0;
+	const justification = payload.justification || payload.notes || "-";
+	const contactPerson = payload.contact_person || payload.contactPerson || "";
+	const contactNpp = payload.contact_npp || payload.contactNpp || "";
+	const contactPhone = payload.contact_phone || payload.contactPhone || "";
+
+	const bodyData: Record<string, any> = {
+		// snake_case
+		equipment_id: eqId,
+		request_number: reqNum,
+		request_type: "REUSE",
+		requesting_project: targetPlant,
+		requesting_plant: targetPlant,
+		target_plant: targetPlant,
+		installation_location: installLoc,
+		requesting_unit: installLoc,
+		reuse_date: reuseDate,
+		start_date: reuseDate,
+		estimated_new_purchase_cost: costAvoidance,
+		refurbishment_cost: Number(payload.refurbishment_cost) || Number(payload.refurbishmentCost) || 0,
+		estimated_cost_avoidance: costAvoidance,
+		justification: justification,
+		notes: justification,
+		contact_person: contactPerson,
+		contact_npp: contactNpp,
+		contact_phone: contactPhone,
+
+		// camelCase
+		equipmentId: eqId,
+		requestNumber: reqNum,
 		requestType: "REUSE",
-		requestingProject:
-			payload.target_plant ||
-			payload.requesting_project ||
-			payload.requestingProject ||
-			"Proyek Reuse",
-		requestingPlant:
-			payload.target_plant ||
-			payload.requestingPlant ||
-			payload.requesting_plant ||
-			"Plant PUSRI IB",
-		installationLocation: installationLoc,
-		reuseDate:
-			payload.start_date ||
-			payload.reuseDate ||
-			new Date().toISOString().split("T")[0],
-		estimatedNewPurchaseCost:
-			Number(payload.estimated_new_purchase_cost) ||
-			Number(payload.estimatedNewPurchaseCost) ||
-			Number(payload.estimated_cost_avoidance) ||
-			0,
-		refurbishmentCost:
-			Number(payload.refurbishment_cost) || Number(payload.refurbishmentCost) || 0,
-		estimatedCostAvoidance:
-			Number(payload.estimated_cost_avoidance) ||
-			Number(payload.estimatedCostAvoidance) ||
-			0,
-		justification: payload.justification || "-",
-		notes: payload.notes || payload.justification || "-",
+		requestingProject: targetPlant,
+		requestingPlant: targetPlant,
+		targetPlant: targetPlant,
+		installationLocation: installLoc,
+		requestingUnit: installLoc,
+		reuseDate: reuseDate,
+		startDate: reuseDate,
+		estimatedNewPurchaseCost: costAvoidance,
+		refurbishmentCost: Number(payload.refurbishment_cost) || Number(payload.refurbishmentCost) || 0,
+		estimatedCostAvoidance: costAvoidance,
+		contactPerson: contactPerson,
+		contactNpp: contactNpp,
+		contactPhone: contactPhone,
 	};
+
+	if (payload.end_date || payload.endDate) {
+		bodyData.end_date = payload.end_date || payload.endDate;
+		bodyData.endDate = payload.end_date || payload.endDate;
+	}
 
 	try {
 		let res = await fetch(`${baseUrl}/api/reuse-request`, {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				Authorization: `Bearer ${token}`,
+				...(token ? { Authorization: `Bearer ${token}` } : {}),
 			},
 			body: JSON.stringify(bodyData),
 		});
@@ -1517,7 +1555,18 @@ export async function createReuseRequest(payload: {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
+					...(token ? { Authorization: `Bearer ${token}` } : {}),
+				},
+				body: JSON.stringify(bodyData),
+			});
+		}
+
+		if (!res.ok && (res.status === 404 || res.status === 405)) {
+			res = await fetch(`${baseUrl}/api/reuse`, {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json",
+					...(token ? { Authorization: `Bearer ${token}` } : {}),
 				},
 				body: JSON.stringify(bodyData),
 			});
@@ -1525,12 +1574,15 @@ export async function createReuseRequest(payload: {
 
 		if (!res.ok) {
 			const errorData = await res.json().catch(() => null);
+			const errMsg =
+				errorData?.message ||
+				errorData?.error ||
+				(typeof errorData === "string" ? errorData : null) ||
+				`HTTP ${res.status}: Gagal membuat pengajuan reuse`;
+			console.error("Create reuse request failed:", res.status, errMsg, errorData);
 			return {
 				success: false,
-				message:
-					errorData?.message ||
-					errorData?.error ||
-					`HTTP ${res.status}: Gagal membuat pengajuan reuse`,
+				message: errMsg,
 			};
 		}
 		const responseData = await res.json().catch(() => null);
