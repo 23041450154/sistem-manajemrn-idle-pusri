@@ -200,8 +200,8 @@
     "semantic_hash": ""
   },
   "src/app/(authenticated-routes)/rendal/idle/page.tsx": {
-    "mtime": 1787238613.4733233,
-    "ast_hash": "0c8c1e21c300b2015c42e38ea0c4870e",
+    "mtime": 1787301197.76266,
+    "ast_hash": "8fd3ac244aa08c7b98e7a588341348ee",
     "semantic_hash": ""
   },
   "src/app/(authenticated-routes)/rendal/layout.tsx": {

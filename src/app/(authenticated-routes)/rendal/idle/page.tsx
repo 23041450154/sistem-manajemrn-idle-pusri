@@ -28,14 +28,7 @@ import {
 type AssetState =
 	| "REGISTERED"
 	| "VALIDATED"
-	| "REJECTED"
-	| "IDLE"
-	| "DALAM_PERBAIKAN"
-	| "READY_TO_REUSE"
-	| "READY TO USE"
-	| "DISPOSAL"
-	| "TIDAK LAYAK"
-	| "NEED_REVISION";
+	| "READY TO USE";
 type ApprovalState =
 	| "PENDING"
 	| "IN_REVIEW"
@@ -60,6 +53,7 @@ interface Equipment {
 	notes?: string;
 	idleReason?: string;
 	photos?: string[];
+	createdAt?: string;
 }
 
 export default function RendalIdlePage() {
@@ -106,6 +100,9 @@ export default function RendalIdlePage() {
 				getObjectTypes(),
 			]);
 			data.sort((a: any, b: any) => {
+				const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+				const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+				if (timeB !== timeA) return timeB - timeA;
 				const idA = Number(a.id) || 0;
 				const idB = Number(b.id) || 0;
 				return idB - idA;
@@ -120,81 +117,127 @@ export default function RendalIdlePage() {
 				} catch (e) {}
 			}
 
-			const mappedData = data.map((item: any) => {
-				let objectTypeName = "Belum Ditentukan";
-				if (item.object_type?.name) {
-					objectTypeName = item.object_type.name;
-				} else if (item.objectType?.name) {
-					objectTypeName = item.objectType.name;
-				} else {
-					const otId =
-						item.id_object_type || item.object_type_id || item.objectTypeId;
-					if (otId && objTypes) {
-						const found = objTypes.find(
-							(o: any) => o.id === otId || o.id === Number(otId),
-						);
-						if (found) objectTypeName = found.name;
+			const mappedData = data
+				.filter((item: any) => {
+					const rawStatus = (typeof item.status === "string" ? item.status : item.status?.name || "").toUpperCase();
+					const statusId = Number(item.status_id || item.status?.id || 0);
+
+					const isRepair =
+						statusId === 3 ||
+						statusId === 4 ||
+						statusId === 5 ||
+						rawStatus.includes("PERBAIKAN") ||
+						rawStatus.includes("REPAIR") ||
+						rawStatus.includes("MAINTENANCE") ||
+						rawStatus.includes("REVALIDATION");
+
+					const isScrap =
+						statusId === 8 ||
+						rawStatus.includes("SCRAP") ||
+						rawStatus.includes("DISPOSAL") ||
+						rawStatus.includes("REJECT") ||
+						rawStatus.includes("TIDAK LAYAK");
+
+					if (isRepair || isScrap) return false;
+
+					const isRegistered =
+						statusId === 1 ||
+						rawStatus.includes("REGISTER") ||
+						rawStatus === "NONE" ||
+						rawStatus === "PENDING_REVIEW" ||
+						rawStatus === "";
+
+					const isValidated =
+						statusId === 2 ||
+						rawStatus === "VALIDATED";
+
+					const isReady =
+						statusId === 6 ||
+						rawStatus.includes("READY") ||
+						rawStatus.includes("SIAP") ||
+						rawStatus === "IDLE";
+
+					return isRegistered || isValidated || isReady;
+				})
+				.map((item: any) => {
+					let objectTypeName = "Belum Ditentukan";
+					if (item.object_type?.name) {
+						objectTypeName = item.object_type.name;
+					} else if (item.objectType?.name) {
+						objectTypeName = item.objectType.name;
+					} else {
+						const otId =
+							item.id_object_type || item.object_type_id || item.objectTypeId;
+						if (otId && objTypes) {
+							const found = objTypes.find(
+								(o: any) => o.id === otId || o.id === Number(otId),
+							);
+							if (found) objectTypeName = found.name;
+						}
 					}
-				}
 
-				const isRevised = revisedIds.includes(String(item.id));
-				const rawStatus =
-					(typeof item.status === "string" ? item.status : item.status?.name) ||
-					"";
-				let statusStr = isRevised
-					? "REGISTERED"
-					: (
-							rawStatus ||
-							(item.status_id === 2
-								? "VALIDATED"
-								: item.status_id === 3
-									? "REJECTED"
-									: item.status_id === 4
-										? "READY TO USE"
-										: item.status_id === 5
-											? "READY_TO_REUSE"
-											: "REGISTERED")
-						).toUpperCase();
+					const isRevised = revisedIds.includes(String(item.id));
+					const rawStatus =
+						(typeof item.status === "string" ? item.status : item.status?.name || "").toUpperCase();
+					const statusId = Number(item.status_id || item.status?.id || 0);
 
-				if (statusStr === "IDLE") statusStr = "READY TO USE";
+					let statusStr: AssetState = "REGISTERED";
+					if (isRevised) {
+						statusStr = "REGISTERED";
+					} else if (
+						statusId === 6 ||
+						rawStatus.includes("READY") ||
+						rawStatus.includes("SIAP") ||
+						rawStatus === "IDLE"
+					) {
+						statusStr = "READY TO USE";
+					} else if (
+						statusId === 2 ||
+						rawStatus === "VALIDATED"
+					) {
+						statusStr = "VALIDATED";
+					} else {
+						statusStr = "REGISTERED";
+					}
 
-				return {
-					id: item.id?.toString() || "-",
-					kodeAlat: item.equipment_code,
-					namaAlat: item.name,
-					plant: item.plant?.name || "-",
-					jenisAlat: objectTypeName,
-					tanggalRegistrasi: item.created_at
-						? new Date(item.created_at).toISOString().split("T")[0]
-						: "-",
-					statusAset: statusStr,
-					statusPersetujuan: "PENDING",
-					storageLocation: item.storage_location?.name || "Belum Ditentukan",
-					funcLoc:
-						typeof item.func_loc === "string"
-							? item.func_loc
-							: item.func_loc?.name || "-",
-					vendor: item.vendor || "-",
-					year: item.year || "-",
-					originalValue: item.original_value || 0,
-					notes: item.notes || "-",
-					idleReason: item.idle_reason || "-",
-					photos: item.attachments
-						? item.attachments
-								.filter(
-									(att: any) =>
-										att.attachment_category === "equipment_photo" ||
-										att.attachment_category === "photo" ||
-										att.category === "equipment_photo" ||
-										att.category === "photo",
-								)
-								.map((att: any) => {
-									const url = att.file_url || att.fileUrl || "";
-									return url.replace(/\\/g, "/");
-								})
-						: [],
-				};
-			});
+					return {
+						id: item.id?.toString() || "-",
+						kodeAlat: item.equipment_code || item.kodeAlat || `EQ-${item.id}`,
+						namaAlat: item.name || item.namaAlat || "Equipment Tanpa Nama",
+						plant: (typeof item.plant === "object" ? item.plant?.name : item.plant) || item.plant_description || "-",
+						jenisAlat: objectTypeName,
+						tanggalRegistrasi: item.created_at
+							? new Date(item.created_at).toISOString().split("T")[0]
+							: "-",
+						createdAt: item.created_at || "",
+						statusAset: statusStr,
+						statusPersetujuan: "PENDING",
+						storageLocation: (typeof item.storage_location === "object" ? item.storage_location?.name : item.storage_location) || "Belum Ditentukan",
+						funcLoc:
+							typeof item.func_loc === "string"
+								? item.func_loc
+								: item.func_loc?.name || "-",
+						vendor: item.vendor || "-",
+						year: item.year || item.year_of_purchase || "-",
+						originalValue: item.original_value || item.book_value || 0,
+						notes: item.notes || "-",
+						idleReason: item.idle_reason || "-",
+						photos: item.attachments
+							? item.attachments
+									.filter(
+										(att: any) =>
+											att.attachment_category === "equipment_photo" ||
+											att.attachment_category === "photo" ||
+											att.category === "equipment_photo" ||
+											att.category === "photo",
+									)
+									.map((att: any) => {
+										const url = att.file_url || att.fileUrl || "";
+										return url.replace(/\\/g, "/");
+									})
+							: [],
+					};
+				});
 			setEquipments(mappedData as Equipment[]);
 		} catch (err: unknown) {
 			console.error(err);
@@ -245,21 +288,46 @@ export default function RendalIdlePage() {
 			const matchPlant = plantFilter === "Semua" || item.plant === plantFilter;
 			const matchStatus =
 				statusFilter === "Semua" ||
-				item.statusAset === statusFilter ||
-				((statusFilter === "READY TO USE" || statusFilter === "READY_TO_REUSE") &&
-					((item.statusAset as string) === "READY_TO_REUSE" ||
-						(item.statusAset as string) === "READY TO REUSE" ||
-						item.statusAset === "READY TO USE"));
+				item.statusAset === statusFilter;
 			return matchSearch && matchPlant && matchStatus;
 		});
 
 		if (sortConfig) {
 			result.sort((a, b) => {
+				if (sortConfig.key === "tanggalRegistrasi") {
+					const timeA = a.createdAt
+						? new Date(a.createdAt).getTime()
+						: a.tanggalRegistrasi && a.tanggalRegistrasi !== "-"
+							? new Date(a.tanggalRegistrasi).getTime()
+							: 0;
+					const timeB = b.createdAt
+						? new Date(b.createdAt).getTime()
+						: b.tanggalRegistrasi && b.tanggalRegistrasi !== "-"
+							? new Date(b.tanggalRegistrasi).getTime()
+							: 0;
+					if (timeA !== timeB)
+						return sortConfig.direction === "asc" ? timeA - timeB : timeB - timeA;
+				}
+				if (sortConfig.key === "originalValue") {
+					const valA = Number(a.originalValue) || 0;
+					const valB = Number(b.originalValue) || 0;
+					return sortConfig.direction === "asc" ? valA - valB : valB - valA;
+				}
 				const valA = String(a[sortConfig.key] || "").toLowerCase();
 				const valB = String(b[sortConfig.key] || "").toLowerCase();
 				if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
 				if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
 				return 0;
+			});
+		} else {
+			// Default sort: data yang baru masuk / didaftarkan berada di paling atas
+			result.sort((a, b) => {
+				const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+				const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+				if (timeB !== timeA) return timeB - timeA;
+				const idA = Number(a.id) || 0;
+				const idB = Number(b.id) || 0;
+				return idB - idA;
 			});
 		}
 		return result;
@@ -300,31 +368,17 @@ export default function RendalIdlePage() {
 		const styles: Record<string, string> = {
 			REGISTERED: "bg-blue-50 text-blue-700 border-blue-200",
 			VALIDATED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-			REJECTED: "bg-red-50 text-red-700 border-red-200",
-			IDLE: "bg-indigo-50 text-indigo-700 border-indigo-200",
 			"READY TO USE": "bg-indigo-50 text-indigo-700 border-indigo-200",
-			DALAM_PERBAIKAN: "bg-amber-50 text-amber-700 border-amber-200",
-			PERBAIKAN: "bg-amber-50 text-amber-700 border-amber-200",
-			READY_TO_REUSE: "bg-teal-50 text-teal-700 border-teal-200",
-			NEED_REVISION: "bg-orange-50 text-orange-700 border-orange-200",
-			REVISI: "bg-orange-50 text-orange-700 border-orange-200",
-			DISPOSAL: "bg-purple-50 text-purple-700 border-purple-200",
-			"TIDAK LAYAK": "bg-rose-50 text-rose-700 border-rose-200",
 		};
 
 		let displayStatus = (status || "").replace(/_/g, " ");
-		if (status === "IDLE" || status === "READY_TO_REUSE") {
+		if (displayStatus === "IDLE" || displayStatus === "READY TO REUSE") {
 			displayStatus = "READY TO USE";
-		} else if (status === "DALAM_PERBAIKAN") {
-			displayStatus = "PERBAIKAN";
-		} else if (status === "NEED_REVISION") {
-			displayStatus = "REVISI";
 		}
 
 		const style =
 			styles[displayStatus] ||
 			styles[status] ||
-			styles["READY TO USE"] ||
 			"bg-gray-50 text-gray-700 border-gray-200";
 		return (
 			<span
@@ -452,9 +506,6 @@ export default function RendalIdlePage() {
 							<option value="REGISTERED">REGISTERED</option>
 							<option value="VALIDATED">VALIDATED</option>
 							<option value="READY TO USE">READY TO USE</option>
-							<option value="DALAM_PERBAIKAN">DALAM PERBAIKAN</option>
-							<option value="READY_TO_REUSE">READY TO USE</option>
-							<option value="REJECTED">REJECTED</option>
 						</select>
 
 						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
@@ -602,40 +653,14 @@ export default function RendalIdlePage() {
 										</td>
 										<td className="px-2 py-2 text-center">
 											<div className="flex justify-center items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
-												{item.statusAset === "DALAM_PERBAIKAN" && (
-													<button
-														onClick={() => setRepairModal(item)}
-														className="inline-flex items-center justify-center gap-1 bg-[#0A356A] hover:bg-[#062854] text-white px-2 py-1 rounded text-[11px] font-bold transition-all shadow-sm"
-														title="Catat Hasil Perbaikan"
-													>
-														<Wrench className="w-3 h-3" />
-														<span>Perbaikan</span>
-													</button>
-												)}
-												{item.statusAset === "REJECTED" ||
-												item.statusAset === "DISPOSAL" ||
-												item.statusAset === "TIDAK LAYAK" ||
-												item.statusAset === "NEED_REVISION" ? (
-													<Link
-														href={`/rendal/register-equipment?editId=${item.id}`}
-														className="inline-flex items-center justify-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded text-[11px] font-bold transition-all shadow-sm"
-														title="Revisi (Dinyatakan Tidak Layak)"
-													>
-														<RotateCcw className="w-3 h-3" />
-														<span>Revisi</span>
-													</Link>
-												) : (
-													item.statusAset !== "DALAM_PERBAIKAN" && (
-														<button
-															onClick={() => setDetailModal(item)}
-															className="inline-flex items-center justify-center gap-1 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2 py-1 rounded text-[11px] font-bold transition-all shadow-sm"
-															title="Lihat Detail"
-														>
-															<Eye className="w-3 h-3" />
-															<span>Detail</span>
-														</button>
-													)
-												)}
+												<button
+													onClick={() => setDetailModal(item)}
+													className="inline-flex items-center justify-center gap-1 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2 py-1 rounded text-[11px] font-bold transition-all shadow-sm"
+													title="Lihat Detail"
+												>
+													<Eye className="w-3 h-3" />
+													<span>Detail</span>
+												</button>
 											</div>
 										</td>
 									</tr>
