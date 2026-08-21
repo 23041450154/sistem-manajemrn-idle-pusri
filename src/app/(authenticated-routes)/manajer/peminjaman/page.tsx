@@ -247,6 +247,7 @@ export default function ManajerPeminjamanPage() {
 				selectedRequest.approval_id,
 				newStatus,
 				actionNotes,
+				selectedRequest.id,
 			);
 			if (result.success) {
 				const updated = requests.map((r) =>
