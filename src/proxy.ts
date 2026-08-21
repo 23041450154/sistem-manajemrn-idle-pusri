@@ -3,7 +3,7 @@ import type { NextRequest } from 'next/server'
 import { normalizeRole, homePathForRole } from './lib/roles'
 import type { Role } from './lib/roles'
 
-const PUBLIC_PATHS = ['/login', '/forgot-password']
+const PUBLIC_PATHS = ['/login', '/forgot-password', '/auth']
 
 
 export function proxy(request: NextRequest) {

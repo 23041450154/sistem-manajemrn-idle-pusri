@@ -2,6 +2,7 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
+import { ssoCallbackAction } from "@/action/auth";
 
 function CallbackContent() {
   const params = useSearchParams();
@@ -12,25 +13,19 @@ function CallbackContent() {
     const code = params.get("code");
     const uid = params.get("uid");
     const clientId = process.env.NEXT_PUBLIC_CLIENT_ID;
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL;
 
-    if (!code || !clientId || !apiUrl) {
-      setMessage("Callback SSO tidak lengkap. Kode, client ID, atau API belum tersedia.");
+    if (!code || !clientId) {
+      setMessage("Callback SSO tidak lengkap. Kode atau client ID belum tersedia.");
       return;
     }
 
-    const callbackUrl = new URL(`${apiUrl.replace(/\/$/, "")}/api/auth/callback`);
-    callbackUrl.searchParams.set("code", code);
-    callbackUrl.searchParams.set("clientId", clientId);
-    if (uid) callbackUrl.searchParams.set("uid", uid);
-
-    fetch(callbackUrl.toString(), { credentials: "include" })
-      .then(async (response) => {
-        const body = await response.json().catch(() => null);
-        if (!response.ok) {
-          throw new Error(body?.message || `SSO gagal (HTTP ${response.status})`);
+    ssoCallbackAction(code, clientId, uid)
+      .then((res) => {
+        if (!res.status) {
+          setMessage(res.message || "SSO gagal.");
+          return;
         }
-        router.replace("/");
+        router.replace(res.redirectUrl || "/");
       })
       .catch((error: Error) => setMessage(error.message));
   }, [params, router]);

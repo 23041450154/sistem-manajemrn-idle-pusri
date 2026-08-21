@@ -7,7 +7,7 @@ import type {
   User,
 } from "../types/Auth"
 import { redirect } from "next/navigation"
-import { homePathForRole } from "../lib/roles"
+import { homePathForRole, normalizeRole } from "../lib/roles"
 
 
 
@@ -171,4 +171,48 @@ export async function logoutAction() {
   cookieStorage.delete("token")
   cookieStorage.delete("user")
   redirect("/login")
+}
+
+export async function ssoCallbackAction(code: string, clientId: string, uid?: string | null) {
+  try {
+    const callbackUrl = new URL(`${API_URL}/api/auth/callback`);
+    callbackUrl.searchParams.set("code", code);
+    callbackUrl.searchParams.set("clientId", clientId);
+    if (uid) callbackUrl.searchParams.set("uid", uid);
+
+    const res = await fetch(callbackUrl.toString(), {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+      cache: "no-store",
+    });
+
+    const result = await res.json().catch(() => null);
+    const token = result?.data?.token || result?.token;
+    const user = result?.data?.user || result?.user;
+
+    if (!res.ok || !token) {
+      return {
+        status: false,
+        message: result?.error || result?.message || `SSO gagal (HTTP ${res.status})`,
+      };
+    }
+
+    const cookieStorage = await cookies();
+    cookieStorage.set("token", token, cookieConfig(60 * 30));
+    if (user) {
+      cookieStorage.set("user", JSON.stringify(user), cookieConfig(60 * 30));
+    }
+
+    const role = user?.role ? normalizeRole(user.role) : undefined;
+    return {
+      status: true,
+      redirectUrl: role ? homePathForRole(role) : "/",
+    };
+  } catch (error: any) {
+    console.error("SSO callback error:", error);
+    return {
+      status: false,
+      message: error?.message || "Terjadi kesalahan saat memproses SSO.",
+    };
+  }
 }
