@@ -84,6 +84,7 @@ export default function ManajerApprovePage() {
 	const [searchInput, setSearchInput] = useState("");
 	const [plant, setPlant] = useState("Semua Plant");
 	const [status, setStatus] = useState("Semua Status");
+	const [activeTab, setActiveTab] = useState<"inbox" | "history">("inbox");
 	const [startDate, setStartDate] = useState("");
 	const [endDate, setEndDate] = useState("");
 
@@ -346,6 +347,9 @@ export default function ManajerApprovePage() {
 	const filteredRequests = useMemo(() => {
 		const query = searchInput || search;
 		return requests.filter((req) => {
+			const isAwaitingDecision =
+				req.approvalStatus === "PENDING" || req.approvalStatus === "IN_REVIEW";
+			const matchTab = activeTab === "inbox" ? isAwaitingDecision : !isAwaitingDecision;
 			const matchSearch = query
 				? req.nomorRequest.toLowerCase().includes(query.toLowerCase()) ||
 					req.kodeAset.toLowerCase().includes(query.toLowerCase()) ||
@@ -364,9 +368,14 @@ export default function ManajerApprovePage() {
 			} else if (startDate) {
 				matchDate = req.tanggalPengajuan.startsWith(startDate);
 			}
-			return matchSearch && matchPlant && matchStatus && matchDate;
+			return matchTab && matchSearch && matchPlant && matchStatus && matchDate;
 		});
-	}, [requests, search, searchInput, plant, status, startDate, endDate]);
+	}, [requests, activeTab, search, searchInput, plant, status, startDate, endDate]);
+
+	const inboxCount = requests.filter(
+		(req) => req.approvalStatus === "PENDING" || req.approvalStatus === "IN_REVIEW",
+	).length;
+	const historyCount = requests.length - inboxCount;
 
 	const totalPages = Math.ceil(filteredRequests.length / ITEMS_PER_PAGE);
 	// Halaman dijepit ke rentang valid agar filter tidak menyisakan halaman kosong.
@@ -450,11 +459,40 @@ export default function ManajerApprovePage() {
 
 			{/* Table Section */}
 			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+				<div className="flex items-center gap-6 border-b border-gray-200 bg-white px-5 pt-3">
+					<button
+						type="button"
+						onClick={() => {
+							setActiveTab("inbox");
+							setCurrentPage(1);
+						}}
+						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${activeTab === "inbox" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
+					>
+						Antrean Persetujuan
+						<span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${activeTab === "inbox" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}>
+							{inboxCount}
+						</span>
+					</button>
+					<button
+						type="button"
+						onClick={() => {
+							setActiveTab("history");
+							setCurrentPage(1);
+						}}
+						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${activeTab === "history" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
+					>
+						Riwayat Persetujuan
+						<span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${activeTab === "history" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}>
+							{historyCount}
+						</span>
+					</button>
+				</div>
 				{/* Toolbar / Filters (Identik dengan halaman Inspeksi Validasi) */}
-				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
+				<div className="border-b border-gray-200 bg-white p-4">
+					<div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
 					{/* Search */}
-					<div className="flex w-full lg:w-auto gap-2">
-						<div className="relative flex-1 lg:w-72">
+					<div className="flex w-full gap-2 xl:w-[360px] xl:shrink-0">
+						<div className="relative min-w-0 flex-1">
 							<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
 							<input
 								type="text"
@@ -464,24 +502,24 @@ export default function ManajerApprovePage() {
 									setSearchInput(e.target.value);
 									setSearch(e.target.value);
 								}}
-								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400 font-medium"
+								className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pr-4 pl-9 text-[13px] font-medium placeholder:text-gray-400 focus:border-[#0A356A] focus:bg-white focus:ring-1 focus:ring-[#0A356A] focus:outline-none"
 							/>
 						</div>
 						<button
 							type="button"
 							onClick={() => setSearch(searchInput)}
-							className="px-3.5 py-1.5 bg-[#0A356A] text-white text-[13px] font-semibold rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-xs cursor-pointer"
+							className="h-10 shrink-0 rounded-lg bg-[#0A356A] px-3.5 text-[13px] font-semibold whitespace-nowrap text-white shadow-xs transition-colors hover:bg-[#062854] cursor-pointer"
 						>
 							Cari
 						</button>
 					</div>
 
 					{/* Filter Group */}
-					<div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+					<div className="grid w-full grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center xl:w-auto xl:flex-nowrap">
 						<select
 							value={plant}
 							onChange={(e) => setPlant(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer font-medium"
+							className="h-10 min-w-0 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-medium text-gray-700 outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] sm:w-[115px] cursor-pointer"
 						>
 							<option value="Semua Plant">Semua Plant</option>
 							{plants.map((p: any) => (
@@ -494,7 +532,7 @@ export default function ManajerApprovePage() {
 						<select
 							value={status}
 							onChange={(e) => setStatus(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[140px] cursor-pointer font-medium"
+							className="h-10 min-w-0 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-medium text-gray-700 outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] sm:w-[120px] cursor-pointer"
 						>
 							<option value="Semua Status">Semua Status</option>
 							<option value="PENDING">Menunggu Review</option>
@@ -507,21 +545,20 @@ export default function ManajerApprovePage() {
 							type="date"
 							value={startDate}
 							onChange={(e) => setStartDate(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer font-medium"
+							className="h-10 min-w-0 rounded-lg border border-gray-200 bg-white px-3 text-[13px] font-medium text-gray-700 outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] sm:min-w-[140px] cursor-pointer"
 						/>
-
-						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
 
 						{/* Reset Button */}
 						<button
 							type="button"
 							onClick={handleReset}
-							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
+							className="flex h-10 items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 text-[13px] font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800 whitespace-nowrap cursor-pointer"
 							title="Reset semua filter"
 						>
 							<RefreshCw className="w-3.5 h-3.5" />
 							Reset
 						</button>
+					</div>
 					</div>
 				</div>
 				<div className="overflow-x-auto">
@@ -532,13 +569,13 @@ export default function ManajerApprovePage() {
 									No
 								</th>
 								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
-									Kode
+									No. Registrasi
 								</th>
 								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
-									Kode Aset
+									Kode
 								</th>
 								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider min-w-[120px] whitespace-nowrap text-center">
-									Nama Aset
+									Nama
 								</th>
 								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
 									Plant

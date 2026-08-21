@@ -74,14 +74,16 @@ export default function RegisterEquipmentPage() {
 
 	useEffect(() => {
 		async function loadData() {
-			const [objs, plantsList, funcLocList, equipments] = await Promise.all([
+			const [objs, plantsList, storageLocList, funcLocList, equipments] = await Promise.all([
 				getObjectTypes(),
 				getPlants(),
+				getStorageLocations(),
 				getFunctionalLocations(),
 				editId ? getEquipments() : Promise.resolve([]),
 			]);
 			setObjectTypes(objs);
 			setPlants(plantsList);
+			setStorageLocations(storageLocList);
 			setFuncLocs(funcLocList);
 
 			// ponytail: backend equipment shape belum punya DTO frontend bersama.
@@ -117,9 +119,6 @@ export default function RegisterEquipmentPage() {
 					),
 					notes: found.notes || "",
 				});
-				if (plantId) {
-					getStorageLocations(plantId).then(setStorageLocations);
-				}
 			}
 		}
 		loadData();
@@ -146,21 +145,7 @@ export default function RegisterEquipmentPage() {
 			setFormData((prev) => ({
 				...prev,
 				plantId: value,
-				storageLocationId: "",
 			}));
-			if (value) {
-				getStorageLocations(value).then((locs) => {
-					setStorageLocations(locs);
-					if (locs && locs.length > 0) {
-						setFormData((prev) => ({
-							...prev,
-							storageLocationId: String(locs[0].id),
-						}));
-					}
-				});
-			} else {
-				setStorageLocations([]);
-			}
 			setTouched((prev) => ({ ...prev, plantId: true }));
 			return;
 		}
@@ -566,18 +551,15 @@ export default function RegisterEquipmentPage() {
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									LOKASI PENYIMPANAN
 								</label>
-								<select
-									onBlur={handleBlur}
-									name="storageLocationId"
-									value={formData.storageLocationId}
-									onChange={handleChange}
-									disabled={!formData.plantId}
-									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white disabled:bg-gray-50 disabled:cursor-not-allowed ${!formData.storageLocationId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
-								>
-									<option value="" disabled>
-										{formData.plantId
-											? "Pilih Lokasi Simpan..."
-											: "Pilih Pabrik dulu..."}
+				<select
+					onBlur={handleBlur}
+					name="storageLocationId"
+					value={formData.storageLocationId}
+					onChange={handleChange}
+					className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white ${!formData.storageLocationId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
+				>
+					<option value="" disabled>
+						Pilih Lokasi Simpan...
 									</option>
 									{storageLocations.map((loc: { id: number; name: string }) => (
 										<option

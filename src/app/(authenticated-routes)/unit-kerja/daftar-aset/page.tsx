@@ -6,6 +6,8 @@
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { getEquipments, getObjectTypes, getAttachmentsByEquipmentId, createReuseRequest } from "@/action/api";
+import KatalogClient from "../katalog/katalog-client";
+import { normalizeEquipment } from "../katalog/shared";
 import {
 	Search,
 	RefreshCw,
@@ -24,6 +26,8 @@ import {
 	MapPin,
 	Info,
 	ArrowUpDown,
+	LayoutGrid,
+	List,
 } from "lucide-react";
 
 interface EquipmentItem {
@@ -55,6 +59,7 @@ export default function DaftarAsetPage() {
 	const [filterTipeObjek, setFilterTipeObjek] = useState("");
 	const [filterKondisi, setFilterKondisi] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
+	const [viewMode, setViewMode] = useState<"table" | "catalog">("table");
 
 	// Detail Modal
 	const [selectedAsset, setSelectedAsset] = useState<EquipmentItem | null>(null);
@@ -69,15 +74,13 @@ export default function DaftarAsetPage() {
 	const [requestErrorMessage, setRequestErrorMessage] = useState<string | null>(null);
 
 	const [requestFormData, setRequestFormData] = useState({
-		target_plant: "Plant PUSRI IB",
-		installation_location: "Area Pabrik Utama",
+		requesting_project: "",
+		requesting_plant: "",
+		installation_location: "",
 		start_date: new Date().toISOString().split("T")[0],
-		end_date: "",
-		justification: "Diperlukan untuk memperlancar operasional dan efisiensi unit kerja.",
-		estimated_cost_avoidance: 150000000,
-		contact_person: "Budi Santoso",
-		contact_npp: "100002",
-		contact_phone: "0812-7890-1122",
+		estimated_new_purchase_cost: "",
+		justification: "",
+		notes: "",
 	});
 
 	const loadData = async () => {
@@ -263,6 +266,11 @@ export default function DaftarAsetPage() {
 		return filteredItems.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 	}, [filteredItems, currentPage]);
 
+	const catalogItems = useMemo(
+		() => equipments.map((item) => normalizeEquipment(item as unknown as Record<string, unknown>)),
+		[equipments],
+	);
+
 	const openDetailModal = async (item: EquipmentItem) => {
 		setSelectedAsset(item);
 		setIsDetailOpen(true);
@@ -280,15 +288,13 @@ export default function DaftarAsetPage() {
 	const openRequestModal = (item: EquipmentItem) => {
 		setRequestModalAsset(item);
 		setRequestFormData({
-			target_plant: item.plant || "Plant PUSRI IB",
-			installation_location: "Area Pabrik Utama",
+			requesting_project: "",
+			requesting_plant: "",
+			installation_location: "",
 			start_date: new Date().toISOString().split("T")[0],
-			end_date: "",
-			justification: "Diperlukan untuk memperlancar operasional dan efisiensi unit kerja.",
-			estimated_cost_avoidance: item.book_value || 150000000,
-			contact_person: "Budi Santoso",
-			contact_npp: "100002",
-			contact_phone: "0812-7890-1122",
+			estimated_new_purchase_cost: "",
+			justification: "",
+			notes: "",
 		});
 		setRequestErrorMessage(null);
 	};
@@ -307,29 +313,32 @@ export default function DaftarAsetPage() {
 			return;
 		}
 
+		const estimatedNewPurchaseCost = Number(
+			String(requestFormData.estimated_new_purchase_cost).replace(/\D/g, ""),
+		);
+		if (estimatedNewPurchaseCost <= 0) {
+			setRequestErrorMessage("Estimasi biaya pembelian baru harus lebih dari 0.");
+			return;
+		}
+
 		setIsSubmittingRequest(true);
 		setRequestErrorMessage(null);
 
 		try {
-			const reqNumber = `REQ-REUSE-${Date.now().toString().slice(-6)}`;
 			const res = await createReuseRequest({
 				equipment_id: requestModalAsset.id,
-				request_number: reqNumber,
-				target_plant: requestFormData.target_plant,
+				requestingProject: requestFormData.requesting_project,
+				requestingPlant: requestFormData.requesting_plant,
 				installation_location: requestFormData.installation_location,
-				requesting_unit: requestFormData.installation_location,
-				start_date: requestFormData.start_date,
-				end_date: requestFormData.end_date || undefined,
+				reuseDate: requestFormData.start_date,
+				estimatedNewPurchaseCost: estimatedNewPurchaseCost,
 				justification: requestFormData.justification,
-				estimated_cost_avoidance: Number(requestFormData.estimated_cost_avoidance) || 0,
-				contact_person: requestFormData.contact_person,
-				contact_npp: requestFormData.contact_npp,
-				contact_phone: requestFormData.contact_phone,
+				notes: requestFormData.notes,
 			});
 
 			if (res && res.success) {
 				setRequestSuccessMessage(
-					`Permintaan untuk peralatan "${requestModalAsset.name}" (${requestModalAsset.equipment_code}) berhasil diajukan dengan No. ${reqNumber}!`,
+					`Permintaan untuk peralatan "${requestModalAsset.name}" (${requestModalAsset.equipment_code}) berhasil diajukan.`,
 				);
 				setRequestModalAsset(null);
 				if (isDetailOpen) setIsDetailOpen(false);
@@ -367,14 +376,38 @@ export default function DaftarAsetPage() {
 							Daftar seluruh peralatan idle yang tersedia dan dapat diajukan untuk pemakaian kembali oleh Unit Kerja Operasi.
 						</p>
 					</div>
-					<button
-						onClick={loadData}
-						disabled={isLoading}
-						className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
-					>
-						<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-						Muat Ulang
-					</button>
+					<div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
+						<button
+							onClick={loadData}
+							disabled={isLoading}
+							className="flex items-center justify-center gap-1 px-2.5 py-1.5 text-[12px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
+						>
+							<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+							Muat Ulang
+						</button>
+						<div className="inline-flex shrink-0 rounded-lg border border-gray-200 bg-white p-0.5 shadow-sm" role="tablist" aria-label="Mode tampilan aset">
+							<button
+								type="button"
+								onClick={() => setViewMode("table")}
+								role="tab"
+								aria-selected={viewMode === "table"}
+								className={`flex items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors ${viewMode === "table" ? "bg-[#0A356A] text-white" : "text-gray-600 hover:bg-gray-100"}`}
+							>
+								<List className="h-3.5 w-3.5" />
+								Daftar Tabel
+							</button>
+							<button
+								type="button"
+								onClick={() => setViewMode("catalog")}
+								role="tab"
+								aria-selected={viewMode === "catalog"}
+								className={`flex items-center gap-1 rounded-md px-2 py-1.5 text-[11px] font-semibold transition-colors ${viewMode === "catalog" ? "bg-[#0A356A] text-white" : "text-gray-600 hover:bg-gray-100"}`}
+							>
+								<LayoutGrid className="h-3.5 w-3.5" />
+								Katalog
+							</button>
+						</div>
+					</div>
 				</div>
 			</div>
 
@@ -407,7 +440,7 @@ export default function DaftarAsetPage() {
 
 
 			{/* Main Table Card */}
-			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4">
+			<div className={`${viewMode === "table" ? "" : "hidden"} bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4`}>
 				{/* Navigation Tabs */}
 				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
 					<button
@@ -731,6 +764,12 @@ export default function DaftarAsetPage() {
 				)}
 			</div>
 
+			{viewMode === "catalog" && (
+				<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+					<KatalogClient items={catalogItems} embedded />
+				</div>
+			)}
+
 			{/* Detail Modal */}
 			{isDetailOpen && selectedAsset && (
 				<div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
@@ -915,47 +954,62 @@ export default function DaftarAsetPage() {
 								</div>
 							</div>
 
-							{/* Target Plant & Location */}
+							{/* Project & Plant */}
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 								<div>
 									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Plant Tujuan <span className="text-red-500">*</span>
+										Proyek Pemohon <span className="text-red-500">*</span>
 									</label>
 									<input
 										type="text"
-										value={requestFormData.target_plant}
+										value={requestFormData.requesting_project}
 										onChange={(e) =>
-											setRequestFormData({ ...requestFormData, target_plant: e.target.value })
+											setRequestFormData({ ...requestFormData, requesting_project: e.target.value })
 										}
 										required
+										placeholder="misal: Proyek Revamp Pabrik"
 										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
 									/>
 								</div>
 								<div>
 									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Lokasi Pemasangan <span className="text-red-500">*</span>
+										Plant Pemohon <span className="text-red-500">*</span>
 									</label>
 									<input
 										type="text"
-										value={requestFormData.installation_location}
+										value={requestFormData.requesting_plant}
 										onChange={(e) =>
 											setRequestFormData({
 												...requestFormData,
-												installation_location: e.target.value,
+												requesting_plant: e.target.value,
 											})
 										}
 										required
-										placeholder="misal: Area Ammonia Pabrik IB"
+										placeholder="misal: Plant PUSRI IB"
 										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
 									/>
 								</div>
 							</div>
 
-							{/* Dates */}
+							<div>
+								<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
+									Lokasi Pemasangan <span className="text-red-500">*</span>
+								</label>
+								<input
+									type="text"
+									value={requestFormData.installation_location}
+									onChange={(e) => setRequestFormData({ ...requestFormData, installation_location: e.target.value })}
+									required
+									placeholder="misal: Area Ammonia Pabrik IB"
+									className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
+								/>
+							</div>
+
+							{/* Reuse Date & Cost */}
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 								<div>
 									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Tanggal Mulai Pemakaian <span className="text-red-500">*</span>
+										Tanggal Reuse <span className="text-red-500">*</span>
 									</label>
 									<input
 										type="date"
@@ -969,16 +1023,31 @@ export default function DaftarAsetPage() {
 								</div>
 								<div>
 									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Tanggal Selesai (Opsional)
+										Estimasi Biaya Pembelian Baru <span className="text-red-500">*</span>
 									</label>
-									<input
-										type="date"
-										value={requestFormData.end_date}
-										onChange={(e) =>
-											setRequestFormData({ ...requestFormData, end_date: e.target.value })
-										}
-										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
-									/>
+									<div className="relative">
+										<span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">
+											Rp
+										</span>
+										<input
+											type="text"
+											inputMode="numeric"
+											value={
+												requestFormData.estimated_new_purchase_cost
+													? Number(requestFormData.estimated_new_purchase_cost).toLocaleString("id-ID")
+													: ""
+											}
+											onChange={(e) =>
+												setRequestFormData({
+													...requestFormData,
+													estimated_new_purchase_cost: e.target.value.replace(/\D/g, ""),
+												})
+											}
+											required
+											placeholder="15.000.000"
+											className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
+										/>
+									</div>
 								</div>
 							</div>
 
@@ -999,48 +1068,17 @@ export default function DaftarAsetPage() {
 								/>
 							</div>
 
-							{/* Contact Person */}
-							<div className="pt-2 border-t border-gray-100">
-								<p className="text-xs font-bold text-gray-800 mb-2">Informasi Penanggung Jawab (PIC)</p>
-								<div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-									<div>
-										<label className="text-[11px] text-gray-500 font-semibold block mb-1">Nama PIC</label>
-										<input
-											type="text"
-											value={requestFormData.contact_person}
-											onChange={(e) =>
-												setRequestFormData({ ...requestFormData, contact_person: e.target.value })
-											}
-											required
-											className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:border-[#0A356A] outline-none"
-										/>
-									</div>
-									<div>
-										<label className="text-[11px] text-gray-500 font-semibold block mb-1">NPP</label>
-										<input
-											type="text"
-											value={requestFormData.contact_npp}
-											onChange={(e) =>
-												setRequestFormData({ ...requestFormData, contact_npp: e.target.value })
-											}
-											required
-											className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:border-[#0A356A] outline-none"
-										/>
-									</div>
-									<div>
-										<label className="text-[11px] text-gray-500 font-semibold block mb-1">No. Telp / HP</label>
-										<input
-											type="text"
-											value={requestFormData.contact_phone}
-											onChange={(e) =>
-												setRequestFormData({ ...requestFormData, contact_phone: e.target.value })
-											}
-											required
-											className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:border-[#0A356A] outline-none"
-										/>
-									</div>
-								</div>
+							<div>
+								<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">Catatan</label>
+								<textarea
+									rows={2}
+									value={requestFormData.notes}
+									onChange={(e) => setRequestFormData({ ...requestFormData, notes: e.target.value })}
+									placeholder="Catatan tambahan bila diperlukan"
+									className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none resize-none"
+								/>
 							</div>
+
 
 							{/* Footer Actions */}
 							<div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-2">

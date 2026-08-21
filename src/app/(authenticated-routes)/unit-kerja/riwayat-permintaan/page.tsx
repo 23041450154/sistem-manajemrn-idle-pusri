@@ -437,49 +437,49 @@ function RiwayatPermintaanContent() {
 				</div>
 
 				{/* Table */}
-			<div className="overflow-x-hidden">
-				<table className="w-full text-left border-collapse table-fixed">
+			<div className="overflow-x-auto">
+				<table className="min-w-[900px] w-full text-left border-collapse table-fixed">
 					<thead className="bg-gray-50/95 backdrop-blur-sm">
 						<tr className="border-b border-gray-300">
-							<th className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
+							<th className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-center w-12">
 								No
 							</th>
 							<th
-								className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[140px]"
+								className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[155px]"
 								onClick={() => handleSort("request_number")}
 							>
-								<div className="flex items-center justify-start">
+								<div className="flex items-center justify-start gap-1 whitespace-nowrap">
 									No. Pengajuan {getSortIcon("request_number")}
 								</div>
 							</th>
 							<th
-								className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+								className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[225px]"
 								onClick={() => handleSort("equipment_name")}
 							>
-								<div className="flex items-center justify-start">
+								<div className="flex items-center justify-start gap-1 whitespace-nowrap">
 									Nama Alat {getSortIcon("equipment_name")}
 								</div>
 							</th>
 							<th
-								className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[100px]"
+								className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left w-[145px]"
 								onClick={() => handleSort("target_plant")}
 							>
-								<div className="flex items-center justify-start">
+								<div className="flex items-center justify-start gap-1 whitespace-nowrap">
 									Plant {getSortIcon("target_plant")}
 								</div>
 							</th>
 							<th
-								className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center w-[100px]"
+								className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center w-[125px]"
 								onClick={() => handleSort("start_date")}
 							>
-								<div className="flex items-center justify-center">
+								<div className="flex items-center justify-center gap-1 whitespace-nowrap">
 									Tgl Permintaan {getSortIcon("start_date")}
 								</div>
 							</th>
-							<th className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-center w-[140px]">
+							<th className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-center w-[125px]">
 								Status
 							</th>
-							<th className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-center w-[90px]">
+							<th className="px-3 py-3 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-center w-[88px]">
 								Aksi
 							</th>
 						</tr>
@@ -517,16 +517,18 @@ function RiwayatPermintaanContent() {
 										<td className="px-3 py-3 text-[13px] text-gray-500 font-medium text-center">
 											{rowNum}
 										</td>
-										<td className="px-3 py-3 text-[13px] font-semibold text-[#0A356A] text-left break-all">
-											{item.request_number}
+										<td className="px-3 py-3 text-[13px] font-semibold text-[#0A356A] text-left">
+											<span className="block break-words leading-tight" title={item.request_number}>
+												{item.request_number}
+											</span>
 										</td>
 										<td className="px-3 py-3 text-[13px] font-semibold text-gray-800 text-left" title={item.equipment_name}>
 											<span className="leading-tight line-clamp-2 block">
 												{item.equipment_name}
 											</span>
 										</td>
-										<td className="px-3 py-3 text-[13px] text-gray-600 font-medium text-left">
-											<span className="line-clamp-2 block">{item.target_plant}</span>
+										<td className="px-3 py-3 text-[13px] text-gray-600 font-medium text-left" title={item.target_plant}>
+											<span className="line-clamp-2 block leading-tight">{item.target_plant}</span>
 										</td>
 										<td className="px-3 py-3 text-[13px] text-gray-600 font-medium text-center whitespace-nowrap">
 											{item.start_date}
