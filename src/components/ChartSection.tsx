@@ -37,32 +37,61 @@ export function ChartSection() {
   
   // Calculate pieData
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const readyCount = data.filter((e: any) => e.status?.name === 'READY_TO_REUSE').length;
+  const readyCount = data.filter((e: any) => {
+    const st = (typeof e.status === "object" ? e.status?.name : e.status || "").toUpperCase();
+    const id = Number(e.status_id || e.status?.id || 0);
+    return id === 6 || id === 2 || st.includes("READY") || st.includes("VALID") || st === "IDLE";
+  }).length;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const idleCount = data.filter((e: any) => e.status?.name === 'IDLE').length;
+  const idleCount = data.filter((e: any) => {
+    const st = (typeof e.status === "object" ? e.status?.name : e.status || "").toUpperCase();
+    const id = Number(e.status_id || e.status?.id || 0);
+    return id === 1 || st.includes("REGISTER") || st.includes("PENDING");
+  }).length;
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const repairCount = data.filter((e: any) => e.status?.name === 'DALAM_PERBAIKAN').length;
+  const repairCount = data.filter((e: any) => {
+    const st = (typeof e.status === "object" ? e.status?.name : e.status || "").toUpperCase();
+    const id = Number(e.status_id || e.status?.id || 0);
+    return id === 3 || id === 4 || id === 5 || st.includes("PERBAIKAN") || st.includes("REPAIR") || st.includes("MAINTENANCE");
+  }).length;
   
   const readyPct = totalAset > 0 ? Math.round((readyCount / totalAset) * 100) : 0;
   const idlePct = totalAset > 0 ? Math.round((idleCount / totalAset) * 100) : 0;
   const repairPct = totalAset > 0 ? Math.round((repairCount / totalAset) * 100) : 0;
 
   const pieData = [
-    { name: "Siap Digunakan", value: readyPct || 61, color: "#10b981" },
-    { name: "Idle (Standby)", value: idlePct || 33, color: "#2563eb" },
-    { name: "Butuh Perbaikan", value: repairPct || 4, color: "#ef4444" },
-  ];
+    { name: "Siap Digunakan", value: readyPct, count: readyCount, color: "#10b981" },
+    { name: "Menunggu Validasi", value: idlePct, count: idleCount, color: "#2563eb" },
+    { name: "Butuh Perbaikan", value: repairPct, count: repairCount, color: "#ef4444" },
+  ].filter((p) => p.count > 0);
 
-  // Dummy line data since real timeline data might need grouping by month
-  // But we will use the same for visual purposes if no logic for it
-  const months = ["Mei", "Jun", "Jul", "Agu", "Sep", "Okt"];
-  // eslint-disable-next-line react-hooks/purity
-  const lineData = months.map(m => ({ name: m, value: 50 }));
-  
-  // Try to group by created_at month if possible
-  if (totalAset > 0) {
-     // A simple fallback to real data if any (just demoing dynamic behavior)
+  if (pieData.length === 0) {
+    pieData.push({ name: "Belum Ada Data", value: 100, count: 0, color: "#e5e7eb" });
   }
+
+  // Monthly Trend from DB created_at
+  const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+  const now = new Date();
+  const monthlyBuckets = new Map<string, { name: string; value: number }>();
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    monthlyBuckets.set(key, { name: monthNames[d.getMonth()], value: 0 });
+  }
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  data.forEach((e: any) => {
+    if (!e.created_at) return;
+    const d = new Date(e.created_at);
+    const key = `${d.getFullYear()}-${d.getMonth()}`;
+    if (monthlyBuckets.has(key)) {
+      monthlyBuckets.get(key)!.value += 1;
+    }
+  });
+
+  const lineData = Array.from(monthlyBuckets.values());
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">

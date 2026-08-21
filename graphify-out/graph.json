@@ -1782,8 +1782,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "package_dependencies_react",
-      "community": 3,
-      "community_name": "dependencies",
+      "community": 63,
+      "community_name": "getReuseRequests",
       "norm_label": "react"
     },
     {
@@ -1793,8 +1793,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "react",
-      "community": 3,
-      "community_name": "dependencies",
+      "community": 63,
+      "community_name": "getReuseRequests",
       "norm_label": "react"
     },
     {
@@ -2552,8 +2552,8 @@
       "source_location": "L314",
       "_origin": "ast",
       "id": "src_action_api_getapprovals",
-      "community": 43,
-      "community_name": "getApprovals",
+      "community": 75,
+      "community_name": "validasi/page.tsx",
       "norm_label": "getapprovals()"
     },
     {
@@ -2563,8 +2563,8 @@
       "source_location": "L332",
       "_origin": "ast",
       "id": "src_action_api_getapprovalbyid",
-      "community": 75,
-      "community_name": "validasi/page.tsx",
+      "community": 42,
+      "community_name": "approve/page.tsx",
       "norm_label": "getapprovalbyid()"
     },
     {
@@ -2673,7 +2673,7 @@
       "source_location": "L648",
       "_origin": "ast",
       "id": "src_action_api_getobjecttypes",
-      "community": 59,
+      "community": 43,
       "community_name": "getObjectTypes",
       "norm_label": "getobjecttypes()"
     },
@@ -2707,7 +2707,7 @@
       "_origin": "ast",
       "id": "src_action_api_getstoragelocations",
       "community": 59,
-      "community_name": "getObjectTypes",
+      "community_name": "register-equipment/page.tsx",
       "norm_label": "getstoragelocations()"
     },
     {
@@ -2740,7 +2740,7 @@
       "_origin": "ast",
       "id": "src_action_api_createequipment",
       "community": 59,
-      "community_name": "getObjectTypes",
+      "community_name": "register-equipment/page.tsx",
       "norm_label": "createequipment()"
     },
     {
@@ -2751,7 +2751,7 @@
       "_origin": "ast",
       "id": "src_action_api_getequipmentbyid",
       "community": 59,
-      "community_name": "getObjectTypes",
+      "community_name": "register-equipment/page.tsx",
       "norm_label": "getequipmentbyid()"
     },
     {
@@ -2762,7 +2762,7 @@
       "_origin": "ast",
       "id": "src_action_api_updateequipment",
       "community": 59,
-      "community_name": "getObjectTypes",
+      "community_name": "register-equipment/page.tsx",
       "norm_label": "updateequipment()"
     },
     {
@@ -2960,7 +2960,7 @@
       "_origin": "ast",
       "id": "src_action_api_getfunctionallocations",
       "community": 59,
-      "community_name": "getObjectTypes",
+      "community_name": "register-equipment/page.tsx",
       "norm_label": "getfunctionallocations()"
     },
     {
@@ -2981,8 +2981,8 @@
       "source_location": "L1654",
       "_origin": "ast",
       "id": "src_action_api_updatereuserequeststatus",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 81,
+      "community_name": "peminjaman/page.tsx",
       "norm_label": "updatereuserequeststatus()"
     },
     {
@@ -2992,8 +2992,8 @@
       "source_location": "L1724",
       "_origin": "ast",
       "id": "src_action_api_approverevalidationequipment",
-      "community": 43,
-      "community_name": "getApprovals",
+      "community": 75,
+      "community_name": "validasi/page.tsx",
       "norm_label": "approverevalidationequipment()"
     },
     {
@@ -3300,7 +3300,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page",
-      "community": 59,
+      "community": 43,
       "community_name": "getObjectTypes",
       "norm_label": "admin/dashboard/page.tsx"
     },
@@ -3311,7 +3311,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page_modules",
-      "community": 59,
+      "community": 43,
       "community_name": "getObjectTypes",
       "norm_label": "modules"
     },
@@ -3322,7 +3322,7 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page_admindashboardpage",
-      "community": 59,
+      "community": 43,
       "community_name": "getObjectTypes",
       "norm_label": "admindashboardpage()"
     },
@@ -3971,8 +3971,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_peminjaman_page",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 81,
+      "community_name": "peminjaman/page.tsx",
       "norm_label": "peminjaman/page.tsx"
     },
     {
@@ -3982,8 +3982,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_peminjaman_page_reuserequest",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 81,
+      "community_name": "peminjaman/page.tsx",
       "norm_label": "reuserequest"
     },
     {
@@ -3993,8 +3993,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_peminjaman_page_reuserequestapi",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 81,
+      "community_name": "peminjaman/page.tsx",
       "norm_label": "reuserequestapi"
     },
     {
@@ -4004,8 +4004,8 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_peminjaman_page_manajerpeminjamanpage",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 81,
+      "community_name": "peminjaman/page.tsx",
       "norm_label": "manajerpeminjamanpage()"
     },
     {
@@ -4378,7 +4378,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_idle_page",
-      "community": 59,
+      "community": 43,
       "community_name": "getObjectTypes",
       "norm_label": "rendal/idle/page.tsx"
     },
@@ -4389,7 +4389,7 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_idle_page_assetstate",
-      "community": 59,
+      "community": 43,
       "community_name": "getObjectTypes",
       "norm_label": "assetstate"
     },
@@ -4400,7 +4400,7 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_idle_page_approvalstate",
-      "community": 59,
+      "community": 43,
       "community_name": "getObjectTypes",
       "norm_label": "approvalstate"
     },
@@ -4411,7 +4411,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_idle_page_equipment",
-      "community": 59,
+      "community": 43,
       "community_name": "getObjectTypes",
       "norm_label": "equipment"
     },
@@ -4422,7 +4422,7 @@
       "source_location": "L65",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_idle_page_rendalidlepage",
-      "community": 59,
+      "community": 43,
       "community_name": "getObjectTypes",
       "norm_label": "rendalidlepage()"
     },
@@ -4433,8 +4433,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page",
-      "community": 43,
-      "community_name": "getApprovals",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "laporan/page.tsx"
     },
     {
@@ -4444,8 +4444,8 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_auditlogentry",
-      "community": 43,
-      "community_name": "getApprovals",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "auditlogentry"
     },
     {
@@ -4455,8 +4455,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_buildauditlogs",
-      "community": 43,
-      "community_name": "getApprovals",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "buildauditlogs()"
     },
     {
@@ -4466,8 +4466,8 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_actiontypeconfig",
-      "community": 43,
-      "community_name": "getApprovals",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "actiontypeconfig"
     },
     {
@@ -4477,8 +4477,8 @@
       "source_location": "L181",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_audittrailpage",
-      "community": 43,
-      "community_name": "getApprovals",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "audittrailpage()"
     },
     {
@@ -4533,7 +4533,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_page",
       "community": 59,
-      "community_name": "getObjectTypes",
+      "community_name": "register-equipment/page.tsx",
       "norm_label": "register-equipment/page.tsx"
     },
     {
@@ -4544,7 +4544,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_page_registerequipmentpage",
       "community": 59,
-      "community_name": "getObjectTypes",
+      "community_name": "register-equipment/page.tsx",
       "norm_label": "registerequipmentpage()"
     },
     {
@@ -4620,8 +4620,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_page",
-      "community": 43,
-      "community_name": "getApprovals",
+      "community": 75,
+      "community_name": "validasi/page.tsx",
       "norm_label": "rendal/validasi-ulang/page.tsx"
     },
     {
@@ -4631,8 +4631,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_page_validasiulangitem",
-      "community": 43,
-      "community_name": "getApprovals",
+      "community": 75,
+      "community_name": "validasi/page.tsx",
       "norm_label": "validasiulangitem"
     },
     {
@@ -4642,8 +4642,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_page_rendalvalidasiulangpage",
-      "community": 43,
-      "community_name": "getApprovals",
+      "community": 75,
+      "community_name": "validasi/page.tsx",
       "norm_label": "rendalvalidasiulangpage()"
     },
     {
@@ -4653,8 +4653,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page",
-      "community": 66,
-      "community_name": "getAttachmentsByEquipmentId",
+      "community": 43,
+      "community_name": "getObjectTypes",
       "norm_label": "daftar-aset/page.tsx"
     },
     {
@@ -4664,8 +4664,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_equipmentitem",
-      "community": 66,
-      "community_name": "getAttachmentsByEquipmentId",
+      "community": 43,
+      "community_name": "getObjectTypes",
       "norm_label": "equipmentitem"
     },
     {
@@ -4675,8 +4675,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
-      "community": 66,
-      "community_name": "getAttachmentsByEquipmentId",
+      "community": 43,
+      "community_name": "getObjectTypes",
       "norm_label": "daftarasetpage()"
     },
     {
@@ -4763,8 +4763,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_equipment_page",
-      "community": 66,
-      "community_name": "getAttachmentsByEquipmentId",
+      "community": 43,
+      "community_name": "getObjectTypes",
       "norm_label": "unit-kerja/equipment/page.tsx"
     },
     {
@@ -4774,8 +4774,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_equipment_page_unitkerjaequipmentpage",
-      "community": 66,
-      "community_name": "getAttachmentsByEquipmentId",
+      "community": 43,
+      "community_name": "getObjectTypes",
       "norm_label": "unitkerjaequipmentpage()"
     },
     {
@@ -5698,8 +5698,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_dashboards_unitkerjadashboard",
-      "community": 3,
-      "community_name": "dependencies",
+      "community": 63,
+      "community_name": "getReuseRequests",
       "norm_label": "unitkerjadashboard.tsx"
     },
     {
@@ -5709,8 +5709,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_components_dashboards_unitkerjadashboard_unitkerjadashboard",
-      "community": 3,
-      "community_name": "dependencies",
+      "community": 63,
+      "community_name": "getReuseRequests",
       "norm_label": "unitkerjadashboard()"
     },
     {
@@ -5787,7 +5787,7 @@
       "_origin": "ast",
       "id": "src_components_editequipmentdialog",
       "community": 59,
-      "community_name": "getObjectTypes",
+      "community_name": "register-equipment/page.tsx",
       "norm_label": "editequipmentdialog.tsx"
     },
     {
@@ -5798,7 +5798,7 @@
       "_origin": "ast",
       "id": "src_components_editequipmentdialog_editequipmentdialogprops",
       "community": 59,
-      "community_name": "getObjectTypes",
+      "community_name": "register-equipment/page.tsx",
       "norm_label": "editequipmentdialogprops"
     },
     {
@@ -5809,7 +5809,7 @@
       "_origin": "ast",
       "id": "src_components_editequipmentdialog_extractstringvalue",
       "community": 59,
-      "community_name": "getObjectTypes",
+      "community_name": "register-equipment/page.tsx",
       "norm_label": "extractstringvalue()"
     },
     {
@@ -5820,7 +5820,7 @@
       "_origin": "ast",
       "id": "src_components_editequipmentdialog_editequipmentdialog",
       "community": 59,
-      "community_name": "getObjectTypes",
+      "community_name": "register-equipment/page.tsx",
       "norm_label": "editequipmentdialog()"
     },
     {
@@ -6314,8 +6314,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_approvals",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 81,
+      "community_name": "peminjaman/page.tsx",
       "norm_label": "approvals.ts"
     },
     {
@@ -6325,8 +6325,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_approvals_approvalkind",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 81,
+      "community_name": "peminjaman/page.tsx",
       "norm_label": "approvalkind"
     },
     {
@@ -6336,8 +6336,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_approvals_disposaldisplaystatus",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 81,
+      "community_name": "peminjaman/page.tsx",
       "norm_label": "disposaldisplaystatus"
     },
     {
@@ -6347,8 +6347,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_lib_approvals_reusedisplaystatus",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 81,
+      "community_name": "peminjaman/page.tsx",
       "norm_label": "reusedisplaystatus"
     },
     {
@@ -15249,7 +15249,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
-      "source_location": "L233",
+      "source_location": "L253",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
@@ -15552,6 +15552,18 @@
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page_riwayatpermintaancontent",
+      "target": "src_action_api_getreuserequests",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Dashboards/UnitKerjaDashboard.tsx",
+      "source_location": "L29",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_components_dashboards_unitkerjadashboard",
       "target": "src_action_api_getreuserequests",
       "confidence_score": 1.0
     },
@@ -23195,5 +23207,5 @@
       "source_file": "public/validasiInspeksi.png"
     }
   ],
-  "built_at_commit": "7cb5399571699b5b6e9d65eaa515dc4c3ae8c6ce"
+  "built_at_commit": "564167371c4c5d1e6951025c9c3b5816fd49ad09"
 }

@@ -74,67 +74,88 @@ export default function DaftarAsetPage() {
 				const mapped: EquipmentItem[] = rawEqList
 					.filter((item: any) => {
 						const rawStatus = (typeof item.status === "object" ? item.status?.name : item.status || "").toUpperCase();
-						const isScrap =
-							item.status_id === 8 ||
-							item.status?.id === 8 ||
-							rawStatus.includes("SCRAP") ||
-							rawStatus.includes("DISPOSAL");
-						return !isScrap;
+						const statusId = Number(item.status_id || item.status?.id || 0);
+
+						const isRepair =
+							statusId === 3 ||
+							statusId === 4 ||
+							statusId === 5 ||
+							rawStatus.includes("PERBAIKAN") ||
+							rawStatus.includes("MAINTENANCE") ||
+							rawStatus.includes("REPAIR") ||
+							rawStatus.includes("REVALIDATION") ||
+							rawStatus.includes("REVALIDASI");
+
+						const isReady =
+							statusId === 6 ||
+							statusId === 2 ||
+							rawStatus.includes("READY") ||
+							rawStatus.includes("SIAP") ||
+							rawStatus.includes("VALIDATED") ||
+							rawStatus.includes("VALID") ||
+							rawStatus === "IDLE";
+
+						return isReady || isRepair;
 					})
 					.map((item: any) => {
-					let catName = "Peralatan Umum";
-					if (typeof item.object_type?.name === "string") catName = item.object_type.name;
-					else if (typeof item.objectType?.name === "string") catName = item.objectType.name;
-					else if (typeof item.object_type_name === "string") catName = item.object_type_name;
-					else if (item.object_type_id && objTypes) {
-						const found = objTypes.find((o: any) => String(o.id) === String(item.object_type_id));
-						if (found && typeof found.name === "string") catName = found.name;
-					}
+						let catName = "Peralatan Umum";
+						if (typeof item.object_type?.name === "string") catName = item.object_type.name;
+						else if (typeof item.objectType?.name === "string") catName = item.objectType.name;
+						else if (typeof item.object_type_name === "string") catName = item.object_type_name;
+						else if (item.object_type_id && objTypes) {
+							const found = objTypes.find((o: any) => String(o.id) === String(item.object_type_id));
+							if (found && typeof found.name === "string") catName = found.name;
+						}
 
-					let plantStr = "STG & Boilers";
-					if (typeof item.plant === "string") {
-						plantStr = item.plant;
-					} else if (item.plant && typeof item.plant === "object") {
-						plantStr = item.plant.name || item.plant.plant || item.plant.description || "STG & Boilers";
-					}
+						let plantStr = "STG & Boilers";
+						if (typeof item.plant === "string") {
+							plantStr = item.plant;
+						} else if (item.plant && typeof item.plant === "object") {
+							plantStr = item.plant.name || item.plant.plant || item.plant.description || "STG & Boilers";
+						}
 
-					let storageLoc = "Gudang Utama Pusri";
-					if (typeof item.storage_location === "string") storageLoc = item.storage_location;
-					else if (item.storage_location && typeof item.storage_location === "object") storageLoc = item.storage_location.name || "Gudang Utama Pusri";
+						let storageLoc = "Gudang Utama Pusri";
+						if (typeof item.storage_location === "string") storageLoc = item.storage_location;
+						else if (item.storage_location && typeof item.storage_location === "object") storageLoc = item.storage_location.name || "Gudang Utama Pusri";
 
-					const rawStatus = (typeof item.status === "object" ? item.status?.name : item.status || "").toUpperCase();
-					let normalizedStatus = "READY TO USE";
-					if (item.status_id === 3 || rawStatus.includes("PERBAIKAN") || rawStatus.includes("MAINTENANCE") || rawStatus.includes("REPAIR")) {
-						normalizedStatus = "DALAM PERBAIKAN";
-					} else if (item.status_id === 8 || rawStatus.includes("SCRAP") || rawStatus.includes("DISPOSAL")) {
-						normalizedStatus = "SCRAP";
-					} else if (item.status_id === 1 || rawStatus.includes("REGISTERED")) {
-						normalizedStatus = "REGISTERED";
-					}
+						const rawStatus = (typeof item.status === "object" ? item.status?.name : item.status || "").toUpperCase();
+						const statusId = Number(item.status_id || item.status?.id || 0);
 
-					let conditionStr = "Baik";
-					if (typeof item.condition === "object") conditionStr = item.condition?.name || "Baik";
-					else if (typeof item.condition === "string") conditionStr = item.condition;
+						const isRepair =
+							statusId === 3 ||
+							statusId === 4 ||
+							statusId === 5 ||
+							rawStatus.includes("PERBAIKAN") ||
+							rawStatus.includes("MAINTENANCE") ||
+							rawStatus.includes("REPAIR") ||
+							rawStatus.includes("REVALIDATION") ||
+							rawStatus.includes("REVALIDASI");
 
-					return {
-						id: String(item.id),
-						equipment_code: String(item.equipment_code || item.kodeAlat || `EQ-${item.id}`),
-						name: String(item.name || item.namaAlat || "Equipment Tanpa Nama"),
-						plant: plantStr,
-						object_type_name: String(catName),
-						status_name: normalizedStatus,
-						condition_name: conditionStr.replace(/_/g, " "),
-						storage_location: String(storageLoc),
-						serial_number: String(item.serial_number || "SN-2026-X89"),
-						vendor: String(item.vendor || item.manufacturer || "PT Utama Engineering"),
-						year_of_purchase: Number(item.year_of_purchase) || 2020,
-						book_value: Number(item.book_value) || 120000000,
-						specifications: String(item.specifications || item.specification || item.description || "Spesifikasi standar operasional pabrik"),
-						capacity: String(item.capacity || "-"),
-						notes: item.notes || "-",
-						created_at: item.created_at || "-",
-					};
-				});
+						const normalizedStatus = isRepair ? "DALAM PERBAIKAN" : "READY TO USE";
+
+						let conditionStr = "Baik";
+						if (typeof item.condition === "object") conditionStr = item.condition?.name || "Baik";
+						else if (typeof item.condition === "string") conditionStr = item.condition;
+
+						return {
+							id: String(item.id),
+							equipment_code: String(item.equipment_code || item.kodeAlat || `EQ-${item.id}`),
+							name: String(item.name || item.namaAlat || "Equipment Tanpa Nama"),
+							plant: plantStr,
+							object_type_name: String(catName),
+							status_name: normalizedStatus,
+							condition_name: conditionStr.replace(/_/g, " "),
+							storage_location: String(storageLoc),
+							serial_number: String(item.serial_number || "SN-2026-X89"),
+							vendor: String(item.vendor || item.manufacturer || "PT Utama Engineering"),
+							year_of_purchase: Number(item.year_of_purchase) || 2020,
+							book_value: Number(item.book_value) || 120000000,
+							specifications: String(item.specifications || item.specification || item.description || "Spesifikasi standar operasional pabrik"),
+							capacity: String(item.capacity || "-"),
+							notes: item.notes || "-",
+							created_at: item.created_at || "-",
+						};
+					});
 
 				setEquipments(mapped);
 			} else {
@@ -173,10 +194,9 @@ export default function DaftarAsetPage() {
 
 	const stats = useMemo(() => {
 		const total = equipments.length;
-		const ready = equipments.filter((e) => e.status_name === "READY TO USE" || e.status_name === "IDLE").length;
+		const ready = equipments.filter((e) => e.status_name === "READY TO USE").length;
 		const perbaikan = equipments.filter((e) => e.status_name === "DALAM PERBAIKAN").length;
-		const scrap = equipments.filter((e) => e.status_name === "SCRAP").length;
-		return { total, ready, perbaikan, scrap };
+		return { total, ready, perbaikan };
 	}, [equipments]);
 
 	const handleSearch = () => setSearchQuery(searchInput);
@@ -194,7 +214,7 @@ export default function DaftarAsetPage() {
 		let result = equipments;
 
 		if (activeTab === "ready") {
-			result = result.filter((e) => e.status_name === "READY TO USE" || e.status_name === "IDLE");
+			result = result.filter((e) => e.status_name === "READY TO USE");
 		} else if (activeTab === "perbaikan") {
 			result = result.filter((e) => e.status_name === "DALAM PERBAIKAN");
 		}

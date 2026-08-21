@@ -43,35 +43,48 @@ export function CostAvoidanceSection() {
 	}, []);
 
 	// --- Dynamic Operational Counts ---
-	// Menunggu Validasi (REGISTERED only)
-	const menungguValidasiCount = equipments.filter(
-		(e: Equipment) =>
-			e.status?.name === "REGISTERED" ||
-			e.statusAset === "REGISTERED",
-	).length;
+	// Menunggu Validasi (status_id 1 or REGISTERED or PENDING_REVIEW)
+	const menungguValidasiCount = equipments.filter((e: Equipment) => {
+		const st = (typeof e.status === "object" ? e.status?.name : e.status || e.statusAset || "").toUpperCase();
+		const id = Number(e.status_id || e.status?.id || 0);
+		return id === 1 || st === "REGISTERED" || st === "PENDING_REVIEW" || st === "NONE";
+	}).length;
 
-	// Dalam Perbaikan (REJECTED or DALAM_PERBAIKAN or REPAIR)
-	const dalamPerbaikanCount = equipments.filter(
-		(e: Equipment) =>
-			e.status?.name === "REJECTED" ||
-			e.status?.name === "DALAM_PERBAIKAN" ||
-			e.status?.name === "REPAIR" ||
-			e.statusAset === "REJECTED",
-	).length;
+	// Dalam Perbaikan (status_id 3, 4, 5 or REPAIR, DALAM_PERBAIKAN, MAINTENANCE, REVALIDATION)
+	const dalamPerbaikanCount = equipments.filter((e: Equipment) => {
+		const st = (typeof e.status === "object" ? e.status?.name : e.status || e.statusAset || "").toUpperCase();
+		const id = Number(e.status_id || e.status?.id || 0);
+		return (
+			id === 3 ||
+			id === 4 ||
+			id === 5 ||
+			st.includes("PERBAIKAN") ||
+			st.includes("REPAIR") ||
+			st.includes("MAINTENANCE") ||
+			st.includes("REVALIDATION") ||
+			st.includes("REVALIDASI") ||
+			st === "REJECTED"
+		);
+	}).length;
 
-	// Ready to Use (READY_TO_REUSE, READY TO USE, or IDLE)
-	const readyCount = equipments.filter(
-		(e: Equipment) =>
-			e.status?.name === "READY_TO_REUSE" ||
-			e.status?.name === "IDLE" ||
-			e.statusAset === "READY_TO_REUSE" ||
-			e.statusAset === "IDLE",
-	).length;
+	// Ready to Use (status_id 6, 2 or READY_TO_USE, READY_TO_REUSE, READY, VALIDATED, IDLE)
+	const readyCount = equipments.filter((e: Equipment) => {
+		const st = (typeof e.status === "object" ? e.status?.name : e.status || e.statusAset || "").toUpperCase();
+		const id = Number(e.status_id || e.status?.id || 0);
+		return (
+			id === 6 ||
+			id === 2 ||
+			st.includes("READY") ||
+			st.includes("VALID") ||
+			st === "IDLE"
+		);
+	}).length;
 
 	// Menunggu Disposal
-	const disposalCount = disposals.filter(
-		(d: Equipment) => d.status !== "DISPOSED",
-	).length;
+	const disposalCount = disposals.filter((d: Equipment) => {
+		const st = (typeof d.status === "object" ? d.status?.name : d.status || "").toUpperCase();
+		return !st.includes("COMPLETED") && !st.includes("DISPOSED");
+	}).length;
 
 	// --- Dynamic Recent Activities ---
 	const sortedEquipments = [...equipments].sort(

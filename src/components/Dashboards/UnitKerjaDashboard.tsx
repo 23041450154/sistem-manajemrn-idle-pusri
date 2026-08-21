@@ -26,17 +26,22 @@ import {
   Legend
 } from 'recharts';
 
-import { getEquipments } from '@/action/api';
+import { getEquipments, getReuseRequests } from '@/action/api';
 
 export default function UnitKerjaDashboard() {
   const [data, setData] = React.useState<any[]>([]);
+  const [reuseRequests, setReuseRequests] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
 
   React.useEffect(() => {
     async function fetch() {
       try {
-        const equipments = await getEquipments();
+        const [equipments, requests] = await Promise.all([
+          getEquipments().catch(() => []),
+          getReuseRequests().catch(() => []),
+        ]);
         setData(equipments || []);
+        setReuseRequests(requests || []);
       } catch (err) {
         console.error(err);
       } finally {
@@ -48,24 +53,35 @@ export default function UnitKerjaDashboard() {
 
   const totalAset = data.length;
   
-  const activeCount = data.filter(a => a.status?.name === 'ACTIVE').length || 0;
-  const idleCount = data.filter(a => a.status?.name === 'IDLE').length || 0;
-  const rusakCount = data.filter(a => a.status?.name === 'DALAM_PERBAIKAN').length || 0;
-  const othersCount = totalAset - activeCount - idleCount - rusakCount;
+  const readyCount = data.filter((a) => {
+    const st = (typeof a.status === "object" ? a.status?.name : a.status || "").toUpperCase();
+    const id = Number(a.status_id || a.status?.id || 0);
+    return id === 6 || id === 2 || st.includes("READY") || st.includes("VALID") || st === "IDLE";
+  }).length;
 
-  // Let's assume if there are no ACTIVE, we just show others as ACTIVE for display purposes if the status names don't match perfectly. But it's better to stick to real counts.
+  const idleCount = data.filter((a) => {
+    const st = (typeof a.status === "object" ? a.status?.name : a.status || "").toUpperCase();
+    const id = Number(a.status_id || a.status?.id || 0);
+    return id === 1 || st.includes("REGISTER") || st.includes("PENDING");
+  }).length;
+
+  const rusakCount = data.filter((a) => {
+    const st = (typeof a.status === "object" ? a.status?.name : a.status || "").toUpperCase();
+    const id = Number(a.status_id || a.status?.id || 0);
+    return id === 3 || id === 4 || id === 5 || st.includes("PERBAIKAN") || st.includes("REPAIR") || st.includes("MAINTENANCE");
+  }).length;
+
   const pieData = [
-    { name: 'Aktif', value: activeCount + othersCount, color: '#10B981' },
-    { name: 'Idle', value: idleCount, color: '#F59E0B' },
-    { name: 'Rusak', value: rusakCount, color: '#EF4444' },
-  ].filter(p => p.value > 0);
+    { name: 'Siap Digunakan', value: readyCount, color: '#10B981' },
+    { name: 'Menunggu Validasi', value: idleCount, color: '#F59E0B' },
+    { name: 'Dalam Perbaikan', value: rusakCount, color: '#EF4444' },
+  ].filter((p) => p.value > 0);
   
-  // If no pieData, supply a dummy one for empty state
   if (pieData.length === 0) pieData.push({ name: 'Belum Ada Data', value: 1, color: '#E5E7EB' });
 
   // Group by plant
   const plants = data.reduce((acc: any, curr: any) => {
-    const plant = curr.plant || 'Lainnya';
+    const plant = (typeof curr.plant === "object" ? curr.plant?.name : curr.plant) || curr.plant_description || 'Lainnya';
     acc[plant] = (acc[plant] || 0) + 1;
     return acc;
   }, {});
@@ -75,9 +91,11 @@ export default function UnitKerjaDashboard() {
     value: plants[key]
   }));
 
-  const readyToReuseCount = data.filter(a => a.status?.name === 'READY_TO_REUSE' || a.status?.name === 'IDLE').length || 0;
-  // Temporary logic for 'Permintaan Menunggu'
-  const permintaanMenunggu = data.filter(a => !a.status?.name || a.status?.name === 'REGISTERED').length || 0;
+  const readyToReuseCount = readyCount;
+  const permintaanMenunggu = reuseRequests.filter((r) => {
+    const s = (r.status || r.approval_status || "").toUpperCase();
+    return s.includes("PENDING") || s.includes("REVIEW");
+  }).length;
 
   return (
     <div className="max-w-[1600px] mx-auto p-4 sm:p-6 lg:p-8 space-y-8 bg-[#F8F9FB] min-h-screen">
@@ -115,15 +133,15 @@ export default function UnitKerjaDashboard() {
         {/* KPI 2 */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between h-full">
           <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Aset Aktif</span>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Aset Siap Pakai</span>
             <div className="w-10 h-10 rounded-full bg-emerald-50 flex items-center justify-center">
               <Settings className="w-5 h-5 text-emerald-500" />
             </div>
           </div>
           <div>
-            <div className="text-3xl font-extrabold text-gray-900 mb-1">{isLoading ? "..." : activeCount + othersCount}</div>
+            <div className="text-3xl font-extrabold text-gray-900 mb-1">{isLoading ? "..." : readyCount}</div>
             <p className="text-xs font-medium text-gray-500">
-              {(totalAset > 0 ? Math.round(((activeCount + othersCount) / totalAset) * 100) : 0)}% dari total aset
+              {(totalAset > 0 ? Math.round((readyCount / totalAset) * 100) : 0)}% dari total aset
             </p>
           </div>
         </div>
@@ -131,15 +149,15 @@ export default function UnitKerjaDashboard() {
         {/* KPI 3 */}
         <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col justify-between h-full">
           <div className="flex justify-between items-start mb-4">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Aset Idle (Ready)</span>
+            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">Menunggu Validasi</span>
             <div className="w-10 h-10 rounded-full bg-orange-50 flex items-center justify-center">
               <Package className="w-5 h-5 text-orange-500" />
             </div>
           </div>
           <div>
-            <div className="text-3xl font-extrabold text-gray-900 mb-1">{isLoading ? "..." : readyToReuseCount}</div>
+            <div className="text-3xl font-extrabold text-gray-900 mb-1">{isLoading ? "..." : idleCount}</div>
             <p className="text-xs font-medium text-gray-500">
-              Siap untuk digunakan/dimobilisasi
+              Menunggu pemeriksaan teknis
             </p>
           </div>
         </div>

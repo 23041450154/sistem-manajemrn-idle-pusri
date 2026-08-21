@@ -1,16 +1,16 @@
 # Graph Report - fe  (2026-08-21)
 
 ## Corpus Check
-- 134 files · ~279,159 words
+- 134 files · ~279,430 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 760 nodes · 1220 edges · 81 communities (59 shown, 22 thin omitted)
+- 760 nodes · 1221 edges · 82 communities (60 shown, 22 thin omitted)
 - Extraction: 99% EXTRACTED · 1% INFERRED · 0% AMBIGUOUS · INFERRED: 16 edges (avg confidence: 0.86)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `7cb53995`
+- Built from commit: `56416737`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -53,7 +53,7 @@
 - PUSRI Logo Asset
 - components.json
 - approve/page.tsx
-- getApprovals
+- getObjectTypes
 - Inspection Photo Attachment (Pixel Art Anime Avatar)
 - 1. Pemetaan Peran Pengguna (User Roles) & Tanggung Jawab
 - File Document Icon
@@ -66,7 +66,7 @@
 - Window Icon SVG
 - api.ts
 - getDisposals
-- getObjectTypes
+- register-equipment/page.tsx
 - PRODUCT.md
 - open-in-terminal/manifest.json
 - check-equipment-form.mjs
@@ -82,6 +82,7 @@
 - inspeksi-berkala/page.tsx
 - DeleteConfirmDialog.tsx
 - check-scrap-reason.mjs
+- peminjaman/page.tsx
 
 ## God Nodes (most connected - your core abstractions)
 1. `getEquipments()` - 51 edges
@@ -126,7 +127,7 @@
 - **Asset Validation and Revision Workflow** — public_refrensi_image3_pusat_data_aset_dashboard, public_refrensi_image3_detail_informasi_aset_panel, public_refrensi_image3_minta_revisi_validasi_modal [INFERRED 0.85]
 - **Inspection Validation Management System UI Workflow** — public_validasiinspeksi_ui_table, public_validasiinspeksi_asset_status_flow, public_validasiinspeksi_approval_status_flow, public_validasiinspeksi_validation_actions [EXTRACTED 1.00]
 
-## Communities (81 total, 22 thin omitted)
+## Communities (82 total, 22 thin omitted)
 
 ### Community 0 - "ManajemenInspeksi.tsx"
 Cohesion: 0.15
@@ -141,8 +142,8 @@ Cohesion: 0.10
 Nodes (28): __awaiter(), buildDefaultTerminalAppSetting(), buildLaunchCommand(), buildMacLaunch(), buildUnixLaunch(), buildWindowsLaunch(), DEFAULT_SETTINGS, defaultTerminalApp() (+20 more)
 
 ### Community 3 - "dependencies"
-Cohesion: 0.07
-Nodes (28): @base-ui/react, class-variance-authority, clsx, lucide-react, next, nextjs-toploader, dependencies, @base-ui/react (+20 more)
+Cohesion: 0.08
+Nodes (25): @base-ui/react, class-variance-authority, clsx, lucide-react, next, nextjs-toploader, dependencies, @base-ui/react (+17 more)
 
 ### Community 4 - "compilerOptions"
 Cohesion: 0.07
@@ -241,28 +242,28 @@ Cohesion: 0.09
 Nodes (21): aliases, components, hooks, lib, ui, utils, iconLibrary, menuAccent (+13 more)
 
 ### Community 42 - "approve/page.tsx"
-Cohesion: 0.25
-Nodes (10): getPlants(), reviewApproval(), startReviewApproval(), APPROVAL_STATUS_LABEL, CONDITION_RESULT, formatRupiah(), Lookup, ManajerApprovePage() (+2 more)
+Cohesion: 0.24
+Nodes (11): getApprovalById(), getPlants(), reviewApproval(), startReviewApproval(), APPROVAL_STATUS_LABEL, CONDITION_RESULT, formatRupiah(), Lookup (+3 more)
 
-### Community 43 - "getApprovals"
-Cohesion: 0.29
-Nodes (8): approveRevalidationEquipment(), getApprovals(), actionTypeConfig, AuditLogEntry, AuditTrailPage(), buildAuditLogs(), RendalValidasiUlangPage(), ValidasiUlangItem
+### Community 43 - "getObjectTypes"
+Cohesion: 0.18
+Nodes (8): getObjectTypes(), MODULES, ApprovalState, AssetState, Equipment, RendalIdlePage(), DaftarAsetPage(), EquipmentItem
 
 ### Community 48 - "1. Pemetaan Peran Pengguna (User Roles) & Tanggung Jawab"
 Cohesion: 0.17
 Nodes (11): 1. Pemetaan Peran Pengguna (User Roles) & Tanggung Jawab, 2. Alur Status & Siklus Hidup Aset (Asset Lifecycle), 3. Penyesuaian Formulir & Aturan Teknis Sistem, A. Parameter Informasi Aset (Pendaftaran Alat), A. Rendal Pemeliharaan (Planner & Coordinator), B. Form Inspeksi & Penomoran Pemeriksaan, B. Inspeksi Teknik - Instek (Validator & Auditor), C. Logika Validasi Kondisi & Kelayakan Aset (+3 more)
 
 ### Community 57 - "api.ts"
-Cohesion: 0.15
-Nodes (5): createInspection(), submitInspectionData(), FormInspeksiPage(), ApprovalKind, disposalDisplayStatus
+Cohesion: 0.18
+Nodes (3): createInspection(), submitInspectionData(), FormInspeksiPage()
 
 ### Community 58 - "getDisposals"
-Cohesion: 0.09
-Nodes (26): absoluteFileUrl(), approveDisposal(), createDisposalRequest(), DisposalItemDTO, getDisposalMethods(), getDisposals(), getInspections(), getValidations() (+18 more)
+Cohesion: 0.08
+Nodes (30): absoluteFileUrl(), approveDisposal(), createDisposalRequest(), DisposalItemDTO, getDisposalMethods(), getDisposals(), getInspections(), getValidations() (+22 more)
 
-### Community 59 - "getObjectTypes"
-Cohesion: 0.16
-Nodes (15): createEquipment(), getEquipmentById(), getFunctionalLocations(), getObjectTypes(), getStorageLocations(), updateEquipment(), MODULES, ApprovalState (+7 more)
+### Community 59 - "register-equipment/page.tsx"
+Cohesion: 0.33
+Nodes (9): createEquipment(), getEquipmentById(), getFunctionalLocations(), getStorageLocations(), updateEquipment(), RegisterEquipmentPage(), EditEquipmentDialog(), EditEquipmentDialogProps (+1 more)
 
 ### Community 60 - "PRODUCT.md"
 Cohesion: 0.17
@@ -278,15 +279,15 @@ Nodes (7): api, appended, body, createFn, optional, page, required
 
 ### Community 63 - "getReuseRequests"
 Cohesion: 0.15
-Nodes (12): getReuseRequests(), updateReuseRequestStatus(), ManajerPeminjamanPage(), ReuseRequest, ReuseRequestApi, ApiRow, EquipmentItem, ReuseRequestItem (+4 more)
+Nodes (10): react, react, getReuseRequests(), ApiRow, EquipmentItem, ReuseRequestItem, UnitKerjaDashboardPage(), ReuseRequestItem (+2 more)
 
 ### Community 64 - "ui-layouts-mcp"
 Cohesion: 0.40
 Nodes (4): npx, 21st, ui-layouts-mcp, @ui-layouts/mcp
 
 ### Community 66 - "getAttachmentsByEquipmentId"
-Cohesion: 0.17
-Nodes (10): createReuseRequest(), getAttachmentsByEquipmentId(), GET(), DaftarAsetPage(), EquipmentItem, EquipmentItem, ReuseRequestItem, UnitKerjaKatalogPage() (+2 more)
+Cohesion: 0.25
+Nodes (8): createReuseRequest(), getAttachmentsByEquipmentId(), GET(), EquipmentItem, ReuseRequestItem, UnitKerjaKatalogPage(), KatalogItemMinimal, RequestModalButton()
 
 ### Community 67 - "check-repair-payload.mjs"
 Cohesion: 0.22
@@ -301,12 +302,16 @@ Cohesion: 0.11
 Nodes (21): eq(), completeEquipmentRepair(), findLatestInspectionId(), getEquipmentRepairs(), Equipment, PemeliharaanDashboardPage(), relativeTime(), Repair (+13 more)
 
 ### Community 75 - "validasi/page.tsx"
-Cohesion: 0.31
-Nodes (8): getApprovalById(), getRequireActions(), resubmitApproval(), ApprovalState, Asset, AssetState, ManajemenInspeksi(), STATUS_BY_ID
+Cohesion: 0.22
+Nodes (11): approveRevalidationEquipment(), getApprovals(), getRequireActions(), resubmitApproval(), ApprovalState, Asset, AssetState, ManajemenInspeksi() (+3 more)
 
 ### Community 76 - "inspeksi-berkala/page.tsx"
 Cohesion: 0.19
 Nodes (11): NOW, Equipment, InspectionItem, InspeksiAntreanPage(), EquipmentLike, InspectionLike, inspectionQueue(), LastInspection (+3 more)
+
+### Community 81 - "peminjaman/page.tsx"
+Cohesion: 0.31
+Nodes (7): updateReuseRequestStatus(), ManajerPeminjamanPage(), ReuseRequest, ReuseRequestApi, ApprovalKind, disposalDisplayStatus, reuseDisplayStatus
 
 ## Knowledge Gaps
 - **290 isolated node(s):** `21st`, `npx`, `@ui-layouts/mcp`, `id`, `name` (+285 more)
@@ -316,9 +321,9 @@ Nodes (11): NOW, Equipment, InspectionItem, InspeksiAntreanPage(), EquipmentLike
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getEquipments()` connect `getEquipments` to `ManajemenInspeksi.tsx`, `auth.ts`, `getAttachmentsByEquipmentId`, `dependencies`, `pemeliharaan/dashboard/page.tsx`, `shared.tsx`, `approve/page.tsx`, `validasi/page.tsx`, `inspeksi-berkala/page.tsx`, `getApprovals`, `api.ts`, `getDisposals`, `getObjectTypes`, `getReuseRequests`?**
-  _High betweenness centrality (0.086) - this node is a cross-community bridge._
-- **Why does `dependencies` connect `dependencies` to `devDependencies`?**
+- **Why does `getEquipments()` connect `getEquipments` to `ManajemenInspeksi.tsx`, `auth.ts`, `getAttachmentsByEquipmentId`, `pemeliharaan/dashboard/page.tsx`, `shared.tsx`, `approve/page.tsx`, `validasi/page.tsx`, `getObjectTypes`, `inspeksi-berkala/page.tsx`, `api.ts`, `getDisposals`, `register-equipment/page.tsx`, `getReuseRequests`?**
+  _High betweenness centrality (0.085) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `dependencies` to `devDependencies`, `getReuseRequests`?**
   _High betweenness centrality (0.064) - this node is a cross-community bridge._
 - **What connects `21st`, `npx`, `@ui-layouts/mcp` to the rest of the system?**
   _290 weakly-connected nodes found - possible documentation gaps or missing edges._
@@ -327,6 +332,6 @@ _Questions this graph is uniquely positioned to answer:_
 - **Should `open-in-terminal/main.js` be split into smaller, more focused modules?**
   _Cohesion score 0.09565217391304348 - nodes in this community are weakly interconnected._
 - **Should `dependencies` be split into smaller, more focused modules?**
-  _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.08 - nodes in this community are weakly interconnected._
 - **Should `compilerOptions` be split into smaller, more focused modules?**
   _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._

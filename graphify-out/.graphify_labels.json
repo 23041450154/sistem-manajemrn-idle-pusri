@@ -42,7 +42,7 @@
   "40": "components.json",
   "41": "inspeksi/equipment/page.tsx",
   "42": "approve/page.tsx",
-  "43": "getApprovals",
+  "43": "getObjectTypes",
   "44": "loading.tsx",
   "45": "LoginPage.tsx",
   "46": "test_prod.js",
@@ -58,7 +58,7 @@
   "56": "Window Icon SVG",
   "57": "api.ts",
   "58": "getDisposals",
-  "59": "getObjectTypes",
+  "59": "register-equipment/page.tsx",
   "60": "PRODUCT.md",
   "61": "open-in-terminal/manifest.json",
   "62": "check-equipment-form.mjs",
@@ -79,5 +79,6 @@
   "77": "pemeliharaan/page.tsx",
   "78": "DeleteConfirmDialog.tsx",
   "79": "check-scrap-reason.mjs",
-  "80": "callback/page.tsx"
+  "80": "callback/page.tsx",
+  "81": "peminjaman/page.tsx"
 }
