@@ -1,23 +1,14 @@
 "use client";
 
 import {
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	CartesianGrid,
 	Tooltip,
 	ResponsiveContainer,
-	AreaChart,
-	Area,
 	PieChart,
 	Pie,
 	Cell,
-	Legend,
 } from "recharts";
 import {
 	Recycle,
-	ChevronDown,
 	Clock,
 	Wrench,
 	CheckCircle,
@@ -29,34 +20,6 @@ import { getEquipments, getDisposals } from "@/action/api";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Equipment = any;
-
-const formatCurrency = (value: number) => {
-	if (value >= 1_000_000_000) {
-		return `Rp ${(value / 1_000_000_000).toFixed(2)} M`;
-	}
-	if (value >= 1_000_000) {
-		return `Rp ${(value / 1_000_000).toFixed(0)} Jt`;
-	}
-	if (value >= 1_000) {
-		return `Rp ${(value / 1_000).toFixed(0)} Rb`;
-	}
-	return `Rp ${value.toLocaleString("id-ID")}`;
-};
-
-const monthNames = [
-	"Jan",
-	"Feb",
-	"Mar",
-	"Apr",
-	"Mei",
-	"Jun",
-	"Jul",
-	"Agu",
-	"Sep",
-	"Okt",
-	"Nov",
-	"Des",
-];
 
 export function CostAvoidanceSection() {
 	const [equipments, setEquipments] = useState<Equipment[]>([]);
@@ -80,35 +43,73 @@ export function CostAvoidanceSection() {
 	}, []);
 
 	// --- Dynamic Operational Counts ---
-	// Menunggu Validasi (REGISTERED only)
-	const menungguValidasiCount = equipments.filter(
-		(e: Equipment) =>
-			e.status?.name === "REGISTERED" ||
-			e.statusAset === "REGISTERED",
-	).length;
+	// Set ID aset yang ada di daftar disposals
+	const disposalEquipmentIds = new Set(
+		disposals
+			.map((d: Equipment) => String(d.equipment_id || d.equipment?.id || d.id))
+			.filter(Boolean),
+	);
 
-	// Dalam Perbaikan (REJECTED or DALAM_PERBAIKAN or REPAIR)
-	const dalamPerbaikanCount = equipments.filter(
-		(e: Equipment) =>
-			e.status?.name === "REJECTED" ||
-			e.status?.name === "DALAM_PERBAIKAN" ||
-			e.status?.name === "REPAIR" ||
-			e.statusAset === "REJECTED",
-	).length;
+	// Kategorisasi setiap aset secara eksklusif dan lengkap (exhaustive)
+	let menungguValidasiCount = 0;
+	let dalamPerbaikanCount = 0;
+	let readyCount = 0;
+	let scrapCount = 0;
 
-	// Ready to Use (READY_TO_REUSE, READY TO USE, or IDLE)
-	const readyCount = equipments.filter(
-		(e: Equipment) =>
-			e.status?.name === "READY_TO_REUSE" ||
-			e.status?.name === "IDLE" ||
-			e.statusAset === "READY_TO_REUSE" ||
-			e.statusAset === "IDLE",
-	).length;
+	equipments.forEach((e: Equipment) => {
+		const st = (
+			typeof e.status === "object" ? e.status?.name : e.status || e.statusAset || ""
+		)
+			.toUpperCase()
+			.trim();
+		const id = Number(e.status_id || e.status?.id || 0);
+		const eqId = String(e.id || "");
 
-	// Menunggu Disposal
-	const disposalCount = disposals.filter(
-		(d: Equipment) => d.status !== "DISPOSED",
-	).length;
+		// 1. Scrap / Disposal
+		if (
+			id === 8 ||
+			st.includes("SCRAP") ||
+			st.includes("DISPOS") ||
+			st.includes("TIDAK LAYAK") ||
+			st.includes("CONDEMNED") ||
+			st.includes("RUSAK_BERAT") ||
+			st.includes("RUSAK BERAT") ||
+			(eqId && disposalEquipmentIds.has(eqId))
+		) {
+			scrapCount++;
+		}
+		// 2. Dalam Perbaikan
+		else if (
+			id === 3 ||
+			id === 4 ||
+			id === 5 ||
+			st.includes("PERBAIKAN") ||
+			st.includes("REPAIR") ||
+			st.includes("MAINTENANCE") ||
+			st.includes("REVALIDATION") ||
+			st.includes("REVALIDASI") ||
+			st === "REJECTED"
+		) {
+			dalamPerbaikanCount++;
+		}
+		// 3. Ready to Use / Idle / Validated
+		else if (
+			id === 6 ||
+			id === 2 ||
+			id === 7 ||
+			st.includes("READY") ||
+			st.includes("VALID") ||
+			st === "IDLE"
+		) {
+			readyCount++;
+		}
+		// 4. Menunggu Validasi (Status awal / Registered / Pending)
+		else {
+			menungguValidasiCount++;
+		}
+	});
+
+	const totalUnit = equipments.length;
 
 	// --- Dynamic Recent Activities ---
 	const sortedEquipments = [...equipments].sort(
@@ -167,93 +168,12 @@ export function CostAvoidanceSection() {
 		},
 		{ name: "Dalam Perbaikan", value: dalamPerbaikanCount, color: "#ef4444" },
 		{ name: "Siap Re-use / Idle", value: readyCount, color: "#10b981" },
-		{ name: "Scrap", value: disposalCount, color: "#8b5cf6" },
+		{ name: "Scrap", value: scrapCount, color: "#8b5cf6" },
 	].filter((item) => item.value > 0);
 
 	if (pieData.length === 0) {
 		pieData.push({ name: "Tidak Ada Data", value: 1, color: "#e5e7eb" });
 	}
-
-	// --- Financial Calculations for Bottom Charts ---
-	const idleEquipments = equipments.filter(
-		(e: Equipment) => e.status?.name === "IDLE",
-	);
-	const readyEquipments = equipments.filter(
-		(e: Equipment) => e.status?.name === "READY_TO_REUSE",
-	);
-
-	const potentialSavings = idleEquipments.reduce(
-		(sum: number, e: Equipment) =>
-			sum + (Number(e.original_value) || Number(e.estimated_reuse_value) || 0),
-		0,
-	);
-
-	const realizedSavings = readyEquipments.reduce(
-		(sum: number, e: Equipment) =>
-			sum + (Number(e.original_value) || Number(e.estimated_reuse_value) || 0),
-		0,
-	);
-
-	const disposalRecovery = disposals
-		.filter((d: Equipment) => d.status === "DISPOSED")
-		.reduce(
-			(sum: number, d: Equipment) => sum + (Number(d.scrap_value) || 0),
-			0,
-		);
-
-	// --- Bar Chart: Cost Avoidance by Plant ---
-	const plantMap = new Map<
-		string,
-		{ plant: string; potential: number; realized: number }
-	>();
-	equipments.forEach((e: Equipment) => {
-		const plant = e.plant_description || e.plant || "Tidak Diketahui";
-		const reuseValue =
-			Number(e.original_value) || Number(e.estimated_reuse_value) || 0;
-		if (!plantMap.has(plant)) {
-			plantMap.set(plant, { plant, potential: 0, realized: 0 });
-		}
-		const entry = plantMap.get(plant)!;
-		if (e.status?.name === "IDLE") entry.potential += reuseValue;
-		if (e.status?.name === "READY_TO_REUSE") entry.realized += reuseValue;
-	});
-	const plantData = Array.from(plantMap.values())
-		.sort((a, b) => b.potential + b.realized - a.potential - a.realized)
-		.slice(0, 5); // top 5 plants to keep it compact
-
-	// --- Area Chart: Monthly Trend ---
-	const monthlyMap = new Map<
-		string,
-		{ month: string; value: number; cumulative: number }
-	>();
-	let cumulativeTotal = 0;
-	const now = new Date();
-	for (let i = 5; i >= 0; i--) {
-		const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-		const key = `${d.getFullYear()}-${d.getMonth()}`;
-		monthlyMap.set(key, {
-			month: monthNames[d.getMonth()],
-			value: 0,
-			cumulative: 0,
-		});
-	}
-
-	equipments.forEach((e: Equipment) => {
-		if (!e.created_at) return;
-		const d = new Date(e.created_at);
-		const key = `${d.getFullYear()}-${d.getMonth()}`;
-		if (monthlyMap.has(key)) {
-			const entry = monthlyMap.get(key)!;
-			entry.value +=
-				Number(e.original_value) || Number(e.estimated_reuse_value) || 0;
-		}
-	});
-
-	const monthlyData = Array.from(monthlyMap.values());
-	monthlyData.forEach((entry) => {
-		cumulativeTotal += entry.value;
-		entry.cumulative = cumulativeTotal;
-	});
 
 	// DESIGN.md KPI card: one style, value-dominant, state carried by a 2px left rule.
 	// Data-driven so the four cards cannot drift apart (they previously differed only by hue).
@@ -281,7 +201,7 @@ export function CostAvoidanceSection() {
 		},
 		{
 			label: "Menunggu Scrap",
-			value: disposalCount,
+			value: scrapCount,
 			caption: "Proses penghapusan aset",
 			rule: "#475569",
 			icon: Recycle,
@@ -358,7 +278,7 @@ export function CostAvoidanceSection() {
 									</div>
 								</div>
 							)}
-							{disposalCount > 0 && (
+							{scrapCount > 0 && (
 								<div className="flex items-start gap-2.5 text-[13px] text-[#475569] py-2.5">
 									<span
 										className="w-0.5 self-stretch shrink-0 bg-[#475569]"
@@ -366,7 +286,7 @@ export function CostAvoidanceSection() {
 									/>
 									<div>
 										<span className="font-semibold text-[#0F172A]">
-											{disposalCount} scrap menunggu approval
+											{scrapCount} aset menunggu proses scrap
 										</span>
 										. Tindak lanjuti usulan scrap.
 									</div>
@@ -374,7 +294,7 @@ export function CostAvoidanceSection() {
 							)}
 							{menungguValidasiCount === 0 &&
 								dalamPerbaikanCount === 0 &&
-								disposalCount === 0 && (
+								scrapCount === 0 && (
 									<div className="flex items-center gap-2 text-[13px] text-[#475569] py-3">
 										<Check
 											className="w-4 h-4 text-[#059669] shrink-0"
@@ -458,7 +378,7 @@ export function CostAvoidanceSection() {
 						</ResponsiveContainer>
 						<div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
 							<span className="text-2xl font-extrabold text-gray-800">
-								{equipments.length}
+								{totalUnit}
 							</span>
 							<span className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">
 								Total Unit
@@ -483,7 +403,10 @@ export function CostAvoidanceSection() {
 								</div>
 								<span className="font-bold text-gray-800 bg-gray-50 px-2 py-0.5 rounded border border-[#E6E8EA] text-xs">
 									{item.value} Unit (
-									{Math.round((item.value / (equipments.length || 1)) * 100)}%)
+									{totalUnit > 0
+										? Math.round((item.value / totalUnit) * 100)
+										: 0}
+									%)
 								</span>
 							</div>
 						))}
@@ -491,196 +414,6 @@ export function CostAvoidanceSection() {
 				</div>
 			</div>
 
-			<hr className="border-[#E6E8EA]/60 my-2" />
-
-			{/* 3. Executive Analytic Charts at the Bottom (Smaller & Side by Side) */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-				{/* Plant Savings Chart */}
-				<div className="bg-white rounded border border-[#E6E8EA] p-5">
-					<div className="flex justify-between items-center mb-4">
-						<div>
-							<h3 className="text-xs font-bold text-gray-800 uppercase tracking-wide">
-								Penghematan Biaya per Plant
-							</h3>
-							<p className="text-[10px] text-gray-400 mt-0.5">
-								Nilai optimalisasi aset per lokasi pabrik
-							</p>
-						</div>
-						<button className="flex items-center gap-1.5 text-[10px] font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-full transition-colors">
-							Semua Plant
-							<ChevronDown className="w-2.5 h-2.5" />
-						</button>
-					</div>
-					<div className="h-56">
-						<ResponsiveContainer width="100%" height="100%">
-							<BarChart
-								data={
-									plantData.length > 0
-										? plantData
-										: [{ plant: "No Data", potential: 0, realized: 0 }]
-								}
-								margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-							>
-								<CartesianGrid
-									strokeDasharray="3 3"
-									vertical={false}
-									stroke="#e5e7eb"
-								/>
-								<XAxis
-									dataKey="plant"
-									axisLine={false}
-									tickLine={false}
-									tick={{ fontSize: 9, fill: "#6b7280" }}
-									dy={5}
-									interval={0}
-									angle={-10}
-									textAnchor="end"
-									height={40}
-								/>
-								<YAxis
-									axisLine={false}
-									tickLine={false}
-									tick={{ fontSize: 9, fill: "#6b7280" }}
-									tickFormatter={(v) => formatCurrency(v)}
-									width={60}
-								/>
-								<Tooltip
-									contentStyle={{
-										borderRadius: "8px",
-										border: "none",
-										boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-									}}
-									formatter={(value) => formatCurrency(Number(value) || 0)}
-								/>
-								<Legend
-									wrapperStyle={{ fontSize: "10px", paddingTop: "5px" }}
-									iconType="circle"
-									iconSize={6}
-								/>
-								<Bar
-									dataKey="realized"
-									name="Terealisasi"
-									fill="#10b981"
-									radius={[4, 4, 0, 0]}
-									maxBarSize={25}
-								/>
-								<Bar
-									dataKey="potential"
-									name="Potensi"
-									fill="#2563eb"
-									radius={[4, 4, 0, 0]}
-									maxBarSize={25}
-								/>
-							</BarChart>
-						</ResponsiveContainer>
-					</div>
-				</div>
-
-				{/* Monthly Trend Chart */}
-				<div className="bg-white rounded border border-[#E6E8EA] p-5">
-					<div className="flex justify-between items-center mb-4">
-						<div>
-							<h3 className="text-xs font-bold text-gray-800 uppercase tracking-wide">
-								Tren Penghematan Biaya Bulanan
-							</h3>
-							<p className="text-[10px] text-gray-400 mt-0.5">
-								Akumulasi nilai optimalisasi aset 6 bulan terakhir
-							</p>
-						</div>
-						<button className="flex items-center gap-1.5 text-[10px] font-bold text-gray-600 bg-gray-100 hover:bg-gray-200 px-2.5 py-1 rounded-full transition-colors">
-							6 Bulan Terakhir
-							<ChevronDown className="w-2.5 h-2.5" />
-						</button>
-					</div>
-					<div className="h-56">
-						<ResponsiveContainer width="100%" height="100%">
-							<AreaChart
-								data={monthlyData}
-								margin={{ top: 10, right: 10, left: 0, bottom: 0 }}
-							>
-								<defs>
-									<linearGradient
-										id="colorCumulative"
-										x1="0"
-										y1="0"
-										x2="0"
-										y2="1"
-									>
-										<stop offset="5%" stopColor="#0556B3" stopOpacity={0.15} />
-										<stop offset="95%" stopColor="#0556B3" stopOpacity={0} />
-									</linearGradient>
-									<linearGradient id="colorMonthly" x1="0" y1="0" x2="0" y2="1">
-										<stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
-										<stop offset="95%" stopColor="#10b981" stopOpacity={0} />
-									</linearGradient>
-								</defs>
-								<CartesianGrid
-									strokeDasharray="3 3"
-									vertical={false}
-									stroke="#e5e7eb"
-								/>
-								<XAxis
-									dataKey="month"
-									axisLine={false}
-									tickLine={false}
-									tick={{ fontSize: 10, fill: "#6b7280" }}
-									dy={5}
-								/>
-								<YAxis
-									axisLine={false}
-									tickLine={false}
-									tick={{ fontSize: 10, fill: "#6b7280" }}
-									tickFormatter={(v) => formatCurrency(v)}
-									width={60}
-								/>
-								<Tooltip
-									contentStyle={{
-										borderRadius: "8px",
-										border: "none",
-										boxShadow: "0 4px 6px -1px rgb(0 0 0 / 0.1)",
-									}}
-									formatter={(value) => formatCurrency(Number(value) || 0)}
-								/>
-								<Legend
-									wrapperStyle={{ fontSize: "10px", paddingTop: "5px" }}
-									iconType="circle"
-									iconSize={6}
-								/>
-								<Area
-									type="monotone"
-									dataKey="value"
-									name="Nilai Bulanan"
-									stroke="#10b981"
-									strokeWidth={2}
-									fillOpacity={1}
-									fill="url(#colorMonthly)"
-									activeDot={{
-										r: 4,
-										fill: "#10b981",
-										stroke: "#fff",
-										strokeWidth: 1.5,
-									}}
-								/>
-								<Area
-									type="monotone"
-									dataKey="cumulative"
-									name="Akumulasi"
-									stroke="#0556B3"
-									strokeWidth={2}
-									fillOpacity={1}
-									fill="url(#colorCumulative)"
-									activeDot={{
-										r: 4,
-										fill: "#0556B3",
-										stroke: "#fff",
-										strokeWidth: 1.5,
-									}}
-								/>
-							</AreaChart>
-						</ResponsiveContainer>
-					</div>
-				</div>
-			</div>
 		</div>
 	);
 }

@@ -26,57 +26,6 @@ export default function RendalDashboard() {
         </div>
       </div>
 
-      {/* Stats Cards - Hidden sementara
-      <div className={styles.statsGrid}>
-        <StatCard
-          title="Total Peralatan"
-          value="1,284"
-          icon={Server}
-          trend="12%"
-          iconBgColor="bg-blue-50"
-          iconColor="text-[#0556B3]"
-        />
-        <StatCard
-          title="Idle Equipment"
-          value="426"
-          icon={PowerOff}
-          iconBgColor="bg-blue-50"
-          iconColor="text-blue-600"
-        />
-        <StatCard
-          title="Siap Digunakan"
-          value="782"
-          icon={CheckCircle}
-          iconBgColor="bg-green-50"
-          iconColor="text-green-500"
-        />
-        <StatCard
-          title="Butuh Perbaikan"
-          value="54"
-          icon={Wrench}
-          iconBgColor="bg-red-50"
-          iconColor="text-red-500"
-        />
-        <StatCard
-          title="Menunggu Inspeksi"
-          value="12"
-          icon={Clock}
-          iconBgColor="bg-orange-50"
-          iconColor="text-orange-500"
-        />
-        <StatCard
-          title="Permintaan"
-          value="08"
-          icon={FileQuestion}
-          iconBgColor="bg-blue-50"
-          iconColor="text-[#0556B3]"
-        />
-      </div>
-      */}
-
-      {/* Charts Section - Hidden sementara */}
-      {/* <ChartSection /> */}
-
       {/* Cost Avoidance Section */}
       <CostAvoidanceSection />
     </div>

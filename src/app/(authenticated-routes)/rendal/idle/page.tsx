@@ -57,6 +57,7 @@ interface Equipment {
 	notes?: string;
 	idleReason?: string;
 	photos?: string[];
+	createdAt?: string;
 }
 
 export default function RendalIdlePage() {
@@ -103,6 +104,9 @@ export default function RendalIdlePage() {
 				getObjectTypes(),
 			]);
 			data.sort((a: any, b: any) => {
+				const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+				const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+				if (timeB !== timeA) return timeB - timeA;
 				const idA = Number(a.id) || 0;
 				const idB = Number(b.id) || 0;
 				return idB - idA;
@@ -114,70 +118,121 @@ export default function RendalIdlePage() {
 					revisedIds = JSON.parse(
 						localStorage.getItem("revised_equipment_ids") || "[]",
 					);
-				} catch (e) {}
+				} catch (err) {
+					console.warn("Gagal membaca revised_equipment_ids:", err);
+				}
 			}
 
-			const mappedData = data.map((item: any) => {
-				let objectTypeName = "Belum Ditentukan";
-				if (item.object_type?.name) {
-					objectTypeName = item.object_type.name;
-				} else if (item.objectType?.name) {
-					objectTypeName = item.objectType.name;
-				} else {
-					const otId =
-						item.id_object_type || item.object_type_id || item.objectTypeId;
-					if (otId && objTypes) {
-						const found = objTypes.find(
-							(o: any) => o.id === otId || o.id === Number(otId),
-						);
-						if (found) objectTypeName = found.name;
+			const mappedData = data
+				.filter((item: any) => {
+					const rawStatus = (
+						typeof item.status === "string" ? item.status : item.status?.name || ""
+					).toUpperCase();
+					const statusId = Number(item.status_id || item.status?.id || 0);
+
+					const isRepair =
+						statusId === 3 ||
+						statusId === 4 ||
+						statusId === 5 ||
+						rawStatus.includes("PERBAIKAN") ||
+						rawStatus.includes("REPAIR") ||
+						rawStatus.includes("MAINTENANCE") ||
+						rawStatus.includes("REVALIDATION");
+
+					const isScrap =
+						statusId === 8 ||
+						rawStatus.includes("SCRAP") ||
+						rawStatus.includes("DISPOSAL") ||
+						rawStatus.includes("REJECT") ||
+						rawStatus.includes("TIDAK LAYAK");
+
+					if (isRepair || isScrap) return false;
+
+					const isRegistered =
+						statusId === 1 ||
+						rawStatus.includes("REGISTER") ||
+						rawStatus === "NONE" ||
+						rawStatus === "PENDING_REVIEW" ||
+						rawStatus === "";
+
+					const isValidated = statusId === 2 || rawStatus === "VALIDATED";
+
+					const isReady =
+						statusId === 6 ||
+						rawStatus.includes("READY") ||
+						rawStatus.includes("SIAP") ||
+						rawStatus === "IDLE";
+
+					return isRegistered || isValidated || isReady;
+				})
+				.map((item: any) => {
+					let objectTypeName = "Belum Ditentukan";
+					if (item.object_type?.name) {
+						objectTypeName = item.object_type.name;
+					} else if (item.objectType?.name) {
+						objectTypeName = item.objectType.name;
+					} else {
+						const otId =
+							item.id_object_type || item.object_type_id || item.objectTypeId;
+						if (otId && objTypes) {
+							const found = objTypes.find(
+								(o: any) => o.id === otId || o.id === Number(otId),
+							);
+							if (found) objectTypeName = found.name;
+						}
 					}
-				}
 
-				const isRevised = revisedIds.includes(String(item.id));
-				const rawStatus =
-					(typeof item.status === "string" ? item.status : item.status?.name) || "";
-				const statusStr = isRevised
-					? "REGISTERED"
-					: statusName(rawStatus) || "REGISTERED";
+					const isRevised = revisedIds.includes(String(item.id));
+					const rawStatus =
+						(typeof item.status === "string" ? item.status : item.status?.name) || "";
+					const statusStr = isRevised
+						? "REGISTERED"
+						: statusName(rawStatus) || "REGISTERED";
 
-				return {
-					id: item.id?.toString() || "-",
-					kodeAlat: item.equipment_code,
-					namaAlat: item.name,
-					plant: item.plant?.name || "-",
-					jenisAlat: objectTypeName,
-					tanggalRegistrasi: item.created_at
-						? new Date(item.created_at).toISOString().split("T")[0]
-						: "-",
-					statusAset: statusStr,
-					statusPersetujuan: "PENDING",
-					storageLocation: item.storage_location?.name || "Belum Ditentukan",
-					funcLoc:
-						typeof item.func_loc === "string"
-							? item.func_loc
-							: item.func_loc?.name || "-",
-					vendor: item.vendor || "-",
-					year: item.year || "-",
-					originalValue: item.original_value || 0,
-					notes: item.notes || "-",
-					idleReason: item.idle_reason || "-",
-					photos: item.attachments
-						? item.attachments
-								.filter(
-									(att: any) =>
-										att.attachment_category === "equipment_photo" ||
-										att.attachment_category === "photo" ||
-										att.category === "equipment_photo" ||
-										att.category === "photo",
-								)
-								.map((att: any) => {
-									const url = att.file_url || att.fileUrl || "";
-									return url.replace(/\\/g, "/");
-								})
-						: [],
-				};
-			});
+					return {
+						id: item.id?.toString() || "-",
+						kodeAlat: item.equipment_code || item.kodeAlat || `EQ-${item.id}`,
+						namaAlat: item.name || item.namaAlat || "Equipment Tanpa Nama",
+						plant:
+							(typeof item.plant === "object" ? item.plant?.name : item.plant) ||
+							item.plant_description ||
+							"-",
+						jenisAlat: objectTypeName,
+						tanggalRegistrasi: item.created_at
+							? new Date(item.created_at).toISOString().split("T")[0]
+							: "-",
+						createdAt: item.created_at || "",
+						statusAset: statusStr,
+						statusPersetujuan: "PENDING",
+						storageLocation:
+							(typeof item.storage_location === "object"
+								? item.storage_location?.name
+								: item.storage_location) || "Belum Ditentukan",
+						funcLoc:
+							typeof item.func_loc === "string"
+								? item.func_loc
+								: item.func_loc?.name || "-",
+						vendor: item.vendor || "-",
+						year: item.year || item.year_of_purchase || "-",
+						originalValue: item.original_value || item.book_value || 0,
+						notes: item.notes || "-",
+						idleReason: item.idle_reason || "-",
+						photos: item.attachments
+							? item.attachments
+									.filter(
+										(att: any) =>
+											att.attachment_category === "equipment_photo" ||
+											att.attachment_category === "photo" ||
+											att.category === "equipment_photo" ||
+											att.category === "photo",
+									)
+									.map((att: any) => {
+										const url = att.file_url || att.fileUrl || "";
+										return url.replace(/\\/g, "/");
+									})
+							: [],
+					};
+				});
 			setEquipments(mappedData as Equipment[]);
 		} catch (err: unknown) {
 			console.error(err);
@@ -191,10 +246,12 @@ export default function RendalIdlePage() {
 	};
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- fetch data awal saat mount
 		fetchEquipments();
 	}, []);
 
 	useEffect(() => {
+		// eslint-disable-next-line react-hooks/set-state-in-effect -- reset paginasi saat filter berubah
 		setCurrentPage(1);
 	}, [search, plantFilter, statusFilter]);
 
@@ -231,11 +288,40 @@ export default function RendalIdlePage() {
 
 		if (sortConfig) {
 			result.sort((a, b) => {
+				if (sortConfig.key === "tanggalRegistrasi") {
+					const timeA = a.createdAt
+						? new Date(a.createdAt).getTime()
+						: a.tanggalRegistrasi && a.tanggalRegistrasi !== "-"
+							? new Date(a.tanggalRegistrasi).getTime()
+							: 0;
+					const timeB = b.createdAt
+						? new Date(b.createdAt).getTime()
+						: b.tanggalRegistrasi && b.tanggalRegistrasi !== "-"
+							? new Date(b.tanggalRegistrasi).getTime()
+							: 0;
+					if (timeA !== timeB)
+						return sortConfig.direction === "asc" ? timeA - timeB : timeB - timeA;
+				}
+				if (sortConfig.key === "originalValue") {
+					const valA = Number(a.originalValue) || 0;
+					const valB = Number(b.originalValue) || 0;
+					return sortConfig.direction === "asc" ? valA - valB : valB - valA;
+				}
 				const valA = String(a[sortConfig.key] || "").toLowerCase();
 				const valB = String(b[sortConfig.key] || "").toLowerCase();
 				if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
 				if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
 				return 0;
+			});
+		} else {
+			// Default sort: data yang baru masuk / didaftarkan berada di paling atas
+			result.sort((a, b) => {
+				const timeA = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+				const timeB = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+				if (timeB !== timeA) return timeB - timeA;
+				const idA = Number(a.id) || 0;
+				const idB = Number(b.id) || 0;
+				return idB - idA;
 			});
 		}
 		return result;

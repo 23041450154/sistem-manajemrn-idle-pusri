@@ -257,7 +257,7 @@ export default function FormInspeksiPage() {
 			<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-2">
 				<span>Inspeksi Teknik</span>
 				<ChevronRight className="w-3.5 h-3.5" />
-				<span>Inspeksi</span>
+				<span>Inspeksi Berkala</span>
 				<ChevronRight className="w-3.5 h-3.5" />
 				<span className="text-[#0A356A] font-semibold">Form Inspeksi</span>
 			</div>

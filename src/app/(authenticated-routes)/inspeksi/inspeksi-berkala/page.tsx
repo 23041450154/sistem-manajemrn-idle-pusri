@@ -299,7 +299,7 @@ export default function InspeksiAntreanPage() {
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
 					<span>Inspeksi Teknik</span>
 					<ChevronRight className="w-3.5 h-3.5" />
-					<span className="text-[#0A356A] font-semibold">Inspeksi</span>
+					<span className="text-[#0A356A] font-semibold">Inspeksi Berkala</span>
 				</div>
 				<div className="flex items-center justify-between">
 					<div>

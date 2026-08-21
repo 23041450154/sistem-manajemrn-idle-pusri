@@ -41,6 +41,11 @@
   "39": "upload/route.ts",
   "40": "components.json",
   "41": "inspeksi/equipment/page.tsx",
+<<<<<<< HEAD
+=======
+  "42": "approve/page.tsx",
+  "43": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
   "44": "loading.tsx",
   "45": "LoginPage.tsx",
   "46": "test_prod.js",
@@ -55,9 +60,18 @@
   "55": "Vercel Logo",
   "56": "Window Icon SVG",
   "57": "api.ts",
+<<<<<<< HEAD
   "60": "PRODUCT.md",
   "61": "open-in-terminal/manifest.json",
   "62": "check-equipment-form.mjs",
+=======
+  "58": "getDisposals",
+  "59": "register-equipment/page.tsx",
+  "60": "PRODUCT.md",
+  "61": "open-in-terminal/manifest.json",
+  "62": "check-equipment-form.mjs",
+  "63": "getEquipments",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
   "64": "ui-layouts-mcp",
   "65": "EVIDENCE.md",
   "67": "check-repair-payload.mjs",
@@ -68,8 +82,14 @@
   "72": "permintaan/page.tsx",
   "73": "useDebounce.ts",
   "74": "app.json",
+<<<<<<< HEAD
   "76": "CostAvoidanceSection.tsx",
+=======
+  "75": "validasi/page.tsx",
+  "76": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
   "77": "pemeliharaan/page.tsx",
   "78": "DeleteConfirmDialog.tsx",
-  "79": "check-scrap-reason.mjs"
+  "79": "check-scrap-reason.mjs",
+  "80": "callback/page.tsx"
 }

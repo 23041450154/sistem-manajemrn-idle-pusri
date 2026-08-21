@@ -2211,8 +2211,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_check_inspection_schedule",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "check-inspection-schedule.mjs"
     },
     {
@@ -2222,8 +2227,13 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "scripts_check_inspection_schedule_now",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "now"
     },
     {
@@ -2233,8 +2243,13 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "scripts_check_inspection_schedule_daysago",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "daysago()"
     },
     {
@@ -2486,7 +2501,11 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_action_api_getequipments",
+<<<<<<< HEAD
       "community": 0,
+=======
+      "community": 63,
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "community_name": "getEquipments",
       "norm_label": "getequipments()"
     },
@@ -2497,8 +2516,13 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_action_api_disposalitemdto",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "disposalitemdto"
     },
     {
@@ -2508,8 +2532,13 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "src_action_api_absolutefileurl",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "absolutefileurl()"
     },
     {
@@ -2519,8 +2548,13 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "src_action_api_getdisposals",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "getdisposals()"
     },
     {
@@ -2530,8 +2564,13 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "src_action_api_approvedisposal",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "approvedisposal()"
     },
     {
@@ -2541,8 +2580,13 @@
       "source_location": "L230",
       "_origin": "ast",
       "id": "src_action_api_createdisposalrequest",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "createdisposalrequest()"
     },
     {
@@ -2552,7 +2596,11 @@
       "source_location": "L314",
       "_origin": "ast",
       "id": "src_action_api_getapprovals",
+<<<<<<< HEAD
       "community": 0,
+=======
+      "community": 63,
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "community_name": "getEquipments",
       "norm_label": "getapprovals()"
     },
@@ -2574,8 +2622,13 @@
       "source_location": "L355",
       "_origin": "ast",
       "id": "src_action_api_getvalidations",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "getvalidations()"
     },
     {
@@ -2629,8 +2682,13 @@
       "source_location": "L560",
       "_origin": "ast",
       "id": "src_action_api_getinspections",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "getinspections()"
     },
     {
@@ -2640,8 +2698,8 @@
       "source_location": "L578",
       "_origin": "ast",
       "id": "src_action_api_createinspection",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 63,
+      "community_name": "getEquipments",
       "norm_label": "createinspection()"
     },
     {
@@ -2651,8 +2709,8 @@
       "source_location": "L626",
       "_origin": "ast",
       "id": "src_action_api_submitinspectiondata",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 63,
+      "community_name": "getEquipments",
       "norm_label": "submitinspectiondata()"
     },
     {
@@ -2673,8 +2731,13 @@
       "source_location": "L648",
       "_origin": "ast",
       "id": "src_action_api_getobjecttypes",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "getobjecttypes()"
     },
     {
@@ -2706,8 +2769,13 @@
       "source_location": "L714",
       "_origin": "ast",
       "id": "src_action_api_getstoragelocations",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "getstoragelocations()"
     },
     {
@@ -2739,8 +2807,13 @@
       "source_location": "L805",
       "_origin": "ast",
       "id": "src_action_api_createequipment",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "createequipment()"
     },
     {
@@ -2750,8 +2823,8 @@
       "source_location": "L840",
       "_origin": "ast",
       "id": "src_action_api_getequipmentbyid",
-      "community": 6,
-      "community_name": "shared.tsx",
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
       "norm_label": "getequipmentbyid()"
     },
     {
@@ -2761,8 +2834,13 @@
       "source_location": "L874",
       "_origin": "ast",
       "id": "src_action_api_updateequipment",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "updateequipment()"
     },
     {
@@ -2882,7 +2960,11 @@
       "source_location": "L1285",
       "_origin": "ast",
       "id": "src_action_api_deleteequipment",
+<<<<<<< HEAD
       "community": 0,
+=======
+      "community": 63,
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "community_name": "getEquipments",
       "norm_label": "deleteequipment()"
     },
@@ -2937,48 +3019,68 @@
       "source_location": "L1444",
       "_origin": "ast",
       "id": "src_action_api_createreuserequest",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "createreuserequest()"
     },
     {
       "label": "getReuseRequests()",
       "file_type": "code",
       "source_file": "src/action/api.ts",
-      "source_location": "L1561",
+      "source_location": "L1613",
       "_origin": "ast",
       "id": "src_action_api_getreuserequests",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 3,
+      "community_name": "dependencies",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "getreuserequests()"
     },
     {
       "label": "getFunctionalLocations()",
       "file_type": "code",
       "source_file": "src/action/api.ts",
-      "source_location": "L1607",
+      "source_location": "L1697",
       "_origin": "ast",
       "id": "src_action_api_getfunctionallocations",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "getfunctionallocations()"
     },
     {
       "label": "getDisposalMethods()",
       "file_type": "code",
       "source_file": "src/action/api.ts",
-      "source_location": "L1627",
+      "source_location": "L1717",
       "_origin": "ast",
       "id": "src_action_api_getdisposalmethods",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "getdisposalmethods()"
     },
     {
       "label": "updateReuseRequestStatus()",
       "file_type": "code",
       "source_file": "src/action/api.ts",
-      "source_location": "L1654",
+      "source_location": "L1744",
       "_origin": "ast",
       "id": "src_action_api_updatereuserequeststatus",
       "community": 57,
@@ -2989,10 +3091,14 @@
       "label": "approveRevalidationEquipment()",
       "file_type": "code",
       "source_file": "src/action/api.ts",
-      "source_location": "L1724",
+      "source_location": "L1888",
       "_origin": "ast",
       "id": "src_action_api_approverevalidationequipment",
+<<<<<<< HEAD
       "community": 0,
+=======
+      "community": 63,
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "community_name": "getEquipments",
       "norm_label": "approverevalidationequipment()"
     },
@@ -3184,6 +3290,39 @@
       "norm_label": "deletemasteritem()"
     },
     {
+      "label": "callback/page.tsx",
+      "file_type": "code",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_app_auth_auth_callback_page",
+      "community": 80,
+      "community_name": "callback/page.tsx",
+      "norm_label": "callback/page.tsx"
+    },
+    {
+      "label": "CallbackContent()",
+      "file_type": "code",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "src_app_auth_auth_callback_page_callbackcontent",
+      "community": 80,
+      "community_name": "callback/page.tsx",
+      "norm_label": "callbackcontent()"
+    },
+    {
+      "label": "SsoCallbackPage()",
+      "file_type": "code",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L41",
+      "_origin": "ast",
+      "id": "src_app_auth_auth_callback_page_ssocallbackpage",
+      "community": 80,
+      "community_name": "callback/page.tsx",
+      "norm_label": "ssocallbackpage()"
+    },
+    {
       "label": "LoginForm.tsx",
       "file_type": "code",
       "source_file": "src/app/(auth)/login/LoginForm.tsx",
@@ -3267,8 +3406,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "admin/dashboard/page.tsx"
     },
     {
@@ -3278,8 +3422,13 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page_modules",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "modules"
     },
     {
@@ -3289,8 +3438,13 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page_admindashboardpage",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "admindashboardpage()"
     },
     {
@@ -3300,7 +3454,11 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_equipment_page",
+<<<<<<< HEAD
       "community": 0,
+=======
+      "community": 63,
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "community_name": "getEquipments",
       "norm_label": "admin/equipment/page.tsx"
     },
@@ -3344,7 +3502,11 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_equipment_page_equipmentmanagementpage",
+<<<<<<< HEAD
       "community": 0,
+=======
+      "community": 63,
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "community_name": "getEquipments",
       "norm_label": "equipmentmanagementpage()"
     },
@@ -3432,7 +3594,11 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_dashboard_page",
+<<<<<<< HEAD
       "community": 0,
+=======
+      "community": 63,
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "community_name": "getEquipments",
       "norm_label": "inspeksi/dashboard/page.tsx"
     },
@@ -3443,7 +3609,11 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_dashboard_page_inspeksidashboardpage",
+<<<<<<< HEAD
       "community": 0,
+=======
+      "community": 63,
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "community_name": "getEquipments",
       "norm_label": "inspeksidashboardpage()"
     },
@@ -3476,8 +3646,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_forminspeksi_page",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 63,
+      "community_name": "getEquipments",
       "norm_label": "forminspeksi/page.tsx"
     },
     {
@@ -3487,8 +3657,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_forminspeksi_page_forminspeksipage",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 63,
+      "community_name": "getEquipments",
       "norm_label": "forminspeksipage()"
     },
     {
@@ -3498,8 +3668,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "inspeksi-berkala/page.tsx"
     },
     {
@@ -3509,8 +3684,13 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page_equipment",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "equipment"
     },
     {
@@ -3520,8 +3700,13 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page_inspectionitem",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "inspectionitem"
     },
     {
@@ -3531,8 +3716,13 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page_inspeksiantreanpage",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "inspeksiantreanpage()"
     },
     {
@@ -3597,8 +3787,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_manajemen_page",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "manajemen/page.tsx"
     },
     {
@@ -3608,8 +3803,13 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_manajemen_page_inspection",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "inspection"
     },
     {
@@ -3619,8 +3819,13 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_manajemen_page_inspeksidashboard",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "inspeksidashboard()"
     },
     {
@@ -3894,8 +4099,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_dashboard_page",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "manajer/dashboard/page.tsx"
     },
     {
@@ -3905,8 +4110,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_dashboard_page_manajerdashboardpage",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "manajerdashboardpage()"
     },
     {
@@ -3916,8 +4121,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_disposal_page",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "manajer/disposal/page.tsx"
     },
     {
@@ -3927,8 +4137,13 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_disposal_page_disposalitem",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "disposalitem"
     },
     {
@@ -3938,8 +4153,13 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_disposal_page_disposalinboxpage",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "disposalinboxpage()"
     },
     {
@@ -4015,8 +4235,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_scrap_page",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "manajer/scrap/page.tsx"
     },
     {
@@ -4026,8 +4251,13 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_scrap_page_disposalitem",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "disposalitem"
     },
     {
@@ -4037,8 +4267,13 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_scrap_page_manajerscrappage",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "manajerscrappage()"
     },
     {
@@ -4290,8 +4525,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_dashboard_page",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "rendal/dashboard/page.tsx"
     },
     {
@@ -4301,8 +4536,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_dashboard_page_rendaldashboard",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "rendaldashboard()"
     },
     {
@@ -4312,8 +4547,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_disposal_page",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "rendal/disposal/page.tsx"
     },
     {
@@ -4323,8 +4563,13 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_disposal_page_equipment",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "equipment"
     },
     {
@@ -4334,8 +4579,13 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_disposal_page_inspection",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "inspection"
     },
     {
@@ -4345,8 +4595,13 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_disposal_page_disposalmethod",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "disposalmethod"
     },
     {
@@ -4356,8 +4611,13 @@
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_disposal_page_disposalitem",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "disposalitem"
     },
     {
@@ -4367,8 +4627,13 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_disposal_page_verifikasidisposalpage",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "verifikasidisposalpage()"
     },
     {
@@ -4378,8 +4643,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_idle_page",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "rendal/idle/page.tsx"
     },
     {
@@ -4389,41 +4659,70 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_idle_page_assetstate",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "assetstate"
     },
     {
       "label": "ApprovalState",
       "file_type": "code",
       "source_file": "src/app/(authenticated-routes)/rendal/idle/page.tsx",
+<<<<<<< HEAD
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_idle_page_approvalstate",
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "source_location": "L32",
+      "_origin": "ast",
+      "id": "src_app_authenticated_routes_rendal_idle_page_approvalstate",
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "approvalstate"
     },
     {
       "label": "Equipment",
       "file_type": "code",
       "source_file": "src/app/(authenticated-routes)/rendal/idle/page.tsx",
+<<<<<<< HEAD
       "source_location": "L43",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_idle_page_equipment",
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "source_location": "L39",
+      "_origin": "ast",
+      "id": "src_app_authenticated_routes_rendal_idle_page_equipment",
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "equipment"
     },
     {
       "label": "RendalIdlePage()",
       "file_type": "code",
       "source_file": "src/app/(authenticated-routes)/rendal/idle/page.tsx",
+<<<<<<< HEAD
       "source_location": "L62",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_idle_page_rendalidlepage",
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "source_location": "L59",
+      "_origin": "ast",
+      "id": "src_app_authenticated_routes_rendal_idle_page_rendalidlepage",
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "rendalidlepage()"
     },
     {
@@ -4433,8 +4732,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 63,
+      "community_name": "getEquipments",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "laporan/page.tsx"
     },
     {
@@ -4444,8 +4748,13 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_auditlogentry",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 63,
+      "community_name": "getEquipments",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "auditlogentry"
     },
     {
@@ -4455,8 +4764,13 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_buildauditlogs",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 63,
+      "community_name": "getEquipments",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "buildauditlogs()"
     },
     {
@@ -4466,8 +4780,13 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_actiontypeconfig",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 63,
+      "community_name": "getEquipments",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "actiontypeconfig"
     },
     {
@@ -4477,8 +4796,13 @@
       "source_location": "L181",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_audittrailpage",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 63,
+      "community_name": "getEquipments",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "audittrailpage()"
     },
     {
@@ -4532,8 +4856,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_page",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "register-equipment/page.tsx"
     },
     {
@@ -4543,8 +4872,13 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_page_registerequipmentpage",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "registerequipmentpage()"
     },
     {
@@ -4554,8 +4888,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_scrap_page",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "rendal/scrap/page.tsx"
     },
     {
@@ -4565,8 +4904,13 @@
       "source_location": "L32",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_scrap_page_equipment",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "equipment"
     },
     {
@@ -4576,8 +4920,13 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_scrap_page_inspection",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "inspection"
     },
     {
@@ -4587,8 +4936,13 @@
       "source_location": "L58",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_scrap_page_disposalmethod",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "disposalmethod"
     },
     {
@@ -4598,8 +4952,13 @@
       "source_location": "L64",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_scrap_page_disposalitem",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "disposalitem"
     },
     {
@@ -4609,8 +4968,13 @@
       "source_location": "L78",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_scrap_page_rendalscrappage",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 58,
+      "community_name": "getDisposals",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "rendalscrappage()"
     },
     {
@@ -4620,7 +4984,11 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_page",
+<<<<<<< HEAD
       "community": 0,
+=======
+      "community": 63,
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "community_name": "getEquipments",
       "norm_label": "rendal/validasi-ulang/page.tsx"
     },
@@ -4631,7 +4999,11 @@
       "source_location": "L25",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_page_validasiulangitem",
+<<<<<<< HEAD
       "community": 0,
+=======
+      "community": 63,
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "community_name": "getEquipments",
       "norm_label": "validasiulangitem"
     },
@@ -4642,7 +5014,11 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_page_rendalvalidasiulangpage",
+<<<<<<< HEAD
       "community": 0,
+=======
+      "community": 63,
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "community_name": "getEquipments",
       "norm_label": "rendalvalidasiulangpage()"
     },
@@ -4653,8 +5029,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "daftar-aset/page.tsx"
     },
     {
@@ -4664,8 +5045,13 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_equipmentitem",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "equipmentitem"
     },
     {
@@ -4686,8 +5072,13 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "daftarasetpage()"
     },
     {
@@ -4697,8 +5088,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 3,
+      "community_name": "dependencies",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "unit-kerja/dashboard/page.tsx"
     },
     {
@@ -4708,8 +5104,13 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_apirow",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 3,
+      "community_name": "dependencies",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "apirow"
     },
     {
@@ -4730,8 +5131,13 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_equipmentitem",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 3,
+      "community_name": "dependencies",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "equipmentitem"
     },
     {
@@ -4741,8 +5147,13 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_reuserequestitem",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 3,
+      "community_name": "dependencies",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "reuserequestitem"
     },
     {
@@ -4752,8 +5163,13 @@
       "source_location": "L45",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_kpicard",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 3,
+      "community_name": "dependencies",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "kpicard()"
     },
     {
@@ -4763,8 +5179,13 @@
       "source_location": "L70",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_unitkerjadashboardpage",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 3,
+      "community_name": "dependencies",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "unitkerjadashboardpage()"
     },
     {
@@ -4774,8 +5195,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_equipment_page",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "unit-kerja/equipment/page.tsx"
     },
     {
@@ -4785,8 +5211,13 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_equipment_page_unitkerjaequipmentpage",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "unitkerjaequipmentpage()"
     },
     {
@@ -4796,8 +5227,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_page",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "unit-kerja/idle/page.tsx"
     },
     {
@@ -4807,8 +5243,13 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_page_equipmentitem",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "equipmentitem"
     },
     {
@@ -4818,8 +5259,13 @@
       "source_location": "L59",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_page_reuserequestitem",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "reuserequestitem"
     },
     {
@@ -4829,8 +5275,13 @@
       "source_location": "L79",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_page_unitkerjakatalogpage",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "unitkerjakatalogpage()"
     },
     {
@@ -4895,8 +5346,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "request-modal-button.tsx"
     },
     {
@@ -4906,8 +5362,13 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button_katalogitemminimal",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "katalogitemminimal"
     },
     {
@@ -4917,8 +5378,13 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button_requestmodalbutton",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "requestmodalbutton()"
     },
     {
@@ -5247,8 +5713,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 3,
+      "community_name": "dependencies",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "riwayat-permintaan/page.tsx"
     },
     {
@@ -5258,8 +5729,13 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page_reuserequestitem",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 3,
+      "community_name": "dependencies",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "reuserequestitem"
     },
     {
@@ -5269,8 +5745,13 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page_riwayatpermintaancontent",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 3,
+      "community_name": "dependencies",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "riwayatpermintaancontent()"
     },
     {
@@ -5280,8 +5761,13 @@
       "source_location": "L706",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page_riwayatpermintaanpage",
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
+=======
+      "community": 3,
+      "community_name": "dependencies",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "riwayatpermintaanpage()"
     },
     {
@@ -5654,52 +6140,30 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_costavoidancesection",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "costavoidancesection.tsx"
     },
     {
       "label": "Equipment",
       "file_type": "code",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L31",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_costavoidancesection_equipment",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "equipment"
-    },
-    {
-      "label": "formatCurrency()",
-      "file_type": "code",
-      "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L33",
-      "_origin": "ast",
-      "id": "src_components_costavoidancesection_formatcurrency",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
-      "norm_label": "formatcurrency()"
-    },
-    {
-      "label": "monthNames",
-      "file_type": "code",
-      "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L46",
-      "_origin": "ast",
-      "id": "src_components_costavoidancesection_monthnames",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
-      "norm_label": "monthnames"
     },
     {
       "label": "CostAvoidanceSection()",
       "file_type": "code",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L61",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "src_components_costavoidancesection_costavoidancesection",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "costavoidancesection()"
     },
     {
@@ -5819,8 +6283,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_editequipmentdialog",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "editequipmentdialog.tsx"
     },
     {
@@ -5830,8 +6299,13 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_components_editequipmentdialog_editequipmentdialogprops",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "editequipmentdialogprops"
     },
     {
@@ -5841,8 +6315,13 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_components_editequipmentdialog_extractstringvalue",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "extractstringvalue()"
     },
     {
@@ -5852,8 +6331,13 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_editequipmentdialog_editequipmentdialog",
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
+=======
+      "community": 59,
+      "community_name": "register-equipment/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "editequipmentdialog()"
     },
     {
@@ -6534,8 +7018,13 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "inspection-schedule.ts"
     },
     {
@@ -6545,8 +7034,13 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_statuslike",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "statuslike"
     },
     {
@@ -6556,8 +7050,13 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_statusname",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "statusname()"
     },
     {
@@ -6567,8 +7066,13 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_inspectionlike",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "inspectionlike"
     },
     {
@@ -6578,8 +7082,13 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_equipmentlike",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "equipmentlike"
     },
     {
@@ -6589,8 +7098,13 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_lastinspection",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "lastinspection"
     },
     {
@@ -6600,8 +7114,13 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_latestinspectionbyequipment",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "latestinspectionbyequipment()"
     },
     {
@@ -6611,8 +7130,13 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_inspectionqueue",
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
+=======
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "inspectionqueue()"
     },
     {
@@ -6691,6 +7215,17 @@
       "community": 1,
       "community_name": "auth.ts",
       "norm_label": "role"
+    },
+    {
+      "label": "DEFAULT_ROLE",
+      "file_type": "code",
+      "source_file": "src/lib/roles.ts",
+      "source_location": "L17",
+      "_origin": "ast",
+      "id": "src_lib_roles_default_role",
+      "community": 1,
+      "community_name": "auth.ts",
+      "norm_label": "default_role"
     },
     {
       "label": "ROLE_HOME",
@@ -12079,7 +12614,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/action/api.ts",
-      "source_location": "L1724",
+      "source_location": "L1888",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_action_api",
@@ -12277,7 +12812,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/action/api.ts",
-      "source_location": "L1627",
+      "source_location": "L1717",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_action_api",
@@ -12332,7 +12867,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/action/api.ts",
-      "source_location": "L1607",
+      "source_location": "L1697",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_action_api",
@@ -12442,7 +12977,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/action/api.ts",
-      "source_location": "L1561",
+      "source_location": "L1613",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_action_api",
@@ -12530,7 +13065,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/action/api.ts",
-      "source_location": "L1654",
+      "source_location": "L1744",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_action_api",
@@ -12971,7 +13506,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L28",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_costavoidancesection",
@@ -13356,7 +13891,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/rendal/idle/page.tsx",
+<<<<<<< HEAD
       "source_location": "L102",
+=======
+      "source_location": "L99",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_rendal_idle_page_rendalidlepage",
@@ -13464,7 +14003,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+<<<<<<< HEAD
       "source_location": "L76",
+=======
+      "source_location": "L87",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
@@ -13559,7 +14102,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L28",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_costavoidancesection",
@@ -13847,7 +14390,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L28",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_costavoidancesection",
@@ -13920,7 +14463,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/rendal/disposal/page.tsx",
+<<<<<<< HEAD
       "source_location": "L296",
+=======
+      "source_location": "L306",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_rendal_disposal_page_verifikasidisposalpage",
@@ -14244,7 +14791,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/rendal/disposal/page.tsx",
+<<<<<<< HEAD
       "source_location": "L237",
+=======
+      "source_location": "L247",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_rendal_disposal_page_verifikasidisposalpage",
@@ -14784,7 +15335,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/rendal/idle/page.tsx",
+<<<<<<< HEAD
       "source_location": "L103",
+=======
+      "source_location": "L100",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_rendal_idle_page_rendalidlepage",
@@ -14820,7 +15375,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+<<<<<<< HEAD
       "source_location": "L77",
+=======
+      "source_location": "L88",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
@@ -15348,7 +15907,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+<<<<<<< HEAD
       "source_location": "L280",
+=======
+      "source_location": "L271",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
@@ -15514,6 +16077,30 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+      "source_location": "L8",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page",
+      "target": "src_action_api_createreuserequest",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+      "source_location": "L315",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
+      "target": "src_action_api_createreuserequest"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/idle/page.tsx",
       "source_location": "L4",
       "weight": 1.0,
@@ -15646,13 +16233,25 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/riwayat-permintaan/page.tsx",
       "source_location": "L97",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page_riwayatpermintaancontent",
-      "target": "src_action_api_getreuserequests"
+      "target": "src_action_api_getreuserequests",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/components/Dashboards/UnitKerjaDashboard.tsx",
+      "source_location": "L29",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_components_dashboards_unitkerjadashboard",
+      "target": "src_action_api_getreuserequests",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -16914,6 +17513,28 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_auth_auth_callback_page",
+      "target": "src_app_auth_auth_callback_page_callbackcontent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L41",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_auth_auth_callback_page",
+      "target": "src_app_auth_auth_callback_page_ssocallbackpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/app/(auth)/login/LoginForm.tsx",
       "source_location": "L9",
       "weight": 1.0,
@@ -16967,6 +17588,18 @@
       "_origin": "ast",
       "source": "src_app_auth_login_page",
       "target": "src_app_auth_login_loginform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/login/page.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_auth_login_page",
+      "target": "src_app_auth_login_loginform_loginform",
       "confidence_score": 1.0
     },
     {
@@ -18890,7 +19523,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/rendal/idle/page.tsx",
+<<<<<<< HEAD
       "source_location": "L36",
+=======
+      "source_location": "L32",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_rendal_idle_page",
@@ -18912,7 +19549,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/rendal/idle/page.tsx",
+<<<<<<< HEAD
       "source_location": "L43",
+=======
+      "source_location": "L39",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_rendal_idle_page",
@@ -18923,7 +19564,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/rendal/idle/page.tsx",
+<<<<<<< HEAD
       "source_location": "L62",
+=======
+      "source_location": "L59",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_rendal_idle_page",
@@ -19430,6 +20075,7 @@
       "confidence_score": 1.0
     },
     {
+<<<<<<< HEAD
       "relation": "references",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -19476,6 +20122,18 @@
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
       "target": "src_lib_equipment_status_statustext"
+=======
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/equipment/page.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_equipment_page",
+      "target": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
+      "confidence_score": 1.0
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
     },
     {
       "relation": "contains",
@@ -19755,6 +20413,18 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/page.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_id_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_id_gallery_gallery",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/page.tsx",
@@ -19786,6 +20456,18 @@
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_katalog_id_page",
       "target": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_id_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button_requestmodalbutton",
       "confidence_score": 1.0
     },
     {
@@ -20023,16 +20705,28 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/page.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client_katalogclient",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
       "source_location": "L149",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client_equipmentcard",
-      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_formatrupiah"
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_formatrupiah",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -20968,7 +21662,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L61",
+      "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_costavoidancesection",
@@ -20979,45 +21673,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L31",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_costavoidancesection",
       "target": "src_components_costavoidancesection_equipment",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L33",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_components_costavoidancesection",
-      "target": "src_components_costavoidancesection_formatcurrency",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L46",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_components_costavoidancesection",
-      "target": "src_components_costavoidancesection_monthnames",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L544",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_components_costavoidancesection_costavoidancesection",
-      "target": "src_components_costavoidancesection_formatcurrency",
       "confidence_score": 1.0
     },
     {
@@ -21797,13 +22457,13 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/components/ui/button.tsx",
       "source_location": "L52",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_ui_button_button",
-      "target": "src_lib_utils_cn"
+      "target": "src_lib_utils_cn",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -22227,6 +22887,17 @@
       "_origin": "ast",
       "source": "src_lib_master_entities_findmasterentity",
       "target": "src_lib_master_entities_master_entities"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/roles.ts",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_roles",
+      "target": "src_lib_roles_default_role",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -24268,5 +24939,9 @@
       "source_file": "public/validasiInspeksi.png"
     }
   ],
+<<<<<<< HEAD
   "built_at_commit": "7cb5399571699b5b6e9d65eaa515dc4c3ae8c6ce"
+=======
+  "built_at_commit": "b5a9103cc8ffc81d06a8822ab57729a5eb8a7651"
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
 }
