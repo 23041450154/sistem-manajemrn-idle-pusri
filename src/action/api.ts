@@ -1746,6 +1746,7 @@ export async function updateReuseRequestStatus(
 	status: "APPROVED" | "REJECTED" | "IN_REVIEW" | "REVISION_REQUESTED",
 	notes?: string,
 	reuseRequestId?: string | number,
+	equipmentId?: string | number,
 ) {
 	const action =
 		status === "APPROVED"
@@ -1767,53 +1768,87 @@ export async function updateReuseRequestStatus(
 		...(token ? { Authorization: `Bearer ${token}` } : {}),
 	};
 
-	const requestBody = JSON.stringify({
+	// 1. Dynamic lookup in GET /api/approvals/reuse to find the exact approval record ID
+	let matchedApprovalId: string | null = approvalId;
+	try {
+		const appRes = await fetch(`${baseUrl}/api/approvals/reuse`, {
+			headers,
+			cache: "no-store",
+		});
+		if (appRes.ok) {
+			const appJson = await appRes.json().catch(() => null);
+			const apps = Array.isArray(appJson) ? appJson : appJson?.data || [];
+			if (Array.isArray(apps)) {
+				const rId = String(reuseRequestId || "");
+				const eId = String(equipmentId || "");
+				const aId = String(approvalId || "");
+				const found = apps.find((a: any) => {
+					const refId = String(a.reference_id ?? a.referenceId ?? a.referenceID ?? "");
+					const eqId = String(a.equipment_id ?? a.equipmentId ?? "");
+					const idStr = String(a.id ?? a.ID ?? "");
+					return (
+						(rId && refId === rId) ||
+						(eId && (eqId === eId || refId === eId)) ||
+						(aId && (idStr === aId || refId === aId))
+					);
+				});
+				if (found) {
+					matchedApprovalId = String(found.id ?? found.ID ?? matchedApprovalId);
+				}
+			}
+		}
+	} catch (e) {
+		console.warn("Lookup approvals/reuse error:", e);
+	}
+
+	const approvalBody = JSON.stringify({
 		action,
 		notes: trimmedNotes || "Disetujui oleh Manajer Rendal",
-		status: action === "APPROVE" ? "APPROVED" : action === "REVISION" ? "REVISION_REQUESTED" : "IN_REVIEW",
-		approval_status: action === "APPROVE" ? "APPROVED" : action === "REVISION" ? "REVISION_REQUESTED" : "IN_REVIEW",
 	});
 
-	const targetId = approvalId || String(reuseRequestId || "");
-	const altId = reuseRequestId ? String(reuseRequestId) : approvalId ? String(approvalId) : "";
+	const requestUpdateBody = JSON.stringify({
+		status: action === "APPROVE" ? "APPROVED" : action === "REVISION" ? "REVISION_REQUESTED" : "IN_REVIEW",
+		approval_status: action === "APPROVE" ? "APPROVED" : action === "REVISION" ? "REVISION_REQUESTED" : "IN_REVIEW",
+		action,
+		notes: trimmedNotes || "Disetujui oleh Manajer Rendal",
+	});
 
-	const candidates: Array<{ url: string; method: "PATCH" | "POST" | "PUT" }> = [];
+	const candidates: Array<{ url: string; method: "PATCH" | "POST" | "PUT"; body: string }> = [];
 
-	if (targetId) {
-		candidates.push({ url: `${baseUrl}/api/approvals/reuse/${targetId}/review`, method: "PATCH" });
-		candidates.push({ url: `${baseUrl}/api/approvals/reuse/${targetId}/review`, method: "POST" });
+	if (matchedApprovalId) {
+		candidates.push({ url: `${baseUrl}/api/approvals/reuse/${matchedApprovalId}/review`, method: "PATCH", body: approvalBody });
+		candidates.push({ url: `${baseUrl}/api/approvals/reuse/${matchedApprovalId}/review`, method: "POST", body: approvalBody });
+		candidates.push({ url: `${baseUrl}/api/approvals/${matchedApprovalId}/review`, method: "PATCH", body: approvalBody });
 	}
 
-	if (altId && altId !== targetId) {
-		candidates.push({ url: `${baseUrl}/api/approvals/reuse/${altId}/review`, method: "PATCH" });
-		candidates.push({ url: `${baseUrl}/api/approvals/reuse/${altId}/review`, method: "POST" });
+	if (reuseRequestId && String(reuseRequestId) !== matchedApprovalId) {
+		candidates.push({ url: `${baseUrl}/api/approvals/reuse/${reuseRequestId}/review`, method: "PATCH", body: approvalBody });
+		candidates.push({ url: `${baseUrl}/api/approvals/reuse/${reuseRequestId}/review`, method: "POST", body: approvalBody });
 	}
 
-	if (targetId) {
-		candidates.push({ url: `${baseUrl}/api/approvals/${targetId}/review`, method: "PATCH" });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${targetId}/review`, method: "PATCH" });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${targetId}/approve`, method: "PATCH" });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${targetId}/approve`, method: "POST" });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${targetId}`, method: "PATCH" });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${targetId}`, method: "PUT" });
+	if (reuseRequestId) {
+		candidates.push({ url: `${baseUrl}/api/reuse-request/${reuseRequestId}/approve`, method: "PATCH", body: requestUpdateBody });
+		candidates.push({ url: `${baseUrl}/api/reuse-request/${reuseRequestId}/approve`, method: "POST", body: requestUpdateBody });
+		candidates.push({ url: `${baseUrl}/api/reuse-request/${reuseRequestId}/review`, method: "PATCH", body: requestUpdateBody });
+		candidates.push({ url: `${baseUrl}/api/reuse-request/${reuseRequestId}`, method: "PATCH", body: requestUpdateBody });
+		candidates.push({ url: `${baseUrl}/api/reuse-request/${reuseRequestId}`, method: "PUT", body: requestUpdateBody });
+		candidates.push({ url: `${baseUrl}/api/reuse-requests/${reuseRequestId}`, method: "PATCH", body: requestUpdateBody });
+		candidates.push({ url: `${baseUrl}/api/reuse-requests/${reuseRequestId}`, method: "PUT", body: requestUpdateBody });
 	}
 
-	if (altId && altId !== targetId) {
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${altId}/review`, method: "PATCH" });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${altId}/approve`, method: "PATCH" });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${altId}/approve`, method: "POST" });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${altId}`, method: "PATCH" });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${altId}`, method: "PUT" });
+	if (approvalId && String(approvalId) !== matchedApprovalId && String(approvalId) !== String(reuseRequestId)) {
+		candidates.push({ url: `${baseUrl}/api/reuse-request/${approvalId}`, method: "PATCH", body: requestUpdateBody });
+		candidates.push({ url: `${baseUrl}/api/reuse-request/${approvalId}`, method: "PUT", body: requestUpdateBody });
 	}
 
-	let lastErrMsg = "Gagal memperbarui pengajuan peminjaman.";
+	let lastErrMsg = "Gagal memperbarui status pengajuan peminjaman.";
 
 	for (const candidate of candidates) {
 		try {
 			const res = await fetch(candidate.url, {
 				method: candidate.method,
 				headers,
-				body: requestBody,
+				body: candidate.body,
 			});
 
 			if (res.ok) {

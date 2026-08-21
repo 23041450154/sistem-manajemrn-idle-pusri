@@ -248,6 +248,7 @@ export default function ManajerPeminjamanPage() {
 				newStatus,
 				actionNotes,
 				selectedRequest.id,
+				selectedRequest.equipment_id,
 			);
 			if (result.success) {
 				const updated = requests.map((r) =>
