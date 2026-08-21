@@ -39,9 +39,14 @@ import {
 	uploadEquipmentAttachmentBase64,
 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
+import {
+	type EquipmentStatus,
+	statusBadgeStyle,
+	statusText,
+} from "@/lib/equipment-status";
 
 // Tipe Data
-type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE";
+type AssetState = EquipmentStatus | "REJECTED";
 type ApprovalState =
 	| "NONE"
 	| "PENDING_REVIEW"
@@ -197,9 +202,7 @@ export default function ManajemenInspeksi() {
 				});
 
 				// Sort data by ID descending (newest first)
-				mappedWithApproval.sort(
-					(a: any, b: any) => Number(b.id) - Number(a.id),
-				);
+				mappedWithApproval.sort((a: any, b: any) => Number(b.id) - Number(a.id));
 
 				setAssets(mappedWithApproval);
 			} catch (err) {
@@ -314,10 +317,7 @@ export default function ManajemenInspeksi() {
 		}
 
 		// Reset Form jika status belum divalidasi (baru pertama kali)
-		if (
-			asset.statusAset === "REGISTERED" &&
-			asset.statusPersetujuan === "NONE"
-		) {
+		if (asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE") {
 			setHasilPemeriksaan("");
 			setCatatan("");
 			setRekomendasi("");
@@ -330,9 +330,7 @@ export default function ManajemenInspeksi() {
 			setHasilPemeriksaan(
 				asset.statusAset === "REJECTED" ? "Tidak Layak" : "Layak",
 			);
-			setCatatan(
-				"Visual fisik aman, tidak ada kebocoran, performa motor stabil.",
-			);
+			setCatatan("Visual fisik aman, tidak ada kebocoran, performa motor stabil.");
 			setRekomendasi("Dapat dimobilisasi segera ke area yang membutuhkan.");
 			setLokasi("Area Unit P-IB"); // Default mock data yang sesuai opsi dropdown
 			setJamMulai("09:00");
@@ -375,8 +373,7 @@ export default function ManajemenInspeksi() {
 							try {
 								const reader = new FileReader();
 								const dataUrl = await new Promise<string>((resolve) => {
-									reader.onload = (e) =>
-										resolve((e.target?.result as string) || "");
+									reader.onload = (e) => resolve((e.target?.result as string) || "");
 									reader.onerror = () => resolve("");
 									reader.readAsDataURL(file);
 								});
@@ -403,15 +400,9 @@ export default function ManajemenInspeksi() {
 					message: "Data inspeksi berhasil disubmit ke sistem.",
 				});
 
-				const revised = JSON.parse(
-					localStorage.getItem("revisedAssets") || "[]",
-				);
-				const inReview = JSON.parse(
-					localStorage.getItem("inReviewAssets") || "[]",
-				);
-				const approved = JSON.parse(
-					localStorage.getItem("approvedAssets") || "[]",
-				);
+				const revised = JSON.parse(localStorage.getItem("revisedAssets") || "[]");
+				const inReview = JSON.parse(localStorage.getItem("inReviewAssets") || "[]");
+				const approved = JSON.parse(localStorage.getItem("approvedAssets") || "[]");
 
 				const reValidated = JSON.parse(
 					localStorage.getItem("reValidatedAssets") || "[]",
@@ -420,10 +411,7 @@ export default function ManajemenInspeksi() {
 				if (revised.includes(selectedAsset.kodeAlat)) {
 					if (!reValidated.includes(selectedAsset.kodeAlat)) {
 						reValidated.push(selectedAsset.kodeAlat);
-						localStorage.setItem(
-							"reValidatedAssets",
-							JSON.stringify(reValidated),
-						);
+						localStorage.setItem("reValidatedAssets", JSON.stringify(reValidated));
 					}
 				}
 
@@ -461,9 +449,7 @@ export default function ManajemenInspeksi() {
 							? {
 									...a,
 									statusAset: isUtilizable ? "VALIDATED" : "REJECTED",
-									statusPersetujuan: isUtilizable
-										? "PENDING_REVIEW"
-										: "REJECTED",
+									statusPersetujuan: isUtilizable ? "PENDING_REVIEW" : "REJECTED",
 									lampiran: [...a.lampiran, ...fileNames],
 								}
 							: a,
@@ -622,23 +608,14 @@ export default function ManajemenInspeksi() {
 	}, [search, plantFilter, statusFilter, dateFilter]);
 
 	// UI Helpers
-	const getStatusAsetBadge = (status: AssetState | string) => {
-		const styles: Record<string, string> = {
-			REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
-			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
-			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-			IDLE: "bg-[#E0E7FF] text-[#4F46E5]",
-			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
-		};
-		const displayStatus = status === "IDLE" ? "READY TO USE" : status;
-		return (
-			<span
-				className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${styles[status] || styles["READY TO USE"]}`}
-			>
-				{displayStatus}
-			</span>
-		);
-	};
+	// Teks badge = nama status dari backend apa adanya (lihat lib/equipment-status).
+	const getStatusAsetBadge = (status: AssetState | string) => (
+		<span
+			className={`text-[9px] font-semibold px-1.5 py-0.5 rounded-full ${statusBadgeStyle(status)}`}
+		>
+			{statusText(status)}
+		</span>
+	);
 
 	const getApprovalBadge = (status: ApprovalState) => {
 		const styles = {
@@ -702,7 +679,7 @@ export default function ManajemenInspeksi() {
 					</button>
 				)}
 				{(asset.statusPersetujuan === "IN_REVIEW" ||
-					asset.statusAset === "IDLE" ||
+					asset.statusAset === "READY_TO_USE" ||
 					asset.statusAset === "REJECTED") && (
 					<button
 						title="Detail Info"
@@ -752,11 +729,7 @@ export default function ManajemenInspeksi() {
 
 	const handleSort = (key: keyof Asset) => {
 		let direction: "asc" | "desc" = "asc";
-		if (
-			sortConfig &&
-			sortConfig.key === key &&
-			sortConfig.direction === "asc"
-		) {
+		if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
 			direction = "desc";
 		}
 		setSortConfig({ key, direction });
@@ -785,9 +758,7 @@ export default function ManajemenInspeksi() {
 					) : (
 						<XCircle className="w-4 h-4 text-red-400" />
 					)}
-					<span className="text-[13px] font-medium">
-						{notification.message}
-					</span>
+					<span className="text-[13px] font-medium">{notification.message}</span>
 				</div>
 			)}
 
@@ -818,8 +789,7 @@ export default function ManajemenInspeksi() {
 							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
 						</span>
 						<span className="text-[13px] text-blue-800 font-medium">
-							Terdapat{" "}
-							<strong className="font-bold">{pendingCount} aset</strong> yang
+							Terdapat <strong className="font-bold">{pendingCount} aset</strong> yang
 							membutuhkan tindakan Validasi atau Revisi dari Anda.
 						</span>
 					</div>
@@ -915,9 +885,7 @@ export default function ManajemenInspeksi() {
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("kodeAlat")}
 								>
-									<div className="flex items-center">
-										Kode {getSortIcon("kodeAlat")}
-									</div>
+									<div className="flex items-center">Kode {getSortIcon("kodeAlat")}</div>
 								</th>
 								<th
 									className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
@@ -933,9 +901,7 @@ export default function ManajemenInspeksi() {
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("plant")}
 								>
-									<div className="flex items-center">
-										Plant {getSortIcon("plant")}
-									</div>
+									<div className="flex items-center">Plant {getSortIcon("plant")}</div>
 								</th>
 								<th
 									className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
@@ -987,19 +953,13 @@ export default function ManajemenInspeksi() {
 						<tbody className="bg-white">
 							{isLoading ? (
 								<tr>
-									<td
-										colSpan={10}
-										className="px-5 py-12 text-center text-gray-500"
-									>
+									<td colSpan={10} className="px-5 py-12 text-center text-gray-500">
 										Memuat data...
 									</td>
 								</tr>
 							) : paginatedAssets.length === 0 ? (
 								<tr>
-									<td
-										colSpan={7}
-										className="px-5 py-12 text-center text-gray-500"
-									>
+									<td colSpan={7} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -1060,8 +1020,8 @@ export default function ManajemenInspeksi() {
 											{asset.statusPersetujuan === "NONE" ||
 											asset.statusPersetujuan === "PENDING_REVIEW" ? (
 												<span className="bg-[#DCFCE7] text-[#16A34A] px-1.5 py-0.5 rounded-full flex items-center gap-1 w-fit font-semibold text-[8px]">
-													<div className="w-1.5 h-1.5 bg-[#16A34A] rounded-full"></div>{" "}
-													1 Hari
+													<div className="w-1.5 h-1.5 bg-[#16A34A] rounded-full"></div> 1
+													Hari
 												</span>
 											) : (
 												<span className="text-gray-400 font-medium text-[9px]">
@@ -1092,8 +1052,7 @@ export default function ManajemenInspeksi() {
 
 				<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
 					<span className="text-[11px] font-medium text-gray-500">
-						Menampilkan {paginatedAssets.length} dari {filteredAssets.length}{" "}
-						data
+						Menampilkan {paginatedAssets.length} dari {filteredAssets.length} data
 					</span>
 					{totalPages > 1 && (
 						<div className="flex items-center gap-1.5">
@@ -1108,9 +1067,7 @@ export default function ManajemenInspeksi() {
 								Hal {currentPage} / {totalPages}
 							</span>
 							<button
-								onClick={() =>
-									setCurrentPage((p) => Math.min(totalPages, p + 1))
-								}
+								onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
 								disabled={currentPage === totalPages}
 								className="px-2.5 py-1 text-[11px] font-medium text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-50 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
 							>
@@ -1205,9 +1162,8 @@ export default function ManajemenInspeksi() {
 											Menunggu Revisi Anda
 										</h4>
 										<p className="text-[11px] text-orange-700 mt-0.5">
-											Manager meminta revisi: &quot;Mohon lampirkan bukti foto
-											tambahan dan lengkapi detail kondisi pada catatan
-											pemeriksaan.&quot;
+											Manager meminta revisi: &quot;Mohon lampirkan bukti foto tambahan dan
+											lengkapi detail kondisi pada catatan pemeriksaan.&quot;
 										</p>
 									</div>
 								</div>
@@ -1220,8 +1176,8 @@ export default function ManajemenInspeksi() {
 											Mode Ubah Data
 										</h4>
 										<p className="text-[11px] text-blue-700 mt-0.5">
-											Anda sedang mengubah data validasi yang sebelumnya telah
-											dikirimkan, namun belum di-review oleh Manager.
+											Anda sedang mengubah data validasi yang sebelumnya telah dikirimkan,
+											namun belum di-review oleh Manager.
 										</p>
 									</div>
 								</div>
@@ -1320,11 +1276,7 @@ export default function ManajemenInspeksi() {
 										<div className="flex gap-2">
 											{attachments
 												.filter((att: any) => {
-													const url = (
-														att.file_url ||
-														att.url ||
-														""
-													).toLowerCase();
+													const url = (att.file_url || att.url || "").toLowerCase();
 													return (
 														url.includes(".jpeg") ||
 														url.includes(".jpg") ||
@@ -1338,9 +1290,7 @@ export default function ManajemenInspeksi() {
 													<div
 														key={idx}
 														className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm"
-														onClick={() =>
-															setPreviewImage(att.file_url || att.url)
-														}
+														onClick={() => setPreviewImage(att.file_url || att.url)}
 														title={`Foto Aset ${idx + 1}`}
 													>
 														<img
@@ -1352,11 +1302,7 @@ export default function ManajemenInspeksi() {
 												))}
 
 											{attachments.filter((att: any) => {
-												const url = (
-													att.file_url ||
-													att.url ||
-													""
-												).toLowerCase();
+												const url = (att.file_url || att.url || "").toLowerCase();
 												return (
 													url.includes(".jpeg") ||
 													url.includes(".jpg") ||
@@ -1366,9 +1312,7 @@ export default function ManajemenInspeksi() {
 												);
 											}).length === 0 && (
 												<div className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 border-dashed flex items-center justify-center">
-													<span className="text-[10px] text-gray-400">
-														Belum ada foto
-													</span>
+													<span className="text-[10px] text-gray-400">Belum ada foto</span>
 												</div>
 											)}
 										</div>
@@ -1560,11 +1504,7 @@ export default function ManajemenInspeksi() {
 										<label className="block text-[11px] font-semibold text-gray-700 mb-1">
 											Catatan Pemeriksaan{" "}
 											<span
-												className={
-													hasilPemeriksaan === "Tidak Layak"
-														? "text-red-500"
-														: ""
-												}
+												className={hasilPemeriksaan === "Tidak Layak" ? "text-red-500" : ""}
 											>
 												{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}
 											</span>
@@ -1655,9 +1595,7 @@ export default function ManajemenInspeksi() {
 												>
 													{uploadedFiles.map((file, i) => {
 														const isImage = file.type.startsWith("image/");
-														const previewUrl = isImage
-															? URL.createObjectURL(file)
-															: null;
+														const previewUrl = isImage ? URL.createObjectURL(file) : null;
 														return (
 															<div
 																key={i}
@@ -1674,9 +1612,7 @@ export default function ManajemenInspeksi() {
 																) : (
 																	<div className="h-28 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
 																		<Paperclip className="w-8 h-8 mb-2" />
-																		<span className="text-[10px] font-bold">
-																			PDF / DOC
-																		</span>
+																		<span className="text-[10px] font-bold">PDF / DOC</span>
 																	</div>
 																)}
 																<div className="px-2 py-1.5 border-t border-gray-100 bg-white">
@@ -1749,8 +1685,7 @@ export default function ManajemenInspeksi() {
 								>
 									{isSubmitting ? (
 										<>
-											<RefreshCw className="w-3.5 h-3.5 animate-spin" />{" "}
-											Proses...
+											<RefreshCw className="w-3.5 h-3.5 animate-spin" /> Proses...
 										</>
 									) : (
 										<>
@@ -1807,80 +1742,53 @@ export default function ManajemenInspeksi() {
 									</p>
 								</div>
 								<div>
-									<p className="text-[11px] text-gray-500 mb-0.5">
-										Kategori / Jenis:
-									</p>
+									<p className="text-[11px] text-gray-500 mb-0.5">Kategori / Jenis:</p>
 									<p className="text-[12px] font-bold text-gray-900">
 										{selectedAsset.jenisAlat}
 									</p>
 								</div>
 								<div>
-									<p className="text-[11px] text-gray-500 mb-0.5">
-										Plant Asal:
-									</p>
+									<p className="text-[11px] text-gray-500 mb-0.5">Plant Asal:</p>
 									<p className="text-[12px] font-bold text-gray-900">
 										{selectedAsset.plant}
 									</p>
 								</div>
 								<div>
-									<p className="text-[11px] text-gray-500 mb-0.5">
-										Lokasi Gudang:
-									</p>
-									<p className="text-[12px] font-bold text-gray-900">
-										Storage Area B
-									</p>
+									<p className="text-[11px] text-gray-500 mb-0.5">Lokasi Gudang:</p>
+									<p className="text-[12px] font-bold text-gray-900">Storage Area B</p>
 								</div>
 								<div>
-									<p className="text-[11px] text-gray-500 mb-0.5">
-										Pabrikan / Vendor:
-									</p>
-									<p className="text-[12px] font-bold text-gray-900">
-										Atlas Copco
-									</p>
+									<p className="text-[11px] text-gray-500 mb-0.5">Pabrikan / Vendor:</p>
+									<p className="text-[12px] font-bold text-gray-900">Atlas Copco</p>
 								</div>
 								<div>
-									<p className="text-[11px] text-gray-500 mb-0.5">
-										Tahun Pembuatan:
-									</p>
+									<p className="text-[11px] text-gray-500 mb-0.5">Tahun Pembuatan:</p>
 									<p className="text-[12px] font-bold text-gray-900">2015</p>
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">
 										Nilai Perolehan (IDR):
 									</p>
-									<p className="text-[12px] font-bold text-gray-900">
-										Rp 300,000,000
-									</p>
+									<p className="text-[12px] font-bold text-gray-900">Rp 300,000,000</p>
 								</div>
 								<div>
-									<p className="text-[11px] text-gray-500 mb-0.5">
-										Kondisi Fisik:
-									</p>
+									<p className="text-[11px] text-gray-500 mb-0.5">Kondisi Fisik:</p>
 									<p className="text-[12px] font-bold text-gray-900">BAGUS</p>
 								</div>
 								<div>
-									<p className="text-[11px] text-gray-500 mb-0.5">
-										Didaftarkan Oleh:
-									</p>
-									<p className="text-[12px] font-bold text-gray-900">
-										NPP2304145
-									</p>
+									<p className="text-[11px] text-gray-500 mb-0.5">Didaftarkan Oleh:</p>
+									<p className="text-[12px] font-bold text-gray-900">NPP2304145</p>
 								</div>
 								<div>
-									<p className="text-[11px] text-gray-500 mb-0.5">
-										Tanggal Registrasi:
-									</p>
+									<p className="text-[11px] text-gray-500 mb-0.5">Tanggal Registrasi:</p>
 									<p className="text-[12px] font-bold text-gray-900">
 										{selectedAsset.tanggalRegistrasi}
 									</p>
 								</div>
 								<div className="col-span-4">
-									<p className="text-[11px] text-gray-500 mb-1">
-										Catatan Pendaftaran:
-									</p>
+									<p className="text-[11px] text-gray-500 mb-1">Catatan Pendaftaran:</p>
 									<div className="bg-gray-50 p-2 rounded text-[12px] italic text-gray-700 border border-gray-100">
-										&quot;Kompresor cadangan dari decommission utilitas
-										lama.&quot;
+										&quot;Kompresor cadangan dari decommission utilitas lama.&quot;
 									</div>
 								</div>
 							</div>

@@ -48,9 +48,9 @@ export default function RegisterEquipmentPage() {
 		message: string;
 	} | null>(null);
 
-	const [objectTypes, setObjectTypes] = useState<
-		{ id: number; name: string }[]
-	>([]);
+	const [objectTypes, setObjectTypes] = useState<{ id: number; name: string }[]>(
+		[],
+	);
 	const [plants, setPlants] = useState<{ id: number; name: string }[]>([]);
 	const [storageLocations, setStorageLocations] = useState<
 		{ id: number; name: string }[]
@@ -65,7 +65,7 @@ export default function RegisterEquipmentPage() {
 		plantId: "",
 		objectTypeId: "",
 		vendor: "",
-		year: new Date().getFullYear().toString(),
+		year: "",
 		originalValue: "",
 		idleReason: "",
 		storageLocationId: "",
@@ -103,12 +103,11 @@ export default function RegisterEquipmentPage() {
 							"",
 					),
 					vendor: found.vendor || "",
-					year: String(found.year || new Date().getFullYear()),
+					year: found.year ? String(found.year) : "",
 					originalValue: found.original_value
 						? Number(found.original_value).toLocaleString("id-ID")
 						: "",
-					idleReason:
-						found.idle_declaration?.idle_reason || found.idle_reason || "",
+					idleReason: found.idle_declaration?.idle_reason || found.idle_reason || "",
 					storageLocationId: String(
 						found.storage_location_id ||
 							found.id_storage_location ||
@@ -245,6 +244,7 @@ export default function RegisterEquipmentPage() {
 			!formData.name ||
 			!formData.objectTypeId ||
 			!formData.plantId ||
+			!formData.vendor ||
 			!formData.idleReason
 		) {
 			setShowValidationErrors(true);
@@ -306,10 +306,7 @@ export default function RegisterEquipmentPage() {
 		fd.append("id_storage_location", formData.storageLocationId);
 		fd.append("id_func_loc", formData.funcLocId);
 		fd.append("vendor", formData.vendor);
-		fd.append(
-			"year",
-			String(Number(formData.year) || new Date().getFullYear()),
-		);
+		fd.append("year", String(Number(formData.year) || new Date().getFullYear()));
 		fd.append(
 			"original_value",
 			String(Number(formData.originalValue.replace(/\./g, "")) || 0),
@@ -336,8 +333,7 @@ export default function RegisterEquipmentPage() {
 			setNotification({
 				type: "error",
 				message:
-					"Gagal menyimpan data: " +
-					(res.message || "Pastikan field sudah sesuai."),
+					"Gagal menyimpan data: " + (res.message || "Pastikan field sudah sesuai."),
 			});
 			setTimeout(() => setNotification(null), 3000);
 		}
@@ -394,9 +390,7 @@ export default function RegisterEquipmentPage() {
 					) : (
 						<XCircle className="w-4 h-4 text-red-400" />
 					)}
-					<span className="text-[13px] font-medium">
-						{notification.message}
-					</span>
+					<span className="text-[13px] font-medium">{notification.message}</span>
 				</div>
 			)}
 
@@ -517,11 +511,7 @@ export default function RegisterEquipmentPage() {
 										Pilih Kategori...
 									</option>
 									{objectTypes.map((type: { id: number; name: string }) => (
-										<option
-											key={type.id}
-											value={type.id}
-											className="text-gray-900"
-										>
+										<option key={type.id} value={type.id} className="text-gray-900">
 											{type.name}
 										</option>
 									))}
@@ -553,12 +543,11 @@ export default function RegisterEquipmentPage() {
 										</option>
 									))}
 								</select>
-								{(showValidationErrors || touched.plantId) &&
-									!formData.plantId && (
-										<p className="text-[10px] text-red-500 mt-1 font-medium">
-											* Pabrik / Plant wajib dipilih.
-										</p>
-									)}
+								{(showValidationErrors || touched.plantId) && !formData.plantId && (
+									<p className="text-[10px] text-red-500 mt-1 font-medium">
+										* Pabrik / Plant wajib dipilih.
+									</p>
+								)}
 							</div>
 
 							{/* Baris 3: Area */}
@@ -575,16 +564,10 @@ export default function RegisterEquipmentPage() {
 									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white disabled:bg-gray-50 disabled:cursor-not-allowed ${!formData.storageLocationId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
 								>
 									<option value="" disabled>
-										{formData.plantId
-											? "Pilih Lokasi Simpan..."
-											: "Pilih Pabrik dulu..."}
+										{formData.plantId ? "Pilih Lokasi Simpan..." : "Pilih Pabrik dulu..."}
 									</option>
 									{storageLocations.map((loc: { id: number; name: string }) => (
-										<option
-											key={loc.id}
-											value={loc.id}
-											className="text-gray-900"
-										>
+										<option key={loc.id} value={loc.id} className="text-gray-900">
 											{loc.name}
 										</option>
 									))}
@@ -616,25 +599,37 @@ export default function RegisterEquipmentPage() {
 							{/* Baris 4: Spesifikasi Khusus */}
 							<div className="space-y-1.5">
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-									VENDOR / MERK
+									VENDOR / MERK <span className="text-red-500">*</span>
 								</label>
 								<input
 									type="text"
 									name="vendor"
 									value={formData.vendor}
 									onChange={handleChange}
+									onBlur={handleBlur}
+									aria-required="true"
+									aria-invalid={
+										(showValidationErrors || touched.vendor) && !formData.vendor
+									}
 									placeholder="Masukkan vendor / merk..."
-									className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0556B3] outline-none transition-all"
+									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all ${(showValidationErrors || touched.vendor) && !formData.vendor ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
 								/>
+								{(showValidationErrors || touched.vendor) && !formData.vendor && (
+									<p className="text-[10px] text-red-500 mt-1 font-medium">
+										Vendor / merk wajib diisi.
+									</p>
+								)}
 							</div>
 							<div className="space-y-1.5">
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-									TAHUN PEROLEHAN
+									TAHUN PEROLEHAN{" "}
+									<span className="text-gray-400 lowercase font-normal">(opsional)</span>
 								</label>
 								<input
 									type="number"
 									name="year"
 									value={formData.year}
+									placeholder="Contoh: 2020"
 									onChange={handleChange}
 									min="1950"
 									max="2100"
@@ -645,7 +640,7 @@ export default function RegisterEquipmentPage() {
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">
 									NILAI PEROLEHAN{" "}
 									<span className="text-gray-400 lowercase font-normal">
-										(Rp)
+										(Rp, opsional)
 									</span>
 								</label>
 								<div className="relative">
@@ -685,13 +680,8 @@ export default function RegisterEquipmentPage() {
 					<div className="bg-white rounded shadow-sm border border-gray-200 flex flex-col h-full">
 						{/* Judul Panel */}
 						<div className="p-4 sm:p-5 border-b border-gray-100 flex items-center gap-2.5 bg-gray-50/50 rounded-t">
-							<AlertCircle
-								className="w-5 h-5 text-[#0A356A]"
-								strokeWidth={2.5}
-							/>
-							<h2 className="text-lg font-bold text-gray-900">
-								Kondisi & Berkas
-							</h2>
+							<AlertCircle className="w-5 h-5 text-[#0A356A]" strokeWidth={2.5} />
+							<h2 className="text-lg font-bold text-gray-900">Kondisi & Berkas</h2>
 						</div>
 
 						<div className="p-4 sm:p-5 flex-1 flex flex-col gap-4">
@@ -708,8 +698,7 @@ export default function RegisterEquipmentPage() {
 									onChange={handleChange}
 									placeholder="Masukkan Alasan Idle..."
 									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all ${
-										(showValidationErrors || touched.idleReason) &&
-										!formData.idleReason
+										(showValidationErrors || touched.idleReason) && !formData.idleReason
 											? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10 text-gray-900"
 											: "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
 									}`}
@@ -779,9 +768,7 @@ export default function RegisterEquipmentPage() {
 										>
 											{uploadedFiles.map((file, i) => {
 												const isImage = file.type.startsWith("image/");
-												const previewUrl = isImage
-													? URL.createObjectURL(file)
-													: null;
+												const previewUrl = isImage ? URL.createObjectURL(file) : null;
 												return (
 													<div
 														key={i}
@@ -798,9 +785,7 @@ export default function RegisterEquipmentPage() {
 														) : (
 															<div className="h-16 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
 																<Paperclip className="w-5 h-5 mb-1" />
-																<span className="text-[9px] font-bold">
-																	PDF
-																</span>
+																<span className="text-[9px] font-bold">PDF</span>
 															</div>
 														)}
 														<div className="px-1.5 py-1 border-t border-gray-100 bg-white">
@@ -884,8 +869,8 @@ export default function RegisterEquipmentPage() {
 						{/* Modal Body */}
 						<div className="p-6">
 							<p className="text-sm text-gray-600 mb-5 leading-relaxed">
-								Gunakan fitur ini untuk meregistrasikan banyak peralatan
-								sekaligus. Silakan pilih format file dan unggah dokumen Anda.
+								Gunakan fitur ini untuk meregistrasikan banyak peralatan sekaligus.
+								Silakan pilih format file dan unggah dokumen Anda.
 							</p>
 
 							{/* Pilihan Format */}
@@ -908,8 +893,7 @@ export default function RegisterEquipmentPage() {
 											Format Template Excel
 										</p>
 										<p className="text-[10px] text-gray-500 mt-0.5">
-											Gunakan format ini untuk mengisi data peralatan secara
-											massal
+											Gunakan format ini untuk mengisi data peralatan secara massal
 										</p>
 									</div>
 								</div>
@@ -948,9 +932,7 @@ export default function RegisterEquipmentPage() {
 
 								<button
 									type="button"
-									onClick={() =>
-										document.getElementById("import-file-upload")?.click()
-									}
+									onClick={() => document.getElementById("import-file-upload")?.click()}
 									className="bg-white border border-gray-300 text-gray-700 px-5 py-2 rounded text-sm font-bold hover:bg-gray-100 transition-colors shadow-sm"
 								>
 									Pilih File Dokumen
@@ -996,9 +978,7 @@ export default function RegisterEquipmentPage() {
 								disabled={isImporting}
 								onClick={() => {
 									if (!importFile) {
-										alert(
-											"Harap pilih file terlebih dahulu sebelum memproses import!",
-										);
+										alert("Harap pilih file terlebih dahulu sebelum memproses import!");
 										return;
 									}
 
@@ -1006,9 +986,7 @@ export default function RegisterEquipmentPage() {
 									setIsImporting(true);
 									setTimeout(() => {
 										setIsImporting(false);
-										alert(
-											`File ${importFile.name} berhasil disiapkan untuk di-import!`,
-										);
+										alert(`File ${importFile.name} berhasil disiapkan untuk di-import!`);
 										setShowImportModal(false);
 										setImportFile(null);
 									}, 2000);

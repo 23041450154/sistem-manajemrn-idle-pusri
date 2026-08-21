@@ -15,6 +15,7 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { getEquipments, getApprovals } from "@/action/api";
+import { statusName } from "@/lib/equipment-status";
 
 export default function InspeksiDashboardPage() {
   const [equipments, setEquipments] = useState<any[]>([]);
@@ -24,9 +25,7 @@ export default function InspeksiDashboardPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      const [eqData] = await Promise.all([
-        getEquipments(),
-      ]);
+      const [eqData] = await Promise.all([getEquipments()]);
       setEquipments(Array.isArray(eqData) ? eqData : []);
     } catch (err) {
       console.error("Dashboard fetch error:", err);
@@ -44,31 +43,27 @@ export default function InspeksiDashboardPage() {
 
   const pendingAssets = useMemo(() => {
     return equipments.filter((eq) => {
-      const st = (typeof eq.status === "string" ? eq.status : eq.status?.name) || "";
-      return (
-        st === "REGISTERED" ||
-        st === "NONE" ||
-        st === "PENDING_REVIEW" ||
-        st === ""
+      const st = statusName(
+        typeof eq.status === "string" ? eq.status : eq.status?.name,
       );
+      return st === "REGISTERED" || st === "";
     });
   }, [equipments]);
 
   const validatedAssetsCount = useMemo(() => {
     return equipments.filter((eq) => {
-      const st = (typeof eq.status === "string" ? eq.status : eq.status?.name) || "";
-      return (
-        st === "VALIDATED" ||
-        st === "READY_TO_USE" ||
-        st === "IDLE" ||
-        st === "READY TO USE"
+      const st = statusName(
+        typeof eq.status === "string" ? eq.status : eq.status?.name,
       );
+      return st === "VALIDATED" || st === "READY_TO_USE" || st === "REUSED";
     }).length;
   }, [equipments]);
 
   const repairOrScrapCount = useMemo(() => {
     return equipments.filter((eq) => {
-      const st = (typeof eq.status === "string" ? eq.status : eq.status?.name) || "";
+      const st = statusName(
+        typeof eq.status === "string" ? eq.status : eq.status?.name,
+      );
       return (
         st === "REPAIR" ||
         st === "SCRAP" ||
@@ -112,7 +107,9 @@ export default function InspeksiDashboardPage() {
               Dashboard Inspeksi Teknik
             </h1>
             <p className="text-sm text-blue-100/90 mt-2 font-normal leading-relaxed">
-              Pusat pengawasan kelayakan peralatan idle, pemantauan inspeksi berkala, dan penjaminan mutu kesehatan alat PT Pupuk Sriwidjaja Palembang.
+              Pusat pengawasan kelayakan peralatan idle, pemantauan inspeksi
+              berkala, dan penjaminan mutu kesehatan alat PT Pupuk Sriwidjaja
+              Palembang.
             </p>
           </div>
 
@@ -154,7 +151,9 @@ export default function InspeksiDashboardPage() {
             </span>
             <span className="text-xs text-gray-500 font-medium">unit</span>
           </div>
-          <p className="text-[11px] text-gray-500 mt-1">Total aset idle terdaftar</p>
+          <p className="text-[11px] text-gray-500 mt-1">
+            Total aset idle terdaftar
+          </p>
         </div>
 
         {/* Antrean Validasi */}
@@ -175,7 +174,9 @@ export default function InspeksiDashboardPage() {
               Perlu Tindakan
             </span>
           </div>
-          <p className="text-[11px] text-amber-700 mt-1">Aset baru menunggu pemeriksaan</p>
+          <p className="text-[11px] text-amber-700 mt-1">
+            Aset baru menunggu pemeriksaan
+          </p>
         </div>
 
         {/* Tervalidasi (Ready to Use) */}
@@ -194,7 +195,9 @@ export default function InspeksiDashboardPage() {
             </span>
             <span className="text-xs text-emerald-600 font-medium">unit</span>
           </div>
-          <p className="text-[11px] text-emerald-700 mt-1">Layak operasional & direkomendasikan</p>
+          <p className="text-[11px] text-emerald-700 mt-1">
+            Layak operasional & direkomendasikan
+          </p>
         </div>
 
         {/* Perbaikan / Scrap */}
@@ -213,7 +216,9 @@ export default function InspeksiDashboardPage() {
             </span>
             <span className="text-xs text-rose-600 font-medium">unit</span>
           </div>
-          <p className="text-[11px] text-rose-700 mt-1">Rusak ringan, sedang, atau scrap</p>
+          <p className="text-[11px] text-rose-700 mt-1">
+            Rusak ringan, sedang, atau scrap
+          </p>
         </div>
       </div>
 
@@ -229,11 +234,14 @@ export default function InspeksiDashboardPage() {
               Validasi Kelayakan Aset
             </h3>
             <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              Lakukan pemeriksaan fisik, pengujian teknis, dan penetapan status kelayakan aset baru terdaftar.
+              Lakukan pemeriksaan fisik, pengujian teknis, dan penetapan status
+              kelayakan aset baru terdaftar.
             </p>
           </div>
           <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-400">Pemeriksaan Awal</span>
+            <span className="text-xs font-semibold text-gray-400">
+              Pemeriksaan Awal
+            </span>
             <Link
               href="/inspeksi/validasi"
               className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A356A] group-hover:translate-x-1 transition-transform"
@@ -254,11 +262,14 @@ export default function InspeksiDashboardPage() {
               Inspeksi Berkala
             </h3>
             <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              Jadwalkan dan catat hasil inspeksi rutin berkala untuk memastikan kesehatan aset idle terjaga.
+              Jadwalkan dan catat hasil inspeksi rutin berkala untuk memastikan
+              kesehatan aset idle terjaga.
             </p>
           </div>
           <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-400">Monitoring Rutin</span>
+            <span className="text-xs font-semibold text-gray-400">
+              Monitoring Rutin
+            </span>
             <Link
               href="/inspeksi/inspeksi-berkala"
               className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 group-hover:translate-x-1 transition-transform"
@@ -279,11 +290,14 @@ export default function InspeksiDashboardPage() {
               Validasi Perbaikan Alat
             </h3>
             <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              Pemeriksaan ulang dan verifikasi fungsi pada peralatan yang telah selesai diperbaiki oleh tim Pemeliharaan.
+              Pemeriksaan ulang dan verifikasi fungsi pada peralatan yang telah
+              selesai diperbaiki oleh tim Pemeliharaan.
             </p>
           </div>
           <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-400">Uji Ulang Pasca Perbaikan</span>
+            <span className="text-xs font-semibold text-gray-400">
+              Uji Ulang Pasca Perbaikan
+            </span>
             <Link
               href="/inspeksi/validasi-ulang"
               className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 group-hover:translate-x-1 transition-transform"
@@ -363,34 +377,50 @@ export default function InspeksiDashboardPage() {
             <tbody className="divide-y divide-gray-100">
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-xs text-gray-500">
+                  <td
+                    colSpan={7}
+                    className="px-4 py-8 text-center text-xs text-gray-500"
+                  >
                     <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-[#0A356A]" />
                     Memuat antrean validasi...
                   </td>
                 </tr>
               ) : filteredPending.length === 0 ? (
                 <tr>
-                  <td colSpan={7} className="px-4 py-8 text-center text-xs text-gray-400 italic">
-                    {search ? "Tidak ada peralatan yang sesuai dengan kata kunci pencarian." : "Tidak ada antrean validasi kelayakan saat ini."}
+                  <td
+                    colSpan={7}
+                    className="px-4 py-8 text-center text-xs text-gray-400 italic"
+                  >
+                    {search
+                      ? "Tidak ada peralatan yang sesuai dengan kata kunci pencarian."
+                      : "Tidak ada antrean validasi kelayakan saat ini."}
                   </td>
                 </tr>
               ) : (
                 filteredPending.slice(0, 5).map((eq: any, idx: number) => (
-                  <tr key={eq.id || idx} className="hover:bg-gray-50/60 transition-colors h-[48px]">
+                  <tr
+                    key={eq.id || idx}
+                    className="hover:bg-gray-50/60 transition-colors h-[48px]"
+                  >
                     <td className="px-4 py-2 text-xs text-gray-500 text-center font-medium">
                       {idx + 1}
                     </td>
                     <td className="px-4 py-2 text-xs font-bold text-[#0A356A] text-center truncate">
                       {eq.equipment_code || eq.kodeAlat || "-"}
                     </td>
-                    <td className="px-4 py-2 text-xs font-semibold text-gray-800 truncate" title={eq.name || eq.namaAlat}>
+                    <td
+                      className="px-4 py-2 text-xs font-semibold text-gray-800 truncate"
+                      title={eq.name || eq.namaAlat}
+                    >
                       {eq.name || eq.namaAlat || "-"}
                     </td>
                     <td className="px-4 py-2 text-xs text-gray-600 font-medium text-center truncate">
                       {eq.plant?.name || eq.plant || "-"}
                     </td>
                     <td className="px-4 py-2 text-xs text-gray-600 font-medium text-center font-mono text-[11px]">
-                      {eq.created_at ? new Date(eq.created_at).toLocaleDateString("id-ID") : "-"}
+                      {eq.created_at
+                        ? new Date(eq.created_at).toLocaleDateString("id-ID")
+                        : "-"}
                     </td>
                     <td className="px-4 py-2 text-xs text-center">
                       <span className="inline-block px-2.5 py-1 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 whitespace-nowrap">

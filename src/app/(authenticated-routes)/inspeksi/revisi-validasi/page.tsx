@@ -38,9 +38,15 @@ import {
 	uploadEquipmentAttachment,
 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
+import {
+	type EquipmentStatus,
+	statusBadgeStyle,
+	statusName,
+	statusText,
+} from "@/lib/equipment-status";
 
 // Tipe Data
-type AssetState = "REGISTERED" | "VALIDATED" | "REJECTED" | "IDLE";
+type AssetState = EquipmentStatus | "REJECTED";
 type ApprovalState =
 	| "NONE"
 	| "PENDING_REVIEW"
@@ -118,16 +124,7 @@ export default function RevisiValidasiPage() {
 						tanggalRegistrasi: item.created_at
 							? new Date(item.created_at).toISOString().split("T")[0]
 							: "-",
-						statusAset: (
-							item.status?.name ||
-							(item.status_id === 2
-								? "VALIDATED"
-								: item.status_id === 3
-									? "REJECTED"
-									: item.status_id === 4
-										? "IDLE"
-										: "REGISTERED")
-						).toUpperCase(),
+						statusAset: statusName(item.status?.name) || "REGISTERED",
 						statusPersetujuan: "NONE", // Default, will override below
 						spesifikasi: item.notes || "Belum ada spesifikasi",
 						lampiran: [],
@@ -153,7 +150,7 @@ export default function RevisiValidasiPage() {
 
 				// Correcting status mapping based on API
 				const mappedWithApproval = mappedData.map((item: any) => {
-					let statusAset = item.statusAset?.toUpperCase() || "REGISTERED";
+					let statusAset = statusName(item.statusAset) || "REGISTERED";
 					let statusPersetujuan: ApprovalState = "NONE";
 
 					if (statusAset === "REGISTERED") {
@@ -171,7 +168,7 @@ export default function RevisiValidasiPage() {
 								statusPersetujuan = "IN_REVIEW";
 							} else if (app.approval_status === "APPROVED") {
 								statusPersetujuan = "APPROVED";
-								statusAset = "IDLE";
+								statusAset = "READY_TO_USE";
 							} else if (app.approval_status === "REJECTED") {
 								statusPersetujuan = "REJECTED";
 								statusAset = "REJECTED";
@@ -181,7 +178,7 @@ export default function RevisiValidasiPage() {
 						} else {
 							statusPersetujuan = "PENDING_REVIEW";
 						}
-					} else if (statusAset === "IDLE") {
+					} else if (statusAset === "READY_TO_USE") {
 						statusPersetujuan = "APPROVED";
 					} else if (statusAset === "REJECTED") {
 						statusPersetujuan = "REJECTED";
@@ -191,9 +188,7 @@ export default function RevisiValidasiPage() {
 				});
 
 				// Sort data by ID descending (newest first)
-				mappedWithApproval.sort(
-					(a: any, b: any) => Number(b.id) - Number(a.id),
-				);
+				mappedWithApproval.sort((a: any, b: any) => Number(b.id) - Number(a.id));
 
 				// KUSUS HANYA ASSET YANG BERSTATUS NEED_REVISION
 				const finalAssets = mappedWithApproval.filter(
@@ -325,9 +320,7 @@ export default function RevisiValidasiPage() {
 			asset.statusAset === "REJECTED" ? "Tidak Layak" : "Layak",
 		);
 		setConditionId("");
-		setCatatan(
-			"Visual fisik aman, tidak ada kebocoran, performa motor stabil.",
-		);
+		setCatatan("Visual fisik aman, tidak ada kebocoran, performa motor stabil.");
 		setRekomendasi("Dapat dimobilisasi segera ke area yang membutuhkan.");
 		setLokasi("Area Unit P-IB");
 		setJamMulai("09:00");
@@ -359,13 +352,10 @@ export default function RevisiValidasiPage() {
 			if (res.success) {
 				if (uploadedFiles && uploadedFiles.length > 0) {
 					try {
-						const tokenMatch = document.cookie.match(
-							/(^|;)\s*token\s*=\s*([^;]+)/,
-						);
+						const tokenMatch = document.cookie.match(/(^|;)\s*token\s*=\s*([^;]+)/);
 						const token = tokenMatch ? tokenMatch[2] : "";
 						const API_URL =
-							process.env.NEXT_PUBLIC_API_URL ||
-							"https://api.testing.naufal.me";
+							process.env.NEXT_PUBLIC_API_URL || "https://api.testing.naufal.me";
 
 						for (const file of uploadedFiles) {
 							const fd = new FormData();
@@ -373,22 +363,15 @@ export default function RevisiValidasiPage() {
 							fd.append("file", file);
 							fd.append("category", "inspection_photo");
 
-							const resUpload = await fetch(
-								`${API_URL}/api/attachments/upload`,
-								{
-									method: "POST",
-									headers: {
-										Authorization: `Bearer ${token}`,
-									},
-									body: fd,
+							const resUpload = await fetch(`${API_URL}/api/attachments/upload`, {
+								method: "POST",
+								headers: {
+									Authorization: `Bearer ${token}`,
 								},
-							);
+								body: fd,
+							});
 							if (!resUpload.ok) {
-								console.error(
-									"Gagal upload file:",
-									file.name,
-									await resUpload.text(),
-								);
+								console.error("Gagal upload file:", file.name, await resUpload.text());
 							} else {
 								console.log("Upload berhasil:", await resUpload.json());
 							}
@@ -543,30 +526,14 @@ export default function RevisiValidasiPage() {
 		setCurrentPage(1);
 	}, [search, plantFilter, dateFilter]);
 
-	const getStatusAsetBadge = (status: AssetState | string) => {
-		const styles: Record<string, string> = {
-			REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
-			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
-			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-			IDLE: "bg-[#E0E7FF] text-[#4F46E5]",
-			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
-		};
-		let displayStatus = (status || "").replace(/_/g, " ");
-		if (
-			displayStatus === "IDLE" ||
-			displayStatus === "READY TO REUSE" ||
-			displayStatus === "REUSED"
-		) {
-			displayStatus = "READY TO USE";
-		}
-		return (
-			<span
-				className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${styles[displayStatus] || styles[status] || styles["READY TO USE"]}`}
-			>
-				{displayStatus}
-			</span>
-		);
-	};
+	// Teks badge = nama status dari backend apa adanya (lihat lib/equipment-status).
+	const getStatusAsetBadge = (status: AssetState | string) => (
+		<span
+			className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${statusBadgeStyle(status)}`}
+		>
+			{statusText(status)}
+		</span>
+	);
 
 	const getApprovalBadge = (status: ApprovalState) => {
 		return (
@@ -615,11 +582,7 @@ export default function RevisiValidasiPage() {
 
 	const handleSort = (key: keyof Asset) => {
 		let direction: "asc" | "desc" = "asc";
-		if (
-			sortConfig &&
-			sortConfig.key === key &&
-			sortConfig.direction === "asc"
-		) {
+		if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
 			direction = "desc";
 		}
 		setSortConfig({ key, direction });
@@ -648,9 +611,7 @@ export default function RevisiValidasiPage() {
 					) : (
 						<XCircle className="w-4 h-4 text-red-400" />
 					)}
-					<span className="text-[13px] font-medium">
-						{notification.message}
-					</span>
+					<span className="text-[13px] font-medium">{notification.message}</span>
 				</div>
 			)}
 
@@ -663,8 +624,7 @@ export default function RevisiValidasiPage() {
 							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500"></span>
 						</span>
 						<span className="text-[13px] text-purple-900 font-medium">
-							Terdapat{" "}
-							<strong className="font-bold">{assets.length} aset</strong> yang
+							Terdapat <strong className="font-bold">{assets.length} aset</strong> yang
 							memerlukan revisi validasi sesuai catatan Manajer Rendal.
 						</span>
 					</div>
@@ -755,9 +715,7 @@ export default function RevisiValidasiPage() {
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("plant")}
 								>
-									<div className="flex items-center">
-										Plant {getSortIcon("plant")}
-									</div>
+									<div className="flex items-center">Plant {getSortIcon("plant")}</div>
 								</th>
 								<th
 									className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
@@ -797,27 +755,21 @@ export default function RevisiValidasiPage() {
 						<tbody className="bg-white">
 							{isLoading ? (
 								<tr>
-									<td
-										colSpan={8}
-										className="px-5 py-12 text-center text-gray-500"
-									>
+									<td colSpan={8} className="px-5 py-12 text-center text-gray-500">
 										Memuat data revisi...
 									</td>
 								</tr>
 							) : paginatedAssets.length === 0 ? (
 								<tr>
-									<td
-										colSpan={8}
-										className="px-5 py-12 text-center text-gray-500"
-									>
+									<td colSpan={8} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<CheckCircle2 className="w-6 h-6 text-emerald-400 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
 												Tidak Ada Peralatan Perlu Revisi
 											</p>
 											<p className="text-[11px] text-gray-500 mt-1">
-												Semua validasi inspeksi telah diproses atau belum
-												membutuhkan revisi.
+												Semua validasi inspeksi telah diproses atau belum membutuhkan
+												revisi.
 											</p>
 										</div>
 									</td>
@@ -837,9 +789,7 @@ export default function RevisiValidasiPage() {
 												className="px-3 py-1 text-[14px] font-semibold text-gray-800"
 												title={asset.namaAlat}
 											>
-												<span className="leading-tight line-clamp-2">
-													{asset.namaAlat}
-												</span>
+												<span className="leading-tight line-clamp-2">{asset.namaAlat}</span>
 											</td>
 											<td className="px-3 py-1 text-[14px] text-gray-600 font-medium">
 												{asset.plant}
@@ -872,11 +822,9 @@ export default function RevisiValidasiPage() {
 				<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
 					<span className="text-[11px] font-medium text-gray-500">
 						Menampilkan{" "}
-						{filteredAssets.length === 0
-							? 0
-							: (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
-						- {Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length)}{" "}
-						dari {filteredAssets.length} data (10 baris/halaman)
+						{filteredAssets.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
+						- {Math.min(currentPage * ITEMS_PER_PAGE, filteredAssets.length)} dari{" "}
+						{filteredAssets.length} data (10 baris/halaman)
 					</span>
 					<div className="flex items-center gap-1.5">
 						<button
@@ -888,22 +836,21 @@ export default function RevisiValidasiPage() {
 						</button>
 
 						<div className="flex items-center gap-1">
-							{Array.from(
-								{ length: Math.max(1, totalPages) },
-								(_, i) => i + 1,
-							).map((page) => (
-								<button
-									key={page}
-									onClick={() => setCurrentPage(page)}
-									className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
-										currentPage === page
-											? "bg-[#0A356A] text-white"
-											: "text-gray-600 hover:bg-gray-100"
-									}`}
-								>
-									{page}
-								</button>
-							))}
+							{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map(
+								(page) => (
+									<button
+										key={page}
+										onClick={() => setCurrentPage(page)}
+										className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
+											currentPage === page
+												? "bg-[#0A356A] text-white"
+												: "text-gray-600 hover:bg-gray-100"
+										}`}
+									>
+										{page}
+									</button>
+								),
+							)}
 						</div>
 
 						<button
@@ -996,8 +943,8 @@ export default function RevisiValidasiPage() {
 										Catatan Revisi dari Manajer Rendal
 									</h4>
 									<p className="text-[12px] text-purple-800 mt-1 font-medium bg-white/70 p-2 rounded border border-purple-200">
-										&quot;Mohon perbarui dan lengkapi hasil validasi beserta
-										foto pendukung tambahan sebelum pengajuan disetujui.&quot;
+										&quot;Mohon perbarui dan lengkapi hasil validasi beserta foto
+										pendukung tambahan sebelum pengajuan disetujui.&quot;
 									</p>
 								</div>
 							</div>
@@ -1204,11 +1151,7 @@ export default function RevisiValidasiPage() {
 										<label className="block text-[11px] font-semibold text-gray-700 mb-1">
 											Catatan Pemeriksaan Baru{" "}
 											<span
-												className={
-													hasilPemeriksaan === "Tidak Layak"
-														? "text-red-500"
-														: ""
-												}
+												className={hasilPemeriksaan === "Tidak Layak" ? "text-red-500" : ""}
 											>
 												{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}
 											</span>
@@ -1295,9 +1238,7 @@ export default function RevisiValidasiPage() {
 											>
 												{uploadedFiles.map((file, i) => {
 													const isImage = file.type.startsWith("image/");
-													const previewUrl = isImage
-														? URL.createObjectURL(file)
-														: null;
+													const previewUrl = isImage ? URL.createObjectURL(file) : null;
 													return (
 														<div
 															key={i}
@@ -1314,9 +1255,7 @@ export default function RevisiValidasiPage() {
 															) : (
 																<div className="h-28 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
 																	<Paperclip className="w-8 h-8 mb-2" />
-																	<span className="text-[10px] font-bold">
-																		PDF / DOC
-																	</span>
+																	<span className="text-[10px] font-bold">PDF / DOC</span>
 																</div>
 															)}
 															<div className="px-2 py-1.5 border-t border-gray-100 bg-white">

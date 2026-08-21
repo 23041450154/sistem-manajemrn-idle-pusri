@@ -3,27 +3,29 @@
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { getEquipments, getObjectTypes, getAttachmentsByEquipmentId } from "@/action/api";
+import {
+	getEquipments,
+	getObjectTypes,
+	getAttachmentsByEquipmentId,
+} from "@/action/api";
+import {
+	statusBadgeStyle,
+	statusName,
+	statusText,
+} from "@/lib/equipment-status";
 import {
 	Search,
 	RefreshCw,
 	Loader2,
 	ChevronRight,
 	AlertCircle,
-	Wrench,
-	CheckCircle2,
-	Clock,
-	XCircle,
 	Eye,
 	Send,
 	X,
 	FileText,
-	Building,
-	MapPin,
 	Info,
-	ArrowUpDown,
 } from "lucide-react";
 
 interface EquipmentItem {
@@ -45,10 +47,15 @@ interface EquipmentItem {
 	created_at?: string;
 }
 
+/** Unit Kerja hanya melihat aset siap pakai + yang sedang diperbaiki. */
+const VISIBLE_STATUSES = ["READY_TO_USE", "REPAIR"];
+
 export default function DaftarAsetPage() {
 	const [equipments, setEquipments] = useState<EquipmentItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
-	const [activeTab, setActiveTab] = useState<"semua" | "ready" | "perbaikan">("semua");
+	const [activeTab, setActiveTab] = useState<"semua" | "ready" | "perbaikan">(
+		"semua",
+	);
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [filterPlant, setFilterPlant] = useState("");
@@ -72,69 +79,87 @@ export default function DaftarAsetPage() {
 
 			if (Array.isArray(rawEqList)) {
 				const mapped: EquipmentItem[] = rawEqList
-					.filter((item: any) => {
-						const rawStatus = (typeof item.status === "object" ? item.status?.name : item.status || "").toUpperCase();
-						const isScrap =
-							item.status_id === 8 ||
-							item.status?.id === 8 ||
-							rawStatus.includes("SCRAP") ||
-							rawStatus.includes("DISPOSAL");
-						return !isScrap;
-					})
+					.filter((item: any) =>
+						VISIBLE_STATUSES.includes(
+							statusName(
+								typeof item.status === "object" ? item.status?.name : item.status,
+							),
+						),
+					)
 					.map((item: any) => {
-					let catName = "Peralatan Umum";
-					if (typeof item.object_type?.name === "string") catName = item.object_type.name;
-					else if (typeof item.objectType?.name === "string") catName = item.objectType.name;
-					else if (typeof item.object_type_name === "string") catName = item.object_type_name;
-					else if (item.object_type_id && objTypes) {
-						const found = objTypes.find((o: any) => String(o.id) === String(item.object_type_id));
-						if (found && typeof found.name === "string") catName = found.name;
-					}
+						let catName = "Peralatan Umum";
+						if (typeof item.object_type?.name === "string")
+							catName = item.object_type.name;
+						else if (typeof item.objectType?.name === "string")
+							catName = item.objectType.name;
+						else if (typeof item.object_type_name === "string")
+							catName = item.object_type_name;
+						else if (item.object_type_id && objTypes) {
+							const found = objTypes.find(
+								(o: any) => String(o.id) === String(item.object_type_id),
+							);
+							if (found && typeof found.name === "string") catName = found.name;
+						}
 
-					let plantStr = "STG & Boilers";
-					if (typeof item.plant === "string") {
-						plantStr = item.plant;
-					} else if (item.plant && typeof item.plant === "object") {
-						plantStr = item.plant.name || item.plant.plant || item.plant.description || "STG & Boilers";
-					}
+						let plantStr = "STG & Boilers";
+						if (typeof item.plant === "string") {
+							plantStr = item.plant;
+						} else if (item.plant && typeof item.plant === "object") {
+							plantStr =
+								item.plant.name ||
+								item.plant.plant ||
+								item.plant.description ||
+								"STG & Boilers";
+						}
 
-					let storageLoc = "Gudang Utama Pusri";
-					if (typeof item.storage_location === "string") storageLoc = item.storage_location;
-					else if (item.storage_location && typeof item.storage_location === "object") storageLoc = item.storage_location.name || "Gudang Utama Pusri";
+						let storageLoc = "Gudang Utama Pusri";
+						if (typeof item.storage_location === "string")
+							storageLoc = item.storage_location;
+						else if (
+							item.storage_location &&
+							typeof item.storage_location === "object"
+						)
+							storageLoc = item.storage_location.name || "Gudang Utama Pusri";
 
-					const rawStatus = (typeof item.status === "object" ? item.status?.name : item.status || "").toUpperCase();
-					let normalizedStatus = "READY TO USE";
-					if (item.status_id === 3 || rawStatus.includes("PERBAIKAN") || rawStatus.includes("MAINTENANCE") || rawStatus.includes("REPAIR")) {
-						normalizedStatus = "DALAM PERBAIKAN";
-					} else if (item.status_id === 8 || rawStatus.includes("SCRAP") || rawStatus.includes("DISPOSAL")) {
-						normalizedStatus = "SCRAP";
-					} else if (item.status_id === 1 || rawStatus.includes("REGISTERED")) {
-						normalizedStatus = "REGISTERED";
-					}
+						// Nama status kanonik dari backend (lihat lib/equipment-status).
+						const normalizedStatus = statusName(
+							typeof item.status === "object" ? item.status?.name : item.status,
+						);
 
-					let conditionStr = "Baik";
-					if (typeof item.condition === "object") conditionStr = item.condition?.name || "Baik";
-					else if (typeof item.condition === "string") conditionStr = item.condition;
+						let conditionStr = "Baik";
+						if (typeof item.condition === "object")
+							conditionStr = item.condition?.name || "Baik";
+						else if (typeof item.condition === "string")
+							conditionStr = item.condition;
 
-					return {
-						id: String(item.id),
-						equipment_code: String(item.equipment_code || item.kodeAlat || `EQ-${item.id}`),
-						name: String(item.name || item.namaAlat || "Equipment Tanpa Nama"),
-						plant: plantStr,
-						object_type_name: String(catName),
-						status_name: normalizedStatus,
-						condition_name: conditionStr.replace(/_/g, " "),
-						storage_location: String(storageLoc),
-						serial_number: String(item.serial_number || "SN-2026-X89"),
-						vendor: String(item.vendor || item.manufacturer || "PT Utama Engineering"),
-						year_of_purchase: Number(item.year_of_purchase) || 2020,
-						book_value: Number(item.book_value) || 120000000,
-						specifications: String(item.specifications || item.specification || item.description || "Spesifikasi standar operasional pabrik"),
-						capacity: String(item.capacity || "-"),
-						notes: item.notes || "-",
-						created_at: item.created_at || "-",
-					};
-				});
+						return {
+							id: String(item.id),
+							equipment_code: String(
+								item.equipment_code || item.kodeAlat || `EQ-${item.id}`,
+							),
+							name: String(item.name || item.namaAlat || "Equipment Tanpa Nama"),
+							plant: plantStr,
+							object_type_name: String(catName),
+							status_name: normalizedStatus,
+							condition_name: conditionStr.replace(/_/g, " "),
+							storage_location: String(storageLoc),
+							serial_number: String(item.serial_number || "SN-2026-X89"),
+							vendor: String(
+								item.vendor || item.manufacturer || "PT Utama Engineering",
+							),
+							year_of_purchase: Number(item.year_of_purchase) || 2020,
+							book_value: Number(item.book_value) || 120000000,
+							specifications: String(
+								item.specifications ||
+									item.specification ||
+									item.description ||
+									"Spesifikasi standar operasional pabrik",
+							),
+							capacity: String(item.capacity || "-"),
+							notes: item.notes || "-",
+							created_at: item.created_at || "-",
+						};
+					});
 
 				setEquipments(mapped);
 			} else {
@@ -152,34 +177,47 @@ export default function DaftarAsetPage() {
 		loadData();
 	}, []);
 
-	useEffect(() => {
-		setCurrentPage(1);
-	}, [activeTab, searchQuery, filterPlant, filterTipeObjek, filterKondisi]);
-
 	const plantOptions = useMemo(
-		() => [...new Set(equipments.map((e) => e.plant).filter((v) => v && v !== "-"))].sort(),
+		() =>
+			[
+				...new Set(equipments.map((e) => e.plant).filter((v) => v && v !== "-")),
+			].sort(),
 		[equipments],
 	);
 
 	const tipeObjekOptions = useMemo(
-		() => [...new Set(equipments.map((e) => e.object_type_name).filter((v) => v && v !== "-"))].sort(),
+		() =>
+			[
+				...new Set(
+					equipments.map((e) => e.object_type_name).filter((v) => v && v !== "-"),
+				),
+			].sort(),
 		[equipments],
 	);
 
 	const kondisiOptions = useMemo(
-		() => [...new Set(equipments.map((e) => e.condition_name).filter((v) => v && v !== "-"))].sort(),
+		() =>
+			[
+				...new Set(
+					equipments.map((e) => e.condition_name).filter((v) => v && v !== "-"),
+				),
+			].sort(),
 		[equipments],
 	);
 
 	const stats = useMemo(() => {
 		const total = equipments.length;
-		const ready = equipments.filter((e) => e.status_name === "READY TO USE" || e.status_name === "IDLE").length;
-		const perbaikan = equipments.filter((e) => e.status_name === "DALAM PERBAIKAN").length;
-		const scrap = equipments.filter((e) => e.status_name === "SCRAP").length;
-		return { total, ready, perbaikan, scrap };
+		const ready = equipments.filter(
+			(e) => e.status_name === "READY_TO_USE",
+		).length;
+		const perbaikan = equipments.filter((e) => e.status_name === "REPAIR").length;
+		return { total, ready, perbaikan };
 	}, [equipments]);
 
-	const handleSearch = () => setSearchQuery(searchInput);
+	const handleSearch = () => {
+		setSearchQuery(searchInput);
+		setCurrentPage(1);
+	};
 
 	const handleReset = () => {
 		setSearchInput("");
@@ -194,9 +232,9 @@ export default function DaftarAsetPage() {
 		let result = equipments;
 
 		if (activeTab === "ready") {
-			result = result.filter((e) => e.status_name === "READY TO USE" || e.status_name === "IDLE");
+			result = result.filter((e) => e.status_name === "READY_TO_USE");
 		} else if (activeTab === "perbaikan") {
-			result = result.filter((e) => e.status_name === "DALAM PERBAIKAN");
+			result = result.filter((e) => e.status_name === "REPAIR");
 		}
 
 		if (searchQuery.trim()) {
@@ -212,11 +250,20 @@ export default function DaftarAsetPage() {
 		}
 
 		if (filterPlant) result = result.filter((item) => item.plant === filterPlant);
-		if (filterTipeObjek) result = result.filter((item) => item.object_type_name === filterTipeObjek);
-		if (filterKondisi) result = result.filter((item) => item.condition_name === filterKondisi);
+		if (filterTipeObjek)
+			result = result.filter((item) => item.object_type_name === filterTipeObjek);
+		if (filterKondisi)
+			result = result.filter((item) => item.condition_name === filterKondisi);
 
 		return result;
-	}, [equipments, activeTab, searchQuery, filterPlant, filterTipeObjek, filterKondisi]);
+	}, [
+		equipments,
+		activeTab,
+		searchQuery,
+		filterPlant,
+		filterTipeObjek,
+		filterKondisi,
+	]);
 
 	const ITEMS_PER_PAGE = 10;
 	const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
@@ -241,7 +288,11 @@ export default function DaftarAsetPage() {
 
 	const formatRupiah = (val?: number) => {
 		if (!val) return "Rp 0";
-		return new Intl.NumberFormat("id-ID", { style: "currency", currency: "IDR", maximumFractionDigits: 0 }).format(val);
+		return new Intl.NumberFormat("id-ID", {
+			style: "currency",
+			currency: "IDR",
+			maximumFractionDigits: 0,
+		}).format(val);
 	};
 
 	return (
@@ -259,7 +310,8 @@ export default function DaftarAsetPage() {
 							Daftar Peralatan Idle
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar seluruh peralatan idle yang tersedia dan dapat diajukan untuk pemakaian kembali oleh Unit Kerja Operasi.
+							Peralatan idle yang siap digunakan dan yang sedang dalam perbaikan.
+							Permintaan pemakaian hanya bisa diajukan untuk aset siap pakai.
 						</p>
 					</div>
 					<button
@@ -272,7 +324,6 @@ export default function DaftarAsetPage() {
 					</button>
 				</div>
 			</div>
-
 
 			{/* Main Table Card */}
 			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4">
@@ -292,7 +343,9 @@ export default function DaftarAsetPage() {
 						<span>Semua Aset</span>
 						<span
 							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
-								activeTab === "semua" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"
+								activeTab === "semua"
+									? "bg-[#0A356A] text-white"
+									: "bg-gray-100 text-gray-600"
 							}`}
 						>
 							{stats.total}
@@ -313,7 +366,9 @@ export default function DaftarAsetPage() {
 						<span>Siap Pakai</span>
 						<span
 							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
-								activeTab === "ready" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"
+								activeTab === "ready"
+									? "bg-[#0A356A] text-white"
+									: "bg-gray-100 text-gray-600"
 							}`}
 						>
 							{stats.ready}
@@ -334,7 +389,9 @@ export default function DaftarAsetPage() {
 						<span>Dalam Perbaikan</span>
 						<span
 							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
-								activeTab === "perbaikan" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"
+								activeTab === "perbaikan"
+									? "bg-[#0A356A] text-white"
+									: "bg-gray-100 text-gray-600"
 							}`}
 						>
 							{stats.perbaikan}
@@ -369,7 +426,10 @@ export default function DaftarAsetPage() {
 					<div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
 						<select
 							value={filterPlant}
-							onChange={(e) => setFilterPlant(e.target.value)}
+							onChange={(e) => {
+								setFilterPlant(e.target.value);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Plant</option>
@@ -382,7 +442,10 @@ export default function DaftarAsetPage() {
 
 						<select
 							value={filterTipeObjek}
-							onChange={(e) => setFilterTipeObjek(e.target.value)}
+							onChange={(e) => {
+								setFilterTipeObjek(e.target.value);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Tipe</option>
@@ -395,7 +458,10 @@ export default function DaftarAsetPage() {
 
 						<select
 							value={filterKondisi}
-							onChange={(e) => setFilterKondisi(e.target.value)}
+							onChange={(e) => {
+								setFilterKondisi(e.target.value);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Kondisi</option>
@@ -520,17 +586,9 @@ export default function DaftarAsetPage() {
 										</td>
 										<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
 											<span
-												className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-													asset.status_name === "READY TO USE"
-														? "bg-emerald-100 text-emerald-800"
-														: asset.status_name === "DALAM PERBAIKAN"
-															? "bg-amber-100 text-amber-800"
-															: asset.status_name === "SCRAP"
-																? "bg-rose-100 text-rose-800"
-																: "bg-blue-100 text-blue-800"
-												}`}
+												className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${statusBadgeStyle(asset.status_name)}`}
 											>
-												{asset.status_name}
+												{statusText(asset.status_name)}
 											</span>
 										</td>
 										<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
@@ -543,13 +601,23 @@ export default function DaftarAsetPage() {
 													<Eye className="w-4 h-4" />
 												</button>
 
-												<Link
-													href={`/unit-kerja/permintaan?equipment_id=${asset.id}`}
-													className="flex items-center gap-1 px-2.5 py-1 bg-[#0A356A] text-white text-[12px] font-semibold rounded-lg hover:bg-[#062854] transition-colors shadow-sm"
-												>
-													<Send className="w-3 h-3" />
-													<span>Permintaan</span>
-												</Link>
+												{asset.status_name === "READY_TO_USE" ? (
+													<Link
+														href={`/unit-kerja/permintaan?equipment_id=${asset.id}`}
+														className="flex items-center gap-1 px-2.5 py-1 bg-[#0A356A] text-white text-[12px] font-semibold rounded-lg hover:bg-[#062854] transition-colors shadow-sm"
+													>
+														<Send className="w-3 h-3" />
+														<span>Permintaan</span>
+													</Link>
+												) : (
+													<span
+														className="flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-400 text-[12px] font-semibold rounded-lg cursor-not-allowed"
+														title="Aset sedang dalam perbaikan, belum bisa diajukan"
+													>
+														<Send className="w-3 h-3" />
+														<span>Permintaan</span>
+													</span>
+												)}
 											</div>
 										</td>
 									</tr>
@@ -571,7 +639,11 @@ export default function DaftarAsetPage() {
 							<span className="font-semibold text-gray-800">
 								{Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)}
 							</span>{" "}
-							dari <span className="font-semibold text-gray-800">{filteredItems.length}</span> peralatan
+							dari{" "}
+							<span className="font-semibold text-gray-800">
+								{filteredItems.length}
+							</span>{" "}
+							peralatan
 						</div>
 
 						<div className="flex items-center gap-1">
@@ -608,7 +680,9 @@ export default function DaftarAsetPage() {
 								<Info className="w-5 h-5 text-blue-300" />
 								<div>
 									<h2 className="text-base font-bold">Detail Peralatan Idle</h2>
-									<p className="text-[11px] text-blue-200">{selectedAsset.equipment_code}</p>
+									<p className="text-[11px] text-blue-200">
+										{selectedAsset.equipment_code}
+									</p>
 								</div>
 							</div>
 							<button
@@ -623,61 +697,105 @@ export default function DaftarAsetPage() {
 							{/* Core Info Box */}
 							<div className="bg-gray-50 border border-gray-200 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-[13px]">
 								<div>
-									<span className="text-gray-500 block text-[11px] font-semibold uppercase">Nama Peralatan</span>
-									<span className="font-bold text-gray-900 text-base">{selectedAsset.name}</span>
+									<span className="text-gray-500 block text-[11px] font-semibold uppercase">
+										Nama Peralatan
+									</span>
+									<span className="font-bold text-gray-900 text-base">
+										{selectedAsset.name}
+									</span>
 								</div>
 								<div>
-									<span className="text-gray-500 block text-[11px] font-semibold uppercase">Kode Alat</span>
-									<span className="font-mono font-semibold text-[#0A356A]">{selectedAsset.equipment_code}</span>
+									<span className="text-gray-500 block text-[11px] font-semibold uppercase">
+										Kode Alat
+									</span>
+									<span className="font-mono font-semibold text-[#0A356A]">
+										{selectedAsset.equipment_code}
+									</span>
 								</div>
 								<div>
-									<span className="text-gray-500 block text-[11px] font-semibold uppercase">Tipe Objek</span>
-									<span className="font-medium text-gray-800">{selectedAsset.object_type_name}</span>
+									<span className="text-gray-500 block text-[11px] font-semibold uppercase">
+										Tipe Objek
+									</span>
+									<span className="font-medium text-gray-800">
+										{selectedAsset.object_type_name}
+									</span>
 								</div>
 								<div>
-									<span className="text-gray-500 block text-[11px] font-semibold uppercase">Plant</span>
-									<span className="font-medium text-gray-800">{selectedAsset.plant}</span>
+									<span className="text-gray-500 block text-[11px] font-semibold uppercase">
+										Plant
+									</span>
+									<span className="font-medium text-gray-800">
+										{selectedAsset.plant}
+									</span>
 								</div>
 								<div>
-									<span className="text-gray-500 block text-[11px] font-semibold uppercase">Lokasi Penyimpanan</span>
-									<span className="font-medium text-gray-800">{selectedAsset.storage_location}</span>
+									<span className="text-gray-500 block text-[11px] font-semibold uppercase">
+										Lokasi Penyimpanan
+									</span>
+									<span className="font-medium text-gray-800">
+										{selectedAsset.storage_location}
+									</span>
 								</div>
 								<div>
-									<span className="text-gray-500 block text-[11px] font-semibold uppercase">Kondisi</span>
-									<span className="font-medium text-emerald-700">{selectedAsset.condition_name}</span>
+									<span className="text-gray-500 block text-[11px] font-semibold uppercase">
+										Kondisi
+									</span>
+									<span className="font-medium text-emerald-700">
+										{selectedAsset.condition_name}
+									</span>
 								</div>
 							</div>
 
 							{/* Specs & Additional Info */}
 							<div className="space-y-3 text-[13px]">
-								<h3 className="font-bold text-gray-900 border-b border-gray-200 pb-1 text-[14px]">Spesifikasi Teknis</h3>
+								<h3 className="font-bold text-gray-900 border-b border-gray-200 pb-1 text-[14px]">
+									Spesifikasi Teknis
+								</h3>
 								<p className="text-gray-700 bg-blue-50/50 p-3 rounded-lg border border-blue-100 whitespace-pre-wrap">
 									{selectedAsset.specifications}
 								</p>
 
 								<div className="grid grid-cols-2 gap-4 pt-2">
 									<div>
-										<span className="text-gray-500 text-[11px] font-semibold uppercase block">Serial Number</span>
-										<span className="font-medium text-gray-800">{selectedAsset.serial_number}</span>
+										<span className="text-gray-500 text-[11px] font-semibold uppercase block">
+											Serial Number
+										</span>
+										<span className="font-medium text-gray-800">
+											{selectedAsset.serial_number}
+										</span>
 									</div>
 									<div>
-										<span className="text-gray-500 text-[11px] font-semibold uppercase block">Vendor / Pabrikan</span>
-										<span className="font-medium text-gray-800">{selectedAsset.vendor}</span>
+										<span className="text-gray-500 text-[11px] font-semibold uppercase block">
+											Vendor / Pabrikan
+										</span>
+										<span className="font-medium text-gray-800">
+											{selectedAsset.vendor}
+										</span>
 									</div>
 									<div>
-										<span className="text-gray-500 text-[11px] font-semibold uppercase block">Tahun Pembelian</span>
-										<span className="font-medium text-gray-800">{selectedAsset.year_of_purchase}</span>
+										<span className="text-gray-500 text-[11px] font-semibold uppercase block">
+											Tahun Pembelian
+										</span>
+										<span className="font-medium text-gray-800">
+											{selectedAsset.year_of_purchase}
+										</span>
 									</div>
 									<div>
-										<span className="text-gray-500 text-[11px] font-semibold uppercase block">Nilai Buku</span>
-										<span className="font-medium text-gray-800">{formatRupiah(selectedAsset.book_value)}</span>
+										<span className="text-gray-500 text-[11px] font-semibold uppercase block">
+											Nilai Buku
+										</span>
+										<span className="font-medium text-gray-800">
+											{formatRupiah(selectedAsset.book_value)}
+										</span>
 									</div>
 								</div>
 							</div>
 
 							{/* Lampiran Files */}
 							<div className="space-y-2 pt-2">
-								<h3 className="font-bold text-gray-900 border-b border-gray-200 pb-1 text-[14px]">Dokumen & Foto Lampiran</h3>
+								<h3 className="font-bold text-gray-900 border-b border-gray-200 pb-1 text-[14px]">
+									Dokumen & Foto Lampiran
+								</h3>
 								{isLoadingAttachments ? (
 									<div className="flex items-center gap-2 text-gray-500 py-3">
 										<Loader2 className="w-4 h-4 animate-spin text-[#0A356A]" />
@@ -694,12 +812,16 @@ export default function DaftarAsetPage() {
 												className="flex items-center gap-2 p-2 bg-gray-50 border border-gray-200 rounded-lg text-xs font-medium text-blue-700 hover:bg-blue-50 transition-colors"
 											>
 												<FileText className="w-4 h-4 shrink-0 text-blue-600" />
-												<span className="truncate">{att.file_name || att.name || `Lampiran #${idx + 1}`}</span>
+												<span className="truncate">
+													{att.file_name || att.name || `Lampiran #${idx + 1}`}
+												</span>
 											</a>
 										))}
 									</div>
 								) : (
-									<p className="text-xs text-gray-400 italic py-1">Tidak ada dokumen atau foto lampiran.</p>
+									<p className="text-xs text-gray-400 italic py-1">
+										Tidak ada dokumen atau foto lampiran.
+									</p>
 								)}
 							</div>
 						</div>
@@ -712,13 +834,20 @@ export default function DaftarAsetPage() {
 								Tutup
 							</button>
 
-							<Link
-								href={`/unit-kerja/permintaan?equipment_id=${selectedAsset.id}`}
-								className="flex items-center gap-1.5 px-4 py-2 bg-[#0A356A] text-white text-xs font-bold rounded-lg hover:bg-[#062854] transition-colors shadow-sm"
-							>
-								<Send className="w-3.5 h-3.5" />
-								<span>Ajukan Permintaan Aset Ini</span>
-							</Link>
+							{selectedAsset.status_name === "READY_TO_USE" ? (
+								<Link
+									href={`/unit-kerja/permintaan?equipment_id=${selectedAsset.id}`}
+									className="flex items-center gap-1.5 px-4 py-2 bg-[#0A356A] text-white text-xs font-bold rounded-lg hover:bg-[#062854] transition-colors shadow-sm"
+								>
+									<Send className="w-3.5 h-3.5" />
+									<span>Ajukan Permintaan Aset Ini</span>
+								</Link>
+							) : (
+								<span className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed">
+									<AlertCircle className="w-3.5 h-3.5" />
+									<span>Belum Bisa Diajukan (Dalam Perbaikan)</span>
+								</span>
+							)}
 						</div>
 					</div>
 				</div>

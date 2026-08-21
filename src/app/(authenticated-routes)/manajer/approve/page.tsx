@@ -25,6 +25,11 @@ import {
 	getValidations,
 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
+import {
+	statusBadgeStyle,
+	statusName,
+	statusText,
+} from "@/lib/equipment-status";
 
 type Lookup = {
 	id: number;
@@ -116,13 +121,9 @@ export default function ManajerApprovePage() {
 		const fetchData = async () => {
 			try {
 				setIsLoading(true);
-				const [approvalsData, equipmentsData, user, plantsData] =
-					await Promise.all([
-						getApprovals(),
-						getEquipments(),
-						getCurrentUserAction(),
-						getPlants(),
-					]);
+				const [approvalsData, equipmentsData, user, plantsData] = await Promise.all(
+					[getApprovals(), getEquipments(), getCurrentUserAction(), getPlants()],
+				);
 				const currentUserNPP = user?.user?.npp || "";
 				if (Array.isArray(plantsData)) {
 					setPlants(plantsData);
@@ -145,13 +146,11 @@ export default function ManajerApprovePage() {
 						APPROVAL_STATUS_LABEL[approvalStatus] ||
 						approvalStatus;
 
-					let statusAset = (
-						item.equipment_status ||
-						eq?.status?.name ||
-						"VALIDATED"
-					).toUpperCase();
+					let statusAset = statusName(
+						item.equipment_status || eq?.status?.name || "VALIDATED",
+					);
 					if (approvalStatus === "APPROVED") {
-						statusAset = "READY TO USE";
+						statusAset = "READY_TO_USE";
 					}
 
 					return {
@@ -170,8 +169,7 @@ export default function ManajerApprovePage() {
 						approvalStatus: approvalStatus,
 						statusLabel: statusLabel,
 						inspekturNPP: (() => {
-							const p =
-								eq?.updated_by_npp || eq?.created_by_npp || currentUserNPP;
+							const p = eq?.updated_by_npp || eq?.created_by_npp || currentUserNPP;
 							if (!p) return "-";
 							return /^\d/.test(p) ? `NPP${p}` : p;
 						})(),
@@ -279,7 +277,7 @@ export default function ManajerApprovePage() {
 					req.kodeAset === selectedAsset.kodeAset
 						? {
 								...req,
-								statusAset: "READY TO USE",
+								statusAset: "READY_TO_USE",
 								approvalStatus: "APPROVED",
 								statusLabel: APPROVAL_STATUS_LABEL.APPROVED,
 							}
@@ -291,8 +289,7 @@ export default function ManajerApprovePage() {
 			} else {
 				setNotification({
 					type: "error",
-					message:
-						"Gagal menyetujui aset: " + (res.message || "Silakan coba lagi."),
+					message: "Gagal menyetujui aset: " + (res.message || "Silakan coba lagi."),
 				});
 				setTimeout(() => setNotification(null), 3000);
 			}
@@ -359,8 +356,7 @@ export default function ManajerApprovePage() {
 			let matchDate = true;
 			if (startDate && endDate) {
 				const reqDate = new Date(req.tanggalPengajuan);
-				matchDate =
-					reqDate >= new Date(startDate) && reqDate <= new Date(endDate);
+				matchDate = reqDate >= new Date(startDate) && reqDate <= new Date(endDate);
 			} else if (startDate) {
 				matchDate = req.tanggalPengajuan.startsWith(startDate);
 			}
@@ -386,28 +382,14 @@ export default function ManajerApprovePage() {
 		setCurrentPage(1);
 	};
 
-	const getStatusAsetBadge = (status: string) => {
-		let displayStatus = (status || "").replace(/_/g, " ");
-		if (
-			displayStatus === "IDLE" ||
-			displayStatus === "READY TO REUSE" ||
-			displayStatus === "REUSED"
-		) {
-			displayStatus = "READY TO USE";
-		}
-		if (status === "VALIDATED" || displayStatus === "READY TO USE") {
-			return (
-				<span className="bg-[#DCFCE7] text-[#16A34A] px-3 py-1 rounded-full text-[11px] font-semibold">
-					{displayStatus}
-				</span>
-			);
-		}
-		return (
-			<span className="bg-gray-100 text-gray-700 px-3 py-1 rounded-full text-[11px] font-semibold">
-				{displayStatus}
-			</span>
-		);
-	};
+	// Teks badge = nama status dari backend apa adanya (lihat lib/equipment-status).
+	const getStatusAsetBadge = (status: string) => (
+		<span
+			className={`${statusBadgeStyle(status)} px-3 py-1 rounded-full text-[11px] font-semibold`}
+		>
+			{statusText(status)}
+		</span>
+	);
 
 	// Warna badge dipilih dari enum backend; teksnya memakai label dari backend.
 	const APPROVAL_BADGE_STYLE: Record<string, string> = {
@@ -435,9 +417,7 @@ export default function ManajerApprovePage() {
 					) : (
 						<XCircle className="w-4 h-4 text-red-400" />
 					)}
-					<span className="text-[13px] font-medium">
-						{notification.message}
-					</span>
+					<span className="text-[13px] font-medium">{notification.message}</span>
 				</div>
 			)}
 
@@ -578,10 +558,7 @@ export default function ManajerApprovePage() {
 								</tr>
 							) : (
 								paginatedRequests.map((req, index) => (
-									<tr
-										key={req.id}
-										className="hover:bg-blue-50/30 transition-colors"
-									>
+									<tr key={req.id} className="hover:bg-blue-50/30 transition-colors">
 										<td className="px-2 py-2 text-[12px] text-gray-500 font-medium text-center">
 											{index + 1 + (page - 1) * ITEMS_PER_PAGE}
 										</td>
@@ -626,10 +603,8 @@ export default function ManajerApprovePage() {
 					<div className="px-6 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
 						<span className="text-[12px] font-medium text-gray-500">
 							Menampilkan{" "}
-							{filteredRequests.length === 0
-								? 0
-								: (page - 1) * ITEMS_PER_PAGE + 1}{" "}
-							- {Math.min(page * ITEMS_PER_PAGE, filteredRequests.length)} dari{" "}
+							{filteredRequests.length === 0 ? 0 : (page - 1) * ITEMS_PER_PAGE + 1} -{" "}
+							{Math.min(page * ITEMS_PER_PAGE, filteredRequests.length)} dari{" "}
 							{filteredRequests.length} data (10 baris/halaman)
 						</span>
 						{totalPages > 1 && (
@@ -642,26 +617,22 @@ export default function ManajerApprovePage() {
 									Prev
 								</button>
 								<div className="flex items-center gap-1">
-									{Array.from({ length: totalPages }, (_, i) => i + 1).map(
-										(page) => (
-											<button
-												key={page}
-												onClick={() => setCurrentPage(page)}
-												className={`w-7 h-7 rounded-md text-[12px] font-bold flex items-center justify-center transition-colors ${
-													currentPage === page
-														? "bg-[#0A356A] text-white"
-														: "text-gray-600 hover:bg-gray-100"
-												}`}
-											>
-												{page}
-											</button>
-										),
-									)}
+									{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+										<button
+											key={page}
+											onClick={() => setCurrentPage(page)}
+											className={`w-7 h-7 rounded-md text-[12px] font-bold flex items-center justify-center transition-colors ${
+												currentPage === page
+													? "bg-[#0A356A] text-white"
+													: "text-gray-600 hover:bg-gray-100"
+											}`}
+										>
+											{page}
+										</button>
+									))}
 								</div>
 								<button
-									onClick={() =>
-										setCurrentPage((p) => Math.min(totalPages, p + 1))
-									}
+									onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
 									disabled={page === totalPages}
 									className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
 								>
@@ -767,9 +738,7 @@ export default function ManajerApprovePage() {
 										</p>
 									</div>
 									<div>
-										<p className="text-[12px] text-gray-500 font-medium mb-1">
-											Plant:
-										</p>
+										<p className="text-[12px] text-gray-500 font-medium mb-1">Plant:</p>
 										<p className="text-[13px] font-bold text-gray-900">
 											{selectedAsset.plant?.name ?? "-"}
 										</p>
@@ -779,9 +748,7 @@ export default function ManajerApprovePage() {
 										<p className="text-[12px] text-gray-500 font-medium mb-1">
 											Functional Location:
 										</p>
-										<p className="text-[13px] font-bold text-gray-900">
-											FL-P1-0023
-										</p>
+										<p className="text-[13px] font-bold text-gray-900">FL-P1-0023</p>
 									</div>
 									<div>
 										<p className="text-[12px] text-gray-500 font-medium mb-1">
@@ -824,7 +791,7 @@ export default function ManajerApprovePage() {
 									<div className="mt-4">
 										<p className="text-[12px] text-gray-500 font-medium mb-2">
 											Foto Dokumentasi:
-									</p>
+										</p>
 										<div className="grid grid-cols-3 gap-3">
 											{attachments.map((att: any, idx: number) => (
 												<div
@@ -927,16 +894,13 @@ export default function ManajerApprovePage() {
 										</p>
 										<p className="text-[13px] font-bold text-gray-900">
 											{validationDetail?.start_at
-												? new Date(validationDetail.start_at).toLocaleString(
-														"id-ID",
-														{
-															day: "numeric",
-															month: "short",
-															year: "numeric",
-															hour: "2-digit",
-															minute: "2-digit",
-														},
-													)
+												? new Date(validationDetail.start_at).toLocaleString("id-ID", {
+														day: "numeric",
+														month: "short",
+														year: "numeric",
+														hour: "2-digit",
+														minute: "2-digit",
+													})
 												: "-"}
 										</p>
 									</div>
@@ -983,9 +947,7 @@ export default function ManajerApprovePage() {
 										</p>
 										<p className="text-[13px] text-gray-800">
 											{equipmentDetail?.status?.name || (
-												<span className="text-gray-400 italic">
-													Belum ada data
-												</span>
+												<span className="text-gray-400 italic">Belum ada data</span>
 											)}
 										</p>
 										{equipmentDetail?.status?.description && (
@@ -1024,9 +986,7 @@ export default function ManajerApprovePage() {
 									return (
 										<div className={`border rounded-lg p-4 mb-5 ${tone.box}`}>
 											<div className="flex items-center gap-2 mb-2">
-												<div
-													className={`w-2 h-2 rounded-full ${tone.dot}`}
-												></div>
+												<div className={`w-2 h-2 rounded-full ${tone.dot}`}></div>
 												<p
 													className={`text-[13px] font-bold uppercase tracking-wide ${tone.text}`}
 												>
@@ -1052,9 +1012,7 @@ export default function ManajerApprovePage() {
 													{validationDetail?.notes ? (
 														`"${validationDetail.notes}"`
 													) : (
-														<span className="text-gray-400">
-															Belum ada catatan
-														</span>
+														<span className="text-gray-400">Belum ada catatan</span>
 													)}
 												</p>
 
@@ -1100,24 +1058,19 @@ export default function ManajerApprovePage() {
 										</div>
 									)}
 									<div className="flex-1 border border-gray-200 rounded-lg bg-gray-50 p-3 text-[11px] text-gray-500 overflow-y-auto h-24">
-										<p className="font-bold text-gray-700 mb-1">
-											Riwayat Audit (Log):
-										</p>
+										<p className="font-bold text-gray-700 mb-1">Riwayat Audit (Log):</p>
 										<ul className="list-disc pl-4 space-y-1">
 											{approvalSteps.length > 0 ? (
 												approvalSteps.map((step) => (
 													<li key={step.id}>
 														{step.approval_date
-															? new Date(step.approval_date).toLocaleString(
-																	"en-GB",
-																	{
-																		day: "2-digit",
-																		month: "short",
-																		year: "numeric",
-																		hour: "2-digit",
-																		minute: "2-digit",
-																	},
-																)
+															? new Date(step.approval_date).toLocaleString("en-GB", {
+																	day: "2-digit",
+																	month: "short",
+																	year: "numeric",
+																	hour: "2-digit",
+																	minute: "2-digit",
+																})
 															: "-"}{" "}
 														- {step.status_label || step.approval_status}{" "}
 														{step.approval_name
@@ -1197,13 +1150,11 @@ export default function ManajerApprovePage() {
 						</h3>
 
 						<p className="text-[13px] text-gray-600 mb-6 leading-relaxed">
-							Apakah Anda yakin ingin menyetujui hasil validasi ini? Setelah
-							disetujui,{" "}
-							<span className="font-bold">{selectedAsset.kodeAset}</span> aset
-							akan berubah menjadi{" "}
-							<span className="font-bold text-green-700">READY TO USE</span>,
-							proses persetujuan selesai, dan pengajuan tidak lagi muncul pada
-							Inbox Approval.
+							Apakah Anda yakin ingin menyetujui hasil validasi ini? Setelah disetujui,{" "}
+							<span className="font-bold">{selectedAsset.kodeAset}</span> aset akan
+							berubah menjadi{" "}
+							<span className="font-bold text-green-700">READY_TO_USE</span>, proses
+							persetujuan selesai, dan pengajuan tidak lagi muncul pada Inbox Approval.
 						</p>
 
 						<div className="flex items-center gap-3 w-full justify-center">
@@ -1235,10 +1186,7 @@ export default function ManajerApprovePage() {
 					<div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl p-6 flex flex-col items-start animate-in zoom-in-95 duration-200">
 						<div className="flex items-center gap-3 mb-3">
 							<div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-								<RefreshCw
-									className="w-4 h-4 text-purple-600"
-									strokeWidth={3}
-								/>
+								<RefreshCw className="w-4 h-4 text-purple-600" strokeWidth={3} />
 							</div>
 							<h3 className="text-[16px] font-bold text-gray-900">
 								Minta Revisi Validasi
@@ -1246,9 +1194,9 @@ export default function ManajerApprovePage() {
 						</div>
 
 						<p className="text-[13px] text-gray-600 mb-5 leading-relaxed text-left">
-							Apakah Anda yakin ingin meminta revisi? Tim Inspeksi Teknik akan
-							dapat memperbarui hasil validasi berdasarkan catatan revisi yang
-							Anda berikan di bawah ini.
+							Apakah Anda yakin ingin meminta revisi? Tim Inspeksi Teknik akan dapat
+							memperbarui hasil validasi berdasarkan catatan revisi yang Anda berikan
+							di bawah ini.
 						</p>
 
 						<div className="text-left w-full mb-6">

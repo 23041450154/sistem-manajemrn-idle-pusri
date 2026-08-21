@@ -12,6 +12,7 @@ import {
 	createDisposalRequest,
 	getValidations,
 } from "@/action/api";
+import { statusName } from "@/lib/equipment-status";
 import {
 	Trash2,
 	Search,
@@ -128,16 +129,15 @@ export default function VerifikasiDisposalPage() {
 				const objectTypeName =
 					item.object_type?.name || item.objectType?.name || "Belum Ditentukan";
 
-				// Normalize status: replace spaces with underscores, uppercase
-				let normalizedStatus = rawStatus.toUpperCase().replace(/\s+/g, "_");
+				// Nama status kanonik dari backend (lihat lib/equipment-status).
+				let normalizedStatus = statusName(rawStatus);
 
-				// If equipment has a disposal-recommending inspection, override status
+				// Aset dengan hasil inspeksi tidak layak dianggap DISPOSAL_RECOMMENDED
+				// walau status di DB belum sempat diperbarui.
 				const eqId = item.id?.toString() || "-";
 				if (
 					disposalInspectedIds.has(eqId) &&
-					!["DISPOSAL_RECOMMENDED", "SCRAP", "RUSAK_BERAT"].includes(
-						normalizedStatus,
-					)
+					!["DISPOSAL_RECOMMENDED", "SCRAP"].includes(normalizedStatus)
 				) {
 					normalizedStatus = "DISPOSAL_RECOMMENDED";
 				}
@@ -193,19 +193,9 @@ export default function VerifikasiDisposalPage() {
 	const filteredAssets = useMemo(() => {
 		const submittedIds = new Set(disposals.map((d) => String(d.equipment_id)));
 		const query = search.toLowerCase().trim();
-		const disposalStatuses = new Set([
-			"DISPOSAL_RECOMMENDED",
-			"DISPOSAL RECOMMENDED",
-			"SCRAP",
-			"RUSAK_BERAT",
-			"RUSAK BERAT",
-			"CONDEMNED",
-			"DISPOSED",
-		]);
+		const disposalStatuses = new Set(["DISPOSAL_RECOMMENDED", "SCRAP"]);
 		return equipments.filter((eq) => {
-			const normalized = eq.statusAset.replace(/\s+/g, "_");
-			const isRecommended =
-				disposalStatuses.has(eq.statusAset) || disposalStatuses.has(normalized);
+			const isRecommended = disposalStatuses.has(statusName(eq.statusAset));
 			const isNotSubmitted = !submittedIds.has(eq.id);
 			const matchSearch =
 				!query ||

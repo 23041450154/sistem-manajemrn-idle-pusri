@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getEquipments, getReuseRequests } from "@/action/api";
+import { statusName } from "@/lib/equipment-status";
 import { Package, Send, ArrowRight, RefreshCw } from "lucide-react";
 import styles from "@/app/(authenticated-routes)/dashboard.module.css";
 
@@ -81,63 +82,39 @@ export default function UnitKerjaDashboardPage() {
 
 			const mappedEquipments: EquipmentItem[] = (rawEqList || []).map(
 				(item: ApiRow) => {
-					const rawStatus = str(item.status, "").toUpperCase();
-					const isReady =
-						rawStatus.includes("READY") ||
-						rawStatus.includes("SIAP") ||
-						rawStatus.includes("VALID");
-
 					return {
 						id: String(item.id),
 						equipment_code: str(item.equipment_code, `EQ-${item.id}`),
 						name: str(item.name, item.nama),
 						plant: str(item.plant),
-						status_name: isReady ? "READY_TO_REUSE" : "IDLE",
+						status_name: statusName(str(item.status, "")),
 					};
 				},
 			);
 
-			const reqList: ReuseRequestItem[] = (rawRequests || []).map(
-				(r: ApiRow) => {
-					const equipment = (r.equipment ?? {}) as ApiRow;
-					return {
-						id: String(r.id),
-						request_number: str(
-							r.request_number,
-							r.requestNumber,
-							`REQ-${r.id}`,
-						),
-						equipment_code: str(
-							r.equipment_code,
-							r.equipmentCode,
-							equipment.equipment_code,
-						),
-						equipment_name: str(
-							r.equipment_name,
-							r.equipmentName,
-							equipment.name,
-						),
-						installation_location: str(
-							r.installation_location,
-							r.installationLocation,
-						),
-						estimated_cost_avoidance:
-							Number(r.estimated_cost_avoidance ?? r.estimatedCostAvoidance) ||
-							0,
-						status: str(
-							r.status,
-							r.approval_status,
-							r.approvalStatus,
-							"PENDING",
-						),
-					};
-				},
-			);
+			const reqList: ReuseRequestItem[] = (rawRequests || []).map((r: ApiRow) => {
+				const equipment = (r.equipment ?? {}) as ApiRow;
+				return {
+					id: String(r.id),
+					request_number: str(r.request_number, r.requestNumber, `REQ-${r.id}`),
+					equipment_code: str(
+						r.equipment_code,
+						r.equipmentCode,
+						equipment.equipment_code,
+					),
+					equipment_name: str(r.equipment_name, r.equipmentName, equipment.name),
+					installation_location: str(
+						r.installation_location,
+						r.installationLocation,
+					),
+					estimated_cost_avoidance:
+						Number(r.estimated_cost_avoidance ?? r.estimatedCostAvoidance) || 0,
+					status: str(r.status, r.approval_status, r.approvalStatus, "PENDING"),
+				};
+			});
 
 			setEquipments(
-				mappedEquipments.filter(
-					(e) => e.status_name === "READY_TO_REUSE" || e.status_name === "IDLE",
-				),
+				mappedEquipments.filter((e) => e.status_name === "READY_TO_USE"),
 			);
 			setReuseRequests(reqList);
 		} catch (err) {
@@ -198,8 +175,8 @@ export default function UnitKerjaDashboardPage() {
 				<div>
 					<h1 className={styles.pageTitle}>Dashboard Unit Kerja Operasi</h1>
 					<p className={styles.pageSubtitle}>
-						Ketersediaan aset idle dan status pengajuan penggunaan kembali dari
-						unit kerja Anda.
+						Ketersediaan aset idle dan status pengajuan penggunaan kembali dari unit
+						kerja Anda.
 					</p>
 				</div>
 				<div className={styles.headerActions}>
@@ -208,9 +185,7 @@ export default function UnitKerjaDashboardPage() {
 						disabled={isLoading}
 						className={styles.btnOutline}
 					>
-						<RefreshCw
-							className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}
-						/>
+						<RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
 						Muat Ulang
 					</button>
 					<Link href="/unit-kerja/katalog" className={styles.btnPrimary}>
@@ -292,9 +267,7 @@ export default function UnitKerjaDashboardPage() {
 									<tr>
 										<td colSpan={4} className="px-4 py-10 text-center">
 											<RefreshCw className="w-5 h-5 text-[#0A356A] animate-spin mx-auto mb-2" />
-											<p className="text-[13px] text-[#64748B]">
-												Memuat pengajuan...
-											</p>
+											<p className="text-[13px] text-[#64748B]">Memuat pengajuan...</p>
 										</td>
 									</tr>
 								) : reuseRequests.length === 0 ? (
@@ -313,10 +286,7 @@ export default function UnitKerjaDashboardPage() {
 									</tr>
 								) : (
 									reuseRequests.slice(0, 5).map((req) => (
-										<tr
-											key={req.id}
-											className="hover:bg-[#F2F3F4] transition-colors"
-										>
+										<tr key={req.id} className="hover:bg-[#F2F3F4] transition-colors">
 											<td className="px-4 py-2.5 text-[13px] text-[#0A356A] font-medium whitespace-nowrap tabular-nums">
 												{req.request_number}
 											</td>
@@ -358,9 +328,7 @@ export default function UnitKerjaDashboardPage() {
 
 					<div className="divide-y divide-[#E6E8EA]">
 						{isLoading ? (
-							<p className="px-5 py-6 text-[13px] text-[#64748B]">
-								Memuat katalog...
-							</p>
+							<p className="px-5 py-6 text-[13px] text-[#64748B]">Memuat katalog...</p>
 						) : equipments.length === 0 ? (
 							<p className="px-5 py-6 text-[13px] text-[#64748B]">
 								Tidak ada aset siap pakai saat ini.
@@ -372,10 +340,7 @@ export default function UnitKerjaDashboardPage() {
 									className="px-5 py-3 flex items-center justify-between gap-3 hover:bg-[#F2F3F4] transition-colors"
 								>
 									<div className="min-w-0">
-										<p
-											className="text-[13px] text-[#0F172A] truncate"
-											title={item.name}
-										>
+										<p className="text-[13px] text-[#0F172A] truncate" title={item.name}>
 											{item.name}
 										</p>
 										<p className="text-[12px] text-[#64748B] tabular-nums truncate">

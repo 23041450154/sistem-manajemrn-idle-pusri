@@ -9,6 +9,7 @@ import {
 	getApprovals,
 	approveRevalidationEquipment,
 } from "@/action/api";
+import { statusName as canonStatus } from "@/lib/equipment-status";
 import {
 	CheckCircle2,
 	Search,
@@ -80,19 +81,9 @@ export default function RendalValidasiUlangPage() {
 			if (Array.isArray(data) && data.length > 0) {
 				filtered = data
 					.filter((item: any) => {
-						const statusName = String(
-							item.status?.name || item.statusAset || "",
-						).toUpperCase();
-						const isRevalidation =
-							item.status_id === 5 ||
-							item.status?.id === 5 ||
-							statusName === "REVALIDATION" ||
-							statusName === "REVALIDASI";
-						const isReadyToUse =
-							item.status_id === 6 ||
-							item.status?.id === 6 ||
-							statusName === "READY_TO_USE" ||
-							statusName === "READY TO USE";
+						const statusName = canonStatus(item.status?.name || item.statusAset);
+						const isRevalidation = statusName === "REVALIDATION";
+						const isReadyToUse = statusName === "READY_TO_USE";
 						return isRevalidation || isReadyToUse;
 					})
 					.map((item: any) => {
@@ -116,11 +107,7 @@ export default function RendalValidasiUlangPage() {
 						const statusName = String(
 							item.status?.name || item.statusAset || "",
 						).toUpperCase();
-						const isReady =
-							item.status_id === 6 ||
-							item.status?.id === 6 ||
-							statusName === "READY_TO_USE" ||
-							statusName === "READY TO USE";
+						const isReady = statusName === "READY_TO_USE";
 
 						const matchingApproval = approvalsList.find(
 							(a: any) =>
@@ -131,7 +118,7 @@ export default function RendalValidasiUlangPage() {
 						let displayStatus = "REVALIDATION";
 						let displayStatusId = 5;
 						if (isReady) {
-							displayStatus = "READY TO USE";
+							displayStatus = "READY_TO_USE";
 							displayStatusId = 6;
 						}
 
@@ -179,9 +166,7 @@ export default function RendalValidasiUlangPage() {
 
 	const plantOptions = useMemo(
 		() =>
-			[
-				...new Set(items.map((e) => e.plant).filter((v) => v && v !== "-")),
-			].sort(),
+			[...new Set(items.map((e) => e.plant).filter((v) => v && v !== "-"))].sort(),
 		[items],
 	);
 
@@ -194,11 +179,11 @@ export default function RendalValidasiUlangPage() {
 	);
 
 	const antreanCount = useMemo(() => {
-		return items.filter((item) => item.statusAset !== "READY TO USE").length;
+		return items.filter((item) => item.statusAset !== "READY_TO_USE").length;
 	}, [items]);
 
 	const riwayatCount = useMemo(() => {
-		return items.filter((item) => item.statusAset === "READY TO USE").length;
+		return items.filter((item) => item.statusAset === "READY_TO_USE").length;
 	}, [items]);
 
 	const handleSearch = () => setSearchQuery(searchInput);
@@ -216,7 +201,7 @@ export default function RendalValidasiUlangPage() {
 		let result = items;
 
 		result = result.filter((item) => {
-			const isReady = item.statusAset === "READY TO USE";
+			const isReady = item.statusAset === "READY_TO_USE";
 			return activeTab === "antrean" ? !isReady : isReady;
 		});
 
@@ -231,8 +216,7 @@ export default function RendalValidasiUlangPage() {
 					item.lokasiPenyimpanan.toLowerCase().includes(q),
 			);
 		}
-		if (filterPlant)
-			result = result.filter((item) => item.plant === filterPlant);
+		if (filterPlant) result = result.filter((item) => item.plant === filterPlant);
 		if (filterTipeObjek)
 			result = result.filter((item) => item.tipeObjek === filterTipeObjek);
 
@@ -261,11 +245,7 @@ export default function RendalValidasiUlangPage() {
 
 	const handleSort = (key: keyof ValidasiUlangItem) => {
 		let direction: "asc" | "desc" = "asc";
-		if (
-			sortConfig &&
-			sortConfig.key === key &&
-			sortConfig.direction === "asc"
-		) {
+		if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
 			direction = "desc";
 		}
 		setSortConfig({ key, direction });
@@ -300,7 +280,7 @@ export default function RendalValidasiUlangPage() {
 						item.id === selectedAsset.id
 							? {
 									...item,
-									statusAset: "READY TO USE",
+									statusAset: "READY_TO_USE",
 									statusId: 6,
 								}
 							: item,
@@ -308,7 +288,7 @@ export default function RendalValidasiUlangPage() {
 				);
 				setNotification({
 					type: "success",
-					message: `Peralatan ${selectedAsset.kodeAlat} berhasil disetujui menjadi READY TO USE di database!`,
+					message: `Peralatan ${selectedAsset.kodeAlat} berhasil disetujui menjadi READY_TO_USE di database!`,
 				});
 				handleCloseModal();
 				await loadData();
@@ -346,9 +326,7 @@ export default function RendalValidasiUlangPage() {
 					) : (
 						<XCircle className="w-4 h-4 text-red-400 shrink-0" />
 					)}
-					<span className="text-[13px] font-medium">
-						{notification.message}
-					</span>
+					<span className="text-[13px] font-medium">{notification.message}</span>
 					<button
 						onClick={() => setNotification(null)}
 						className="text-gray-400 hover:text-white ml-2"
@@ -373,8 +351,8 @@ export default function RendalValidasiUlangPage() {
 							Persetujuan Perbaikan Alat
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar peralatan yang telah selesai diperbaiki dan divalidasi
-							ulang oleh Inspeksi Teknik untuk disetujui menjadi Ready to Use.
+							Daftar peralatan yang telah selesai diperbaiki dan divalidasi ulang oleh
+							Inspeksi Teknik untuk disetujui menjadi Ready to Use.
 						</p>
 					</div>
 					<button
@@ -382,9 +360,7 @@ export default function RendalValidasiUlangPage() {
 						disabled={isLoading}
 						className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
 					>
-						<RefreshCw
-							className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`}
-						/>
+						<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
 						Muat Ulang
 					</button>
 				</div>
@@ -551,10 +527,7 @@ export default function RendalValidasiUlangPage() {
 						<tbody className="bg-white">
 							{isLoading ? (
 								<tr>
-									<td
-										colSpan={9}
-										className="px-5 py-12 text-center text-gray-500"
-									>
+									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<Loader2 className="w-5 h-5 text-[#0A356A] animate-spin mb-2" />
 											<p className="text-[13px] font-medium">Memuat data...</p>
@@ -563,10 +536,7 @@ export default function RendalValidasiUlangPage() {
 								</tr>
 							) : paginatedItems.length === 0 ? (
 								<tr>
-									<td
-										colSpan={9}
-										className="px-5 py-12 text-center text-gray-500"
-									>
+									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -662,8 +632,8 @@ export default function RendalValidasiUlangPage() {
 					<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
 						<span className="text-[11px] font-medium text-gray-500">
 							Menampilkan{" "}
-							{filteredItems.length === 0 ? 0 : (page - 1) * ITEMS_PER_PAGE + 1}{" "}
-							- {Math.min(page * ITEMS_PER_PAGE, filteredItems.length)} dari{" "}
+							{filteredItems.length === 0 ? 0 : (page - 1) * ITEMS_PER_PAGE + 1} -{" "}
+							{Math.min(page * ITEMS_PER_PAGE, filteredItems.length)} dari{" "}
 							{filteredItems.length} data ({ITEMS_PER_PAGE} baris/halaman)
 						</span>
 						<div className="flex items-center gap-1.5">
@@ -675,28 +645,25 @@ export default function RendalValidasiUlangPage() {
 								Prev
 							</button>
 							<div className="flex items-center gap-1">
-								{Array.from(
-									{ length: Math.max(1, totalPages) },
-									(_, i) => i + 1,
-								).map((page) => (
-									<button
-										key={page}
-										onClick={() => setCurrentPage(page)}
-										className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
-											currentPage === page
-												? "bg-[#0A356A] text-white"
-												: "text-gray-600 hover:bg-gray-100"
-										}`}
-									>
-										{page}
-									</button>
-								))}
+								{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map(
+									(page) => (
+										<button
+											key={page}
+											onClick={() => setCurrentPage(page)}
+											className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
+												currentPage === page
+													? "bg-[#0A356A] text-white"
+													: "text-gray-600 hover:bg-gray-100"
+											}`}
+										>
+											{page}
+										</button>
+									),
+								)}
 							</div>
 							<button
 								onClick={() =>
-									setCurrentPage((p) =>
-										Math.min(Math.max(1, totalPages), p + 1),
-									)
+									setCurrentPage((p) => Math.min(Math.max(1, totalPages), p + 1))
 								}
 								disabled={page === Math.max(1, totalPages)}
 								className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
@@ -744,11 +711,10 @@ export default function RendalValidasiUlangPage() {
 							{/* Info box */}
 							<div className="bg-blue-50/70 rounded-lg p-3.5 border border-blue-100 text-xs text-blue-900 leading-normal">
 								Peralatan ini telah selesai diperbaiki dan telah dinyatakan{" "}
-								<strong>{selectedAsset.kondisi}</strong> pada pemeriksaan ulang
-								oleh Inspeksi Teknik.
+								<strong>{selectedAsset.kondisi}</strong> pada pemeriksaan ulang oleh
+								Inspeksi Teknik.
 								<div className="mt-1 text-gray-700">
-									Menyetujui tindakan ini akan mengubah status aset secara resmi
-									menjadi{" "}
+									Menyetujui tindakan ini akan mengubah status aset secara resmi menjadi{" "}
 									<strong className="text-[#0A356A]">Ready to Use</strong>.
 								</div>
 							</div>
@@ -823,9 +789,7 @@ export default function RendalValidasiUlangPage() {
 									) : (
 										<CheckCircle2 className="w-4 h-4" />
 									)}
-									{isSubmitting
-										? "Menyetujui..."
-										: "Setujui Menjadi Ready To Use"}
+									{isSubmitting ? "Menyetujui..." : "Setujui Menjadi Ready To Use"}
 								</button>
 							</div>
 						</form>

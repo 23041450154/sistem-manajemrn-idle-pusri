@@ -7,6 +7,13 @@ import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { getEquipments, getObjectTypes } from "@/action/api";
 import {
+	type EquipmentStatus,
+	EQUIPMENT_STATUS,
+	statusBadgeStyle,
+	statusName,
+	statusText,
+} from "@/lib/equipment-status";
+import {
 	Search,
 	AlertCircle,
 	RefreshCw,
@@ -25,17 +32,7 @@ import {
 } from "lucide-react";
 
 // Tipe Data menyesuaikan dengan struktur standar Asset/Equipment
-type AssetState =
-	| "REGISTERED"
-	| "VALIDATED"
-	| "REJECTED"
-	| "IDLE"
-	| "DALAM_PERBAIKAN"
-	| "READY_TO_REUSE"
-	| "READY TO USE"
-	| "DISPOSAL"
-	| "TIDAK LAYAK"
-	| "NEED_REVISION";
+type AssetState = EquipmentStatus | "REJECTED";
 type ApprovalState =
 	| "PENDING"
 	| "IN_REVIEW"
@@ -139,24 +136,10 @@ export default function RendalIdlePage() {
 
 				const isRevised = revisedIds.includes(String(item.id));
 				const rawStatus =
-					(typeof item.status === "string" ? item.status : item.status?.name) ||
-					"";
-				let statusStr = isRevised
+					(typeof item.status === "string" ? item.status : item.status?.name) || "";
+				const statusStr = isRevised
 					? "REGISTERED"
-					: (
-							rawStatus ||
-							(item.status_id === 2
-								? "VALIDATED"
-								: item.status_id === 3
-									? "REJECTED"
-									: item.status_id === 4
-										? "READY TO USE"
-										: item.status_id === 5
-											? "READY_TO_REUSE"
-											: "REGISTERED")
-						).toUpperCase();
-
-				if (statusStr === "IDLE") statusStr = "READY TO USE";
+					: statusName(rawStatus) || "REGISTERED";
 
 				return {
 					id: item.id?.toString() || "-",
@@ -218,9 +201,7 @@ export default function RendalIdlePage() {
 	const plantOptions = useMemo(
 		() =>
 			[
-				...new Set(
-					equipments.map((e) => e.plant).filter((v) => v && v !== "-"),
-				),
+				...new Set(equipments.map((e) => e.plant).filter((v) => v && v !== "-")),
 			].sort(),
 		[equipments],
 	);
@@ -244,12 +225,7 @@ export default function RendalIdlePage() {
 				item.namaAlat?.toLowerCase().includes(query);
 			const matchPlant = plantFilter === "Semua" || item.plant === plantFilter;
 			const matchStatus =
-				statusFilter === "Semua" ||
-				item.statusAset === statusFilter ||
-				((statusFilter === "READY TO USE" || statusFilter === "READY_TO_REUSE") &&
-					((item.statusAset as string) === "READY_TO_REUSE" ||
-						(item.statusAset as string) === "READY TO REUSE" ||
-						item.statusAset === "READY TO USE"));
+				statusFilter === "Semua" || item.statusAset === statusFilter;
 			return matchSearch && matchPlant && matchStatus;
 		});
 
@@ -274,11 +250,7 @@ export default function RendalIdlePage() {
 
 	const handleSort = (key: keyof Equipment) => {
 		let direction: "asc" | "desc" = "asc";
-		if (
-			sortConfig &&
-			sortConfig.key === key &&
-			sortConfig.direction === "asc"
-		) {
+		if (sortConfig && sortConfig.key === key && sortConfig.direction === "asc") {
 			direction = "desc";
 		}
 		setSortConfig({ key, direction });
@@ -296,44 +268,13 @@ export default function RendalIdlePage() {
 		);
 	};
 
-	const getStatusBadge = (status: AssetState | string) => {
-		const styles: Record<string, string> = {
-			REGISTERED: "bg-blue-50 text-blue-700 border-blue-200",
-			VALIDATED: "bg-emerald-50 text-emerald-700 border-emerald-200",
-			REJECTED: "bg-red-50 text-red-700 border-red-200",
-			IDLE: "bg-indigo-50 text-indigo-700 border-indigo-200",
-			"READY TO USE": "bg-indigo-50 text-indigo-700 border-indigo-200",
-			DALAM_PERBAIKAN: "bg-amber-50 text-amber-700 border-amber-200",
-			PERBAIKAN: "bg-amber-50 text-amber-700 border-amber-200",
-			READY_TO_REUSE: "bg-teal-50 text-teal-700 border-teal-200",
-			NEED_REVISION: "bg-orange-50 text-orange-700 border-orange-200",
-			REVISI: "bg-orange-50 text-orange-700 border-orange-200",
-			DISPOSAL: "bg-purple-50 text-purple-700 border-purple-200",
-			"TIDAK LAYAK": "bg-rose-50 text-rose-700 border-rose-200",
-		};
-
-		let displayStatus = (status || "").replace(/_/g, " ");
-		if (status === "IDLE" || status === "READY_TO_REUSE") {
-			displayStatus = "READY TO USE";
-		} else if (status === "DALAM_PERBAIKAN") {
-			displayStatus = "PERBAIKAN";
-		} else if (status === "NEED_REVISION") {
-			displayStatus = "REVISI";
-		}
-
-		const style =
-			styles[displayStatus] ||
-			styles[status] ||
-			styles["READY TO USE"] ||
-			"bg-gray-50 text-gray-700 border-gray-200";
-		return (
-			<span
-				className={`inline-flex items-center justify-center text-[10px] font-bold px-1.5 py-0.5 rounded border leading-tight ${style}`}
-			>
-				{displayStatus}
-			</span>
-		);
-	};
+	const getStatusBadge = (status: AssetState | string) => (
+		<span
+			className={`inline-flex items-center justify-center text-[10px] font-bold px-1.5 py-0.5 rounded border leading-tight ${statusBadgeStyle(status)}`}
+		>
+			{statusText(status)}
+		</span>
+	);
 
 	return (
 		<div className="max-w-7xl mx-auto pt-2 pb-8">
@@ -350,7 +291,8 @@ export default function RendalIdlePage() {
 							Data Registrasi Aset Idle
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar seluruh aset idle yang telah diregistrasi beserta status proses validasinya.
+							Daftar seluruh aset idle yang telah diregistrasi beserta status proses
+							validasinya.
 						</p>
 					</div>
 					<div className="flex items-center gap-2">
@@ -392,7 +334,9 @@ export default function RendalIdlePage() {
 							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
 						</span>
 						<span className="text-[13px] text-blue-800 font-medium">
-							Terdapat <strong className="font-bold">{filteredData.length} aset</strong> terdaftar di sistem.
+							Terdapat{" "}
+							<strong className="font-bold">{filteredData.length} aset</strong>{" "}
+							terdaftar di sistem.
 						</span>
 					</div>
 				</div>
@@ -449,11 +393,11 @@ export default function RendalIdlePage() {
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
 						>
 							<option value="Semua">Semua Status</option>
-							<option value="REGISTERED">REGISTERED</option>
-							<option value="VALIDATED">VALIDATED</option>
-							<option value="READY TO USE">READY TO USE</option>
-							<option value="DALAM_PERBAIKAN">DALAM PERBAIKAN</option>
-							<option value="READY_TO_REUSE">READY TO USE</option>
+							{EQUIPMENT_STATUS.map((s) => (
+								<option key={s} value={s}>
+									{statusText(s)}
+								</option>
+							))}
 							<option value="REJECTED">REJECTED</option>
 						</select>
 
@@ -580,18 +524,30 @@ export default function RendalIdlePage() {
 										<td className="px-2 py-2 text-gray-500 font-medium text-center truncate">
 											{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
-										<td className="px-2 py-2 font-semibold text-[#0A356A] text-left truncate" title={item.kodeAlat}>
+										<td
+											className="px-2 py-2 font-semibold text-[#0A356A] text-left truncate"
+											title={item.kodeAlat}
+										>
 											{item.kodeAlat}
 										</td>
-										<td className="px-2 py-2 font-semibold text-gray-800 text-left" title={item.namaAlat}>
+										<td
+											className="px-2 py-2 font-semibold text-gray-800 text-left"
+											title={item.namaAlat}
+										>
 											<span className="leading-tight line-clamp-2 block text-left">
 												{item.namaAlat}
 											</span>
 										</td>
-										<td className="px-2 py-2 text-gray-600 font-medium text-left truncate" title={item.plant}>
+										<td
+											className="px-2 py-2 text-gray-600 font-medium text-left truncate"
+											title={item.plant}
+										>
 											{item.plant}
 										</td>
-										<td className="px-2 py-2 text-gray-600 font-medium text-left truncate" title={item.jenisAlat}>
+										<td
+											className="px-2 py-2 text-gray-600 font-medium text-left truncate"
+											title={item.jenisAlat}
+										>
 											{item.jenisAlat}
 										</td>
 										<td className="px-2 py-2 text-gray-600 font-medium text-left truncate">
@@ -602,7 +558,7 @@ export default function RendalIdlePage() {
 										</td>
 										<td className="px-2 py-2 text-center">
 											<div className="flex justify-center items-center gap-1 opacity-90 group-hover:opacity-100 transition-opacity">
-												{item.statusAset === "DALAM_PERBAIKAN" && (
+												{item.statusAset === "REPAIR" && (
 													<button
 														onClick={() => setRepairModal(item)}
 														className="inline-flex items-center justify-center gap-1 bg-[#0A356A] hover:bg-[#062854] text-white px-2 py-1 rounded text-[11px] font-bold transition-all shadow-sm"
@@ -613,9 +569,8 @@ export default function RendalIdlePage() {
 													</button>
 												)}
 												{item.statusAset === "REJECTED" ||
-												item.statusAset === "DISPOSAL" ||
-												item.statusAset === "TIDAK LAYAK" ||
-												item.statusAset === "NEED_REVISION" ? (
+												item.statusAset === "DISPOSAL_RECOMMENDED" ||
+												item.statusAset === "SCRAP" ? (
 													<Link
 														href={`/rendal/register-equipment?editId=${item.id}`}
 														className="inline-flex items-center justify-center gap-1 bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded text-[11px] font-bold transition-all shadow-sm"
@@ -625,7 +580,7 @@ export default function RendalIdlePage() {
 														<span>Revisi</span>
 													</Link>
 												) : (
-													item.statusAset !== "DALAM_PERBAIKAN" && (
+													item.statusAset !== "REPAIR" && (
 														<button
 															onClick={() => setDetailModal(item)}
 															className="inline-flex items-center justify-center gap-1 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2 py-1 rounded text-[11px] font-bold transition-all shadow-sm"
@@ -650,11 +605,9 @@ export default function RendalIdlePage() {
 					<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
 						<span className="text-[11px] font-medium text-gray-500">
 							Menampilkan{" "}
-							{filteredData.length === 0
-								? 0
-								: (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
-							- {Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)}{" "}
-							dari {filteredData.length} data ({ITEMS_PER_PAGE} baris/halaman)
+							{filteredData.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
+							- {Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)} dari{" "}
+							{filteredData.length} data ({ITEMS_PER_PAGE} baris/halaman)
 						</span>
 						<div className="flex items-center gap-1.5">
 							<button
@@ -665,19 +618,21 @@ export default function RendalIdlePage() {
 								Prev
 							</button>
 							<div className="flex items-center gap-1">
-								{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map((page) => (
-									<button
-										key={page}
-										onClick={() => setCurrentPage(page)}
-										className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
-											currentPage === page
-												? "bg-[#0A356A] text-white"
-												: "text-gray-600 hover:bg-gray-100"
-										}`}
-									>
-										{page}
-									</button>
-								))}
+								{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map(
+									(page) => (
+										<button
+											key={page}
+											onClick={() => setCurrentPage(page)}
+											className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
+												currentPage === page
+													? "bg-[#0A356A] text-white"
+													: "text-gray-600 hover:bg-gray-100"
+											}`}
+										>
+											{page}
+										</button>
+									),
+								)}
 							</div>
 							<button
 								onClick={() =>
@@ -724,8 +679,8 @@ export default function RendalIdlePage() {
 							className="px-6 py-5 space-y-4 overflow-y-auto flex-1"
 						>
 							<div className="bg-gray-50 rounded-lg p-3 border border-gray-200 text-xs text-gray-600 leading-normal">
-								Unggah bukti biaya dan deskripsi tindakan perbaikan di bawah ini
-								untuk merubah status peralatan menjadi{" "}
+								Unggah bukti biaya dan deskripsi tindakan perbaikan di bawah ini untuk
+								merubah status peralatan menjadi{" "}
 								<strong className="text-[#0A356A]">Ready to Use</strong>.
 							</div>
 
@@ -932,9 +887,7 @@ export default function RendalIdlePage() {
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
 											Status Aset
 										</p>
-										<div className="mt-0.5">
-											{getStatusBadge(detailModal.statusAset)}
-										</div>
+										<div className="mt-0.5">{getStatusBadge(detailModal.statusAset)}</div>
 									</div>
 									<div>
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
