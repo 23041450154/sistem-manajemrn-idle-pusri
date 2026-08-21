@@ -173,7 +173,7 @@ export function Sidebar({ role }: { role?: string }) {
 					icon: RefreshCw,
 				},
 				{
-					name: "Inspeksi",
+					name: "Inspeksi Berkala",
 					href: "/inspeksi/inspeksi-berkala",
 					icon: ClipboardCheck,
 				},

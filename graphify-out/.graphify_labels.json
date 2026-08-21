@@ -7,7 +7,7 @@
   "5": "devDependencies",
   "6": "shared.tsx",
   "7": "claude-code-ide/main.js",
-  "8": "getEquipments",
+  "8": "RendalDashboard.tsx",
   "9": "ActionMenu.tsx",
   "10": "master.ts",
   "11": "DESIGN.md — Idle Equipment Console",
@@ -62,10 +62,9 @@
   "60": "PRODUCT.md",
   "61": "open-in-terminal/manifest.json",
   "62": "check-equipment-form.mjs",
-  "63": "getReuseRequests",
+  "63": "getEquipments",
   "64": "ui-layouts-mcp",
   "65": "EVIDENCE.md",
-  "66": "getAttachmentsByEquipmentId",
   "67": "check-repair-payload.mjs",
   "68": "claude-code-ide/manifest.json",
   "69": "pemeliharaan/dashboard/page.tsx",
@@ -79,6 +78,5 @@
   "77": "pemeliharaan/page.tsx",
   "78": "DeleteConfirmDialog.tsx",
   "79": "check-scrap-reason.mjs",
-  "80": "callback/page.tsx",
-  "81": "peminjaman/page.tsx"
+  "80": "callback/page.tsx"
 }
