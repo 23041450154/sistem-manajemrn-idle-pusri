@@ -100,8 +100,8 @@
     "semantic_hash": ""
   },
   "src/action/auth.ts": {
-    "mtime": 1786616725.4623466,
-    "ast_hash": "6489395482f48ff15c30535f7517b789",
+    "mtime": 1787343903.397154,
+    "ast_hash": "d96afbf2545fbbba58cd0bda494e8c35",
     "semantic_hash": ""
   },
   "src/app/(auth)/login/LoginForm.tsx": {
@@ -330,8 +330,8 @@
     "semantic_hash": ""
   },
   "src/proxy.ts": {
-    "mtime": 1786261136.919526,
-    "ast_hash": "4cb9285c9bcf90bf41811c118dcfc084",
+    "mtime": 1787343765.887217,
+    "ast_hash": "11b57e9c95082757d9264318cc42d325",
     "semantic_hash": ""
   },
   "src/types/Auth.ts": {
@@ -805,8 +805,8 @@
     "semantic_hash": ""
   },
   "src/app/(auth)/auth/callback/page.tsx": {
-    "mtime": 1787263324.1674695,
-    "ast_hash": "077fde2fd56ac85b22f4033e0f934061",
+    "mtime": 1787343775.551181,
+    "ast_hash": "4efc452fa649d7f60f1cdb36b4342bdd",
     "semantic_hash": ""
   }
 }
