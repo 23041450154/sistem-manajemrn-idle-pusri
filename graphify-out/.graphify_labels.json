@@ -57,7 +57,7 @@
   "55": "Vercel Logo",
   "56": "Window Icon SVG",
   "57": "api.ts",
-  "58": "getInspections",
+  "58": "getDisposals",
   "59": "getObjectTypes",
   "60": "PRODUCT.md",
   "61": "open-in-terminal/manifest.json",
@@ -65,7 +65,7 @@
   "63": "getReuseRequests",
   "64": "ui-layouts-mcp",
   "65": "EVIDENCE.md",
-  "66": "getDisposals",
+  "66": "getAttachmentsByEquipmentId",
   "67": "check-repair-payload.mjs",
   "68": "claude-code-ide/manifest.json",
   "69": "pemeliharaan/dashboard/page.tsx",
@@ -75,8 +75,9 @@
   "73": "useDebounce.ts",
   "74": "app.json",
   "75": "validasi/page.tsx",
-  "76": "CostAvoidanceSection.tsx",
+  "76": "inspeksi-berkala/page.tsx",
   "77": "pemeliharaan/page.tsx",
   "78": "DeleteConfirmDialog.tsx",
-  "79": "check-scrap-reason.mjs"
+  "79": "check-scrap-reason.mjs",
+  "80": "callback/page.tsx"
 }

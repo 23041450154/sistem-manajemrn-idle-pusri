@@ -2211,8 +2211,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "scripts_check_inspection_schedule",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "check-inspection-schedule.mjs"
     },
     {
@@ -2222,8 +2222,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "scripts_check_inspection_schedule_now",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "now"
     },
     {
@@ -2233,8 +2233,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "scripts_check_inspection_schedule_daysago",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "daysago()"
     },
     {
@@ -2244,8 +2244,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "scripts_check_inspection_schedule_eq",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
       "norm_label": "eq()"
     },
     {
@@ -2497,7 +2497,7 @@
       "source_location": "L56",
       "_origin": "ast",
       "id": "src_action_api_disposalitemdto",
-      "community": 66,
+      "community": 58,
       "community_name": "getDisposals",
       "norm_label": "disposalitemdto"
     },
@@ -2508,7 +2508,7 @@
       "source_location": "L77",
       "_origin": "ast",
       "id": "src_action_api_absolutefileurl",
-      "community": 66,
+      "community": 58,
       "community_name": "getDisposals",
       "norm_label": "absolutefileurl()"
     },
@@ -2519,7 +2519,7 @@
       "source_location": "L93",
       "_origin": "ast",
       "id": "src_action_api_getdisposals",
-      "community": 66,
+      "community": 58,
       "community_name": "getDisposals",
       "norm_label": "getdisposals()"
     },
@@ -2530,7 +2530,7 @@
       "source_location": "L168",
       "_origin": "ast",
       "id": "src_action_api_approvedisposal",
-      "community": 66,
+      "community": 58,
       "community_name": "getDisposals",
       "norm_label": "approvedisposal()"
     },
@@ -2542,7 +2542,7 @@
       "_origin": "ast",
       "id": "src_action_api_createdisposalrequest",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "createdisposalrequest()"
     },
     {
@@ -2575,7 +2575,7 @@
       "_origin": "ast",
       "id": "src_action_api_getvalidations",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "getvalidations()"
     },
     {
@@ -2596,8 +2596,8 @@
       "source_location": "L434",
       "_origin": "ast",
       "id": "src_action_api_createrevalidation",
-      "community": 75,
-      "community_name": "validasi/page.tsx",
+      "community": 0,
+      "community_name": "ManajemenInspeksi.tsx",
       "norm_label": "createrevalidation()"
     },
     {
@@ -2630,7 +2630,7 @@
       "_origin": "ast",
       "id": "src_action_api_getinspections",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "getinspections()"
     },
     {
@@ -2662,8 +2662,8 @@
       "source_location": "L630",
       "_origin": "ast",
       "id": "src_action_api_getconditions",
-      "community": 75,
-      "community_name": "validasi/page.tsx",
+      "community": 0,
+      "community_name": "ManajemenInspeksi.tsx",
       "norm_label": "getconditions()"
     },
     {
@@ -2706,8 +2706,8 @@
       "source_location": "L714",
       "_origin": "ast",
       "id": "src_action_api_getstoragelocations",
-      "community": 42,
-      "community_name": "approve/page.tsx",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "getstoragelocations()"
     },
     {
@@ -2739,8 +2739,8 @@
       "source_location": "L805",
       "_origin": "ast",
       "id": "src_action_api_createequipment",
-      "community": 42,
-      "community_name": "approve/page.tsx",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "createequipment()"
     },
     {
@@ -2750,8 +2750,8 @@
       "source_location": "L840",
       "_origin": "ast",
       "id": "src_action_api_getequipmentbyid",
-      "community": 6,
-      "community_name": "shared.tsx",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "getequipmentbyid()"
     },
     {
@@ -2761,8 +2761,8 @@
       "source_location": "L874",
       "_origin": "ast",
       "id": "src_action_api_updateequipment",
-      "community": 42,
-      "community_name": "approve/page.tsx",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "updateequipment()"
     },
     {
@@ -2805,8 +2805,8 @@
       "source_location": "L1062",
       "_origin": "ast",
       "id": "src_action_api_getattachmentsbyequipmentid",
-      "community": 0,
-      "community_name": "ManajemenInspeksi.tsx",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "getattachmentsbyequipmentid()"
     },
     {
@@ -2937,8 +2937,8 @@
       "source_location": "L1444",
       "_origin": "ast",
       "id": "src_action_api_createreuserequest",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "createreuserequest()"
     },
     {
@@ -2959,8 +2959,8 @@
       "source_location": "L1607",
       "_origin": "ast",
       "id": "src_action_api_getfunctionallocations",
-      "community": 42,
-      "community_name": "approve/page.tsx",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "getfunctionallocations()"
     },
     {
@@ -2971,7 +2971,7 @@
       "_origin": "ast",
       "id": "src_action_api_getdisposalmethods",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "getdisposalmethods()"
     },
     {
@@ -2981,8 +2981,8 @@
       "source_location": "L1654",
       "_origin": "ast",
       "id": "src_action_api_updatereuserequeststatus",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 63,
+      "community_name": "getReuseRequests",
       "norm_label": "updatereuserequeststatus()"
     },
     {
@@ -3184,6 +3184,39 @@
       "norm_label": "deletemasteritem()"
     },
     {
+      "label": "callback/page.tsx",
+      "file_type": "code",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_app_auth_auth_callback_page",
+      "community": 80,
+      "community_name": "callback/page.tsx",
+      "norm_label": "callback/page.tsx"
+    },
+    {
+      "label": "CallbackContent()",
+      "file_type": "code",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L6",
+      "_origin": "ast",
+      "id": "src_app_auth_auth_callback_page_callbackcontent",
+      "community": 80,
+      "community_name": "callback/page.tsx",
+      "norm_label": "callbackcontent()"
+    },
+    {
+      "label": "SsoCallbackPage()",
+      "file_type": "code",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L41",
+      "_origin": "ast",
+      "id": "src_app_auth_auth_callback_page_ssocallbackpage",
+      "community": 80,
+      "community_name": "callback/page.tsx",
+      "norm_label": "ssocallbackpage()"
+    },
+    {
       "label": "LoginForm.tsx",
       "file_type": "code",
       "source_file": "src/app/(auth)/login/LoginForm.tsx",
@@ -3267,8 +3300,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page",
-      "community": 66,
-      "community_name": "getDisposals",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "admin/dashboard/page.tsx"
     },
     {
@@ -3278,8 +3311,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page_modules",
-      "community": 66,
-      "community_name": "getDisposals",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "modules"
     },
     {
@@ -3289,8 +3322,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page_admindashboardpage",
-      "community": 66,
-      "community_name": "getDisposals",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "admindashboardpage()"
     },
     {
@@ -3465,8 +3498,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "inspeksi-berkala/page.tsx"
     },
     {
@@ -3476,8 +3509,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page_equipment",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "equipment"
     },
     {
@@ -3487,8 +3520,8 @@
       "source_location": "L40",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page_inspectionitem",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "inspectionitem"
     },
     {
@@ -3498,8 +3531,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page_inspeksiantreanpage",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "inspeksiantreanpage()"
     },
     {
@@ -3565,7 +3598,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_manajemen_page",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "manajemen/page.tsx"
     },
     {
@@ -3576,7 +3609,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_manajemen_page_inspection",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "inspection"
     },
     {
@@ -3587,7 +3620,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_manajemen_page_inspeksidashboard",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "inspeksidashboard()"
     },
     {
@@ -3652,8 +3685,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
-      "community": 75,
-      "community_name": "validasi/page.tsx",
+      "community": 0,
+      "community_name": "ManajemenInspeksi.tsx",
       "norm_label": "inspeksi/validasi-ulang/page.tsx"
     },
     {
@@ -3663,8 +3696,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_revalidasiitem",
-      "community": 75,
-      "community_name": "validasi/page.tsx",
+      "community": 0,
+      "community_name": "ManajemenInspeksi.tsx",
       "norm_label": "revalidasiitem"
     },
     {
@@ -3674,8 +3707,8 @@
       "source_location": "L34",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_validasiulangpage",
-      "community": 75,
-      "community_name": "validasi/page.tsx",
+      "community": 0,
+      "community_name": "ManajemenInspeksi.tsx",
       "norm_label": "validasiulangpage()"
     },
     {
@@ -3861,8 +3894,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_dashboard_page",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "manajer/dashboard/page.tsx"
     },
     {
@@ -3872,8 +3905,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_dashboard_page_manajerdashboardpage",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "manajerdashboardpage()"
     },
     {
@@ -3883,7 +3916,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_disposal_page",
-      "community": 66,
+      "community": 58,
       "community_name": "getDisposals",
       "norm_label": "manajer/disposal/page.tsx"
     },
@@ -3894,7 +3927,7 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_disposal_page_disposalitem",
-      "community": 66,
+      "community": 58,
       "community_name": "getDisposals",
       "norm_label": "disposalitem"
     },
@@ -3905,7 +3938,7 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_disposal_page_disposalinboxpage",
-      "community": 66,
+      "community": 58,
       "community_name": "getDisposals",
       "norm_label": "disposalinboxpage()"
     },
@@ -3938,8 +3971,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_peminjaman_page",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 63,
+      "community_name": "getReuseRequests",
       "norm_label": "peminjaman/page.tsx"
     },
     {
@@ -3949,8 +3982,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_peminjaman_page_reuserequest",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 63,
+      "community_name": "getReuseRequests",
       "norm_label": "reuserequest"
     },
     {
@@ -3960,8 +3993,8 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_peminjaman_page_reuserequestapi",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 63,
+      "community_name": "getReuseRequests",
       "norm_label": "reuserequestapi"
     },
     {
@@ -3971,8 +4004,8 @@
       "source_location": "L76",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_peminjaman_page_manajerpeminjamanpage",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 63,
+      "community_name": "getReuseRequests",
       "norm_label": "manajerpeminjamanpage()"
     },
     {
@@ -3982,7 +4015,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_scrap_page",
-      "community": 66,
+      "community": 58,
       "community_name": "getDisposals",
       "norm_label": "manajer/scrap/page.tsx"
     },
@@ -3993,7 +4026,7 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_scrap_page_disposalitem",
-      "community": 66,
+      "community": 58,
       "community_name": "getDisposals",
       "norm_label": "disposalitem"
     },
@@ -4004,7 +4037,7 @@
       "source_location": "L13",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_scrap_page_manajerscrappage",
-      "community": 66,
+      "community": 58,
       "community_name": "getDisposals",
       "norm_label": "manajerscrappage()"
     },
@@ -4257,8 +4290,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_dashboard_page",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "rendal/dashboard/page.tsx"
     },
     {
@@ -4268,8 +4301,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_dashboard_page_rendaldashboard",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "rendaldashboard()"
     },
     {
@@ -4280,7 +4313,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_disposal_page",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "rendal/disposal/page.tsx"
     },
     {
@@ -4291,7 +4324,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_disposal_page_equipment",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "equipment"
     },
     {
@@ -4302,7 +4335,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_disposal_page_inspection",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "inspection"
     },
     {
@@ -4313,7 +4346,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_disposal_page_disposalmethod",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "disposalmethod"
     },
     {
@@ -4324,7 +4357,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_disposal_page_disposalitem",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "disposalitem"
     },
     {
@@ -4335,7 +4368,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_disposal_page_verifikasidisposalpage",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "verifikasidisposalpage()"
     },
     {
@@ -4499,8 +4532,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_page",
-      "community": 42,
-      "community_name": "approve/page.tsx",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "register-equipment/page.tsx"
     },
     {
@@ -4510,8 +4543,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_page_registerequipmentpage",
-      "community": 42,
-      "community_name": "approve/page.tsx",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "registerequipmentpage()"
     },
     {
@@ -4522,7 +4555,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_scrap_page",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "rendal/scrap/page.tsx"
     },
     {
@@ -4533,7 +4566,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_scrap_page_equipment",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "equipment"
     },
     {
@@ -4544,7 +4577,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_scrap_page_inspection",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "inspection"
     },
     {
@@ -4555,7 +4588,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_scrap_page_disposalmethod",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "disposalmethod"
     },
     {
@@ -4566,7 +4599,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_scrap_page_disposalitem",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "disposalitem"
     },
     {
@@ -4577,7 +4610,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_scrap_page_rendalscrappage",
       "community": 58,
-      "community_name": "getInspections",
+      "community_name": "getDisposals",
       "norm_label": "rendalscrappage()"
     },
     {
@@ -4620,8 +4653,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page",
-      "community": 59,
-      "community_name": "getObjectTypes",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "daftar-aset/page.tsx"
     },
     {
@@ -4631,8 +4664,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_equipmentitem",
-      "community": 59,
-      "community_name": "getObjectTypes",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "equipmentitem"
     },
     {
@@ -4642,8 +4675,8 @@
       "source_location": "L48",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
-      "community": 59,
-      "community_name": "getObjectTypes",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "daftarasetpage()"
     },
     {
@@ -4730,8 +4763,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_equipment_page",
-      "community": 59,
-      "community_name": "getObjectTypes",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "unit-kerja/equipment/page.tsx"
     },
     {
@@ -4741,8 +4774,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_equipment_page_unitkerjaequipmentpage",
-      "community": 59,
-      "community_name": "getObjectTypes",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "unitkerjaequipmentpage()"
     },
     {
@@ -4752,8 +4785,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_page",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "unit-kerja/idle/page.tsx"
     },
     {
@@ -4763,8 +4796,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_page_equipmentitem",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "equipmentitem"
     },
     {
@@ -4774,8 +4807,8 @@
       "source_location": "L35",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_page_reuserequestitem",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "reuserequestitem"
     },
     {
@@ -4785,8 +4818,8 @@
       "source_location": "L55",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_page_unitkerjakatalogpage",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "unitkerjakatalogpage()"
     },
     {
@@ -4851,8 +4884,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "request-modal-button.tsx"
     },
     {
@@ -4862,8 +4895,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button_katalogitemminimal",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "katalogitemminimal"
     },
     {
@@ -4873,8 +4906,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button_requestmodalbutton",
-      "community": 63,
-      "community_name": "getReuseRequests",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "requestmodalbutton()"
     },
     {
@@ -5346,8 +5379,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_api_test_attachments_route",
-      "community": 0,
-      "community_name": "ManajemenInspeksi.tsx",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "test-attachments/route.ts"
     },
     {
@@ -5357,8 +5390,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "src_app_api_test_attachments_route_get",
-      "community": 0,
-      "community_name": "ManajemenInspeksi.tsx",
+      "community": 66,
+      "community_name": "getAttachmentsByEquipmentId",
       "norm_label": "get()"
     },
     {
@@ -5610,52 +5643,30 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_costavoidancesection",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "costavoidancesection.tsx"
     },
     {
       "label": "Equipment",
       "file_type": "code",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L31",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_costavoidancesection_equipment",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "equipment"
-    },
-    {
-      "label": "formatCurrency()",
-      "file_type": "code",
-      "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L33",
-      "_origin": "ast",
-      "id": "src_components_costavoidancesection_formatcurrency",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
-      "norm_label": "formatcurrency()"
-    },
-    {
-      "label": "monthNames",
-      "file_type": "code",
-      "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L46",
-      "_origin": "ast",
-      "id": "src_components_costavoidancesection_monthnames",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
-      "norm_label": "monthnames"
     },
     {
       "label": "CostAvoidanceSection()",
       "file_type": "code",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L61",
+      "source_location": "L24",
       "_origin": "ast",
       "id": "src_components_costavoidancesection_costavoidancesection",
-      "community": 76,
-      "community_name": "CostAvoidanceSection.tsx",
+      "community": 58,
+      "community_name": "getDisposals",
       "norm_label": "costavoidancesection()"
     },
     {
@@ -5775,8 +5786,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_editequipmentdialog",
-      "community": 42,
-      "community_name": "approve/page.tsx",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "editequipmentdialog.tsx"
     },
     {
@@ -5786,8 +5797,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_components_editequipmentdialog_editequipmentdialogprops",
-      "community": 42,
-      "community_name": "approve/page.tsx",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "editequipmentdialogprops"
     },
     {
@@ -5797,8 +5808,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_components_editequipmentdialog_extractstringvalue",
-      "community": 42,
-      "community_name": "approve/page.tsx",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "extractstringvalue()"
     },
     {
@@ -5808,8 +5819,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_editequipmentdialog_editequipmentdialog",
-      "community": 42,
-      "community_name": "approve/page.tsx",
+      "community": 59,
+      "community_name": "getObjectTypes",
       "norm_label": "editequipmentdialog()"
     },
     {
@@ -6336,8 +6347,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_lib_approvals_reusedisplaystatus",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 63,
+      "community_name": "getReuseRequests",
       "norm_label": "reusedisplaystatus"
     },
     {
@@ -6413,8 +6424,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "inspection-schedule.ts"
     },
     {
@@ -6424,8 +6435,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_statuslike",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "statuslike"
     },
     {
@@ -6435,8 +6446,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_statusname",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "statusname()"
     },
     {
@@ -6446,8 +6457,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_inspectionlike",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "inspectionlike"
     },
     {
@@ -6457,8 +6468,8 @@
       "source_location": "L28",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_equipmentlike",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "equipmentlike"
     },
     {
@@ -6468,8 +6479,8 @@
       "source_location": "L33",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_lastinspection",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "lastinspection"
     },
     {
@@ -6479,8 +6490,8 @@
       "source_location": "L39",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_latestinspectionbyequipment",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "latestinspectionbyequipment()"
     },
     {
@@ -6490,8 +6501,8 @@
       "source_location": "L66",
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_inspectionqueue",
-      "community": 58,
-      "community_name": "getInspections",
+      "community": 76,
+      "community_name": "inspeksi-berkala/page.tsx",
       "norm_label": "inspectionqueue()"
     },
     {
@@ -6570,6 +6581,17 @@
       "community": 1,
       "community_name": "auth.ts",
       "norm_label": "role"
+    },
+    {
+      "label": "DEFAULT_ROLE",
+      "file_type": "code",
+      "source_file": "src/lib/roles.ts",
+      "source_location": "L17",
+      "_origin": "ast",
+      "id": "src_lib_roles_default_role",
+      "community": 1,
+      "community_name": "auth.ts",
+      "norm_label": "default_role"
     },
     {
       "label": "ROLE_HOME",
@@ -12850,7 +12872,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L28",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_costavoidancesection",
@@ -13438,7 +13460,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L28",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_costavoidancesection",
@@ -13726,7 +13748,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L28",
+      "source_location": "L19",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_costavoidancesection",
@@ -13799,7 +13821,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/rendal/disposal/page.tsx",
-      "source_location": "L303",
+      "source_location": "L306",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_rendal_disposal_page_verifikasidisposalpage",
@@ -14123,7 +14145,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/rendal/disposal/page.tsx",
-      "source_location": "L244",
+      "source_location": "L247",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_rendal_disposal_page_verifikasidisposalpage",
@@ -15525,13 +15547,13 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/riwayat-permintaan/page.tsx",
       "source_location": "L97",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page_riwayatpermintaancontent",
-      "target": "src_action_api_getreuserequests"
+      "target": "src_action_api_getreuserequests",
+      "confidence_score": 1.0
     },
     {
       "relation": "imports",
@@ -16793,6 +16815,28 @@
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_auth_auth_callback_page",
+      "target": "src_app_auth_auth_callback_page_callbackcontent",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L41",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_auth_auth_callback_page",
+      "target": "src_app_auth_auth_callback_page_ssocallbackpage",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
       "source_file": "src/app/(auth)/login/LoginForm.tsx",
       "source_location": "L9",
       "weight": 1.0,
@@ -16846,6 +16890,18 @@
       "_origin": "ast",
       "source": "src_app_auth_login_page",
       "target": "src_app_auth_login_loginform",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/login/page.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_auth_login_page",
+      "target": "src_app_auth_login_loginform_loginform",
       "confidence_score": 1.0
     },
     {
@@ -18617,6 +18673,18 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/equipment/page.tsx",
+      "source_location": "L1",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_equipment_page",
+      "target": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/dashboard/page.tsx",
@@ -18774,6 +18842,18 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/page.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_id_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_id_gallery_gallery",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/page.tsx",
@@ -18805,6 +18885,18 @@
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_katalog_id_page",
       "target": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/page.tsx",
+      "source_location": "L7",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_id_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button_requestmodalbutton",
       "confidence_score": 1.0
     },
     {
@@ -19042,16 +19134,28 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/page.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_katalog_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client_katalogclient",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
       "source_location": "L149",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client_equipmentcard",
-      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_formatrupiah"
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_formatrupiah",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -19987,7 +20091,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L61",
+      "source_location": "L24",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_costavoidancesection",
@@ -19998,45 +20102,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L31",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_costavoidancesection",
       "target": "src_components_costavoidancesection_equipment",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L33",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_components_costavoidancesection",
-      "target": "src_components_costavoidancesection_formatcurrency",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "contains",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L46",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_components_costavoidancesection",
-      "target": "src_components_costavoidancesection_monthnames",
-      "confidence_score": 1.0
-    },
-    {
-      "relation": "calls",
-      "context": "call",
-      "confidence": "EXTRACTED",
-      "source_file": "src/components/CostAvoidanceSection.tsx",
-      "source_location": "L544",
-      "weight": 1.0,
-      "_origin": "ast",
-      "source": "src_components_costavoidancesection_costavoidancesection",
-      "target": "src_components_costavoidancesection_formatcurrency",
       "confidence_score": 1.0
     },
     {
@@ -20744,13 +20814,13 @@
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
-      "confidence_score": 1.0,
       "source_file": "src/components/ui/button.tsx",
       "source_location": "L52",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_ui_button_button",
-      "target": "src_lib_utils_cn"
+      "target": "src_lib_utils_cn",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -21073,6 +21143,17 @@
       "_origin": "ast",
       "source": "src_lib_master_entities_findmasterentity",
       "target": "src_lib_master_entities_master_entities"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/lib/roles.ts",
+      "source_location": "L17",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_lib_roles",
+      "target": "src_lib_roles_default_role",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -23114,5 +23195,5 @@
       "source_file": "public/validasiInspeksi.png"
     }
   ],
-  "built_at_commit": "f8435ca094eed19b1c01c1ccd489427045d409d7"
+  "built_at_commit": "7cb5399571699b5b6e9d65eaa515dc4c3ae8c6ce"
 }
