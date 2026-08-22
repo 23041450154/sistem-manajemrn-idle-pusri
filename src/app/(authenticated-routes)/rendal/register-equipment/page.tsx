@@ -26,6 +26,7 @@ import {
 	getFunctionalLocations,
 } from "@/action/api";
 import { useRouter, useSearchParams } from "next/navigation";
+import YearPicker from "@/components/YearPicker";
 
 export default function RegisterEquipmentPage() {
 	const router = useRouter();
@@ -625,15 +626,10 @@ export default function RegisterEquipmentPage() {
 									TAHUN PEROLEHAN{" "}
 									<span className="text-gray-400 lowercase font-normal">(opsional)</span>
 								</label>
-								<input
-									type="number"
-									name="year"
+								<YearPicker
 									value={formData.year}
-									placeholder="Contoh: 2020"
-									onChange={handleChange}
-									min="1950"
-									max="2100"
-									className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0556B3] outline-none transition-all"
+									onChange={(year) => setFormData((prev) => ({ ...prev, year }))}
+									placeholder="Pilih tahun perolehan"
 								/>
 							</div>
 							<div className="space-y-1.5">
