@@ -24,6 +24,7 @@ import {
 	getPlants,
 	getStorageLocations,
 	getFunctionalLocations,
+	uploadEquipmentAttachment,
 } from "@/action/api";
 import { useRouter, useSearchParams } from "next/navigation";
 import YearPicker from "@/components/YearPicker";
@@ -75,13 +76,14 @@ export default function RegisterEquipmentPage() {
 
 	useEffect(() => {
 		async function loadData() {
-			const [objs, plantsList, storageLocList, funcLocList, equipments] = await Promise.all([
-				getObjectTypes(),
-				getPlants(),
-				getStorageLocations(),
-				getFunctionalLocations(),
-				editId ? getEquipments() : Promise.resolve([]),
-			]);
+			const [objs, plantsList, storageLocList, funcLocList, equipments] =
+				await Promise.all([
+					getObjectTypes(),
+					getPlants(),
+					getStorageLocations(),
+					getFunctionalLocations(),
+					editId ? getEquipments() : Promise.resolve([]),
+				]);
 			setObjectTypes(objs);
 			setPlants(plantsList);
 			setStorageLocations(storageLocList);
@@ -263,12 +265,9 @@ export default function RegisterEquipmentPage() {
 					attachment.append("equipment_id", editId);
 					attachment.append("category", "equipment_photo");
 					attachment.append("file", file);
-					const upload = await fetch("/api/upload", {
-						method: "POST",
-						body: attachment,
-					});
-					if (!upload.ok)
-						console.error("Gagal upload foto:", file.name, await upload.text());
+					const upload = await uploadEquipmentAttachment(attachment);
+					if (!upload.success)
+						console.error("Gagal upload foto:", file.name, upload.message);
 				}
 			}
 
@@ -541,15 +540,15 @@ export default function RegisterEquipmentPage() {
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									LOKASI PENYIMPANAN
 								</label>
-				<select
-					onBlur={handleBlur}
-					name="storageLocationId"
-					value={formData.storageLocationId}
-					onChange={handleChange}
-					className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white ${!formData.storageLocationId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
-				>
-					<option value="" disabled>
-						Pilih Lokasi Simpan...
+								<select
+									onBlur={handleBlur}
+									name="storageLocationId"
+									value={formData.storageLocationId}
+									onChange={handleChange}
+									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white ${!formData.storageLocationId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
+								>
+									<option value="" disabled>
+										Pilih Lokasi Simpan...
 									</option>
 									{storageLocations.map((loc: { id: number; name: string }) => (
 										<option key={loc.id} value={loc.id} className="text-gray-900">
