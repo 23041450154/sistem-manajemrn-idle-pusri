@@ -5,7 +5,7 @@ import Link from "next/link";
 import { getEquipments, getReuseRequests } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
 import { Package, Send, ArrowRight, RefreshCw } from "lucide-react";
-import styles from "@/app/(authenticated-routes)/dashboard.module.css";
+import { buttonVariants } from "@/components/ui/button";
 
 /** ponytail: API rows are untyped JSON; every field is narrowed at the mapping boundary below.
  * Upgrade path: generate types from the backend OpenAPI/Prisma schema. */
@@ -95,52 +95,40 @@ export default function UnitKerjaDashboardPage() {
 				},
 			);
 
-			const reqList: ReuseRequestItem[] = (rawRequests || []).map(
-				(r: ApiRow) => {
-					const equipment = (r.equipment ?? {}) as ApiRow;
-					const equipmentId = String(
-						r.equipment_id ?? r.equipmentId ?? equipment.id ?? "",
-					);
-					// Response reuse kadang hanya membawa relasi equipment kosong.
-					// Utamakan data master equipment dari /api/equipment berdasarkan ID.
-					const masterEquipment = equipmentById.get(equipmentId) ?? equipment;
-					return {
-						id: String(r.id),
-						request_number: str(
-							r.request_number,
-							r.requestNumber,
-							`REQ-${r.id}`,
-						),
-						equipment_code: str(
-							masterEquipment.equipment_code,
-							masterEquipment.equipmentCode,
-							r.equipment_code,
-							r.equipmentCode,
-							equipment.equipment_code,
-						),
-						equipment_name: str(
-							masterEquipment.name,
-							masterEquipment.nama,
-							r.equipment_name,
-							r.equipmentName,
-							equipment.name,
-						),
-						installation_location: str(
-							r.installation_location,
-							r.installationLocation,
-						),
-						estimated_cost_avoidance:
-							Number(r.estimated_cost_avoidance ?? r.estimatedCostAvoidance) ||
-							0,
-						status: str(
-							r.status,
-							r.approval_status,
-							r.approvalStatus,
-							"PENDING",
-						),
-					};
-				},
-			);
+			const reqList: ReuseRequestItem[] = (rawRequests || []).map((r: ApiRow) => {
+				const equipment = (r.equipment ?? {}) as ApiRow;
+				const equipmentId = String(
+					r.equipment_id ?? r.equipmentId ?? equipment.id ?? "",
+				);
+				// Response reuse kadang hanya membawa relasi equipment kosong.
+				// Utamakan data master equipment dari /api/equipment berdasarkan ID.
+				const masterEquipment = equipmentById.get(equipmentId) ?? equipment;
+				return {
+					id: String(r.id),
+					request_number: str(r.request_number, r.requestNumber, `REQ-${r.id}`),
+					equipment_code: str(
+						masterEquipment.equipment_code,
+						masterEquipment.equipmentCode,
+						r.equipment_code,
+						r.equipmentCode,
+						equipment.equipment_code,
+					),
+					equipment_name: str(
+						masterEquipment.name,
+						masterEquipment.nama,
+						r.equipment_name,
+						r.equipmentName,
+						equipment.name,
+					),
+					installation_location: str(
+						r.installation_location,
+						r.installationLocation,
+					),
+					estimated_cost_avoidance:
+						Number(r.estimated_cost_avoidance ?? r.estimatedCostAvoidance) || 0,
+					status: str(r.status, r.approval_status, r.approvalStatus, "PENDING"),
+				};
+			});
 
 			setEquipments(
 				mappedEquipments.filter((e) => e.status_name === "READY_TO_USE"),
@@ -198,26 +186,30 @@ export default function UnitKerjaDashboardPage() {
 	};
 
 	return (
-		<div className={styles.pageContainer}>
+		<div className="page-container">
 			{/* Header */}
-			<div className={styles.pageHeader}>
+			<div className="page-header">
 				<div>
-					<h1 className={styles.pageTitle}>Dashboard Unit Kerja Operasi</h1>
-					<p className={styles.pageSubtitle}>
+					<h1 className="page-title">Dashboard Unit Kerja Operasi</h1>
+					<p className="page-subtitle">
 						Ketersediaan aset idle dan status pengajuan penggunaan kembali dari unit
 						kerja Anda.
 					</p>
 				</div>
-				<div className={styles.headerActions}>
+				<div className="header-actions">
 					<button
+						type="button"
 						onClick={fetchData}
 						disabled={isLoading}
-						className={styles.btnOutline}
+						className={buttonVariants({ variant: "brandOutline", size: "lg" })}
 					>
 						<RefreshCw className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`} />
 						Muat Ulang
 					</button>
-					<Link href="/unit-kerja/katalog" className={styles.btnPrimary}>
+					<Link
+						href="/unit-kerja/katalog"
+						className={buttonVariants({ variant: "brand", size: "lg" })}
+					>
 						<Package className="w-4 h-4" />
 						Katalog Aset
 					</Link>
@@ -320,10 +312,10 @@ export default function UnitKerjaDashboardPage() {
 												{req.request_number}
 											</td>
 											<td className="px-4 py-2.5">
-											<div className="text-[13px] text-[#0F172A]">
-												{req.equipment_name}
-											</div>
-										</td>
+												<div className="text-[13px] text-[#0F172A]">
+													{req.equipment_name}
+												</div>
+											</td>
 											<td className="px-4 py-2.5 text-[13px] text-[#475569]">
 												{req.installation_location}
 											</td>
@@ -374,7 +366,7 @@ export default function UnitKerjaDashboardPage() {
 										</p>
 									</div>
 									<Link
-									href="/unit-kerja/daftar-aset"
+										href="/unit-kerja/daftar-aset"
 										className="shrink-0 inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-[4px] border border-[#E6E8EA] text-[12px] font-medium text-[#334155] hover:bg-[#F2F3F4] transition-colors"
 									>
 										<Send className="w-3.5 h-3.5" />

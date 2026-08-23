@@ -25,7 +25,7 @@ import {
 	rupiah,
 	type RepairFlowStatus,
 } from "@/lib/equipment-status";
-import styles from "@/app/(authenticated-routes)/dashboard.module.css";
+import { buttonVariants } from "@/components/ui/button";
 
 interface Equipment {
 	id: number;
@@ -231,22 +231,29 @@ export default function PemeliharaanDashboardPage() {
 	}
 
 	return (
-		<div className={styles.pageContainer}>
+		<div className="page-container">
 			{/* Header */}
-			<div className={styles.pageHeader}>
+			<div className="page-header">
 				<div>
-					<h1 className={styles.pageTitle}>Dashboard Pemeliharaan Lapangan</h1>
-					<p className={styles.pageSubtitle}>
+					<h1 className="page-title">Dashboard Pemeliharaan Lapangan</h1>
+					<p className="page-subtitle">
 						Posisi setiap aset dalam alur perbaikan, dari antrean sampai siap
 						digunakan.
 					</p>
 				</div>
-				<div className={styles.headerActions}>
-					<button onClick={loadData} className={styles.btnOutline}>
+				<div className="header-actions">
+					<button
+						type="button"
+						onClick={loadData}
+						className={buttonVariants({ variant: "brandOutline", size: "lg" })}
+					>
 						<RefreshCw className="w-4 h-4" aria-hidden="true" />
 						Muat Ulang
 					</button>
-					<Link href="/pemeliharaan/perbaikan-alat" className={styles.btnPrimary}>
+					<Link
+						href="/pemeliharaan/perbaikan-alat"
+						className={buttonVariants({ variant: "brand", size: "lg" })}
+					>
 						Kerjakan Antrean
 						<ArrowRight className="w-4 h-4" aria-hidden="true" />
 					</Link>

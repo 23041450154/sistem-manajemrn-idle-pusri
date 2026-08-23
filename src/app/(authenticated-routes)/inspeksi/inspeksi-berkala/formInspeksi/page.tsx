@@ -215,9 +215,9 @@ export default function FormInspeksiPage() {
 					aria-modal="true"
 					aria-labelledby="inspeksi-toast-title"
 				>
-					<div className="bg-white rounded-2xl shadow-2xl w-full max-w-md p-8 text-center animate-in zoom-in-95 duration-200">
-						<div className="mx-auto w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center mb-5">
-							<CheckCircle2 className="w-9 h-9 text-emerald-600" />
+					<div className="bg-white rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] w-full max-w-md p-8 text-center animate-in zoom-in-95 duration-200">
+						<div className="mx-auto w-16 h-16 rounded-full bg-white flex items-center justify-center mb-5">
+							<CheckCircle2 className="w-9 h-9 text-[#059669]" />
 						</div>
 						<h2
 							id="inspeksi-toast-title"
@@ -237,10 +237,10 @@ export default function FormInspeksiPage() {
 
 			{toast.show && toast.type === "error" && (
 				<div
-					className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300"
+					className="fixed top-6 right-6 z-[70] bg-white text-[#0F172A] px-5 py-3 rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300"
 					role="alert"
 				>
-					<XCircle className="w-4 h-4 text-red-400" />
+					<XCircle className="w-4 h-4 text-[#DC2626]" />
 					<span className="text-[13px] font-medium">{toast.message}</span>
 					<button
 						type="button"
@@ -275,7 +275,7 @@ export default function FormInspeksiPage() {
 				</div>
 				<button
 					onClick={() => router.back()}
-					className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm"
+					className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 hover:text-[#0A356A] transition-colors"
 				>
 					<ArrowLeft className="w-3.5 h-3.5" />
 					Kembali
@@ -283,16 +283,16 @@ export default function FormInspeksiPage() {
 			</div>
 
 			{/* Equipment Info Card */}
-			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden mb-6">
-				<div className="px-5 py-3 border-b border-gray-200 bg-gray-50/95">
-					<h2 className="text-[14px] font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+			<div className="bg-white border border-gray-200 rounded overflow-hidden mb-6">
+				<div className="px-5 py-3 border-b border-gray-200 bg-[#F2F3F4]">
+					<h2 className="text-[14px] font-bold text-gray-700flex items-center gap-2">
 						<FileText className="w-4 h-4 text-[#0A356A]" />
 						Informasi Aset
 					</h2>
 				</div>
 				<div className="p-5 grid grid-cols-2 md:grid-cols-4 gap-4">
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+						<p className="text-[11px] font-bold text-gray-500 mb-1">
 							Kode Aset
 						</p>
 						<p className="text-[14px] font-bold text-[#0A356A]">
@@ -300,7 +300,7 @@ export default function FormInspeksiPage() {
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+						<p className="text-[11px] font-bold text-gray-500 mb-1">
 							Nama Aset
 						</p>
 						<p className="text-[14px] font-bold text-gray-800">
@@ -308,7 +308,7 @@ export default function FormInspeksiPage() {
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+						<p className="text-[11px] font-bold text-gray-500 mb-1">
 							Plant
 						</p>
 						<p className="text-[14px] font-medium text-gray-700">
@@ -318,7 +318,7 @@ export default function FormInspeksiPage() {
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+						<p className="text-[11px] font-bold text-gray-500 mb-1">
 							Lokasi Penyimpanan
 						</p>
 						<p className="text-[14px] font-medium text-gray-700">
@@ -326,7 +326,7 @@ export default function FormInspeksiPage() {
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+						<p className="text-[11px] font-bold text-gray-500 mb-1">
 							Status Saat Ini
 						</p>
 						<span className="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
@@ -340,7 +340,7 @@ export default function FormInspeksiPage() {
 						</span>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider mb-1">
+						<p className="text-[11px] font-bold text-gray-500 mb-1">
 							Tanggal Inspeksi
 						</p>
 						<p className="text-[14px] font-medium text-gray-700">
@@ -353,22 +353,22 @@ export default function FormInspeksiPage() {
 			{/* Form Card */}
 			<form
 				onSubmit={handleSubmit}
-				className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden"
+				className="bg-white border border-gray-200 rounded overflow-hidden"
 			>
 				{/* Form Header */}
-				<div className="px-5 py-3 border-b border-gray-200 bg-gray-50/95 flex items-center justify-between">
-					<h2 className="text-[14px] font-bold text-gray-700 uppercase tracking-wider flex items-center gap-2">
+				<div className="px-5 py-3 border-b border-gray-200 bg-[#F2F3F4] flex items-center justify-between">
+					<h2 className="text-[14px] font-bold text-gray-700flex items-center gap-2">
 						<ClipboardCheck className="w-4 h-4 text-[#0A356A]" />
 						Hasil Inspeksi
 					</h2>
-					<span className="text-[11px] font-bold text-red-500">* Wajib diisi</span>
+					<span className="text-[11px] font-bold text-[#DC2626]">* Wajib diisi</span>
 				</div>
 
 				<div className="p-5 space-y-6">
 					{/* Section: Hasil Inspeksi */}
 					<div>
-						<label className="block text-[13px] font-bold text-gray-700 uppercase tracking-wider mb-3">
-							Hasil Inspeksi Aset <span className="text-red-500">*</span>
+						<label className="block text-[13px] font-bold text-gray-700 mb-3">
+							Hasil Inspeksi Aset <span className="text-[#DC2626]">*</span>
 						</label>
 						<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
 							{hasilOptions.map((opt) => {
@@ -378,26 +378,26 @@ export default function FormInspeksiPage() {
 									{ selected: string; hover: string; ring: string }
 								> = {
 									emerald: {
-										selected: "border-emerald-500 bg-emerald-50 ring-1 ring-emerald-200",
-										hover: "hover:border-emerald-300",
-										ring: "text-emerald-600",
+										selected: "border-[#059669] bg-white ring-1 ring-[#059669]",
+										hover: "hover:border-[#059669]",
+										ring: "text-[#059669]",
 									},
 									amber: {
-										selected: "border-amber-500 bg-amber-50 ring-1 ring-amber-200",
-										hover: "hover:border-amber-300",
-										ring: "text-amber-600",
+										selected: "border-[#B45309] bg-white ring-1 ring-[#B45309]",
+										hover: "hover:border-[#B45309]",
+										ring: "text-[#B45309]",
 									},
 									red: {
-										selected: "border-red-500 bg-red-50 ring-1 ring-red-200",
-										hover: "hover:border-red-300",
-										ring: "text-red-600",
+										selected: "border-[#DC2626] bg-white ring-1 ring-[#DC2626]",
+										hover: "hover:border-[#DC2626]",
+										ring: "text-[#DC2626]",
 									},
 								};
 								const c = colorMap[opt.color];
 								return (
 									<label
 										key={opt.value}
-										className={`relative flex flex-col gap-1 p-4 border-2 rounded-lg cursor-pointer transition-all ${isSelected ? c.selected : `border-gray-200 ${c.hover} bg-white`} group`}
+										className={`relative flex flex-col gap-1 p-4 border-2 rounded cursor-pointer transition-all ${isSelected ? c.selected : `border-gray-200 ${c.hover} bg-white`} group`}
 									>
 										<input
 											type="radio"
@@ -434,9 +434,9 @@ export default function FormInspeksiPage() {
 
 						{/* Disposal Warning */}
 						{hasilInspeksi === "DISPOSAL" && (
-							<div className="mt-3 flex items-start gap-2 bg-amber-50 border border-amber-200 rounded-lg p-3 animate-in fade-in duration-200">
-								<AlertCircle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-								<p className="text-[12px] text-amber-800 font-medium">
+							<div className="mt-3 flex items-start gap-2 bg-white border border-[#B45309] rounded p-3 animate-in fade-in duration-200">
+								<AlertCircle className="w-4 h-4 text-[#B45309] shrink-0 mt-0.5" />
+								<p className="text-[12px] text-[#B45309] font-medium">
 									Aset akan diajukan sebagai rekomendasi scrap dan memerlukan persetujuan
 									Manajer Rendal.
 								</p>
@@ -446,9 +446,9 @@ export default function FormInspeksiPage() {
 
 					{/* Section: Jenis Perbaikan (Conditional) */}
 					{hasilInspeksi === "REPAIR" && (
-						<div className="animate-in fade-in slide-in-from-top-2 bg-gray-50 border border-gray-200 rounded-lg p-4">
-							<label className="block text-[13px] font-bold text-gray-700 uppercase tracking-wider mb-3">
-								Jenis Perbaikan <span className="text-red-500">*</span>
+						<div className="animate-in fade-in slide-in-from-top-2 bg-gray-50 border border-gray-200 rounded p-4">
+							<label className="block text-[13px] font-bold text-gray-700 mb-3">
+								Jenis Perbaikan <span className="text-[#DC2626]">*</span>
 							</label>
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 								{[
@@ -467,7 +467,7 @@ export default function FormInspeksiPage() {
 									return (
 										<label
 											key={opt.value}
-											className={`relative flex flex-col gap-1 p-3.5 border-2 rounded-lg cursor-pointer transition-all ${isSelected ? "border-[#0A356A] bg-blue-50 ring-1 ring-blue-200" : "border-gray-200 hover:border-blue-300 bg-white"} group`}
+											className={`relative flex flex-col gap-1 p-3.5 border-2 rounded cursor-pointer transition-all ${isSelected ? "border-[#0A356A] bg-[#F2F3F4] ring-1 ring-[#0A356A]" : "border-[#E6E8EA] hover:border-[#0A356A] bg-white"} group`}
 										>
 											<input
 												type="radio"
@@ -504,8 +504,8 @@ export default function FormInspeksiPage() {
 					{/* Section: Kondisi Mekanik & Elektrik */}
 					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
 						<div>
-							<label className="block text-[13px] font-bold text-gray-700 uppercase tracking-wider mb-2">
-								Kondisi Mekanik <span className="text-red-500">*</span>
+							<label className="block text-[13px] font-bold text-gray-700 mb-2">
+								Kondisi Mekanik <span className="text-[#DC2626]">*</span>
 							</label>
 							<textarea
 								value={mechanicalCondition}
@@ -516,12 +516,12 @@ export default function FormInspeksiPage() {
 								}}
 								placeholder="Cek kondisi mekanik: bearing, gear, seal, dll."
 								rows={3}
-								className="w-full px-3 py-2.5 text-[13px] border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
+								className="w-full px-3 py-2.5 text-[13px] border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
 							/>
 						</div>
 						<div>
-							<label className="block text-[13px] font-bold text-gray-700 uppercase tracking-wider mb-2">
-								Kondisi Elektrik <span className="text-red-500">*</span>
+							<label className="block text-[13px] font-bold text-gray-700 mb-2">
+								Kondisi Elektrik <span className="text-[#DC2626]">*</span>
 							</label>
 							<textarea
 								value={electricalCondition}
@@ -532,22 +532,22 @@ export default function FormInspeksiPage() {
 								}}
 								placeholder="Cek kondisi elektrik: motor, kabel, sensor, dll."
 								rows={3}
-								className="w-full px-3 py-2.5 text-[13px] border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
+								className="w-full px-3 py-2.5 text-[13px] border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
 							/>
 						</div>
 					</div>
 
 					{/* Section: Catatan */}
 					<div>
-						<label className="block text-[13px] font-bold text-gray-700 uppercase tracking-wider mb-2">
-							Catatan Inspeksi <span className="text-red-500">*</span>
+						<label className="block text-[13px] font-bold text-gray-700 mb-2">
+							Catatan Inspeksi <span className="text-[#DC2626]">*</span>
 						</label>
 						<textarea
 							value={notes}
 							onChange={(e) => setNotes(e.target.value)}
 							placeholder="Tuliskan temuan lapangan secara rinci di sini..."
 							rows={5}
-							className="w-full px-3 py-2.5 text-[13px] border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
+							className="w-full px-3 py-2.5 text-[13px] border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
 						/>
 						<p className="text-[11px] text-gray-500 mt-1.5 font-medium">
 							Wajib diisi dan tidak boleh hanya berupa spasi kosong.
@@ -557,7 +557,7 @@ export default function FormInspeksiPage() {
 					{/* Section: Upload Foto */}
 					<div>
 						<div className="flex items-center justify-between mb-2">
-							<label className="block text-[13px] font-bold text-gray-700 uppercase tracking-wider">
+							<label className="block text-[13px] font-bold text-gray-700">
 								Foto Bukti Lapangan
 							</label>
 							{files.length > 0 && (
@@ -569,7 +569,7 @@ export default function FormInspeksiPage() {
 
 						<div
 							onClick={() => fileInputRef.current?.click()}
-							className="w-full border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-[#0A356A] transition-all min-h-[120px]"
+							className="w-full border-2 border-dashed border-gray-300 rounded p-4 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-[#0A356A] transition-all min-h-[120px]"
 						>
 							{files.length === 0 ? (
 								<>
@@ -601,7 +601,7 @@ export default function FormInspeksiPage() {
 															e.stopPropagation();
 															removeFile(idx);
 														}}
-														className="bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-all shadow-lg"
+														className="bg-[#DC2626] text-white p-1.5 rounded hover:bg-[#DC2626] transition-all shadow-lg"
 														title="Hapus foto"
 													>
 														<X className="w-3.5 h-3.5" />
@@ -610,7 +610,7 @@ export default function FormInspeksiPage() {
 											</div>
 										))}
 									</div>
-									<div className="flex items-center justify-center gap-2 text-[12px] font-bold text-[#0A356A] bg-blue-50 py-2 rounded-md border border-blue-100 transition-colors">
+									<div className="flex items-center justify-center gap-2 text-[12px] font-bold text-[#0A356A] bg-white py-2 rounded border border-[#E6E8EA] transition-colors">
 										<UploadCloud className="w-4 h-4" /> Tambah Foto
 									</div>
 								</div>
@@ -627,7 +627,7 @@ export default function FormInspeksiPage() {
 						/>
 
 						{fileError && (
-							<div className="mt-2 flex items-center gap-1.5 text-[12px] font-medium text-red-500">
+							<div className="mt-2 flex items-center gap-1.5 text-[12px] font-medium text-[#DC2626]">
 								<AlertCircle className="w-3.5 h-3.5" /> {fileError}
 							</div>
 						)}
@@ -639,17 +639,17 @@ export default function FormInspeksiPage() {
 					<button
 						type="button"
 						onClick={() => router.back()}
-						className="w-full sm:w-auto flex items-center justify-center px-5 py-2.5 border border-gray-300 rounded-lg font-bold text-[13px] text-gray-700 bg-white hover:bg-gray-50 transition-all shadow-sm"
+						className="w-full sm:w-auto flex items-center justify-center px-5 py-2.5 border border-gray-300 rounded font-bold text-[13px] text-gray-700 bg-white hover:bg-gray-50 transition-all"
 					>
 						Batal
 					</button>
 					<button
 						type="submit"
 						disabled={isSubmitDisabled}
-						className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded-lg font-bold text-[13px] transition-all shadow-sm ${
+						className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded font-bold text-[13px] transition-all ${
 							isSubmitDisabled
 								? "bg-gray-100 text-gray-400 cursor-not-allowed border border-transparent"
-								: "bg-[#0A356A] text-white hover:bg-[#062854] border border-transparent"
+								: "bg-[#0A356A] text-white hover:bg-[#0556B3] border border-transparent"
 						}`}
 					>
 						{loading ? (

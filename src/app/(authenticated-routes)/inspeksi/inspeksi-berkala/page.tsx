@@ -314,7 +314,7 @@ export default function InspeksiAntreanPage() {
 					<button
 						onClick={reload}
 						disabled={loading}
-						className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
+						className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 hover:text-[#0A356A] transition-colors disabled:opacity-50"
 					>
 						<RefreshCw className={`w-3.5 h-3.5 ${loading ? "animate-spin" : ""}`} />
 						Muat Ulang
@@ -325,7 +325,7 @@ export default function InspeksiAntreanPage() {
 			{/* Main Content Card Container */}
 			<div
 				id="inspeksi-table-container"
-				className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4"
+				className="bg-white border border-gray-200 rounded overflow-hidden scroll-mt-4"
 			>
 				{/* Navigation Tabs */}
 				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
@@ -342,7 +342,7 @@ export default function InspeksiAntreanPage() {
 					>
 						<span>Antrean Inspeksi</span>
 						<span
-							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold ${
 								activeTab === "antrean"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -365,7 +365,7 @@ export default function InspeksiAntreanPage() {
 					>
 						<span>Riwayat Inspeksi</span>
 						<span
-							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold ${
 								activeTab === "riwayat"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -391,7 +391,7 @@ export default function InspeksiAntreanPage() {
 									setSearch(e.target.value);
 									setCurrentPage(1);
 								}}
-								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
+								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
 							/>
 						</div>
 						<button
@@ -399,7 +399,7 @@ export default function InspeksiAntreanPage() {
 								setSearch(searchInput);
 								setCurrentPage(1);
 							}}
-							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
+							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded hover:bg-[#0556B3] transition-colors whitespace-nowrap"
 						>
 							Cari
 						</button>
@@ -415,7 +415,7 @@ export default function InspeksiAntreanPage() {
 										setFilterPlant(e.target.value);
 										setCurrentPage(1);
 									}}
-									className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+									className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 								>
 									<option value="">Semua Plant</option>
 									{plantOptions.map((p) => (
@@ -431,7 +431,7 @@ export default function InspeksiAntreanPage() {
 										setFilterTipeObjek(e.target.value);
 										setCurrentPage(1);
 									}}
-									className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+									className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 								>
 									<option value="">Semua Tipe</option>
 									{tipeObjekOptions.map((t) => (
@@ -447,7 +447,7 @@ export default function InspeksiAntreanPage() {
 
 						<button
 							onClick={handleReset}
-							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
+							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors whitespace-nowrap"
 							title="Reset semua filter"
 						>
 							<RefreshCw className="w-3.5 h-3.5" />
@@ -459,13 +459,13 @@ export default function InspeksiAntreanPage() {
 				{/* Table */}
 				<div className="overflow-x-auto lg:overflow-x-hidden">
 					<table className="w-full text-left border-collapse">
-						<thead className="bg-gray-50/95 backdrop-blur-sm">
+						<thead className="bg-[#F2F3F4]">
 							<tr className="border-b border-gray-300">
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
+								<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center w-10">
 									No
 								</th>
 								<th
-									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
 									onClick={() => handleSort("equipment_code")}
 								>
 									<div className="flex items-center justify-start">
@@ -473,18 +473,18 @@ export default function InspeksiAntreanPage() {
 									</div>
 								</th>
 								<th
-									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+									className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left"
 									onClick={() => handleSort("name")}
 								>
 									<div className="flex items-center justify-start">
 										Nama Peralatan {getSortIcon("name")}
 									</div>
 								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
 									Tipe Objek
 								</th>
 								<th
-									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
 									onClick={() => handleSort("plant")}
 								>
 									<div className="flex items-center justify-start">
@@ -493,11 +493,11 @@ export default function InspeksiAntreanPage() {
 								</th>
 								{activeTab === "antrean" ? (
 									<>
-										<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
 											Lokasi
 										</th>
 										<th
-											className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+											className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
 											onClick={() => handleSort("date")}
 										>
 											<div className="flex items-center justify-start">
@@ -505,26 +505,26 @@ export default function InspeksiAntreanPage() {
 											</div>
 										</th>
 										<th
-											className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+											className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
 											onClick={() => handleSort("last")}
 										>
 											<div className="flex items-center justify-start">
 												Inspeksi Terakhir {getSortIcon("last")}
 											</div>
 										</th>
-										<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center whitespace-nowrap">
 											Aksi
 										</th>
 									</>
 								) : (
 									<>
-										<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
 											Tgl Inspeksi
 										</th>
-										<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left">
+										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left">
 											Hasil / Catatan
 										</th>
-										<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center whitespace-nowrap">
 											Status
 										</th>
 									</>
@@ -581,7 +581,7 @@ export default function InspeksiAntreanPage() {
 									return (
 										<tr
 											key={row.id}
-											className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
+											className="border-b border-gray-200 last:border-b-0 hover:bg-[#F2F3F4] transition-colors group"
 										>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-500 font-medium text-center">
 												{rowNum}
@@ -610,7 +610,7 @@ export default function InspeksiAntreanPage() {
 														{row.last_inspection_date.split("T")[0]}
 													</span>
 												) : (
-													<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-blue-100 text-blue-800">
+													<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] font-bold bg-[#F2F3F4] text-[#334155]">
 														Belum pernah
 													</span>
 												)}
@@ -618,7 +618,7 @@ export default function InspeksiAntreanPage() {
 											<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
 												<Link
 													href={`/inspeksi/inspeksi-berkala/formInspeksi?equipmentId=${row.id}`}
-													className="inline-flex items-center gap-1 bg-[#0A356A] hover:bg-[#062854] text-white px-2.5 py-1 rounded-lg text-[12px] font-bold transition-all shadow-sm"
+													className="inline-flex items-center gap-1 bg-[#0A356A] hover:bg-[#0556B3] text-white px-2.5 py-1 rounded text-[12px] font-bold transition-all"
 												>
 													<ClipboardCheck className="w-3.5 h-3.5" />
 													Form Inspeksi
@@ -637,7 +637,7 @@ export default function InspeksiAntreanPage() {
 									return (
 										<tr
 											key={row.id}
-											className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
+											className="border-b border-gray-200 last:border-b-0 hover:bg-[#F2F3F4] transition-colors group"
 										>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-500 font-medium text-center">
 												{rowNum}
@@ -664,7 +664,7 @@ export default function InspeksiAntreanPage() {
 												<span className="text-gray-500 text-[11px] block">{row.notes}</span>
 											</td>
 											<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
-												<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-bold bg-emerald-100 text-emerald-800">
+												<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] font-bold bg-white text-[#059669]">
 													<CheckCircle2 className="w-3 h-3" />
 													{row.status_name}
 												</span>
@@ -697,7 +697,7 @@ export default function InspeksiAntreanPage() {
 						<button
 							onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
 							disabled={currentPage === 1}
-							className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors text-[13px]"
+							className="px-3 py-1 bg-white border border-gray-200 rounded text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors text-[13px]"
 						>
 							Sebelumnya
 						</button>
@@ -709,7 +709,7 @@ export default function InspeksiAntreanPage() {
 						<button
 							onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
 							disabled={currentPage === totalPages}
-							className="px-3 py-1 bg-white border border-gray-200 rounded-lg text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors text-[13px]"
+							className="px-3 py-1 bg-white border border-gray-200 rounded text-gray-600 hover:bg-gray-50 disabled:opacity-40 transition-colors text-[13px]"
 						>
 							Selanjutnya
 						</button>

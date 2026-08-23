@@ -529,7 +529,7 @@ export default function RevisiValidasiPage() {
 	// Teks badge = nama status dari backend apa adanya (lihat lib/equipment-status).
 	const getStatusAsetBadge = (status: AssetState | string) => (
 		<span
-			className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${statusBadgeStyle(status)}`}
+			className={`inline-block border text-[11px] font-semibold px-2 py-0.5 rounded-sm ${statusBadgeStyle(status)}`}
 		>
 			{statusText(status)}
 		</span>
@@ -537,7 +537,7 @@ export default function RevisiValidasiPage() {
 
 	const getApprovalBadge = (status: ApprovalState) => {
 		return (
-			<span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[#F3E8FF] text-[#9333EA]">
+			<span className="inline-block border text-[11px] font-semibold px-2 py-0.5 rounded-sm whitespace-nowrap border-[#B45309] text-[#B45309]">
 				Perlu Revisi
 			</span>
 		);
@@ -549,7 +549,7 @@ export default function RevisiValidasiPage() {
 				<button
 					title="Revisi Validasi"
 					onClick={() => openModal(asset, "VALIDASI")}
-					className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+					className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1"
 				>
 					<Edit className="w-3.5 h-3.5" />
 					<span className="text-[11px] font-bold">Revisi Validasi</span>
@@ -605,11 +605,11 @@ export default function RevisiValidasiPage() {
 		<div className="max-w-7xl mx-auto pt-2 pb-8">
 			{/* Toast */}
 			{notification && (
-				<div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+				<div className="fixed top-6 right-6 z-[70] bg-white text-[#0F172A] px-5 py-3 rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
 					{notification.type === "success" ? (
-						<CheckCircle2 className="w-4 h-4 text-emerald-400" />
+						<CheckCircle2 className="w-4 h-4 text-[#059669]" />
 					) : (
-						<XCircle className="w-4 h-4 text-red-400" />
+						<XCircle className="w-4 h-4 text-[#DC2626]" />
 					)}
 					<span className="text-[13px] font-medium">{notification.message}</span>
 				</div>
@@ -617,13 +617,10 @@ export default function RevisiValidasiPage() {
 
 			{/* Action Notification Banner */}
 			{assets.length > 0 && (
-				<div className="mb-4 flex items-center justify-between bg-purple-50 border border-purple-100 rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
+				<div className="mb-4 flex items-center justify-between rounded border border-[#B45309]/30 bg-[#F2F3F4] px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
 					<div className="flex items-center gap-3">
-						<span className="flex h-2.5 w-2.5 relative">
-							<span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
-							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-purple-500"></span>
-						</span>
-						<span className="text-[13px] text-purple-900 font-medium">
+						<span className="inline-flex h-2.5 w-2.5 rounded-sm bg-[#B45309]" aria-hidden="true"></span>
+						<span className="text-[13px] text-[#0F172A] font-medium">
 							Terdapat <strong className="font-bold">{assets.length} aset</strong> yang
 							memerlukan revisi validasi sesuai catatan Manajer Rendal.
 						</span>
@@ -634,7 +631,7 @@ export default function RevisiValidasiPage() {
 			{/* Main Content Area (Tabel) */}
 			<div
 				id="revisi-table-container"
-				className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4"
+				className="bg-white border border-gray-200 rounded overflow-hidden scroll-mt-4"
 			>
 				{/* Toolbar / Filters */}
 				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
@@ -648,12 +645,12 @@ export default function RevisiValidasiPage() {
 								value={searchInput}
 								onChange={(e) => setSearchInput(e.target.value)}
 								onKeyDown={(e) => e.key === "Enter" && setSearch(searchInput)}
-								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
+								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
 							/>
 						</div>
 						<button
 							onClick={() => setSearch(searchInput)}
-							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
+							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded hover:bg-[#0556B3] transition-colors whitespace-nowrap"
 						>
 							Cari
 						</button>
@@ -664,7 +661,7 @@ export default function RevisiValidasiPage() {
 						<select
 							value={plantFilter}
 							onChange={(e) => setPlantFilter(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="Semua">Semua Plant</option>
 							<option value="P-1">Plant 1</option>
@@ -677,14 +674,14 @@ export default function RevisiValidasiPage() {
 							type="date"
 							value={dateFilter}
 							onChange={(e) => setDateFilter(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						/>
 
 						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
 
 						<button
 							onClick={resetFilter}
-							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
+							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors whitespace-nowrap"
 							title="Reset semua filter"
 						>
 							<RefreshCw className="w-3.5 h-3.5" />
@@ -696,13 +693,13 @@ export default function RevisiValidasiPage() {
 				{/* Table */}
 				<div className="overflow-x-auto">
 					<table className="w-full text-left border-collapse">
-						<thead className="bg-gray-50/95 backdrop-blur-sm">
+						<thead className="bg-[#F2F3F4]">
 							<tr className="border-b border-gray-300">
-								<th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center w-12">
+								<th className="px-3 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center w-12">
 									No
 								</th>
 								<th
-									className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+									className="px-3 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("namaAlat")}
 								>
@@ -711,14 +708,14 @@ export default function RevisiValidasiPage() {
 									</div>
 								</th>
 								<th
-									className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+									className="px-3 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("plant")}
 								>
 									<div className="flex items-center">Plant {getSortIcon("plant")}</div>
 								</th>
 								<th
-									className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+									className="px-3 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("jenisAlat")}
 								>
@@ -727,7 +724,7 @@ export default function RevisiValidasiPage() {
 									</div>
 								</th>
 								<th
-									className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+									className="px-3 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("tanggalRegistrasi")}
 								>
@@ -736,7 +733,7 @@ export default function RevisiValidasiPage() {
 									</div>
 								</th>
 								<th
-									className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"
+									className="px-3 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("statusAset")}
 								>
@@ -744,10 +741,10 @@ export default function RevisiValidasiPage() {
 										Aset {getSortIcon("statusAset")}
 									</div>
 								</th>
-								<th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider">
+								<th className="px-3 py-2.5 text-[12px] font-bold text-gray-500">
 									Status Persetujuan
 								</th>
-								<th className="px-3 py-2.5 text-[12px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-3 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center whitespace-nowrap">
 									Tindakan
 								</th>
 							</tr>
@@ -763,7 +760,7 @@ export default function RevisiValidasiPage() {
 								<tr>
 									<td colSpan={8} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
-											<CheckCircle2 className="w-6 h-6 text-emerald-400 mb-2" />
+											<CheckCircle2 className="w-6 h-6 text-[#059669] mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
 												Tidak Ada Peralatan Perlu Revisi
 											</p>
@@ -780,7 +777,7 @@ export default function RevisiValidasiPage() {
 									return (
 										<tr
 											key={asset.id}
-											className="border-b border-gray-200 last:border-b-0 hover:bg-purple-50/30 transition-colors group"
+											className="border-b border-gray-200 last:border-b-0 hover:bg-[#F2F3F4] transition-colors group"
 										>
 											<td className="px-3 py-1 text-[14px] text-gray-500 font-medium text-center">
 												{rowNum}
@@ -870,11 +867,11 @@ export default function RevisiValidasiPage() {
 			{isModalOpen && modalMode === "VALIDASI" && selectedAsset && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 					<div
-						className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"
+						className="fixed inset-0 bg-gray-900/50 transition-opacity"
 						onClick={closeModal}
 					/>
 
-					<div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+					<div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col animate-in fade-in zoom-in-95 duration-200">
 						{/* Header */}
 						<div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
 							<div className="flex items-center gap-3">
@@ -897,32 +894,32 @@ export default function RevisiValidasiPage() {
 						{/* Body */}
 						<div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50/50">
 							{/* Asset Info Ribbon */}
-							<div className="bg-[#f0f7ff] border border-blue-100 rounded-lg p-2.5 mb-4 flex items-center justify-between gap-4">
+							<div className="bg-[#F2F3F4] border border-[#E6E8EA] rounded p-2.5 mb-4 flex items-center justify-between gap-4">
 								<div className="flex items-center gap-5 overflow-hidden">
 									<div>
-										<span className="text-blue-700/60 text-[10px] font-semibold uppercase block leading-none mb-1">
+										<span className="text-[#64748B] text-[10px] font-medium block leading-none mb-1">
 											Nama Peralatan
 										</span>
-										<span className="font-bold text-[13px] text-blue-900 truncate">
+										<span className="font-bold text-[13px] text-[#0F172A] truncate">
 											{selectedAsset.namaAlat}
 										</span>
 									</div>
-									<div className="w-px h-5 bg-blue-200"></div>
+									<div className="w-px h-5 bg-[#E6E8EA]"></div>
 									<div>
-										<span className="text-blue-700/60 text-[10px] font-semibold uppercase block leading-none mb-1">
+										<span className="text-[#64748B] text-[10px] font-medium block leading-none mb-1">
 											Plant
 										</span>
-										<span className="font-bold text-[13px] text-blue-900">
+										<span className="font-bold text-[13px] text-[#0F172A]">
 											{selectedAsset.plant}
 										</span>
 									</div>
-									<div className="w-px h-5 bg-blue-200"></div>
+									<div className="w-px h-5 bg-[#E6E8EA]"></div>
 									<div className="flex-1 min-w-52">
-										<span className="text-blue-700/60 text-[10px] font-semibold uppercase block leading-none mb-1">
+										<span className="text-[#64748B] text-[10px] font-medium block leading-none mb-1">
 											Spesifikasi Singkat
 										</span>
 										<span
-											className="text-blue-800 text-[12px] truncate block"
+											className="text-[#334155] text-[12px] truncate block"
 											title={selectedAsset.spesifikasi}
 										>
 											{selectedAsset.spesifikasi}
@@ -936,13 +933,13 @@ export default function RevisiValidasiPage() {
 							</div>
 
 							{/* Banner Catatan Revisi dari Manager */}
-							<div className="bg-purple-50 border-l-4 border-purple-600 p-3.5 mb-4 rounded-r-lg flex gap-3 shadow-sm">
-								<AlertCircle className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+							<div className="bg-[#F2F3F4] border-l-4 border-[#B45309] p-3.5 mb-4 rounded-r-lg flex gap-3">
+								<AlertCircle className="w-5 h-5 text-[#B45309] shrink-0 mt-0.5" />
 								<div>
-									<h4 className="text-[13px] font-bold text-purple-900">
+									<h4 className="text-[13px] font-bold text-[#0F172A]">
 										Catatan Revisi dari Manajer Rendal
 									</h4>
-									<p className="text-[12px] text-purple-800 mt-1 font-medium bg-white/70 p-2 rounded border border-purple-200">
+									<p className="text-[12px] text-[#0F172A] mt-1 font-medium bg-white/70 p-2 rounded border border-[#B45309]">
 										&quot;Mohon perbarui dan lengkapi hasil validasi beserta foto
 										pendukung tambahan sebelum pengajuan disetujui.&quot;
 									</p>
@@ -950,7 +947,7 @@ export default function RevisiValidasiPage() {
 							</div>
 
 							{/* Form Grid */}
-							<div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
+							<div className="bg-white border border-gray-200 rounded p-4">
 								{/* Row 1: Identifikasi & Waktu */}
 								<div className="grid grid-cols-12 gap-3 mb-3">
 									<div className="col-span-3">
@@ -972,10 +969,10 @@ export default function RevisiValidasiPage() {
 											type="date"
 											value={tglPemeriksaan}
 											onChange={(e) => setTglPemeriksaan(e.target.value)}
-											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${showValidationErrors && !tglPemeriksaan ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`}
+											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${showValidationErrors && !tglPemeriksaan ? "border-[#DC2626] focus:border-[#DC2626]" : "border-gray-300 focus:border-[#0A356A]"}`}
 										/>
 										{showValidationErrors && !tglPemeriksaan && (
-											<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 												* Tanggal wajib diisi.
 											</p>
 										)}
@@ -987,7 +984,7 @@ export default function RevisiValidasiPage() {
 											label="Jam Mulai *"
 										/>
 										{showValidationErrors && !jamMulai && (
-											<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 												* Jam Mulai wajib diisi.
 											</p>
 										)}
@@ -999,7 +996,7 @@ export default function RevisiValidasiPage() {
 											label="Jam Selesai *"
 										/>
 										{showValidationErrors && !jamSelesai && (
-											<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 												* Jam Selesai wajib diisi.
 											</p>
 										)}
@@ -1024,7 +1021,7 @@ export default function RevisiValidasiPage() {
 										<select
 											value={lokasi}
 											onChange={(e) => setLokasi(e.target.value)}
-											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${showValidationErrors && !lokasi ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`}
+											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${showValidationErrors && !lokasi ? "border-[#DC2626] focus:border-[#DC2626]" : "border-gray-300 focus:border-[#0A356A]"}`}
 										>
 											<option value="" disabled>
 												Pilih Lokasi...
@@ -1038,7 +1035,7 @@ export default function RevisiValidasiPage() {
 											<option value="Bengkel Mekanik">Bengkel Mekanik</option>
 										</select>
 										{showValidationErrors && !lokasi && (
-											<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 												* Lokasi wajib dipilih.
 											</p>
 										)}
@@ -1052,19 +1049,19 @@ export default function RevisiValidasiPage() {
 											<label
 												className={`flex-1 relative border rounded-md p-1.5 cursor-pointer flex items-center justify-center gap-2 transition-all ${
 													hasilPemeriksaan === "Layak"
-														? "border-emerald-500 bg-emerald-50/50"
+														? "border-[#059669] bg-white"
 														: "border-gray-200 bg-white hover:bg-gray-50"
-												} ${showValidationErrors && !hasilPemeriksaan ? "border-red-400" : ""}`}
+												} ${showValidationErrors && !hasilPemeriksaan ? "border-[#DC2626]" : ""}`}
 											>
 												<div
-													className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Layak" ? "border-emerald-500" : showValidationErrors && !hasilPemeriksaan ? "border-red-400" : "border-gray-300"}`}
+													className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Layak" ? "border-[#059669]" : showValidationErrors && !hasilPemeriksaan ? "border-[#DC2626]" : "border-gray-300"}`}
 												>
 													{hasilPemeriksaan === "Layak" && (
-														<div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+														<div className="w-1.5 h-1.5 bg-[#059669] rounded-full" />
 													)}
 												</div>
 												<span
-													className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-emerald-700" : "text-gray-700"}`}
+													className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-[#059669]" : "text-gray-700"}`}
 												>
 													Layak Digunakan
 												</span>
@@ -1081,19 +1078,19 @@ export default function RevisiValidasiPage() {
 											<label
 												className={`flex-1 relative border rounded-md p-1.5 cursor-pointer flex items-center justify-center gap-2 transition-all ${
 													hasilPemeriksaan === "Tidak Layak"
-														? "border-red-500 bg-red-50/50"
+														? "border-[#DC2626] bg-white"
 														: "border-gray-200 bg-white hover:bg-gray-50"
-												} ${showValidationErrors && !hasilPemeriksaan ? "border-red-400" : ""}`}
+												} ${showValidationErrors && !hasilPemeriksaan ? "border-[#DC2626]" : ""}`}
 											>
 												<div
-													className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Tidak Layak" ? "border-red-500" : showValidationErrors && !hasilPemeriksaan ? "border-red-400" : "border-gray-300"}`}
+													className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Tidak Layak" ? "border-[#DC2626]" : showValidationErrors && !hasilPemeriksaan ? "border-[#DC2626]" : "border-gray-300"}`}
 												>
 													{hasilPemeriksaan === "Tidak Layak" && (
-														<div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+														<div className="w-1.5 h-1.5 bg-[#DC2626] rounded-full" />
 													)}
 												</div>
 												<span
-													className={`text-[13px] font-semibold ${hasilPemeriksaan === "Tidak Layak" ? "text-red-700" : "text-gray-700"}`}
+													className={`text-[13px] font-semibold ${hasilPemeriksaan === "Tidak Layak" ? "text-[#DC2626]" : "text-gray-700"}`}
 												>
 													Tidak Layak
 												</span>
@@ -1108,7 +1105,7 @@ export default function RevisiValidasiPage() {
 											</label>
 										</div>
 										{showValidationErrors && !hasilPemeriksaan && (
-											<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 												* Hasil Evaluasi wajib dipilih.
 											</p>
 										)}
@@ -1126,7 +1123,7 @@ export default function RevisiValidasiPage() {
 											value={conditionId}
 											onChange={(e) => setConditionId(e.target.value)}
 											required
-											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${showValidationErrors && !conditionId ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`}
+											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${showValidationErrors && !conditionId ? "border-[#DC2626] focus:border-[#DC2626]" : "border-gray-300 focus:border-[#0A356A]"}`}
 										>
 											<option value="" disabled>
 												Pilih Kondisi...
@@ -1138,7 +1135,7 @@ export default function RevisiValidasiPage() {
 											))}
 										</select>
 										{showValidationErrors && !conditionId && (
-											<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 												* Kondisi aset wajib dipilih.
 											</p>
 										)}
@@ -1151,7 +1148,7 @@ export default function RevisiValidasiPage() {
 										<label className="block text-[11px] font-semibold text-gray-700 mb-1">
 											Catatan Pemeriksaan Baru{" "}
 											<span
-												className={hasilPemeriksaan === "Tidak Layak" ? "text-red-500" : ""}
+												className={hasilPemeriksaan === "Tidak Layak" ? "text-[#DC2626]" : ""}
 											>
 												{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}
 											</span>
@@ -1167,12 +1164,12 @@ export default function RevisiValidasiPage() {
 											}
 											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none resize-none transition-all ${
 												hasilPemeriksaan === "Tidak Layak" && !catatan.trim()
-													? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10"
+													? "border-[#DC2626] focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
 													: "border-gray-300 focus:border-[#0A356A]"
 											}`}
 										/>
 										{hasilPemeriksaan === "Tidak Layak" && !catatan.trim() && (
-											<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 												* Harus diisi agar bisa disimpan.
 											</p>
 										)}
@@ -1209,12 +1206,12 @@ export default function RevisiValidasiPage() {
 										onDrop={handleDrop}
 										className={`border-2 border-dashed rounded-md p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
 											isDragging
-												? "border-[#0A356A] bg-blue-50/80"
-												: "border-gray-300 bg-gray-50 hover:bg-blue-50/50 hover:border-blue-300"
+												? "border-[#0A356A] bg-[#F2F3F4]"
+												: "border-gray-300 bg-gray-50 hover:bg-[#F2F3F4] hover:border-[#0A356A]"
 										}`}
 									>
 										<UploadCloud
-											className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A] animate-bounce" : "text-gray-400"}`}
+											className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A]" : "text-gray-400"}`}
 										/>
 										<div className="text-[13px] text-center">
 											<span className="font-bold text-[#0A356A]">
@@ -1226,7 +1223,7 @@ export default function RevisiValidasiPage() {
 										</span>
 
 										{uploadedFiles.length === 0 && (
-											<span className="text-[9px] font-bold text-gray-500 uppercase bg-gray-50 px-1.5 py-0.5 rounded mt-1">
+											<span className="text-[9px] font-bold text-gray-500 border border-[#E6E8EA] bg-white px-1.5 py-0.5 rounded-sm mt-1">
 												Opsional
 											</span>
 										)}
@@ -1242,7 +1239,7 @@ export default function RevisiValidasiPage() {
 													return (
 														<div
 															key={i}
-															className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white w-[150px] shadow-sm hover:shadow-md transition-all hover:border-[#0A356A]"
+															className="relative group border border-gray-200 rounded overflow-hidden bg-white w-[150px] transition-all hover:border-[#0A356A]"
 														>
 															{isImage ? (
 																<div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -1271,7 +1268,7 @@ export default function RevisiValidasiPage() {
 																	e.stopPropagation();
 																	removeFile(i);
 																}}
-																className="absolute top-1.5 right-1.5 bg-red-500 rounded-full p-1 text-white hover:bg-red-600 shadow-md transition-colors opacity-0 group-hover:opacity-100"
+																className="absolute top-1.5 right-1.5 bg-[#DC2626] rounded p-1 text-white hover:bg-[#DC2626] transition-colors opacity-0 group-hover:opacity-100"
 																title="Hapus"
 															>
 																<X className="w-3.5 h-3.5" />
@@ -1284,7 +1281,7 @@ export default function RevisiValidasiPage() {
 									</div>
 
 									{fileError && (
-										<p className="text-[10px] text-red-500 mt-1.5 font-medium">
+										<p className="text-[10px] text-[#DC2626] mt-1.5 font-medium">
 											* {fileError}
 										</p>
 									)}
@@ -1297,7 +1294,7 @@ export default function RevisiValidasiPage() {
 							<button
 								onClick={closeModal}
 								disabled={isSubmitting}
-								className="px-4 py-1.5 text-[13px] font-semibold text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50"
+								className="px-4 py-1.5 text-[13px] font-semibold text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-[#E6E8EA] transition-colors disabled:opacity-50"
 							>
 								Tutup
 							</button>
@@ -1305,7 +1302,7 @@ export default function RevisiValidasiPage() {
 							<button
 								onClick={handleSaveClick}
 								disabled={isSubmitting}
-								className="px-5 py-1.5 text-[13px] font-bold text-white bg-purple-600 hover:bg-purple-700 rounded-md transition-all shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+								className="px-5 py-1.5 text-[13px] font-bold text-white bg-[#B45309] hover:bg-[#B45309] rounded-md transition-all disabled:opacity-50 flex items-center gap-1.5"
 							>
 								{isSubmitting ? (
 									<>
@@ -1324,11 +1321,11 @@ export default function RevisiValidasiPage() {
 
 			{previewImage && (
 				<div
-					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm"
+					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90"
 					onClick={() => setPreviewImage(null)}
 				>
 					<button
-						className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded-full transition-colors"
+						className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded transition-colors"
 						onClick={(e) => {
 							e.stopPropagation();
 							setPreviewImage(null);
@@ -1339,7 +1336,7 @@ export default function RevisiValidasiPage() {
 					<img
 						src={previewImage}
 						alt="Preview"
-						className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+						className="max-w-full max-h-full object-contain rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
 						onClick={(e) => e.stopPropagation()}
 					/>
 				</div>

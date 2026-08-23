@@ -1,37 +1,55 @@
 import Link from "next/link";
-import { FileText, Plus, Server, PowerOff, CheckCircle, Wrench, Clock, FileQuestion } from "lucide-react";
+import {
+  FileText,
+  Plus,
+  Server,
+  PowerOff,
+  CheckCircle,
+  Wrench,
+  Clock,
+  FileQuestion,
+} from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { ChartSection } from "@/components/ChartSection";
 import { UpcomingInspections } from "@/components/UpcomingInspections";
 import { RecentActivities } from "@/components/RecentActivities";
-import styles from "@/app/(authenticated-routes)/dashboard.module.css";
+import { buttonVariants } from "@/components/ui/button";
 import { getEquipments } from "@/action/api";
 
 export default async function RendalDashboard() {
-  const equipments = await getEquipments() || [];
-  
+  const equipments: { status?: { name?: string } }[] =
+    (await getEquipments()) || [];
+
   const totalPeralatan = equipments.length;
-  const idleCount = equipments.filter((e: any) => e.status?.name === 'IDLE').length;
-  const readyCount = equipments.filter((e: any) => e.status?.name === 'READY_TO_REUSE').length;
-  const repairCount = equipments.filter((e: any) => e.status?.name === 'DALAM_PERBAIKAN').length;
-  const inspectionCount = equipments.filter((e: any) => e.status?.name === 'REGISTERED').length;
-  
+  const countBy = (name: string) =>
+    equipments.filter((e) => e.status?.name === name).length;
+  const idleCount = countBy("IDLE");
+  const readyCount = countBy("READY_TO_REUSE");
+  const repairCount = countBy("DALAM_PERBAIKAN");
+  const inspectionCount = countBy("REGISTERED");
+
   return (
-    <div className={styles.pageContainer}>
+    <div className="page-container">
       {/* Header Overview */}
-      <div className={styles.pageHeader}>
+      <div className="page-header">
         <div>
-          <h1 className={styles.pageTitle}>Dashboard Overview</h1>
-          <p className={styles.pageSubtitle}>
+          <h1 className="page-title">Dashboard Overview</h1>
+          <p className="page-subtitle">
             Selamat datang kembali, berikut ringkasan status aset hari ini.
           </p>
         </div>
-        <div className={styles.headerActions}>
-          <button className={styles.btnOutline}>
+        <div className="header-actions">
+          <button
+            type="button"
+            className={buttonVariants({ variant: "brandOutline", size: "lg" })}
+          >
             <FileText className="w-4 h-4" />
             Buat Laporan
           </button>
-          <Link href="/rendal/register-equipment" className={styles.btnPrimary}>
+          <Link
+            href="/rendal/register-equipment"
+            className={buttonVariants({ variant: "brand", size: "lg" })}
+          >
             <Plus className="w-4 h-4" />
             Daftarkan Peralatan
           </Link>
@@ -39,7 +57,7 @@ export default async function RendalDashboard() {
       </div>
 
       {/* Stats Cards */}
-      <div className={styles.statsGrid}>
+      <div className="stats-grid">
         <StatCard
           title="Total Peralatan"
           value={totalPeralatan.toString()}
@@ -89,8 +107,8 @@ export default async function RendalDashboard() {
       <ChartSection />
 
       {/* Bottom Section: Tables & Activity */}
-      <div className={styles.bottomGrid}>
-        <div className={styles.upcomingWrapper}>
+      <div className="bottom-grid">
+        <div className="upcoming-wrapper">
           <UpcomingInspections />
         </div>
         <div>

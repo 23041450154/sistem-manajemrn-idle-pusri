@@ -17,7 +17,6 @@ import {
 	Trash2,
 } from "lucide-react";
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 interface RevalidasiItem {
 	id: string;
 	kodeAlat: string;
@@ -59,16 +58,18 @@ export default function ValidasiUlangPage() {
 	} | null>(null);
 	const [modalError, setModalError] = useState<string | null>(null);
 
-	const loadData = async () => {
-		setIsLoading(true);
-		try {
-			const [data, conditionsData] = await Promise.all([
-				getEquipments(),
-				getConditions(),
-			]);
-			setConditions(conditionsData || []);
+	// Pure fetch + map. No setState inside, so it can run from an effect
+	// callback or from refresh handlers without cascading renders.
+	const fetchRevalidasiData = async (): Promise<{
+		items: RevalidasiItem[];
+		conditions: Awaited<ReturnType<typeof getConditions>>;
+	}> => {
+		const [data, conditionsData] = await Promise.all([
+			getEquipments(),
+			getConditions(),
+		]);
 
-			let filtered: RevalidasiItem[] = [];
+		let filtered: RevalidasiItem[] = [];
 
 			if (Array.isArray(data) && data.length > 0) {
 				filtered = data
@@ -137,9 +138,22 @@ export default function ValidasiUlangPage() {
 							statusId: item.status_id || item.status?.id || 4,
 						};
 					});
-			}
+		}
 
-			setItems(filtered);
+		return { items: filtered, conditions: conditionsData || [] };
+	};
+
+	const applyRevalidasiData = (result: {
+		items: RevalidasiItem[];
+		conditions: Awaited<ReturnType<typeof getConditions>>;
+	}) => {
+		setConditions(result.conditions);
+		setItems(result.items);
+	};
+
+	const loadData = async () => {
+		try {
+			applyRevalidasiData(await fetchRevalidasiData());
 		} catch (err) {
 			console.error("Error loading validasi ulang:", err);
 			setItems([]);
@@ -149,12 +163,22 @@ export default function ValidasiUlangPage() {
 	};
 
 	useEffect(() => {
-		loadData();
+		let cancelled = false;
+		fetchRevalidasiData()
+			.then((result) => {
+				if (!cancelled) applyRevalidasiData(result);
+			})
+			.catch((err) => {
+				console.error("Error loading validasi ulang:", err);
+				if (!cancelled) setItems([]);
+			})
+			.finally(() => {
+				if (!cancelled) setIsLoading(false);
+			});
+		return () => {
+			cancelled = true;
+		};
 	}, []);
-
-	useEffect(() => {
-		setCurrentPage(1);
-	}, [activeTab, searchQuery, filterPlant, filterTipeObjek]);
 
 	const plantOptions = useMemo(
 		() =>
@@ -216,13 +240,17 @@ export default function ValidasiUlangPage() {
 		return filteredItems.slice(start, start + ITEMS_PER_PAGE);
 	}, [filteredItems, currentPage]);
 
-	const handleSearch = () => setSearchQuery(searchInput);
+	const handleSearch = () => {
+		setSearchQuery(searchInput);
+		setCurrentPage(1);
+	};
 
 	const handleReset = () => {
 		setSearchInput("");
 		setSearchQuery("");
 		setFilterPlant("");
 		setFilterTipeObjek("");
+		setCurrentPage(1);
 	};
 
 	const handleOpenModal = (asset: RevalidasiItem) => {
@@ -288,6 +316,7 @@ export default function ValidasiUlangPage() {
 			} else {
 				setModalError(result.message || "Gagal menyimpan re-validasi ke database.");
 			}
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (err: any) {
 			setModalError(err.message || "Terjadi kesalahan koneksi ke database.");
 		} finally {
@@ -297,21 +326,21 @@ export default function ValidasiUlangPage() {
 
 	const getConditionBadge = (kondisi: string) => {
 		if (kondisi === "Baik" || kondisi === "BAGUS")
-			return "bg-emerald-50 text-emerald-700 border border-emerald-200";
+			return "border border-[#059669] text-[#059669]";
 		if (kondisi === "-")
 			return "bg-gray-50 text-gray-400 border border-gray-200";
-		return "bg-amber-50 text-amber-700 border border-amber-200";
+		return "border border-[#B45309] text-[#B45309]";
 	};
 
 	return (
 		<div className="max-w-7xl mx-auto pt-2 pb-8">
 			{/* Toast */}
 			{notification && (
-				<div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+				<div className="fixed top-6 right-6 z-[70] bg-white text-[#0F172A] px-5 py-3 rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
 					{notification.type === "success" ? (
-						<CheckCircle2 className="w-4 h-4 text-emerald-400" />
+						<CheckCircle2 className="w-4 h-4 text-[#059669]" />
 					) : (
-						<XCircle className="w-4 h-4 text-red-400" />
+						<XCircle className="w-4 h-4 text-[#DC2626]" />
 					)}
 					<span className="text-[13px] font-medium">{notification.message}</span>
 					<button
@@ -337,7 +366,7 @@ export default function ValidasiUlangPage() {
 					<button
 						onClick={loadData}
 						disabled={isLoading}
-						className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm"
+						className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 hover:text-[#0A356A] transition-colors"
 					>
 						<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
 						Muat Ulang
@@ -350,7 +379,7 @@ export default function ValidasiUlangPage() {
 
 
 			{/* Main Content Area (Tabel) */}
-			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4">
+			<div className="bg-white border border-gray-200 rounded overflow-hidden scroll-mt-4">
 				{/* Navigation Tabs */}
 				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
 					<button
@@ -366,7 +395,7 @@ export default function ValidasiUlangPage() {
 					>
 						<span>Antrean Validasi Perbaikan</span>
 						<span
-							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold ${
 								activeTab === "antrean"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -389,7 +418,7 @@ export default function ValidasiUlangPage() {
 					>
 						<span>Riwayat Validasi Perbaikan</span>
 						<span
-							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold ${
 								activeTab === "riwayat"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -412,12 +441,12 @@ export default function ValidasiUlangPage() {
 								value={searchInput}
 								onChange={(e) => setSearchInput(e.target.value)}
 								onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
+								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
 							/>
 						</div>
 						<button
 							onClick={handleSearch}
-							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
+							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded hover:bg-[#0556B3] transition-colors whitespace-nowrap"
 						>
 							Cari
 						</button>
@@ -428,7 +457,7 @@ export default function ValidasiUlangPage() {
 						<select
 							value={filterPlant}
 							onChange={(e) => setFilterPlant(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Plant</option>
 							{plantOptions.map((p) => (
@@ -439,7 +468,7 @@ export default function ValidasiUlangPage() {
 						<select
 							value={filterTipeObjek}
 							onChange={(e) => setFilterTipeObjek(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Tipe</option>
 							{tipeObjekOptions.map((t) => (
@@ -452,7 +481,7 @@ export default function ValidasiUlangPage() {
 						{/* Reset Button */}
 						<button
 							onClick={handleReset}
-							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
+							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors whitespace-nowrap"
 							title="Reset semua filter"
 						>
 							<RefreshCw className="w-3.5 h-3.5" />
@@ -464,7 +493,7 @@ export default function ValidasiUlangPage() {
 				{/* Table */}
 				<div className="overflow-hidden">
 					<table className="w-full text-left border-collapse table-fixed">
-						<thead className="bg-gray-50/95 backdrop-blur-sm">
+						<thead className="bg-[#F2F3F4]">
 							<tr className="border-b border-gray-300">
 								<th className="px-2 py-3 text-[10px] font-bold text-gray-600 uppercase tracking-wide text-center w-[4%]">
 									No
@@ -534,7 +563,7 @@ export default function ValidasiUlangPage() {
 									return (
 										<tr
 											key={asset.id}
-											className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
+											className="border-b border-gray-200 last:border-b-0 hover:bg-[#F2F3F4] transition-colors group"
 										>
 											<td className="px-3 py-3 text-[13px] text-gray-500 font-medium text-center">
 												{rowNum}
@@ -568,19 +597,20 @@ export default function ValidasiUlangPage() {
 											</td>
 											<td className="px-2 py-3 text-center">
 												<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
-													{isAntreanRow ? (
-														<button
-															onClick={() => handleOpenModal(asset)}
-														className="inline-flex items-center gap-1 bg-[#0A356A] hover:bg-[#062854] text-white px-2 py-1 rounded-md text-[11px] font-bold transition-all shadow-sm"
+																											{isAntreanRow ? (
+																												<button
+																													onClick={() => handleOpenModal(asset)}
+														className="inline-flex items-center gap-1 bg-[#0A356A] hover:bg-[#0556B3] text-white px-2 py-1 rounded text-[11px] font-medium transition-colors duration-150"
 															title="Validasi Perbaikan Alat"
 														>
-															<ClipboardCheck className="w-3.5 h-3.5" />
+															<ClipboardCheck className="h-3.5 w-3.5" />
 															Validasi
 														</button>
 													) : (
-														<span className="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded text-[11px] font-bold shadow-sm">
-															<CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-															Selesai Validasi
+														/* Status akhir: teks polos, bukan kontrol palsu yang tak bisa diklik. */
+														<span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#059669]">
+															<CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+															Selesai divalidasi
 														</span>
 													)}
 												</div>
@@ -644,31 +674,27 @@ export default function ValidasiUlangPage() {
 
 			{/* Modal Validasi Perbaikan Alat */}
 			{isModalOpen && selectedAsset && (
-				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-					<div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+				<div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0F172A]/50 p-4 animate-in fade-in duration-200">
+					<div className="bg-white rounded w-full max-w-lg overflow-hidden border border-[#E6E8EA] flex flex-col max-h-[90vh] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] animate-in zoom-in-95 fade-in duration-200">
 						{/* Modal Header */}
-						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
-							<div className="flex items-center gap-3">
-								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
-									<ClipboardCheck className="w-5 h-5 text-white" />
-								</div>
-								<div>
-									<h2 className="text-base font-bold text-white">Validasi Perbaikan Alat</h2>
-									<p className="text-xs text-blue-100">{selectedAsset.kodeAlat} — {selectedAsset.namaAlat}</p>
-								</div>
+						<div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-[#E6E8EA]">
+							<div className="min-w-0">
+								<h2 id="modal-title" className="text-[14px] font-semibold leading-tight text-[#0F172A]">Validasi Perbaikan Alat</h2>
+								<p className="mt-0.5 truncate font-mono text-[12px] text-[#64748B]">{selectedAsset.kodeAlat} · {selectedAsset.namaAlat}</p>
 							</div>
 							<button
 								onClick={handleCloseModal}
-								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+								aria-label="Tutup dialog"
+								className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-[#64748B] transition-colors duration-150 hover:bg-[#F2F3F4] hover:text-[#0F172A]"
 							>
-								<X className="w-5 h-5" />
+								<X className="h-4 w-4" />
 							</button>
 						</div>
 
 						{/* Modal Body */}
 						<div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
 							{/* Info Aset */}
-							<div className="bg-gray-50 rounded-lg p-3 border border-gray-200 grid grid-cols-2 gap-2 text-xs">
+							<div className="bg-gray-50 rounded p-3 border border-gray-200 grid grid-cols-2 gap-2 text-xs">
 								<div>
 									<p className="text-gray-500 font-medium">Tipe Objek</p>
 									<p className="text-gray-800 font-semibold">{selectedAsset.tipeObjek}</p>
@@ -689,13 +715,13 @@ export default function ValidasiUlangPage() {
 
 							{/* Kondisi */}
 							<div>
-								<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-									Kondisi Hasil Pemeriksaan <span className="text-red-500">*</span>
+								<label className="text-xs font-bold text-gray-700 block mb-1.5">
+									Kondisi Hasil Pemeriksaan <span className="text-[#DC2626]">*</span>
 								</label>
 								<select
 									value={conditionId}
 									onChange={(e) => setConditionId(e.target.value)}
-									className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium text-gray-700 cursor-pointer"
+									className="w-full px-3 py-2 text-sm border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium text-gray-700 cursor-pointer"
 								>
 									<option value="">— Pilih Kondisi —</option>
 									{conditions.map((c) => (
@@ -714,13 +740,13 @@ export default function ValidasiUlangPage() {
 
 											if (nameUpper === "BAGUS" || nameUpper === "BAIK") {
 												return (
-													<div className="bg-emerald-50 border border-emerald-200 rounded-lg p-3 text-xs text-emerald-900 flex items-start gap-2.5 shadow-xs">
-														<CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+													<div className="border border-[#059669] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
+														<CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
 														<div>
-															<p className="font-bold text-emerald-900">
+															<p className="font-bold text-[#059669]">
 																BAGUS → Status Naik ke REVALIDATION
 															</p>
-															<p className="text-[11px] text-emerald-700 mt-0.5 leading-relaxed">
+															<p className="text-[11px] text-[#059669] mt-0.5 leading-relaxed">
 																Perbaikan dinyatakan berhasil. Aset akan diteruskan ke <strong>Rendal Pemeliharaan</strong> untuk persetujuan status <strong>Ready to Use</strong>.
 															</p>
 														</div>
@@ -730,13 +756,13 @@ export default function ValidasiUlangPage() {
 
 											if (nameUpper === "RUSAK_BERAT") {
 												return (
-													<div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-900 flex items-start gap-2.5 shadow-xs">
-														<Trash2 className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />
+													<div className="border border-[#DC2626] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
+														<Trash2 className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
 														<div>
-															<p className="font-bold text-red-900">
+															<p className="font-bold text-[#DC2626]">
 																RUSAK BERAT → Status Dialihkan ke SCRAP
 															</p>
-															<p className="text-[11px] text-red-700 mt-0.5 leading-relaxed">
+															<p className="text-[11px] text-[#DC2626] mt-0.5 leading-relaxed">
 																Kerusakan berat dan tidak ekonomis diperbaiki. Aset direkomendasikan untuk proses usulan <strong>Scrap / Penghapusan</strong>.
 															</p>
 														</div>
@@ -745,13 +771,13 @@ export default function ValidasiUlangPage() {
 											}
 
 											return (
-												<div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-xs text-amber-900 flex items-start gap-2.5 shadow-xs">
-													<Wrench className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+												<div className="border border-[#B45309] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
+													<Wrench className="w-4 h-4 text-[#B45309] shrink-0 mt-0.5" />
 													<div>
-														<p className="font-bold text-amber-900">
+														<p className="font-bold text-[#B45309]">
 															RUSAK (Ringan/Sedang) → Status Kembali ke REPAIR
 														</p>
-														<p className="text-[11px] text-amber-700 mt-0.5 leading-relaxed">
+														<p className="text-[11px] text-[#B45309] mt-0.5 leading-relaxed">
 															Aset masih mengalami kendala teknis dan akan dikembalikan ke antrean perbaikan <strong>Pemeliharaan Lapangan</strong>.
 														</p>
 													</div>
@@ -760,12 +786,12 @@ export default function ValidasiUlangPage() {
 										})()}
 									</div>
 								) : (
-									<div className="mt-2 bg-gray-50 border border-gray-200 rounded-lg p-2.5 text-[11px] text-gray-500 leading-normal">
+									<div className="mt-2 bg-gray-50 border border-gray-200 rounded p-2.5 text-[11px] text-gray-500 leading-normal">
 										<p className="font-semibold text-gray-700 mb-0.5">Panduan Keputusan Validasi Perbaikan Alat:</p>
 										<ul className="space-y-0.5 list-disc list-inside text-[10px]">
-											<li><strong className="text-emerald-700">BAGUS</strong>: Naik ke REVALIDATION (persetujuan Rendal)</li>
-											<li><strong className="text-amber-700">Rusak Ringan/Sedang</strong>: Kembali ke REPAIR (antrean perbaikan)</li>
-											<li><strong className="text-red-700">Rusak Berat</strong>: Dialihkan ke SCRAP (usulan scrap)</li>
+											<li><strong className="text-[#059669]">BAGUS</strong>: Naik ke REVALIDATION (persetujuan Rendal)</li>
+											<li><strong className="text-[#B45309]">Rusak Ringan/Sedang</strong>: Kembali ke REPAIR (antrean perbaikan)</li>
+											<li><strong className="text-[#DC2626]">Rusak Berat</strong>: Dialihkan ke SCRAP (usulan scrap)</li>
 										</ul>
 									</div>
 								)}
@@ -773,7 +799,7 @@ export default function ValidasiUlangPage() {
 
 							{/* Catatan */}
 							<div>
-								<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
+								<label className="text-xs font-bold text-gray-700 block mb-1.5">
 									Catatan Pemeriksaan
 								</label>
 								<textarea
@@ -781,13 +807,13 @@ export default function ValidasiUlangPage() {
 									onChange={(e) => setNotes(e.target.value)}
 									rows={3}
 									placeholder="Hasil pemeriksaan visual, fungsi mekanik/elektrik, dll."
-									className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all resize-none"
+									className="w-full px-3 py-2 text-sm border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all resize-none"
 								/>
 							</div>
 
 							{/* Rekomendasi */}
 							<div>
-								<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
+								<label className="text-xs font-bold text-gray-700 block mb-1.5">
 									Rekomendasi Tindak Lanjut
 								</label>
 								<input
@@ -795,15 +821,15 @@ export default function ValidasiUlangPage() {
 									value={followupRecommendation}
 									onChange={(e) => setFollowupRecommendation(e.target.value)}
 									placeholder="Misal: Dapat dimobilisasi segera"
-									className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all"
+									className="w-full px-3 py-2 text-sm border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all"
 								/>
 							</div>
 
 							{/* Error */}
 							{modalError && (
-								<div className="flex items-start gap-2 bg-red-50 border border-red-200 rounded-lg p-3">
-									<AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-									<p className="text-xs text-red-700 font-medium">{modalError}</p>
+								<div className="flex items-start gap-2 border border-[#DC2626] bg-white rounded p-3">
+									<AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
+									<p className="text-xs text-[#DC2626] font-medium">{modalError}</p>
 								</div>
 							)}
 						</div>
@@ -813,14 +839,14 @@ export default function ValidasiUlangPage() {
 							<button
 								onClick={handleCloseModal}
 								disabled={isSubmitting}
-								className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+								className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
 							>
 								Batal
 							</button>
 							<button
 								onClick={handleSubmit}
 								disabled={isSubmitting || !conditionId}
-								className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-lg transition-colors shadow-sm disabled:opacity-50 disabled:cursor-not-allowed"
+								className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 							>
 								{isSubmitting ? (
 									<Loader2 className="w-4 h-4 animate-spin" />

@@ -95,24 +95,27 @@ export const statusText = (raw?: string | null) =>
 	statusName(raw).replace(/_/g, " ");
 
 /**
- * Warna badge per status kanonik. Sudah termasuk `border-*` supaya halaman yang
- * pakai varian ber-border maupun tanpa border bisa memakai map yang sama.
+ * Warna badge per status kanonik — DESIGN.md five-hue system.
+ * Transparent fill, 1px border + text in the state hue:
+ *   biru #0556B3 menunggu/proses berikutnya · amber #B45309 dalam pengerjaan
+ *   hijau #059669 layak/disetujui · merah #DC2626 ditolak/tidak layak
+ *   slate #475569 netral/disposal.
  */
-export const STATUS_BADGE_STYLE: Record<string, string> = {
-	REGISTERED: "bg-[#E0F2FE] text-[#0284C7] border-[#BAE6FD]",
-	VALIDATED: "bg-[#DCFCE7] text-[#16A34A] border-[#BBF7D0]",
-	REPAIR: "bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]",
-	REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E] border-[#99F6E4]",
-	REVALIDATION: "bg-[#F3E8FF] text-[#9333EA] border-[#E9D5FF]",
-	READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5] border-[#C7D2FE]",
-	REUSED: "bg-[#E0E7FF] text-[#4F46E5] border-[#C7D2FE]",
-	DISPOSAL_RECOMMENDED: "bg-[#FFEDD5] text-[#C2410C] border-[#FED7AA]",
-	SCRAP: "bg-[#FEE2E2] text-[#DC2626] border-[#FECACA]",
+const STATUS_BADGE_STYLE: Record<string, string> = {
+	REGISTERED: "border-[#0556B3] text-[#0556B3]",
+	VALIDATED: "border-[#059669] text-[#059669]",
+	REPAIR: "border-[#B45309] text-[#B45309]",
+	REPAIR_COMPLETED: "border-[#0556B3] text-[#0556B3]",
+	REVALIDATION: "border-[#B45309] text-[#B45309]",
+	READY_TO_USE: "border-[#059669] text-[#059669]",
+	REUSED: "border-[#059669] text-[#059669]",
+	DISPOSAL_RECOMMENDED: "border-[#475569] text-[#475569]",
+	SCRAP: "border-[#DC2626] text-[#DC2626]",
 };
 
 export const statusBadgeStyle = (raw?: string | null) =>
 	STATUS_BADGE_STYLE[statusName(raw)] ??
-	"bg-gray-100 text-gray-700 border-gray-200";
+	"border-[#475569] text-[#475569]";
 
 export const rupiah = (value: number) =>
 	`Rp ${new Intl.NumberFormat("id-ID").format(Math.round(value))}`;

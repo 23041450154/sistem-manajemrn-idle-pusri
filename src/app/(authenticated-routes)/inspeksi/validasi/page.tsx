@@ -235,10 +235,13 @@ export default function ManajemenInspeksi() {
 				// Sort data by ID descending (newest first)
 				mappedWithApproval.sort((a: any, b: any) => Number(b.id) - Number(a.id));
 
-				// Revalidation items belong strictly in /inspeksi/validasi-ulang, exclude from /inspeksi/validasi
+				// Revalidation & repair-completed items belong strictly in /inspeksi/validasi-ulang,
+				// exclude both from /inspeksi/validasi
 				const validasiOnly = mappedWithApproval.filter(
 					(a: any) =>
-						a.statusAset !== "REVALIDATION" && a.statusAset !== "REVALIDASI",
+						a.statusAset !== "REVALIDATION" &&
+						a.statusAset !== "REVALIDASI" &&
+						a.statusAset !== "REPAIR_COMPLETED",
 				);
 
 				setAssets(validasiOnly);
@@ -614,16 +617,6 @@ export default function ManajemenInspeksi() {
 		}
 	};
 
-	// Hitung durasi pemeriksaan dalam hari (inklusif).
-	const hitungDurasi = () => {
-		if (!isDateRangeValid) return "-";
-		const mulai = new Date(tglMulai);
-		const selesai = new Date(tglSelesai);
-		const hari =
-			Math.round((selesai.getTime() - mulai.getTime()) / 86_400_000) + 1;
-		return `${hari} Hari`;
-	};
-
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files) {
 			setFileError(null);
@@ -804,20 +797,21 @@ export default function ManajemenInspeksi() {
 	// Teks badge = nama status dari backend apa adanya (lihat lib/equipment-status).
 	const getStatusAsetBadge = (status: AssetState | string) => (
 		<span
-			className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${statusBadgeStyle(status)}`}
+			className={`inline-block border text-[11px] font-semibold px-2 py-0.5 rounded-sm whitespace-nowrap ${statusBadgeStyle(status)}`}
 		>
 			{statusText(status)}
 		</span>
 	);
 
 	const getApprovalBadge = (status: ApprovalState) => {
+		/* DESIGN.md five-hue system: transparent fill, 1px border in state hue. */
 		const styles = {
-			NONE: "bg-gray-100 text-gray-500",
-			PENDING_REVIEW: "bg-yellow-100 text-yellow-700",
-			IN_REVIEW: "bg-[#E0F2FE] text-[#0284C7]",
-			APPROVED: "bg-[#DCFCE7] text-[#16A34A]",
-			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-			NEED_REVISION: "bg-[#F3E8FF] text-[#9333EA]",
+			NONE: "border-[#475569] text-[#475569]",
+			PENDING_REVIEW: "border-[#0556B3] text-[#0556B3]",
+			IN_REVIEW: "border-[#B45309] text-[#B45309]",
+			APPROVED: "border-[#059669] text-[#059669]",
+			REJECTED: "border-[#DC2626] text-[#DC2626]",
+			NEED_REVISION: "border-[#B45309] text-[#B45309]",
 		};
 		const labels = {
 			NONE: "-",
@@ -829,7 +823,7 @@ export default function ManajemenInspeksi() {
 		};
 		return (
 			<span
-				className={`inline-block text-[11px] font-semibold px-2 py-0.5 rounded-full whitespace-nowrap ${styles[status]}`}
+				className={`inline-block border text-[11px] font-semibold px-2 py-0.5 rounded-sm whitespace-nowrap ${styles[status]}`}
 			>
 				{labels[status]}
 			</span>
@@ -850,7 +844,7 @@ export default function ManajemenInspeksi() {
 					<button
 						title="Inspeksi"
 						onClick={() => openModal(asset, "VALIDASI")}
-						className="text-blue-600 hover:text-blue-800 hover:bg-blue-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+						className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1"
 					>
 						<Check className="w-3.5 h-3.5" />
 						<span className="text-[11px] font-bold">Inspeksi</span>
@@ -870,7 +864,7 @@ export default function ManajemenInspeksi() {
 					<button
 						title="Revisi Inspeksi"
 						onClick={() => openModal(asset, "VALIDASI")}
-						className="text-purple-600 hover:text-purple-800 hover:bg-purple-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+						className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1"
 					>
 						<Edit className="w-3.5 h-3.5" />
 						<span className="text-[11px] font-bold">Revisi Inspeksi</span>
@@ -950,11 +944,11 @@ export default function ManajemenInspeksi() {
 		<div className="max-w-7xl mx-auto pt-2 pb-8">
 			{/* Toast */}
 			{notification && (
-				<div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+				<div className="fixed top-6 right-6 z-[70] bg-white text-[#0F172A] px-5 py-3 rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
 					{notification.type === "success" ? (
-						<CheckCircle2 className="w-4 h-4 text-emerald-400" />
+						<CheckCircle2 className="w-4 h-4 text-[#059669]" />
 					) : (
-						<XCircle className="w-4 h-4 text-red-400" />
+						<XCircle className="w-4 h-4 text-[#DC2626]" />
 					)}
 					<span className="text-[13px] font-medium">{notification.message}</span>
 				</div>
@@ -976,7 +970,7 @@ export default function ManajemenInspeksi() {
 			{/* Main Content Area (Tabel) */}
 			<div
 				id="validasi-table-container"
-				className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4"
+				className="bg-white border border-gray-200 rounded overflow-hidden scroll-mt-4"
 			>
 				{/* Tab Navigation */}
 				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
@@ -993,7 +987,7 @@ export default function ManajemenInspeksi() {
 					>
 						<span>Antrean Validasi</span>
 						<span
-							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold ${
 								activeTab === "antrean"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -1016,7 +1010,7 @@ export default function ManajemenInspeksi() {
 					>
 						<span>Riwayat Validasi</span>
 						<span
-							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold ${
 								activeTab === "riwayat"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -1041,12 +1035,12 @@ export default function ManajemenInspeksi() {
 									setSearchInput(e.target.value);
 									setSearch(e.target.value); // Realtime search!
 								}}
-								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
+								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
 							/>
 						</div>
 						<button
 							onClick={() => setSearch(searchInput)}
-							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
+							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded hover:bg-[#0556B3] transition-colors whitespace-nowrap"
 						>
 							Cari
 						</button>
@@ -1057,7 +1051,7 @@ export default function ManajemenInspeksi() {
 						<select
 							value={plantFilter}
 							onChange={(e) => setPlantFilter(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="Semua">Semua Plant</option>
 							<option value="P-1">Plant 1</option>
@@ -1069,7 +1063,7 @@ export default function ManajemenInspeksi() {
 						<select
 							value={statusFilter}
 							onChange={(e) => setStatusFilter(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[140px] cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[140px] cursor-pointer"
 						>
 							<option value="Semua">Semua Status</option>
 							<option value="REGISTERED">REGISTERED</option>
@@ -1085,7 +1079,7 @@ export default function ManajemenInspeksi() {
 							type="date"
 							value={dateFilter}
 							onChange={(e) => setDateFilter(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						/>
 
 						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
@@ -1093,7 +1087,7 @@ export default function ManajemenInspeksi() {
 						{/* Reset Button */}
 						<button
 							onClick={resetFilter}
-							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
+							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors whitespace-nowrap"
 							title="Reset semua filter"
 						>
 							<RefreshCw className="w-3.5 h-3.5" />
@@ -1105,13 +1099,13 @@ export default function ManajemenInspeksi() {
 				{/* Table */}
 				<div className="overflow-x-auto">
 					<table className="w-full text-center border-collapse">
-						<thead className="bg-gray-50/95 backdrop-blur-sm">
+						<thead className="bg-[#F2F3F4]">
 							<tr className="border-b border-gray-300">
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center w-12 whitespace-nowrap">
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center w-12 whitespace-nowrap">
 									No
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("namaAlat")}
 								>
@@ -1120,7 +1114,7 @@ export default function ManajemenInspeksi() {
 									</div>
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap"
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("plant")}
 								>
@@ -1129,7 +1123,7 @@ export default function ManajemenInspeksi() {
 									</div>
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap"
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("jenisAlat")}
 								>
@@ -1138,7 +1132,7 @@ export default function ManajemenInspeksi() {
 									</div>
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap"
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("statusAset")}
 								>
@@ -1147,7 +1141,7 @@ export default function ManajemenInspeksi() {
 									</div>
 								</th>
 								<th
-									className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center whitespace-nowrap"
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("statusPersetujuan")}
 								>
@@ -1155,7 +1149,7 @@ export default function ManajemenInspeksi() {
 										Persetujuan {getSortIcon("statusPersetujuan")}
 									</div>
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center whitespace-nowrap">
 									Tindakan
 								</th>
 							</tr>
@@ -1214,7 +1208,7 @@ export default function ManajemenInspeksi() {
 									return (
 										<tr
 											key={asset.id}
-											className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
+											className="border-b border-gray-200 last:border-b-0 hover:bg-[#F2F3F4] transition-colors group"
 										>
 											<td className="px-3 py-3 text-[15px] text-gray-500 font-medium text-center">
 												{rowNum}
@@ -1308,12 +1302,12 @@ export default function ManajemenInspeksi() {
 				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 					{/* Backdrop */}
 					<div
-						className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"
+						className="fixed inset-0 bg-gray-900/50 transition-opacity"
 						onClick={closeModal}
 					/>
 
 					{/* Modal Dialog */}
-					<div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+					<div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col animate-in fade-in zoom-in-95 duration-200">
 						{/* Header */}
 						<div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
 							<div className="flex items-center gap-3">
@@ -1340,32 +1334,32 @@ export default function ManajemenInspeksi() {
 						{/* Body (Compact UI) */}
 						<div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50/50">
 							{/* Thin Asset Info Ribbon */}
-							<div className="bg-[#f0f7ff] border border-blue-100 rounded-lg p-2.5 mb-4 flex items-center justify-between gap-4">
+							<div className="bg-[#F2F3F4] border border-[#E6E8EA] rounded p-2.5 mb-4 flex items-center justify-between gap-4">
 								<div className="flex items-center gap-5 overflow-hidden">
 									<div>
-										<span className="text-blue-700/60 text-[10px] font-semibold uppercase block leading-none mb-1">
+										<span className="text-[#64748B] text-[10px] font-medium block leading-none mb-1">
 											Nama Peralatan
 										</span>
-										<span className="font-bold text-[13px] text-blue-900 truncate">
+										<span className="font-bold text-[13px] text-[#0F172A] truncate">
 											{selectedAsset.namaAlat}
 										</span>
 									</div>
-									<div className="w-px h-5 bg-blue-200"></div>
+									<div className="w-px h-5 bg-[#E6E8EA]"></div>
 									<div>
-										<span className="text-blue-700/60 text-[10px] font-semibold uppercase block leading-none mb-1">
+										<span className="text-[#64748B] text-[10px] font-medium block leading-none mb-1">
 											Plant
 										</span>
-										<span className="font-bold text-[13px] text-blue-900">
+										<span className="font-bold text-[13px] text-[#0F172A]">
 											{selectedAsset.plant}
 										</span>
 									</div>
-									<div className="w-px h-5 bg-blue-200"></div>
+									<div className="w-px h-5 bg-[#E6E8EA]"></div>
 									<div className="flex-1 min-w-52">
-										<span className="text-blue-700/60 text-[10px] font-semibold uppercase block leading-none mb-1">
+										<span className="text-[#64748B] text-[10px] font-medium block leading-none mb-1">
 											Spesifikasi Singkat
 										</span>
 										<span
-											className="text-blue-800 text-[12px] truncate block"
+											className="text-[#334155] text-[12px] truncate block"
 											title={selectedAsset.spesifikasi}
 										>
 											{selectedAsset.spesifikasi}
@@ -1380,13 +1374,13 @@ export default function ManajemenInspeksi() {
 
 							{/* Banners untuk Status Khusus */}
 							{selectedAsset.statusPersetujuan === "NEED_REVISION" && (
-								<div className="bg-purple-50 border-l-4 border-purple-500 p-3 mb-4 rounded-r-lg flex gap-3 shadow-sm">
-									<AlertCircle className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+								<div className="bg-[#F2F3F4] border-l-4 border-[#B45309] p-3 mb-4 rounded-r-lg flex gap-3">
+									<AlertCircle className="w-5 h-5 text-[#B45309] shrink-0 mt-0.5" />
 									<div>
-										<h4 className="text-[12px] font-bold text-purple-800">
+										<h4 className="text-[12px] font-bold text-[#0F172A]">
 											Menunggu Revisi Anda
 										</h4>
-										<p className="text-[11px] text-purple-700 mt-0.5">
+										<p className="text-[11px] text-[#475569] mt-0.5">
 											Manager meminta revisi: &quot;
 											{managerNotes || "Mohon lengkapi/perbaiki data temuan validasi."}
 											&quot;
@@ -1395,13 +1389,13 @@ export default function ManajemenInspeksi() {
 								</div>
 							)}
 							{selectedAsset.statusPersetujuan === "PENDING_REVIEW" && (
-								<div className="bg-blue-50 border-l-4 border-blue-500 p-3 mb-4 rounded-r-lg flex gap-3 shadow-sm">
-									<Info className="w-5 h-5 text-blue-600 shrink-0" />
+								<div className="bg-[#F2F3F4] border-l-4 border-[#0556B3] p-3 mb-4 rounded-r-lg flex gap-3">
+									<Info className="w-5 h-5 text-[#0A356A] shrink-0" />
 									<div>
-										<h4 className="text-[12px] font-bold text-blue-800">
+										<h4 className="text-[12px] font-bold text-[#334155]">
 											Mode Ubah Data
 										</h4>
-										<p className="text-[11px] text-blue-700 mt-0.5">
+										<p className="text-[11px] text-[#475569] mt-0.5">
 											Anda sedang mengubah data validasi yang sebelumnya telah dikirimkan,
 											namun belum di-review oleh Manager.
 										</p>
@@ -1410,7 +1404,7 @@ export default function ManajemenInspeksi() {
 							)}
 
 							{/* Informasi Registrasi (Rendal) */}
-							<div className="bg-white border border-gray-200 rounded-lg p-3 mb-4 shadow-sm">
+							<div className="bg-white border border-gray-200 rounded p-3 mb-4">
 								<div className="flex items-center gap-2 mb-2 pb-2 border-b border-gray-100">
 									<Info className="w-4 h-4 text-gray-500" />
 									<h3 className="text-[12px] font-bold text-gray-800">
@@ -1421,7 +1415,7 @@ export default function ManajemenInspeksi() {
 								<div className="flex flex-col md:flex-row gap-4">
 									<div className="flex-1 grid grid-cols-2 md:grid-cols-3 gap-y-3 gap-x-4">
 										<div>
-											<span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">
+											<span className="text-[10px] font-semibold text-gray-500 block mb-0.5">
 												Kode Aset / Tag
 											</span>
 											<span className="text-[12px] font-bold text-[#0A356A]">
@@ -1429,7 +1423,7 @@ export default function ManajemenInspeksi() {
 											</span>
 										</div>
 										<div>
-											<span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">
+											<span className="text-[10px] font-semibold text-gray-500 block mb-0.5">
 												Nama Peralatan
 											</span>
 											<span className="text-[12px] font-medium text-gray-900">
@@ -1437,7 +1431,7 @@ export default function ManajemenInspeksi() {
 											</span>
 										</div>
 										<div>
-											<span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">
+											<span className="text-[10px] font-semibold text-gray-500 block mb-0.5">
 												Kategori (Tipe)
 											</span>
 											<span className="text-[12px] font-medium text-gray-900">
@@ -1445,7 +1439,7 @@ export default function ManajemenInspeksi() {
 											</span>
 										</div>
 										<div>
-											<span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">
+											<span className="text-[10px] font-semibold text-gray-500 block mb-0.5">
 												Lokasi Penyimpanan
 											</span>
 											<span className="text-[12px] font-medium text-gray-900">
@@ -1453,7 +1447,7 @@ export default function ManajemenInspeksi() {
 											</span>
 										</div>
 										<div>
-											<span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">
+											<span className="text-[10px] font-semibold text-gray-500 block mb-0.5">
 												Pabrik / Plant
 											</span>
 											<span className="text-[12px] font-medium text-gray-900">
@@ -1461,7 +1455,7 @@ export default function ManajemenInspeksi() {
 											</span>
 										</div>
 										<div>
-											<span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">
+											<span className="text-[10px] font-semibold text-gray-500 block mb-0.5">
 												Area (FuncLoc)
 											</span>
 											<span className="text-[12px] font-medium text-gray-900">
@@ -1469,7 +1463,7 @@ export default function ManajemenInspeksi() {
 											</span>
 										</div>
 										<div>
-											<span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">
+											<span className="text-[10px] font-semibold text-gray-500 block mb-0.5">
 												Vendor / Merk
 											</span>
 											<span className="text-[12px] font-medium text-gray-900">
@@ -1477,7 +1471,7 @@ export default function ManajemenInspeksi() {
 											</span>
 										</div>
 										<div>
-											<span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">
+											<span className="text-[10px] font-semibold text-gray-500 block mb-0.5">
 												Tahun Perolehan
 											</span>
 											<span className="text-[12px] font-medium text-gray-900">
@@ -1485,10 +1479,10 @@ export default function ManajemenInspeksi() {
 											</span>
 										</div>
 										<div>
-											<span className="text-[10px] font-semibold text-gray-500 uppercase block mb-0.5">
+											<span className="text-[10px] font-semibold text-gray-500 block mb-0.5">
 												Nilai Perolehan (Rp)
 											</span>
-											<span className="text-[12px] font-medium text-green-700">
+											<span className="text-[12px] font-medium text-[#059669]">
 												{selectedAsset.nilaiPerolehan}
 											</span>
 										</div>
@@ -1496,7 +1490,7 @@ export default function ManajemenInspeksi() {
 
 									{/* Foto Registrasi */}
 									<div className="w-full md:w-56 shrink-0 flex flex-col gap-2 md:border-l md:border-gray-100 md:pl-4">
-										<span className="text-[10px] font-semibold text-gray-500 uppercase block">
+										<span className="text-[10px] font-semibold text-gray-500 block">
 											Foto Registrasi
 										</span>
 										<div className="flex gap-2">
@@ -1504,7 +1498,7 @@ export default function ManajemenInspeksi() {
 												attachments.slice(0, 2).map((att: any, idx: number) => (
 													<div
 														key={idx}
-														className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-blue-400 transition-colors shadow-sm"
+														className="h-16 flex-1 bg-gray-100 rounded border border-gray-200 overflow-hidden cursor-pointer hover:border-[#0556B3] transition-colors"
 														onClick={() => setPreviewImage(att.file_url || att.url)}
 														title={`Foto ${idx + 1}`}
 													>
@@ -1533,12 +1527,12 @@ export default function ManajemenInspeksi() {
 							</div>
 
 							{/* Form Grid (Optimized for minimal scrolling) */}
-							<div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm">
-								{/* Row 1: Identifikasi & Waktu — lebar kolom menyesuaikan ada/tidaknya
+							<div className="bg-white border border-gray-200 rounded p-4">
+								{/* Row 1: Identifikasi & Waktu: lebar kolom menyesuaikan ada/tidaknya
 								    No. Pemeriksaan supaya baris tetap penuh 12 kolom. */}
 								<div className="grid grid-cols-12 gap-3 mb-3">
 									{inspectionNumber && (
-										<div className="col-span-12 md:col-span-3">
+										<div className="col-span-12 md:col-span-4">
 											<label className="block text-[11px] font-semibold text-gray-700 mb-1">
 												No. Pemeriksaan
 											</label>
@@ -1551,7 +1545,7 @@ export default function ManajemenInspeksi() {
 										</div>
 									)}
 									<div
-										className={`col-span-6 ${inspectionNumber ? "md:col-span-3" : "md:col-span-4"}`}
+										className={`col-span-6 ${inspectionNumber ? "md:col-span-4" : "md:col-span-6"}`}
 									>
 										<label
 											htmlFor="tgl-mulai"
@@ -1565,16 +1559,16 @@ export default function ManajemenInspeksi() {
 											value={tglMulai}
 											onChange={(e) => setTglMulai(e.target.value)}
 											disabled={isReadOnly}
-											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !tglMulai ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`}
+											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !tglMulai ? "border-[#DC2626] focus:border-[#DC2626]" : "border-gray-300 focus:border-[#0A356A]"}`}
 										/>
 										{showValidationErrors && !tglMulai && (
-											<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 												* Tanggal mulai wajib diisi.
 											</p>
 										)}
 									</div>
 									<div
-										className={`col-span-6 ${inspectionNumber ? "md:col-span-3" : "md:col-span-4"}`}
+										className={`col-span-6 ${inspectionNumber ? "md:col-span-4" : "md:col-span-6"}`}
 									>
 										<label
 											htmlFor="tgl-selesai"
@@ -1589,28 +1583,15 @@ export default function ManajemenInspeksi() {
 											min={tglMulai}
 											onChange={(e) => setTglSelesai(e.target.value)}
 											disabled={isReadOnly}
-											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !isDateRangeValid ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`}
+											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !isDateRangeValid ? "border-[#DC2626] focus:border-[#DC2626]" : "border-gray-300 focus:border-[#0A356A]"}`}
 										/>
 										{showValidationErrors && !isDateRangeValid && (
-											<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 												{tglSelesai
 													? "* Tidak boleh sebelum tanggal mulai."
 													: "* Tanggal berakhir wajib diisi."}
 											</p>
 										)}
-									</div>
-									<div
-										className={`col-span-12 ${inspectionNumber ? "md:col-span-3" : "md:col-span-4"}`}
-									>
-										<label className="block text-[11px] font-semibold text-gray-700 mb-1">
-											Durasi Pemeriksaan
-										</label>
-										<input
-											type="text"
-											value={hitungDurasi()}
-											disabled
-											className="w-full bg-gray-100 border border-gray-200 rounded-md px-3 py-1.5 text-[13px] font-medium text-gray-500"
-										/>
 									</div>
 								</div>
 
@@ -1624,19 +1605,19 @@ export default function ManajemenInspeksi() {
 											<label
 												className={`flex-1 relative border rounded-md p-1.5 cursor-pointer flex items-center justify-center gap-2 transition-all ${
 													hasilPemeriksaan === "Layak"
-														? "border-emerald-500 bg-emerald-50/50"
+														? "border-[#059669] bg-white"
 														: "border-gray-200 bg-white hover:bg-gray-50"
-												} ${isReadOnly && hasilPemeriksaan !== "Layak" ? "opacity-50 cursor-not-allowed" : ""} ${showValidationErrors && !hasilPemeriksaan ? "border-red-400" : ""}`}
+												} ${isReadOnly && hasilPemeriksaan !== "Layak" ? "opacity-50 cursor-not-allowed" : ""} ${showValidationErrors && !hasilPemeriksaan ? "border-[#DC2626]" : ""}`}
 											>
 												<div
-													className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Layak" ? "border-emerald-500" : showValidationErrors && !hasilPemeriksaan ? "border-red-400" : "border-gray-300"}`}
+													className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Layak" ? "border-[#059669]" : showValidationErrors && !hasilPemeriksaan ? "border-[#DC2626]" : "border-gray-300"}`}
 												>
 													{hasilPemeriksaan === "Layak" && (
-														<div className="w-1.5 h-1.5 bg-emerald-500 rounded-full" />
+														<div className="w-1.5 h-1.5 bg-[#059669] rounded-full" />
 													)}
 												</div>
 												<span
-													className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-emerald-700" : "text-gray-700"}`}
+													className={`text-[13px] font-semibold ${hasilPemeriksaan === "Layak" ? "text-[#059669]" : "text-gray-700"}`}
 												>
 													Layak Digunakan
 												</span>
@@ -1654,19 +1635,19 @@ export default function ManajemenInspeksi() {
 											<label
 												className={`flex-1 relative border rounded-md p-1.5 cursor-pointer flex items-center justify-center gap-2 transition-all ${
 													hasilPemeriksaan === "Tidak Layak"
-														? "border-red-500 bg-red-50/50"
+														? "border-[#DC2626] bg-white"
 														: "border-gray-200 bg-white hover:bg-gray-50"
-												} ${isReadOnly && hasilPemeriksaan !== "Tidak Layak" ? "opacity-50 cursor-not-allowed" : ""} ${showValidationErrors && !hasilPemeriksaan ? "border-red-400" : ""}`}
+												} ${isReadOnly && hasilPemeriksaan !== "Tidak Layak" ? "opacity-50 cursor-not-allowed" : ""} ${showValidationErrors && !hasilPemeriksaan ? "border-[#DC2626]" : ""}`}
 											>
 												<div
-													className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Tidak Layak" ? "border-red-500" : showValidationErrors && !hasilPemeriksaan ? "border-red-400" : "border-gray-300"}`}
+													className={`w-3 h-3 rounded-full border-2 flex items-center justify-center ${hasilPemeriksaan === "Tidak Layak" ? "border-[#DC2626]" : showValidationErrors && !hasilPemeriksaan ? "border-[#DC2626]" : "border-gray-300"}`}
 												>
 													{hasilPemeriksaan === "Tidak Layak" && (
-														<div className="w-1.5 h-1.5 bg-red-500 rounded-full" />
+														<div className="w-1.5 h-1.5 bg-[#DC2626] rounded-full" />
 													)}
 												</div>
 												<span
-													className={`text-[13px] font-semibold ${hasilPemeriksaan === "Tidak Layak" ? "text-red-700" : "text-gray-700"}`}
+													className={`text-[13px] font-semibold ${hasilPemeriksaan === "Tidak Layak" ? "text-[#DC2626]" : "text-gray-700"}`}
 												>
 													Tidak Layak
 												</span>
@@ -1682,7 +1663,7 @@ export default function ManajemenInspeksi() {
 											</label>
 										</div>
 										{showValidationErrors && !hasilPemeriksaan && (
-											<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 												* Hasil Evaluasi wajib dipilih.
 											</p>
 										)}
@@ -1701,7 +1682,7 @@ export default function ManajemenInspeksi() {
 											onChange={(e) => setConditionId(e.target.value)}
 											disabled={isReadOnly || hasilPemeriksaan === "Tidak Layak"}
 											required
-											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !effectiveConditionId ? "border-red-400 focus:border-red-500" : "border-gray-300 focus:border-[#0A356A]"}`}
+											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 ${showValidationErrors && !effectiveConditionId ? "border-[#DC2626] focus:border-[#DC2626]" : "border-gray-300 focus:border-[#0A356A]"}`}
 										>
 											<option value="" disabled>
 												Pilih Kondisi...
@@ -1719,7 +1700,7 @@ export default function ManajemenInspeksi() {
 											))}
 										</select>
 										{showValidationErrors && !effectiveConditionId && (
-											<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 												* Kondisi aset wajib dipilih.
 											</p>
 										)}
@@ -1736,9 +1717,9 @@ export default function ManajemenInspeksi() {
 											<div className="col-span-12 mt-2">
 												<div className="flex justify-between items-end mb-1">
 													<label className="block text-[11px] font-semibold text-gray-700">
-														Perbaikan Khusus <span className="text-red-500">*</span>
+														Perbaikan Khusus <span className="text-[#DC2626]">*</span>
 													</label>
-													<span className="text-[9px] font-bold text-red-500 uppercase bg-red-50 px-1 py-0.5 rounded">
+													<span className="text-[9px] font-bold text-[#DC2626] border border-[#DC2626] px-1 py-0.5 rounded-sm">
 														Wajib
 													</span>
 												</div>
@@ -1747,7 +1728,7 @@ export default function ManajemenInspeksi() {
 													onChange={(e) => setRequiredActionId(e.target.value)}
 													className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${
 														showValidationErrors && !requiredActionId
-															? "border-red-400 focus:border-red-500"
+															? "border-[#DC2626] focus:border-[#DC2626]"
 															: "border-gray-300 focus:border-[#0A356A]"
 													}`}
 												>
@@ -1761,7 +1742,7 @@ export default function ManajemenInspeksi() {
 													))}
 												</select>
 												{showValidationErrors && !requiredActionId && (
-													<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+													<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 														* Tindakan Perbaikan wajib dipilih saat layak.
 													</p>
 												)}
@@ -1775,7 +1756,7 @@ export default function ManajemenInspeksi() {
 										<label className="block text-[11px] font-semibold text-gray-700 mb-1">
 											Catatan Pemeriksaan{" "}
 											<span
-												className={hasilPemeriksaan === "Tidak Layak" ? "text-red-500" : ""}
+												className={hasilPemeriksaan === "Tidak Layak" ? "text-[#DC2626]" : ""}
 											>
 												{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}
 											</span>
@@ -1792,12 +1773,12 @@ export default function ManajemenInspeksi() {
 											}
 											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 resize-none transition-all ${
 												hasilPemeriksaan === "Tidak Layak" && !catatan.trim()
-													? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10"
+													? "border-[#DC2626] focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
 													: "border-gray-300 focus:border-[#0A356A]"
 											}`}
 										/>
 										{hasilPemeriksaan === "Tidak Layak" && !catatan.trim() && (
-											<p className="text-[10px] text-red-500 mt-0.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
 												* Harus diisi agar bisa disimpan.
 											</p>
 										)}
@@ -1836,12 +1817,12 @@ export default function ManajemenInspeksi() {
 											onDrop={handleDrop}
 											className={`border-2 border-dashed rounded-md p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
 												isDragging
-													? "border-[#0A356A] bg-blue-50/80"
-													: "border-gray-300 bg-gray-50 hover:bg-blue-50/50 hover:border-blue-300"
+													? "border-[#0A356A] bg-[#F2F3F4]"
+													: "border-gray-300 bg-gray-50 hover:bg-[#F2F3F4] hover:border-[#0A356A]"
 											}`}
 										>
 											<UploadCloud
-												className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A] animate-bounce" : "text-gray-400"}`}
+												className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A]" : "text-gray-400"}`}
 											/>
 											<div className="text-[13px] text-center">
 												<span className="font-bold text-[#0A356A]">
@@ -1853,7 +1834,7 @@ export default function ManajemenInspeksi() {
 											</span>
 
 											{uploadedFiles.length === 0 && (
-												<span className="text-[9px] font-bold text-gray-500 uppercase bg-gray-50 px-1.5 py-0.5 rounded mt-1">
+												<span className="text-[9px] font-bold text-gray-500 border border-[#E6E8EA] bg-white px-1.5 py-0.5 rounded-sm mt-1">
 													Opsional
 												</span>
 											)}
@@ -1870,7 +1851,7 @@ export default function ManajemenInspeksi() {
 														return (
 															<div
 																key={i}
-																className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white w-[150px] shadow-sm hover:shadow-md transition-all hover:border-[#0A356A]"
+																className="relative group border border-gray-200 rounded overflow-hidden bg-white w-[150px] transition-all hover:border-[#0A356A]"
 															>
 																{isImage ? (
 																	<div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
@@ -1899,7 +1880,7 @@ export default function ManajemenInspeksi() {
 																		e.stopPropagation();
 																		removeFile(i);
 																	}}
-																	className="absolute top-1.5 right-1.5 bg-red-500 rounded-full p-1 text-white hover:bg-red-600 shadow-md transition-colors opacity-0 group-hover:opacity-100"
+																	className="absolute top-1.5 right-1.5 bg-[#DC2626] rounded p-1 text-white hover:bg-[#DC2626] transition-colors opacity-0 group-hover:opacity-100"
 																	title="Hapus"
 																>
 																	<X className="w-3.5 h-3.5" />
@@ -1912,7 +1893,7 @@ export default function ManajemenInspeksi() {
 										</div>
 
 										{fileError && (
-											<p className="text-[10px] text-red-500 mt-1.5 font-medium">
+											<p className="text-[10px] text-[#DC2626] mt-1.5 font-medium">
 												* {fileError}
 											</p>
 										)}
@@ -1926,7 +1907,7 @@ export default function ManajemenInspeksi() {
 												);
 											}).length > 0 && (
 												<div className="mt-4 border-t border-gray-100 pt-3 text-left">
-													<span className="text-[11px] font-bold text-gray-500 block mb-2 uppercase tracking-wide">
+													<span className="text-[11px] font-bold text-gray-500 block mb-2 tracking-normal">
 														Foto Lama yang Tersimpan (Tidak Akan Diganti kecuali Anda
 														Mengunggah Foto Baru):
 													</span>
@@ -1962,7 +1943,7 @@ export default function ManajemenInspeksi() {
 
 										{uploadedFiles.length > 0 &&
 											selectedAsset.statusPersetujuan === "NEED_REVISION" && (
-												<p className="text-[10px] text-amber-600 mt-2 font-medium">
+												<p className="text-[10px] text-[#B45309] mt-2 font-medium">
 													* Catatan: Mengunggah foto baru akan mengganti seluruh foto lama di
 													atas.
 												</p>
@@ -1994,7 +1975,7 @@ export default function ManajemenInspeksi() {
 							<button
 								onClick={closeModal}
 								disabled={isSubmitting}
-								className="px-4 py-1.5 text-[13px] font-semibold text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-gray-100 transition-colors disabled:opacity-50"
+								className="px-4 py-1.5 text-[13px] font-semibold text-gray-600 bg-white border border-gray-300 rounded-md hover:bg-[#E6E8EA] transition-colors disabled:opacity-50"
 							>
 								Tutup
 							</button>
@@ -2003,7 +1984,7 @@ export default function ManajemenInspeksi() {
 								<button
 									onClick={handleSaveClick}
 									disabled={isSubmitting}
-									className="px-5 py-1.5 text-[13px] font-bold text-white bg-[#0A356A] hover:bg-[#062854] rounded-md transition-all shadow-sm disabled:opacity-50 flex items-center gap-1.5"
+									className="px-5 py-1.5 text-[13px] font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-md transition-all disabled:opacity-50 flex items-center gap-1.5"
 								>
 									{isSubmitting ? (
 										<>
@@ -2024,10 +2005,10 @@ export default function ManajemenInspeksi() {
 			{isModalOpen && modalMode === "DETAIL" && selectedAsset && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 					<div
-						className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"
+						className="fixed inset-0 bg-gray-900/50 transition-opacity"
 						onClick={closeModal}
 					/>
-					<div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+					<div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col animate-in fade-in zoom-in-95 duration-200">
 						<div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
 							<div>
 								<h2 className="text-lg font-bold text-gray-900 leading-tight">
@@ -2046,7 +2027,7 @@ export default function ManajemenInspeksi() {
 						</div>
 
 						<div className="flex-1 overflow-y-auto px-5 py-4">
-							<h3 className="text-[#0A356A] font-bold text-[13px] mb-2.5 uppercase tracking-wide">
+							<h3 className="text-[#0A356A] font-bold text-[13px] mb-2.5 tracking-normal">
 								Spesifikasi Alat
 							</h3>
 
@@ -2129,7 +2110,7 @@ export default function ManajemenInspeksi() {
 
 							<hr className="border-gray-200 my-4" />
 
-							<h3 className="text-[#0A356A] font-bold text-[13px] mb-2.5 uppercase tracking-wide">
+							<h3 className="text-[#0A356A] font-bold text-[13px] mb-2.5 tracking-normal">
 								Lampiran Gambar & Dokumen
 							</h3>
 							<div className="grid grid-cols-3 gap-3 mb-3">
@@ -2187,10 +2168,10 @@ export default function ManajemenInspeksi() {
 										<div
 											key={`doc-${idx}`}
 											onClick={() => window.open(att.file_url || att.url, "_blank")}
-											className="border border-gray-200 rounded p-2.5 flex flex-col justify-between bg-white shadow-sm cursor-pointer hover:border-[#0A356A] transition-colors group"
+											className="border border-gray-200 rounded p-2.5 flex flex-col justify-between bg-white cursor-pointer hover:border-[#0A356A] transition-colors group"
 										>
 											<div className="flex items-start gap-2 mb-2">
-												<div className="w-7 h-7 rounded bg-red-50 text-red-500 border border-red-100 flex items-center justify-center shrink-0 group-hover:bg-[#0A356A]/10 group-hover:text-[#0A356A] group-hover:border-[#0A356A]/20 transition-colors">
+												<div className="w-7 h-7 rounded border border-[#DC2626] text-[#DC2626] bg-white flex items-center justify-center shrink-0 group-hover:bg-[#0A356A]/10 group-hover:text-[#0A356A] group-hover:border-[#0A356A]/20 transition-colors">
 													<span className="font-bold text-[9px]">DOC</span>
 												</div>
 												<div className="overflow-hidden">
@@ -2212,7 +2193,7 @@ export default function ManajemenInspeksi() {
 														link.target = "_blank";
 														link.click();
 													}}
-													className="text-[11px] font-semibold text-[#0A356A] hover:bg-blue-50 p-1.5 rounded transition-colors"
+													className="text-[11px] font-semibold text-[#0A356A] hover:bg-[#F2F3F4] p-1.5 rounded transition-colors"
 													title="Download Dokumen"
 												>
 													<Download className="w-3.5 h-3.5" />
@@ -2226,7 +2207,7 @@ export default function ManajemenInspeksi() {
 						<div className="px-5 py-2.5 border-t border-gray-200 bg-gray-50 flex justify-end shrink-0 rounded-b-xl">
 							<button
 								onClick={closeModal}
-								className="px-4 py-1.5 border border-gray-300 bg-white rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 shadow-sm transition-all"
+								className="px-4 py-1.5 border border-gray-300 bg-white rounded-md text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-all"
 							>
 								Tutup
 							</button>
@@ -2236,11 +2217,11 @@ export default function ManajemenInspeksi() {
 			)}
 			{previewImage && (
 				<div
-					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm"
+					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90"
 					onClick={() => setPreviewImage(null)}
 				>
 					<button
-						className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded-full transition-colors"
+						className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded transition-colors"
 						onClick={(e) => {
 							e.stopPropagation();
 							setPreviewImage(null);
@@ -2251,7 +2232,7 @@ export default function ManajemenInspeksi() {
 					<img
 						src={previewImage}
 						alt="Preview"
-						className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
+						className="max-w-full max-h-full object-contain rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
 						onClick={(e) => e.stopPropagation()}
 					/>
 				</div>

@@ -1,9 +1,12 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+/* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { useState, useEffect } from "react";
 import { 
-  Calendar, Clock, AlertCircle, CheckCircle2, Search, Filter, 
-  Download, Printer, Eye, Plus, Info, BarChart2 
+  Search, 
+  Download, Printer, Eye, Plus, Info
 } from "lucide-react";
 import Link from "next/link";
 
@@ -39,6 +42,13 @@ export default function InspeksiDashboard() {
     
     return matchesSearch && matchesStatus;
   });
+
+  /* KPI diturunkan dari data yang benar-benar tampil. Tanpa angka hardcode:
+     metrik palsu adalah pelanggaran blocking di EVIDENCE.md. */
+  const totalInspeksi = data.length;
+  const mendatangCount = data.filter((r) => r.status === "Mendatang").length;
+  const terlambatCount = data.filter((r) => r.status === "Terlambat").length;
+  const selesaiCount = data.filter((r) => r.status === "Selesai").length;
 
   const fallbackData: Inspection[] = [
     { id: 1, equipment: { equipment_code: "C-102", name: "Centrifugal Pump C-102" }, inspection_date: "2023-10-24T00:00:00Z", require_action: { name: "KHUSUS" }, inspector: "Budi Santoso", status: "Terlambat", notes: "" },
@@ -81,7 +91,7 @@ export default function InspeksiDashboard() {
         }
         setData(fallbackData);
         setLoading(false);
-      } catch (err) {
+      } catch {
         setData(fallbackData);
         setLoading(false);
       }
@@ -126,11 +136,11 @@ export default function InspeksiDashboard() {
           <div className="flex items-center gap-1.5 text-[11px] text-gray-500 mb-0.5">
             <span>Manajemen Inspeksi</span>
             <span className="text-gray-400">&rsaquo;</span>
-            <span className="font-semibold text-[#0A356A] uppercase tracking-wide">Daftar Inspeksi Teknik</span>
+            <span className="font-semibold text-[#0A356A] tracking-normal">Daftar Inspeksi Teknik</span>
           </div>
           <h1 className="text-xl font-bold text-gray-900 tracking-tight">Daftar Inspeksi Teknik</h1>
         </div>
-        <button className="bg-[#0A356A] hover:bg-[#062854] text-white px-4 py-2 rounded-md text-[13px] font-bold flex items-center gap-2 transition-all shadow-sm">
+        <button className="bg-[#0A356A] hover:bg-[#0556B3] text-white px-4 py-2 rounded-md text-[13px] font-bold flex items-center gap-2 transition-all">
           <Plus className="w-4 h-4" />
           Buat Jadwal
         </button>
@@ -142,51 +152,27 @@ export default function InspeksiDashboard() {
         {/* BAGIAN KIRI: KPI & TABEL */}
         <div className="lg:col-span-9 flex flex-col gap-3 min-h-0">
           
-          {/* KPI Cards (Shrink-0 agar tetap tingginya) */}
+          {/* KPI Cards (Shrink-0 agar tetap tingginya) — pola border-l-2 DESIGN.md */}
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 shrink-0 print:hidden">
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 flex items-center gap-3">
-              <div className="w-8 h-8 rounded bg-blue-50 flex items-center justify-center shrink-0">
-                <Calendar className="w-4 h-4 text-[#0A356A]" />
+            {[
+              { label: "Total", value: totalInspeksi, rule: "#334155" },
+              { label: "Mendatang", value: mendatangCount, rule: "#0556B3" },
+              { label: "Terlambat", value: terlambatCount, rule: "#DC2626" },
+              { label: "Selesai", value: selesaiCount, rule: "#059669" },
+            ].map((kpi) => (
+              <div
+                key={kpi.label}
+                className="bg-white rounded border border-[#E6E8EA] border-l-2 p-2.5"
+                style={{ borderLeftColor: kpi.rule }}
+              >
+                <p className="text-[10px] font-bold text-[#64748B] uppercase tracking-wider leading-none mb-1">{kpi.label}</p>
+                <p className="text-lg font-extrabold text-[#0F172A] leading-none tabular-nums">{loading ? "..." : kpi.value}</p>
               </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider leading-none mb-1">Total</p>
-                <p className="text-lg font-extrabold text-gray-900 leading-none">124</p>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 flex items-center gap-3">
-              <div className="w-8 h-8 rounded bg-blue-50 flex items-center justify-center shrink-0">
-                <Clock className="w-4 h-4 text-[#0A356A]" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider leading-none mb-1">Mendatang</p>
-                <p className="text-lg font-extrabold text-gray-900 leading-none">18</p>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 flex items-center gap-3">
-              <div className="w-8 h-8 rounded bg-red-50 flex items-center justify-center shrink-0">
-                <AlertCircle className="w-4 h-4 text-red-500" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider leading-none mb-1">Terlambat</p>
-                <p className="text-lg font-extrabold text-gray-900 leading-none">5</p>
-              </div>
-            </div>
-            
-            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-2.5 flex items-center gap-3">
-              <div className="w-8 h-8 rounded bg-emerald-50 flex items-center justify-center shrink-0">
-                <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-              </div>
-              <div>
-                <p className="text-[10px] font-bold text-gray-500 uppercase tracking-wider leading-none mb-1">Selesai</p>
-                <p className="text-lg font-extrabold text-gray-900 leading-none">42</p>
-              </div>
-            </div>
+            ))}
           </div>
 
           {/* Tabel Data Inspeksi - Menggunakan flex-1 dan min-h-0 agar mengisi sisa ruang */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden print:shadow-none print:border-none">
+          <div className="bg-white rounded border border-gray-200 flex flex-col flex-1 min-h-0 overflow-hidden print:shadow-none print:border-none">
             
             {/* Toolbar Tabel */}
             <div className="p-2 border-b border-gray-200 bg-white flex flex-col sm:flex-row gap-2 justify-between items-center shrink-0 print:hidden">
@@ -219,7 +205,7 @@ export default function InspeksiDashboard() {
                       setSearchQuery("");
                       setStatusFilter("");
                     }}
-                    className="flex items-center gap-1 px-2 py-1.5 text-[12px] font-semibold text-red-600 hover:bg-red-50 border border-red-200 rounded-md transition-colors"
+                    className="flex items-center gap-1 px-2 py-1.5 text-[12px] font-semibold text-[#334155] hover:bg-[#F2F3F4] border border-[#E6E8EA] rounded-md transition-colors"
                   >
                     Reset Filter
                   </button>
@@ -228,14 +214,14 @@ export default function InspeksiDashboard() {
                 <button 
                   onClick={handleExportCSV}
                   title="Export to CSV"
-                  className="p-1.5 border border-gray-200 rounded-md hover:bg-gray-50 text-gray-600 transition-colors bg-white shadow-sm flex items-center gap-1"
+                  className="p-1.5 border border-gray-200 rounded-md hover:bg-gray-50 text-gray-600 transition-colors bg-white flex items-center gap-1"
                 >
                   <Download className="w-3.5 h-3.5" />
                 </button>
                 <button 
                   onClick={() => window.print()}
                   title="Print Halaman"
-                  className="p-1.5 border border-gray-200 rounded-md hover:bg-gray-50 text-gray-600 transition-colors bg-white shadow-sm flex items-center gap-1"
+                  className="p-1.5 border border-gray-200 rounded-md hover:bg-gray-50 text-gray-600 transition-colors bg-white flex items-center gap-1"
                 >
                   <Printer className="w-3.5 h-3.5" />
                 </button>
@@ -245,8 +231,8 @@ export default function InspeksiDashboard() {
             {/* Isi Tabel dengan scroll Y otomatis (flex-1 min-h-0 memaksanya scroll jika berlebih) */}
             <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 bg-white print:overflow-visible print:h-auto">
               <table className="w-full text-left border-collapse min-w-[700px]">
-                <thead className="sticky top-0 bg-gray-50/95 backdrop-blur-sm z-10 border-b border-gray-200 shadow-sm">
-                  <tr className="text-[10px] uppercase tracking-wider text-gray-500 font-semibold">
+                <thead className="sticky top-0 bg-[#F2F3F4] z-10 border-b border-gray-200">
+                  <tr className="text-[10px] uppercase tracking-[0.04em] text-[#334155] font-semibold">
                     <th className="px-4 py-2.5">Kode Aset</th>
                     <th className="px-4 py-2.5">Peralatan</th>
                     <th className="px-4 py-2.5">Tanggal</th>
@@ -263,7 +249,7 @@ export default function InspeksiDashboard() {
                     </tr>
                   ) : (
                     filteredData.map((row, i) => (
-                      <tr key={i} className="hover:bg-blue-50/30 transition-colors group">
+                      <tr key={i} className="hover:bg-[#F2F3F4] transition-colors group">
                         <td className="px-4 py-2 whitespace-nowrap text-[12px] font-bold text-[#0A356A]">{row.equipment.equipment_code}</td>
                         <td className="px-4 py-2 text-[12px] text-gray-800 font-medium truncate max-w-[150px]" title={row.equipment.name}>{row.equipment.name}</td>
                         <td className="px-4 py-2 whitespace-nowrap text-[12px] text-gray-600">
@@ -277,18 +263,18 @@ export default function InspeksiDashboard() {
                         <td className="px-4 py-2 whitespace-nowrap text-[12px] text-gray-600">{row.inspector}</td>
                         <td className="px-4 py-2 whitespace-nowrap">
                           {row.status === "Terlambat" && (
-                            <span className="bg-red-50 text-red-700 text-[10px] font-semibold px-2 py-0.5 rounded-full">Terlambat</span>
+                            <span className="border text-[#DC2626] text-[10px] font-semibold px-2 py-0.5 rounded-sm">Terlambat</span>
                           )}
                           {row.status === "Mendatang" && (
-                            <span className="bg-blue-50 text-blue-700 text-[10px] font-semibold px-2 py-0.5 rounded-full">Mendatang</span>
+                            <span className="border text-[#0556B3] text-[10px] font-semibold px-2 py-0.5 rounded-sm">Mendatang</span>
                           )}
                           {row.status === "Selesai" && (
-                            <span className="bg-emerald-50 text-emerald-700 text-[10px] font-semibold px-2 py-0.5 rounded-full">Selesai</span>
+                            <span className="border text-[#059669] text-[10px] font-semibold px-2 py-0.5 rounded-sm">Selesai</span>
                           )}
                         </td>
                         <td className="px-4 py-2 whitespace-nowrap text-right">
                           {row.status !== "Selesai" ? (
-                            <Link href={`/inspeksi/inspeksi-berkala/formInspeksi?equipmentId=${(row.equipment as any)?.id || row.id}`} className="inline-block bg-blue-50 text-[#0A356A] hover:bg-[#0A356A] hover:text-white border border-blue-200 px-2.5 py-1 rounded text-[10px] font-bold transition-all shadow-sm">
+                            <Link href={`/inspeksi/inspeksi-berkala/formInspeksi?equipmentId=${(row.equipment as any)?.id || row.id}`} className="inline-block bg-white text-[#0A356A] hover:bg-[#0556B3] hover:text-white border border-[#E6E8EA] px-2.5 py-1 rounded text-[10px] font-bold transition-all">
                               Mulai
                             </Link>
                           ) : (
@@ -309,7 +295,7 @@ export default function InspeksiDashboard() {
               <span>Menampilkan {filteredData.length} data</span>
               <div className="flex items-center gap-1">
                 <button className="p-0.5 text-gray-400 hover:text-[#0A356A] disabled:opacity-50 transition-colors">&lsaquo;</button>
-                <button className="w-5 h-5 rounded bg-[#0A356A] text-white font-bold shadow-sm">1</button>
+                <button className="w-5 h-5 rounded bg-[#0A356A] text-white font-bold">1</button>
                 <button className="p-0.5 text-gray-400 hover:text-[#0A356A] transition-colors">&rsaquo;</button>
               </div>
             </div>
@@ -321,33 +307,17 @@ export default function InspeksiDashboard() {
         {/* BAGIAN KANAN: WIDGET */}
         <div className="lg:col-span-3 flex flex-col gap-3 shrink-0">
           
-          <div className="bg-[#f0f7ff] rounded-lg border border-blue-100 p-4 shadow-sm">
-            <div className="w-8 h-8 rounded bg-[#0A356A] flex items-center justify-center mb-2.5 shadow-sm">
-              <Info className="w-4 h-4 text-white" />
+          <div className="bg-white rounded border border-[#E6E8EA] p-4">
+            <div className="w-8 h-8 rounded border border-[#334155] text-[#334155] flex items-center justify-center mb-2.5">
+              <Info className="w-4 h-4" />
             </div>
-            <h3 className="text-[12px] font-bold text-[#0A356A] mb-1">Panduan Inspeksi</h3>
-            <p className="text-[11px] text-gray-600 leading-relaxed mb-3">
+            <h3 className="text-[12px] font-bold text-[#0F172A] mb-1">Panduan Inspeksi</h3>
+            <p className="text-[11px] text-[#64748B] leading-relaxed mb-3">
               Aset idle wajib diinspeksi minimal satu kali setiap 3 bulan untuk memastikan integritas mekanis.
             </p>
-            <a href="#" className="text-[10px] font-bold text-[#0556B3] uppercase tracking-wider hover:underline flex items-center gap-1">
-              UNDUH SOP <span className="text-[12px] leading-none">&nearr;</span>
+            <a href="#" className="text-[11px] font-semibold text-[#0556B3] hover:underline flex items-center gap-1">
+              Unduh SOP <span className="text-[12px] leading-none">&nearr;</span>
             </a>
-          </div>
-
-          <div className="bg-[#85AEE6] rounded-lg border border-transparent p-4 shadow-sm text-white overflow-hidden relative">
-            <div className="w-8 h-8 rounded bg-[#0A356A]/30 flex items-center justify-center mb-2.5 backdrop-blur-sm relative z-10">
-              <BarChart2 className="w-4 h-4 text-white" />
-            </div>
-            <div className="relative z-10">
-              <h3 className="text-[12px] font-bold mb-1">Kesehatan Aset</h3>
-              <p className="text-[11px] text-white/90 leading-relaxed mb-3">
-                Berdasarkan data minggu ini, 92% aset idle berstatus siap pakai. Sisa 8% butuh perbaikan.
-              </p>
-              <div className="w-full bg-white/30 h-1.5 rounded-full overflow-hidden flex shadow-inner">
-                <div className="bg-[#0A356A] h-full rounded-full" style={{ width: "92%" }}></div>
-              </div>
-            </div>
-            <div className="absolute top-0 right-0 w-20 h-20 bg-white/10 rounded-full blur-xl -mr-6 -mt-6"></div>
           </div>
 
         </div>

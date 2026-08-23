@@ -22,7 +22,7 @@ import {
 	AlertCircle,
 	ImageOff,
 } from "lucide-react";
-import styles from "@/app/(authenticated-routes)/dashboard.module.css";
+import { buttonVariants } from "@/components/ui/button";
 
 interface MaintenanceEquipment {
 	id: string;
@@ -416,7 +416,7 @@ export default function PerbaikanAlatPage() {
 	};
 
 	return (
-		<div className={styles.pageContainer}>
+		<div className="page-container">
 			{/* Toast */}
 			{notification && (
 				<div
@@ -442,7 +442,7 @@ export default function PerbaikanAlatPage() {
 			)}
 
 			{/* Header */}
-			<div className={styles.pageHeader}>
+			<div className="page-header">
 				<div>
 					<nav
 						aria-label="Breadcrumb"
@@ -452,16 +452,17 @@ export default function PerbaikanAlatPage() {
 						<ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
 						<span className="text-[#0F172A] font-medium">Perbaikan Alat</span>
 					</nav>
-					<h1 className={styles.pageTitle}>Daftar Perbaikan Aset</h1>
-					<p className={styles.pageSubtitle}>
+					<h1 className="page-title">Daftar Perbaikan Aset</h1>
+					<p className="page-subtitle">
 						Catat hasil perbaikan agar aset lanjut ke validasi ulang Inspeksi Teknik.
 					</p>
 				</div>
-				<div className={styles.headerActions}>
+				<div className="header-actions">
 					<button
+						type="button"
 						onClick={loadEquipments}
 						disabled={isLoading}
-						className={styles.btnOutline}
+						className={buttonVariants({ variant: "brandOutline", size: "lg" })}
 					>
 						<RefreshCw
 							className={`w-4 h-4 ${isLoading ? "animate-spin" : ""}`}

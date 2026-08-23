@@ -1,448 +1,407 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+/* DESIGN.md contract: palette row 102 + brand exception, radius 4px,
+   status via 2px rule/border, no shadows on static surfaces. */
+
+/* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import {
-  Wrench,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  ClipboardCheck,
-  RefreshCw,
-  Search,
-  ArrowRight,
-  ShieldCheck,
-  ChevronRight,
+	Wrench,
+	Clock,
+	CheckCircle2,
+	AlertTriangle,
+	ClipboardCheck,
+	RefreshCw,
+	Search,
+	ChevronRight,
+	ArrowRight,
+	FileText,
 } from "lucide-react";
-import { getEquipments, getApprovals } from "@/action/api";
+import { getEquipments } from "@/action/api";
+import { buttonVariants } from "@/components/ui/button";
 import { statusName } from "@/lib/equipment-status";
 
 export default function InspeksiDashboardPage() {
-  const [equipments, setEquipments] = useState<any[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [search, setSearch] = useState("");
+	const [equipments, setEquipments] = useState<any[]>([]);
+	const [isLoading, setIsLoading] = useState(true);
+	const [search, setSearch] = useState("");
 
-  const fetchData = async () => {
-    setIsLoading(true);
-    try {
-      const [eqData] = await Promise.all([getEquipments()]);
-      setEquipments(Array.isArray(eqData) ? eqData : []);
-    } catch (err) {
-      console.error("Dashboard fetch error:", err);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+	// Initial load: state updates happen only in async callbacks, never
+	// synchronously inside the effect body.
+	useEffect(() => {
+		let cancelled = false;
+		getEquipments()
+			.then((eqData) => {
+				if (!cancelled) setEquipments(Array.isArray(eqData) ? eqData : []);
+			})
+			.catch((err) => {
+				console.error("Dashboard fetch error:", err);
+			})
+			.finally(() => {
+				if (!cancelled) setIsLoading(false);
+			});
+		return () => {
+			cancelled = true;
+		};
+	}, []);
 
-  useEffect(() => {
-    fetchData();
-  }, []);
+	// Compute metrics
+	const totalAssets = equipments.length;
 
-  // Compute metrics
-  const totalAssets = equipments.length;
+	const pendingAssets = useMemo(() => {
+		return equipments.filter((eq) => {
+			const st = statusName(
+				typeof eq.status === "string" ? eq.status : eq.status?.name,
+			);
+			return st === "REGISTERED" || st === "";
+		});
+	}, [equipments]);
 
-  const pendingAssets = useMemo(() => {
-    return equipments.filter((eq) => {
-      const st = statusName(
-        typeof eq.status === "string" ? eq.status : eq.status?.name,
-      );
-      return st === "REGISTERED" || st === "";
-    });
-  }, [equipments]);
+	const validatedAssetsCount = useMemo(() => {
+		return equipments.filter((eq) => {
+			const st = statusName(
+				typeof eq.status === "string" ? eq.status : eq.status?.name,
+			);
+			return st === "VALIDATED" || st === "READY_TO_USE" || st === "REUSED";
+		}).length;
+	}, [equipments]);
 
-  const validatedAssetsCount = useMemo(() => {
-    return equipments.filter((eq) => {
-      const st = statusName(
-        typeof eq.status === "string" ? eq.status : eq.status?.name,
-      );
-      return st === "VALIDATED" || st === "READY_TO_USE" || st === "REUSED";
-    }).length;
-  }, [equipments]);
+	const repairOrScrapCount = useMemo(() => {
+		return equipments.filter((eq) => {
+			const st = statusName(
+				typeof eq.status === "string" ? eq.status : eq.status?.name,
+			);
+			return (
+				st === "REPAIR" ||
+				st === "SCRAP" ||
+				st === "DISPOSAL_RECOMMENDED" ||
+				st === "REJECTED"
+			);
+		}).length;
+	}, [equipments]);
 
-  const repairOrScrapCount = useMemo(() => {
-    return equipments.filter((eq) => {
-      const st = statusName(
-        typeof eq.status === "string" ? eq.status : eq.status?.name,
-      );
-      return (
-        st === "REPAIR" ||
-        st === "SCRAP" ||
-        st === "DISPOSAL_RECOMMENDED" ||
-        st === "REJECTED"
-      );
-    }).length;
-  }, [equipments]);
+	// Filtered table queue
+	const filteredPending = useMemo(() => {
+		const q = search.toLowerCase().trim();
+		if (!q) return pendingAssets;
+		return pendingAssets.filter((eq) => {
+			const code = eq.equipment_code || eq.kodeAlat || "";
+			const name = eq.name || eq.namaAlat || "";
+			const plant = eq.plant?.name || eq.plant || "";
+			return (
+				code.toLowerCase().includes(q) ||
+				name.toLowerCase().includes(q) ||
+				plant.toLowerCase().includes(q)
+			);
+		});
+	}, [pendingAssets, search]);
 
-  // Filtered table queue
-  const filteredPending = useMemo(() => {
-    const q = search.toLowerCase().trim();
-    if (!q) return pendingAssets;
-    return pendingAssets.filter((eq) => {
-      const code = eq.equipment_code || eq.kodeAlat || "";
-      const name = eq.name || eq.namaAlat || "";
-      const plant = eq.plant?.name || eq.plant || "";
-      return (
-        code.toLowerCase().includes(q) ||
-        name.toLowerCase().includes(q) ||
-        plant.toLowerCase().includes(q)
-      );
-    });
-  }, [pendingAssets, search]);
+	// DESIGN.md KPI card: one style, value-dominant, state carried by a 2px left rule.
+	const kpis = [
+		{
+			label: "Total Peralatan",
+			value: totalAssets,
+			caption: "Total aset idle terdaftar",
+			rule: "#334155",
+			icon: FileText,
+		},
+		{
+			label: "Menunggu Validasi",
+			value: pendingAssets.length,
+			caption: "Baru terdaftar, belum diperiksa",
+			rule: "#0556B3",
+			icon: Clock,
+		},
+		{
+			label: "Tervalidasi / Ready",
+			value: validatedAssetsCount,
+			caption: "Layak operasional",
+			rule: "#059669",
+			icon: CheckCircle2,
+		},
+		{
+			label: "Perbaikan / Scrap",
+			value: repairOrScrapCount,
+			caption: "Rusak atau tidak layak",
+			rule: "#B45309",
+			icon: AlertTriangle,
+		},
+	];
 
-  return (
-    <div className="max-w-7xl mx-auto pt-2 pb-10 space-y-6">
-      {/* Top Banner Header */}
-      <div className="relative bg-gradient-to-br from-[#0A356A] via-[#0D478A] to-[#0556B3] text-white p-6 sm:p-8 rounded-2xl shadow-md border border-[#0A356A]/20 overflow-hidden">
-        {/* Background Overlay Decoration */}
-        <div className="absolute right-0 top-0 -mt-8 -mr-8 w-64 h-64 bg-white/5 rounded-full blur-2xl pointer-events-none" />
-        <div className="absolute left-1/2 bottom-0 w-48 h-48 bg-blue-400/10 rounded-full blur-xl pointer-events-none" />
+	// DESIGN.md module shortcut: divide-y nav rows, not equal icon-tile cards.
+	const modules = [
+		{
+			href: "/inspeksi/validasi",
+			title: "Validasi Kelayakan Aset",
+			purpose: "Pemeriksaan fisik dan penetapan status kelayakan aset baru.",
+			tag: "Pemeriksaan Awal",
+			rule: "#0556B3",
+			icon: ClipboardCheck,
+		},
+		{
+			href: "/inspeksi/inspeksi-berkala",
+			title: "Inspeksi Berkala",
+			purpose: "Catat hasil inspeksi rutin untuk menjaga kondisi aset idle.",
+			tag: "Monitoring Rutin",
+			rule: "#334155",
+			icon: RefreshCw,
+		},
+		{
+			href: "/inspeksi/validasi-ulang",
+			title: "Validasi Perbaikan Alat",
+			purpose: "Uji ulang peralatan pasca perbaikan tim Pemeliharaan.",
+			tag: "Pasca Perbaikan",
+			rule: "#059669",
+			icon: Wrench,
+		},
+	];
 
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-          <div className="max-w-2xl">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 text-blue-100 text-xs font-semibold backdrop-blur-md mb-3 border border-white/15">
-              <ShieldCheck className="w-3.5 h-3.5 text-blue-300" />
-              <span>Inspeksi Teknik & Validasi Kelayakan</span>
-            </div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white leading-tight">
-              Dashboard Inspeksi Teknik
-            </h1>
-            <p className="text-sm text-blue-100/90 mt-2 font-normal leading-relaxed">
-              Pusat pengawasan kelayakan peralatan idle, pemantauan inspeksi
-              berkala, dan penjaminan mutu kesehatan alat PT Pupuk Sriwidjaja
-              Palembang.
-            </p>
-          </div>
+	return (
+		<div className="page-container">
+			{/* Page Header */}
+			<header className="page-header">
+				<div>
+					<h1 className="page-title">Dashboard Inspeksi Teknik</h1>
+					<p className="page-subtitle">
+						Pengawasan kelayakan peralatan idle dan pemantauan inspeksi berkala.
+					</p>
+				</div>
+				<div className="header-actions">
+					<Link
+						href="/inspeksi/inspeksi-berkala"
+						className={buttonVariants({ variant: "brandOutline" })}
+					>
+						<ClipboardCheck data-icon="inline-start" className="h-4 w-4" />
+						Inspeksi Berkala
+					</Link>
+					<Link
+						href="/inspeksi/validasi"
+						className={buttonVariants({ variant: "brand" })}
+					>
+						<CheckCircle2 data-icon="inline-start" className="h-4 w-4" />
+						Validasi Kelayakan
+					</Link>
+				</div>
+			</header>
 
-          {/* Header Action Buttons */}
-          <div className="flex flex-wrap items-center gap-3 shrink-0">
-            <Link
-              href="/inspeksi/validasi"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white text-[#0A356A] rounded-xl text-xs font-bold hover:bg-blue-50 transition-all shadow-md active:scale-95 cursor-pointer"
-            >
-              <CheckCircle2 className="w-4 h-4 text-[#0A356A]" />
-              <span>Validasi Kelayakan</span>
-            </Link>
-            <Link
-              href="/inspeksi/inspeksi-berkala"
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/15 hover:bg-white/25 text-white border border-white/20 rounded-xl text-xs font-bold transition-all backdrop-blur-md active:scale-95 cursor-pointer"
-            >
-              <ClipboardCheck className="w-4 h-4 text-blue-200" />
-              <span>Inspeksi Berkala</span>
-            </Link>
-          </div>
-        </div>
-      </div>
+			{/* KPI Strip */}
+			<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+				{kpis.map((kpi) => (
+					<div
+						key={kpi.label}
+						className="flex items-start justify-between gap-3 rounded border border-[#E6E8EA] border-l-2 bg-white p-4"
+						style={{ borderLeftColor: kpi.rule }}
+					>
+						<div className="min-w-0">
+							<p className="truncate text-[12px] font-medium text-[#64748B]">
+								{kpi.label}
+							</p>
+							<p className="mt-2 text-[28px] leading-none font-semibold tracking-[-0.02em] text-[#0F172A] tabular-nums">
+								{isLoading ? "..." : kpi.value}
+							</p>
+							<p className="mt-1.5 text-[12px] text-[#64748B]">{kpi.caption}</p>
+						</div>
+						<kpi.icon
+							className="mt-0.5 h-4 w-4 shrink-0"
+							style={{ color: kpi.rule }}
+							aria-hidden="true"
+						/>
+					</div>
+				))}
+			</div>
 
-      {/* Metrics Summary Section (4 Cards) */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {/* Total Assets */}
-        <div className="bg-white p-5 rounded-xl border border-gray-200/80 shadow-xs hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-gray-500 uppercase tracking-wider">
-              Total Peralatan
-            </span>
-            <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-[#0A356A]">
-              <Wrench className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-gray-900">
-              {isLoading ? "..." : totalAssets}
-            </span>
-            <span className="text-xs text-gray-500 font-medium">unit</span>
-          </div>
-          <p className="text-[11px] text-gray-500 mt-1">
-            Total aset idle terdaftar
-          </p>
-        </div>
+			{/* Module Shortcuts */}
+			<section
+				aria-label="Modul inspeksi"
+				className="rounded border border-[#E6E8EA] bg-white"
+			>
+				<ul className="divide-y divide-[#E6E8EA]">
+					{modules.map((mod) => (
+						<li key={mod.href}>
+							<Link
+								href={mod.href}
+								className="group flex items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-[#F2F3F4]"
+							>
+								<span
+									className="flex h-9 w-9 shrink-0 items-center justify-center rounded border"
+									style={{ borderColor: mod.rule, color: mod.rule }}
+								>
+									<mod.icon className="h-4 w-4" aria-hidden="true" />
+								</span>
+								<span className="min-w-0 flex-1">
+									<span className="block truncate text-[14px] font-semibold text-[#0F172A]">
+										{mod.title}
+									</span>
+									<span className="mt-0.5 block truncate text-[13px] text-[#64748B]">
+										{mod.purpose}
+									</span>
+								</span>
+								<span className="hidden shrink-0 text-[12px] font-medium text-[#64748B] sm:block">
+									{mod.tag}
+								</span>
+								<ChevronRight
+									className="h-4 w-4 shrink-0 text-[#64748B] transition-colors duration-150 group-hover:text-[#0A356A]"
+									aria-hidden="true"
+								/>
+							</Link>
+						</li>
+					))}
+				</ul>
+			</section>
 
-        {/* Antrean Validasi */}
-        <div className="bg-white p-5 rounded-xl border border-amber-200/80 shadow-xs hover:shadow-md transition-all relative overflow-hidden">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-amber-700 uppercase tracking-wider">
-              Menunggu Validasi
-            </span>
-            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-600">
-              <Clock className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-amber-900">
-              {isLoading ? "..." : pendingAssets.length}
-            </span>
-            <span className="text-xs text-amber-600 font-bold bg-amber-100 px-2 py-0.5 rounded-full">
-              Perlu Tindakan
-            </span>
-          </div>
-          <p className="text-[11px] text-amber-700 mt-1">
-            Aset baru menunggu pemeriksaan
-          </p>
-        </div>
+			{/* Table Section: Antrean Validasi Kelayakan Terbaru */}
+			<section
+				className="overflow-hidden rounded border border-[#E6E8EA] bg-white"
+				aria-label="Antrean validasi kelayakan"
+			>
+				<div className="flex flex-col gap-3 border-b border-[#E6E8EA] p-4 sm:flex-row sm:items-center sm:justify-between">
+					<div>
+						<h2 className="flex items-center gap-2 text-[14px] font-semibold text-[#0F172A]">
+							Antrean Validasi Kelayakan
+							<span
+								className="inline-flex items-center whitespace-nowrap rounded-sm border px-2 py-0.5 text-[11px] font-semibold"
+								style={{ borderColor: "#0556B3", color: "#0556B3" }}
+							>
+								{pendingAssets.length} Menunggu
+							</span>
+						</h2>
+						<p className="mt-0.5 text-[12px] text-[#64748B]">
+							Peralatan terdaftar terbaru yang membutuhkan validasi teknis.
+						</p>
+					</div>
 
-        {/* Tervalidasi (Ready to Use) */}
-        <div className="bg-white p-5 rounded-xl border border-emerald-200/80 shadow-xs hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-emerald-700 uppercase tracking-wider">
-              Tervalidasi / Ready
-            </span>
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 flex items-center justify-center text-emerald-600">
-              <CheckCircle2 className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-emerald-900">
-              {isLoading ? "..." : validatedAssetsCount}
-            </span>
-            <span className="text-xs text-emerald-600 font-medium">unit</span>
-          </div>
-          <p className="text-[11px] text-emerald-700 mt-1">
-            Layak operasional & direkomendasikan
-          </p>
-        </div>
+					<div className="flex items-center gap-2">
+						<div className="relative flex-1 sm:w-64">
+							<Search
+								className="pointer-events-none absolute left-2.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#64748B]"
+								aria-hidden="true"
+							/>
+							<input
+								type="search"
+								aria-label="Cari antrean validasi"
+								placeholder="Cari kode/nama..."
+								value={search}
+								onChange={(e) => setSearch(e.target.value)}
+								className="h-8 w-full rounded border border-[#E6E8EA] bg-white pr-3 pl-8 text-[13px] text-[#0F172A] placeholder:text-[#64748B]"
+							/>
+						</div>
+						<Link
+							href="/inspeksi/validasi"
+							className="inline-flex h-8 shrink-0 items-center gap-1.5 rounded px-2.5 text-[13px] font-medium text-[#334155] transition-colors duration-150 hover:bg-[#F2F3F4] hover:text-[#0A356A]"
+						>
+							Lihat Semua
+							<ArrowRight className="h-3.5 w-3.5" aria-hidden="true" />
+						</Link>
+					</div>
+				</div>
 
-        {/* Perbaikan / Scrap */}
-        <div className="bg-white p-5 rounded-xl border border-rose-200/80 shadow-xs hover:shadow-md transition-all">
-          <div className="flex items-center justify-between">
-            <span className="text-xs font-bold text-rose-700 uppercase tracking-wider">
-              Perbaikan / Scrap
-            </span>
-            <div className="w-10 h-10 rounded-xl bg-rose-50 flex items-center justify-center text-rose-600">
-              <AlertTriangle className="w-5 h-5" />
-            </div>
-          </div>
-          <div className="mt-3 flex items-baseline gap-2">
-            <span className="text-2xl font-black text-rose-900">
-              {isLoading ? "..." : repairOrScrapCount}
-            </span>
-            <span className="text-xs text-rose-600 font-medium">unit</span>
-          </div>
-          <p className="text-[11px] text-rose-700 mt-1">
-            Rusak ringan, sedang, atau scrap
-          </p>
-        </div>
-      </div>
-
-      {/* Shortcut Feature Cards Grid (3 Navigation Cards) */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-        {/* Feature 1 */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group">
-          <div>
-            <div className="w-12 h-12 rounded-xl bg-[#0A356A]/10 text-[#0A356A] flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <Wrench className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-gray-900 group-hover:text-[#0A356A] transition-colors">
-              Validasi Kelayakan Aset
-            </h3>
-            <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              Lakukan pemeriksaan fisik, pengujian teknis, dan penetapan status
-              kelayakan aset baru terdaftar.
-            </p>
-          </div>
-          <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-400">
-              Pemeriksaan Awal
-            </span>
-            <Link
-              href="/inspeksi/validasi"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-[#0A356A] group-hover:translate-x-1 transition-transform"
-            >
-              <span>Buka Validasi</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Feature 2 */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group">
-          <div>
-            <div className="w-12 h-12 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <ClipboardCheck className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-gray-900 group-hover:text-blue-600 transition-colors">
-              Inspeksi Berkala
-            </h3>
-            <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              Jadwalkan dan catat hasil inspeksi rutin berkala untuk memastikan
-              kesehatan aset idle terjaga.
-            </p>
-          </div>
-          <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-400">
-              Monitoring Rutin
-            </span>
-            <Link
-              href="/inspeksi/inspeksi-berkala"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-blue-600 group-hover:translate-x-1 transition-transform"
-            >
-              <span>Buka Inspeksi</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Feature 3 */}
-        <div className="bg-white rounded-2xl p-6 border border-gray-200/80 shadow-xs hover:shadow-lg transition-all flex flex-col justify-between group">
-          <div>
-            <div className="w-12 h-12 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center mb-4 group-hover:scale-110 transition-transform">
-              <RefreshCw className="w-6 h-6" />
-            </div>
-            <h3 className="text-base font-bold text-gray-900 group-hover:text-emerald-600 transition-colors">
-              Validasi Perbaikan Alat
-            </h3>
-            <p className="text-xs text-gray-500 mt-2 leading-relaxed">
-              Pemeriksaan ulang dan verifikasi fungsi pada peralatan yang telah
-              selesai diperbaiki oleh tim Pemeliharaan.
-            </p>
-          </div>
-          <div className="mt-6 pt-4 border-t border-gray-100 flex items-center justify-between">
-            <span className="text-xs font-semibold text-gray-400">
-              Uji Ulang Pasca Perbaikan
-            </span>
-            <Link
-              href="/inspeksi/validasi-ulang"
-              className="inline-flex items-center gap-1.5 text-xs font-bold text-emerald-600 group-hover:translate-x-1 transition-transform"
-            >
-              <span>Buka Validasi Perbaikan</span>
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Table Section: Antrean Validasi Kelayakan Terbaru */}
-      <div className="bg-white border border-gray-200 rounded-2xl shadow-sm overflow-hidden">
-        <div className="p-4 sm:p-5 border-b border-gray-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4 bg-gray-50/50">
-          <div>
-            <h2 className="text-base font-bold text-gray-900 flex items-center gap-2">
-              <span>Antrean Validasi Kelayakan</span>
-              <span className="bg-amber-100 text-amber-800 text-[11px] font-extrabold px-2.5 py-0.5 rounded-full">
-                {pendingAssets.length} Menunggu
-              </span>
-            </h2>
-            <p className="text-xs text-gray-500 mt-0.5">
-              Peralatan terdaftar terbaru yang membutuhkan validasi teknis.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-3 w-full sm:w-auto">
-            {/* Search Input */}
-            <div className="relative flex-1 sm:w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Cari kode/nama..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full pl-9 pr-3 py-1.5 text-xs bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400 font-medium"
-              />
-            </div>
-            <Link
-              href="/inspeksi/validasi"
-              className="inline-flex items-center gap-1 text-xs font-bold text-[#0A356A] hover:text-[#062854] bg-white px-3 py-1.5 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors shrink-0 shadow-2xs cursor-pointer"
-            >
-              <span>Lihat Semua</span>
-              <ChevronRight className="w-3.5 h-3.5" />
-            </Link>
-          </div>
-        </div>
-
-        {/* Table Content */}
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse table-fixed">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
-                <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[40px]">
-                  No
-                </th>
-                <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[130px]">
-                  Kode Alat
-                </th>
-                <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider text-left">
-                  Nama Peralatan
-                </th>
-                <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[100px]">
-                  Plant
-                </th>
-                <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[120px]">
-                  Tanggal Registrasi
-                </th>
-                <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[140px]">
-                  Status
-                </th>
-                <th className="px-4 py-3 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[110px]">
-                  Aksi
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {isLoading ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-xs text-gray-500"
-                  >
-                    <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-[#0A356A]" />
-                    Memuat antrean validasi...
-                  </td>
-                </tr>
-              ) : filteredPending.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-4 py-8 text-center text-xs text-gray-400 italic"
-                  >
-                    {search
-                      ? "Tidak ada peralatan yang sesuai dengan kata kunci pencarian."
-                      : "Tidak ada antrean validasi kelayakan saat ini."}
-                  </td>
-                </tr>
-              ) : (
-                filteredPending.slice(0, 5).map((eq: any, idx: number) => (
-                  <tr
-                    key={eq.id || idx}
-                    className="hover:bg-gray-50/60 transition-colors h-[48px]"
-                  >
-                    <td className="px-4 py-2 text-xs text-gray-500 text-center font-medium">
-                      {idx + 1}
-                    </td>
-                    <td className="px-4 py-2 text-xs font-bold text-[#0A356A] text-center truncate">
-                      {eq.equipment_code || eq.kodeAlat || "-"}
-                    </td>
-                    <td
-                      className="px-4 py-2 text-xs font-semibold text-gray-800 truncate"
-                      title={eq.name || eq.namaAlat}
-                    >
-                      {eq.name || eq.namaAlat || "-"}
-                    </td>
-                    <td className="px-4 py-2 text-xs text-gray-600 font-medium text-center truncate">
-                      {eq.plant?.name || eq.plant || "-"}
-                    </td>
-                    <td className="px-4 py-2 text-xs text-gray-600 font-medium text-center font-mono text-[11px]">
-                      {eq.created_at
-                        ? new Date(eq.created_at).toLocaleDateString("id-ID")
-                        : "-"}
-                    </td>
-                    <td className="px-4 py-2 text-xs text-center">
-                      <span className="inline-block px-2.5 py-1 text-[11px] font-bold rounded-full bg-amber-100 text-amber-800 whitespace-nowrap">
-                        Menunggu Validasi
-                      </span>
-                    </td>
-                    <td className="px-4 py-2 text-center w-[110px]">
-                      <Link
-                        href="/inspeksi/validasi"
-                        className="inline-flex items-center justify-center gap-1 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
-                      >
-                        <Wrench className="w-3.5 h-3.5" />
-                        Validasi
-                      </Link>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  );
+				{/* Table Content */}
+				<div className="overflow-x-auto">
+					<table className="w-full min-w-[860px] table-fixed border-collapse text-left">
+						<thead>
+							<tr className="border-b border-[#E6E8EA] bg-[#F2F3F4]">
+								<th scope="col" className="w-12 px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+									No
+								</th>
+								<th scope="col" className="w-[140px] px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+									Kode Alat
+								</th>
+								<th scope="col" className="px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+									Nama Peralatan
+								</th>
+								<th scope="col" className="w-[100px] px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+									Plant
+								</th>
+								<th scope="col" className="w-[130px] px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+									Tgl Registrasi
+								</th>
+								<th scope="col" className="w-[160px] px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+									Status
+								</th>
+								<th scope="col" className="w-[110px] px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+									Aksi
+								</th>
+							</tr>
+						</thead>
+						<tbody className="divide-y divide-[#E6E8EA]">
+							{isLoading ? (
+								<tr>
+									<td colSpan={7} className="px-4 py-3">
+										<div className="space-y-3" aria-hidden="true">
+											{Array.from({ length: 5 }).map((_, i) => (
+												<div
+													key={i}
+													className="h-9 animate-pulse rounded-sm bg-[#F2F3F4]"
+													style={{ animationDelay: `${i * 60}ms` }}
+												/>
+											))}
+										</div>
+										<span className="sr-only">Memuat antrean validasi...</span>
+									</td>
+								</tr>
+							) : filteredPending.length === 0 ? (
+								<tr>
+									<td colSpan={7} className="px-4 py-14 text-center">
+										<p className="text-[14px] font-semibold text-[#0F172A]">
+											Tidak Ada Antrean
+										</p>
+										<p className="mt-1 text-[13px] text-[#64748B]">
+											{search
+												? "Tidak ada peralatan yang cocok dengan kata kunci pencarian."
+												: "Tidak ada antrean validasi kelayakan saat ini."}
+										</p>
+									</td>
+								</tr>
+							) : (
+								filteredPending.slice(0, 5).map((eq: any, idx: number) => (
+									<tr key={eq.id || idx} className="transition-colors duration-150 hover:bg-[#F2F3F4]">
+										<td className="px-4 py-2.5 text-center text-[13px] text-[#64748B] tabular-nums">
+											{idx + 1}
+										</td>
+										<td className="px-4 py-2.5 font-mono text-[13px] font-medium text-[#0F172A]" title={eq.equipment_code || eq.kodeAlat}>
+											<span className="block truncate">{eq.equipment_code || eq.kodeAlat || "-"}</span>
+										</td>
+										<td
+											className="px-4 py-2.5 text-[13px] font-medium text-[#0F172A]"
+											title={eq.name || eq.namaAlat}
+										>
+											<span className="block truncate">{eq.name || eq.namaAlat || "-"}</span>
+										</td>
+										<td className="px-4 py-2.5 text-[13px] text-[#475569]">
+											<span className="block truncate">{eq.plant?.name || eq.plant || "-"}</span>
+										</td>
+										<td className="px-4 py-2.5 text-[13px] text-[#475569] tabular-nums">
+											{eq.created_at
+												? new Date(eq.created_at).toLocaleDateString("id-ID")
+												: "-"}
+										</td>
+										<td className="px-4 py-2.5 text-center">
+											<span
+												className="inline-flex items-center whitespace-nowrap rounded-sm border px-2 py-0.5 text-[11px] font-semibold"
+												style={{ borderColor: "#0556B3", color: "#0556B3" }}
+											>
+												Menunggu Validasi
+											</span>
+										</td>
+										<td className="px-4 py-2.5 text-center whitespace-nowrap">
+											<Link
+												href="/inspeksi/validasi"
+												className="inline-flex h-11 items-center justify-center gap-1.5 rounded bg-[#0A356A] px-3 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#0556B3]"
+											>
+												<Wrench className="h-3.5 w-3.5" aria-hidden="true" />
+												Validasi
+											</Link>
+										</td>
+									</tr>
+								))
+							)}
+						</tbody>
+					</table>
+				</div>
+			</section>
+		</div>
+	);
 }

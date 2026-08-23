@@ -131,6 +131,42 @@
   --sidebar-ring: oklch(0.542 0.034 322.5);
 }
 
+/* DESIGN.md page scaffolding — replaces (authenticated-routes)/dashboard.module.css.
+   Tailwind v4 @utility keeps the semantic names usable from any className. */
+@utility app-shell {
+  @apply flex h-screen overflow-hidden bg-[#f8f9fb];
+}
+@utility app-main-column {
+  @apply flex flex-1 flex-col overflow-hidden;
+}
+@utility app-main-area {
+  @apply flex-1 overflow-y-auto p-6;
+}
+@utility page-container {
+  @apply mx-auto flex w-full max-w-[1400px] flex-col gap-6;
+}
+@utility page-header {
+  @apply flex flex-col gap-4 border-b border-[#e6e8ea] pb-5 sm:flex-row sm:items-center sm:justify-between;
+}
+@utility page-title {
+  @apply text-xl leading-tight font-semibold tracking-[-0.01em] text-[#0f172a];
+}
+@utility page-subtitle {
+  @apply mt-1 text-[0.8125rem] text-[#64748b];
+}
+@utility header-actions {
+  @apply flex items-center gap-3;
+}
+@utility stats-grid {
+  @apply grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-6;
+}
+@utility bottom-grid {
+  @apply grid grid-cols-1 gap-6 lg:grid-cols-3;
+}
+@utility upcoming-wrapper {
+  @apply col-span-1 lg:col-span-2;
+}
+
 @layer base {
   * {
     @apply border-border outline-ring/50;
@@ -175,9 +211,9 @@
     background-color: white !important;
   }
   
-  div[class*="layout"], 
-  div[class*="mainContent"], 
-  main[class*="mainArea"] {
+  [data-app-shell],
+  [data-app-main-column],
+  [data-app-main-area] {
     display: block !important;
     height: auto !important;
     overflow: visible !important;
