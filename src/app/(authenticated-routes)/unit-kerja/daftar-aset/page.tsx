@@ -4,7 +4,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState, useMemo } from "react";
-import Link from "next/link";
 import {
 	getEquipments,
 	getObjectTypes,
@@ -28,6 +27,7 @@ import {
 	Send,
 	X,
 	FileText,
+	ImageOff,
 	Info,
 	ArrowUpDown,
 	LayoutGrid,
@@ -75,6 +75,8 @@ export default function DaftarAsetPage() {
 	const [isDetailOpen, setIsDetailOpen] = useState(false);
 	const [attachments, setAttachments] = useState<any[]>([]);
 	const [isLoadingAttachments, setIsLoadingAttachments] = useState(false);
+	const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+	const [failedPhotoUrls, setFailedPhotoUrls] = useState<string[]>([]);
 
 	// Request Reuse Modal
 	const [requestModalAsset, setRequestModalAsset] =
@@ -91,13 +93,10 @@ export default function DaftarAsetPage() {
 		requesting_project: "",
 		requesting_plant: "",
 		installation_location: "",
-		start_date: new Date().toISOString().split("T")[0],
+		reuse_date: new Date().toISOString().split("T")[0],
 		estimated_new_purchase_cost: "",
 		justification: "",
 		notes: "",
-		contact_person: "",
-		contact_npp: "",
-		contact_phone: "",
 	});
 
 	const loadData = async () => {
@@ -305,7 +304,10 @@ export default function DaftarAsetPage() {
 	}, [filteredItems, currentPage]);
 
 	const catalogItems = useMemo(
-		() => equipments.map((item) => normalizeEquipment(item as unknown as Record<string, unknown>)),
+		() =>
+			equipments.map((item) =>
+				normalizeEquipment(item as unknown as Record<string, unknown>),
+			),
 		[equipments],
 	);
 
@@ -323,34 +325,55 @@ export default function DaftarAsetPage() {
 		}
 	};
 
-	const openRequestModal = (item: EquipmentItem) => {
+	const openRequestModal = async (item: EquipmentItem) => {
 		setRequestModalAsset(item);
 		setRequestFormData({
 			requesting_project: "",
 			requesting_plant: "",
 			installation_location: "",
-			start_date: new Date().toISOString().split("T")[0],
+			reuse_date: new Date().toISOString().split("T")[0],
 			estimated_new_purchase_cost: "",
 			justification: "",
 			notes: "",
-			contact_person: "",
-			contact_npp: "",
-			contact_phone: "",
 		});
 		setRequestErrorMessage(null);
+		setActivePhotoIndex(0);
+		setFailedPhotoUrls([]);
+
+		// Verifikasi visual: pemohon harus melihat unit fisiknya sebelum mengajukan.
+		setIsLoadingAttachments(true);
+		try {
+			const res = await getAttachmentsByEquipmentId(item.id);
+			setAttachments(Array.isArray(res) ? res : []);
+		} catch {
+			setAttachments([]);
+		} finally {
+			setIsLoadingAttachments(false);
+		}
 	};
 
 	const handleRequestSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!requestModalAsset || isSubmittingRequest) return;
 
+		// Backend CreateReuseRequest: semua field di bawah ini validate:"required".
+		if (!requestFormData.requesting_project.trim()) {
+			setRequestErrorMessage("Proyek pemohon wajib diisi.");
+			return;
+		}
+
+		if (!requestFormData.requesting_plant.trim()) {
+			setRequestErrorMessage("Plant pemohon wajib diisi.");
+			return;
+		}
+
 		if (!requestFormData.installation_location.trim()) {
 			setRequestErrorMessage("Lokasi pemasangan wajib diisi.");
 			return;
 		}
 
-		if (!requestFormData.justification.trim()) {
-			setRequestErrorMessage("Alasan kebutuhan / justifikasi wajib diisi.");
+		if (!requestFormData.reuse_date) {
+			setRequestErrorMessage("Tanggal reuse wajib diisi.");
 			return;
 		}
 
@@ -368,16 +391,13 @@ export default function DaftarAsetPage() {
 		try {
 			const res = await createReuseRequest({
 				equipment_id: requestModalAsset.id,
-				requestingProject: requestFormData.requesting_project,
-				requestingPlant: requestFormData.requesting_plant,
-				installation_location: requestFormData.installation_location,
-				reuseDate: requestFormData.start_date,
+				requestingProject: requestFormData.requesting_project.trim(),
+				requestingPlant: requestFormData.requesting_plant.trim(),
+				installationLocation: requestFormData.installation_location.trim(),
+				reuseDate: requestFormData.reuse_date,
 				estimatedNewPurchaseCost: estimatedNewPurchaseCost,
-				justification: requestFormData.justification,
-				notes: requestFormData.notes,
-				contact_person: requestFormData.contact_person,
-				contact_npp: requestFormData.contact_npp,
-				contact_phone: requestFormData.contact_phone,
+				justification: requestFormData.justification.trim(),
+				notes: requestFormData.notes.trim(),
 			});
 
 			if (res && res.success) {
@@ -410,6 +430,43 @@ export default function DaftarAsetPage() {
 		}).format(val);
 	};
 
+	/** Nilai spesifikasi kosong dari API dirender "—", bukan baris kosong. */
+	const specValue = (val?: string | number) => {
+		if (val === null || val === undefined) return "—";
+		const s = String(val).trim();
+		return s.length > 0 && s !== "0" ? s : "—";
+	};
+
+	/* Lampiran dipisah: yang bisa dirender sebagai gambar vs dokumen.
+	   ponytail: klasifikasi lewat ekstensi URL. Kalau backend nanti mengirim
+	   mime_type, ganti ke field itu. */
+	const IMAGE_URL_PATTERN = /\.(jpe?g|png|webp|gif|avif)(\?|$)/i;
+
+	const normalizedAttachments = useMemo(
+		() =>
+			attachments
+				.map((att: any) => ({
+					url: String(att?.file_url || att?.url || "").trim(),
+					name: String(att?.file_name || att?.name || "").trim(),
+				}))
+				.filter((att) => att.url.length > 0),
+		[attachments],
+	);
+
+	const requestPhotos = useMemo(
+		() =>
+			normalizedAttachments.filter(
+				(att) =>
+					IMAGE_URL_PATTERN.test(att.url) && !failedPhotoUrls.includes(att.url),
+			),
+		[normalizedAttachments, failedPhotoUrls],
+	);
+
+	const requestDocuments = useMemo(
+		() => normalizedAttachments.filter((att) => !IMAGE_URL_PATTERN.test(att.url)),
+		[normalizedAttachments],
+	);
+
 	return (
 		<div className="max-w-7xl mx-auto pt-2 pb-8">
 			{/* Page Header */}
@@ -435,10 +492,16 @@ export default function DaftarAsetPage() {
 							disabled={isLoading}
 							className="flex items-center justify-center gap-1 px-2.5 py-1.5 text-[12px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm disabled:opacity-50"
 						>
-							<RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+							<RefreshCw
+								className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`}
+							/>
 							Muat Ulang
 						</button>
-						<div className="inline-flex shrink-0 rounded-lg border border-gray-200 bg-white p-0.5 shadow-sm" role="tablist" aria-label="Mode tampilan aset">
+						<div
+							className="inline-flex shrink-0 rounded-lg border border-gray-200 bg-white p-0.5 shadow-sm"
+							role="tablist"
+							aria-label="Mode tampilan aset"
+						>
 							<button
 								type="button"
 								onClick={() => setViewMode("table")}
@@ -465,7 +528,9 @@ export default function DaftarAsetPage() {
 			</div>
 
 			{/* Main Table Card */}
-			<div className={`${viewMode === "table" ? "" : "hidden"} bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4`}>
+			<div
+				className={`${viewMode === "table" ? "" : "hidden"} bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4`}
+			>
 				{/* Navigation Tabs */}
 				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
 					<button
@@ -555,7 +620,7 @@ export default function DaftarAsetPage() {
 						</div>
 						<button
 							onClick={handleSearch}
-							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
+							className="px-3 py-1.5 bg-brand text-white text-[13px] font-medium rounded-lg hover:bg-brand-hover transition-colors duration-150 ease-out whitespace-nowrap"
 						>
 							Cari
 						</button>
@@ -741,13 +806,14 @@ export default function DaftarAsetPage() {
 												</button>
 
 												{asset.status_name === "READY_TO_USE" ? (
-													<Link
-														href={`/unit-kerja/permintaan?equipment_id=${asset.id}`}
-														className="flex items-center gap-1 px-2.5 py-1 bg-[#0A356A] text-white text-[12px] font-semibold rounded-lg hover:bg-[#062854] transition-colors shadow-sm"
+													<button
+														type="button"
+														onClick={() => openRequestModal(asset)}
+														className="flex items-center gap-1 px-2.5 py-1 bg-brand text-white text-[12px] font-semibold rounded-lg hover:bg-brand-hover transition-colors duration-150 ease-out cursor-pointer"
 													>
 														<Send className="w-3 h-3" />
 														<span>Permintaan</span>
-													</Link>
+													</button>
 												) : (
 													<span
 														className="flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-400 text-[12px] font-semibold rounded-lg cursor-not-allowed"
@@ -896,7 +962,7 @@ export default function DaftarAsetPage() {
 								<h3 className="font-bold text-gray-900 border-b border-gray-200 pb-1 text-[14px]">
 									Spesifikasi Teknis
 								</h3>
-								<p className="text-gray-700 bg-blue-50/50 p-3 rounded-lg border border-blue-100 whitespace-pre-wrap">
+								<p className="text-[#0F172A] bg-[#F2F3F4] p-3 rounded-lg border border-[#E6E8EA] whitespace-pre-wrap">
 									{selectedAsset.specifications}
 								</p>
 
@@ -980,13 +1046,17 @@ export default function DaftarAsetPage() {
 							</button>
 
 							{selectedAsset.status_name === "READY_TO_USE" ? (
-								<Link
-									href={`/unit-kerja/permintaan?equipment_id=${selectedAsset.id}`}
-									className="flex items-center gap-1.5 px-4 py-2 bg-[#0A356A] text-white text-xs font-bold rounded-lg hover:bg-[#062854] transition-colors shadow-sm"
+								<button
+									type="button"
+									onClick={() => {
+										setIsDetailOpen(false);
+										openRequestModal(selectedAsset);
+									}}
+									className="flex items-center gap-1.5 px-4 py-2 bg-brand text-white text-xs font-bold rounded-lg hover:bg-brand-hover transition-colors duration-150 ease-out cursor-pointer"
 								>
 									<Send className="w-3.5 h-3.5" />
 									<span>Ajukan Permintaan Aset Ini</span>
-								</Link>
+								</button>
 							) : (
 								<span className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed">
 									<AlertCircle className="w-3.5 h-3.5" />
@@ -998,298 +1068,454 @@ export default function DaftarAsetPage() {
 				</div>
 			)}
 
-			{/* Modal Ajukan Permintaan Pemakaian */}
+			{/* Modal Ajukan Permintaan Pemakaian — DESIGN.md tokens only.
+			    Two columns: left rail verifies the physical unit, right column collects
+			    the 8 CreateReuseRequest fields. */}
 			{requestModalAsset && (
-				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-					<div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 my-8">
-						{/* Header */}
-						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
-							<div className="flex items-center gap-3">
-								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
-									<Send className="w-5 h-5 text-white" />
-								</div>
-								<div>
-									<h2 className="text-base font-bold text-white">
-										Ajukan Permintaan Pemakaian
-									</h2>
-									<p className="text-xs text-blue-100">
-										{requestModalAsset.equipment_code} — {requestModalAsset.name}
-									</p>
-								</div>
+				<div
+					role="dialog"
+					aria-modal="true"
+					aria-labelledby="request-modal-title"
+					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0F172A]/50 animate-in fade-in duration-200"
+				>
+					<div className="relative flex flex-col w-full max-w-5xl max-h-[92vh] bg-white border border-[#E6E8EA] rounded-lg shadow-[0_8px_24px_-4px_rgb(15_23_42/0.12)] animate-in zoom-in-[0.98] duration-200">
+						{/* Header — flat brand fill, no gradient, no icon tile */}
+						<div className="flex items-start justify-between gap-4 px-5 py-4 bg-brand rounded-t-lg">
+							<div className="min-w-0">
+								<p className="font-mono text-[12px] tracking-[0.02em] text-white/75">
+									{requestModalAsset.equipment_code}
+								</p>
+								<h2
+									id="request-modal-title"
+									className="mt-0.5 text-base font-semibold tracking-[-0.01em] leading-tight text-white truncate"
+								>
+									Ajukan Permintaan Pemakaian
+								</h2>
 							</div>
 							<button
+								type="button"
 								onClick={() => {
 									if (!isSubmittingRequest) setRequestModalAsset(null);
 								}}
 								disabled={isSubmittingRequest}
-								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50 cursor-pointer"
+								aria-label="Tutup formulir permintaan"
+								className="shrink-0 -mt-2 -mr-2 inline-flex items-center justify-center w-11 h-11 rounded-lg text-white transition-colors duration-150 ease-out hover:bg-brand-hover focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
 							>
 								<X className="w-5 h-5" />
 							</button>
 						</div>
 
-						{/* Form Content */}
-						<form
-							onSubmit={handleRequestSubmit}
-							className="px-6 py-5 space-y-4 overflow-y-auto flex-1"
-						>
-							{requestErrorMessage && (
-								<div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700 flex items-center gap-2">
-									<AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
-									<span>{requestErrorMessage}</span>
-								</div>
-							)}
-
-							{/* Summary Box */}
-							<div className="bg-gray-50 rounded-lg p-3 border border-gray-200 grid grid-cols-2 gap-2 text-xs">
-								<div>
-									<p className="text-gray-500 font-medium">Peralatan</p>
-									<p className="text-gray-800 font-semibold truncate">
-										{requestModalAsset.name}
-									</p>
-								</div>
-								<div>
-									<p className="text-gray-500 font-medium">Tipe Objek</p>
-									<p className="text-gray-800 font-semibold">
-										{requestModalAsset.object_type_name}
-									</p>
-								</div>
-								<div>
-									<p className="text-gray-500 font-medium">Lokasi Asal</p>
-									<p className="text-gray-800 font-semibold">
-										{requestModalAsset.plant}
-									</p>
-								</div>
-								<div>
-									<p className="text-gray-500 font-medium">Kondisi</p>
-									<p className="text-emerald-700 font-semibold">
-										{requestModalAsset.condition_name}
-									</p>
-								</div>
-							</div>
-
-							{/* Project & Plant */}
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-								<div>
-									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Proyek Pemohon <span className="text-red-500">*</span>
-									</label>
-									<input
-										type="text"
-										value={requestFormData.requesting_project}
-										onChange={(e) =>
-											setRequestFormData({
-												...requestFormData,
-												requesting_project: e.target.value,
-											})
-										}
-										required
-										placeholder="misal: Proyek Revamp Pabrik"
-										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
-									/>
-								</div>
-								<div>
-									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Plant Pemohon <span className="text-red-500">*</span>
-									</label>
-									<input
-										type="text"
-										value={requestFormData.requesting_plant}
-										onChange={(e) =>
-											setRequestFormData({
-												...requestFormData,
-												requesting_plant: e.target.value,
-											})
-										}
-										required
-										placeholder="misal: Plant PUSRI IB"
-										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
-									/>
-								</div>
-							</div>
-
-							<div>
-								<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-									Lokasi Pemasangan <span className="text-red-500">*</span>
-								</label>
-								<input
-									type="text"
-									value={requestFormData.installation_location}
-									onChange={(e) => setRequestFormData({ ...requestFormData, installation_location: e.target.value })}
-									required
-									placeholder="misal: Area Ammonia Pabrik IB"
-									className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
-								/>
-							</div>
-
-							{/* Reuse Date & Cost */}
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-								<div>
-									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Tanggal Reuse <span className="text-red-500">*</span>
-									</label>
-									<input
-										type="date"
-										value={requestFormData.start_date}
-										onChange={(e) =>
-											setRequestFormData({
-												...requestFormData,
-												start_date: e.target.value,
-											})
-										}
-										required
-										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
-									/>
-								</div>
-								<div>
-									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Estimasi Biaya Pembelian Baru <span className="text-red-500">*</span>
-									</label>
-									<div className="relative">
-										<span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-500">
-											Rp
-										</span>
-										<input
-											type="text"
-											inputMode="numeric"
-											value={
-												requestFormData.estimated_new_purchase_cost
-													? Number(requestFormData.estimated_new_purchase_cost).toLocaleString("id-ID")
-													: ""
+						{/* Body */}
+						<div className="grid grid-cols-1 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
+							{/* Left rail — the physical asset */}
+							<div className="p-5 bg-[#F8FAFC] border-b border-[#E6E8EA] lg:border-b-0 lg:border-r lg:overflow-y-auto">
+								<div className="relative w-full aspect-[4/3] overflow-hidden bg-[#F2F3F4] border border-[#E6E8EA] rounded-lg">
+									{isLoadingAttachments ? (
+										<div className="flex items-center justify-center w-full h-full text-[#64748B]">
+											<Loader2 className="w-5 h-5 animate-spin" />
+										</div>
+									) : requestPhotos.length > 0 ? (
+										/* eslint-disable-next-line @next/next/no-img-element */
+										<img
+											src={requestPhotos[activePhotoIndex]?.url}
+											alt={`Foto peralatan ${requestModalAsset.name}`}
+											className="w-full h-full object-cover"
+											onError={() =>
+												setFailedPhotoUrls((prev) => [
+													...prev,
+													requestPhotos[activePhotoIndex]?.url,
+												])
 											}
-											onChange={(e) =>
-												setRequestFormData({
-													...requestFormData,
-													estimated_new_purchase_cost: e.target.value.replace(/\D/g, ""),
-												})
-											}
-											required
-											placeholder="15.000.000"
-											className="w-full pl-10 pr-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
 										/>
-									</div>
-								</div>
-							</div>
-
-							{/* Justification */}
-							<div>
-								<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-									Alasan Kebutuhan / Justifikasi <span className="text-red-500">*</span>
-								</label>
-								<textarea
-									rows={3}
-									value={requestFormData.justification}
-									onChange={(e) =>
-										setRequestFormData({
-											...requestFormData,
-											justification: e.target.value,
-										})
-									}
-									required
-									placeholder="Jelaskan kebutuhan pemakaian peralatan ini..."
-									className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none resize-none"
-								/>
-							</div>
-
-					{/* Contact Person */}
-					<div className="pt-2 border-t border-gray-100">
-						<p className="text-xs font-bold text-gray-800 mb-2">
-							Informasi Penanggung Jawab (PIC)
-						</p>
-						<div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-							<div>
-								<label className="text-[11px] text-gray-500 font-semibold block mb-1">
-									Nama PIC
-								</label>
-								<input
-									type="text"
-									value={requestFormData.contact_person}
-									onChange={(e) =>
-										setRequestFormData({
-											...requestFormData,
-											contact_person: e.target.value,
-										})
-									}
-									className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:border-[#0A356A] outline-none"
-								/>
-							</div>
-							<div>
-								<label className="text-[11px] text-gray-500 font-semibold block mb-1">
-									NPP
-								</label>
-								<input
-									type="text"
-									value={requestFormData.contact_npp}
-									onChange={(e) =>
-										setRequestFormData({
-											...requestFormData,
-											contact_npp: e.target.value,
-										})
-									}
-									className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:border-[#0A356A] outline-none"
-								/>
-							</div>
-							<div>
-								<label className="text-[11px] text-gray-500 font-semibold block mb-1">
-									No. Telp / HP
-								</label>
-								<input
-									type="text"
-									value={requestFormData.contact_phone}
-									onChange={(e) =>
-										setRequestFormData({
-											...requestFormData,
-											contact_phone: e.target.value,
-										})
-									}
-									className="w-full px-2.5 py-1.5 text-xs border border-gray-200 rounded-lg focus:border-[#0A356A] outline-none"
-								/>
-							</div>
-						</div>
-					</div>
-
-					{/* Catatan */}
-					<div>
-						<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">Catatan</label>
-						<textarea
-							rows={2}
-							value={requestFormData.notes}
-							onChange={(e) => setRequestFormData({ ...requestFormData, notes: e.target.value })}
-							placeholder="Catatan tambahan bila diperlukan"
-							className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none resize-none"
-						/>
-					</div>
-
-
-							{/* Footer Actions */}
-							<div className="pt-4 border-t border-gray-200 flex items-center justify-end gap-2">
-								<button
-									type="button"
-									onClick={() => setRequestModalAsset(null)}
-									disabled={isSubmittingRequest}
-									className="px-4 py-2 text-xs font-semibold text-gray-600 hover:bg-gray-100 rounded-lg transition-colors cursor-pointer"
-								>
-									Batal
-								</button>
-								<button
-									type="submit"
-									disabled={isSubmittingRequest}
-									className="flex items-center gap-1.5 px-4 py-2 bg-[#0A356A] hover:bg-[#062854] text-white text-xs font-bold rounded-lg shadow-sm transition-colors disabled:opacity-50 cursor-pointer"
-								>
-									{isSubmittingRequest ? (
-										<>
-											<Loader2 className="w-3.5 h-3.5 animate-spin" />
-											<span>Mengirim...</span>
-										</>
 									) : (
-										<>
-											<Send className="w-3.5 h-3.5" />
-											<span>Kirim Pengajuan</span>
-										</>
+										<div className="flex flex-col items-center justify-center gap-2 w-full h-full p-4 text-center text-[#64748B]">
+											<ImageOff className="w-6 h-6" />
+											<p className="text-[12px] font-medium leading-snug">
+												Belum ada foto peralatan yang diunggah.
+											</p>
+										</div>
 									)}
-								</button>
+								</div>
+
+								{requestPhotos.length > 1 && (
+									<div className="flex flex-wrap gap-2 mt-2">
+										{requestPhotos.map((photo, idx) => (
+											<button
+												key={photo.url}
+												type="button"
+												onClick={() => setActivePhotoIndex(idx)}
+												aria-label={`Lihat foto ${idx + 1}`}
+												aria-pressed={idx === activePhotoIndex}
+												className={`w-14 h-14 overflow-hidden bg-[#F2F3F4] rounded-lg transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155] cursor-pointer ${
+													idx === activePhotoIndex
+														? "border-2 border-brand"
+														: "border border-[#E6E8EA] hover:border-[#64748B]"
+												}`}
+											>
+												{/* eslint-disable-next-line @next/next/no-img-element */}
+												<img
+													src={photo.url}
+													alt=""
+													className="w-full h-full object-cover"
+												/>
+											</button>
+										))}
+									</div>
+								)}
+
+								<div className="mt-5">
+									<h3 className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#64748B]">
+										Identitas Peralatan
+									</h3>
+									<dl className="mt-2 border-t border-[#E6E8EA]">
+										{[
+											{
+												label: "Nama",
+												value: specValue(requestModalAsset.name),
+											},
+											{
+												label: "Tipe objek",
+												value: specValue(requestModalAsset.object_type_name),
+											},
+											{
+												label: "Serial number",
+												value: specValue(requestModalAsset.serial_number),
+												mono: true,
+											},
+											{
+												label: "Plant asal",
+												value: specValue(requestModalAsset.plant),
+											},
+											{
+												label: "Lokasi simpan",
+												value: specValue(requestModalAsset.storage_location),
+											},
+											{
+												label: "Kondisi",
+												value: specValue(requestModalAsset.condition_name),
+												accent: true,
+											},
+										].map((row) => (
+											<div
+												key={row.label}
+												className="flex items-baseline justify-between gap-4 py-2 border-b border-[#E6E8EA]"
+											>
+												<dt className="shrink-0 text-[12px] font-medium leading-snug text-[#64748B]">
+													{row.label}
+												</dt>
+												<dd
+													className={`text-[13px] leading-snug text-right tabular-nums text-[#0F172A] [overflow-wrap:anywhere] ${
+														row.mono ? "font-mono text-[12px]" : ""
+													} ${row.accent ? "font-semibold text-state-ready" : ""}`}
+												>
+													{row.value}
+												</dd>
+											</div>
+										))}
+									</dl>
+								</div>
+
+								<div className="mt-5">
+									<h3 className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#64748B]">
+										Spesifikasi & Nilai
+									</h3>
+									<dl className="mt-2 border-t border-[#E6E8EA]">
+										{[
+											{
+												label: "Kapasitas",
+												value: specValue(requestModalAsset.capacity),
+											},
+											{
+												label: "Vendor",
+												value: specValue(requestModalAsset.vendor),
+											},
+											{
+												label: "Tahun perolehan",
+												value: specValue(requestModalAsset.year_of_purchase),
+											},
+											{
+												label: "Nilai buku",
+												value: requestModalAsset.book_value
+													? formatRupiah(requestModalAsset.book_value)
+													: "—",
+											},
+										].map((row) => (
+											<div
+												key={row.label}
+												className="flex items-baseline justify-between gap-4 py-2 border-b border-[#E6E8EA]"
+											>
+												<dt className="shrink-0 text-[12px] font-medium leading-snug text-[#64748B]">
+													{row.label}
+												</dt>
+												<dd className="text-[13px] leading-snug text-right tabular-nums text-[#0F172A] [overflow-wrap:anywhere]">
+													{row.value}
+												</dd>
+											</div>
+										))}
+									</dl>
+									{requestModalAsset.specifications?.trim() && (
+										<p className="mt-2 text-[12px] leading-relaxed text-[#475569] [overflow-wrap:anywhere]">
+											{requestModalAsset.specifications}
+										</p>
+									)}
+								</div>
+
+								{requestDocuments.length > 0 && (
+									<div className="mt-5">
+										<h3 className="text-[11px] font-semibold uppercase tracking-[0.04em] text-[#64748B]">
+											Dokumen Lampiran
+										</h3>
+										<div className="mt-2 border-t border-[#E6E8EA]">
+											{requestDocuments.map((doc, idx) => (
+												<a
+													key={doc.url}
+													href={doc.url}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="flex items-center gap-2 min-h-11 py-2 border-b border-[#E6E8EA] text-[12px] font-medium text-[#0556B3] transition-colors duration-150 ease-out hover:text-brand focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
+												>
+													<FileText className="w-4 h-4 shrink-0" />
+													<span className="truncate">
+														{doc.name || `Lampiran ${idx + 1}`}
+													</span>
+												</a>
+											))}
+										</div>
+									</div>
+								)}
 							</div>
-						</form>
+
+							{/* Right column — the form */}
+							<form onSubmit={handleRequestSubmit} className="flex flex-col min-h-0">
+								<div className="flex flex-col gap-5 flex-1 min-h-0 p-5 lg:overflow-y-auto">
+									{requestErrorMessage && (
+										<div className="flex items-start gap-2 px-3 py-2.5 bg-white border border-[#DC2626] rounded-lg text-[12px] leading-relaxed text-[#DC2626]">
+											<AlertCircle className="w-4 h-4 shrink-0" />
+											<span>{requestErrorMessage}</span>
+										</div>
+									)}
+
+									<fieldset className="border-0 p-0 m-0">
+										<legend className="p-0 mb-3 text-[13px] font-semibold leading-snug text-[#0F172A]">
+											Tujuan pemakaian
+										</legend>
+										<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+											<div className="flex flex-col gap-1.5">
+												<label
+													htmlFor="req-project"
+													className="text-[12px] font-medium leading-snug text-[#0F172A]"
+												>
+													Proyek pemohon <span className="text-[#DC2626]">*</span>
+												</label>
+												<input
+													id="req-project"
+													type="text"
+													value={requestFormData.requesting_project}
+													onChange={(e) =>
+														setRequestFormData({
+															...requestFormData,
+															requesting_project: e.target.value,
+														})
+													}
+													required
+													placeholder="Revamp Pabrik IB"
+													className="w-full min-h-10 px-3 py-2 bg-white border border-[#E6E8EA] rounded-lg text-[13px] leading-normal text-[#0F172A] placeholder:text-[#64748B] transition-colors duration-150 ease-out hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
+												/>
+											</div>
+											<div className="flex flex-col gap-1.5">
+												<label
+													htmlFor="req-plant"
+													className="text-[12px] font-medium leading-snug text-[#0F172A]"
+												>
+													Plant pemohon <span className="text-[#DC2626]">*</span>
+												</label>
+												<input
+													id="req-plant"
+													type="text"
+													value={requestFormData.requesting_plant}
+													onChange={(e) =>
+														setRequestFormData({
+															...requestFormData,
+															requesting_plant: e.target.value,
+														})
+													}
+													required
+													placeholder="PUSRI IB"
+													className="w-full min-h-10 px-3 py-2 bg-white border border-[#E6E8EA] rounded-lg text-[13px] leading-normal text-[#0F172A] placeholder:text-[#64748B] transition-colors duration-150 ease-out hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
+												/>
+											</div>
+										</div>
+										<div className="flex flex-col gap-1.5 mt-3">
+											<label
+												htmlFor="req-location"
+												className="text-[12px] font-medium leading-snug text-[#0F172A]"
+											>
+												Lokasi pemasangan <span className="text-[#DC2626]">*</span>
+											</label>
+											<input
+												id="req-location"
+												type="text"
+												value={requestFormData.installation_location}
+												onChange={(e) =>
+													setRequestFormData({
+														...requestFormData,
+														installation_location: e.target.value,
+													})
+												}
+												required
+												placeholder="Area Ammonia, Pabrik IB"
+												className="w-full min-h-10 px-3 py-2 bg-white border border-[#E6E8EA] rounded-lg text-[13px] leading-normal text-[#0F172A] placeholder:text-[#64748B] transition-colors duration-150 ease-out hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
+											/>
+										</div>
+									</fieldset>
+
+									<fieldset className="border-0 p-0 m-0">
+										<legend className="p-0 mb-3 text-[13px] font-semibold leading-snug text-[#0F172A]">
+											Waktu & nilai penggantian
+										</legend>
+										<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+											<div className="flex flex-col gap-1.5">
+												<label
+													htmlFor="req-date"
+													className="text-[12px] font-medium leading-snug text-[#0F172A]"
+												>
+													Tanggal reuse <span className="text-[#DC2626]">*</span>
+												</label>
+												<input
+													id="req-date"
+													type="date"
+													value={requestFormData.reuse_date}
+													onChange={(e) =>
+														setRequestFormData({
+															...requestFormData,
+															reuse_date: e.target.value,
+														})
+													}
+													required
+													className="w-full min-h-10 px-3 py-2 bg-white border border-[#E6E8EA] rounded-lg text-[13px] leading-normal text-[#0F172A] tabular-nums transition-colors duration-150 ease-out hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
+												/>
+											</div>
+											<div className="flex flex-col gap-1.5">
+												<label
+													htmlFor="req-cost"
+													className="text-[12px] font-medium leading-snug text-[#0F172A]"
+												>
+													Estimasi harga unit baru <span className="text-[#DC2626]">*</span>
+												</label>
+												<div className="flex items-stretch">
+													<span className="inline-flex items-center px-2.5 bg-[#F2F3F4] border border-r-0 border-[#E6E8EA] rounded-l-lg text-[12px] font-medium text-[#475569]">
+														Rp
+													</span>
+													<input
+														id="req-cost"
+														type="text"
+														inputMode="numeric"
+														value={
+															requestFormData.estimated_new_purchase_cost
+																? Number(
+																		requestFormData.estimated_new_purchase_cost,
+																	).toLocaleString("id-ID")
+																: ""
+														}
+														onChange={(e) =>
+															setRequestFormData({
+																...requestFormData,
+																estimated_new_purchase_cost: e.target.value.replace(/\D/g, ""),
+															})
+														}
+														required
+														placeholder="15.000.000"
+														className="w-full min-h-10 px-3 py-2 bg-white border border-[#E6E8EA] rounded-r-lg text-[13px] leading-normal text-[#0F172A] tabular-nums placeholder:text-[#64748B] transition-colors duration-150 ease-out hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
+													/>
+												</div>
+												<p className="text-[11px] leading-snug text-[#64748B]">
+													Dipakai untuk menghitung cost avoidance.
+												</p>
+											</div>
+										</div>
+									</fieldset>
+
+									<fieldset className="border-0 p-0 m-0">
+										<legend className="p-0 mb-3 text-[13px] font-semibold leading-snug text-[#0F172A]">
+											Keterangan
+										</legend>
+										<div className="flex flex-col gap-1.5">
+											<label
+												htmlFor="req-justification"
+												className="text-[12px] font-medium leading-snug text-[#0F172A]"
+											>
+												Alasan kebutuhan{" "}
+												<span className="font-normal text-[#64748B]">(opsional)</span>
+											</label>
+											<textarea
+												id="req-justification"
+												rows={3}
+												value={requestFormData.justification}
+												onChange={(e) =>
+													setRequestFormData({
+														...requestFormData,
+														justification: e.target.value,
+													})
+												}
+												placeholder="Alasan unit ini dibutuhkan di lokasi tujuan."
+												className="w-full min-h-10 px-3 py-2 bg-white border border-[#E6E8EA] rounded-lg text-[13px] leading-normal text-[#0F172A] resize-y placeholder:text-[#64748B] transition-colors duration-150 ease-out hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
+											/>
+										</div>
+										<div className="flex flex-col gap-1.5 mt-3">
+											<label
+												htmlFor="req-notes"
+												className="text-[12px] font-medium leading-snug text-[#0F172A]"
+											>
+												Catatan{" "}
+												<span className="font-normal text-[#64748B]">(opsional)</span>
+											</label>
+											<textarea
+												id="req-notes"
+												rows={2}
+												value={requestFormData.notes}
+												onChange={(e) =>
+													setRequestFormData({
+														...requestFormData,
+														notes: e.target.value,
+													})
+												}
+												placeholder="Catatan tambahan untuk verifikator."
+												className="w-full min-h-10 px-3 py-2 bg-white border border-[#E6E8EA] rounded-lg text-[13px] leading-normal text-[#0F172A] resize-y placeholder:text-[#64748B] transition-colors duration-150 ease-out hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
+											/>
+										</div>
+									</fieldset>
+								</div>
+
+								{/* Footer — outside the scroll container */}
+								<div className="flex items-center justify-end gap-3 shrink-0 px-5 py-3.5 bg-[#F8FAFC] border-t border-[#E6E8EA] rounded-b-lg">
+									<button
+										type="button"
+										onClick={() => setRequestModalAsset(null)}
+										disabled={isSubmittingRequest}
+										className="inline-flex items-center justify-center gap-2 min-h-9 px-3.5 py-2 bg-white border border-[#E6E8EA] rounded-lg text-[13px] font-medium text-[#334155] transition-colors duration-150 ease-out hover:bg-[#F2F3F4] hover:text-brand active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+									>
+										Batal
+									</button>
+									<button
+										type="submit"
+										disabled={isSubmittingRequest}
+										className="inline-flex items-center justify-center gap-2 min-h-9 px-3.5 py-2 bg-brand border border-brand rounded-lg text-[13px] font-medium text-white transition-colors duration-150 ease-out hover:bg-brand-hover hover:border-brand-hover active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+									>
+										{isSubmittingRequest ? (
+											<>
+												<Loader2 className="w-4 h-4 animate-spin" />
+												<span>Mengirim</span>
+											</>
+										) : (
+											<>
+												<Send className="w-4 h-4" />
+												<span>Kirim Pengajuan</span>
+											</>
+										)}
+									</button>
+								</div>
+							</form>
+						</div>
 					</div>
 				</div>
 			)}
