@@ -25,7 +25,6 @@ import {
 	ChevronDown,
   ChevronRight,
 	Factory,
-  Cog,
   History,
   RefreshCw,
 } from "lucide-react";
@@ -45,15 +44,32 @@ export function Sidebar({ role }: { role?: string }) {
 		let isMounted = true;
 		const checkPending = async () => {
 			try {
-				const [data, approvalsData] = await Promise.all([
+				const [data, approvalsData, reuseApprovalsData, disposalApprovalsData] = await Promise.all([
 					getEquipments(),
 					getApprovals().catch(() => []),
+					getApprovals("reuse").catch(() => []),
+					getApprovals("disposal").catch(() => []),
 				]);
 				if (!Array.isArray(data) || !isMounted) return;
 
 				const approvalsList = Array.isArray(approvalsData)
 					? approvalsData
 					: (approvalsData as any)?.data || [];
+				const asList = (value: unknown) =>
+					Array.isArray(value) ? value : (value as any)?.data || [];
+				const awaitingManagerAction = (list: any[]) =>
+					list.filter((item: any) => {
+						const approvalStatus = String(
+							item.approval_status ?? item.approvalStatus ?? item.status ?? "",
+						).toUpperCase();
+						const currentStep = String(
+							item.current_step ?? item.currentStep ?? "",
+						).toUpperCase();
+						return approvalStatus === "PENDING" && (!currentStep || currentStep === "MANAJER_RENDAL");
+					}).length;
+				const validationApprovalAntrean = awaitingManagerAction(approvalsList);
+				const reuseApprovalAntrean = awaitingManagerAction(asList(reuseApprovalsData));
+				const disposalApprovalAntrean = awaitingManagerAction(asList(disposalApprovalsData));
 
 				// Validasi Kelayakan (/inspeksi/validasi): HANYA aset yang butuh tindakan Inspeksi (REGISTERED / REVISION_REQUIRED)
 				const validasiAntrean = data.filter((item: any) => {
@@ -102,6 +118,9 @@ export function Sidebar({ role }: { role?: string }) {
 					"/inspeksi/validasi-ulang": validasiUlangAntrean,
 					"/rendal/validasi-ulang": rendalValidasiUlangAntrean,
 					"/pemeliharaan/perbaikan-alat": perbaikanAntrean,
+					"/manajer/approve": validationApprovalAntrean,
+					"/manajer/peminjaman": reuseApprovalAntrean,
+					"/manajer/scrap": disposalApprovalAntrean,
 				});
 			} catch (err) {
 				console.error("Error checking sidebar pending badges:", err);
@@ -219,11 +238,6 @@ export function Sidebar({ role }: { role?: string }) {
 					name: "Daftar Aset",
 					href: "/unit-kerja/daftar-aset",
 					icon: Wrench,
-				},
-				{
-					name: "Katalog Aset",
-					href: "/unit-kerja/katalog",
-					icon: Cog,
 				},
 				{
 					name: "Riwayat Permintaan",

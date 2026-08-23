@@ -354,13 +354,41 @@ export default function RendalIdlePage() {
 		);
 	};
 
-	const getStatusBadge = (status: AssetState | string) => (
-		<span
-			className={`inline-flex items-center justify-center text-[10px] font-bold px-1.5 py-0.5 rounded border leading-tight ${statusBadgeStyle(status)}`}
-		>
-			{statusText(status)}
-		</span>
-	);
+	const getStatusBadge = (status: AssetState | string) => {
+		const styles: Record<string, string> = {
+			REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
+			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
+			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
+			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
+			"DISPOSAL_RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
+			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
+			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
+			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
+			REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
+			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
+			READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
+		};
+
+		let displayStatus = (status || "").replace(/_/g, " ");
+		if (
+			displayStatus === "READY TO REUSE" ||
+			displayStatus === "REUSED"
+		) {
+			displayStatus = "READY TO USE";
+		}
+
+		const style =
+			styles[displayStatus] ||
+			styles[status] ||
+			styles.SCRAP;
+		return (
+			<span
+				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${style}`}
+			>
+				{displayStatus}
+			</span>
+		);
+	};
 
 	return (
 		<div className="max-w-7xl mx-auto pt-2 pb-8">

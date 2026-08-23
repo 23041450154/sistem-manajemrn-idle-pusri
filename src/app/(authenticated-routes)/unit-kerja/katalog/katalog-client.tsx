@@ -8,7 +8,13 @@ import { STATE_STYLE, EquipmentThumb, formatRupiah } from "./shared";
 
 const ALL = "Semua";
 
-export default function KatalogClient({ items }: { items: KatalogItem[] }) {
+export default function KatalogClient({
+  items,
+  embedded = false,
+}: {
+  items: KatalogItem[];
+  embedded?: boolean;
+}) {
   const [query, setQuery] = useState("");
   const [plant, setPlant] = useState(ALL);
   const [category, setCategory] = useState(ALL);
@@ -34,19 +40,21 @@ export default function KatalogClient({ items }: { items: KatalogItem[] }) {
   }, [items, query, plant, category, condition]);
 
   return (
-    <div className="mx-auto max-w-[1400px] px-6 py-6">
-      <header className="border-b border-[#E6E8EA] pb-5">
-        <p className="text-[12px] font-medium text-[#64748B]">Unit Kerja Operasi</p>
-        <h1 className="mt-1 text-[20px] font-semibold tracking-[-0.01em] text-[#0F172A]">
-          Katalog Equipment Idle
-        </h1>
-        <p className="mt-1 text-[14px] text-[#64748B]">
-          Aset idle yang tersedia untuk dipinjam unit kerja. Pilih satu untuk melihat spesifikasi
-          lengkap dan mengajukan permintaan.
-        </p>
-      </header>
+    <div className={embedded ? "p-4 sm:p-5" : "mx-auto max-w-[1400px] px-6 py-6"}>
+      {!embedded && (
+        <header className="border-b border-[#E6E8EA] pb-5">
+          <p className="text-[12px] font-medium text-[#64748B]">Unit Kerja Operasi</p>
+          <h1 className="mt-1 text-[20px] font-semibold tracking-[-0.01em] text-[#0F172A]">
+            Katalog Equipment Idle
+          </h1>
+          <p className="mt-1 text-[14px] text-[#64748B]">
+            Aset idle yang tersedia untuk dipinjam unit kerja. Pilih satu untuk melihat spesifikasi
+            lengkap dan mengajukan permintaan.
+          </p>
+        </header>
+      )}
 
-      <div className="mt-5 flex flex-col gap-3 lg:flex-row lg:items-center">
+      <div className={`${embedded ? "" : "mt-5 "}flex flex-col gap-3 lg:flex-row lg:items-center`}>
         <div className="relative flex-1">
           <Search
             className="pointer-events-none absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 text-[#64748B]"

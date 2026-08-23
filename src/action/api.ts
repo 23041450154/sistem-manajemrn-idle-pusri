@@ -1443,18 +1443,13 @@ export async function resubmitApproval(id: string, formData: FormData) {
 
 export async function createReuseRequest(payload: {
 	equipment_id: string | number;
-	request_number?: string;
-	requesting_unit?: string;
-	installation_location?: string;
+	requestingProject?: string;
+	requestingPlant?: string;
 	installationLocation?: string;
-	target_plant?: string;
-	start_date?: string;
-	end_date?: string;
+	reuseDate?: string;
+	estimatedNewPurchaseCost?: number;
 	justification?: string;
-	estimated_cost_avoidance?: number;
-	contact_person?: string;
-	contact_npp?: string;
-	contact_phone?: string;
+	notes?: string;
 	[key: string]: any;
 }) {
 	const cookieStore = await cookies();
@@ -1463,82 +1458,46 @@ export async function createReuseRequest(payload: {
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
 
 	const eqId = Number(payload.equipment_id) || Number(payload.equipmentId) || 0;
-	const reqNum =
-		payload.request_number || payload.requestNumber || `REQ-REUSE-${Date.now()}`;
-	const targetPlant =
+	const requestingProject =
+		payload.requestingProject ||
+		payload.requesting_project ||
 		payload.target_plant ||
 		payload.targetPlant ||
-		payload.requesting_plant ||
+		"";
+	const requestingPlant =
 		payload.requestingPlant ||
-		payload.requesting_project ||
-		payload.requestingProject ||
-		"Plant PUSRI IB";
+		payload.requesting_plant ||
+		payload.target_plant ||
+		payload.targetPlant ||
+		"";
 	const installLoc =
-		payload.installation_location ||
 		payload.installationLocation ||
+		payload.installation_location ||
 		payload.requesting_unit ||
-		"Area Pabrik Utama";
+		"";
 	const reuseDate =
-		payload.start_date ||
-		payload.startDate ||
 		payload.reuse_date ||
 		payload.reuseDate ||
-		new Date().toISOString().split("T")[0];
-	const costAvoidance =
+		payload.start_date ||
+		payload.startDate ||
+		"";
+	const estimatedNewPurchaseCost =
+		Number(payload.estimatedNewPurchaseCost) ||
+		Number(payload.estimated_new_purchase_cost) ||
 		Number(payload.estimated_cost_avoidance) ||
 		Number(payload.estimatedCostAvoidance) ||
-		Number(payload.estimated_new_purchase_cost) ||
-		Number(payload.estimatedNewPurchaseCost) ||
 		0;
-	const justification = payload.justification || payload.notes || "-";
-	const contactPerson = payload.contact_person || payload.contactPerson || "";
-	const contactNpp = payload.contact_npp || payload.contactNpp || "";
-	const contactPhone = payload.contact_phone || payload.contactPhone || "";
-
-	const bodyData: Record<string, any> = {
-		// snake_case
-		equipment_id: eqId,
-		request_number: reqNum,
-		request_type: "REUSE",
-		requesting_project: targetPlant,
-		requesting_plant: targetPlant,
-		target_plant: targetPlant,
-		installation_location: installLoc,
-		requesting_unit: installLoc,
-		reuse_date: reuseDate,
-		start_date: reuseDate,
-		estimated_new_purchase_cost: costAvoidance,
-		refurbishment_cost: Number(payload.refurbishment_cost) || Number(payload.refurbishmentCost) || 0,
-		estimated_cost_avoidance: costAvoidance,
-		justification: justification,
-		notes: justification,
-		contact_person: contactPerson,
-		contact_npp: contactNpp,
-		contact_phone: contactPhone,
-
-		// camelCase
+	const justification = payload.justification || "";
+	const bodyData = {
 		equipmentId: eqId,
-		requestNumber: reqNum,
-		requestType: "REUSE",
-		requestingProject: targetPlant,
-		requestingPlant: targetPlant,
-		targetPlant: targetPlant,
+		requestingProject,
+		requestingPlant,
 		installationLocation: installLoc,
-		requestingUnit: installLoc,
-		reuseDate: reuseDate,
-		startDate: reuseDate,
-		estimatedNewPurchaseCost: costAvoidance,
-		refurbishmentCost: Number(payload.refurbishment_cost) || Number(payload.refurbishmentCost) || 0,
-		estimatedCostAvoidance: costAvoidance,
-		contactPerson: contactPerson,
-		contactNpp: contactNpp,
-		contactPhone: contactPhone,
+		reuseDate,
+		estimatedNewPurchaseCost,
+		justification,
+		notes: payload.notes || "",
 	};
-
-	if (payload.end_date || payload.endDate) {
-		bodyData.end_date = payload.end_date || payload.endDate;
-		bodyData.endDate = payload.end_date || payload.endDate;
-	}
 
 	try {
 		let res = await fetch(`${baseUrl}/api/reuse-request`, {
@@ -1648,26 +1607,26 @@ export async function getReuseRequests(scope: "mine" | "all" = "mine") {
 		if (!Array.isArray(list)) return [];
 
 		const approvalByRef = new Map<string, any>();
-		const approvalByEq = new Map<string, any>();
 		if (appRes?.ok) {
 			const appJson = await appRes.json().catch(() => null);
-			const apps = Array.isArray(appJson) ? appJson : appJson?.data || [];
+			const apps = Array.isArray(appJson)
+				? appJson
+				: appJson?.data?.items || appJson?.data?.data || appJson?.data || [];
 			if (Array.isArray(apps)) {
 				apps.forEach((a: any) => {
 					if (a.reference_id != null) approvalByRef.set(String(a.reference_id), a);
 					if (a.referenceId != null) approvalByRef.set(String(a.referenceId), a);
 					if (a.referenceID != null) approvalByRef.set(String(a.referenceID), a);
-					if (a.equipment_id != null) approvalByEq.set(String(a.equipment_id), a);
-					if (a.equipmentId != null) approvalByEq.set(String(a.equipmentId), a);
+					if (a.ReferenceID != null) approvalByRef.set(String(a.ReferenceID), a);
 				});
 			}
 		}
 
 		return list.map((item: any) => {
-			const approval =
-				approvalByRef.get(String(item.id)) ||
-				(item.equipment_id ? approvalByEq.get(String(item.equipment_id)) : null) ||
-				(item.equipment?.id ? approvalByEq.get(String(item.equipment.id)) : null);
+			const approval = approvalByRef.get(String(item.id));
+			const requestNumber = String(
+				item.request_number ?? item.requestNumber ?? "",
+			).replace(/^-+(?=REU-)/i, "");
 
 			const foundApprovalId =
 				approval?.id ??
@@ -1679,12 +1638,25 @@ export async function getReuseRequests(scope: "mine" | "all" = "mine") {
 
 			return {
 				...item,
-				approval_id: foundApprovalId ? String(foundApprovalId) : String(item.id),
+				// Backend dapat menghasilkan nomor dengan dash awal ("-REU-").
+				// Hilangkan hanya untuk tampilan tanpa mengubah data backend.
+				...(requestNumber ? { request_number: requestNumber } : {}),
+				// Jangan gunakan ID reuse sebagai fallback: endpoint review membutuhkan
+				// ID ApprovalRequest, bukan ID ReuseRequest.
+				approval_id: foundApprovalId ? String(foundApprovalId) : null,
 				approval_status:
-					approval?.approval_status ||
-					approval?.status ||
+					// ReuseRequest diperbarui dalam transaksi yang sama saat approval
+					// diputuskan. Prioritaskan nilainya agar tabel tidak tertahan pada
+					// daftar approval yang belum tersinkron.
 					item.approval_status ||
+					item.approvalStatus ||
+					item.ApprovalStatus ||
 					item.status ||
+					approval?.approval_status ||
+					approval?.approvalStatus ||
+					approval?.ApprovalStatus ||
+					approval?.status ||
+					approval?.Status ||
 					"PENDING",
 			};
 		});
@@ -1746,7 +1718,6 @@ export async function updateReuseRequestStatus(
 	status: "APPROVED" | "REJECTED" | "IN_REVIEW" | "REVISION_REQUESTED",
 	notes?: string,
 	reuseRequestId?: string | number,
-	equipmentId?: string | number,
 ) {
 	const action =
 		status === "APPROVED"
@@ -1759,7 +1730,6 @@ export async function updateReuseRequestStatus(
 	if (action === "REVISION" && !trimmedNotes) {
 		return { success: false, message: "Catatan/alasan wajib diisi." };
 	}
-
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
@@ -1768,91 +1738,79 @@ export async function updateReuseRequestStatus(
 		...(token ? { Authorization: `Bearer ${token}` } : {}),
 	};
 
-	// 1. Dynamic lookup in GET /api/approvals/reuse to find the exact approval record ID
-	let matchedApprovalId: string | null = approvalId;
-	try {
-		const appRes = await fetch(`${baseUrl}/api/approvals/reuse`, {
-			headers,
-			cache: "no-store",
-		});
-		if (appRes.ok) {
-			const appJson = await appRes.json().catch(() => null);
-			const apps = Array.isArray(appJson) ? appJson : appJson?.data || [];
-			if (Array.isArray(apps)) {
-				const rId = String(reuseRequestId || "");
-				const eId = String(equipmentId || "");
-				const aId = String(approvalId || "");
-				const found = apps.find((a: any) => {
-					const refId = String(a.reference_id ?? a.referenceId ?? a.referenceID ?? "");
-					const eqId = String(a.equipment_id ?? a.equipmentId ?? "");
-					const idStr = String(a.id ?? a.ID ?? "");
-					return (
-						(rId && refId === rId) ||
-						(eId && (eqId === eId || refId === eId)) ||
-						(aId && (idStr === aId || refId === aId))
-					);
-				});
-				if (found) {
-					matchedApprovalId = String(found.id ?? found.ID ?? matchedApprovalId);
-				}
-			}
-		}
-	} catch (e) {
-		console.warn("Lookup approvals/reuse error:", e);
-	}
-
 	const approvalBody = JSON.stringify({
 		action,
 		notes: trimmedNotes || "Disetujui oleh Manajer Rendal",
 	});
 
-	const requestUpdateBody = JSON.stringify({
-		status: action === "APPROVE" ? "APPROVED" : action === "REVISION" ? "REVISION_REQUESTED" : "IN_REVIEW",
-		approval_status: action === "APPROVE" ? "APPROVED" : action === "REVISION" ? "REVISION_REQUESTED" : "IN_REVIEW",
-		action,
-		notes: trimmedNotes || "Disetujui oleh Manajer Rendal",
-	});
-
-	const candidates: Array<{ url: string; method: "PATCH" | "POST" | "PUT"; body: string }> = [];
-
-	if (matchedApprovalId) {
-		candidates.push({ url: `${baseUrl}/api/approvals/reuse/${matchedApprovalId}/review`, method: "PATCH", body: approvalBody });
-		candidates.push({ url: `${baseUrl}/api/approvals/reuse/${matchedApprovalId}/review`, method: "POST", body: approvalBody });
-		candidates.push({ url: `${baseUrl}/api/approvals/${matchedApprovalId}/review`, method: "PATCH", body: approvalBody });
-	}
-
-	if (reuseRequestId && String(reuseRequestId) !== matchedApprovalId) {
-		candidates.push({ url: `${baseUrl}/api/approvals/reuse/${reuseRequestId}/review`, method: "PATCH", body: approvalBody });
-		candidates.push({ url: `${baseUrl}/api/approvals/reuse/${reuseRequestId}/review`, method: "POST", body: approvalBody });
-	}
-
-	if (reuseRequestId) {
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${reuseRequestId}/approve`, method: "PATCH", body: requestUpdateBody });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${reuseRequestId}/approve`, method: "POST", body: requestUpdateBody });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${reuseRequestId}/review`, method: "PATCH", body: requestUpdateBody });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${reuseRequestId}`, method: "PATCH", body: requestUpdateBody });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${reuseRequestId}`, method: "PUT", body: requestUpdateBody });
-		candidates.push({ url: `${baseUrl}/api/reuse-requests/${reuseRequestId}`, method: "PATCH", body: requestUpdateBody });
-		candidates.push({ url: `${baseUrl}/api/reuse-requests/${reuseRequestId}`, method: "PUT", body: requestUpdateBody });
-	}
-
-	if (approvalId && String(approvalId) !== matchedApprovalId && String(approvalId) !== String(reuseRequestId)) {
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${approvalId}`, method: "PATCH", body: requestUpdateBody });
-		candidates.push({ url: `${baseUrl}/api/reuse-request/${approvalId}`, method: "PUT", body: requestUpdateBody });
-	}
-
-	let lastErrMsg = "Gagal memperbarui status pengajuan peminjaman.";
-
-	for (const candidate of candidates) {
-		try {
-			const res = await fetch(candidate.url, {
-				method: candidate.method,
+	try {
+		// Selalu cari ulang ApprovalRequest berdasarkan ReferenceID (ID reuse),
+		// karena endpoint review tidak menerima ID ReuseRequest.
+		let resolvedApprovalId = approvalId;
+		if (reuseRequestId != null) {
+			const approvalListRes = await fetch(`${baseUrl}/api/approvals/reuse`, {
 				headers,
-				body: candidate.body,
+				cache: "no-store",
 			});
+			const approvalListJson = await approvalListRes.json().catch(() => null);
+			if (!approvalListRes.ok) {
+				return {
+					success: false,
+					message:
+						approvalListJson?.message ||
+						approvalListJson?.error ||
+						`Gagal mengambil data approval reuse (HTTP ${approvalListRes.status}).`,
+				};
+			}
+			const approvals = Array.isArray(approvalListJson)
+				? approvalListJson
+				: approvalListJson?.data?.items || approvalListJson?.data?.data || approvalListJson?.data || [];
+			const matchedApproval = Array.isArray(approvals)
+				? approvals.find(
+						(approval: any) =>
+							String(
+								approval.reference_id ??
+									approval.referenceId ??
+									approval.referenceID ??
+									approval.ReferenceID ??
+									"",
+							) === String(reuseRequestId),
+					)
+				: null;
 
+			if (matchedApproval) {
+				resolvedApprovalId = String(matchedApproval.id ?? matchedApproval.ID ?? "");
+			} else if (!resolvedApprovalId) {
+				return {
+					success: false,
+					message: "Approval request untuk pengajuan reuse ini tidak ditemukan di backend.",
+				};
+			}
+		}
+
+		if (!resolvedApprovalId) {
+			return {
+				success: false,
+				message: "ID approval untuk pengajuan ini tidak ditemukan.",
+			};
+		}
+
+		const reviewIds = [resolvedApprovalId];
+		// Beberapa versi handler VPS mencari ApprovalRequest berdasarkan
+		// ReferenceID. Coba ID reuse hanya jika primary key approval memberi 404.
+		if (reuseRequestId != null && String(reuseRequestId) !== resolvedApprovalId) {
+			reviewIds.push(String(reuseRequestId));
+		}
+
+		let lastError: { message?: string; error?: string } | null = null;
+		let lastStatus = 0;
+		for (const reviewId of reviewIds) {
+			const res = await fetch(
+				`${baseUrl}/api/approvals/reuse/${reviewId}/review`,
+				{ method: "PATCH", headers, body: approvalBody },
+			);
+			const json = await res.json().catch(() => null);
 			if (res.ok) {
-				const json = await res.json().catch(() => null);
 				return {
 					success: true,
 					message: json?.message || "Status pengajuan peminjaman berhasil diperbarui.",
@@ -1860,20 +1818,23 @@ export async function updateReuseRequestStatus(
 				};
 			}
 
-			const errJson = await res.json().catch(() => null);
-			const msg = errJson?.message || errJson?.error || `HTTP ${res.status}`;
-			if (res.status !== 404 && res.status !== 405 && !msg.toLowerCase().includes("not found")) {
-				lastErrMsg = msg;
-			}
-		} catch (err: any) {
-			console.error(`Attempt ${candidate.method} ${candidate.url} failed:`, err);
+			lastError = json;
+			lastStatus = res.status;
+			const message = String(json?.message || json?.error || "").toLowerCase();
+			if (res.status !== 404 && !message.includes("not found")) break;
 		}
-	}
 
-	return {
-		success: false,
-		message: lastErrMsg || "Gagal memperbarui status pengajuan peminjaman di server.",
-	};
+		return {
+			success: false,
+			message:
+				lastError?.message ||
+				lastError?.error ||
+				`Gagal memproses approval reuse (HTTP ${lastStatus}).`,
+		};
+	} catch (error: any) {
+		console.error("Review reuse request error:", error);
+		return { success: false, message: error?.message || "Gagal terhubung ke server." };
+	}
 }
 
 /**

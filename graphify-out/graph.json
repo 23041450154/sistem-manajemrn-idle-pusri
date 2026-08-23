@@ -2212,12 +2212,17 @@
       "_origin": "ast",
       "id": "scripts_check_inspection_schedule",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "check-inspection-schedule.mjs"
     },
     {
@@ -2228,12 +2233,17 @@
       "_origin": "ast",
       "id": "scripts_check_inspection_schedule_now",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "now"
     },
     {
@@ -2244,12 +2254,17 @@
       "_origin": "ast",
       "id": "scripts_check_inspection_schedule_daysago",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "daysago()"
     },
     {
@@ -2502,10 +2517,14 @@
       "_origin": "ast",
       "id": "src_action_api_getequipments",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
 =======
       "community": 63,
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
       "norm_label": "getequipments()"
     },
@@ -2517,12 +2536,17 @@
       "_origin": "ast",
       "id": "src_action_api_disposalitemdto",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 58,
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 57,
+      "community_name": "api.ts",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "disposalitemdto"
     },
     {
@@ -2533,12 +2557,17 @@
       "_origin": "ast",
       "id": "src_action_api_absolutefileurl",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 58,
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 57,
+      "community_name": "api.ts",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "absolutefileurl()"
     },
     {
@@ -2549,12 +2578,17 @@
       "_origin": "ast",
       "id": "src_action_api_getdisposals",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 58,
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 57,
+      "community_name": "api.ts",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "getdisposals()"
     },
     {
@@ -2565,12 +2599,17 @@
       "_origin": "ast",
       "id": "src_action_api_approvedisposal",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 58,
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 57,
+      "community_name": "api.ts",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "approvedisposal()"
     },
     {
@@ -2585,8 +2624,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "createdisposalrequest()"
     },
     {
@@ -2597,10 +2640,14 @@
       "_origin": "ast",
       "id": "src_action_api_getapprovals",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
 =======
       "community": 63,
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
       "norm_label": "getapprovals()"
     },
@@ -2612,7 +2659,11 @@
       "_origin": "ast",
       "id": "src_action_api_getapprovalbyid",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "getapprovalbyid()"
     },
     {
@@ -2627,8 +2678,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "getvalidations()"
     },
     {
@@ -2639,7 +2694,11 @@
       "_origin": "ast",
       "id": "src_action_api_validateequipment",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "validateequipment()"
     },
     {
@@ -2650,7 +2709,11 @@
       "_origin": "ast",
       "id": "src_action_api_createrevalidation",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "createrevalidation()"
     },
     {
@@ -2687,8 +2750,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "getinspections()"
     },
     {
@@ -2698,8 +2765,8 @@
       "source_location": "L578",
       "_origin": "ast",
       "id": "src_action_api_createinspection",
-      "community": 63,
-      "community_name": "getEquipments",
+      "community": 57,
+      "community_name": "api.ts",
       "norm_label": "createinspection()"
     },
     {
@@ -2709,8 +2776,8 @@
       "source_location": "L626",
       "_origin": "ast",
       "id": "src_action_api_submitinspectiondata",
-      "community": 63,
-      "community_name": "getEquipments",
+      "community": 57,
+      "community_name": "api.ts",
       "norm_label": "submitinspectiondata()"
     },
     {
@@ -2721,7 +2788,11 @@
       "_origin": "ast",
       "id": "src_action_api_getconditions",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "getconditions()"
     },
     {
@@ -2770,12 +2841,17 @@
       "_origin": "ast",
       "id": "src_action_api_getstoragelocations",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "getstoragelocations()"
     },
     {
@@ -2786,7 +2862,11 @@
       "_origin": "ast",
       "id": "src_action_api_getrequireactions",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "getrequireactions()"
     },
     {
@@ -2808,12 +2888,17 @@
       "_origin": "ast",
       "id": "src_action_api_createequipment",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "createequipment()"
     },
     {
@@ -2823,8 +2908,8 @@
       "source_location": "L840",
       "_origin": "ast",
       "id": "src_action_api_getequipmentbyid",
-      "community": 59,
-      "community_name": "register-equipment/page.tsx",
+      "community": 43,
+      "community_name": "getObjectTypes",
       "norm_label": "getequipmentbyid()"
     },
     {
@@ -2835,12 +2920,17 @@
       "_origin": "ast",
       "id": "src_action_api_updateequipment",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "updateequipment()"
     },
     {
@@ -2851,7 +2941,11 @@
       "_origin": "ast",
       "id": "src_action_api_uploadequipmentattachment",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "uploadequipmentattachment()"
     },
     {
@@ -2862,7 +2956,11 @@
       "_origin": "ast",
       "id": "src_action_api_uploadequipmentattachmentbase64",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "uploadequipmentattachmentbase64()"
     },
     {
@@ -2884,7 +2982,11 @@
       "_origin": "ast",
       "id": "src_action_api_getattachmentsbyequipmentid",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "getattachmentsbyequipmentid()"
     },
     {
@@ -2961,10 +3063,14 @@
       "_origin": "ast",
       "id": "src_action_api_deleteequipment",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
 =======
       "community": 63,
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
       "norm_label": "deleteequipment()"
     },
@@ -3009,7 +3115,11 @@
       "_origin": "ast",
       "id": "src_action_api_resubmitapproval",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "resubmitapproval()"
     },
     {
@@ -3020,21 +3130,27 @@
       "_origin": "ast",
       "id": "src_action_api_createreuserequest",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 43,
       "community_name": "getObjectTypes",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 6,
+      "community_name": "shared.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "createreuserequest()"
     },
     {
       "label": "getReuseRequests()",
       "file_type": "code",
       "source_file": "src/action/api.ts",
-      "source_location": "L1613",
+      "source_location": "L1572",
       "_origin": "ast",
       "id": "src_action_api_getreuserequests",
+<<<<<<< HEAD
 <<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
@@ -3042,15 +3158,20 @@
       "community": 3,
       "community_name": "dependencies",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 66,
+      "community_name": "getReuseRequests",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "getreuserequests()"
     },
     {
       "label": "getFunctionalLocations()",
       "file_type": "code",
       "source_file": "src/action/api.ts",
-      "source_location": "L1697",
+      "source_location": "L1669",
       "_origin": "ast",
       "id": "src_action_api_getfunctionallocations",
+<<<<<<< HEAD
 <<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
@@ -3058,13 +3179,17 @@
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "getfunctionallocations()"
     },
     {
       "label": "getDisposalMethods()",
       "file_type": "code",
       "source_file": "src/action/api.ts",
-      "source_location": "L1717",
+      "source_location": "L1689",
       "_origin": "ast",
       "id": "src_action_api_getdisposalmethods",
 <<<<<<< HEAD
@@ -3072,33 +3197,41 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "getdisposalmethods()"
     },
     {
       "label": "updateReuseRequestStatus()",
       "file_type": "code",
       "source_file": "src/action/api.ts",
-      "source_location": "L1744",
+      "source_location": "L1716",
       "_origin": "ast",
       "id": "src_action_api_updatereuserequeststatus",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 66,
+      "community_name": "getReuseRequests",
       "norm_label": "updatereuserequeststatus()"
     },
     {
       "label": "approveRevalidationEquipment()",
       "file_type": "code",
       "source_file": "src/action/api.ts",
-      "source_location": "L1888",
+      "source_location": "L1849",
       "_origin": "ast",
       "id": "src_action_api_approverevalidationequipment",
+<<<<<<< HEAD
 <<<<<<< HEAD
       "community": 0,
 =======
       "community": 63,
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
       "norm_label": "approverevalidationequipment()"
     },
@@ -3167,6 +3300,17 @@
       "community": 1,
       "community_name": "auth.ts",
       "norm_label": "logoutaction()"
+    },
+    {
+      "label": "ssoCallbackAction()",
+      "file_type": "code",
+      "source_file": "src/action/auth.ts",
+      "source_location": "L176",
+      "_origin": "ast",
+      "id": "src_action_auth_ssocallbackaction",
+      "community": 1,
+      "community_name": "auth.ts",
+      "norm_label": "ssocallbackaction()"
     },
     {
       "label": "master.ts",
@@ -3296,30 +3440,30 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_auth_auth_callback_page",
-      "community": 80,
-      "community_name": "callback/page.tsx",
+      "community": 1,
+      "community_name": "auth.ts",
       "norm_label": "callback/page.tsx"
     },
     {
       "label": "CallbackContent()",
       "file_type": "code",
       "source_file": "src/app/(auth)/auth/callback/page.tsx",
-      "source_location": "L6",
+      "source_location": "L7",
       "_origin": "ast",
       "id": "src_app_auth_auth_callback_page_callbackcontent",
-      "community": 80,
-      "community_name": "callback/page.tsx",
+      "community": 1,
+      "community_name": "auth.ts",
       "norm_label": "callbackcontent()"
     },
     {
       "label": "SsoCallbackPage()",
       "file_type": "code",
       "source_file": "src/app/(auth)/auth/callback/page.tsx",
-      "source_location": "L41",
+      "source_location": "L36",
       "_origin": "ast",
       "id": "src_app_auth_auth_callback_page_ssocallbackpage",
-      "community": 80,
-      "community_name": "callback/page.tsx",
+      "community": 1,
+      "community_name": "auth.ts",
       "norm_label": "ssocallbackpage()"
     },
     {
@@ -3407,12 +3551,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "admin/dashboard/page.tsx"
     },
     {
@@ -3423,12 +3572,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page_modules",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "modules"
     },
     {
@@ -3439,12 +3593,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page_admindashboardpage",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "admindashboardpage()"
     },
     {
@@ -3455,10 +3614,14 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_equipment_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
 =======
       "community": 63,
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
       "norm_label": "admin/equipment/page.tsx"
     },
@@ -3503,10 +3666,14 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_equipment_page_equipmentmanagementpage",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
 =======
       "community": 63,
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
       "norm_label": "equipmentmanagementpage()"
     },
@@ -3595,10 +3762,14 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_dashboard_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
 =======
       "community": 63,
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
       "norm_label": "inspeksi/dashboard/page.tsx"
     },
@@ -3610,10 +3781,14 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_dashboard_page_inspeksidashboardpage",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
 =======
       "community": 63,
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
       "norm_label": "inspeksidashboardpage()"
     },
@@ -3646,8 +3821,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_forminspeksi_page",
-      "community": 63,
-      "community_name": "getEquipments",
+      "community": 57,
+      "community_name": "api.ts",
       "norm_label": "forminspeksi/page.tsx"
     },
     {
@@ -3657,8 +3832,8 @@
       "source_location": "L23",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_forminspeksi_page_forminspeksipage",
-      "community": 63,
-      "community_name": "getEquipments",
+      "community": 57,
+      "community_name": "api.ts",
       "norm_label": "forminspeksipage()"
     },
     {
@@ -3669,12 +3844,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "inspeksi-berkala/page.tsx"
     },
     {
@@ -3685,12 +3865,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page_equipment",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "equipment"
     },
     {
@@ -3701,12 +3886,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page_inspectionitem",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "inspectionitem"
     },
     {
@@ -3717,12 +3907,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page_inspeksiantreanpage",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 58,
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "inspeksiantreanpage()"
     },
     {
@@ -3792,8 +3987,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "manajemen/page.tsx"
     },
     {
@@ -3808,8 +4007,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "inspection"
     },
     {
@@ -3824,8 +4027,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "inspeksidashboard()"
     },
     {
@@ -3836,7 +4043,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_revisi_validasi_page",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "revisi-validasi/page.tsx"
     },
     {
@@ -3847,7 +4058,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_revisi_validasi_page_assetstate",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "assetstate"
     },
     {
@@ -3858,7 +4073,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_revisi_validasi_page_approvalstate",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "approvalstate"
     },
     {
@@ -3869,7 +4088,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_revisi_validasi_page_asset",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "asset"
     },
     {
@@ -3880,7 +4103,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_revisi_validasi_page_revisivalidasipage",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "revisivalidasipage()"
     },
     {
@@ -3891,7 +4118,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "inspeksi/validasi-ulang/page.tsx"
     },
     {
@@ -3902,7 +4133,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_revalidasiitem",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "revalidasiitem"
     },
     {
@@ -3913,7 +4148,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_validasiulangpage",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "validasiulangpage()"
     },
     {
@@ -3924,7 +4163,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_page",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "validasi/page.tsx"
     },
     {
@@ -3935,7 +4178,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_page_assetstate",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "assetstate"
     },
     {
@@ -3946,7 +4193,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_page_approvalstate",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "approvalstate"
     },
     {
@@ -3957,7 +4208,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_page_status_by_id",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "status_by_id"
     },
     {
@@ -3968,7 +4223,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_page_asset",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "asset"
     },
     {
@@ -3979,7 +4238,11 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_page_manajemeninspeksi",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "manajemeninspeksi()"
     },
     {
@@ -4099,8 +4362,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_dashboard_page",
-      "community": 58,
-      "community_name": "getDisposals",
+      "community": 63,
+      "community_name": "CostAvoidanceSection.tsx",
       "norm_label": "manajer/dashboard/page.tsx"
     },
     {
@@ -4110,8 +4373,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_dashboard_page_manajerdashboardpage",
-      "community": 58,
-      "community_name": "getDisposals",
+      "community": 63,
+      "community_name": "CostAvoidanceSection.tsx",
       "norm_label": "manajerdashboardpage()"
     },
     {
@@ -4122,12 +4385,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_disposal_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 58,
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 57,
+      "community_name": "api.ts",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "manajer/disposal/page.tsx"
     },
     {
@@ -4138,12 +4406,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_disposal_page_disposalitem",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 58,
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 57,
+      "community_name": "api.ts",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "disposalitem"
     },
     {
@@ -4154,12 +4427,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_disposal_page_disposalinboxpage",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 58,
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 57,
+      "community_name": "api.ts",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "disposalinboxpage()"
     },
     {
@@ -4191,8 +4469,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_peminjaman_page",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 66,
+      "community_name": "getReuseRequests",
       "norm_label": "peminjaman/page.tsx"
     },
     {
@@ -4202,8 +4480,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_peminjaman_page_reuserequest",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 66,
+      "community_name": "getReuseRequests",
       "norm_label": "reuserequest"
     },
     {
@@ -4213,19 +4491,19 @@
       "source_location": "L52",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_peminjaman_page_reuserequestapi",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 66,
+      "community_name": "getReuseRequests",
       "norm_label": "reuserequestapi"
     },
     {
       "label": "ManajerPeminjamanPage()",
       "file_type": "code",
       "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
-      "source_location": "L76",
+      "source_location": "L79",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_peminjaman_page_manajerpeminjamanpage",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 66,
+      "community_name": "getReuseRequests",
       "norm_label": "manajerpeminjamanpage()"
     },
     {
@@ -4236,12 +4514,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_scrap_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 58,
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 57,
+      "community_name": "api.ts",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "manajer/scrap/page.tsx"
     },
     {
@@ -4252,12 +4535,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_scrap_page_disposalitem",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 58,
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 57,
+      "community_name": "api.ts",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "disposalitem"
     },
     {
@@ -4268,12 +4556,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_scrap_page_manajerscrappage",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 58,
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 57,
+      "community_name": "api.ts",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "manajerscrappage()"
     },
     {
@@ -4525,8 +4818,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_dashboard_page",
-      "community": 58,
-      "community_name": "getDisposals",
+      "community": 63,
+      "community_name": "CostAvoidanceSection.tsx",
       "norm_label": "rendal/dashboard/page.tsx"
     },
     {
@@ -4536,8 +4829,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_dashboard_page_rendaldashboard",
-      "community": 58,
-      "community_name": "getDisposals",
+      "community": 63,
+      "community_name": "CostAvoidanceSection.tsx",
       "norm_label": "rendaldashboard()"
     },
     {
@@ -4552,8 +4845,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "rendal/disposal/page.tsx"
     },
     {
@@ -4568,8 +4865,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "equipment"
     },
     {
@@ -4584,8 +4885,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "inspection"
     },
     {
@@ -4600,8 +4905,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "disposalmethod"
     },
     {
@@ -4616,8 +4925,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "disposalitem"
     },
     {
@@ -4632,8 +4945,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "verifikasidisposalpage()"
     },
     {
@@ -4733,10 +5050,14 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 63,
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "laporan/page.tsx"
@@ -4749,10 +5070,14 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_auditlogentry",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 63,
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "auditlogentry"
@@ -4765,10 +5090,14 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_buildauditlogs",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 63,
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "buildauditlogs()"
@@ -4781,10 +5110,14 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_actiontypeconfig",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 63,
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "actiontypeconfig"
@@ -4797,10 +5130,14 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_audittrailpage",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 63,
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
       "norm_label": "audittrailpage()"
@@ -4857,12 +5194,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "register-equipment/page.tsx"
     },
     {
@@ -4873,12 +5215,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_page_registerequipmentpage",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "registerequipmentpage()"
     },
     {
@@ -4893,8 +5240,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "rendal/scrap/page.tsx"
     },
     {
@@ -4909,8 +5260,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "equipment"
     },
     {
@@ -4925,8 +5280,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "inspection"
     },
     {
@@ -4941,8 +5300,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "disposalmethod"
     },
     {
@@ -4957,8 +5320,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "disposalitem"
     },
     {
@@ -4973,8 +5340,12 @@
       "community_name": "api.ts",
 =======
       "community": 58,
+<<<<<<< HEAD
       "community_name": "getDisposals",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community_name": "getInspections",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "rendalscrappage()"
     },
     {
@@ -4985,10 +5356,14 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
 =======
       "community": 63,
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
       "norm_label": "rendal/validasi-ulang/page.tsx"
     },
@@ -5000,10 +5375,14 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_page_validasiulangitem",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
 =======
       "community": 63,
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
       "norm_label": "validasiulangitem"
     },
@@ -5015,10 +5394,14 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_page_rendalvalidasiulangpage",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
 =======
       "community": 63,
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 59,
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "community_name": "getEquipments",
       "norm_label": "rendalvalidasiulangpage()"
     },
@@ -5030,18 +5413,24 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
 =======
       "community": 43,
       "community_name": "getObjectTypes",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 6,
+      "community_name": "shared.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "daftar-aset/page.tsx"
     },
     {
       "label": "EquipmentItem",
       "file_type": "code",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+<<<<<<< HEAD
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_equipmentitem",
@@ -5052,6 +5441,13 @@
       "community": 43,
       "community_name": "getObjectTypes",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "source_location": "L33",
+      "_origin": "ast",
+      "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_equipmentitem",
+      "community": 6,
+      "community_name": "shared.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "equipmentitem"
     },
     {
@@ -5069,6 +5465,7 @@
       "label": "DaftarAsetPage()",
       "file_type": "code",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+<<<<<<< HEAD
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
@@ -5079,6 +5476,13 @@
       "community": 43,
       "community_name": "getObjectTypes",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "source_location": "L52",
+      "_origin": "ast",
+      "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
+      "community": 6,
+      "community_name": "shared.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "daftarasetpage()"
     },
     {
@@ -5089,12 +5493,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
 =======
       "community": 3,
       "community_name": "dependencies",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 66,
+      "community_name": "getReuseRequests",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "unit-kerja/dashboard/page.tsx"
     },
     {
@@ -5105,12 +5514,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_apirow",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
 =======
       "community": 3,
       "community_name": "dependencies",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 66,
+      "community_name": "getReuseRequests",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "apirow"
     },
     {
@@ -5132,12 +5546,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_equipmentitem",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
 =======
       "community": 3,
       "community_name": "dependencies",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 66,
+      "community_name": "getReuseRequests",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "equipmentitem"
     },
     {
@@ -5148,12 +5567,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_reuserequestitem",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
 =======
       "community": 3,
       "community_name": "dependencies",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 66,
+      "community_name": "getReuseRequests",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "reuserequestitem"
     },
     {
@@ -5164,12 +5588,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_kpicard",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
 =======
       "community": 3,
       "community_name": "dependencies",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 66,
+      "community_name": "getReuseRequests",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "kpicard()"
     },
     {
@@ -5180,12 +5609,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_unitkerjadashboardpage",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
 =======
       "community": 3,
       "community_name": "dependencies",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 66,
+      "community_name": "getReuseRequests",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "unitkerjadashboardpage()"
     },
     {
@@ -5196,12 +5630,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_equipment_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
 =======
       "community": 43,
       "community_name": "getObjectTypes",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 6,
+      "community_name": "shared.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "unit-kerja/equipment/page.tsx"
     },
     {
@@ -5212,12 +5651,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_equipment_page_unitkerjaequipmentpage",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
 =======
       "community": 43,
       "community_name": "getObjectTypes",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 6,
+      "community_name": "shared.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "unitkerjaequipmentpage()"
     },
     {
@@ -5347,12 +5791,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 43,
       "community_name": "getObjectTypes",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 6,
+      "community_name": "shared.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "request-modal-button.tsx"
     },
     {
@@ -5363,12 +5812,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button_katalogitemminimal",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 43,
       "community_name": "getObjectTypes",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 6,
+      "community_name": "shared.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "katalogitemminimal"
     },
     {
@@ -5379,12 +5833,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button_requestmodalbutton",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 43,
       "community_name": "getObjectTypes",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 6,
+      "community_name": "shared.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "requestmodalbutton()"
     },
     {
@@ -5413,7 +5872,7 @@
       "label": "EquipmentCard()",
       "file_type": "code",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
-      "source_location": "L108",
+      "source_location": "L116",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client_equipmentcard",
       "community": 6,
@@ -5424,7 +5883,7 @@
       "label": "Select()",
       "file_type": "code",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
-      "source_location": "L157",
+      "source_location": "L165",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client_select",
       "community": 6,
@@ -5435,7 +5894,7 @@
       "label": "uniq()",
       "file_type": "code",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
-      "source_location": "L186",
+      "source_location": "L194",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client_uniq",
       "community": 6,
@@ -5714,12 +6173,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
 =======
       "community": 3,
       "community_name": "dependencies",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 66,
+      "community_name": "getReuseRequests",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "riwayat-permintaan/page.tsx"
     },
     {
@@ -5730,12 +6194,17 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page_reuserequestitem",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
 =======
       "community": 3,
       "community_name": "dependencies",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 66,
+      "community_name": "getReuseRequests",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "reuserequestitem"
     },
     {
@@ -5746,21 +6215,6 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page_riwayatpermintaancontent",
 <<<<<<< HEAD
-      "community": 0,
-      "community_name": "getEquipments",
-=======
-      "community": 3,
-      "community_name": "dependencies",
->>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
-      "norm_label": "riwayatpermintaancontent()"
-    },
-    {
-      "label": "RiwayatPermintaanPage()",
-      "file_type": "code",
-      "source_file": "src/app/(authenticated-routes)/unit-kerja/riwayat-permintaan/page.tsx",
-      "source_location": "L706",
-      "_origin": "ast",
-      "id": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page_riwayatpermintaanpage",
 <<<<<<< HEAD
       "community": 0,
       "community_name": "getEquipments",
@@ -5768,6 +6222,31 @@
       "community": 3,
       "community_name": "dependencies",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 66,
+      "community_name": "getReuseRequests",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
+      "norm_label": "riwayatpermintaancontent()"
+    },
+    {
+      "label": "RiwayatPermintaanPage()",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/riwayat-permintaan/page.tsx",
+      "source_location": "L708",
+      "_origin": "ast",
+      "id": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page_riwayatpermintaanpage",
+<<<<<<< HEAD
+<<<<<<< HEAD
+      "community": 0,
+      "community_name": "getEquipments",
+=======
+      "community": 3,
+      "community_name": "dependencies",
+>>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 66,
+      "community_name": "getReuseRequests",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "riwayatpermintaanpage()"
     },
     {
@@ -5877,7 +6356,11 @@
       "_origin": "ast",
       "id": "src_app_api_test_attachments_route",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "test-attachments/route.ts"
     },
     {
@@ -5888,7 +6371,11 @@
       "_origin": "ast",
       "id": "src_app_api_test_attachments_route_get",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "get()"
     },
     {
@@ -6086,7 +6573,11 @@
       "_origin": "ast",
       "id": "src_components_analogtimepicker",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "analogtimepicker.tsx"
     },
     {
@@ -6097,7 +6588,11 @@
       "_origin": "ast",
       "id": "src_components_analogtimepicker_analogtimepickerprops",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "analogtimepickerprops"
     },
     {
@@ -6108,7 +6603,11 @@
       "_origin": "ast",
       "id": "src_components_analogtimepicker_analogtimepicker",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "analogtimepicker()"
     },
     {
@@ -6140,8 +6639,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_costavoidancesection",
-      "community": 58,
-      "community_name": "getDisposals",
+      "community": 63,
+      "community_name": "CostAvoidanceSection.tsx",
       "norm_label": "costavoidancesection.tsx"
     },
     {
@@ -6151,8 +6650,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_costavoidancesection_equipment",
-      "community": 58,
-      "community_name": "getDisposals",
+      "community": 63,
+      "community_name": "CostAvoidanceSection.tsx",
       "norm_label": "equipment"
     },
     {
@@ -6162,8 +6661,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_components_costavoidancesection_costavoidancesection",
-      "community": 58,
-      "community_name": "getDisposals",
+      "community": 63,
+      "community_name": "CostAvoidanceSection.tsx",
       "norm_label": "costavoidancesection()"
     },
     {
@@ -6284,12 +6783,17 @@
       "_origin": "ast",
       "id": "src_components_editequipmentdialog",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "editequipmentdialog.tsx"
     },
     {
@@ -6300,12 +6804,17 @@
       "_origin": "ast",
       "id": "src_components_editequipmentdialog_editequipmentdialogprops",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "editequipmentdialogprops"
     },
     {
@@ -6316,12 +6825,17 @@
       "_origin": "ast",
       "id": "src_components_editequipmentdialog_extractstringvalue",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "extractstringvalue()"
     },
     {
@@ -6332,12 +6846,17 @@
       "_origin": "ast",
       "id": "src_components_editequipmentdialog_editequipmentdialog",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 57,
       "community_name": "api.ts",
 =======
       "community": 59,
       "community_name": "register-equipment/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 43,
+      "community_name": "getObjectTypes",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "editequipmentdialog()"
     },
     {
@@ -6392,7 +6911,11 @@
       "_origin": "ast",
       "id": "src_components_manajemeninspeksi",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "manajemeninspeksi.tsx"
     },
     {
@@ -6403,7 +6926,11 @@
       "_origin": "ast",
       "id": "src_components_manajemeninspeksi_assetstate",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "assetstate"
     },
     {
@@ -6414,7 +6941,11 @@
       "_origin": "ast",
       "id": "src_components_manajemeninspeksi_approvalstate",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "approvalstate"
     },
     {
@@ -6425,7 +6956,11 @@
       "_origin": "ast",
       "id": "src_components_manajemeninspeksi_asset",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "asset"
     },
     {
@@ -6436,7 +6971,11 @@
       "_origin": "ast",
       "id": "src_components_manajemeninspeksi_manajemeninspeksi",
       "community": 0,
+<<<<<<< HEAD
       "community_name": "getEquipments",
+=======
+      "community_name": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "manajemeninspeksi()"
     },
     {
@@ -6498,7 +7037,7 @@
       "label": "Sidebar()",
       "file_type": "code",
       "source_file": "src/components/Sidebar.tsx",
-      "source_location": "L36",
+      "source_location": "L35",
       "_origin": "ast",
       "id": "src_components_sidebar_sidebar",
       "community": 1,
@@ -6831,8 +7370,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_lib_approvals",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 66,
+      "community_name": "getReuseRequests",
       "norm_label": "approvals.ts"
     },
     {
@@ -6842,8 +7381,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_lib_approvals_approvalkind",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 66,
+      "community_name": "getReuseRequests",
       "norm_label": "approvalkind"
     },
     {
@@ -6853,8 +7392,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_approvals_disposaldisplaystatus",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 66,
+      "community_name": "getReuseRequests",
       "norm_label": "disposaldisplaystatus"
     },
     {
@@ -6864,8 +7403,8 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_lib_approvals_reusedisplaystatus",
-      "community": 57,
-      "community_name": "api.ts",
+      "community": 66,
+      "community_name": "getReuseRequests",
       "norm_label": "reusedisplaystatus"
     },
     {
@@ -7019,12 +7558,17 @@
       "_origin": "ast",
       "id": "src_lib_inspection_schedule",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "inspection-schedule.ts"
     },
     {
@@ -7035,12 +7579,17 @@
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_statuslike",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "statuslike"
     },
     {
@@ -7051,12 +7600,17 @@
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_statusname",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "statusname()"
     },
     {
@@ -7067,12 +7621,17 @@
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_inspectionlike",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "inspectionlike"
     },
     {
@@ -7083,12 +7642,17 @@
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_equipmentlike",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "equipmentlike"
     },
     {
@@ -7099,12 +7663,17 @@
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_lastinspection",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "lastinspection"
     },
     {
@@ -7115,12 +7684,17 @@
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_latestinspectionbyequipment",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "latestinspectionbyequipment()"
     },
     {
@@ -7131,12 +7705,17 @@
       "_origin": "ast",
       "id": "src_lib_inspection_schedule_inspectionqueue",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "community": 69,
       "community_name": "pemeliharaan/dashboard/page.tsx",
 =======
       "community": 76,
       "community_name": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "community": 69,
+      "community_name": "pemeliharaan/dashboard/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "norm_label": "inspectionqueue()"
     },
     {
@@ -12614,7 +13193,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/action/api.ts",
-      "source_location": "L1888",
+      "source_location": "L1849",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_action_api",
@@ -12812,7 +13391,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/action/api.ts",
-      "source_location": "L1717",
+      "source_location": "L1689",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_action_api",
@@ -12867,7 +13446,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/action/api.ts",
-      "source_location": "L1697",
+      "source_location": "L1669",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_action_api",
@@ -12977,7 +13556,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/action/api.ts",
-      "source_location": "L1613",
+      "source_location": "L1572",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_action_api",
@@ -13065,7 +13644,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/action/api.ts",
-      "source_location": "L1744",
+      "source_location": "L1716",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_action_api",
@@ -13578,7 +14157,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Sidebar.tsx",
-      "source_location": "L34",
+      "source_location": "L33",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_sidebar",
@@ -13795,7 +14374,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+<<<<<<< HEAD
       "source_location": "L125",
+=======
+      "source_location": "L123",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_approve_page_manajerapprovepage",
@@ -14004,10 +14587,14 @@
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "source_location": "L76",
 =======
       "source_location": "L87",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "source_location": "L90",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
@@ -14186,7 +14773,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Sidebar.tsx",
-      "source_location": "L34",
+      "source_location": "L33",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_sidebar",
@@ -14199,7 +14786,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Sidebar.tsx",
-      "source_location": "L49",
+      "source_location": "L48",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_sidebar_sidebar",
@@ -14575,7 +15162,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+<<<<<<< HEAD
       "source_location": "L125",
+=======
+      "source_location": "L122",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_approve_page_manajerapprovepage",
@@ -14658,7 +15249,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Sidebar.tsx",
-      "source_location": "L34",
+      "source_location": "L33",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_sidebar",
@@ -14671,7 +15262,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Sidebar.tsx",
-      "source_location": "L50",
+      "source_location": "L49",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_sidebar_sidebar",
@@ -14719,7 +15310,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+<<<<<<< HEAD
       "source_location": "L197",
+=======
+      "source_location": "L200",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_approve_page_manajerapprovepage",
@@ -14767,7 +15362,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+<<<<<<< HEAD
       "source_location": "L199",
+=======
+      "source_location": "L202",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_approve_page_manajerapprovepage",
@@ -14939,7 +15538,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+<<<<<<< HEAD
       "source_location": "L265",
+=======
+      "source_location": "L268",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_approve_page_manajerapprovepage",
@@ -14963,7 +15566,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+<<<<<<< HEAD
       "source_location": "L229",
+=======
+      "source_location": "L232",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_approve_page_manajerapprovepage",
@@ -15376,10 +15983,14 @@
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "source_location": "L77",
 =======
       "source_location": "L88",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "source_location": "L91",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
@@ -15530,6 +16141,7 @@
       "confidence_score": 1.0
     },
     {
+<<<<<<< HEAD
       "relation": "calls",
       "context": "call",
       "confidence": "EXTRACTED",
@@ -15542,6 +16154,8 @@
       "target": "src_action_api_getstoragelocations"
     },
     {
+=======
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -15607,7 +16221,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/rendal/register-equipment/page.tsx",
+<<<<<<< HEAD
       "source_location": "L318",
+=======
+      "source_location": "L306",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_rendal_register_equipment_page_registerequipmentpage",
@@ -15643,7 +16261,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+<<<<<<< HEAD
       "source_location": "L200",
+=======
+      "source_location": "L203",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_approve_page_manajerapprovepage",
@@ -15715,7 +16337,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/rendal/register-equipment/page.tsx",
-      "source_location": "L258",
+      "source_location": "L243",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_rendal_register_equipment_page_registerequipmentpage",
@@ -15883,7 +16505,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+<<<<<<< HEAD
       "source_location": "L198",
+=======
+      "source_location": "L201",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_approve_page_manajerapprovepage",
@@ -15908,10 +16534,14 @@
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
 <<<<<<< HEAD
+<<<<<<< HEAD
       "source_location": "L280",
 =======
       "source_location": "L271",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+      "source_location": "L279",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
@@ -16091,7 +16721,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
-      "source_location": "L315",
+      "source_location": "L328",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
@@ -16163,7 +16793,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
-      "source_location": "L107",
+      "source_location": "L111",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_peminjaman_page_manajerpeminjamanpage",
@@ -16331,7 +16961,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
-      "source_location": "L246",
+      "source_location": "L272",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_peminjaman_page_manajerpeminjamanpage",
@@ -16417,6 +17047,17 @@
       "confidence_score": 1.0
     },
     {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/action/auth.ts",
+      "source_location": "L176",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_action_auth",
+      "target": "src_action_auth_ssocallbackaction",
+      "confidence_score": 1.0
+    },
+    {
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -16438,6 +17079,18 @@
       "_origin": "ast",
       "source": "src_action_auth",
       "target": "src_lib_roles_homepathforrole",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/action/auth.ts",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_action_auth",
+      "target": "src_lib_roles_normalizerole",
       "confidence_score": 1.0
     },
     {
@@ -16486,6 +17139,18 @@
       "_origin": "ast",
       "source": "src_action_auth",
       "target": "src_types_auth_user",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_auth_auth_callback_page",
+      "target": "src_action_auth",
       "confidence_score": 1.0
     },
     {
@@ -16697,6 +17362,18 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/action/auth.ts",
+      "source_location": "L201",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_action_auth_ssocallbackaction",
+      "target": "src_action_auth_cookieconfig",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/action/auth.ts",
       "source_location": "L97",
       "weight": 1.0,
       "_origin": "ast",
@@ -16878,7 +17555,11 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+<<<<<<< HEAD
       "source_location": "L125",
+=======
+      "source_location": "L124",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_approve_page_manajerapprovepage",
@@ -17099,6 +17780,54 @@
       "_origin": "ast",
       "source": "src_components_header_header",
       "target": "src_action_auth_logoutaction"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/action/auth.ts",
+      "source_location": "L209",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_action_auth_ssocallbackaction",
+      "target": "src_lib_roles_homepathforrole"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/action/auth.ts",
+      "source_location": "L206",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_action_auth_ssocallbackaction",
+      "target": "src_lib_roles_normalizerole"
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_auth_auth_callback_page",
+      "target": "src_action_auth_ssocallbackaction",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(auth)/auth/callback/page.tsx",
+      "source_location": "L22",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_auth_auth_callback_page_callbackcontent",
+      "target": "src_action_auth_ssocallbackaction",
+      "confidence_score": 1.0
     },
     {
       "relation": "contains",
@@ -17514,7 +18243,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(auth)/auth/callback/page.tsx",
-      "source_location": "L6",
+      "source_location": "L7",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_auth_auth_callback_page",
@@ -17525,7 +18254,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(auth)/auth/callback/page.tsx",
-      "source_location": "L41",
+      "source_location": "L36",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_auth_auth_callback_page",
@@ -18765,7 +19494,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/manajer/approve/page.tsx",
+<<<<<<< HEAD
       "source_location": "L835",
+=======
+      "source_location": "L905",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_approve_page_manajerapprovepage",
@@ -18916,7 +19649,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
-      "source_location": "L76",
+      "source_location": "L79",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_peminjaman_page",
@@ -18975,7 +19708,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/manajer/peminjaman/page.tsx",
-      "source_location": "L150",
+      "source_location": "L157",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_manajer_peminjaman_page_manajerpeminjamanpage",
@@ -19985,7 +20718,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+<<<<<<< HEAD
       "source_location": "L53",
+=======
+      "source_location": "L52",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page",
@@ -19996,7 +20733,11 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+<<<<<<< HEAD
       "source_location": "L31",
+=======
+      "source_location": "L33",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page",
@@ -20066,6 +20807,54 @@
       "relation": "imports_from",
       "context": "import",
       "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+      "source_location": "L9",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client_katalogclient",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+      "source_location": "L10",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_normalizeequipment",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/equipment/page.tsx",
       "source_location": "L1",
       "weight": 1.0,
@@ -20076,16 +20865,28 @@
     },
     {
 <<<<<<< HEAD
+<<<<<<< HEAD
       "relation": "references",
+=======
+      "relation": "calls",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+<<<<<<< HEAD
       "source_location": "L83",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
       "target": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_visible_statuses"
+=======
+      "source_location": "L844",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_formatrupiah"
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
     },
     {
       "relation": "calls",
@@ -20093,6 +20894,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx",
+<<<<<<< HEAD
       "source_location": "L589",
       "weight": 1.0,
       "_origin": "ast",
@@ -20123,6 +20925,15 @@
       "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
       "target": "src_lib_equipment_status_statustext"
 =======
+=======
+      "source_location": "L270",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
+      "target": "src_app_authenticated_routes_unit_kerja_katalog_shared_normalizeequipment"
+    },
+    {
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
@@ -20568,7 +21379,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
-      "source_location": "L108",
+      "source_location": "L116",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client",
@@ -20590,7 +21401,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
-      "source_location": "L157",
+      "source_location": "L165",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client",
@@ -20601,7 +21412,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
-      "source_location": "L186",
+      "source_location": "L194",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client",
@@ -20697,7 +21508,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
-      "source_location": "L17",
+      "source_location": "L23",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client_katalogclient",
@@ -20721,7 +21532,7 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/katalog/katalog-client.tsx",
-      "source_location": "L149",
+      "source_location": "L157",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_katalog_katalog_client_equipmentcard",
@@ -21168,7 +21979,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/unit-kerja/riwayat-permintaan/page.tsx",
-      "source_location": "L706",
+      "source_location": "L708",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_unit_kerja_riwayat_permintaan_page",
@@ -22123,7 +22934,7 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Sidebar.tsx",
-      "source_location": "L36",
+      "source_location": "L35",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_sidebar",
@@ -22135,7 +22946,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Sidebar.tsx",
-      "source_location": "L32",
+      "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_sidebar",
@@ -22147,7 +22958,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/components/Sidebar.tsx",
-      "source_location": "L32",
+      "source_location": "L31",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_sidebar",
@@ -22208,7 +23019,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Sidebar.tsx",
-      "source_location": "L38",
+      "source_location": "L37",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_sidebar_sidebar",
@@ -22220,7 +23031,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/components/Sidebar.tsx",
-      "source_location": "L117",
+      "source_location": "L136",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_components_sidebar_sidebar",
@@ -24940,8 +25751,12 @@
     }
   ],
 <<<<<<< HEAD
+<<<<<<< HEAD
   "built_at_commit": "7cb5399571699b5b6e9d65eaa515dc4c3ae8c6ce"
 =======
   "built_at_commit": "b5a9103cc8ffc81d06a8822ab57729a5eb8a7651"
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+  "built_at_commit": "c6ad62dd8172591cbd527bee7251c9c8e0781049"
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
 }

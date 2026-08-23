@@ -1,5 +1,9 @@
 {
+<<<<<<< HEAD
   "0": "getEquipments",
+=======
+  "0": "validasi/page.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
   "1": "auth.ts",
   "2": "open-in-terminal/main.js",
   "3": "dependencies",
@@ -61,6 +65,7 @@
   "56": "Window Icon SVG",
   "57": "api.ts",
 <<<<<<< HEAD
+<<<<<<< HEAD
   "60": "PRODUCT.md",
   "61": "open-in-terminal/manifest.json",
   "62": "check-equipment-form.mjs",
@@ -72,8 +77,17 @@
   "62": "check-equipment-form.mjs",
   "63": "getEquipments",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+  "58": "getInspections",
+  "59": "getEquipments",
+  "60": "PRODUCT.md",
+  "61": "open-in-terminal/manifest.json",
+  "62": "check-equipment-form.mjs",
+  "63": "CostAvoidanceSection.tsx",
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
   "64": "ui-layouts-mcp",
   "65": "EVIDENCE.md",
+  "66": "getReuseRequests",
   "67": "check-repair-payload.mjs",
   "68": "claude-code-ide/manifest.json",
   "69": "pemeliharaan/dashboard/page.tsx",
@@ -83,13 +97,15 @@
   "73": "useDebounce.ts",
   "74": "app.json",
 <<<<<<< HEAD
+<<<<<<< HEAD
   "76": "CostAvoidanceSection.tsx",
 =======
   "75": "validasi/page.tsx",
   "76": "inspeksi-berkala/page.tsx",
 >>>>>>> d549840919350b8f0306a93beb6bd99126cad79e
+=======
+>>>>>>> d623327ddfbeb8fb4ceb82938774ba28e6c7c914
   "77": "pemeliharaan/page.tsx",
   "78": "DeleteConfirmDialog.tsx",
-  "79": "check-scrap-reason.mjs",
-  "80": "callback/page.tsx"
+  "79": "check-scrap-reason.mjs"
 }

@@ -79,6 +79,9 @@ export default function UnitKerjaDashboardPage() {
 				getEquipments().catch(() => []),
 				getReuseRequests().catch(() => []),
 			]);
+			const equipmentById = new Map<string, ApiRow>(
+				(rawEqList || []).map((item: ApiRow) => [String(item.id), item]),
+			);
 
 			const mappedEquipments: EquipmentItem[] = (rawEqList || []).map(
 				(item: ApiRow) => {
@@ -92,26 +95,52 @@ export default function UnitKerjaDashboardPage() {
 				},
 			);
 
-			const reqList: ReuseRequestItem[] = (rawRequests || []).map((r: ApiRow) => {
-				const equipment = (r.equipment ?? {}) as ApiRow;
-				return {
-					id: String(r.id),
-					request_number: str(r.request_number, r.requestNumber, `REQ-${r.id}`),
-					equipment_code: str(
-						r.equipment_code,
-						r.equipmentCode,
-						equipment.equipment_code,
-					),
-					equipment_name: str(r.equipment_name, r.equipmentName, equipment.name),
-					installation_location: str(
-						r.installation_location,
-						r.installationLocation,
-					),
-					estimated_cost_avoidance:
-						Number(r.estimated_cost_avoidance ?? r.estimatedCostAvoidance) || 0,
-					status: str(r.status, r.approval_status, r.approvalStatus, "PENDING"),
-				};
-			});
+			const reqList: ReuseRequestItem[] = (rawRequests || []).map(
+				(r: ApiRow) => {
+					const equipment = (r.equipment ?? {}) as ApiRow;
+					const equipmentId = String(
+						r.equipment_id ?? r.equipmentId ?? equipment.id ?? "",
+					);
+					// Response reuse kadang hanya membawa relasi equipment kosong.
+					// Utamakan data master equipment dari /api/equipment berdasarkan ID.
+					const masterEquipment = equipmentById.get(equipmentId) ?? equipment;
+					return {
+						id: String(r.id),
+						request_number: str(
+							r.request_number,
+							r.requestNumber,
+							`REQ-${r.id}`,
+						),
+						equipment_code: str(
+							masterEquipment.equipment_code,
+							masterEquipment.equipmentCode,
+							r.equipment_code,
+							r.equipmentCode,
+							equipment.equipment_code,
+						),
+						equipment_name: str(
+							masterEquipment.name,
+							masterEquipment.nama,
+							r.equipment_name,
+							r.equipmentName,
+							equipment.name,
+						),
+						installation_location: str(
+							r.installation_location,
+							r.installationLocation,
+						),
+						estimated_cost_avoidance:
+							Number(r.estimated_cost_avoidance ?? r.estimatedCostAvoidance) ||
+							0,
+						status: str(
+							r.status,
+							r.approval_status,
+							r.approvalStatus,
+							"PENDING",
+						),
+					};
+				},
+			);
 
 			setEquipments(
 				mappedEquipments.filter((e) => e.status_name === "READY_TO_USE"),
@@ -291,13 +320,10 @@ export default function UnitKerjaDashboardPage() {
 												{req.request_number}
 											</td>
 											<td className="px-4 py-2.5">
-												<div className="text-[13px] text-[#0F172A]">
-													{req.equipment_name}
-												</div>
-												<div className="text-[12px] text-[#64748B] tabular-nums">
-													{req.equipment_code}
-												</div>
-											</td>
+											<div className="text-[13px] text-[#0F172A]">
+												{req.equipment_name}
+											</div>
+										</td>
 											<td className="px-4 py-2.5 text-[13px] text-[#475569]">
 												{req.installation_location}
 											</td>
@@ -316,10 +342,10 @@ export default function UnitKerjaDashboardPage() {
 				<div className="bg-white border border-[#E6E8EA] rounded-[4px] overflow-hidden">
 					<div className="flex items-center justify-between px-5 py-4 border-b border-[#E6E8EA]">
 						<h2 className="text-[14px] font-semibold text-[#0F172A]">
-							Aset Idle ({equipments.length})
+							Aset Siap Pakai ({equipments.length})
 						</h2>
 						<Link
-							href="/unit-kerja/katalog"
+							href="/unit-kerja/daftar-aset"
 							className="text-[12px] font-medium text-[#0A356A] hover:text-[#0556B3]"
 						>
 							Lihat semua
@@ -348,7 +374,7 @@ export default function UnitKerjaDashboardPage() {
 										</p>
 									</div>
 									<Link
-										href="/unit-kerja/katalog"
+									href="/unit-kerja/daftar-aset"
 										className="shrink-0 inline-flex items-center gap-1.5 min-h-[36px] px-3 rounded-[4px] border border-[#E6E8EA] text-[12px] font-medium text-[#334155] hover:bg-[#F2F3F4] transition-colors"
 									>
 										<Send className="w-3.5 h-3.5" />

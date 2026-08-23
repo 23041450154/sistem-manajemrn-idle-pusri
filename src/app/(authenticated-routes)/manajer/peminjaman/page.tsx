@@ -53,6 +53,9 @@ interface ReuseRequestApi {
 	id: number | string;
 	approval_id?: string | null;
 	approval_status?: string;
+	approvalStatus?: string;
+	ApprovalStatus?: string;
+	status?: string;
 	request_number?: string;
 	equipment_id?: number | string;
 	requesting_project?: string;
@@ -78,6 +81,7 @@ export default function ManajerPeminjamanPage() {
 	const [searchInput, setSearchInput] = useState("");
 	const [plant, setPlant] = useState("Semua Plant");
 	const [status, setStatus] = useState("Semua Status");
+	const [listTab, setListTab] = useState<"inbox" | "history">("inbox");
 	const [startDate, setStartDate] = useState("");
 	const [endDate, setEndDate] = useState("");
 
@@ -147,8 +151,19 @@ export default function ManajerPeminjamanPage() {
 						contact_person: item.requested_by_user?.name || "-",
 						contact_npp: item.requested_by_user?.npp || "-",
 						contact_phone: "-",
-						status: reuseDisplayStatus(item.approval_status),
-						created_at: startDateStr,
+						// Backend mengembalikan approval_status = APPROVED setelah
+						// Manager menyetujui. Variasi casing dipertahankan agar tidak
+						// kembali tampil sebagai PENDING saat data dimuat ulang.
+						status: reuseDisplayStatus(
+							item.approval_status ||
+								item.approvalStatus ||
+								item.ApprovalStatus ||
+								item.status,
+						),
+						// Gunakan waktu pengajuan untuk pengurutan tabel; tanggal reuse
+						// adalah tanggal pemakaian yang dapat berada di masa depan.
+						created_at:
+							item.created_at || item.requested_at || (typeof rawDate === "string" ? rawDate : undefined),
 						review_notes: item.notes || "",
 					};
 				});
@@ -175,6 +190,8 @@ export default function ManajerPeminjamanPage() {
 	const filteredRequests = useMemo(() => {
 		const query = searchInput || search;
 		return requests.filter((req) => {
+			const isAwaitingDecision = req.status === "PENDING" || req.status === "IN_REVIEW";
+			const matchTab = listTab === "inbox" ? isAwaitingDecision : !isAwaitingDecision;
 			const matchSearch = query
 				? req.request_number.toLowerCase().includes(query.toLowerCase()) ||
 					req.equipment_code.toLowerCase().includes(query.toLowerCase()) ||
@@ -201,9 +218,18 @@ export default function ManajerPeminjamanPage() {
 			} else if (startDate) {
 				matchDate = req.start_date.startsWith(startDate);
 			}
-			return matchSearch && matchPlant && matchStatus && matchDate;
+			return matchTab && matchSearch && matchPlant && matchStatus && matchDate;
+		}).sort((a, b) => {
+			const aTime = Date.parse(a.created_at || "") || 0;
+			const bTime = Date.parse(b.created_at || "") || 0;
+			return bTime - aTime;
 		});
-	}, [requests, search, searchInput, plant, status, startDate, endDate]);
+	}, [requests, listTab, search, searchInput, plant, status, startDate, endDate]);
+
+	const inboxCount = requests.filter(
+		(req) => req.status === "PENDING" || req.status === "IN_REVIEW",
+	).length;
+	const historyCount = requests.length - inboxCount;
 
 	const handleReset = () => {
 		setSearchInput("");
@@ -248,7 +274,6 @@ export default function ManajerPeminjamanPage() {
 				newStatus,
 				actionNotes,
 				selectedRequest.id,
-				selectedRequest.equipment_id,
 			);
 			if (result.success) {
 				const updated = requests.map((r) =>
@@ -275,6 +300,10 @@ export default function ManajerPeminjamanPage() {
 						: r,
 				);
 				setRequests(updated);
+				// Sumber kebenaran status adalah ApprovalRequest di backend. Muat ulang
+				// setelah transaksi approval selesai agar tabel langsung menampilkan
+				// approval_status terbaru (mis. APPROVED).
+				await fetchRequests();
 
 				setNotification({
 					type: "success",
@@ -357,6 +386,34 @@ export default function ManajerPeminjamanPage() {
 
 			{/* Table Section */}
 			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+				<div className="flex items-center gap-6 border-b border-gray-200 bg-white px-5 pt-3">
+					<button
+						type="button"
+						onClick={() => {
+							setListTab("inbox");
+							setCurrentPage(1);
+						}}
+						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${listTab === "inbox" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
+					>
+						Antrean Persetujuan
+						<span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${listTab === "inbox" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}>
+							{inboxCount}
+						</span>
+					</button>
+					<button
+						type="button"
+						onClick={() => {
+							setListTab("history");
+							setCurrentPage(1);
+						}}
+						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${listTab === "history" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
+					>
+						Riwayat Persetujuan
+						<span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${listTab === "history" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}>
+							{historyCount}
+						</span>
+					</button>
+				</div>
 				{/* Toolbar / Filters (Identik dengan halaman Inspeksi Validasi) */}
 				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
 					{/* Search */}
