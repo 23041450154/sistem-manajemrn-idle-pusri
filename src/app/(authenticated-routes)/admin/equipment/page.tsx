@@ -67,6 +67,8 @@ export default function EquipmentManagementPage() {
   };
 
   useEffect(() => {
+    // Fetch-on-mount yang sah: setState hanya setelah await di fetchData.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 

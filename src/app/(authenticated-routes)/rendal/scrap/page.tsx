@@ -191,12 +191,18 @@ export default function RendalScrapPage() {
 	};
 
 	useEffect(() => {
+		// Fetch-on-mount yang sah: setState hanya setelah await di loadData.
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		loadData();
 	}, []);
 
-	useEffect(() => {
+	// Reset halaman saat filter/tab berubah — adjust during render (pola resmi React).
+	const filterKey = `${search}|${activeTab}`;
+	const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+	if (prevFilterKey !== filterKey) {
+		setPrevFilterKey(filterKey);
 		setCurrentPage(1);
-	}, [search, activeTab]);
+	}
 
 	const showToast = (type: "success" | "error", message: string) => {
 		setNotification({ type, message });

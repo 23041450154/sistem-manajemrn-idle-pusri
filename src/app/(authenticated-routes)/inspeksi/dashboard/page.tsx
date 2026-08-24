@@ -303,25 +303,46 @@ export default function InspeksiDashboardPage() {
 					<table className="w-full min-w-[860px] table-fixed border-collapse text-left">
 						<thead>
 							<tr className="border-b border-[#E6E8EA] bg-[#F2F3F4]">
-								<th scope="col" className="w-12 px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+								<th
+									scope="col"
+									className="w-12 px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
+								>
 									No
 								</th>
-								<th scope="col" className="w-[140px] px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+								<th
+									scope="col"
+									className="w-[140px] px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
+								>
 									Kode Alat
 								</th>
-								<th scope="col" className="px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+								<th
+									scope="col"
+									className="px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
+								>
 									Nama Peralatan
 								</th>
-								<th scope="col" className="w-[100px] px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+								<th
+									scope="col"
+									className="w-[100px] px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
+								>
 									Plant
 								</th>
-								<th scope="col" className="w-[130px] px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+								<th
+									scope="col"
+									className="w-[130px] px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
+								>
 									Tgl Registrasi
 								</th>
-								<th scope="col" className="w-[160px] px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+								<th
+									scope="col"
+									className="w-[160px] px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
+								>
 									Status
 								</th>
-								<th scope="col" className="w-[110px] px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase">
+								<th
+									scope="col"
+									className="w-[110px] px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
+								>
 									Aksi
 								</th>
 							</tr>
@@ -357,21 +378,33 @@ export default function InspeksiDashboardPage() {
 								</tr>
 							) : (
 								filteredPending.slice(0, 5).map((eq: any, idx: number) => (
-									<tr key={eq.id || idx} className="transition-colors duration-150 hover:bg-[#F2F3F4]">
+									<tr
+										key={eq.id || idx}
+										className="transition-colors duration-150 hover:bg-[#F2F3F4]"
+									>
 										<td className="px-4 py-2.5 text-center text-[13px] text-[#64748B] tabular-nums">
 											{idx + 1}
 										</td>
-										<td className="px-4 py-2.5 font-mono text-[13px] font-medium text-[#0F172A]" title={eq.equipment_code || eq.kodeAlat}>
-											<span className="block truncate">{eq.equipment_code || eq.kodeAlat || "-"}</span>
+										<td
+											className="px-4 py-2.5 font-mono text-[13px] font-medium text-[#0F172A]"
+											title={eq.equipment_code || eq.kodeAlat}
+										>
+											<span className="block truncate">
+												{eq.equipment_code || eq.kodeAlat || "-"}
+											</span>
 										</td>
 										<td
 											className="px-4 py-2.5 text-[13px] font-medium text-[#0F172A]"
 											title={eq.name || eq.namaAlat}
 										>
-											<span className="block truncate">{eq.name || eq.namaAlat || "-"}</span>
+											<span className="block truncate">
+												{eq.name || eq.namaAlat || "-"}
+											</span>
 										</td>
 										<td className="px-4 py-2.5 text-[13px] text-[#475569]">
-											<span className="block truncate">{eq.plant?.name || eq.plant || "-"}</span>
+											<span className="block truncate">
+												{eq.plant?.name || eq.plant || "-"}
+											</span>
 										</td>
 										<td className="px-4 py-2.5 text-[13px] text-[#475569] tabular-nums">
 											{eq.created_at

@@ -1,5 +1,9 @@
 "use client";
 
+/* ponytail: payload API legacy tetap untyped sampai backend mengekspor DTO bersama.
+   Upgrade path: generate types dari swagger_dump.json backend. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import Link from "next/link";
 import Image from "next/image";
 import { usePathname } from "next/navigation";
@@ -8,25 +12,15 @@ import { MASTER_ENTITIES } from "@/lib/master-entities";
 import {
 	LayoutDashboard,
 	Wrench,
-	PowerOff,
 	ClipboardCheck,
-	FileQuestion,
 	CheckSquare,
-	FileText,
-	Inbox,
 	Database,
-	Users,
-	Settings,
-	Plus,
 	Trash2,
-	Edit,
 	X,
-	ShieldCheck,
 	ChevronDown,
-  ChevronRight,
-	Factory,
-  History,
-  RefreshCw,
+	ChevronRight,
+	History,
+	RefreshCw,
 } from "lucide-react";
 import { useSidebar } from "./SidebarProvider";
 import { useState, useEffect } from "react";
@@ -41,15 +35,16 @@ export function Sidebar({ role }: { role?: string }) {
 	const [pendingCounts, setPendingCounts] = useState<Record<string, number>>({});
 
 	useEffect(() => {
-		let isMounted = true;
+		const isMounted = true;
 		const checkPending = async () => {
 			try {
-				const [data, approvalsData, reuseApprovalsData, disposalApprovalsData] = await Promise.all([
-					getEquipments(),
-					getApprovals().catch(() => []),
-					getApprovals("reuse").catch(() => []),
-					getApprovals("disposal").catch(() => []),
-				]);
+				const [data, approvalsData, reuseApprovalsData, disposalApprovalsData] =
+					await Promise.all([
+						getEquipments(),
+						getApprovals().catch(() => []),
+						getApprovals("reuse").catch(() => []),
+						getApprovals("disposal").catch(() => []),
+					]);
 				if (!Array.isArray(data) || !isMounted) return;
 
 				const approvalsList = Array.isArray(approvalsData)
@@ -65,15 +60,24 @@ export function Sidebar({ role }: { role?: string }) {
 						const currentStep = String(
 							item.current_step ?? item.currentStep ?? "",
 						).toUpperCase();
-						return approvalStatus === "PENDING" && (!currentStep || currentStep === "MANAJER_RENDAL");
+						return (
+							approvalStatus === "PENDING" &&
+							(!currentStep || currentStep === "MANAJER_RENDAL")
+						);
 					}).length;
 				const validationApprovalAntrean = awaitingManagerAction(approvalsList);
-				const reuseApprovalAntrean = awaitingManagerAction(asList(reuseApprovalsData));
-				const disposalApprovalAntrean = awaitingManagerAction(asList(disposalApprovalsData));
+				const reuseApprovalAntrean = awaitingManagerAction(
+					asList(reuseApprovalsData),
+				);
+				const disposalApprovalAntrean = awaitingManagerAction(
+					asList(disposalApprovalsData),
+				);
 
 				// Validasi Kelayakan (/inspeksi/validasi): HANYA aset yang butuh tindakan Inspeksi (REGISTERED / REVISION_REQUIRED)
 				const validasiAntrean = data.filter((item: any) => {
-					const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+					const statusName = String(
+						item.status?.name || item.statusAset || "",
+					).toUpperCase();
 					const statusId = item.status_id || item.status?.id;
 
 					const matchingApproval = approvalsList.find(
@@ -82,7 +86,8 @@ export function Sidebar({ role }: { role?: string }) {
 							String(a.equipment?.id) === String(item.id),
 					);
 
-					const isRevisionRequired = matchingApproval?.approval_status === "REVISION_REQUIRED";
+					const isRevisionRequired =
+						matchingApproval?.approval_status === "REVISION_REQUIRED";
 					const isRegistered = statusId === 1 || statusName === "REGISTERED";
 
 					return isRegistered || isRevisionRequired;
@@ -90,7 +95,9 @@ export function Sidebar({ role }: { role?: string }) {
 
 				// Validasi Perbaikan Alat (/inspeksi/validasi-ulang):
 				const validasiUlangAntrean = data.filter((item: any) => {
-					const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+					const statusName = String(
+						item.status?.name || item.statusAset || "",
+					).toUpperCase();
 					const statusId = item.status_id || item.status?.id;
 					return (
 						statusId === 4 ||
@@ -101,16 +108,29 @@ export function Sidebar({ role }: { role?: string }) {
 
 				// Persetujuan Perbaikan (/rendal/validasi-ulang):
 				const rendalValidasiUlangAntrean = data.filter((item: any) => {
-					const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+					const statusName = String(
+						item.status?.name || item.statusAset || "",
+					).toUpperCase();
 					const statusId = item.status_id || item.status?.id;
-					return statusId === 5 || statusName === "REVALIDATION" || statusName === "REVALIDASI";
+					return (
+						statusId === 5 ||
+						statusName === "REVALIDATION" ||
+						statusName === "REVALIDASI"
+					);
 				}).length;
 
 				// Perbaikan Alat (/pemeliharaan/perbaikan-alat):
 				const perbaikanAntrean = data.filter((item: any) => {
-					const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+					const statusName = String(
+						item.status?.name || item.statusAset || "",
+					).toUpperCase();
 					const statusId = item.status_id || item.status?.id;
-					return statusId === 3 || statusName === "REPAIR" || statusName === "MAINTENANCE" || statusName === "DALAM_PERBAIKAN";
+					return (
+						statusId === 3 ||
+						statusName === "REPAIR" ||
+						statusName === "MAINTENANCE" ||
+						statusName === "DALAM_PERBAIKAN"
+					);
 				}).length;
 
 				setPendingCounts({
@@ -152,7 +172,11 @@ export function Sidebar({ role }: { role?: string }) {
 			mainNavItems = [
 				{ name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
 				{ name: "Peralatan", href: "/rendal/idle", icon: Wrench },
-				{ name: "Persetujuan Perbaikan", href: "/rendal/validasi-ulang", icon: CheckSquare },
+				{
+					name: "Persetujuan Perbaikan",
+					href: "/rendal/validasi-ulang",
+					icon: CheckSquare,
+				},
 				{ name: "Permintaan Scrap", href: "/rendal/scrap", icon: Trash2 },
 			];
 			break;
@@ -349,8 +373,7 @@ export function Sidebar({ role }: { role?: string }) {
 									{masterDataOpen && (
 										<ul className="mt-1 ml-4 space-y-1">
 											{MASTER_ENTITIES.map((entity) => {
-												const childActive =
-													pathname === `/admin/master/${entity.slug}`;
+												const childActive = pathname === `/admin/master/${entity.slug}`;
 												return (
 													<li key={entity.slug}>
 														<Link

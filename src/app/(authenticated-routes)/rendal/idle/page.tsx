@@ -112,17 +112,6 @@ export default function RendalIdlePage() {
 				return idB - idA;
 			});
 
-			let revisedIds: string[] = [];
-			if (typeof window !== "undefined") {
-				try {
-					revisedIds = JSON.parse(
-						localStorage.getItem("revised_equipment_ids") || "[]",
-					);
-				} catch (err) {
-					console.warn("Gagal membaca revised_equipment_ids:", err);
-				}
-			}
-
 			const mappedData = data
 				.filter((item: any) => {
 					const rawStatus = (
@@ -182,12 +171,9 @@ export default function RendalIdlePage() {
 						}
 					}
 
-					const isRevised = revisedIds.includes(String(item.id));
 					const rawStatus =
 						(typeof item.status === "string" ? item.status : item.status?.name) || "";
-					const statusStr = isRevised
-						? "REGISTERED"
-						: statusName(rawStatus) || "REGISTERED";
+					const statusStr = statusName(rawStatus) || "REGISTERED";
 
 					return {
 						id: item.id?.toString() || "-",
@@ -360,7 +346,7 @@ export default function RendalIdlePage() {
 			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
 			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
-			"DISPOSAL_RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
+			DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
 			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
 			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
@@ -370,17 +356,11 @@ export default function RendalIdlePage() {
 		};
 
 		let displayStatus = (status || "").replace(/_/g, " ");
-		if (
-			displayStatus === "READY TO REUSE" ||
-			displayStatus === "REUSED"
-		) {
+		if (displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
 			displayStatus = "READY TO USE";
 		}
 
-		const style =
-			styles[displayStatus] ||
-			styles[status] ||
-			styles.SCRAP;
+		const style = styles[displayStatus] || styles[status] || styles.SCRAP;
 		return (
 			<span
 				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${style}`}

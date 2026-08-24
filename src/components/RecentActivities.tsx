@@ -1,24 +1,36 @@
 "use client";
-import { Plus, Edit2, AlertCircle, CheckCircle2, FileText } from "lucide-react";
+import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getEquipments } from "@/action/api";
 
+type Activity = {
+  title: string;
+  time: string;
+  icon: typeof Plus;
+  iconBg: string;
+  iconColor: string;
+};
+
 export function RecentActivities() {
-  const [activities, setActivities] = useState<any[]>([]);
+  const [activities, setActivities] = useState<Activity[]>([]);
 
   useEffect(() => {
     async function fetch() {
       try {
-        const equipments = await getEquipments();
+        const equipments: Record<string, unknown>[] = await getEquipments();
         if (equipments && equipments.length > 0) {
           // just taking first 5 equipments as 'registered' activities
-          setActivities(equipments.slice(0, 5).map((e: any) => ({
-            title: `${e.name} didaftarkan`,
-            time: e.created_at ? new Date(e.created_at).toLocaleDateString() : "Hari ini",
-            icon: Plus,
-            iconBg: "bg-[#0556B3]",
-            iconColor: "text-white",
-          })));
+          setActivities(
+            equipments.slice(0, 5).map((e) => ({
+              title: `${String(e.name)} didaftarkan`,
+              time: e.created_at
+                ? new Date(String(e.created_at)).toLocaleDateString()
+                : "Hari ini",
+              icon: Plus,
+              iconBg: "bg-[#0556B3]",
+              iconColor: "text-white",
+            })),
+          );
         }
       } catch (err) {
         console.error(err);
@@ -26,7 +38,6 @@ export function RecentActivities() {
     }
     fetch();
   }, []);
-
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col h-full">
@@ -55,10 +66,12 @@ export function RecentActivities() {
               </div>
             ))
           ) : (
-            <p className="text-sm text-gray-500 text-center py-4 relative z-10 bg-white">Belum ada aktivitas.</p>
+            <p className="text-sm text-gray-500 text-center py-4 relative z-10 bg-white">
+              Belum ada aktivitas.
+            </p>
           )}
         </div>
-        
+
         <div className="pt-6 mt-auto">
           <button className="w-full py-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 rounded-lg text-sm font-medium transition-colors">
             Lihat Semua Aktivitas

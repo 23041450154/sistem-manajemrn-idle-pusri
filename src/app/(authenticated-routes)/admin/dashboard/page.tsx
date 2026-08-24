@@ -3,16 +3,48 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
-  Wrench, Database, Trash2, ArrowRight, ShieldCheck,
-  MapPin, Layers, FileText, RefreshCw
+  Wrench,
+  Database,
+  Trash2,
+  ArrowRight,
+  ShieldCheck,
+  MapPin,
+  Layers,
+  FileText,
+  RefreshCw,
 } from "lucide-react";
-import { getEquipments, getObjectTypes, getStorageLocations, getDisposals } from "@/action/api";
+import {
+  getEquipments,
+  getObjectTypes,
+  getStorageLocations,
+  getDisposals,
+} from "@/action/api";
 
 const MODULES = [
-  { href: "/admin/equipment", icon: Wrench, title: "Manajemen Peralatan", desc: "Kelola inventarisasi & status aset" },
-  { href: "/admin/master", icon: Database, title: "Master Data Referensi", desc: "ObjectType, StorageLocation, RequireAction" },
-  { href: "/manajer/scrap", icon: Trash2, title: "Persetujuan Scrap", desc: "Antrean usulan penghapusan aset" },
-  { href: "/manajer/approve", icon: ShieldCheck, title: "Persetujuan Validasi", desc: "Verifikasi kelayakan aset idle" },
+  {
+    href: "/admin/equipment",
+    icon: Wrench,
+    title: "Manajemen Peralatan",
+    desc: "Kelola inventarisasi & status aset",
+  },
+  {
+    href: "/admin/master",
+    icon: Database,
+    title: "Master Data Referensi",
+    desc: "ObjectType, StorageLocation, RequireAction",
+  },
+  {
+    href: "/manajer/scrap",
+    icon: Trash2,
+    title: "Persetujuan Scrap",
+    desc: "Antrean usulan penghapusan aset",
+  },
+  {
+    href: "/manajer/approve",
+    icon: ShieldCheck,
+    title: "Persetujuan Validasi",
+    desc: "Verifikasi kelayakan aset idle",
+  },
 ];
 
 export default function AdminDashboardPage() {
@@ -22,11 +54,22 @@ export default function AdminDashboardPage() {
     totalStorage: 0,
     totalDisposals: 0,
   });
-  const [recentEquipments, setRecentEquipments] = useState<any[]>([]);
+  const [recentEquipments, setRecentEquipments] = useState<
+    Array<{
+      id?: number | string;
+      name?: string | { name?: string };
+      plant?: string | { name?: string; description?: string };
+      status?: string | { name?: string };
+      equipment_code?: string;
+    }>
+  >([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const today = new Date().toLocaleDateString("id-ID", {
-    weekday: "long", day: "numeric", month: "long", year: "numeric",
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
   });
 
   useEffect(() => {
@@ -59,10 +102,30 @@ export default function AdminDashboardPage() {
   }, []);
 
   const kpis = [
-    { label: "Total Aset Inventaris", value: stats.totalEquipment, icon: Wrench, caption: "Peralatan aktif & idle terdaftar" },
-    { label: "Kategori (ObjectType)", value: stats.totalCategories, icon: Layers, caption: "Klasifikasi tipe mesin & alat" },
-    { label: "Gudang & Penyimpanan", value: stats.totalStorage, icon: MapPin, caption: "Lokasi penyimpanan fisik" },
-    { label: "Persetujuan Disposal", value: stats.totalDisposals, icon: Trash2, caption: "Usulan pembuangan aset" },
+    {
+      label: "Total Aset Inventaris",
+      value: stats.totalEquipment,
+      icon: Wrench,
+      caption: "Peralatan aktif & idle terdaftar",
+    },
+    {
+      label: "Kategori (ObjectType)",
+      value: stats.totalCategories,
+      icon: Layers,
+      caption: "Klasifikasi tipe mesin & alat",
+    },
+    {
+      label: "Gudang & Penyimpanan",
+      value: stats.totalStorage,
+      icon: MapPin,
+      caption: "Lokasi penyimpanan fisik",
+    },
+    {
+      label: "Persetujuan Disposal",
+      value: stats.totalDisposals,
+      icon: Trash2,
+      caption: "Usulan pembuangan aset",
+    },
   ];
 
   return (
@@ -70,8 +133,12 @@ export default function AdminDashboardPage() {
       {/* Header */}
       <div className="bg-[#0A356A] rounded-2xl px-6 py-5 text-white flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-xl font-bold tracking-tight">Dashboard Administrator</h1>
-          <p className="text-blue-200/90 text-xs mt-1 font-medium capitalize">{today}</p>
+          <h1 className="text-xl font-bold tracking-tight">
+            Dashboard Administrator
+          </h1>
+          <p className="text-blue-200/90 text-xs mt-1 font-medium capitalize">
+            {today}
+          </p>
         </div>
         <div className="flex items-center gap-2.5 shrink-0">
           <Link
@@ -94,17 +161,28 @@ export default function AdminDashboardPage() {
       {/* KPI Row */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
         {kpis.map(({ label, value, icon: Icon, caption }) => (
-          <div key={label} className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+          <div
+            key={label}
+            className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm"
+          >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">{label}</span>
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+                {label}
+              </span>
               <div className="w-9 h-9 rounded-lg bg-slate-100 text-[#0A356A] flex items-center justify-center shrink-0">
                 <Icon className="w-5 h-5" />
               </div>
             </div>
             <div className="text-3xl font-bold text-slate-900 tracking-tight">
-              {isLoading ? <RefreshCw className="w-6 h-6 animate-spin text-slate-300" /> : value}
+              {isLoading ? (
+                <RefreshCw className="w-6 h-6 animate-spin text-slate-300" />
+              ) : (
+                value
+              )}
             </div>
-            <p className="text-[11px] text-slate-400 mt-1.5 font-medium">{caption}</p>
+            <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
+              {caption}
+            </p>
           </div>
         ))}
       </div>
@@ -124,7 +202,9 @@ export default function AdminDashboardPage() {
                   <Icon className="w-5 h-5" />
                 </div>
                 <h3 className="text-sm font-bold text-slate-900">{title}</h3>
-                <p className="text-xs text-slate-500 mt-1 leading-relaxed font-medium">{desc}</p>
+                <p className="text-xs text-slate-500 mt-1 leading-relaxed font-medium">
+                  {desc}
+                </p>
               </div>
               <div className="flex items-center gap-1.5 text-xs font-bold text-[#0A356A] mt-4 pt-3 border-t border-slate-100">
                 <span>Buka Modul</span>
@@ -141,7 +221,10 @@ export default function AdminDashboardPage() {
               <FileText className="w-4 h-4 text-[#0A356A]" />
               Peralatan Terbaru
             </h3>
-            <Link href="/admin/equipment" className="text-[11px] font-bold text-[#0A356A] hover:underline flex items-center gap-1">
+            <Link
+              href="/admin/equipment"
+              className="text-[11px] font-bold text-[#0A356A] hover:underline flex items-center gap-1"
+            >
               Semua <ArrowRight className="w-3 h-3" />
             </Link>
           </div>
@@ -153,17 +236,35 @@ export default function AdminDashboardPage() {
                 Memuat data...
               </div>
             ) : recentEquipments.length === 0 ? (
-              <div className="px-5 py-8 text-center text-xs text-slate-400">Belum ada data peralatan.</div>
+              <div className="px-5 py-8 text-center text-xs text-slate-400">
+                Belum ada data peralatan.
+              </div>
             ) : (
               recentEquipments.map((item, idx) => {
-                const nameStr = typeof item.name === "string" ? item.name : item.name?.name || "-";
-                const plantStr = typeof item.plant === "string" ? item.plant : item.plant?.name || item.plant?.description || "-";
-                const statusStr = typeof item.status === "string" ? item.status : item.status?.name || "REGISTERED";
+                const nameStr =
+                  typeof item.name === "string"
+                    ? item.name
+                    : item.name?.name || "-";
+                const plantStr =
+                  typeof item.plant === "string"
+                    ? item.plant
+                    : item.plant?.name || item.plant?.description || "-";
+                const statusStr =
+                  typeof item.status === "string"
+                    ? item.status
+                    : item.status?.name || "REGISTERED";
                 return (
-                  <div key={item.id || idx} className="px-5 py-3 flex items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors">
+                  <div
+                    key={item.id || idx}
+                    className="px-5 py-3 flex items-center justify-between gap-3 hover:bg-slate-50/60 transition-colors"
+                  >
                     <div className="min-w-0">
-                      <p className="text-xs font-bold text-slate-800 truncate">{nameStr}</p>
-                      <p className="text-[11px] text-slate-500 font-mono mt-0.5">{item.equipment_code || "-"} · {plantStr}</p>
+                      <p className="text-xs font-bold text-slate-800 truncate">
+                        {nameStr}
+                      </p>
+                      <p className="text-[11px] text-slate-500 font-mono mt-0.5">
+                        {item.equipment_code || "-"} · {plantStr}
+                      </p>
                     </div>
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 border border-slate-200 shrink-0">
                       {statusStr}

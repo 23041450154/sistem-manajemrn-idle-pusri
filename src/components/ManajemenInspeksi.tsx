@@ -22,7 +22,6 @@ import {
 	ArrowUpDown,
 	ArrowUp,
 	ArrowDown,
-	Download,
 	Info,
 } from "lucide-react";
 
@@ -35,8 +34,7 @@ import {
 	getObjectTypes,
 	getApprovals,
 	getAttachmentsByEquipmentId,
-	uploadEquipmentAttachment,
-	uploadEquipmentAttachmentBase64,
+	getValidations,
 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 import {
@@ -97,7 +95,7 @@ export default function ManajemenInspeksi() {
 				const approvalsData = Array.isArray(approvalsRes)
 					? approvalsRes
 					: approvalsRes?.data || [];
-				const currentUserNPP = user?.user?.npp || "NPP2304145";
+				const currentUserNPP = user?.user?.npp || "";
 				const mappedData = data.map((item: any) => {
 					let objectTypeName = "Belum Ditentukan";
 					if (item.object_type?.name) {
@@ -232,7 +230,6 @@ export default function ManajemenInspeksi() {
 	} | null>(null);
 	const [attachments, setAttachments] = useState<any[]>([]);
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
-	const [requiredActionId, setRequiredActionId] = useState("");
 
 	// Form Validasi States
 	const [hasilPemeriksaan, setHasilPemeriksaan] = useState("");
@@ -244,32 +241,6 @@ export default function ManajemenInspeksi() {
 	);
 	const [jamMulai, setJamMulai] = useState("08:00");
 	const [jamSelesai, setJamSelesai] = useState("09:00");
-
-	const handleTimeInput = (
-		value: string,
-		setter: React.Dispatch<React.SetStateAction<string>>,
-	) => {
-		const numbers = value.replace(/\D/g, "");
-		if (numbers.length > 4) return;
-		let formatted = numbers;
-		if (numbers.length >= 3) {
-			formatted = `${numbers.slice(0, 2)}:${numbers.slice(2)}`;
-		}
-
-		// Validasi jam (max 23)
-		if (formatted.length >= 2) {
-			const h = parseInt(formatted.slice(0, 2), 10);
-			if (h > 23) formatted = `23${formatted.slice(2)}`;
-		}
-		// Validasi menit (max 59)
-		if (formatted.length === 5) {
-			const m = parseInt(formatted.slice(3, 5), 10);
-			if (m > 59) formatted = `${formatted.slice(0, 3)}59`;
-		}
-
-		setter(formatted);
-	};
-	const [lokasi, setLokasi] = useState("");
 	const [showValidationErrors, setShowValidationErrors] = useState(false);
 
 	// Upload States
@@ -295,7 +266,6 @@ export default function ManajemenInspeksi() {
 	) => {
 		setSelectedAsset(asset);
 		setModalMode(mode);
-		setRequiredActionId("");
 		setConditionId("");
 		setIsModalOpen(true);
 		setUploadedFiles([]); // Reset files
@@ -321,21 +291,50 @@ export default function ManajemenInspeksi() {
 			setHasilPemeriksaan("");
 			setCatatan("");
 			setRekomendasi("");
-			setLokasi("");
 			setJamMulai("08:00");
 			setJamSelesai("09:00");
 			setTglPemeriksaan(new Date().toISOString().split("T")[0]);
 		} else {
-			// Jika statusnya Ubah Validasi atau Perlu Revisi, muat data yang sudah pernah diisi
-			setHasilPemeriksaan(
-				asset.statusAset === "REJECTED" ? "Tidak Layak" : "Layak",
-			);
-			setCatatan("Visual fisik aman, tidak ada kebocoran, performa motor stabil.");
-			setRekomendasi("Dapat dimobilisasi segera ke area yang membutuhkan.");
-			setLokasi("Area Unit P-IB"); // Default mock data yang sesuai opsi dropdown
-			setJamMulai("09:00");
-			setJamSelesai("10:30");
-			setTglPemeriksaan(new Date().toISOString().split("T")[0]);
+			// Ubah Validasi / Perlu Revisi: muat data inspeksi terakhir dari backend,
+			// bukan teks mock. Backend tidak menyimpan kondisi per validasi, jadi
+			// pilihannya tetap dikosongkan untuk dipilih ulang inspektur.
+			setConditionId("");
+			try {
+				const vals = await getValidations(asset.id);
+				const latest = Array.isArray(vals) ? (vals[vals.length - 1] ?? null) : null;
+				if (latest) {
+					const start = latest.start_at ? new Date(latest.start_at) : null;
+					const end = latest.end_at ? new Date(latest.end_at) : null;
+					const hhmm = (d: Date | null) =>
+						d
+							? `${String(d.getHours()).padStart(2, "0")}:${String(d.getMinutes()).padStart(2, "0")}`
+							: null;
+					setHasilPemeriksaan(
+						asset.statusAset === "REJECTED" ? "Tidak Layak" : "Layak",
+					);
+					setCatatan(typeof latest.notes === "string" ? latest.notes : "");
+					setRekomendasi(
+						typeof latest.followup_recommendation === "string"
+							? latest.followup_recommendation
+							: "",
+					);
+					if (start) {
+						setTglPemeriksaan(start.toISOString().split("T")[0]);
+						const jam = hhmm(start);
+						if (jam) setJamMulai(jam);
+					}
+					const jamSelesaiBaru = hhmm(end);
+					if (jamSelesaiBaru) setJamSelesai(jamSelesaiBaru);
+				} else {
+					setHasilPemeriksaan("");
+					setCatatan("");
+					setRekomendasi("");
+				}
+			} catch {
+				setHasilPemeriksaan("");
+				setCatatan("");
+				setRekomendasi("");
+			}
 		}
 		setIsModalOpen(true);
 	};
@@ -353,94 +352,26 @@ export default function ManajemenInspeksi() {
 		try {
 			const isUtilizable = hasilPemeriksaan === "Layak";
 			const notes = catatan || rekomendasi;
+			// Foto ikut multipart POST /api/validation (reference_type "validations").
+			// Upload base64 terpisah dihapus karena menghasilkan lampiran ganda.
 			const res = await validateEquipment(
 				selectedAsset.id,
 				isUtilizable,
 				Number(conditionId),
 				notes,
+				{
+					startAt: tglPemeriksaan,
+					endAt: tglPemeriksaan,
+					followupRecommendation: rekomendasi || undefined,
+					photos: uploadedFiles,
+				},
 			);
 
 			if (res.success) {
-				// --- MULTIPLE ATTACHMENTS UPLOAD ---
-				if (uploadedFiles && uploadedFiles.length > 0) {
-					try {
-						for (const file of uploadedFiles) {
-							const fd = new FormData();
-							fd.append("equipment_id", selectedAsset.id);
-							fd.append("file", file);
-							fd.append("category", "inspection_photo"); // Kategori sesuai backend
-
-							try {
-								const reader = new FileReader();
-								const dataUrl = await new Promise<string>((resolve) => {
-									reader.onload = (e) => resolve((e.target?.result as string) || "");
-									reader.onerror = () => resolve("");
-									reader.readAsDataURL(file);
-								});
-								if (dataUrl) {
-									await uploadEquipmentAttachmentBase64(
-										selectedAsset.id.toString(),
-										dataUrl,
-										file.name,
-										file.type || "image/jpeg",
-									);
-								}
-							} catch (e) {
-								console.error("Base64 upload failed", e);
-							}
-						}
-					} catch (err) {
-						console.error("Error during file upload:", err);
-					}
-				}
-				// -----------------------------------
-
 				setNotification({
 					type: "success",
 					message: "Data inspeksi berhasil disubmit ke sistem.",
 				});
-
-				const revised = JSON.parse(localStorage.getItem("revisedAssets") || "[]");
-				const inReview = JSON.parse(localStorage.getItem("inReviewAssets") || "[]");
-				const approved = JSON.parse(localStorage.getItem("approvedAssets") || "[]");
-
-				const reValidated = JSON.parse(
-					localStorage.getItem("reValidatedAssets") || "[]",
-				);
-
-				if (revised.includes(selectedAsset.kodeAlat)) {
-					if (!reValidated.includes(selectedAsset.kodeAlat)) {
-						reValidated.push(selectedAsset.kodeAlat);
-						localStorage.setItem("reValidatedAssets", JSON.stringify(reValidated));
-					}
-				}
-
-				localStorage.setItem(
-					"revisedAssets",
-					JSON.stringify(
-						revised.filter((code: string) => code !== selectedAsset.kodeAlat),
-					),
-				);
-				localStorage.setItem(
-					"inReviewAssets",
-					JSON.stringify(
-						inReview.filter((code: string) => code !== selectedAsset.kodeAlat),
-					),
-				);
-				localStorage.setItem(
-					"approvedAssets",
-					JSON.stringify(
-						approved.filter((code: string) => code !== selectedAsset.kodeAlat),
-					),
-				);
-
-				const validated = JSON.parse(
-					localStorage.getItem("validatedAssets") || "[]",
-				);
-				if (isUtilizable && !validated.includes(selectedAsset.kodeAlat)) {
-					validated.push(selectedAsset.kodeAlat);
-					localStorage.setItem("validatedAssets", JSON.stringify(validated));
-				}
 
 				const fileNames = uploadedFiles.map((f) => f.name);
 				setAssets(
@@ -698,7 +629,6 @@ export default function ManajemenInspeksi() {
 		if (
 			!hasilPemeriksaan ||
 			!conditionId ||
-			!lokasi ||
 			!tglPemeriksaan ||
 			!jamMulai ||
 			!jamSelesai
@@ -1755,29 +1685,35 @@ export default function ManajemenInspeksi() {
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">Lokasi Gudang:</p>
-									<p className="text-[12px] font-bold text-gray-900">Storage Area B</p>
+									<p className="text-[12px] font-bold text-gray-900">
+										{selectedAsset.lokasiPenyimpanan}
+									</p>
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">Pabrikan / Vendor:</p>
-									<p className="text-[12px] font-bold text-gray-900">Atlas Copco</p>
+									<p className="text-[12px] font-bold text-gray-900">
+										{selectedAsset.vendor}
+									</p>
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">Tahun Pembuatan:</p>
-									<p className="text-[12px] font-bold text-gray-900">2015</p>
+									<p className="text-[12px] font-bold text-gray-900">
+										{selectedAsset.tahunDibuat}
+									</p>
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">
 										Nilai Perolehan (IDR):
 									</p>
-									<p className="text-[12px] font-bold text-gray-900">Rp 300,000,000</p>
-								</div>
-								<div>
-									<p className="text-[11px] text-gray-500 mb-0.5">Kondisi Fisik:</p>
-									<p className="text-[12px] font-bold text-gray-900">BAGUS</p>
+									<p className="text-[12px] font-bold text-gray-900">
+										{selectedAsset.nilaiPerolehan}
+									</p>
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">Didaftarkan Oleh:</p>
-									<p className="text-[12px] font-bold text-gray-900">NPP2304145</p>
+									<p className="text-[12px] font-bold text-gray-900">
+										{selectedAsset.pemohon}
+									</p>
 								</div>
 								<div>
 									<p className="text-[11px] text-gray-500 mb-0.5">Tanggal Registrasi:</p>
@@ -1788,7 +1724,7 @@ export default function ManajemenInspeksi() {
 								<div className="col-span-4">
 									<p className="text-[11px] text-gray-500 mb-1">Catatan Pendaftaran:</p>
 									<div className="bg-gray-50 p-2 rounded text-[12px] italic text-gray-700 border border-gray-100">
-										&quot;Kompresor cadangan dari decommission utilitas lama.&quot;
+										{selectedAsset.spesifikasi}
 									</div>
 								</div>
 							</div>

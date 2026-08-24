@@ -1,17 +1,14 @@
-"use server"
+"use server";
 
-import { cookies } from "next/headers"
-import type {
-  LoginRequest,
-  LoginResponse,
-  User,
-} from "../types/Auth"
-import { redirect } from "next/navigation"
-import { homePathForRole, normalizeRole } from "../lib/roles"
+import { cookies } from "next/headers";
+import type { LoginRequest, LoginResponse, User } from "../types/Auth";
+import { redirect } from "next/navigation";
+import { homePathForRole, normalizeRole } from "../lib/roles";
 
-
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "https://api.testing.naufal.me"
+const API_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.API_URL ||
+  "https://api.testing.naufal.me";
 
 function cookieConfig(maxAge: number) {
   return {
@@ -19,8 +16,8 @@ function cookieConfig(maxAge: number) {
     sameSite: "lax" as const,
     path: "/",
     secure: true,
-    ...(maxAge ? { maxAge } : {})
-  }
+    ...(maxAge ? { maxAge } : {}),
+  };
 }
 
 export async function login(data: LoginRequest): Promise<LoginResponse> {
@@ -33,9 +30,9 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(data),
       cache: "no-store",
-      signal: controller.signal
+      signal: controller.signal,
     });
-    
+
     clearTimeout(timeoutId);
 
     const result = await res.json().catch(() => null);
@@ -47,40 +44,40 @@ export async function login(data: LoginRequest): Promise<LoginResponse> {
         status: false,
         message: result?.error || result?.message || "login gagal",
         token: null,
-        user: undefined
+        user: undefined,
       };
     }
 
-    const cookieStorage = await cookies()
+    const cookieStorage = await cookies();
 
     cookieStorage.set("token", token, cookieConfig(60 * 30));
     if (user) {
-      cookieStorage.set("user", JSON.stringify(user), cookieConfig(60 * 30))
+      cookieStorage.set("user", JSON.stringify(user), cookieConfig(60 * 30));
     }
 
     return {
       status: true,
       message: result?.message || "login berhasil",
       token: token,
-      user: user
-    }
-  }
-  catch (error: any) {
-    console.error(error)
+      user: user,
+    };
+  } catch (error: unknown) {
+    console.error(error);
     return {
       status: false,
-      message: error.name === 'AbortError' 
-        ? "Koneksi lambat atau tidak merespons. Silakan coba kembali beberapa saat lagi." 
-        : "Terjadi kendala saat masuk ke sistem. Silakan coba kembali.",
-      token: null
-    }
+      message:
+        error instanceof Error && error.name === "AbortError"
+          ? "Koneksi lambat atau tidak merespons. Silakan coba kembali beberapa saat lagi."
+          : "Terjadi kendala saat masuk ke sistem. Silakan coba kembali.",
+      token: null,
+    };
   }
-
 }
 
-
 export async function loginAction(
-  prevState: LoginResponse,
+  // Nama _prevState: parameter pertama wajib ada untuk kontrak useActionState,
+  // tapi memang tidak dipakai di badan aksi ini.
+  _prevState: LoginResponse,
   formData: FormData,
 ): Promise<LoginResponse> {
   const npp = String(formData.get("npp") || "");
@@ -106,11 +103,10 @@ export async function loginAction(
   return result;
 }
 
-
 export async function getCurrentUserAction() {
-  const cookieStorage = await cookies()
-  const token = cookieStorage.get("token")?.value
-  const userStorage = cookieStorage.get("user")?.value
+  const cookieStorage = await cookies();
+  const token = cookieStorage.get("token")?.value;
+  const userStorage = cookieStorage.get("user")?.value;
 
   if (!token) {
     return {
@@ -118,29 +114,28 @@ export async function getCurrentUserAction() {
       message: "token tidak ditemukan",
       token: null,
       user: null,
-    }
+    };
   }
 
   if (userStorage) {
     try {
-      const user: User = JSON.parse(userStorage)
-      if(user && user.name) {
+      const user: User = JSON.parse(userStorage);
+      if (user && user.name) {
         return {
           status: true,
           message: "user ditemukan",
           token: token,
           user: user,
-        }
+        };
       }
-    } catch (e) {
+    } catch {
       return {
         status: false,
         message: "terjadi kesalahan",
         token: null,
         user: null,
-      }
+      };
     }
-
   }
 
   return {
@@ -148,32 +143,36 @@ export async function getCurrentUserAction() {
     message: "terjadi kesalahan",
     token: null,
     user: null,
-  }
+  };
 }
 
 export async function logoutAction() {
-  const cookieStorage = await cookies()
-  const token = cookieStorage.get("token")?.value
+  const cookieStorage = await cookies();
+  const token = cookieStorage.get("token")?.value;
 
   if (token) {
     try {
       await fetch(`${API_URL}/api/auth/logout`, {
         method: "POST",
         headers: {
-          "Authorization": `Bearer ${token}`
-        }
-      })
+          Authorization: `Bearer ${token}`,
+        },
+      });
     } catch (error) {
-      console.error("Gagal memanggil API logout:", error)
+      console.error("Gagal memanggil API logout:", error);
     }
   }
 
-  cookieStorage.delete("token")
-  cookieStorage.delete("user")
-  redirect("/login")
+  cookieStorage.delete("token");
+  cookieStorage.delete("user");
+  redirect("/login");
 }
 
-export async function ssoCallbackAction(code: string, clientId: string, uid?: string | null) {
+export async function ssoCallbackAction(
+  code: string,
+  clientId: string,
+  uid?: string | null,
+) {
   try {
     const callbackUrl = new URL(`${API_URL}/api/auth/callback`);
     callbackUrl.searchParams.set("code", code);
@@ -193,7 +192,8 @@ export async function ssoCallbackAction(code: string, clientId: string, uid?: st
     if (!res.ok || !token) {
       return {
         status: false,
-        message: result?.error || result?.message || `SSO gagal (HTTP ${res.status})`,
+        message:
+          result?.error || result?.message || `SSO gagal (HTTP ${res.status})`,
       };
     }
 
@@ -208,11 +208,14 @@ export async function ssoCallbackAction(code: string, clientId: string, uid?: st
       status: true,
       redirectUrl: role ? homePathForRole(role) : "/",
     };
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("SSO callback error:", error);
     return {
       status: false,
-      message: error?.message || "Terjadi kesalahan saat memproses SSO.",
+      message:
+        error instanceof Error
+          ? error.message
+          : "Terjadi kesalahan saat memproses SSO.",
     };
   }
 }

@@ -619,7 +619,10 @@ export default function RevisiValidasiPage() {
 			{assets.length > 0 && (
 				<div className="mb-4 flex items-center justify-between rounded border border-[#B45309]/30 bg-[#F2F3F4] px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
 					<div className="flex items-center gap-3">
-						<span className="inline-flex h-2.5 w-2.5 rounded-sm bg-[#B45309]" aria-hidden="true"></span>
+						<span
+							className="inline-flex h-2.5 w-2.5 rounded-sm bg-[#B45309]"
+							aria-hidden="true"
+						></span>
 						<span className="text-[13px] text-[#0F172A] font-medium">
 							Terdapat <strong className="font-bold">{assets.length} aset</strong> yang
 							memerlukan revisi validasi sesuai catatan Manajer Rendal.
@@ -1148,7 +1151,9 @@ export default function RevisiValidasiPage() {
 										<label className="block text-[11px] font-semibold text-gray-700 mb-1">
 											Catatan Pemeriksaan Baru{" "}
 											<span
-												className={hasilPemeriksaan === "Tidak Layak" ? "text-[#DC2626]" : ""}
+												className={
+													hasilPemeriksaan === "Tidak Layak" ? "text-[#DC2626]" : ""
+												}
 											>
 												{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}
 											</span>

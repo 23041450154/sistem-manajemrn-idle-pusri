@@ -27,7 +27,8 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 		installation_location: "Area Pabrik Utama",
 		start_date: today,
 		end_date: "",
-		justification: "Diperlukan untuk memperlancar operasional dan efisiensi unit kerja.",
+		justification:
+			"Diperlukan untuk memperlancar operasional dan efisiensi unit kerja.",
 		estimated_cost_avoidance: eq.estimatedReuseValue || 150000000,
 		contact_person: "Budi Santoso",
 		contact_npp: "100002",
@@ -85,9 +86,13 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 			} else {
 				setError(result?.message || "Gagal mengirim pengajuan pemakaian.");
 			}
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Submit error:", err);
-			setError(err.message || "Terjadi kesalahan sistem saat mengirim pengajuan.");
+			setError(
+				err instanceof Error
+					? err.message
+					: "Terjadi kesalahan sistem saat mengirim pengajuan.",
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -114,7 +119,9 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 									<Send className="w-5 h-5 text-white" />
 								</div>
 								<div>
-									<h2 className="text-base font-bold text-white">Ajukan Permintaan Pemakaian</h2>
+									<h2 className="text-base font-bold text-white">
+										Ajukan Permintaan Pemakaian
+									</h2>
 									<p className="text-xs text-blue-100">
 										{eq.code} — {eq.name}
 									</p>
@@ -130,7 +137,10 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 						</div>
 
 						{/* Form */}
-						<form onSubmit={handleSubmit} className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+						<form
+							onSubmit={handleSubmit}
+							className="px-6 py-5 space-y-4 overflow-y-auto flex-1"
+						>
 							{error && (
 								<div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700 flex items-center gap-2">
 									<AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
@@ -159,7 +169,9 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 									<input
 										type="text"
 										value={formData.target_plant}
-										onChange={(e) => setFormData({ ...formData, target_plant: e.target.value })}
+										onChange={(e) =>
+											setFormData({ ...formData, target_plant: e.target.value })
+										}
 										required
 										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
 									/>
@@ -171,7 +183,9 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 									<input
 										type="text"
 										value={formData.installation_location}
-										onChange={(e) => setFormData({ ...formData, installation_location: e.target.value })}
+										onChange={(e) =>
+											setFormData({ ...formData, installation_location: e.target.value })
+										}
 										required
 										placeholder="misal: Area Pabrik III"
 										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
@@ -188,7 +202,9 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 									<input
 										type="date"
 										value={formData.start_date}
-										onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
+										onChange={(e) =>
+											setFormData({ ...formData, start_date: e.target.value })
+										}
 										required
 										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
 									/>
@@ -200,7 +216,12 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 									<input
 										type="number"
 										value={formData.estimated_cost_avoidance}
-										onChange={(e) => setFormData({ ...formData, estimated_cost_avoidance: Number(e.target.value) || 0 })}
+										onChange={(e) =>
+											setFormData({
+												...formData,
+												estimated_cost_avoidance: Number(e.target.value) || 0,
+											})
+										}
 										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
 									/>
 								</div>
@@ -213,7 +234,9 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 								</label>
 								<textarea
 									value={formData.justification}
-									onChange={(e) => setFormData({ ...formData, justification: e.target.value })}
+									onChange={(e) =>
+										setFormData({ ...formData, justification: e.target.value })
+									}
 									required
 									rows={3}
 									placeholder="Tuliskan justifikasi pemakaian peralatan ini..."
@@ -223,13 +246,17 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 
 							{/* Contact Person */}
 							<div className="bg-gray-50/80 rounded-lg p-3 border border-gray-200 space-y-2">
-								<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">Kontak Penanggung Jawab</p>
+								<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
+									Kontak Penanggung Jawab
+								</p>
 								<div className="grid grid-cols-2 gap-2 text-xs">
 									<div>
-										<span className="text-gray-500">Nama:</span> <strong className="text-gray-800">{formData.contact_person}</strong>
+										<span className="text-gray-500">Nama:</span>{" "}
+										<strong className="text-gray-800">{formData.contact_person}</strong>
 									</div>
 									<div>
-										<span className="text-gray-500">NPP:</span> <strong className="text-gray-800">{formData.contact_npp}</strong>
+										<span className="text-gray-500">NPP:</span>{" "}
+										<strong className="text-gray-800">{formData.contact_npp}</strong>
 									</div>
 								</div>
 							</div>

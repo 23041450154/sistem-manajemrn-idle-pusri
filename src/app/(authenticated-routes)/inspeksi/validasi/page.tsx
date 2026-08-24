@@ -539,48 +539,6 @@ export default function ManajemenInspeksi() {
 
 				setNotification({ type: "success", message: successMessage });
 
-				const revised = JSON.parse(localStorage.getItem("revisedAssets") || "[]");
-				const inReview = JSON.parse(localStorage.getItem("inReviewAssets") || "[]");
-				const approved = JSON.parse(localStorage.getItem("approvedAssets") || "[]");
-
-				const reValidated = JSON.parse(
-					localStorage.getItem("reValidatedAssets") || "[]",
-				);
-
-				if (revised.includes(selectedAsset.kodeAlat)) {
-					if (!reValidated.includes(selectedAsset.kodeAlat)) {
-						reValidated.push(selectedAsset.kodeAlat);
-						localStorage.setItem("reValidatedAssets", JSON.stringify(reValidated));
-					}
-				}
-
-				localStorage.setItem(
-					"revisedAssets",
-					JSON.stringify(
-						revised.filter((code: string) => code !== selectedAsset.kodeAlat),
-					),
-				);
-				localStorage.setItem(
-					"inReviewAssets",
-					JSON.stringify(
-						inReview.filter((code: string) => code !== selectedAsset.kodeAlat),
-					),
-				);
-				localStorage.setItem(
-					"approvedAssets",
-					JSON.stringify(
-						approved.filter((code: string) => code !== selectedAsset.kodeAlat),
-					),
-				);
-
-				const validated = JSON.parse(
-					localStorage.getItem("validatedAssets") || "[]",
-				);
-				if (isUtilizable && !validated.includes(selectedAsset.kodeAlat)) {
-					validated.push(selectedAsset.kodeAlat);
-					localStorage.setItem("validatedAssets", JSON.stringify(validated));
-				}
-
 				const fileNames = uploadedFiles.map((f) => f.name);
 				setAssets(
 					assets.map((a) =>
@@ -1756,7 +1714,9 @@ export default function ManajemenInspeksi() {
 										<label className="block text-[11px] font-semibold text-gray-700 mb-1">
 											Catatan Pemeriksaan{" "}
 											<span
-												className={hasilPemeriksaan === "Tidak Layak" ? "text-[#DC2626]" : ""}
+												className={
+													hasilPemeriksaan === "Tidak Layak" ? "text-[#DC2626]" : ""
+												}
 											>
 												{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}
 											</span>

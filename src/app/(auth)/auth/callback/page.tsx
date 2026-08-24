@@ -7,7 +7,12 @@ import { ssoCallbackAction } from "@/action/auth";
 function CallbackContent() {
   const params = useSearchParams();
   const router = useRouter();
-  const [message, setMessage] = useState("Menyelesaikan login SSO...");
+  // Guard message diturunkan saat render pertama, bukan via setState di efek.
+  const [message, setMessage] = useState(() =>
+    params.get("code") && process.env.NEXT_PUBLIC_CLIENT_ID
+      ? "Menyelesaikan login SSO..."
+      : "Callback SSO tidak lengkap. Kode atau client ID belum tersedia.",
+  );
 
   useEffect(() => {
     const code = params.get("code");
@@ -15,7 +20,6 @@ function CallbackContent() {
     const clientId = process.env.NEXT_PUBLIC_CLIENT_ID;
 
     if (!code || !clientId) {
-      setMessage("Callback SSO tidak lengkap. Kode atau client ID belum tersedia.");
       return;
     }
 
@@ -30,12 +34,22 @@ function CallbackContent() {
       .catch((error: Error) => setMessage(error.message));
   }, [params, router]);
 
-  return <main className="min-h-screen grid place-items-center p-6 text-sm text-gray-700">{message}</main>;
+  return (
+    <main className="min-h-screen grid place-items-center p-6 text-sm text-gray-700">
+      {message}
+    </main>
+  );
 }
 
 export default function SsoCallbackPage() {
   return (
-    <Suspense fallback={<main className="min-h-screen grid place-items-center p-6 text-sm text-gray-700">Memuat callback SSO...</main>}>
+    <Suspense
+      fallback={
+        <main className="min-h-screen grid place-items-center p-6 text-sm text-gray-700">
+          Memuat callback SSO...
+        </main>
+      }
+    >
       <CallbackContent />
     </Suspense>
   );

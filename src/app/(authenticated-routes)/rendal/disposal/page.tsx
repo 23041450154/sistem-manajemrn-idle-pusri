@@ -177,12 +177,17 @@ export default function VerifikasiDisposalPage() {
 	};
 
 	useEffect(() => {
+		// Fetch-on-mount yang sah: setState hanya setelah await di loadData.
+		// eslint-disable-next-line react-hooks/set-state-in-effect
 		loadData();
 	}, []);
 
-	useEffect(() => {
+	// Reset halaman saat filter berubah — adjust during render (pola resmi React).
+	const [prevSearch, setPrevSearch] = useState(search);
+	if (prevSearch !== search) {
+		setPrevSearch(search);
 		setCurrentPage(1);
-	}, [search]);
+	}
 
 	const showToast = (type: "success" | "error", message: string) => {
 		setNotification({ type, message });

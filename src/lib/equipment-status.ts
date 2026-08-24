@@ -114,8 +114,7 @@ const STATUS_BADGE_STYLE: Record<string, string> = {
 };
 
 export const statusBadgeStyle = (raw?: string | null) =>
-	STATUS_BADGE_STYLE[statusName(raw)] ??
-	"border-[#475569] text-[#475569]";
+	STATUS_BADGE_STYLE[statusName(raw)] ?? "border-[#475569] text-[#475569]";
 
 export const rupiah = (value: number) =>
 	`Rp ${new Intl.NumberFormat("id-ID").format(Math.round(value))}`;

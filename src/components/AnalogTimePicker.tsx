@@ -15,29 +15,39 @@ export default function AnalogTimePicker({
   disabled = false,
 }: AnalogTimePickerProps) {
   const [isOpen, setIsOpen] = useState(false);
-  
+
   // Internal values in 24h format directly
   const [tempHour, setTempHour] = useState(8); // 0-23
   const [tempMinute, setTempMinute] = useState(0); // 0-59
-  const [hourRange, setHourRange] = useState<"AM_RANGE" | "PM_RANGE">("AM_RANGE"); // "AM_RANGE" (00-11) vs "PM_RANGE" (12-23)
+  const [hourRange, setHourRange] = useState<"AM_RANGE" | "PM_RANGE">(
+    "AM_RANGE",
+  ); // "AM_RANGE" (00-11) vs "PM_RANGE" (12-23)
   const [mode, setMode] = useState<"HOUR" | "MINUTE">("HOUR");
 
   const popoverRef = useRef<HTMLDivElement>(null);
 
-  // Parse 24h format on open
-  useEffect(() => {
+  // Parse 24h format on open / saat value berubah — adjust during render
+  // (pola resmi React pengganti setState-in-effect). Key termasuk isOpen agar
+  // pembukaan ulang popover selalu re-sinkron dari value.
+  const syncKey = `${isOpen}|${value}`;
+  const [prevSyncKey, setPrevSyncKey] = useState<string | null>(null);
+  if (syncKey !== prevSyncKey) {
+    setPrevSyncKey(syncKey);
     if (value && value.includes(":")) {
       const [h24, m] = value.split(":").map(Number);
       setTempHour(h24);
       setTempMinute(m || 0);
       setHourRange(h24 >= 12 ? "PM_RANGE" : "AM_RANGE");
     }
-  }, [value, isOpen]);
+  }
 
   // Click outside to close
   useEffect(() => {
     function handleClickOutside(event: MouseEvent) {
-      if (popoverRef.current && !popoverRef.current.contains(event.target as Node)) {
+      if (
+        popoverRef.current &&
+        !popoverRef.current.contains(event.target as Node)
+      ) {
         setIsOpen(false);
       }
     }
@@ -93,7 +103,7 @@ export default function AnalogTimePicker({
       if (hourRange === "PM_RANGE") {
         hr = dialPosition + 12;
       }
-      
+
       setTempHour(hr);
       // Auto switch to minute selection after selecting hour
       setMode("MINUTE");
@@ -109,7 +119,7 @@ export default function AnalogTimePicker({
 
   // Increment / decrement helpers for fine-tuning
   const adjustMinute = (amount: number) => {
-    setTempMinute(prev => {
+    setTempMinute((prev) => {
       let next = prev + amount;
       if (next >= 60) next = 0;
       if (next < 0) next = 59;
@@ -118,7 +128,7 @@ export default function AnalogTimePicker({
   };
 
   const adjustHour = (amount: number) => {
-    setTempHour(prev => {
+    setTempHour((prev) => {
       let next = prev + amount;
       if (next > 23) next = 0;
       if (next < 0) next = 23;
@@ -137,7 +147,11 @@ export default function AnalogTimePicker({
 
   return (
     <div className="relative w-full">
-      {label && <label className="block text-[11px] font-semibold text-gray-700 mb-1">{label}</label>}
+      {label && (
+        <label className="block text-[11px] font-semibold text-gray-700 mb-1">
+          {label}
+        </label>
+      )}
       <button
         type="button"
         disabled={disabled}
@@ -162,7 +176,9 @@ export default function AnalogTimePicker({
                   type="button"
                   onClick={() => setMode("HOUR")}
                   className={`text-2xl font-bold font-mono px-2 py-0.5 rounded transition-all ${
-                    mode === "HOUR" ? "bg-[#0A356A] text-white" : "text-gray-700 hover:bg-gray-200"
+                    mode === "HOUR"
+                      ? "bg-[#0A356A] text-white"
+                      : "text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   {tempHour.toString().padStart(2, "0")}
@@ -173,12 +189,16 @@ export default function AnalogTimePicker({
                   type="button"
                   onClick={() => setMode("MINUTE")}
                   className={`text-2xl font-bold font-mono px-2 py-0.5 rounded transition-all ${
-                    mode === "MINUTE" ? "bg-[#0A356A] text-white" : "text-gray-700 hover:bg-gray-200"
+                    mode === "MINUTE"
+                      ? "bg-[#0A356A] text-white"
+                      : "text-gray-700 hover:bg-gray-200"
                   }`}
                 >
                   {tempMinute.toString().padStart(2, "0")}
                 </button>
-                <span className="text-xs font-bold text-gray-400 ml-1.5">WIB</span>
+                <span className="text-xs font-bold text-gray-400 ml-1.5">
+                  WIB
+                </span>
               </div>
 
               {/* 24-Hour Range Switcher */}
@@ -190,7 +210,9 @@ export default function AnalogTimePicker({
                     if (tempHour >= 12) setTempHour(tempHour - 12);
                   }}
                   className={`px-2 py-1 text-[10px] font-bold transition-all ${
-                    hourRange === "AM_RANGE" ? "bg-[#0A356A] text-white" : "text-gray-500 hover:bg-gray-100"
+                    hourRange === "AM_RANGE"
+                      ? "bg-[#0A356A] text-white"
+                      : "text-gray-500 hover:bg-gray-100"
                   }`}
                 >
                   00-11
@@ -202,7 +224,9 @@ export default function AnalogTimePicker({
                     if (tempHour < 12) setTempHour(tempHour + 12);
                   }}
                   className={`px-2 py-1 text-[10px] font-bold transition-all ${
-                    hourRange === "PM_RANGE" ? "bg-[#0A356A] text-white" : "text-gray-500 hover:bg-gray-100"
+                    hourRange === "PM_RANGE"
+                      ? "bg-[#0A356A] text-white"
+                      : "text-gray-500 hover:bg-gray-100"
                   }`}
                 >
                   12-23
@@ -212,8 +236,8 @@ export default function AnalogTimePicker({
 
             {/* Mode title */}
             <h4 className="text-[11px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-              {mode === "HOUR" 
-                ? `Pilih Jam (${hourRange === "AM_RANGE" ? "Pagi 00-11" : "Siang/Malam 12-23"})` 
+              {mode === "HOUR"
+                ? `Pilih Jam (${hourRange === "AM_RANGE" ? "Pagi 00-11" : "Siang/Malam 12-23"})`
                 : "Pilih Menit"}
             </h4>
 
@@ -253,7 +277,8 @@ export default function AnalogTimePicker({
                     const y = 96 + R * Math.sin(angle);
 
                     // Determine the actual 24-hour number to display
-                    const actualHour = hourRange === "AM_RANGE" ? dialVal : dialVal + 12;
+                    const actualHour =
+                      hourRange === "AM_RANGE" ? dialVal : dialVal + 12;
                     const isSelected = tempHour === actualHour;
 
                     return (
@@ -303,7 +328,9 @@ export default function AnalogTimePicker({
             {/* Fine Tuning controls below the clock */}
             <div className="flex gap-4 items-center justify-center mt-4 w-full">
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-semibold text-gray-500 uppercase">Jam:</span>
+                <span className="text-[11px] font-semibold text-gray-500 uppercase">
+                  Jam:
+                </span>
                 <button
                   type="button"
                   onClick={() => adjustHour(-1)}
@@ -320,7 +347,9 @@ export default function AnalogTimePicker({
                 </button>
               </div>
               <div className="flex items-center gap-1.5">
-                <span className="text-[11px] font-semibold text-gray-500 uppercase">Menit:</span>
+                <span className="text-[11px] font-semibold text-gray-500 uppercase">
+                  Menit:
+                </span>
                 <button
                   type="button"
                   onClick={() => adjustMinute(-1)}

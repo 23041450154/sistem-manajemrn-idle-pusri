@@ -1116,7 +1116,7 @@ export async function getAttachmentsByEquipmentId(equipmentId: string) {
 			const items = normalizeResponse(eq.attachments);
 			if (items.length > 0) return items;
 		}
-	} catch (e) {
+	} catch {
 		// Lanjut ke fallback jika gagal
 	}
 
@@ -1140,7 +1140,7 @@ export async function getAttachmentsByEquipmentId(equipmentId: string) {
 			const filtered = filterByEquipment(items);
 			if (filtered.length > 0) return filtered;
 		}
-	} catch (e) {
+	} catch {
 		// Lanjut ke fallback
 	}
 
@@ -1287,7 +1287,8 @@ export async function deleteEquipment(id: string) {
 	const token = cookieStore.get("token")?.value;
 
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
-	const targetUrl = `${baseUrl}/api/equipment/${String(id)}`;
+	// Encode path param agar tidak bisa menavigasi path lain di host yang sama.
+	const targetUrl = `${baseUrl}/api/equipment/${encodeURIComponent(String(id))}`;
 	console.log("Attempting to delete equipment:", targetUrl);
 
 	try {
@@ -1764,7 +1765,10 @@ export async function updateReuseRequestStatus(
 			}
 			const approvals = Array.isArray(approvalListJson)
 				? approvalListJson
-				: approvalListJson?.data?.items || approvalListJson?.data?.data || approvalListJson?.data || [];
+				: approvalListJson?.data?.items ||
+					approvalListJson?.data?.data ||
+					approvalListJson?.data ||
+					[];
 			const matchedApproval = Array.isArray(approvals)
 				? approvals.find(
 						(approval: any) =>
@@ -1783,7 +1787,8 @@ export async function updateReuseRequestStatus(
 			} else if (!resolvedApprovalId) {
 				return {
 					success: false,
-					message: "Approval request untuk pengajuan reuse ini tidak ditemukan di backend.",
+					message:
+						"Approval request untuk pengajuan reuse ini tidak ditemukan di backend.",
 				};
 			}
 		}
@@ -1813,7 +1818,8 @@ export async function updateReuseRequestStatus(
 			if (res.ok) {
 				return {
 					success: true,
-					message: json?.message || "Status pengajuan peminjaman berhasil diperbarui.",
+					message:
+						json?.message || "Status pengajuan peminjaman berhasil diperbarui.",
 					data: json?.data,
 				};
 			}
@@ -1833,7 +1839,10 @@ export async function updateReuseRequestStatus(
 		};
 	} catch (error: any) {
 		console.error("Review reuse request error:", error);
-		return { success: false, message: error?.message || "Gagal terhubung ke server." };
+		return {
+			success: false,
+			message: error?.message || "Gagal terhubung ke server.",
+		};
 	}
 }
 

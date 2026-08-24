@@ -1,5 +1,9 @@
 "use client";
 
+/* ponytail: payload API legacy tetap untyped sampai backend mengekspor DTO bersama.
+   Upgrade path: generate types dari swagger_dump.json backend. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import React, { useEffect, useState, useMemo, useRef } from "react";
 import {
   getEquipments,
@@ -8,6 +12,7 @@ import {
   getReuseRequests,
   getAttachmentsByEquipmentId,
 } from "@/action/api";
+import { getCurrentUserAction } from "@/action/auth";
 import {
   statusBadgeStyle,
   statusName,
@@ -118,6 +123,10 @@ export default function UnitKerjaKatalogPage() {
   // Attachment States
   const [attachments, setAttachments] = useState<any[]>([]);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
+  const [currentUser, setCurrentUser] = useState<{
+    name?: string;
+    npp?: string;
+  } | null>(null);
 
   // Reuse Form State
   const [formData, setFormData] = useState({
@@ -128,9 +137,9 @@ export default function UnitKerjaKatalogPage() {
     end_date: "",
     justification: "",
     estimated_cost_avoidance: 0,
-    contact_person: "Budi Santoso",
-    contact_npp: "100002",
-    contact_phone: "0812-7890-1122",
+    contact_person: "",
+    contact_npp: "",
+    contact_phone: "",
   });
 
   const showNotification = (type: "success" | "error", message: string) => {
@@ -152,14 +161,14 @@ export default function UnitKerjaKatalogPage() {
   }, []);
 
   const fetchData = async () => {
-    setIsLoading(true);
-    setError(null);
     try {
-      const [rawEqList, objTypes, rawRequests] = await Promise.all([
+      const [rawEqList, objTypes, rawRequests, user] = await Promise.all([
         getEquipments(),
         getObjectTypes().catch(() => []),
         getReuseRequests().catch(() => []),
+        getCurrentUserAction().catch(() => null),
       ]);
+      setCurrentUser(user?.user ?? null);
 
       const mappedEquipments: EquipmentItem[] = (rawEqList || []).map(
         (item: any) => {
@@ -321,13 +330,9 @@ export default function UnitKerjaKatalogPage() {
           estimated_cost_avoidance:
             Number(r.estimated_cost_avoidance || r.estimatedCostAvoidance) || 0,
           contact_person:
-            typeof r.contact_person === "string"
-              ? r.contact_person
-              : "Budi Santoso",
-          contact_npp: String(r.contact_npp || r.contactNpp || "100002"),
-          contact_phone: String(
-            r.contact_phone || r.contactPhone || "0812-7890-1122",
-          ),
+            typeof r.contact_person === "string" ? r.contact_person : "-",
+          contact_npp: String(r.contact_npp || r.contactNpp || ""),
+          contact_phone: String(r.contact_phone || r.contactPhone || ""),
           status: (r.status ||
             r.approval_status ||
             r.approvalStatus ||
@@ -352,6 +357,10 @@ export default function UnitKerjaKatalogPage() {
   };
 
   useEffect(() => {
+    // Fetch-on-mount yang sah: seluruh setState di fetchData terjadi setelah
+    // await, bukan sinkron di badan efek. Linter tidak menelusuri boundary
+    // await antar-fungsi.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
   }, []);
 
@@ -412,10 +421,14 @@ export default function UnitKerjaKatalogPage() {
     sortConfig,
   ]);
 
-  // Pagination Logic
-  useEffect(() => {
+  // Pagination Logic — reset halaman saat filter berubah (adjust during render,
+  // pola resmi React pengganti setState-in-effect).
+  const filterKey = `${search}|${selectedPlant}|${selectedStatus}|${selectedCategory}`;
+  const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+  if (prevFilterKey !== filterKey) {
+    setPrevFilterKey(filterKey);
     setCurrentPage(1);
-  }, [search, selectedPlant, selectedStatus, selectedCategory]);
+  }
 
   const paginatedEquipments = useMemo(() => {
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -486,9 +499,10 @@ export default function UnitKerjaKatalogPage() {
       end_date: "",
       justification: "",
       estimated_cost_avoidance: item.estimated_reuse_value || 0,
-      contact_person: "Budi Santoso",
-      contact_npp: "100002",
-      contact_phone: "0812-7890-1122",
+      // Prefill kontak dari user yang login — bukan kontak fiktif.
+      contact_person: currentUser?.name || "",
+      contact_npp: currentUser?.npp ? String(currentUser.npp) : "",
+      contact_phone: "",
     });
   };
 

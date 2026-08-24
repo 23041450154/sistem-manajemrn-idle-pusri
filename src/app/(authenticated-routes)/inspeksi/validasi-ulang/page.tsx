@@ -71,73 +71,77 @@ export default function ValidasiUlangPage() {
 
 		let filtered: RevalidasiItem[] = [];
 
-			if (Array.isArray(data) && data.length > 0) {
-				filtered = data
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					.filter((item: any) => {
-						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
-						const isRepairCompleted =
-							item.status_id === 4 ||
-							item.status?.id === 4 ||
-							statusName === "REPAIR_COMPLETED";
-						const isRevalidation =
-							item.status_id === 5 ||
-							item.status?.id === 5 ||
-							statusName === "REVALIDATION" ||
-							statusName === "REVALIDASI";
-						const isReadyToUse =
-							item.status_id === 6 ||
-							item.status?.id === 6 ||
-							statusName === "READY_TO_USE" ||
-							statusName === "READY TO USE";
-						const isScrap =
-							item.status_id === 8 ||
-							item.status?.id === 8 ||
-							statusName === "SCRAP" ||
-							statusName === "DISPOSAL_VERIFIED";
+		if (Array.isArray(data) && data.length > 0) {
+			filtered = data
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				.filter((item: any) => {
+					const statusName = String(
+						item.status?.name || item.statusAset || "",
+					).toUpperCase();
+					const isRepairCompleted =
+						item.status_id === 4 ||
+						item.status?.id === 4 ||
+						statusName === "REPAIR_COMPLETED";
+					const isRevalidation =
+						item.status_id === 5 ||
+						item.status?.id === 5 ||
+						statusName === "REVALIDATION" ||
+						statusName === "REVALIDASI";
+					const isReadyToUse =
+						item.status_id === 6 ||
+						item.status?.id === 6 ||
+						statusName === "READY_TO_USE" ||
+						statusName === "READY TO USE";
+					const isScrap =
+						item.status_id === 8 ||
+						item.status?.id === 8 ||
+						statusName === "SCRAP" ||
+						statusName === "DISPOSAL_VERIFIED";
 
-						return isRepairCompleted || isRevalidation || isReadyToUse || isScrap;
-					})
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
-					.map((item: any) => {
-						const plantStr =
-							typeof item.plant === "string"
-								? item.plant
-								: item.plant?.name || item.plant?.description || "-";
-						const storageStr =
-							typeof item.storage_location === "string"
-								? item.storage_location
-								: item.storage_location?.name || "-";
-						const objectTypeStr =
-							typeof item.object_type === "string"
-								? item.object_type
-								: item.object_type?.name || "-";
-						const conditionStr =
-							typeof item.condition === "string"
-								? item.condition
-								: item.condition?.name || "-";
-						const statusName = String(item.status?.name || item.statusAset || "").toUpperCase();
+					return isRepairCompleted || isRevalidation || isReadyToUse || isScrap;
+				})
+				// eslint-disable-next-line @typescript-eslint/no-explicit-any
+				.map((item: any) => {
+					const plantStr =
+						typeof item.plant === "string"
+							? item.plant
+							: item.plant?.name || item.plant?.description || "-";
+					const storageStr =
+						typeof item.storage_location === "string"
+							? item.storage_location
+							: item.storage_location?.name || "-";
+					const objectTypeStr =
+						typeof item.object_type === "string"
+							? item.object_type
+							: item.object_type?.name || "-";
+					const conditionStr =
+						typeof item.condition === "string"
+							? item.condition
+							: item.condition?.name || "-";
+					const statusName = String(
+						item.status?.name || item.statusAset || "",
+					).toUpperCase();
 
-						return {
-							id: String(item.id),
-							kodeAlat: item.equipment_code || item.kodeAlat || "-",
-							namaAlat:
-								typeof item.name === "string"
-									? item.name
-									: item.name?.name || item.namaAlat || "-",
-							tipeObjek: objectTypeStr,
-							plant: plantStr,
-							lokasiPenyimpanan: storageStr,
-							kondisiSebelumnya: conditionStr,
-							tanggalSelesai: item.updated_at
-								? new Date(item.updated_at).toISOString().split("T")[0]
-								: item.created_at
-									? new Date(item.created_at).toISOString().split("T")[0]
-									: new Date().toISOString().split("T")[0],
-							statusAset: statusName,
-							statusId: item.status_id || item.status?.id || 4,
-						};
-					});
+					return {
+						id: String(item.id),
+						kodeAlat: item.equipment_code || item.kodeAlat || "-",
+						namaAlat:
+							typeof item.name === "string"
+								? item.name
+								: item.name?.name || item.namaAlat || "-",
+						tipeObjek: objectTypeStr,
+						plant: plantStr,
+						lokasiPenyimpanan: storageStr,
+						kondisiSebelumnya: conditionStr,
+						tanggalSelesai: item.updated_at
+							? new Date(item.updated_at).toISOString().split("T")[0]
+							: item.created_at
+								? new Date(item.created_at).toISOString().split("T")[0]
+								: new Date().toISOString().split("T")[0],
+						statusAset: statusName,
+						statusId: item.status_id || item.status?.id || 4,
+					};
+				});
 		}
 
 		return { items: filtered, conditions: conditionsData || [] };
@@ -182,9 +186,7 @@ export default function ValidasiUlangPage() {
 
 	const plantOptions = useMemo(
 		() =>
-			[
-				...new Set(items.map((e) => e.plant).filter((v) => v && v !== "-")),
-			].sort(),
+			[...new Set(items.map((e) => e.plant).filter((v) => v && v !== "-"))].sort(),
 		[items],
 	);
 
@@ -212,7 +214,8 @@ export default function ValidasiUlangPage() {
 		let result = items;
 
 		result = result.filter((item) => {
-			const isAntrean = item.statusId === 4 || item.statusAset === "REPAIR_COMPLETED";
+			const isAntrean =
+				item.statusId === 4 || item.statusAset === "REPAIR_COMPLETED";
 			return activeTab === "antrean" ? isAntrean : !isAntrean;
 		});
 
@@ -282,16 +285,25 @@ export default function ValidasiUlangPage() {
 		setIsSubmitting(true);
 		setModalError(null);
 		try {
-			const selectedConditionObj = conditions.find((c) => String(c.id) === String(conditionId));
-			const conditionNameUpper = String(selectedConditionObj?.name || "").toUpperCase();
+			const selectedConditionObj = conditions.find(
+				(c) => String(c.id) === String(conditionId),
+			);
+			const conditionNameUpper = String(
+				selectedConditionObj?.name || "",
+			).toUpperCase();
 
-			const isBagus = conditionNameUpper === "BAGUS" || conditionNameUpper === "BAIK";
+			const isBagus =
+				conditionNameUpper === "BAGUS" || conditionNameUpper === "BAIK";
 			const isScrap = conditionNameUpper === "RUSAK_BERAT";
 
-			const result = await createRevalidation(selectedAsset.id, Number(conditionId), {
-				notes,
-				followupRecommendation,
-			});
+			const result = await createRevalidation(
+				selectedAsset.id,
+				Number(conditionId),
+				{
+					notes,
+					followupRecommendation,
+				},
+			);
 
 			if (result.success) {
 				if (isBagus) {
@@ -327,8 +339,7 @@ export default function ValidasiUlangPage() {
 	const getConditionBadge = (kondisi: string) => {
 		if (kondisi === "Baik" || kondisi === "BAGUS")
 			return "border border-[#059669] text-[#059669]";
-		if (kondisi === "-")
-			return "bg-gray-50 text-gray-400 border border-gray-200";
+		if (kondisi === "-") return "bg-gray-50 text-gray-400 border border-gray-200";
 		return "border border-[#B45309] text-[#B45309]";
 	};
 
@@ -357,7 +368,9 @@ export default function ValidasiUlangPage() {
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
 					<span>Inspeksi Teknik</span>
 					<ChevronRight className="w-3.5 h-3.5" />
-					<span className="text-[#0A356A] font-semibold">Validasi Perbaikan Alat</span>
+					<span className="text-[#0A356A] font-semibold">
+						Validasi Perbaikan Alat
+					</span>
 				</div>
 				<div className="flex items-center justify-between">
 					<h1 className="text-xl font-bold text-gray-900 tracking-tight">
@@ -373,10 +386,10 @@ export default function ValidasiUlangPage() {
 					</button>
 				</div>
 				<p className="text-[13px] text-gray-500 mt-1">
-					Pemeriksaan ulang aset yang telah selesai perbaikan oleh Pemeliharaan Lapangan.
+					Pemeriksaan ulang aset yang telah selesai perbaikan oleh Pemeliharaan
+					Lapangan.
 				</p>
 			</div>
-
 
 			{/* Main Content Area (Tabel) */}
 			<div className="bg-white border border-gray-200 rounded overflow-hidden scroll-mt-4">
@@ -461,7 +474,9 @@ export default function ValidasiUlangPage() {
 						>
 							<option value="">Semua Plant</option>
 							{plantOptions.map((p) => (
-								<option key={p} value={p}>{p}</option>
+								<option key={p} value={p}>
+									{p}
+								</option>
 							))}
 						</select>
 
@@ -472,7 +487,9 @@ export default function ValidasiUlangPage() {
 						>
 							<option value="">Semua Tipe</option>
 							{tipeObjekOptions.map((t) => (
-								<option key={t} value={t}>{t}</option>
+								<option key={t} value={t}>
+									{t}
+								</option>
 							))}
 						</select>
 
@@ -559,7 +576,8 @@ export default function ValidasiUlangPage() {
 							) : (
 								paginatedItems.map((asset, index) => {
 									const rowNum = (currentPage - 1) * ITEMS_PER_PAGE + index + 1;
-									const isAntreanRow = asset.statusId === 4 || asset.statusAset === "REPAIR_COMPLETED";
+									const isAntreanRow =
+										asset.statusId === 4 || asset.statusAset === "REPAIR_COMPLETED";
 									return (
 										<tr
 											key={asset.id}
@@ -568,22 +586,45 @@ export default function ValidasiUlangPage() {
 											<td className="px-3 py-3 text-[13px] text-gray-500 font-medium text-center">
 												{rowNum}
 											</td>
-											<td className="px-2 py-3 text-[12px] font-semibold text-[#0A356A] text-left" title={asset.kodeAlat}>
-												<span className="line-clamp-2 block break-words leading-tight">{asset.kodeAlat}</span>
+											<td
+												className="px-2 py-3 text-[12px] font-semibold text-[#0A356A] text-left"
+												title={asset.kodeAlat}
+											>
+												<span className="line-clamp-2 block break-words leading-tight">
+													{asset.kodeAlat}
+												</span>
 											</td>
-											<td className="px-2 py-3 text-[12px] font-semibold text-gray-800 text-left" title={asset.namaAlat}>
+											<td
+												className="px-2 py-3 text-[12px] font-semibold text-gray-800 text-left"
+												title={asset.namaAlat}
+											>
 												<span className="leading-tight line-clamp-2 block text-left">
 													{asset.namaAlat}
 												</span>
 											</td>
-											<td className="px-2 py-3 text-[12px] text-gray-600 font-medium text-left" title={asset.tipeObjek}>
-												<span className="line-clamp-2 block leading-tight">{asset.tipeObjek}</span>
+											<td
+												className="px-2 py-3 text-[12px] text-gray-600 font-medium text-left"
+												title={asset.tipeObjek}
+											>
+												<span className="line-clamp-2 block leading-tight">
+													{asset.tipeObjek}
+												</span>
 											</td>
-											<td className="px-2 py-3 text-[12px] text-gray-600 font-medium text-left" title={asset.plant}>
-												<span className="line-clamp-2 block leading-tight">{asset.plant}</span>
+											<td
+												className="px-2 py-3 text-[12px] text-gray-600 font-medium text-left"
+												title={asset.plant}
+											>
+												<span className="line-clamp-2 block leading-tight">
+													{asset.plant}
+												</span>
 											</td>
-											<td className="px-2 py-3 text-[12px] text-gray-600 font-medium text-left" title={asset.lokasiPenyimpanan}>
-												<span className="line-clamp-2 block leading-tight">{asset.lokasiPenyimpanan}</span>
+											<td
+												className="px-2 py-3 text-[12px] text-gray-600 font-medium text-left"
+												title={asset.lokasiPenyimpanan}
+											>
+												<span className="line-clamp-2 block leading-tight">
+													{asset.lokasiPenyimpanan}
+												</span>
 											</td>
 											<td className="px-2 py-3 text-center">
 												<span
@@ -597,10 +638,10 @@ export default function ValidasiUlangPage() {
 											</td>
 											<td className="px-2 py-3 text-center">
 												<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
-																											{isAntreanRow ? (
-																												<button
-																													onClick={() => handleOpenModal(asset)}
-														className="inline-flex items-center gap-1 bg-[#0A356A] hover:bg-[#0556B3] text-white px-2 py-1 rounded text-[11px] font-medium transition-colors duration-150"
+													{isAntreanRow ? (
+														<button
+															onClick={() => handleOpenModal(asset)}
+															className="inline-flex items-center gap-1 bg-[#0A356A] hover:bg-[#0556B3] text-white px-2 py-1 rounded text-[11px] font-medium transition-colors duration-150"
 															title="Validasi Perbaikan Alat"
 														>
 															<ClipboardCheck className="h-3.5 w-3.5" />
@@ -627,11 +668,9 @@ export default function ValidasiUlangPage() {
 				<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
 					<span className="text-[11px] font-medium text-gray-500">
 						Menampilkan{" "}
-						{filteredItems.length === 0
-							? 0
-							: (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
-						- {Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)}{" "}
-						dari {filteredItems.length} data (10 baris/halaman)
+						{filteredItems.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
+						- {Math.min(currentPage * ITEMS_PER_PAGE, filteredItems.length)} dari{" "}
+						{filteredItems.length} data (10 baris/halaman)
 					</span>
 					<div className="flex items-center gap-1.5">
 						<button
@@ -642,22 +681,21 @@ export default function ValidasiUlangPage() {
 							Prev
 						</button>
 						<div className="flex items-center gap-1">
-							{Array.from(
-								{ length: Math.max(1, totalPages) },
-								(_, i) => i + 1,
-							).map((page) => (
-								<button
-									key={page}
-									onClick={() => setCurrentPage(page)}
-									className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
-										currentPage === page
-											? "bg-[#0A356A] text-white"
-											: "text-gray-600 hover:bg-gray-100"
-									}`}
-								>
-									{page}
-								</button>
-							))}
+							{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map(
+								(page) => (
+									<button
+										key={page}
+										onClick={() => setCurrentPage(page)}
+										className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
+											currentPage === page
+												? "bg-[#0A356A] text-white"
+												: "text-gray-600 hover:bg-gray-100"
+										}`}
+									>
+										{page}
+									</button>
+								),
+							)}
 						</div>
 						<button
 							onClick={() =>
@@ -679,8 +717,15 @@ export default function ValidasiUlangPage() {
 						{/* Modal Header */}
 						<div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-[#E6E8EA]">
 							<div className="min-w-0">
-								<h2 id="modal-title" className="text-[14px] font-semibold leading-tight text-[#0F172A]">Validasi Perbaikan Alat</h2>
-								<p className="mt-0.5 truncate font-mono text-[12px] text-[#64748B]">{selectedAsset.kodeAlat} · {selectedAsset.namaAlat}</p>
+								<h2
+									id="modal-title"
+									className="text-[14px] font-semibold leading-tight text-[#0F172A]"
+								>
+									Validasi Perbaikan Alat
+								</h2>
+								<p className="mt-0.5 truncate font-mono text-[12px] text-[#64748B]">
+									{selectedAsset.kodeAlat} · {selectedAsset.namaAlat}
+								</p>
 							</div>
 							<button
 								onClick={handleCloseModal}
@@ -697,7 +742,9 @@ export default function ValidasiUlangPage() {
 							<div className="bg-gray-50 rounded p-3 border border-gray-200 grid grid-cols-2 gap-2 text-xs">
 								<div>
 									<p className="text-gray-500 font-medium">Tipe Objek</p>
-									<p className="text-gray-800 font-semibold">{selectedAsset.tipeObjek}</p>
+									<p className="text-gray-800 font-semibold">
+										{selectedAsset.tipeObjek}
+									</p>
 								</div>
 								<div>
 									<p className="text-gray-500 font-medium">Plant</p>
@@ -705,11 +752,15 @@ export default function ValidasiUlangPage() {
 								</div>
 								<div>
 									<p className="text-gray-500 font-medium">Lokasi</p>
-									<p className="text-gray-800 font-semibold">{selectedAsset.lokasiPenyimpanan}</p>
+									<p className="text-gray-800 font-semibold">
+										{selectedAsset.lokasiPenyimpanan}
+									</p>
 								</div>
 								<div>
 									<p className="text-gray-500 font-medium">Kondisi Sebelumnya</p>
-									<p className="text-gray-800 font-semibold">{selectedAsset.kondisiSebelumnya}</p>
+									<p className="text-gray-800 font-semibold">
+										{selectedAsset.kondisiSebelumnya}
+									</p>
 								</div>
 							</div>
 
@@ -726,7 +777,12 @@ export default function ValidasiUlangPage() {
 									<option value="">— Pilih Kondisi —</option>
 									{conditions.map((c) => (
 										<option key={c.id} value={c.id}>
-											{c.name.replace(/_/g, " ").replace(/\w\S*/g, (txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase())}
+											{c.name
+												.replace(/_/g, " ")
+												.replace(
+													/\w\S*/g,
+													(txt) => txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(),
+												)}
 										</option>
 									))}
 								</select>
@@ -735,7 +791,9 @@ export default function ValidasiUlangPage() {
 								{conditionId ? (
 									<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200">
 										{(() => {
-											const selObj = conditions.find((c) => String(c.id) === String(conditionId));
+											const selObj = conditions.find(
+												(c) => String(c.id) === String(conditionId),
+											);
 											const nameUpper = String(selObj?.name || "").toUpperCase();
 
 											if (nameUpper === "BAGUS" || nameUpper === "BAIK") {
@@ -747,7 +805,9 @@ export default function ValidasiUlangPage() {
 																BAGUS → Status Naik ke REVALIDATION
 															</p>
 															<p className="text-[11px] text-[#059669] mt-0.5 leading-relaxed">
-																Perbaikan dinyatakan berhasil. Aset akan diteruskan ke <strong>Rendal Pemeliharaan</strong> untuk persetujuan status <strong>Ready to Use</strong>.
+																Perbaikan dinyatakan berhasil. Aset akan diteruskan ke{" "}
+																<strong>Rendal Pemeliharaan</strong> untuk persetujuan status{" "}
+																<strong>Ready to Use</strong>.
 															</p>
 														</div>
 													</div>
@@ -763,7 +823,9 @@ export default function ValidasiUlangPage() {
 																RUSAK BERAT → Status Dialihkan ke SCRAP
 															</p>
 															<p className="text-[11px] text-[#DC2626] mt-0.5 leading-relaxed">
-																Kerusakan berat dan tidak ekonomis diperbaiki. Aset direkomendasikan untuk proses usulan <strong>Scrap / Penghapusan</strong>.
+																Kerusakan berat dan tidak ekonomis diperbaiki. Aset
+																direkomendasikan untuk proses usulan{" "}
+																<strong>Scrap / Penghapusan</strong>.
 															</p>
 														</div>
 													</div>
@@ -778,7 +840,8 @@ export default function ValidasiUlangPage() {
 															RUSAK (Ringan/Sedang) → Status Kembali ke REPAIR
 														</p>
 														<p className="text-[11px] text-[#B45309] mt-0.5 leading-relaxed">
-															Aset masih mengalami kendala teknis dan akan dikembalikan ke antrean perbaikan <strong>Pemeliharaan Lapangan</strong>.
+															Aset masih mengalami kendala teknis dan akan dikembalikan ke
+															antrean perbaikan <strong>Pemeliharaan Lapangan</strong>.
 														</p>
 													</div>
 												</div>
@@ -787,11 +850,22 @@ export default function ValidasiUlangPage() {
 									</div>
 								) : (
 									<div className="mt-2 bg-gray-50 border border-gray-200 rounded p-2.5 text-[11px] text-gray-500 leading-normal">
-										<p className="font-semibold text-gray-700 mb-0.5">Panduan Keputusan Validasi Perbaikan Alat:</p>
+										<p className="font-semibold text-gray-700 mb-0.5">
+											Panduan Keputusan Validasi Perbaikan Alat:
+										</p>
 										<ul className="space-y-0.5 list-disc list-inside text-[10px]">
-											<li><strong className="text-[#059669]">BAGUS</strong>: Naik ke REVALIDATION (persetujuan Rendal)</li>
-											<li><strong className="text-[#B45309]">Rusak Ringan/Sedang</strong>: Kembali ke REPAIR (antrean perbaikan)</li>
-											<li><strong className="text-[#DC2626]">Rusak Berat</strong>: Dialihkan ke SCRAP (usulan scrap)</li>
+											<li>
+												<strong className="text-[#059669]">BAGUS</strong>: Naik ke
+												REVALIDATION (persetujuan Rendal)
+											</li>
+											<li>
+												<strong className="text-[#B45309]">Rusak Ringan/Sedang</strong>:
+												Kembali ke REPAIR (antrean perbaikan)
+											</li>
+											<li>
+												<strong className="text-[#DC2626]">Rusak Berat</strong>: Dialihkan
+												ke SCRAP (usulan scrap)
+											</li>
 										</ul>
 									</div>
 								)}
