@@ -1,7 +1,7 @@
 "use client";
 
 import { loginAction } from "@/action/auth";
-import React, { useState, useActionState } from "react";
+import React, { useState, useActionState, useRef, useEffect } from "react";
 import Image from "next/image";
 import styles from "./LoginPage.module.css";
 import type { LoginResponse } from "@/types/Auth";
@@ -20,6 +20,50 @@ export default function LoginForm() {
   const [showPassword, setShowPassword] = useState(false);
   const [npp, setNpp] = useState("");
   const [password, setPassword] = useState("");
+  const nppRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const syncValues = () => {
+      if (nppRef.current && nppRef.current.value !== npp) {
+        setNpp(nppRef.current.value);
+      }
+      if (passwordRef.current && passwordRef.current.value !== password) {
+        setPassword(passwordRef.current.value);
+      }
+    };
+
+    const nppEl = nppRef.current;
+    const passEl = passwordRef.current;
+
+    if (nppEl) {
+      nppEl.addEventListener("input", syncValues);
+      nppEl.addEventListener("change", syncValues);
+    }
+    if (passEl) {
+      passEl.addEventListener("input", syncValues);
+      passEl.addEventListener("change", syncValues);
+    }
+
+    syncValues();
+    const rafId = requestAnimationFrame(syncValues);
+    const timeouts = [20, 50, 100, 200, 400, 800, 1500].map((ms) =>
+      setTimeout(syncValues, ms),
+    );
+
+    return () => {
+      cancelAnimationFrame(rafId);
+      if (nppEl) {
+        nppEl.removeEventListener("input", syncValues);
+        nppEl.removeEventListener("change", syncValues);
+      }
+      if (passEl) {
+        passEl.removeEventListener("input", syncValues);
+        passEl.removeEventListener("change", syncValues);
+      }
+      timeouts.forEach(clearTimeout);
+    };
+  }, []);
 
   const togglePasswordVisibility = () => {
     setShowPassword(!showPassword);
@@ -130,13 +174,24 @@ export default function LoginForm() {
                   <path d="M16 14h4"></path>
                 </svg>
                 <input
+                  ref={nppRef}
                   id="npp"
                   name="npp"
                   type="text"
                   className={styles.input}
                   placeholder="Masukan NPP"
-                  value={npp}
+                  autoComplete="username"
+                  defaultValue=""
                   onChange={(e) => setNpp(e.target.value)}
+                  onInput={(e) => setNpp(e.currentTarget.value)}
+                  onAnimationStart={(e) => {
+                    if (
+                      e.animationName.includes("onAutoFillStart") &&
+                      nppRef.current
+                    ) {
+                      setNpp(nppRef.current.value);
+                    }
+                  }}
                   required
                 />
               </div>
@@ -171,13 +226,24 @@ export default function LoginForm() {
                   <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
                 </svg>
                 <input
+                  ref={passwordRef}
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
                   className={styles.input}
                   placeholder="••••••••"
-                  value={password}
+                  autoComplete="current-password"
+                  defaultValue=""
                   onChange={(e) => setPassword(e.target.value)}
+                  onInput={(e) => setPassword(e.currentTarget.value)}
+                  onAnimationStart={(e) => {
+                    if (
+                      e.animationName.includes("onAutoFillStart") &&
+                      passwordRef.current
+                    ) {
+                      setPassword(passwordRef.current.value);
+                    }
+                  }}
                   required
                 />
                 <button

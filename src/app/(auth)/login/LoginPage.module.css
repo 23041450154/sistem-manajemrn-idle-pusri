@@ -9,6 +9,24 @@
   }
 }
 
+@keyframes onAutoFillStart {
+  from {
+    /**/
+  }
+  to {
+    /**/
+  }
+}
+
+@keyframes onAutoFillCancel {
+  from {
+    /**/
+  }
+  to {
+    /**/
+  }
+}
+
 .container {
   display: flex;
   min-height: 100vh;
@@ -211,6 +229,14 @@
 .input::-ms-reveal,
 .input::-ms-clear {
   display: none;
+}
+
+.input:-webkit-autofill {
+  animation-name: onAutoFillStart;
+}
+
+.input:not(:-webkit-autofill) {
+  animation-name: onAutoFillCancel;
 }
 
 .passwordToggle {
