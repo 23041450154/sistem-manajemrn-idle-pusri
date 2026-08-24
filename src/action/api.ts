@@ -441,7 +441,8 @@ export async function validateEquipment(
 
 export async function createRevalidation(
 	equipmentId: string,
-	conditionId: number,
+	// Status tujuan hasil validasi ulang: REVALIDATION | REPAIR | DISPOSAL_RECOMMENDED.
+	targetStatus: string,
 	opts: {
 		startAt?: string;
 		endAt?: string;
@@ -456,7 +457,7 @@ export async function createRevalidation(
 	const today = new Date().toISOString().split("T")[0];
 	const formData = new FormData();
 	formData.append("equipment_id", String(equipmentId));
-	formData.append("condition_id", String(conditionId));
+	formData.append("target_status", targetStatus);
 	formData.append("start_at", opts?.startAt || today);
 	formData.append("end_at", opts?.endAt || opts?.startAt || today);
 	if (opts?.notes) formData.append("notes", opts.notes);
