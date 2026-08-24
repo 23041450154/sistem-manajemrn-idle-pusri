@@ -12,6 +12,7 @@ import {
 	Database,
 	Lock,
 } from "lucide-react";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
 	getMasterItems,
 	createMasterItem,
@@ -46,6 +47,7 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 	const [itemDesc, setItemDesc] = useState("");
 	const [itemPlantId, setItemPlantId] = useState<number | "">("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isSaveConfirmOpen, setIsSaveConfirmOpen] = useState(false);
 
 	const [notification, setNotification] = useState<{
 		type: "success" | "error";
@@ -86,8 +88,8 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 		setFormOpen(true);
 	};
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
+	const handleSubmit = async (e?: React.FormEvent) => {
+		e?.preventDefault();
 		if (!itemName.trim()) return;
 
 		setIsSubmitting(true);
@@ -425,7 +427,8 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 									Batal
 								</button>
 								<button
-									type="submit"
+									type="button"
+									onClick={() => setIsSaveConfirmOpen(true)}
 									disabled={isSubmitting || !itemName.trim()}
 									className="px-5 py-2.5 bg-[#0A356A] text-white rounded-xl text-xs font-bold hover:bg-[#0556B3] transition-colors flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
 								>
@@ -491,6 +494,19 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 					</div>
 				</div>
 			)}
+			<ConfirmDialog
+				open={isSaveConfirmOpen}
+				onClose={() => setIsSaveConfirmOpen(false)}
+				onConfirm={() => {
+					setIsSaveConfirmOpen(false);
+					handleSubmit();
+				}}
+				title={editing ? "Simpan Perubahan Data Master?" : "Tambah Data Master?"}
+				description={`${itemName.trim() || "Item"} akan ${editing ? "diperbarui" : "ditambahkan"} pada master ${entity.label}.`}
+				confirmLabel={editing ? "Ya, Simpan" : "Ya, Tambah"}
+				pendingLabel="Menyimpan..."
+				isPending={isSubmitting}
+			/>
 		</div>
 	);
 }

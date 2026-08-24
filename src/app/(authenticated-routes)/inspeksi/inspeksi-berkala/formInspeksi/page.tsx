@@ -22,6 +22,7 @@ import {
 	getRequireActions,
 	submitInspectionData,
 } from "@/action/api";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 export default function FormInspeksiPage() {
 	const searchParams = useSearchParams();
@@ -44,6 +45,7 @@ export default function FormInspeksiPage() {
 
 	// UI State
 	const [loading, setLoading] = useState(false);
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [toast, setToast] = useState<{
 		show: boolean;
 		type: "success" | "error";
@@ -131,8 +133,8 @@ export default function FormInspeksiPage() {
 		isNotesEmpty ||
 		loading;
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
+	const handleSubmit = async (e?: React.FormEvent) => {
+		e?.preventDefault();
 		if (isSubmitDisabled) return;
 
 		setLoading(true);
@@ -686,7 +688,8 @@ export default function FormInspeksiPage() {
 						Batal
 					</button>
 					<button
-						type="submit"
+						type="button"
+						onClick={() => setIsConfirmOpen(true)}
 						disabled={isSubmitDisabled}
 						className={`w-full sm:w-auto flex items-center justify-center gap-2 px-6 py-2.5 rounded font-bold text-[13px] transition-all ${
 							isSubmitDisabled
@@ -708,6 +711,20 @@ export default function FormInspeksiPage() {
 					</button>
 				</div>
 			</form>
+
+			<ConfirmDialog
+				open={isConfirmOpen}
+				onClose={() => setIsConfirmOpen(false)}
+				onConfirm={() => {
+					setIsConfirmOpen(false);
+					handleSubmit();
+				}}
+				title="Kirim Hasil Inspeksi Berkala?"
+				description={`Hasil inspeksi untuk ${equipment?.equipment_code ?? equipmentId ?? "peralatan ini"} akan disimpan dan status peralatan diperbarui.`}
+				confirmLabel="Ya, Kirim"
+				pendingLabel="Mengirim..."
+				isPending={loading}
+			/>
 		</div>
 	);
 }

@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 
 import AnalogTimePicker from "@/components/AnalogTimePicker";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 import {
 	getConditions,
@@ -224,6 +225,7 @@ export default function ManajemenInspeksi() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [modalMode, setModalMode] = useState<"VALIDASI" | "DETAIL">("VALIDASI");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [notification, setNotification] = useState<{
 		type: "success" | "error";
 		message: string;
@@ -671,7 +673,7 @@ export default function ManajemenInspeksi() {
 			setShowValidationErrors(true);
 			return;
 		}
-		handleSave();
+		setIsConfirmOpen(true);
 	};
 
 	const isReadOnly =
@@ -1848,6 +1850,20 @@ export default function ManajemenInspeksi() {
 					/>
 				</div>
 			)}
+
+			<ConfirmDialog
+				open={isConfirmOpen}
+				onClose={() => setIsConfirmOpen(false)}
+				onConfirm={() => {
+					setIsConfirmOpen(false);
+					handleSave();
+				}}
+				title="Simpan Hasil Validasi?"
+				description={`Status aset ${selectedAsset?.kodeAlat ?? ""} akan diperbarui sesuai hasil pemeriksaan dan diteruskan ke alur persetujuan.`}
+				confirmLabel="Ya, Simpan"
+				pendingLabel="Menyimpan..."
+				isPending={isSubmitting}
+			/>
 		</div>
 	);
 }

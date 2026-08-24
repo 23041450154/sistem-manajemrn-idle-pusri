@@ -4,6 +4,7 @@ import { Search, Bell, HelpCircle, LogOut, Menu } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { logoutAction } from "@/action/auth";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useSidebar } from "./SidebarProvider";
 
 /* ponytail: payload user legacy bervariasi (langsung / dibungkus {user}, NPP di
@@ -19,6 +20,7 @@ type HeaderUser = {
 
 export function Header({ user }: { user?: HeaderUser }) {
   const [showDropdown, setShowDropdown] = useState(false);
+  const [isLogoutOpen, setIsLogoutOpen] = useState(false);
   const { toggleSidebar } = useSidebar();
 
   const currentUser = user?.user || user;
@@ -94,7 +96,7 @@ export function Header({ user }: { user?: HeaderUser }) {
                 )}
               </div>
               <button
-                onClick={() => logoutAction()}
+                onClick={() => setIsLogoutOpen(true)}
                 className="flex items-center w-full gap-2 px-4 py-2 text-xs font-semibold text-red-600 hover:bg-red-50 transition-colors"
               >
                 <LogOut className="w-4 h-4" />
@@ -104,6 +106,16 @@ export function Header({ user }: { user?: HeaderUser }) {
           )}
         </div>
       </div>
+
+      <ConfirmDialog
+        open={isLogoutOpen}
+        onClose={() => setIsLogoutOpen(false)}
+        onConfirm={() => logoutAction()}
+        title="Keluar dari Aplikasi?"
+        description="Sesi Anda akan diakhiri dan Anda kembali ke halaman login."
+        confirmLabel="Ya, Keluar"
+        tone="destructive"
+      />
     </header>
   );
 }

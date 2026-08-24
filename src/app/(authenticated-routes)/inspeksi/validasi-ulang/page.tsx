@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { getEquipments, createRevalidation } from "@/action/api";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
 	CheckCircle2,
 	Search,
@@ -59,6 +60,7 @@ export default function ValidasiUlangPage() {
 	const [notes, setNotes] = useState("");
 	const [followupRecommendation, setFollowupRecommendation] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [notification, setNotification] = useState<{
 		type: "success" | "error";
 		message: string;
@@ -291,8 +293,8 @@ export default function ValidasiUlangPage() {
 		setModalError(null);
 	};
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
+	const handleSubmit = async (e?: React.FormEvent) => {
+		e?.preventDefault();
 		if (!selectedAsset || !hasilStatus || isSubmitting) return;
 
 		if (!notes.trim()) {
@@ -1023,7 +1025,7 @@ export default function ValidasiUlangPage() {
 										Batal
 									</button>
 									<button
-										onClick={handleSubmit}
+										onClick={() => setIsConfirmOpen(true)}
 										disabled={isSubmitting || !hasilStatus}
 										className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 									>
@@ -1040,6 +1042,20 @@ export default function ValidasiUlangPage() {
 					</div>
 				</div>
 			)}
+
+			<ConfirmDialog
+				open={isConfirmOpen}
+				onClose={() => setIsConfirmOpen(false)}
+				onConfirm={() => {
+					setIsConfirmOpen(false);
+					handleSubmit();
+				}}
+				title="Kirim Hasil Validasi Ulang?"
+				description={`Hasil pemeriksaan ulang ${selectedAsset?.kodeAlat ?? ""} akan disimpan dan status aset berubah menjadi ${hasilStatus.replace(/_/g, " ")}.`}
+				confirmLabel="Ya, Kirim"
+				pendingLabel="Mengirim..."
+				isPending={isSubmitting}
+			/>
 		</div>
 	);
 }

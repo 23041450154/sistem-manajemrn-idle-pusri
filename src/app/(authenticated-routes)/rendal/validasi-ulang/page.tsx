@@ -10,6 +10,7 @@ import {
 	approveRevalidationEquipment,
 } from "@/action/api";
 import { statusName as canonStatus } from "@/lib/equipment-status";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
 	CheckCircle2,
 	Search,
@@ -60,6 +61,7 @@ export default function RendalValidasiUlangPage() {
 	const [modalMode, setModalMode] = useState<"APPROVAL" | "DETAIL">("APPROVAL");
 	const [approvalNotes, setApprovalNotes] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [notification, setNotification] = useState<{
 		type: "success" | "error";
 		message: string;
@@ -277,8 +279,8 @@ export default function RendalValidasiUlangPage() {
 		setApprovalNotes("");
 	};
 
-	const handleApprove = async (e: React.FormEvent) => {
-		e.preventDefault();
+	const handleApprove = async (e?: React.FormEvent) => {
+		e?.preventDefault();
 		if (!selectedAsset || isSubmitting) return;
 
 		setIsSubmitting(true);
@@ -919,7 +921,8 @@ export default function RendalValidasiUlangPage() {
 											Batal
 										</button>
 										<button
-											type="submit"
+											type="button"
+											onClick={() => setIsConfirmOpen(true)}
 											disabled={isSubmitting}
 											className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-lg transition-colors shadow-sm disabled:opacity-50"
 										>
@@ -937,6 +940,19 @@ export default function RendalValidasiUlangPage() {
 					</div>
 				</div>
 			)}
+			<ConfirmDialog
+				open={isConfirmOpen}
+				onClose={() => setIsConfirmOpen(false)}
+				onConfirm={() => {
+					setIsConfirmOpen(false);
+					handleApprove();
+				}}
+				title="Setujui Validasi Ulang?"
+				description={`${selectedAsset?.kodeAlat ?? ""} — Aset akan ditetapkan READY_TO_USE dan keluar dari antrean persetujuan.`}
+				confirmLabel="Ya, Setujui"
+				pendingLabel="Memproses..."
+				isPending={isSubmitting}
+			/>
 		</div>
 	);
 }

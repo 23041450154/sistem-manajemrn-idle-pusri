@@ -27,6 +27,7 @@ import {
 	uploadEquipmentAttachment,
 } from "@/action/api";
 import { useRouter, useSearchParams } from "next/navigation";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import YearPicker from "@/components/YearPicker";
 
 export default function RegisterEquipmentPage() {
@@ -41,6 +42,7 @@ export default function RegisterEquipmentPage() {
 
 	// State untuk efek Loading dan Validasi
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [showValidationErrors, setShowValidationErrors] = useState(false);
 	const [touched, setTouched] = useState<Record<string, boolean>>({});
 	const [isImporting, setIsImporting] = useState(false);
@@ -223,8 +225,8 @@ export default function RegisterEquipmentPage() {
 		setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
 	};
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
+	const handleSubmit = async (e?: React.FormEvent) => {
+		e?.preventDefault();
 
 		// Custom Validation Check
 		if (
@@ -809,7 +811,8 @@ export default function RegisterEquipmentPage() {
 							Batal
 						</Link>
 						<button
-							type="submit"
+							type="button"
+							onClick={() => setIsConfirmOpen(true)}
 							disabled={isSubmitting}
 							className="w-full px-5 py-2.5 rounded bg-[#0A356A] hover:bg-[#0556B3] text-white text-sm font-bold transition-all shadow-md flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
 						>
@@ -996,6 +999,20 @@ export default function RegisterEquipmentPage() {
 					</div>
 				</div>
 			)}
+
+			<ConfirmDialog
+				open={isConfirmOpen}
+				onClose={() => setIsConfirmOpen(false)}
+				onConfirm={() => {
+					setIsConfirmOpen(false);
+					handleSubmit();
+				}}
+				title="Simpan Data Peralatan?"
+				description="Data peralatan akan didaftarkan ke sistem dan masuk alur validasi Rendal Pemeliharaan."
+				confirmLabel="Ya, Simpan"
+				pendingLabel="Menyimpan..."
+				isPending={isSubmitting}
+			/>
 		</div>
 	);
 }

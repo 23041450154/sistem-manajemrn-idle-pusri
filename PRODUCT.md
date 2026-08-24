@@ -27,6 +27,8 @@ Not applicable. This is an operational tool, not a marketing page. The interface
 - Not the anti-slop overcorrection either: no cream/serif/editorial treatment on a plant maintenance tool
 
 ## User-provided facts
+- Source: user — Setiap aksi user yang mengubah data harus menampilkan dialog konfirmasi Ya/Tidak sebelum dieksekusi.
+- Source: user — Copywriting UI disesuaikan (jelas, konkret, tanpa basa-basi).
 
 - Source: user — Redesign scope starts at `src/app/(authenticated-routes)/rendal/`
 - Source: user — Corner radius must be small. "Jangan rounded banget, masih keliatan kotak tapi sedikit rounded."

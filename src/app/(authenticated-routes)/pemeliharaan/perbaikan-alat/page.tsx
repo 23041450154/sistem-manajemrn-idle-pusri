@@ -5,6 +5,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { getEquipments, completeEquipmentRepair } from "@/action/api";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
 	repairFlowStatus,
 	REPAIR_STATUS_LABEL,
@@ -139,6 +140,7 @@ export default function PerbaikanAlatPage() {
 	const [notes, setNotes] = useState("");
 	const [preservationStatus, setPreservationStatus] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 
 	const loadEquipments = async () => {
 		setIsLoading(true);
@@ -360,8 +362,8 @@ export default function PerbaikanAlatPage() {
 	const isFormInvalid =
 		!isCostValid || !isDateRangeValid || !isPreservationValid;
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
+	const handleSubmit = async (e?: React.FormEvent) => {
+		e?.preventDefault();
 		if (isFormInvalid || !selectedAsset || isSubmitting) return;
 
 		setIsSubmitting(true);
@@ -1041,7 +1043,8 @@ export default function PerbaikanAlatPage() {
 										Batal
 									</button>
 									<button
-										type="submit"
+										type="button"
+										onClick={() => setIsConfirmOpen(true)}
 										disabled={isFormInvalid || isSubmitting}
 										className="min-h-[44px] flex items-center gap-2 px-5 text-[13px] font-semibold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-[4px] transition-colors duration-[140ms] ease-out disabled:opacity-50 disabled:cursor-not-allowed"
 									>
@@ -1079,6 +1082,19 @@ export default function PerbaikanAlatPage() {
 					/>
 				</button>
 			)}
+			<ConfirmDialog
+				open={isConfirmOpen}
+				onClose={() => setIsConfirmOpen(false)}
+				onConfirm={() => {
+					setIsConfirmOpen(false);
+					handleSubmit();
+				}}
+				title="Catat Perbaikan Selesai?"
+				description={`${selectedAsset?.kodeAlat ?? ""} akan berstatus REPAIR_COMPLETED dan masuk antrean validasi ulang Inspeksi Teknik.`}
+				confirmLabel="Ya, Simpan"
+				pendingLabel="Menyimpan..."
+				isPending={isSubmitting}
+			/>
 		</div>
 	);
 }

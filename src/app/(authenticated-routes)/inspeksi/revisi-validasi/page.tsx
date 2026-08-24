@@ -27,6 +27,7 @@ import {
 } from "lucide-react";
 
 import AnalogTimePicker from "@/components/AnalogTimePicker";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 import {
 	getConditions,
@@ -216,6 +217,7 @@ export default function RevisiValidasiPage() {
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [modalMode, setModalMode] = useState<"VALIDASI" | "DETAIL">("VALIDASI");
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [notification, setNotification] = useState<{
 		type: "success" | "error";
 		message: string;
@@ -624,7 +626,7 @@ export default function RevisiValidasiPage() {
 			setShowValidationErrors(true);
 			return;
 		}
-		handleSave();
+		setIsConfirmOpen(true);
 	};
 
 	const handleSort = (key: keyof Asset) => {
@@ -1399,6 +1401,20 @@ export default function RevisiValidasiPage() {
 					/>
 				</div>
 			)}
+
+			<ConfirmDialog
+				open={isConfirmOpen}
+				onClose={() => setIsConfirmOpen(false)}
+				onConfirm={() => {
+					setIsConfirmOpen(false);
+					handleSave();
+				}}
+				title="Kirim Revisi Validasi?"
+				description={`Hasil revisi ${selectedAsset?.kodeAlat ?? ""} akan dikirim ulang ke Manajer untuk ditinjau kembali.`}
+				confirmLabel="Ya, Kirim"
+				pendingLabel="Mengirim..."
+				isPending={isSubmitting}
+			/>
 		</div>
 	);
 }

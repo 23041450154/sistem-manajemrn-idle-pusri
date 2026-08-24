@@ -4,6 +4,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Send, X, Loader2, AlertCircle } from "lucide-react";
 import { createReuseRequest } from "@/action/api";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 interface KatalogItemMinimal {
 	id: string;
@@ -18,6 +19,7 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	const today = new Date().toISOString().split("T")[0];
@@ -46,8 +48,8 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 		setError(null);
 	};
 
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
+	const handleSubmit = async (e?: React.FormEvent) => {
+		e?.preventDefault();
 		if (isSubmitting) return;
 
 		if (!formData.installation_location.trim()) {
@@ -272,7 +274,8 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 									Batal
 								</button>
 								<button
-									type="submit"
+									type="button"
+									onClick={() => setIsConfirmOpen(true)}
 									disabled={isSubmitting}
 									className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-[#0A356A] hover:bg-[#062854] rounded-lg transition-colors disabled:opacity-50 shadow-sm"
 								>
@@ -293,6 +296,20 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 					</div>
 				</div>
 			)}
+
+			<ConfirmDialog
+				open={isConfirmOpen}
+				onClose={() => setIsConfirmOpen(false)}
+				onConfirm={() => {
+					setIsConfirmOpen(false);
+					handleSubmit();
+				}}
+				title="Ajukan Permintaan Pemakaian?"
+				description="Permintaan akan dikirim ke Manajer Rendal untuk disetujui sebelum aset dapat dipakai."
+				confirmLabel="Ya, Ajukan"
+				pendingLabel="Mengirim..."
+				isPending={isSubmitting}
+			/>
 		</>
 	);
 }

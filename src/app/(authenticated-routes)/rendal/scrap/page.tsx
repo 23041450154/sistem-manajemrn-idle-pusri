@@ -13,6 +13,7 @@ import {
 	getValidations,
 } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
 	Trash2,
 	Search,
@@ -106,6 +107,7 @@ export default function RendalScrapPage() {
 	// Hasil validasi teknik (GET /api/validation) — sumber alasan & rekomendasi scrap.
 	const [assetValidation, setAssetValidation] = useState<any>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [notification, setNotification] = useState<{
 		type: "success" | "error";
 		message: string;
@@ -328,8 +330,8 @@ export default function RendalScrapPage() {
 		[assetValidation, assetInspection],
 	);
 
-	const handleSubmitVerification = async (e: React.FormEvent) => {
-		e.preventDefault();
+	const handleSubmitVerification = async (e?: React.FormEvent) => {
+		e?.preventDefault();
 		if (!selectedAsset) return;
 
 		setIsSubmitting(true);
@@ -1039,7 +1041,8 @@ export default function RendalScrapPage() {
 									Batal
 								</button>
 								<button
-									type="submit"
+									type="button"
+									onClick={() => setIsConfirmOpen(true)}
 									disabled={isSubmitting}
 									className="px-5 py-2 bg-[#0A356A] hover:bg-[#062854] text-white rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2 cursor-pointer"
 								>
@@ -1178,6 +1181,19 @@ export default function RendalScrapPage() {
 					</div>
 				</div>
 			)}
+			<ConfirmDialog
+				open={isConfirmOpen}
+				onClose={() => setIsConfirmOpen(false)}
+				onConfirm={() => {
+					setIsConfirmOpen(false);
+					handleSubmitVerification();
+				}}
+				title="Kirim Usulan Scrap?"
+				description={`${selectedAsset?.kodeAlat ?? ""} — Usulan scrap akan dikirim dan masuk proses penghapusan aset.`}
+				confirmLabel="Ya, Kirim"
+				pendingLabel="Memproses..."
+				isPending={isSubmitting}
+			/>
 		</div>
 	);
 }
