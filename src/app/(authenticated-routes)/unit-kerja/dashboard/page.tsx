@@ -164,21 +164,20 @@ export default function UnitKerjaDashboardPage() {
 	const getStatusBadge = (status: string) => {
 		const s = status.toUpperCase();
 		let label = "Menunggu Review";
-		let hue = "#B45309";
+		let style = "bg-[#FEF3C7] text-[#B45309]";
 		if (s.includes("APPROV")) {
 			label = "Disetujui";
-			hue = "#059669";
+			style = "bg-[#DCFCE7] text-[#16A34A]";
 		} else if (s.includes("REJECT")) {
 			label = "Ditolak";
-			hue = "#DC2626";
+			style = "bg-[#FEE2E2] text-[#DC2626]";
 		} else if (s.includes("REVISI") || s.includes("REVISION")) {
 			label = "Perlu Revisi";
-			hue = "#0556B3";
+			style = "bg-[#E0F2FE] text-[#0284C7]";
 		}
 		return (
 			<span
-				className="inline-flex items-center rounded-[2px] border px-2 py-0.5 text-[11px] font-semibold"
-				style={{ color: hue, borderColor: hue }}
+				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${style}`}
 			>
 				{label}
 			</span>

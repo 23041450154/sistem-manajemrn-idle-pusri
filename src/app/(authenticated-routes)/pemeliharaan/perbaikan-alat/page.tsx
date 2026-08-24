@@ -68,21 +68,19 @@ const EMPTY_HINT: Record<RepairFlowStatus, string> = {
 	SCRAP: "Belum ada aset yang direkomendasikan scrap.",
 };
 
-/** DESIGN.md status hues — five workflow states, no sixth. */
-const STATUS_HUE: Record<RepairFlowStatus, string> = {
-	REPAIR: "#B45309",
-	REPAIR_COMPLETED: "#0556B3",
-	REVALIDATION: "#475569",
-	READY_TO_USE: "#059669",
-	SCRAP: "#DC2626",
+const STATUS_STYLES: Record<RepairFlowStatus, string> = {
+	REPAIR: "bg-[#FEF3C7] text-[#B45309]",
+	REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
+	REVALIDATION: "bg-[#FEF3C7] text-[#B45309]",
+	READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
+	SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
 };
 
-/** DESIGN.md status badge: 2px radius, transparent fill, 1px border + text in state hue. */
 function StatusBadge({ status }: { status: RepairFlowStatus }) {
+	const style = STATUS_STYLES[status] || "bg-gray-100 text-gray-700";
 	return (
 		<span
-			className="inline-flex items-center rounded-[2px] border px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap"
-			style={{ color: STATUS_HUE[status], borderColor: STATUS_HUE[status] }}
+			className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${style}`}
 		>
 			{REPAIR_STATUS_LABEL[status]}
 		</span>
@@ -169,7 +167,7 @@ export default function PerbaikanAlatPage() {
 							tipeObjek: pick(item.object_type),
 							plant: pick(item.plant),
 							lokasiPenyimpanan: pick(item.storage_location),
-							kondisi: pick(item.condition),
+							kondisi: pick(item.condition).replace(/_/g, " "),
 							terakhirDiperbarui: (stamp ? new Date(stamp) : new Date())
 								.toISOString()
 								.split("T")[0],
@@ -188,6 +186,12 @@ export default function PerbaikanAlatPage() {
 								.filter((url: string) => IMAGE_FILE.test(url)),
 						},
 					];
+				});
+				filteredData.sort((a: any, b: any) => {
+					const timeA = a.terakhirDiperbarui && a.terakhirDiperbarui !== "—" ? new Date(a.terakhirDiperbarui).getTime() : 0;
+					const timeB = b.terakhirDiperbarui && b.terakhirDiperbarui !== "—" ? new Date(b.terakhirDiperbarui).getTime() : 0;
+					if (timeB !== timeA) return timeB - timeA;
+					return (Number(b.id) || 0) - (Number(a.id) || 0);
 				});
 			}
 
@@ -679,14 +683,16 @@ export default function PerbaikanAlatPage() {
 										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
 											{asset.lokasiPenyimpanan}
 										</td>
-										<td className="px-3 py-3 text-center">
+										<td className="px-3 py-3 text-center whitespace-nowrap">
 											<span
-												className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
-													asset.kondisi === "Baik" || asset.kondisi === "BAIK"
-														? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-														: asset.kondisi === "-"
-															? "bg-gray-50 text-gray-400 border border-gray-200"
-															: "bg-amber-50 text-amber-700 border border-amber-200"
+												className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${
+													asset.kondisi === "Baik" || asset.kondisi === "BAIK" || asset.kondisi === "BAGUS"
+														? "bg-[#DCFCE7] text-[#16A34A]"
+														: asset.kondisi === "-" || !asset.kondisi
+															? "bg-gray-100 text-gray-500"
+															: asset.kondisi?.includes("RUSAK BERAT") || asset.kondisi?.includes("SCRAP")
+																? "bg-[#FEE2E2] text-[#DC2626]"
+																: "bg-[#FEF3C7] text-[#B45309]"
 												}`}
 											>
 												{asset.kondisi}

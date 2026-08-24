@@ -9,6 +9,7 @@ import {
 	getObjectTypes,
 	getAttachmentsByEquipmentId,
 	createReuseRequest,
+	getReuseRequests,
 } from "@/action/api";
 import {
 	statusBadgeStyle,
@@ -49,8 +50,8 @@ interface EquipmentItem {
 	book_value: number;
 	specifications: string;
 	capacity: string;
-	notes?: string;
-	created_at?: string;
+	notes: string;
+	created_at: string;
 }
 
 /** Unit Kerja hanya melihat aset siap pakai + yang sedang diperbaiki. */
@@ -59,19 +60,29 @@ const VISIBLE_STATUSES = ["READY_TO_USE", "REPAIR"];
 export default function DaftarAsetPage() {
 	const [equipments, setEquipments] = useState<EquipmentItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
-	const [activeTab, setActiveTab] = useState<"semua" | "ready" | "perbaikan">(
-		"semua",
-	);
+	const [viewMode, setViewMode] = useState<"table" | "catalog">("table");
+
+	// Filters
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [filterPlant, setFilterPlant] = useState("");
 	const [filterTipeObjek, setFilterTipeObjek] = useState("");
 	const [filterKondisi, setFilterKondisi] = useState("");
+	const [activeTab, setActiveTab] = useState<"semua" | "ready" | "perbaikan">(
+		"semua",
+	);
+
+	// Pagination & Sorting
 	const [currentPage, setCurrentPage] = useState(1);
-	const [viewMode, setViewMode] = useState<"table" | "catalog">("table");
+	const [sortConfig, setSortConfig] = useState<{
+		key: keyof EquipmentItem;
+		direction: "asc" | "desc";
+	} | null>(null);
 
 	// Detail Modal
-	const [selectedAsset, setSelectedAsset] = useState<EquipmentItem | null>(null);
+	const [selectedAsset, setSelectedAsset] = useState<EquipmentItem | null>(
+		null,
+	);
 	const [isDetailOpen, setIsDetailOpen] = useState(false);
 	const [attachments, setAttachments] = useState<any[]>([]);
 	const [isLoadingAttachments, setIsLoadingAttachments] = useState(false);
@@ -102,20 +113,54 @@ export default function DaftarAsetPage() {
 	const loadData = async () => {
 		setIsLoading(true);
 		try {
-			const [rawEqList, objTypes] = await Promise.all([
+			const [rawEqList, objTypes, rawReuseRequests] = await Promise.all([
 				getEquipments(),
 				getObjectTypes().catch(() => []),
+				getReuseRequests().catch(() => []),
 			]);
+
+			const requestedEqIdSet = new Set<string>();
+			if (Array.isArray(rawReuseRequests)) {
+				rawReuseRequests.forEach((req: any) => {
+					if (req.equipment_id) requestedEqIdSet.add(String(req.equipment_id));
+					if (req.equipmentId) requestedEqIdSet.add(String(req.equipmentId));
+					if (req.equipment?.id) requestedEqIdSet.add(String(req.equipment.id));
+					if (req.equipment_code)
+						requestedEqIdSet.add(String(req.equipment_code).trim().toLowerCase());
+					if (req.equipmentCode)
+						requestedEqIdSet.add(String(req.equipmentCode).trim().toLowerCase());
+					if (req.equipment?.equipment_code)
+						requestedEqIdSet.add(
+							String(req.equipment.equipment_code).trim().toLowerCase(),
+						);
+				});
+			}
 
 			if (Array.isArray(rawEqList)) {
 				const mapped: EquipmentItem[] = rawEqList
-					.filter((item: any) =>
-						VISIBLE_STATUSES.includes(
+					.filter((item: any) => {
+						const isVisible = VISIBLE_STATUSES.includes(
 							statusName(
 								typeof item.status === "object" ? item.status?.name : item.status,
 							),
-						),
-					)
+						);
+						if (!isVisible) return false;
+
+						const itemId = String(item.id);
+						const itemCode = String(
+							item.equipment_code || item.kodeAlat || "",
+						)
+							.trim()
+							.toLowerCase();
+						// Sembunyikan equipment yang sudah diajukan permintaan
+						if (
+							requestedEqIdSet.has(itemId) ||
+							(itemCode && requestedEqIdSet.has(itemCode))
+						) {
+							return false;
+						}
+						return true;
+					})
 					.map((item: any) => {
 						let catName = "Peralatan Umum";
 						if (typeof item.object_type?.name === "string")
@@ -190,6 +235,13 @@ export default function DaftarAsetPage() {
 							created_at: item.created_at || "-",
 						};
 					});
+
+				mapped.sort((a: any, b: any) => {
+					const timeA = a.created_at && a.created_at !== "-" ? new Date(a.created_at).getTime() : 0;
+					const timeB = b.created_at && b.created_at !== "-" ? new Date(b.created_at).getTime() : 0;
+					if (timeB !== timeA) return timeB - timeA;
+					return (Number(b.id) || 0) - (Number(a.id) || 0);
+				});
 
 				setEquipments(mapped);
 			} else {
@@ -401,8 +453,15 @@ export default function DaftarAsetPage() {
 			});
 
 			if (res && res.success) {
+				const requestedId = requestModalAsset.id;
+				const requestedCode = requestModalAsset.equipment_code;
 				setRequestSuccessMessage(
 					`Permintaan untuk peralatan "${requestModalAsset.name}" (${requestModalAsset.equipment_code}) berhasil diajukan.`,
+				);
+				setEquipments((prev) =>
+					prev.filter(
+						(e) => e.id !== requestedId && e.equipment_code !== requestedCode,
+					),
 				);
 				setRequestModalAsset(null);
 				if (isDetailOpen) setIsDetailOpen(false);
@@ -697,10 +756,10 @@ export default function DaftarAsetPage() {
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
 									No
 								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap w-[130px]">
 									Kode Alat
 								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left">
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left w-[240px] max-w-[280px]">
 									Nama Peralatan
 								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
@@ -763,8 +822,10 @@ export default function DaftarAsetPage() {
 										<td className="px-2.5 py-2.5 text-[13px] font-semibold text-[#0A356A] whitespace-nowrap">
 											{asset.equipment_code}
 										</td>
-										<td className="px-2.5 py-2.5 text-[13px] font-medium text-gray-900">
-											{asset.name}
+										<td className="px-2.5 py-2.5 text-[13px] font-medium text-gray-900 w-[240px] max-w-[280px]">
+											<span className="line-clamp-2 block leading-tight" title={asset.name}>
+												{asset.name}
+											</span>
 										</td>
 										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap">
 											{asset.object_type_name}
@@ -777,20 +838,20 @@ export default function DaftarAsetPage() {
 										</td>
 										<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
 											<span
-												className={`inline-block px-2 py-0.5 rounded text-[11px] font-bold ${
+												className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${
 													asset.condition_name.toUpperCase().includes("BAIK")
-														? "bg-emerald-50 text-emerald-700 border border-emerald-200"
+														? "bg-[#DCFCE7] text-[#16A34A]"
 														: asset.condition_name.toUpperCase().includes("RUSAK")
-															? "bg-rose-50 text-rose-700 border border-rose-200"
-															: "bg-amber-50 text-amber-700 border border-amber-200"
+															? "bg-[#FEE2E2] text-[#DC2626]"
+															: "bg-[#FEF3C7] text-[#B45309]"
 												}`}
 											>
-												{asset.condition_name}
+												{asset.condition_name.replace(/_/g, " ")}
 											</span>
 										</td>
 										<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
 											<span
-												className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold border ${statusBadgeStyle(asset.status_name)}`}
+												className={`inline-flex items-center justify-center px-2.5 py-0.5 rounded-full text-[11px] font-semibold whitespace-nowrap ${statusBadgeStyle(asset.status_name)}`}
 											>
 												{statusText(asset.status_name)}
 											</span>
@@ -951,9 +1012,19 @@ export default function DaftarAsetPage() {
 									<span className="text-gray-500 block text-[11px] font-semibold uppercase">
 										Kondisi
 									</span>
-									<span className="font-medium text-emerald-700">
-										{selectedAsset.condition_name}
-									</span>
+									<div className="mt-0.5">
+										<span
+											className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${
+												selectedAsset.condition_name.toUpperCase().includes("BAIK")
+													? "bg-[#DCFCE7] text-[#16A34A]"
+													: selectedAsset.condition_name.toUpperCase().includes("RUSAK")
+														? "bg-[#FEE2E2] text-[#DC2626]"
+														: "bg-[#FEF3C7] text-[#B45309]"
+											}`}
+										>
+											{selectedAsset.condition_name.replace(/_/g, " ")}
+										</span>
+									</div>
 								</div>
 							</div>
 

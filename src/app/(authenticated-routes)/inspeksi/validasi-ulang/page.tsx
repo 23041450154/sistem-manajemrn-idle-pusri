@@ -15,6 +15,7 @@ import {
 	XCircle,
 	Wrench,
 	Trash2,
+	Eye,
 } from "lucide-react";
 
 interface RevalidasiItem {
@@ -28,6 +29,11 @@ interface RevalidasiItem {
 	tanggalSelesai: string;
 	statusAset?: string;
 	statusId?: number;
+	catatan?: string;
+	vendor?: string;
+	serialNumber?: string;
+	tahun?: number | string;
+	alasanIdle?: string;
 }
 
 export default function ValidasiUlangPage() {
@@ -45,6 +51,7 @@ export default function ValidasiUlangPage() {
 		null,
 	);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [modalMode, setModalMode] = useState<"VALIDASI" | "DETAIL">("VALIDASI");
 	// Hasil validasi ulang dipilih sebagai STATUS tujuan (bukan kondisi):
 	// REVALIDATION = perbaikan berhasil, REPAIR = masih perlu perbaikan,
 	// DISPOSAL_RECOMMENDED = usul scrap.
@@ -128,7 +135,7 @@ export default function ValidasiUlangPage() {
 						tipeObjek: objectTypeStr,
 						plant: plantStr,
 						lokasiPenyimpanan: storageStr,
-						kondisiSebelumnya: conditionStr,
+						kondisiSebelumnya: conditionStr.replace(/_/g, " "),
 						tanggalSelesai: item.updated_at
 							? new Date(item.updated_at).toISOString().split("T")[0]
 							: item.created_at
@@ -136,14 +143,27 @@ export default function ValidasiUlangPage() {
 								: new Date().toISOString().split("T")[0],
 						statusAset: statusName,
 						statusId: item.status_id || item.status?.id || 4,
+						catatan: item.notes || item.description || "-",
+						vendor: item.vendor || item.manufacture || "-",
+						serialNumber: item.serial_number || item.no_seri || "-",
+						tahun: item.year || item.tahun || "-",
+						alasanIdle: item.idle_reason || item.alasan_idle || "-",
 					};
+				});
+				filtered.sort((a: any, b: any) => {
+					const timeA = a.tanggalSelesai && a.tanggalSelesai !== "-" ? new Date(a.tanggalSelesai).getTime() : 0;
+					const timeB = b.tanggalSelesai && b.tanggalSelesai !== "-" ? new Date(b.tanggalSelesai).getTime() : 0;
+					if (timeB !== timeA) return timeB - timeA;
+					return (Number(b.id) || 0) - (Number(a.id) || 0);
 				});
 		}
 
 		return { items: filtered };
 	};
 
-	const applyRevalidasiData = (result: { items: RevalidasiItem[] }) => {
+	const applyRevalidasiData = (result: {
+		items: RevalidasiItem[];
+	}) => {
 		setItems(result.items);
 	};
 
@@ -248,8 +268,12 @@ export default function ValidasiUlangPage() {
 		setCurrentPage(1);
 	};
 
-	const handleOpenModal = (asset: RevalidasiItem) => {
+	const handleOpenModal = (
+		asset: RevalidasiItem,
+		mode: "VALIDASI" | "DETAIL" = "VALIDASI",
+	) => {
 		setSelectedAsset(asset);
+		setModalMode(mode);
 		setHasilStatus("");
 		setNotes("");
 		setFollowupRecommendation("");
@@ -260,6 +284,7 @@ export default function ValidasiUlangPage() {
 	const handleCloseModal = () => {
 		setIsModalOpen(false);
 		setSelectedAsset(null);
+		setModalMode("VALIDASI");
 		setHasilStatus("");
 		setNotes("");
 		setFollowupRecommendation("");
@@ -277,10 +302,14 @@ export default function ValidasiUlangPage() {
 		setIsSubmitting(true);
 		setModalError(null);
 		try {
-			const result = await createRevalidation(selectedAsset.id, hasilStatus, {
-				notes,
-				followupRecommendation,
-			});
+			const result = await createRevalidation(
+				selectedAsset.id,
+				hasilStatus,
+				{
+					notes,
+					followupRecommendation,
+				},
+			);
 
 			if (result.success) {
 				if (hasilStatus === "REVALIDATION") {
@@ -305,22 +334,22 @@ export default function ValidasiUlangPage() {
 			} else {
 				setModalError(result.message || "Gagal menyimpan re-validasi ke database.");
 			}
+			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (err) {
-			setModalError(
-				err instanceof Error
-					? err.message
-					: "Terjadi kesalahan koneksi ke database.",
-			);
+			setModalError(err instanceof Error ? err.message : "Terjadi kesalahan koneksi ke database.");
 		} finally {
 			setIsSubmitting(false);
 		}
 	};
 
 	const getConditionBadge = (kondisi: string) => {
-		if (kondisi === "Baik" || kondisi === "BAGUS")
-			return "border border-[#059669] text-[#059669]";
-		if (kondisi === "-") return "bg-gray-50 text-gray-400 border border-gray-200";
-		return "border border-[#B45309] text-[#B45309]";
+		const k = (kondisi || "").toUpperCase();
+		if (k === "BAIK" || k === "BAGUS")
+			return "bg-[#DCFCE7] text-[#16A34A]";
+		if (k === "-" || !k) return "bg-gray-100 text-gray-500";
+		if (k.includes("RUSAK BERAT") || k.includes("SCRAP"))
+			return "bg-[#FEE2E2] text-[#DC2626]";
+		return "bg-[#FEF3C7] text-[#B45309]";
 	};
 
 	return (
@@ -606,9 +635,9 @@ export default function ValidasiUlangPage() {
 													{asset.lokasiPenyimpanan}
 												</span>
 											</td>
-											<td className="px-2 py-3 text-center">
+											<td className="px-2 py-3 text-center whitespace-nowrap">
 												<span
-													className={`inline-block max-w-full break-words rounded px-1.5 py-0.5 text-[10px] font-bold ${getConditionBadge(asset.kondisiSebelumnya)}`}
+													className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${getConditionBadge(asset.kondisiSebelumnya)}`}
 												>
 													{asset.kondisiSebelumnya}
 												</span>
@@ -616,23 +645,26 @@ export default function ValidasiUlangPage() {
 											<td className="px-2 py-3 text-[11px] text-gray-600 font-medium text-center whitespace-nowrap">
 												{asset.tanggalSelesai}
 											</td>
-											<td className="px-2 py-3 text-center">
+											<td className="px-2 py-3 text-center whitespace-nowrap">
 												<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
 													{isAntreanRow ? (
 														<button
-															onClick={() => handleOpenModal(asset)}
-															className="inline-flex items-center gap-1 bg-[#0A356A] hover:bg-[#0556B3] text-white px-2 py-1 rounded text-[11px] font-medium transition-colors duration-150"
+															onClick={() => handleOpenModal(asset, "VALIDASI")}
+															className="inline-flex items-center gap-1 bg-[#0A356A] hover:bg-[#0556B3] text-white px-2.5 py-1 rounded text-[11px] font-medium transition-colors duration-150"
 															title="Validasi Perbaikan Alat"
 														>
 															<ClipboardCheck className="h-3.5 w-3.5" />
 															Validasi
 														</button>
 													) : (
-														/* Status akhir: teks polos, bukan kontrol palsu yang tak bisa diklik. */
-														<span className="inline-flex items-center gap-1.5 text-[11px] font-medium text-[#059669]">
-															<CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
-															Selesai divalidasi
-														</span>
+														<button
+															onClick={() => handleOpenModal(asset, "DETAIL")}
+															className="inline-flex items-center gap-1 text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
+															title="Lihat Detail"
+														>
+															<Eye className="h-3.5 w-3.5" />
+															Detail
+														</button>
 													)}
 												</div>
 											</td>
@@ -690,214 +722,321 @@ export default function ValidasiUlangPage() {
 				</div>
 			</div>
 
-			{/* Modal Validasi Perbaikan Alat */}
+			{/* Modal Validasi / Detail Perbaikan Alat */}
 			{isModalOpen && selectedAsset && (
 				<div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0F172A]/50 p-4 animate-in fade-in duration-200">
 					<div className="bg-white rounded w-full max-w-lg overflow-hidden border border-[#E6E8EA] flex flex-col max-h-[90vh] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] animate-in zoom-in-95 fade-in duration-200">
-						{/* Modal Header */}
-						<div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-[#E6E8EA]">
-							<div className="min-w-0">
-								<h2
-									id="modal-title"
-									className="text-[14px] font-semibold leading-tight text-[#0F172A]"
-								>
-									Validasi Perbaikan Alat
-								</h2>
-								<p className="mt-0.5 truncate font-mono text-[12px] text-[#64748B]">
-									{selectedAsset.kodeAlat} · {selectedAsset.namaAlat}
-								</p>
-							</div>
-							<button
-								onClick={handleCloseModal}
-								aria-label="Tutup dialog"
-								className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-[#64748B] transition-colors duration-150 hover:bg-[#F2F3F4] hover:text-[#0F172A]"
-							>
-								<X className="h-4 w-4" />
-							</button>
-						</div>
-
-						{/* Modal Body */}
-						<div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
-							{/* Info Aset */}
-							<div className="bg-gray-50 rounded p-3 border border-gray-200 grid grid-cols-2 gap-2 text-xs">
-								<div>
-									<p className="text-gray-500 font-medium">Tipe Objek</p>
-									<p className="text-gray-800 font-semibold">
-										{selectedAsset.tipeObjek}
-									</p>
-								</div>
-								<div>
-									<p className="text-gray-500 font-medium">Plant</p>
-									<p className="text-gray-800 font-semibold">{selectedAsset.plant}</p>
-								</div>
-								<div>
-									<p className="text-gray-500 font-medium">Lokasi</p>
-									<p className="text-gray-800 font-semibold">
-										{selectedAsset.lokasiPenyimpanan}
-									</p>
-								</div>
-								<div>
-									<p className="text-gray-500 font-medium">Kondisi Sebelumnya</p>
-									<p className="text-gray-800 font-semibold">
-										{selectedAsset.kondisiSebelumnya}
-									</p>
-								</div>
-							</div>
-
-							{/* Hasil Validasi Ulang (status tujuan) */}
-							<div>
-								<label className="text-xs font-bold text-gray-700 block mb-1.5">
-									Hasil Validasi Ulang <span className="text-[#DC2626]">*</span>
-								</label>
-								<div className="grid grid-cols-1 gap-2">
-									{[
-										{
-											value: "REVALIDATION",
-											title: "Perbaikan Berhasil",
-											desc: "Aset layak, lanjut ke persetujuan Rendal",
-										},
-										{
-											value: "REPAIR",
-											title: "Masih Perlu Perbaikan",
-											desc: "Kembali ke antrean perbaikan",
-										},
-										{
-											value: "DISPOSAL_RECOMMENDED",
-											title: "Tidak Layak Pakai",
-											desc: "Usul scrap / penghapusan",
-										},
-									].map((opt) => (
-										<label
-											key={opt.value}
-											className={`flex items-start gap-2.5 border rounded p-2.5 cursor-pointer transition-all ${
-												hasilStatus === opt.value
-													? "border-[#0A356A] bg-blue-50/40"
-													: "border-gray-200 bg-white hover:bg-gray-50"
-											}`}
+						{modalMode === "DETAIL" ? (
+							<>
+								{/* Detail Header */}
+								<div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-[#E6E8EA]">
+									<div className="min-w-0">
+										<h2
+											id="modal-title"
+											className="text-[14px] font-semibold leading-tight text-[#0F172A]"
 										>
-											<input
-												type="radio"
-												name="hasil-validasi-ulang"
-												value={opt.value}
-												checked={hasilStatus === opt.value}
-												onChange={(e) => setHasilStatus(e.target.value)}
-												className="mt-0.5 accent-[#0A356A]"
-											/>
-											<span>
-												<span className="block text-sm font-semibold text-gray-800">
-													{opt.title}
+											Detail Validasi Perbaikan Alat
+										</h2>
+										<p className="mt-0.5 truncate font-mono text-[12px] text-[#64748B]">
+											{selectedAsset.kodeAlat} · {selectedAsset.namaAlat}
+										</p>
+									</div>
+									<button
+										onClick={handleCloseModal}
+										aria-label="Tutup dialog"
+										className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-[#64748B] transition-colors duration-150 hover:bg-[#F2F3F4] hover:text-[#0F172A]"
+									>
+										<X className="h-4 w-4" />
+									</button>
+								</div>
+
+								{/* Detail Body */}
+								<div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+									<div className="bg-[#F2F3F4] border border-[#E6E8EA] rounded p-3 grid grid-cols-2 gap-3 text-xs">
+										<div>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Kode Alat</p>
+											<p className="font-bold text-[#0F172A]">{selectedAsset.kodeAlat}</p>
+										</div>
+										<div>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Nama Peralatan</p>
+											<p className="font-bold text-[#0F172A]">{selectedAsset.namaAlat}</p>
+										</div>
+										<div>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Tipe Objek</p>
+											<p className="font-semibold text-[#0F172A]">{selectedAsset.tipeObjek}</p>
+										</div>
+										<div>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Plant</p>
+											<p className="font-semibold text-[#0F172A]">{selectedAsset.plant}</p>
+										</div>
+										<div>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Lokasi Simpan</p>
+											<p className="font-semibold text-[#0F172A]">{selectedAsset.lokasiPenyimpanan}</p>
+										</div>
+										<div>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Kondisi</p>
+											<div className="mt-0.5">
+												<span
+													className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${getConditionBadge(selectedAsset.kondisiSebelumnya)}`}
+												>
+													{selectedAsset.kondisiSebelumnya}
 												</span>
-												<span className="block text-[11px] text-gray-500">
-													→ Status {opt.value.replace(/_/g, " ")} — {opt.desc}
+											</div>
+										</div>
+										<div>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Tanggal Selesai</p>
+											<p className="font-semibold text-[#0F172A]">{selectedAsset.tanggalSelesai}</p>
+										</div>
+										<div>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Status Aset</p>
+											<div className="mt-0.5">
+												<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#DCFCE7] text-[#16A34A]">
+													VALIDATED
 												</span>
-											</span>
+											</div>
+										</div>
+									</div>
+
+									<div className="bg-white border border-[#E6E8EA] rounded p-3 space-y-2 text-xs">
+										<div className="flex justify-between py-1 border-b border-gray-100">
+											<span className="text-[#64748B] font-medium">Vendor / Pabrikan</span>
+											<span className="font-semibold text-[#0F172A]">{selectedAsset.vendor || "-"}</span>
+										</div>
+										<div className="flex justify-between py-1 border-b border-gray-100">
+											<span className="text-[#64748B] font-medium">No. Seri</span>
+											<span className="font-semibold text-[#0F172A]">{selectedAsset.serialNumber || "-"}</span>
+										</div>
+										<div className="flex justify-between py-1 border-b border-gray-100">
+											<span className="text-[#64748B] font-medium">Tahun</span>
+											<span className="font-semibold text-[#0F172A]">{selectedAsset.tahun || "-"}</span>
+										</div>
+										<div className="flex justify-between py-1 border-b border-gray-100">
+											<span className="text-[#64748B] font-medium">Alasan Idle</span>
+											<span className="font-semibold text-[#0F172A]">{selectedAsset.alasanIdle || "-"}</span>
+										</div>
+										<div className="pt-1">
+											<span className="text-[#64748B] font-medium block mb-1">Catatan</span>
+											<p className="text-[#0F172A] leading-relaxed bg-gray-50 p-2 rounded border border-gray-100">
+												{selectedAsset.catatan || "-"}
+											</p>
+										</div>
+									</div>
+								</div>
+
+								{/* Detail Footer */}
+								<div className="px-6 py-3.5 border-t border-[#E6E8EA] bg-gray-50 flex justify-end">
+									<button
+										onClick={handleCloseModal}
+										className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
+									>
+										Tutup
+									</button>
+								</div>
+							</>
+						) : (
+							<>
+								{/* Modal Header */}
+								<div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-[#E6E8EA]">
+									<div className="min-w-0">
+										<h2
+											id="modal-title"
+											className="text-[14px] font-semibold leading-tight text-[#0F172A]"
+										>
+											Validasi Perbaikan Alat
+										</h2>
+										<p className="mt-0.5 truncate font-mono text-[12px] text-[#64748B]">
+											{selectedAsset.kodeAlat} · {selectedAsset.namaAlat}
+										</p>
+									</div>
+									<button
+										onClick={handleCloseModal}
+										aria-label="Tutup dialog"
+										className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-[#64748B] transition-colors duration-150 hover:bg-[#F2F3F4] hover:text-[#0F172A]"
+									>
+										<X className="h-4 w-4" />
+									</button>
+								</div>
+
+								{/* Modal Body */}
+								<div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+									{/* Info Aset */}
+									<div className="bg-gray-50 rounded p-3 border border-gray-200 grid grid-cols-2 gap-2 text-xs">
+										<div>
+											<p className="text-gray-500 font-medium">Tipe Objek</p>
+											<p className="text-gray-800 font-semibold">
+												{selectedAsset.tipeObjek}
+											</p>
+										</div>
+										<div>
+											<p className="text-gray-500 font-medium">Plant</p>
+											<p className="text-gray-800 font-semibold">{selectedAsset.plant}</p>
+										</div>
+										<div>
+											<p className="text-gray-500 font-medium">Lokasi</p>
+											<p className="text-gray-800 font-semibold">
+												{selectedAsset.lokasiPenyimpanan}
+											</p>
+										</div>
+										<div>
+											<p className="text-gray-500 font-medium">Kondisi Sebelumnya</p>
+											<p className="text-gray-800 font-semibold">
+												{selectedAsset.kondisiSebelumnya}
+											</p>
+										</div>
+									</div>
+
+									{/* Hasil Validasi Ulang (status tujuan) */}
+								<div>
+									<label className="text-xs font-bold text-gray-700 block mb-1.5">
+										Hasil Validasi Ulang <span className="text-[#DC2626]">*</span>
+									</label>
+									<div className="grid grid-cols-1 gap-2">
+										{[
+											{
+												value: "REVALIDATION",
+												title: "Perbaikan Berhasil",
+												desc: "Aset layak, lanjut ke persetujuan Rendal",
+											},
+											{
+												value: "REPAIR",
+												title: "Masih Perlu Perbaikan",
+												desc: "Kembali ke antrean perbaikan",
+											},
+											{
+												value: "DISPOSAL_RECOMMENDED",
+												title: "Tidak Layak Pakai",
+												desc: "Usul scrap / penghapusan",
+											},
+										].map((opt) => (
+											<label
+												key={opt.value}
+												className={`flex items-start gap-2.5 border rounded p-2.5 cursor-pointer transition-all ${
+													hasilStatus === opt.value
+														? "border-[#0A356A] bg-blue-50/40"
+														: "border-gray-200 bg-white hover:bg-gray-50"
+												}`}
+											>
+												<input
+													type="radio"
+													name="hasil-validasi-ulang"
+													value={opt.value}
+													checked={hasilStatus === opt.value}
+													onChange={(e) => setHasilStatus(e.target.value)}
+													className="mt-0.5 accent-[#0A356A]"
+												/>
+												<span>
+													<span className="block text-sm font-semibold text-gray-800">
+														{opt.title}
+													</span>
+													<span className="block text-[11px] text-gray-500">
+														→ Status {opt.value.replace(/_/g, " ")} — {opt.desc}
+													</span>
+												</span>
+											</label>
+										))}
+									</div>
+
+									{/* Dynamic Impact Indicator Card */}
+									{hasilStatus === "REVALIDATION" && (
+										<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#059669] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
+											<CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
+											<div>
+												<p className="font-bold text-[#059669]">Status Naik ke REVALIDATION</p>
+												<p className="text-[11px] text-[#059669] mt-0.5 leading-relaxed">
+													Perbaikan dinyatakan berhasil. Aset akan diteruskan ke{" "}
+													<strong>Rendal Pemeliharaan</strong> untuk persetujuan status{" "}
+													<strong>Ready to Use</strong>.
+												</p>
+											</div>
+										</div>
+									)}
+									{hasilStatus === "REPAIR" && (
+										<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#B45309] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
+											<Wrench className="w-4 h-4 text-[#B45309] shrink-0 mt-0.5" />
+											<div>
+												<p className="font-bold text-[#B45309]">Status Kembali ke REPAIR</p>
+												<p className="text-[11px] text-[#B45309] mt-0.5 leading-relaxed">
+													Aset masih mengalami kendala teknis dan akan dikembalikan ke antrean
+													perbaikan <strong>Pemeliharaan Lapangan</strong>.
+												</p>
+											</div>
+										</div>
+									)}
+									{hasilStatus === "DISPOSAL_RECOMMENDED" && (
+										<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#DC2626] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
+											<Trash2 className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
+											<div>
+												<p className="font-bold text-[#DC2626]">Status Dialihkan ke DISPOSAL_RECOMMENDED</p>
+												<p className="text-[11px] text-[#DC2626] mt-0.5 leading-relaxed">
+													Kerusakan berat dan tidak ekonomis diperbaiki. Aset direkomendasikan
+													untuk proses usulan <strong>Scrap / Penghapusan</strong>.
+												</p>
+											</div>
+										</div>
+									)}
+								</div>
+
+								{/* Catatan */}
+									<div>
+										<label className="text-xs font-bold text-gray-700 block mb-1.5">
+											Catatan Pemeriksaan
 										</label>
-									))}
+										<textarea
+											value={notes}
+											onChange={(e) => setNotes(e.target.value)}
+											rows={3}
+											placeholder="Hasil pemeriksaan visual, fungsi mekanik/elektrik, dll."
+											className="w-full px-3 py-2 text-sm border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all resize-none"
+										/>
+									</div>
+
+									{/* Rekomendasi */}
+									<div>
+										<label className="text-xs font-bold text-gray-700 block mb-1.5">
+											Rekomendasi Tindak Lanjut
+										</label>
+										<input
+											type="text"
+											value={followupRecommendation}
+											onChange={(e) => setFollowupRecommendation(e.target.value)}
+											placeholder="Misal: Dapat dimobilisasi segera"
+											className="w-full px-3 py-2 text-sm border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all"
+										/>
+									</div>
+
+									{/* Error */}
+									{modalError && (
+										<div className="flex items-start gap-2 border border-[#DC2626] bg-white rounded p-3">
+											<AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
+											<p className="text-xs text-[#DC2626] font-medium">{modalError}</p>
+										</div>
+									)}
 								</div>
 
-								{/* Dynamic Impact Indicator Card */}
-								{hasilStatus === "REVALIDATION" && (
-									<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#059669] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
-										<CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
-										<div>
-											<p className="font-bold text-[#059669]">
-												Status Naik ke REVALIDATION
-											</p>
-											<p className="text-[11px] text-[#059669] mt-0.5 leading-relaxed">
-												Perbaikan dinyatakan berhasil. Aset akan diteruskan ke{" "}
-												<strong>Rendal Pemeliharaan</strong> untuk persetujuan status{" "}
-												<strong>Ready to Use</strong>.
-											</p>
-										</div>
-									</div>
-								)}
-								{hasilStatus === "REPAIR" && (
-									<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#B45309] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
-										<Wrench className="w-4 h-4 text-[#B45309] shrink-0 mt-0.5" />
-										<div>
-											<p className="font-bold text-[#B45309]">Status Kembali ke REPAIR</p>
-											<p className="text-[11px] text-[#B45309] mt-0.5 leading-relaxed">
-												Aset masih mengalami kendala teknis dan akan dikembalikan ke antrean
-												perbaikan <strong>Pemeliharaan Lapangan</strong>.
-											</p>
-										</div>
-									</div>
-								)}
-								{hasilStatus === "DISPOSAL_RECOMMENDED" && (
-									<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#DC2626] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
-										<Trash2 className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
-										<div>
-											<p className="font-bold text-[#DC2626]">
-												Status Dialihkan ke DISPOSAL_RECOMMENDED
-											</p>
-											<p className="text-[11px] text-[#DC2626] mt-0.5 leading-relaxed">
-												Kerusakan berat dan tidak ekonomis diperbaiki. Aset direkomendasikan
-												untuk proses usulan <strong>Scrap / Penghapusan</strong>.
-											</p>
-										</div>
-									</div>
-								)}
-							</div>
-
-							{/* Catatan */}
-							<div>
-								<label className="text-xs font-bold text-gray-700 block mb-1.5">
-									Catatan Pemeriksaan
-								</label>
-								<textarea
-									value={notes}
-									onChange={(e) => setNotes(e.target.value)}
-									rows={3}
-									placeholder="Hasil pemeriksaan visual, fungsi mekanik/elektrik, dll."
-									className="w-full px-3 py-2 text-sm border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all resize-none"
-								/>
-							</div>
-
-							{/* Rekomendasi */}
-							<div>
-								<label className="text-xs font-bold text-gray-700 block mb-1.5">
-									Rekomendasi Tindak Lanjut
-								</label>
-								<input
-									type="text"
-									value={followupRecommendation}
-									onChange={(e) => setFollowupRecommendation(e.target.value)}
-									placeholder="Misal: Dapat dimobilisasi segera"
-									className="w-full px-3 py-2 text-sm border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all"
-								/>
-							</div>
-
-							{/* Error */}
-							{modalError && (
-								<div className="flex items-start gap-2 border border-[#DC2626] bg-white rounded p-3">
-									<AlertCircle className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
-									<p className="text-xs text-[#DC2626] font-medium">{modalError}</p>
+								{/* Modal Footer */}
+								<div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+									<button
+										onClick={handleCloseModal}
+										disabled={isSubmitting}
+										className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
+									>
+										Batal
+									</button>
+									<button
+										onClick={handleSubmit}
+										disabled={isSubmitting || !hasilStatus}
+										className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+									>
+										{isSubmitting ? (
+											<Loader2 className="w-4 h-4 animate-spin" />
+										) : (
+											<Save className="w-4 h-4" />
+										)}
+										{isSubmitting ? "Menyimpan..." : "Simpan Validasi"}
+									</button>
 								</div>
-							)}
-						</div>
-
-						{/* Modal Footer */}
-						<div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
-							<button
-								onClick={handleCloseModal}
-								disabled={isSubmitting}
-								className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
-							>
-								Batal
-							</button>
-							<button
-								onClick={handleSubmit}
-								disabled={isSubmitting || !hasilStatus}
-								className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-							>
-								{isSubmitting ? (
-									<Loader2 className="w-4 h-4 animate-spin" />
-								) : (
-									<Save className="w-4 h-4" />
-								)}
-								{isSubmitting ? "Menyimpan..." : "Simpan Validasi"}
-							</button>
-						</div>
+							</>
+						)}
 					</div>
 				</div>
 			)}

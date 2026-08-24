@@ -6,12 +6,12 @@ import type { EquipmentState, KatalogDetail } from "./types";
 export const STATE_STYLE: Record<EquipmentState, { label: string; badge: string }> = {
   registered: {
     label: "Menunggu validasi",
-    badge: "border-state-registered text-state-registered",
+    badge: "bg-[#E0F2FE] text-[#0284C7]",
   },
-  repair: { label: "Dalam perbaikan", badge: "border-state-repair text-state-repair" },
-  ready: { label: "Siap dipakai ulang", badge: "border-state-ready text-state-ready" },
-  rejected: { label: "Tidak layak", badge: "border-state-rejected text-state-rejected" },
-  disposal: { label: "Disposal", badge: "border-state-disposal text-state-disposal" },
+  repair: { label: "Dalam perbaikan", badge: "bg-[#FEF3C7] text-[#B45309]" },
+  ready: { label: "Siap dipakai ulang", badge: "bg-[#DCFCE7] text-[#16A34A]" },
+  rejected: { label: "Tidak layak", badge: "bg-[#FEE2E2] text-[#DC2626]" },
+  disposal: { label: "Disposal", badge: "bg-[#FEF3C7] text-[#B45309]" },
 };
 
 export function formatRupiah(value?: number) {

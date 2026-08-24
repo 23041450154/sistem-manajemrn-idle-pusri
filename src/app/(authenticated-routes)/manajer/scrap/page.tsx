@@ -53,6 +53,12 @@ export default function ManajerScrapPage() {
     try {
       const data = await getDisposals();
       if (Array.isArray(data)) {
+        data.sort((a: any, b: any) => {
+          const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          if (timeB !== timeA) return timeB - timeA;
+          return (Number(b.id) || 0) - (Number(a.id) || 0);
+        });
         setDisposals(data);
       }
     } catch (err) {
@@ -120,7 +126,7 @@ export default function ManajerScrapPage() {
       if (res.success) {
         showToast(
           "success",
-          res.message || "Permintaan scrap berhasil disetujui!"
+          "Scrap sukses disetujui."
         );
         setIsApproveConfirmOpen(false);
         setModalError(null);
@@ -177,97 +183,102 @@ export default function ManajerScrapPage() {
     }).format(amount || 0);
   };
 
-  const formatDate = (dateStr: string) => {
-    if (!dateStr) return "-";
+  const formatDate = (dateString?: string) => {
+    if (!dateString) return "-";
     try {
-      return new Date(dateStr).toLocaleDateString("id-ID", {
+      return new Intl.DateTimeFormat("id-ID", {
         day: "numeric",
         month: "short",
         year: "numeric",
-      });
+      }).format(new Date(dateString));
     } catch {
-      return dateStr;
+      return dateString;
     }
   };
 
   return (
     <div className="max-w-7xl mx-auto pt-2 pb-8">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
-        <div>
-          <div className="flex items-center gap-2">
-            <Trash2 className="w-6 h-6 text-[#0A356A]" />
-            <h1 className="text-2xl font-bold text-gray-900 tracking-tight">Persetujuan Scrap Aset</h1>
-          </div>
-          <p className="text-xs text-gray-500 mt-1 font-medium">
-            Peninjauan dan persetujuan usulan scrap aset.
-          </p>
-        </div>
-      </div>
-
-      {/* Inline Notification Banner */}
+      {/* Toast Notification */}
       {toast && (
-        <div className={`mb-5 p-4 rounded-xl border flex items-center gap-3 transition-all duration-300 animate-in fade-in slide-in-from-top-2 ${
-          toast.type === "success"
-            ? "bg-emerald-50 border-emerald-200 text-emerald-800"
-            : "bg-rose-50 border-rose-200 text-rose-800"
-        }`}>
+        <div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
           {toast.type === "success" ? (
-            <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
           ) : (
-            <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
+            <XCircle className="w-4 h-4 text-red-400" />
           )}
-          <div className="flex-1">
-            <p className="text-[13px] font-bold">
-              {toast.type === "success"
-                ? "Persetujuan Berhasil"
-                : toast.type === "reject"
-                ? "Penolakan Berhasil"
-                : "Transaksi Gagal"}
-            </p>
-            <p className="text-[12px] mt-0.5 leading-relaxed font-semibold">
-              {toast.message}
-            </p>
-          </div>
+          <span className="text-[13px] font-medium">{toast.message}</span>
           <button
             onClick={() => setToast(null)}
-            className="text-[11px] font-bold text-gray-400 hover:text-gray-600 cursor-pointer"
+            className="text-gray-400 hover:text-white text-xs ml-2 cursor-pointer"
           >
-            Tutup
+            ✕
           </button>
         </div>
       )}
 
+      {/* Header */}
+      <div className="flex items-center justify-between mb-6">
+        <div>
+          <h1 className="text-xl font-bold text-gray-900 tracking-tight">
+            Persetujuan Scrap Aset
+          </h1>
+          <p className="text-xs text-gray-500 mt-1 font-medium">
+            Peninjauan dan persetujuan usulan scrap peralatan idle.
+          </p>
+        </div>
+      </div>
+
       {/* Main Table */}
       <div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
+        {/* Navigation Tabs */}
+        <div className="flex items-center gap-6 border-b border-gray-200 bg-white px-5 pt-3">
+          <button
+            type="button"
+            onClick={() => changeTab("inbox")}
+            className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${
+              activeTab === "inbox"
+                ? "border-b-2 border-[#0A356A] text-[#0A356A]"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <span>Antrean Pending</span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                activeTab === "inbox"
+                  ? "bg-[#0A356A] text-white"
+                  : "bg-gray-100 text-gray-600"
+              }`}
+            >
+              {pendingDisposals.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => changeTab("history")}
+            className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${
+              activeTab === "history"
+                ? "border-b-2 border-[#0A356A] text-[#0A356A]"
+                : "text-gray-500 hover:text-gray-700"
+            }`}
+          >
+            <span>Riwayat Keputusan</span>
+            <span
+              className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${
+                activeTab === "history"
+                  ? "bg-[#0A356A] text-white"
+                  : "bg-gray-100 text-gray-600"
+              }`}
+            >
+              {historyDisposals.length}
+            </span>
+          </button>
+        </div>
+
         {/* Toolbar / Filters */}
         <div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
-          {/* Tabs */}
-          <div className="flex items-center gap-1.5 bg-gray-100 p-1 rounded-xl border border-gray-200">
-            <button
-              onClick={() => changeTab("inbox")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeTab === "inbox"
-                  ? "bg-[#0A356A] text-white shadow-xs"
-                  : "text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              Antrean Pending
-            </button>
-            <button
-              onClick={() => changeTab("history")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                activeTab === "history"
-                  ? "bg-[#0A356A] text-white shadow-xs"
-                  : "text-gray-600 hover:bg-gray-200"
-              }`}
-            >
-              Riwayat Keputusan
-            </button>
-          </div>
-
-          {/* Search & Refresh */}
-          <div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+          {/* Search */}
+          <div className="flex w-full lg:w-auto gap-2">
             <div className="relative flex-1 lg:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
@@ -288,31 +299,35 @@ export default function ManajerScrapPage() {
             </button>
           </div>
         </div>
+
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50/80 border-b border-gray-200">
-              <tr>
-                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center w-12 whitespace-nowrap">
+              <tr className="border-b border-gray-300">
+                <th className="px-3 py-3 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center w-12 whitespace-nowrap">
                   No
                 </th>
-                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
-                  Nomor Pengajuan
+                <th className="px-3 py-3 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+                  No. Pengajuan
                 </th>
-                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
-                  Kode & Nama Alat
+                <th className="px-3 py-3 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+                  Kode Alat
                 </th>
-                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
+                <th className="px-3 py-3 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left">
+                  Nama Peralatan
+                </th>
+                <th className="px-3 py-3 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
                   Taksiran Nilai Scrap
                 </th>
-                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
+                <th className="px-3 py-3 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
                   Tanggal Pengusulan
                 </th>
                 {activeTab === "history" && (
-                  <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+                  <th className="px-3 py-3 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
                     Status
                   </th>
                 )}
-                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-center whitespace-nowrap">
+                <th className="px-3 py-3 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
                   Aksi
                 </th>
               </tr>
@@ -320,14 +335,14 @@ export default function ManajerScrapPage() {
             <tbody className="divide-y divide-gray-100 bg-white">
               {isLoading ? (
                 <tr>
-                  <td colSpan={activeTab === "history" ? 7 : 6} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={activeTab === "history" ? 8 : 7} className="px-6 py-12 text-center text-gray-400">
                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-[#0A356A]" />
                     <span className="text-xs font-medium">Memuat antrean usulan scrap...</span>
                   </td>
                 </tr>
               ) : filteredDisposals.length === 0 ? (
                 <tr>
-                  <td colSpan={activeTab === "history" ? 7 : 6} className="px-6 py-12 text-center text-gray-400">
+                  <td colSpan={activeTab === "history" ? 8 : 7} className="px-6 py-12 text-center text-gray-400">
                     <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-400 opacity-60" />
                     <p className="text-sm font-semibold text-gray-600">Tidak ada permintaan scrap dalam antrean</p>
                     <p className="text-xs text-gray-400 mt-1">
@@ -339,46 +354,66 @@ export default function ManajerScrapPage() {
                 </tr>
               ) : (
                 paginatedDisposals.map((item, index) => (
-                  <tr key={item.id} className="hover:bg-blue-50/20 transition-colors">
-                    <td className="px-4 py-3.5 text-[13px] text-gray-500 font-medium text-center whitespace-nowrap">
+                  <tr key={item.id} className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group">
+                    <td className="px-3 py-3 text-[13px] text-gray-500 font-medium text-center whitespace-nowrap">
                       {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                     </td>
-                    <td className="px-4 py-3.5 text-[13px] font-bold text-[#0A356A] whitespace-nowrap text-center">
-                      {item.disposal_number}
+                    <td className="px-3 py-3 text-[13px] font-semibold text-[#0A356A] whitespace-nowrap text-center">
+                      {item.disposal_number || "-"}
                     </td>
-                    <td className="px-4 py-3.5 text-center">
-                      <p className="text-[13px] font-bold text-gray-900">{item.equipment_code}</p>
-                      <p className="text-[12px] text-gray-500 font-medium line-clamp-1">{item.equipment_name}</p>
+                    <td className="px-3 py-3 text-[13px] font-semibold text-[#0A356A] whitespace-nowrap text-left">
+                      {item.equipment_code || "-"}
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-[13px] font-bold text-emerald-700 text-center">
+                    <td className="px-3 py-3 text-[13px] font-semibold text-gray-800 text-left" title={item.equipment_name}>
+                      <span className="leading-tight line-clamp-2 block text-left">
+                        {item.equipment_name || "-"}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 whitespace-nowrap text-[13px] font-bold text-emerald-700 text-center">
                       {formatCurrency(item.scrap_value)}
                     </td>
-                    <td className="px-4 py-3.5 whitespace-nowrap text-[12px] text-gray-600 font-medium text-center">
+                    <td className="px-3 py-3 whitespace-nowrap text-[13px] text-gray-600 font-medium text-center">
                       {formatDate(item.created_at)}
                     </td>
                     {activeTab === "history" && (
-                      <td className="px-4 py-3.5 text-center whitespace-nowrap">
+                      <td className="px-3 py-3 text-center whitespace-nowrap">
                         {item.status === "DISPOSED" ? (
-                          <span className="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2.5 py-1 rounded-full text-[10px] font-bold">
-                            <CheckCircle2 className="w-3 h-3" />
+                          <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#DCFCE7] text-[#16A34A]">
                             Disetujui
                           </span>
-                        ) : (
-                          <span className="inline-flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 px-2.5 py-1 rounded-full text-[10px] font-bold">
-                            <XCircle className="w-3 h-3" />
+                        ) : item.status === "REJECTED" ? (
+                          <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEE2E2] text-[#DC2626]">
                             Ditolak
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEF3C7] text-[#B45309]">
+                            Menunggu Persetujuan
                           </span>
                         )}
                       </td>
                     )}
-                    <td className="px-4 py-3.5 text-center whitespace-nowrap">
-                      <button
-                        onClick={() => handleOpenDetail(item)}
-                        className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3.5 py-1.5 rounded-lg text-[12px] font-bold hover:bg-[#0556B3] transition-colors shadow-sm cursor-pointer"
-                      >
-                        <Eye className="w-3.5 h-3.5" />
-                        {activeTab === "history" ? "Detail" : "Tinjau Permintaan"}
-                      </button>
+                    <td className="px-3 py-3 text-center whitespace-nowrap">
+                      <div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
+                        {activeTab === "history" ? (
+                          <button
+                            onClick={() => handleOpenDetail(item)}
+                            className="inline-flex items-center gap-1 text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] px-2.5 py-1 rounded text-[11px] font-medium transition-colors cursor-pointer"
+                            title="Lihat Detail"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            Detail
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => handleOpenDetail(item)}
+                            className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] hover:bg-[#062854] text-white px-3 py-1.5 rounded-md text-[13px] font-bold transition-all shadow-sm cursor-pointer"
+                            title="Tinjau usulan scrap"
+                          >
+                            <Eye className="w-3.5 h-3.5" />
+                            <span>Tinjau Permintaan</span>
+                          </button>
+                        )}
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -388,43 +423,41 @@ export default function ManajerScrapPage() {
         </div>
 
         {filteredDisposals.length > 0 && (
-          <div className="px-6 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
-            <span className="text-[12px] font-medium text-gray-500">
-              Menampilkan {filteredDisposals.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredDisposals.length)} dari {filteredDisposals.length} data (10 baris/halaman)
+          <div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
+            <span className="text-[11px] font-medium text-gray-500">
+              Menampilkan {filteredDisposals.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1} - {Math.min(currentPage * ITEMS_PER_PAGE, filteredDisposals.length)} dari {filteredDisposals.length} data ({ITEMS_PER_PAGE} baris/halaman)
             </span>
-            {totalPages > 1 && (
-              <div className="flex items-center gap-1.5">
-                <button 
-                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                  disabled={currentPage === 1}
-                  className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
-                >
-                  Prev
-                </button>
-                <div className="flex items-center gap-1">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                    <button
-                      key={page}
-                      onClick={() => setCurrentPage(page)}
-                      className={`w-7 h-7 rounded-md text-[12px] font-bold flex items-center justify-center transition-colors ${
-                        currentPage === page
-                          ? "bg-[#0A356A] text-white"
-                          : "text-gray-600 hover:bg-gray-100"
-                      }`}
-                    >
-                      {page}
-                    </button>
-                  ))}
-                </div>
-                <button 
-                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
-                  disabled={currentPage === totalPages}
-                  className="px-3 py-1 text-[12px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
-                >
-                  Next
-                </button>
+            <div className="flex items-center gap-1.5">
+              <button 
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1}
+                className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              >
+                Prev
+              </button>
+              <div className="flex items-center gap-1">
+                {Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
+                      currentPage === page
+                        ? "bg-[#0A356A] text-white"
+                        : "text-gray-600 hover:bg-gray-100"
+                    }`}
+                  >
+                    {page}
+                  </button>
+                ))}
               </div>
-            )}
+              <button 
+                onClick={() => setCurrentPage(p => Math.min(Math.max(1, totalPages), p + 1))}
+                disabled={currentPage === Math.max(1, totalPages)}
+                className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+              >
+                Next
+              </button>
+            </div>
           </div>
         )}
       </div>

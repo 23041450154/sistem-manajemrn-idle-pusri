@@ -164,9 +164,23 @@ export default function VerifikasiDisposalPage() {
 				};
 			});
 
+			mappedEq.sort((a: any, b: any) => {
+				const timeA = a.tanggalRegistrasi && a.tanggalRegistrasi !== "-" ? new Date(a.tanggalRegistrasi).getTime() : 0;
+				const timeB = b.tanggalRegistrasi && b.tanggalRegistrasi !== "-" ? new Date(b.tanggalRegistrasi).getTime() : 0;
+				if (timeB !== timeA) return timeB - timeA;
+				return (Number(b.id) || 0) - (Number(a.id) || 0);
+			});
+
 			setEquipments(mappedEq);
 			setInspections(insData || []);
-			setDisposals(dispData || []);
+			setDisposals(
+				(dispData || []).sort((a: any, b: any) => {
+					const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+					const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+					if (timeB !== timeA) return timeB - timeA;
+					return (Number(b.id) || 0) - (Number(a.id) || 0);
+				}),
+			);
 			setMethods(methData || []);
 		} catch (err) {
 			console.error(err);

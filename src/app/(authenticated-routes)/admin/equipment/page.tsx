@@ -58,7 +58,16 @@ export default function EquipmentManagementPage() {
   const fetchData = async () => {
     setIsLoading(true);
     try {
-      setEquipments(await getEquipments());
+      const data = await getEquipments();
+      if (Array.isArray(data)) {
+        data.sort((a: any, b: any) => {
+          const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+          const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+          if (timeB !== timeA) return timeB - timeA;
+          return (Number(b.id) || 0) - (Number(a.id) || 0);
+        });
+        setEquipments(data);
+      }
     } catch (error) {
       console.error(error);
     } finally {
@@ -142,7 +151,7 @@ export default function EquipmentManagementPage() {
     const raw = status?.name || String(statusId || "");
     return (
       <span
-        className={`px-2.5 py-1 rounded-full text-[11px] font-bold border inline-block ${statusBadgeStyle(raw)}`}
+        className={`px-2.5 py-1 rounded-full text-[11px] font-semibold inline-flex items-center justify-center whitespace-nowrap ${statusBadgeStyle(raw)}`}
       >
         {statusText(raw) || "-"}
       </span>

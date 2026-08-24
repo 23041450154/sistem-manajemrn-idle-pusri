@@ -43,24 +43,21 @@ interface ReuseRequestItem {
 	created_at: string;
 }
 
-/* DESIGN.md status hues: four workflow states mapped onto the locked five-hue
-   system. Colour is carried by border + text, never a filled pastel chip. */
 const STATUS_META: Record<
 	ReuseRequestItem["status"],
-	{ label: string; color: string }
+	{ label: string; bg: string; text: string }
 > = {
-	PENDING: { label: "Menunggu Validasi", color: "#0556B3" },
-	IN_REVIEW: { label: "Dalam Peninjauan", color: "#B45309" },
-	APPROVED: { label: "Disetujui", color: "#059669" },
-	REJECTED: { label: "Ditolak", color: "#DC2626" },
+	PENDING: { label: "Menunggu Persetujuan", bg: "bg-[#FEF3C7]", text: "text-[#B45309]" },
+	IN_REVIEW: { label: "Dalam Peninjauan", bg: "bg-[#FEF3C7]", text: "text-[#B45309]" },
+	APPROVED: { label: "Disetujui", bg: "bg-[#DCFCE7]", text: "text-[#16A34A]" },
+	REJECTED: { label: "Ditolak", bg: "bg-[#FEE2E2]", text: "text-[#DC2626]" },
 };
 
 function StatusBadge({ status }: { status: ReuseRequestItem["status"] }) {
 	const meta = STATUS_META[status] ?? STATUS_META.PENDING;
 	return (
 		<span
-			className="inline-flex items-center whitespace-nowrap rounded-sm border px-2 py-0.5 text-[11px] font-semibold"
-			style={{ borderColor: meta.color, color: meta.color }}
+			className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${meta.bg} ${meta.text}`}
 		>
 			{meta.label}
 		</span>
@@ -324,6 +321,13 @@ function RiwayatPermintaanContent() {
 				if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
 				return 0;
 			});
+		} else {
+			result.sort((a, b) => {
+				const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+				const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+				if (timeB !== timeA) return timeB - timeA;
+				return (Number(b.id) || 0) - (Number(a.id) || 0);
+			});
 		}
 
 		return result;
@@ -364,10 +368,10 @@ function RiwayatPermintaanContent() {
 			icon: FileText,
 		},
 		{
-			label: "Menunggu Validasi",
+			label: "Menunggu Persetujuan",
 			value: stats.pending,
 			caption: "Belum ditinjau",
-			rule: "#0556B3",
+			rule: "#B45309",
 			icon: Clock,
 		},
 		{
@@ -583,13 +587,13 @@ function RiwayatPermintaanContent() {
 								>
 									No
 								</th>
-								{sortableTh("request_number", "No. Pengajuan", "left", "w-[160px]")}
-								{sortableTh("equipment_name", "Nama Alat", "left")}
-								{sortableTh("target_plant", "Plant", "left", "w-[150px]")}
-								{sortableTh("start_date", "Tgl Permintaan", "center", "w-[130px]")}
+								{sortableTh("request_number", "No. Pengajuan", "left", "w-[180px]")}
+								{sortableTh("equipment_name", "Nama Alat", "left", "w-[240px] max-w-[260px]")}
+								{sortableTh("target_plant", "Plant", "left", "w-[160px]")}
+								{sortableTh("start_date", "Tgl Permintaan", "center", "w-[140px]")}
 								<th
 									scope="col"
-									className="w-[145px] px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
+									className="w-[160px] px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
 								>
 									Status
 								</th>
@@ -662,7 +666,7 @@ function RiwayatPermintaanContent() {
 													{item.request_number}
 												</span>
 											</td>
-											<td className="px-4 py-2.5">
+											<td className="px-4 py-2.5 w-[240px] max-w-[260px]">
 												<span
 													className="block truncate text-[13px] leading-tight font-medium text-[#0F172A]"
 													title={item.equipment_name}
