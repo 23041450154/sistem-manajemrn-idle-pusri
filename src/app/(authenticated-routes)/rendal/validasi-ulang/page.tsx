@@ -36,6 +36,7 @@ interface ValidasiUlangItem {
 	statusAset: string;
 	statusId: number;
 	approvalId?: string;
+	approvalStatus?: string;
 	catatanInspeksi?: string;
 }
 
@@ -126,6 +127,10 @@ export default function RendalValidasiUlangPage() {
 							displayStatusId = 6;
 						}
 
+						const approvalStatus =
+							matchingApproval?.approval_status ||
+							(isReady ? "APPROVED" : "PENDING");
+
 						return {
 							id: String(item.id),
 							kodeAlat: item.equipment_code || item.kodeAlat || "-",
@@ -147,6 +152,7 @@ export default function RendalValidasiUlangPage() {
 							approvalId: matchingApproval?.id
 								? String(matchingApproval.id)
 								: undefined,
+							approvalStatus: approvalStatus,
 							catatanInspeksi:
 								item.notes ||
 								"Hasil validasi ulang menunjukkan kondisi alat siap pakai.",
@@ -298,13 +304,14 @@ export default function RendalValidasiUlangPage() {
 									...item,
 									statusAset: "READY_TO_USE",
 									statusId: 6,
+									approvalStatus: "APPROVED",
 								}
 							: item,
 					),
 				);
 				setNotification({
 					type: "success",
-					message: `Peralatan ${selectedAsset.kodeAlat} berhasil disetujui menjadi READY_TO_USE di database!`,
+					message: `Peralatan ${selectedAsset.kodeAlat} berhasil disetujui!`,
 				});
 				handleCloseModal();
 				await loadData();
@@ -324,6 +331,50 @@ export default function RendalValidasiUlangPage() {
 		} finally {
 			setIsSubmitting(false);
 		}
+	};
+
+	const renderStatusBadge = (item: ValidasiUlangItem) => {
+		const status =
+			item.approvalStatus?.toUpperCase() ||
+			(item.statusAset === "READY_TO_USE" ? "APPROVED" : "PENDING");
+
+		if (status === "APPROVED") {
+			return (
+				<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#DCFCE7] text-[#16A34A]">
+					DISETUJUI
+				</span>
+			);
+		}
+
+		if (status === "REJECTED") {
+			return (
+				<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEE2E2] text-[#DC2626]">
+					DITOLAK
+				</span>
+			);
+		}
+
+		if (status === "REVISION_REQUIRED" || status === "REVISION") {
+			return (
+				<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#F3E8FF] text-[#9333EA]">
+					PERLU REVISI
+				</span>
+			);
+		}
+
+		if (status === "IN_REVIEW") {
+			return (
+				<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#E0F2FE] text-[#0284C7]">
+					SEDANG DIREVIEW
+				</span>
+			);
+		}
+
+		return (
+			<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEF3C7] text-[#B45309]">
+				MENUNGGU PERSETUJUAN
+			</span>
+		);
 	};
 
 	return (
@@ -607,19 +658,11 @@ export default function RendalValidasiUlangPage() {
 											{asset.tanggalRevalidasi}
 										</td>
 										<td className="px-3 py-3 text-center whitespace-nowrap">
-											{asset.statusAset === "READY TO USE" || asset.statusAset === "READY_TO_USE" ? (
-												<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#E0E7FF] text-[#4F46E5]">
-													READY TO USE
-												</span>
-											) : (
-												<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEF3C7] text-[#B45309]">
-													MENUNGGU PERSETUJUAN
-												</span>
-											)}
+											{renderStatusBadge(asset)}
 										</td>
 										<td className="px-3 py-3 text-center whitespace-nowrap">
 											<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
-												{activeTab === "riwayat" || asset.statusAset === "READY TO USE" || asset.statusAset === "READY_TO_USE" ? (
+												{activeTab === "riwayat" || asset.approvalStatus === "APPROVED" || asset.statusAset === "READY_TO_USE" || asset.statusAset === "READY TO USE" ? (
 													<button
 														onClick={() => handleOpenModal(asset, "DETAIL")}
 														className="inline-flex items-center gap-1 text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
@@ -727,7 +770,7 @@ export default function RendalValidasiUlangPage() {
 								{/* Detail Body */}
 								<div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
 									<div className="bg-emerald-50/70 rounded-lg p-3.5 border border-emerald-100 text-xs text-emerald-900 leading-normal">
-										Peralatan ini telah disetujui statusnya menjadi{" "}
+										Peralatan ini telah <strong className="text-emerald-700">Disetujui</strong> dan status aset diperbarui menjadi{" "}
 										<strong className="text-emerald-700">Ready to Use</strong> dan siap
 										dimanfaatkan kembali di operasional pabrik.
 									</div>
@@ -783,7 +826,15 @@ export default function RendalValidasiUlangPage() {
 												{selectedAsset.tanggalRevalidasi}
 											</p>
 										</div>
-										<div className="col-span-2">
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												Status Persetujuan
+											</p>
+											<div className="mt-0.5">
+												{renderStatusBadge(selectedAsset)}
+											</div>
+										</div>
+										<div>
 											<p className="text-[10px] font-bold text-gray-400 uppercase">
 												Status Aset
 											</p>
