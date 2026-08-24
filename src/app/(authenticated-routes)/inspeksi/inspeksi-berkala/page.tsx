@@ -102,6 +102,18 @@ export default function InspeksiAntreanPage() {
 						else if (eq.object_type?.name) typeStr = eq.object_type.name;
 						else if (ins.object_type_name) typeStr = ins.object_type_name;
 
+						// Kondisi = snapshot per-inspeksi (condition_id baru di backend).
+						// Data lama sebelum migrasi belum punya snapshot → derive dari
+						// require action, sesuai mapping master require_actions.
+						const requireActionName =
+							ins.require_action?.name || ins.require_action_name || "";
+						const kondisiDariAksi: Record<string, string> = {
+							"Siap Pakai": "BAGUS",
+							"Perbaikan Ringan": "RUSAK_RINGAN",
+							Overhaul: "RUSAK_SEDANG",
+							Disposal: "RUSAK_BERAT",
+						};
+
 						return {
 							id: ins.id,
 							equipment_id: ins.equipment_id,
@@ -113,7 +125,11 @@ export default function InspeksiAntreanPage() {
 							inspection_date:
 								ins.inspection_date || ins.created_at || new Date().toISOString(),
 							notes: ins.notes || ins.summary || "Inspeksi berkala selesai.",
-							condition_name: ins.condition?.name || ins.condition_name || "Baik",
+							condition_name:
+								ins.condition?.name ||
+								ins.condition_name ||
+								kondisiDariAksi[requireActionName] ||
+								"-",
 							require_action_name:
 								ins.require_action?.name || ins.require_action_name || "-",
 							status_name: "Selesai",

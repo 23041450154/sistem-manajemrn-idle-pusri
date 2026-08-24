@@ -15,10 +15,13 @@ import {
 	Loader2,
 	ClipboardCheck,
 	FileText,
-	Image as ImageIcon,
 	ChevronRight,
 } from "lucide-react";
-import { getEquipments, submitInspectionData } from "@/action/api";
+import {
+	getEquipments,
+	getRequireActions,
+	submitInspectionData,
+} from "@/action/api";
 
 export default function FormInspeksiPage() {
 	const searchParams = useSearchParams();
@@ -26,6 +29,9 @@ export default function FormInspeksiPage() {
 	const equipmentId = searchParams.get("equipmentId");
 
 	const [equipment, setEquipment] = useState<any>(null);
+	// Master tindak lanjut dari backend — ID tidak di-hardcode supaya tetap
+	// benar walau urutan/data master require_action berubah.
+	const [requireActions, setRequireActions] = useState<any[]>([]);
 
 	// Form State
 	const [hasilInspeksi, setHasilInspeksi] = useState<string>("");
@@ -45,6 +51,12 @@ export default function FormInspeksiPage() {
 	}>({ show: false, type: "success", message: "" });
 
 	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	useEffect(() => {
+		getRequireActions()
+			.then((res) => setRequireActions(Array.isArray(res) ? res : []))
+			.catch(() => setRequireActions([]));
+	}, []);
 
 	useEffect(() => {
 		if (equipmentId) {
@@ -126,32 +138,65 @@ export default function FormInspeksiPage() {
 		setLoading(true);
 
 		try {
-			const formData = new FormData();
-			formData.append("equipment_id", equipmentId || "");
+			// Resolusi tindak lanjut dari master require_action by nama target
+			// status/kondisi (vokabular stabil), bukan ID auto-increment yang
+			// bisa meleset kalau master data berubah.
+			const resolveRequireActionId = (
+				targetStatus: string,
+				targetCondition?: string,
+			): number | null => {
+				const match = requireActions.find((ra) => {
+					const st = String(ra.target_status?.name || "").toUpperCase();
+					if (st !== targetStatus) return false;
+					if (targetCondition) {
+						const cond = String(ra.target_condition?.name || "").toUpperCase();
+						if (cond !== targetCondition) return false;
+					}
+					return true;
+				});
+				return match ? Number(match.id) : null;
+			};
 
-			let requireActionId = 1;
+			let resolvedId: number | null = null;
 			let isUtilizableStr = "true";
 			let needsRefurbishmentStr = "false";
 
 			if (hasilInspeksi === "READY") {
-				requireActionId = 1;
+				resolvedId = resolveRequireActionId("READY_TO_USE");
 				isUtilizableStr = "true";
 				needsRefurbishmentStr = "false";
 			} else if (hasilInspeksi === "REPAIR") {
-				requireActionId = jenisPerbaikan === "RINGAN" ? 2 : 3;
+				resolvedId =
+					jenisPerbaikan === "RINGAN"
+						? resolveRequireActionId("REPAIR", "RUSAK_RINGAN")
+						: resolveRequireActionId("REPAIR", "RUSAK_SEDANG");
 				isUtilizableStr = "true";
 				needsRefurbishmentStr = "true";
 			} else if (hasilInspeksi === "DISPOSAL") {
-				requireActionId = 4;
+				resolvedId = resolveRequireActionId("DISPOSAL_RECOMMENDED");
 				isUtilizableStr = "false";
 				needsRefurbishmentStr = "false";
 			}
+
+			// Gagal resolusi = master tindak lanjut tidak lengkap/belum termuat.
+			// Blokir submit daripada mengirim ID ngawur yang merusak kondisi aset.
+			if (!resolvedId) {
+				showToast(
+					"error",
+					"Master tindak lanjut (require action) tidak tersedia. Muat ulang halaman atau hubungi admin.",
+				);
+				setLoading(false);
+				return;
+			}
+
+			const formData = new FormData();
+			formData.append("equipment_id", equipmentId || "");
 
 			formData.append("is_utilizable", isUtilizableStr);
 			if (isUtilizableStr === "true") {
 				formData.append("needs_refurbishment", needsRefurbishmentStr);
 			}
-			formData.append("require_action_id", requireActionId.toString());
+			formData.append("require_action_id", resolvedId.toString());
 
 			formData.append("mechanical_condition", mechanicalCondition.trim());
 			formData.append("electrical_condition", electricalCondition.trim());
@@ -176,7 +221,10 @@ export default function FormInspeksiPage() {
 				setLoading(false);
 			}
 		} catch (error) {
-			showToast("error", error instanceof Error ? error.message : "Terjadi kesalahan sistem.");
+			showToast(
+				"error",
+				error instanceof Error ? error.message : "Terjadi kesalahan sistem.",
+			);
 			setLoading(false);
 		}
 	};
@@ -292,25 +340,19 @@ export default function FormInspeksiPage() {
 				</div>
 				<div className="p-5 grid grid-cols-2 md:grid-cols-4 gap-4">
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 mb-1">
-							Kode Aset
-						</p>
+						<p className="text-[11px] font-bold text-gray-500 mb-1">Kode Aset</p>
 						<p className="text-[14px] font-bold text-[#0A356A]">
 							{equipment?.equipment_code || "Memuat..."}
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 mb-1">
-							Nama Aset
-						</p>
+						<p className="text-[11px] font-bold text-gray-500 mb-1">Nama Aset</p>
 						<p className="text-[14px] font-bold text-gray-800">
 							{equipment?.name || "Memuat..."}
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 mb-1">
-							Plant
-						</p>
+						<p className="text-[11px] font-bold text-gray-500 mb-1">Plant</p>
 						<p className="text-[14px] font-medium text-gray-700">
 							{(typeof equipment?.plant === "string"
 								? equipment.plant
