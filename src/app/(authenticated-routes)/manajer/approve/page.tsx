@@ -177,6 +177,13 @@ export default function ManajerApprovePage() {
 					};
 				});
 
+				mappedData.sort((a: any, b: any) => {
+					const timeA = a.tanggalPengajuan && a.tanggalPengajuan !== "-" ? new Date(a.tanggalPengajuan).getTime() : 0;
+					const timeB = b.tanggalPengajuan && b.tanggalPengajuan !== "-" ? new Date(b.tanggalPengajuan).getTime() : 0;
+					if (timeB !== timeA) return timeB - timeA;
+					return (Number(b.id) || 0) - (Number(a.id) || 0);
+				});
+
 				setRequests(mappedData);
 			} catch (error) {
 				console.error(error);

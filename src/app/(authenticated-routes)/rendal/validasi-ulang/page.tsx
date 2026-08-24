@@ -20,6 +20,7 @@ import {
 	ClipboardCheck,
 	AlertCircle,
 	XCircle,
+	Eye,
 } from "lucide-react";
 
 interface ValidasiUlangItem {
@@ -56,6 +57,7 @@ export default function RendalValidasiUlangPage() {
 		null,
 	);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [modalMode, setModalMode] = useState<"APPROVAL" | "DETAIL">("APPROVAL");
 	const [approvalNotes, setApprovalNotes] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [notification, setNotification] = useState<{
@@ -148,6 +150,12 @@ export default function RendalValidasiUlangPage() {
 								"Hasil validasi ulang menunjukkan kondisi alat siap pakai.",
 						};
 					});
+				filtered.sort((a: any, b: any) => {
+					const timeA = a.tanggalRevalidasi ? new Date(a.tanggalRevalidasi).getTime() : 0;
+					const timeB = b.tanggalRevalidasi ? new Date(b.tanggalRevalidasi).getTime() : 0;
+					if (timeB !== timeA) return timeB - timeA;
+					return (Number(b.id) || 0) - (Number(a.id) || 0);
+				});
 			}
 
 			setItems(filtered);
@@ -251,8 +259,12 @@ export default function RendalValidasiUlangPage() {
 		setSortConfig({ key, direction });
 	};
 
-	const handleOpenModal = (asset: ValidasiUlangItem) => {
+	const handleOpenModal = (
+		asset: ValidasiUlangItem,
+		mode: "APPROVAL" | "DETAIL" = "APPROVAL",
+	) => {
 		setSelectedAsset(asset);
+		setModalMode(mode);
 		setApprovalNotes("");
 		setIsModalOpen(true);
 	};
@@ -261,6 +273,8 @@ export default function RendalValidasiUlangPage() {
 		if (isSubmitting) return;
 		setIsModalOpen(false);
 		setSelectedAsset(null);
+		setModalMode("APPROVAL");
+		setApprovalNotes("");
 	};
 
 	const handleApprove = async (e: React.FormEvent) => {
@@ -583,7 +597,7 @@ export default function RendalValidasiUlangPage() {
 											{asset.plant}
 										</td>
 										<td className="px-3 py-3 text-center whitespace-nowrap">
-											<span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200">
+											<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#DCFCE7] text-[#16A34A]">
 												{asset.kondisi}
 											</span>
 										</td>
@@ -591,26 +605,30 @@ export default function RendalValidasiUlangPage() {
 											{asset.tanggalRevalidasi}
 										</td>
 										<td className="px-3 py-3 text-center whitespace-nowrap">
-											{asset.statusAset === "READY TO USE" ? (
-												<span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
+											{asset.statusAset === "READY TO USE" || asset.statusAset === "READY_TO_USE" ? (
+												<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#E0E7FF] text-[#4F46E5]">
 													READY TO USE
 												</span>
 											) : (
-												<span className="inline-block px-2 py-0.5 rounded text-[11px] font-bold bg-amber-50 text-amber-700 border border-amber-200">
+												<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEF3C7] text-[#B45309]">
 													MENUNGGU PERSETUJUAN
 												</span>
 											)}
 										</td>
 										<td className="px-3 py-3 text-center whitespace-nowrap">
 											<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
-												{asset.statusAset === "READY TO USE" ? (
-													<span className="inline-flex items-center justify-center gap-1.5 bg-emerald-50 text-emerald-700 border border-emerald-200 px-2.5 py-1 rounded-md text-[11px] font-bold shadow-sm">
-														<CheckCircle2 className="w-3 h-3" />
-														Disetujui
-													</span>
+												{activeTab === "riwayat" || asset.statusAset === "READY TO USE" || asset.statusAset === "READY_TO_USE" ? (
+													<button
+														onClick={() => handleOpenModal(asset, "DETAIL")}
+														className="inline-flex items-center gap-1 text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] px-2.5 py-1 rounded text-[11px] font-medium transition-colors"
+														title="Lihat Detail"
+													>
+														<Eye className="h-3.5 w-3.5" />
+														Detail
+													</button>
 												) : (
 													<button
-														onClick={() => handleOpenModal(asset)}
+														onClick={() => handleOpenModal(asset, "APPROVAL")}
 														className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] hover:bg-[#062854] text-white px-3 py-1.5 rounded-md text-[13px] font-bold transition-all shadow-sm"
 														title="Setujui Menjadi Ready To Use"
 													>
@@ -675,124 +693,247 @@ export default function RendalValidasiUlangPage() {
 				)}
 			</div>
 
-			{/* Modal Konfirmasi Persetujuan */}
+			{/* Modal Konfirmasi Persetujuan / Detail */}
 			{isModalOpen && selectedAsset && (
 				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
 					<div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
-						{/* Modal Header */}
-						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
-							<div className="flex items-center gap-3">
-								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
-									<ClipboardCheck className="w-5 h-5 text-white" />
+						{modalMode === "DETAIL" ? (
+							<>
+								{/* Detail Header */}
+								<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
+									<div className="flex items-center gap-3">
+										<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
+											<ClipboardCheck className="w-5 h-5 text-white" />
+										</div>
+										<div>
+											<h2 className="text-base font-bold text-white">
+												Detail Persetujuan Re-Validasi
+											</h2>
+											<p className="text-xs text-blue-100">
+												{selectedAsset.kodeAlat} - {selectedAsset.namaAlat}
+											</p>
+										</div>
+									</div>
+									<button
+										onClick={handleCloseModal}
+										className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+									>
+										<X className="w-5 h-5" />
+									</button>
 								</div>
-								<div>
-									<h2 className="text-base font-bold text-white">
-										Persetujuan Perbaikan
-									</h2>
-									<p className="text-xs text-blue-100">
-										{selectedAsset.kodeAlat} - {selectedAsset.namaAlat}
-									</p>
-								</div>
-							</div>
-							<button
-								onClick={handleCloseModal}
-								disabled={isSubmitting}
-								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50"
-							>
-								<X className="w-5 h-5" />
-							</button>
-						</div>
 
-						{/* Form */}
-						<form
-							onSubmit={handleApprove}
-							className="px-6 py-5 space-y-4 overflow-y-auto flex-1"
-						>
-							{/* Info box */}
-							<div className="bg-blue-50/70 rounded-lg p-3.5 border border-blue-100 text-xs text-blue-900 leading-normal">
-								Peralatan ini telah selesai diperbaiki dan telah dinyatakan{" "}
-								<strong>{selectedAsset.kondisi}</strong> pada pemeriksaan ulang oleh
-								Inspeksi Teknik.
-								<div className="mt-1 text-gray-700">
-									Menyetujui tindakan ini akan mengubah status aset secara resmi menjadi{" "}
-									<strong className="text-[#0A356A]">Ready to Use</strong>.
-								</div>
-							</div>
+								{/* Detail Body */}
+								<div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+									<div className="bg-emerald-50/70 rounded-lg p-3.5 border border-emerald-100 text-xs text-emerald-900 leading-normal">
+										Peralatan ini telah disetujui statusnya menjadi{" "}
+										<strong className="text-emerald-700">Ready to Use</strong> dan siap
+										dimanfaatkan kembali di operasional pabrik.
+									</div>
 
-							{/* Detail Ringkasan */}
-							<div className="bg-gray-50 rounded-lg p-3.5 border border-gray-200 grid grid-cols-2 gap-3 text-xs">
-								<div>
-									<p className="text-[10px] font-bold text-gray-400 uppercase">
-										Kode Alat
-									</p>
-									<p className="font-semibold text-gray-800 mt-0.5">
-										{selectedAsset.kodeAlat}
-									</p>
-								</div>
-								<div>
-									<p className="text-[10px] font-bold text-gray-400 uppercase">
-										Plant & Lokasi
-									</p>
-									<p className="font-semibold text-gray-800 mt-0.5">
-										{selectedAsset.plant} - {selectedAsset.lokasiPenyimpanan}
-									</p>
-								</div>
-								<div>
-									<p className="text-[10px] font-bold text-gray-400 uppercase">
-										Kondisi Fisik
-									</p>
-									<p className="font-bold text-emerald-700 mt-0.5">
-										{selectedAsset.kondisi}
-									</p>
-								</div>
-								<div>
-									<p className="text-[10px] font-bold text-gray-400 uppercase">
-										Tgl Re-Validasi
-									</p>
-									<p className="font-semibold text-gray-800 mt-0.5">
-										{selectedAsset.tanggalRevalidasi}
-									</p>
-								</div>
-							</div>
+									<div className="bg-gray-50 rounded-lg p-3.5 border border-gray-200 grid grid-cols-2 gap-3 text-xs">
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												Kode Alat
+											</p>
+											<p className="font-semibold text-gray-800 mt-0.5">
+												{selectedAsset.kodeAlat}
+											</p>
+										</div>
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												Nama Peralatan
+											</p>
+											<p className="font-semibold text-gray-800 mt-0.5">
+												{selectedAsset.namaAlat}
+											</p>
+										</div>
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												Plant & Lokasi
+											</p>
+											<p className="font-semibold text-gray-800 mt-0.5">
+												{selectedAsset.plant} - {selectedAsset.lokasiPenyimpanan}
+											</p>
+										</div>
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												Tipe Objek
+											</p>
+											<p className="font-semibold text-gray-800 mt-0.5">
+												{selectedAsset.tipeObjek}
+											</p>
+										</div>
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												Kondisi Fisik
+											</p>
+											<div className="mt-0.5">
+												<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#DCFCE7] text-[#16A34A]">
+													{selectedAsset.kondisi}
+												</span>
+											</div>
+										</div>
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												Tgl Re-Validasi
+											</p>
+											<p className="font-semibold text-gray-800 mt-0.5">
+												{selectedAsset.tanggalRevalidasi}
+											</p>
+										</div>
+										<div className="col-span-2">
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												Status Aset
+											</p>
+											<div className="mt-0.5">
+												<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#E0E7FF] text-[#4F46E5]">
+													READY TO USE
+												</span>
+											</div>
+										</div>
+									</div>
 
-							{/* Catatan Persetujuan */}
-							<div>
-								<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-									Catatan Persetujuan (Opsional)
-								</label>
-								<textarea
-									rows={3}
-									value={approvalNotes}
-									onChange={(e) => setApprovalNotes(e.target.value)}
-									placeholder="Tambahkan catatan persetujuan atau arahan penempatan aset..."
-									className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all resize-none shadow-sm"
-								/>
-							</div>
-
-							{/* Modal Footer Actions */}
-							<div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 -mx-6 -mb-5 mt-4">
-								<button
-									type="button"
-									disabled={isSubmitting}
-									onClick={handleCloseModal}
-									className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
-								>
-									Batal
-								</button>
-								<button
-									type="submit"
-									disabled={isSubmitting}
-									className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-lg transition-colors shadow-sm disabled:opacity-50"
-								>
-									{isSubmitting ? (
-										<Loader2 className="w-4 h-4 animate-spin" />
-									) : (
-										<CheckCircle2 className="w-4 h-4" />
+									{selectedAsset.catatanInspeksi && (
+										<div>
+											<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1">
+												Catatan Re-Validasi
+											</label>
+											<p className="text-xs text-gray-700 bg-gray-50 p-3 rounded-lg border border-gray-200 leading-relaxed">
+												{selectedAsset.catatanInspeksi}
+											</p>
+										</div>
 									)}
-									{isSubmitting ? "Menyetujui..." : "Setujui Menjadi Ready To Use"}
-								</button>
-							</div>
-						</form>
+								</div>
+
+								{/* Detail Footer */}
+								<div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+									<button
+										type="button"
+										onClick={handleCloseModal}
+										className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+									>
+										Tutup
+									</button>
+								</div>
+							</>
+						) : (
+							<>
+								{/* Modal Header */}
+								<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
+									<div className="flex items-center gap-3">
+										<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
+											<ClipboardCheck className="w-5 h-5 text-white" />
+										</div>
+										<div>
+											<h2 className="text-base font-bold text-white">
+												Persetujuan Perbaikan
+											</h2>
+											<p className="text-xs text-blue-100">
+												{selectedAsset.kodeAlat} - {selectedAsset.namaAlat}
+											</p>
+										</div>
+									</div>
+									<button
+										onClick={handleCloseModal}
+										disabled={isSubmitting}
+										className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50"
+									>
+										<X className="w-5 h-5" />
+									</button>
+								</div>
+
+								{/* Form */}
+								<form
+									onSubmit={handleApprove}
+									className="px-6 py-5 space-y-4 overflow-y-auto flex-1"
+								>
+									{/* Info box */}
+									<div className="bg-blue-50/70 rounded-lg p-3.5 border border-blue-100 text-xs text-blue-900 leading-normal">
+										Peralatan ini telah selesai diperbaiki dan telah dinyatakan{" "}
+										<strong>{selectedAsset.kondisi}</strong> pada pemeriksaan ulang oleh
+										Inspeksi Teknik.
+										<div className="mt-1 text-gray-700">
+											Menyetujui tindakan ini akan mengubah status aset secara resmi menjadi{" "}
+											<strong className="text-[#0A356A]">Ready to Use</strong>.
+										</div>
+									</div>
+
+									{/* Detail Ringkasan */}
+									<div className="bg-gray-50 rounded-lg p-3.5 border border-gray-200 grid grid-cols-2 gap-3 text-xs">
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												Kode Alat
+											</p>
+											<p className="font-semibold text-gray-800 mt-0.5">
+												{selectedAsset.kodeAlat}
+											</p>
+										</div>
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												Plant & Lokasi
+											</p>
+											<p className="font-semibold text-gray-800 mt-0.5">
+												{selectedAsset.plant} - {selectedAsset.lokasiPenyimpanan}
+											</p>
+										</div>
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												Kondisi Fisik
+											</p>
+											<p className="font-bold text-emerald-700 mt-0.5">
+												{selectedAsset.kondisi}
+											</p>
+										</div>
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												Tgl Re-Validasi
+											</p>
+											<p className="font-semibold text-gray-800 mt-0.5">
+												{selectedAsset.tanggalRevalidasi}
+											</p>
+										</div>
+									</div>
+
+									{/* Catatan Persetujuan */}
+									<div>
+										<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
+											Catatan Persetujuan (Opsional)
+										</label>
+										<textarea
+											rows={3}
+											value={approvalNotes}
+											onChange={(e) => setApprovalNotes(e.target.value)}
+											placeholder="Tambahkan catatan persetujuan atau arahan penempatan aset..."
+											className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all resize-none shadow-sm"
+										/>
+									</div>
+
+									{/* Modal Footer Actions */}
+									<div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3 -mx-6 -mb-5 mt-4">
+										<button
+											type="button"
+											disabled={isSubmitting}
+											onClick={handleCloseModal}
+											className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors disabled:opacity-50"
+										>
+											Batal
+										</button>
+										<button
+											type="submit"
+											disabled={isSubmitting}
+											className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-lg transition-colors shadow-sm disabled:opacity-50"
+										>
+											{isSubmitting ? (
+												<Loader2 className="w-4 h-4 animate-spin" />
+											) : (
+												<CheckCircle2 className="w-4 h-4" />
+											)}
+											{isSubmitting ? "Menyetujui..." : "Setujui Menjadi Ready To Use"}
+										</button>
+									</div>
+								</form>
+							</>
+						)}
 					</div>
 				</div>
 			)}

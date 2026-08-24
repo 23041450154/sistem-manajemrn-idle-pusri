@@ -83,7 +83,14 @@ export default function InspeksiAntreanPage() {
 				// Semua aset READY_TO_USE tetap terdaftar; yang berubah setelah diinspeksi
 				// hanyalah kolom "Inspeksi Terakhir". Interval berbeda per equipment, jadi
 				// tidak ada aset yang dibuang otomatis dari daftar.
-				setAntreanData(inspectionQueue(resultEq as Equipment[], allInspections));
+				const queue = inspectionQueue(resultEq as Equipment[], allInspections);
+				queue.sort((a: any, b: any) => {
+					const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+					const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+					if (timeB !== timeA) return timeB - timeA;
+					return (Number(b.id) || 0) - (Number(a.id) || 0);
+				});
+				setAntreanData(queue);
 			} else {
 				setAntreanData([]);
 			}
@@ -120,6 +127,12 @@ export default function InspeksiAntreanPage() {
 						};
 					},
 				);
+				mappedInspections.sort((a: any, b: any) => {
+					const timeA = a.inspection_date ? new Date(a.inspection_date).getTime() : 0;
+					const timeB = b.inspection_date ? new Date(b.inspection_date).getTime() : 0;
+					if (timeB !== timeA) return timeB - timeA;
+					return (Number(b.id) || 0) - (Number(a.id) || 0);
+				});
 				setRiwayatData(mappedInspections);
 			} else {
 				setRiwayatData([]);

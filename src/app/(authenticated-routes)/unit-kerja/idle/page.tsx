@@ -268,9 +268,31 @@ export default function UnitKerjaKatalogPage() {
         },
       );
 
-      // Katalog unit kerja hanya menampilkan aset yang siap dipakai ulang.
+      const requestedEqIdSet = new Set<string>();
+      if (Array.isArray(rawRequests)) {
+        rawRequests.forEach((req: any) => {
+          if (req.equipment_id) requestedEqIdSet.add(String(req.equipment_id));
+          if (req.equipmentId) requestedEqIdSet.add(String(req.equipmentId));
+          if (req.equipment?.id) requestedEqIdSet.add(String(req.equipment.id));
+          if (req.equipment_code)
+            requestedEqIdSet.add(String(req.equipment_code).trim().toLowerCase());
+          if (req.equipmentCode)
+            requestedEqIdSet.add(String(req.equipmentCode).trim().toLowerCase());
+          if (req.equipment?.equipment_code)
+            requestedEqIdSet.add(
+              String(req.equipment.equipment_code).trim().toLowerCase(),
+            );
+        });
+      }
+
+      // Katalog unit kerja hanya menampilkan aset yang siap dipakai ulang dan belum diajukan
       setEquipments(
-        mappedEquipments.filter((e) => e.status_name === "READY_TO_USE"),
+        mappedEquipments.filter(
+          (e) =>
+            e.status_name === "READY_TO_USE" &&
+            !requestedEqIdSet.has(String(e.id)) &&
+            !requestedEqIdSet.has(String(e.equipment_code).trim().toLowerCase()),
+        ),
       );
 
       // Mapped Reuse Requests
@@ -408,6 +430,13 @@ export default function UnitKerjaKatalogPage() {
         if (valA < valB) return sortConfig!.direction === "asc" ? -1 : 1;
         if (valA > valB) return sortConfig!.direction === "asc" ? 1 : -1;
         return 0;
+      });
+    } else {
+      filtered.sort((a, b) => {
+        const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+        const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+        if (timeB !== timeA) return timeB - timeA;
+        return (Number(b.id) || 0) - (Number(a.id) || 0);
       });
     }
 
@@ -570,6 +599,15 @@ export default function UnitKerjaKatalogPage() {
           status: "PENDING",
           created_at: new Date().toISOString(),
         };
+
+        const requestedId = reuseModalItem.id;
+        const requestedCode = reuseModalItem.equipment_code;
+
+        setEquipments((prev) =>
+          prev.filter(
+            (e) => e.id !== requestedId && e.equipment_code !== requestedCode,
+          ),
+        );
 
         setReuseRequests((prev) => [
           newReq,

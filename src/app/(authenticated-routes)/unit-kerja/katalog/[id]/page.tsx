@@ -51,7 +51,7 @@ export default async function KatalogDetailPage({
             </p>
           </div>
           <span
-            className={`rounded-[2px] border px-2 py-1 text-[11px] font-semibold ${state.badge}`}
+            className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${state.badge}`}
           >
             {state.label}
           </span>

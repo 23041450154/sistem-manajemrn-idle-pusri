@@ -178,9 +178,23 @@ export default function RendalScrapPage() {
 				};
 			});
 
+			mappedEq.sort((a: any, b: any) => {
+				const timeA = a.tanggalRegistrasi && a.tanggalRegistrasi !== "-" ? new Date(a.tanggalRegistrasi).getTime() : 0;
+				const timeB = b.tanggalRegistrasi && b.tanggalRegistrasi !== "-" ? new Date(b.tanggalRegistrasi).getTime() : 0;
+				if (timeB !== timeA) return timeB - timeA;
+				return (Number(b.id) || 0) - (Number(a.id) || 0);
+			});
+
 			setEquipments(mappedEq);
 			setInspections(insData || []);
-			setDisposals(dispData || []);
+			setDisposals(
+				(dispData || []).sort((a: any, b: any) => {
+					const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+					const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+					if (timeB !== timeA) return timeB - timeA;
+					return (Number(b.id) || 0) - (Number(a.id) || 0);
+				}),
+			);
 			setMethods(methData || []);
 		} catch (err) {
 			console.error(err);
@@ -320,9 +334,15 @@ export default function RendalScrapPage() {
 
 		setIsSubmitting(true);
 		try {
+			const targetMethodId =
+				Number(disposalMethodId) ||
+				methods.find((m) => m.name.toLowerCase().includes("scrap"))?.id ||
+				methods[0]?.id ||
+				1;
+
 			const payload = {
 				equipment_id: Number(selectedAsset.id),
-				disposal_method_id: Number(disposalMethodId),
+				disposal_method_id: targetMethodId,
 				scrap_value: 0,
 				disposal_date: verificationDate,
 				justification:
@@ -352,7 +372,7 @@ export default function RendalScrapPage() {
 
 				// Update local state so item instantly moves from Inbox to History with PENDING status
 				const selectedMethod = methods.find(
-					(m) => String(m.id) === String(disposalMethodId),
+					(m) => Number(m.id) === targetMethodId || String(m.id) === String(disposalMethodId),
 				);
 				const newDisposalItem: DisposalItem = {
 					id: String(res.data?.id || `DSP-${Date.now()}`),
@@ -968,25 +988,6 @@ export default function RendalScrapPage() {
 												className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-700 cursor-not-allowed"
 											/>
 										</div>
-									</div>
-
-									<div>
-										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-											Metode Scrap <span className="text-red-500">*</span>
-										</label>
-										<select
-											value={disposalMethodId}
-											onChange={(e) => setDisposalMethodId(e.target.value)}
-											required
-											className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:bg-white text-gray-800 focus:outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"
-										>
-											<option value="">Pilih Metode...</option>
-											{methods.map((m) => (
-												<option key={m.id} value={m.id}>
-													{m.name} - {m.description}
-												</option>
-											))}
-										</select>
 									</div>
 
 									<div>

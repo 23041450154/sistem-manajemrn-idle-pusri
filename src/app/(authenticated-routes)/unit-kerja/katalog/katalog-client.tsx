@@ -129,7 +129,7 @@ function EquipmentCard({ item }: { item: KatalogItem }) {
         <div className="flex items-start justify-between gap-2">
           <span className="font-mono text-[12px] text-[#64748B]">{item.code}</span>
           <span
-            className={`shrink-0 rounded-[2px] border px-1.5 py-0.5 text-[11px] font-semibold ${state.badge}`}
+            className={`shrink-0 inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${state.badge}`}
           >
             {state.label}
           </span>

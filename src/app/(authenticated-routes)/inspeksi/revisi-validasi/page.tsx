@@ -500,6 +500,13 @@ export default function RevisiValidasiPage() {
 				}
 				return 0;
 			});
+		} else {
+			filtered.sort((a, b) => {
+				const timeA = a.tanggalRegistrasi && a.tanggalRegistrasi !== "-" ? new Date(a.tanggalRegistrasi).getTime() : 0;
+				const timeB = b.tanggalRegistrasi && b.tanggalRegistrasi !== "-" ? new Date(b.tanggalRegistrasi).getTime() : 0;
+				if (timeB !== timeA) return timeB - timeA;
+				return (Number(b.id) || 0) - (Number(a.id) || 0);
+			});
 		}
 
 		return filtered;
@@ -526,19 +533,59 @@ export default function RevisiValidasiPage() {
 		setCurrentPage(1);
 	}, [search, plantFilter, dateFilter]);
 
-	// Teks badge = nama status dari backend apa adanya (lihat lib/equipment-status).
-	const getStatusAsetBadge = (status: AssetState | string) => (
-		<span
-			className={`inline-block border text-[11px] font-semibold px-2 py-0.5 rounded-sm ${statusBadgeStyle(status)}`}
-		>
-			{statusText(status)}
-		</span>
-	);
+	// UI Helpers
+	const getStatusAsetBadge = (status: AssetState | string) => {
+		const styles: Record<string, string> = {
+			REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
+			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
+			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
+			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
+			DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
+			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
+			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
+			REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
+			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
+			READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
+		};
+
+		let displayStatus = (status || "").replace(/_/g, " ");
+		if (displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
+			displayStatus = "READY TO USE";
+		}
+
+		const style = styles[displayStatus] || styles[status] || styles.SCRAP;
+		return (
+			<span
+				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${style}`}
+			>
+				{displayStatus}
+			</span>
+		);
+	};
 
 	const getApprovalBadge = (status: ApprovalState) => {
+		const styles = {
+			NONE: "bg-gray-100 text-gray-500",
+			PENDING_REVIEW: "bg-[#FEF9C3] text-[#CA8A04]",
+			IN_REVIEW: "bg-[#E0F2FE] text-[#0284C7]",
+			APPROVED: "bg-[#DCFCE7] text-[#16A34A]",
+			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
+			NEED_REVISION: "bg-[#F3E8FF] text-[#9333EA]",
+		};
+		const labels = {
+			NONE: "-",
+			PENDING_REVIEW: "Menunggu Review",
+			IN_REVIEW: "Sedang Direview",
+			APPROVED: "Disetujui",
+			REJECTED: "Ditolak",
+			NEED_REVISION: "Perlu Revisi",
+		};
 		return (
-			<span className="inline-block border text-[11px] font-semibold px-2 py-0.5 rounded-sm whitespace-nowrap border-[#B45309] text-[#B45309]">
-				Perlu Revisi
+			<span
+				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${styles[status] || "bg-[#F3E8FF] text-[#9333EA]"}`}
+			>
+				{labels[status] || "Perlu Revisi"}
 			</span>
 		);
 	};
@@ -1133,7 +1180,13 @@ export default function RevisiValidasiPage() {
 											</option>
 											{conditions.map((condition) => (
 												<option key={condition.id} value={condition.id}>
-													{condition.name}
+													{condition.name
+														.replace(/_/g, " ")
+														.replace(
+															/\w\S*/g,
+															(txt) =>
+																txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(),
+														)}
 												</option>
 											))}
 										</select>

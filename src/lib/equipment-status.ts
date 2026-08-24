@@ -102,19 +102,20 @@ export const statusText = (raw?: string | null) =>
  *   slate #475569 netral/disposal.
  */
 const STATUS_BADGE_STYLE: Record<string, string> = {
-	REGISTERED: "border-[#0556B3] text-[#0556B3]",
-	VALIDATED: "border-[#059669] text-[#059669]",
-	REPAIR: "border-[#B45309] text-[#B45309]",
-	REPAIR_COMPLETED: "border-[#0556B3] text-[#0556B3]",
-	REVALIDATION: "border-[#B45309] text-[#B45309]",
-	READY_TO_USE: "border-[#059669] text-[#059669]",
-	REUSED: "border-[#059669] text-[#059669]",
-	DISPOSAL_RECOMMENDED: "border-[#475569] text-[#475569]",
-	SCRAP: "border-[#DC2626] text-[#DC2626]",
+	REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
+	VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
+	REPAIR: "bg-[#FEF3C7] text-[#B45309]",
+	REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
+	REVALIDATION: "bg-[#FEF3C7] text-[#B45309]",
+	READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
+	REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
+	DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+	SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
+	REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 };
 
 export const statusBadgeStyle = (raw?: string | null) =>
-	STATUS_BADGE_STYLE[statusName(raw)] ?? "border-[#475569] text-[#475569]";
+	STATUS_BADGE_STYLE[statusName(raw)] ?? "bg-gray-100 text-gray-700";
 
 export const rupiah = (value: number) =>
 	`Rp ${new Intl.NumberFormat("id-ID").format(Math.round(value))}`;

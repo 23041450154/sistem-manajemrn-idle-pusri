@@ -35,7 +35,16 @@ export default function InspeksiDashboardPage() {
 		let cancelled = false;
 		getEquipments()
 			.then((eqData) => {
-				if (!cancelled) setEquipments(Array.isArray(eqData) ? eqData : []);
+				if (!cancelled) {
+					const list = Array.isArray(eqData) ? eqData : [];
+					list.sort((a: any, b: any) => {
+						const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+						const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+						if (timeB !== timeA) return timeB - timeA;
+						return (Number(b.id) || 0) - (Number(a.id) || 0);
+					});
+					setEquipments(list);
+				}
 			})
 			.catch((err) => {
 				console.error("Dashboard fetch error:", err);
@@ -413,10 +422,9 @@ export default function InspeksiDashboardPage() {
 										</td>
 										<td className="px-4 py-2.5 text-center">
 											<span
-												className="inline-flex items-center whitespace-nowrap rounded-sm border px-2 py-0.5 text-[11px] font-semibold"
-												style={{ borderColor: "#0556B3", color: "#0556B3" }}
+												className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#E0F2FE] text-[#0284C7]"
 											>
-												Menunggu Validasi
+												REGISTERED
 											</span>
 										</td>
 										<td className="px-4 py-2.5 text-center whitespace-nowrap">
