@@ -220,9 +220,12 @@ export async function approveDisposal(
 			};
 		}
 		return { success: true, message: json?.message, data: json?.data };
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Approve disposal error:", error);
-		return { success: false, message: error.message };
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 }
 
@@ -296,12 +299,14 @@ export async function createDisposalRequest(payload: {
 			message:
 				"Koneksi ke server backend terputus atau mengalami batas waktu (timeout).",
 		};
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Create disposal request error:", error);
 		return {
 			success: false,
 			message:
-				error.message || "Terjadi kesalahan saat mengirim permintaan scrap.",
+				error instanceof Error
+					? error.message
+					: "Terjadi kesalahan saat mengirim permintaan scrap.",
 		};
 	}
 }
@@ -425,9 +430,12 @@ export async function validateEquipment(
 
 		const json = await res.json().catch(() => null);
 		return { success: true, data: json?.data };
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Validate equipment error:", error);
-		return { success: false, message: error.message };
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 }
 
@@ -478,9 +486,12 @@ export async function createRevalidation(
 
 		const json = await res.json().catch(() => null);
 		return { success: true, data: json?.data };
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Create revalidation error:", error);
-		return { success: false, message: error.message };
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 }
 
@@ -519,9 +530,12 @@ export async function reviewApproval(
 		}
 
 		return { success: true };
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Review approval error:", error);
-		return { success: false, message: error.message };
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 }
 
@@ -551,9 +565,12 @@ export async function startReviewApproval(id: string) {
 		}
 
 		return { success: true };
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Start review approval error:", error);
-		return { success: false, message: error.message };
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 }
 
@@ -575,7 +592,7 @@ export async function getInspections() {
 	}
 }
 
-export async function createInspection(formData: FormData) {
+export async function submitInspectionData(formData: FormData) {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 	const userStr = cookieStore.get("user")?.value;
@@ -617,14 +634,13 @@ export async function createInspection(formData: FormData) {
 			message:
 				errorData?.error || errorData?.message || `HTTP Error ${res.status}`,
 		};
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Create inspection error:", error);
-		return { success: false, message: error.message };
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
-}
-
-export async function submitInspectionData(formData: FormData) {
-	return await createInspection(formData);
 }
 
 export async function getConditions() {
@@ -675,24 +691,6 @@ export async function getObjectTypes() {
 }
 
 /** Master alasan idle. Backend: GET /api/idle-reason -> { data: [{ id, reason_name, description }] } */
-export async function getIdleReasons() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-
-	try {
-		const res = await fetch(`${API_URL}/api/idle-reason`, {
-			headers: { Authorization: `Bearer ${token}` },
-			cache: "no-store",
-		});
-		if (!res.ok) return [];
-		const json = await res.json();
-		return json.data || [];
-	} catch (error) {
-		console.error("Fetch idle reasons error:", error);
-		return [];
-	}
-}
-
 export async function getPlants() {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
@@ -766,37 +764,6 @@ export async function getRequireActions() {
 	}
 }
 
-export async function getAreas() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-
-	const fallbackAreas = [
-		{ id: 1, name: "Ammonia Area" },
-		{ id: 2, name: "Urea Area" },
-		{ id: 3, name: "Utility Area" },
-		{ id: 4, name: "Offsite Area" },
-	];
-
-	try {
-		const res = await fetch(`${API_URL}/api/areas`, {
-			headers: { Authorization: `Bearer ${token}` },
-			cache: "no-store",
-		});
-		if (!res.ok) {
-			// Fallback if endpoint doesn't exist yet
-			return fallbackAreas;
-		}
-		const json = await res.json();
-		if (!json.data || json.data.length === 0) {
-			return fallbackAreas;
-		}
-		return json.data;
-	} catch (error) {
-		console.error("Fetch areas error:", error);
-		return fallbackAreas;
-	}
-}
-
 /**
  * Backend pakai tag `form:` + c.ShouldBind, jadi endpoint ini WAJIB multipart/form-data.
  * Foto ikut di request yang sama (field `photo`, repeatable) — backend simpan equipment,
@@ -831,9 +798,12 @@ export async function createEquipment(formData: FormData) {
 		}
 		const responseData = await res.json().catch(() => null);
 		return { success: true, data: responseData?.data || responseData };
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Create equipment error:", error);
-		return { success: false, message: error.message };
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 }
 
@@ -894,9 +864,12 @@ export async function updateEquipment(id: string, payload: any) {
 		const responseData = await res.json().catch(() => null);
 
 		return { success: true, data: responseData?.data };
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Update equipment error:", error);
-		return { success: false, message: error.message };
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 }
 
@@ -958,105 +931,6 @@ export async function uploadEquipmentAttachment(formData: FormData) {
 	}
 
 	return { success: false, message: "Gagal mengunggah foto ke backend" };
-}
-
-export async function uploadEquipmentAttachmentBase64(
-	equipmentId: string,
-	base64Data: string,
-	fileName: string,
-	mimeType: string,
-) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-
-	console.log("=== uploadEquipmentAttachmentBase64 CALLED ===");
-	console.log(
-		"equipmentId:",
-		equipmentId,
-		"fileName:",
-		fileName,
-		"mimeType:",
-		mimeType,
-	);
-	console.log(
-		"base64Data length:",
-		base64Data?.length,
-		"token exists:",
-		!!token,
-	);
-
-	// Pisahkan header "data:image/jpeg;base64," dari isinya
-	const base64Content = base64Data.includes("base64,")
-		? base64Data.split("base64,")[1]
-		: base64Data;
-	const buffer = Buffer.from(base64Content, "base64");
-
-	console.log("Buffer size:", buffer.length, "bytes");
-
-	// Gunakan undici File (tersedia di Node 20+) alih-alih Blob
-	const file = new File([buffer], fileName, { type: mimeType });
-
-	const fd = new FormData();
-	fd.append("equipment_id", equipmentId);
-	fd.append("category", "equipment_photo");
-	fd.append("file", file);
-
-	const endpoint = `${API_URL}/api/attachments/upload`;
-	console.log("Uploading to:", endpoint);
-
-	try {
-		const res = await fetch(endpoint, {
-			method: "POST",
-			headers: { Authorization: `Bearer ${token}` },
-			body: fd,
-		});
-		const resultText = await res.text();
-		console.log("Upload response status:", res.status);
-		console.log("Upload response body:", resultText);
-		if (res.ok) {
-			return { success: true, message: resultText };
-		} else {
-			return { success: false, message: `Status ${res.status}: ${resultText}` };
-		}
-	} catch (err: any) {
-		console.error("Upload exception:", err);
-		return { success: false, message: err.message };
-	}
-}
-
-export async function getAttachments() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-
-	try {
-		console.log("Fetching attachments...");
-		const res = await fetch(`${API_URL}/api/attachments`, {
-			headers: { Authorization: `Bearer ${token}` },
-			cache: "no-store",
-		});
-		console.log("Attachments fetch status:", res.status);
-		if (!res.ok) return [];
-		const json = await res.json();
-		console.log(
-			"Attachments fetch raw json:",
-			JSON.stringify(json).substring(0, 200),
-		);
-
-		// Normalize: API bisa mengembalikan {data: [...]}, [...], atau single object {...}
-		const raw = json.data || json;
-		let items: any[] = [];
-		if (Array.isArray(raw)) items = raw;
-		else if (raw && typeof raw === "object" && raw.id) items = [raw];
-
-		return items.map((item: any) => {
-			// Do not prepend API_URL anymore.
-			// Next.js will proxy /uploads via rewrites so it works from any device
-			return item;
-		});
-	} catch (error) {
-		console.error("Fetch attachments error:", error);
-		return [];
-	}
 }
 
 export async function getAttachmentsByEquipmentId(equipmentId: string) {
@@ -1169,127 +1043,17 @@ export async function getAttachmentsByEquipmentId(equipmentId: string) {
 	return [];
 }
 
-// --- Idle Declarations API ---
-export async function getIdleDeclarations() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-	try {
-		const res = await fetch(`${API_URL}/api/idle-declarations`, {
-			headers: { Authorization: `Bearer ${token}` },
-			cache: "no-store",
-		});
-		const json = await res.json().catch(() => null);
-		return json?.data || [];
-	} catch (error) {
-		console.error("Fetch idle-declarations error:", error);
-		return [];
-	}
-}
-
-export async function getIdleDeclarationById(id: string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-	try {
-		const res = await fetch(`${API_URL}/api/idle-declarations/${id}`, {
-			headers: { Authorization: `Bearer ${token}` },
-			cache: "no-store",
-		});
-		const json = await res.json().catch(() => null);
-		return json?.data || null;
-	} catch (error) {
-		console.error(`Fetch idle-declaration ${id} error:`, error);
-		return null;
-	}
-}
-
-// --- Maintenance API ---
-export async function getMaintenance() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-	try {
-		const res = await fetch(`${API_URL}/api/maintenance`, {
-			headers: { Authorization: `Bearer ${token}` },
-			cache: "no-store",
-		});
-		const json = await res.json().catch(() => null);
-		return json?.data || [];
-	} catch (error) {
-		console.error("Fetch maintenance error:", error);
-		return [];
-	}
-}
-
-export async function createMaintenance(payload: any) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-	try {
-		const res = await fetch(`${API_URL}/api/maintenance`, {
-			method: "POST",
-			headers: {
-				"Content-Type": "application/json",
-				Authorization: `Bearer ${token}`,
-			},
-			body: JSON.stringify(payload),
-		});
-		if (!res.ok) {
-			const errorData = await res.json().catch(() => null);
-			throw new Error(
-				errorData?.error || errorData?.message || "Failed to create maintenance",
-			);
-		}
-		const responseData = await res.json().catch(() => null);
-		return { success: true, data: responseData?.data };
-	} catch (error: any) {
-		console.error("Create maintenance error:", error);
-		return { success: false, message: error.message };
-	}
-}
-
-export async function getMaintenanceById(id: string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-	try {
-		const res = await fetch(`${API_URL}/api/maintenance/${id}`, {
-			headers: { Authorization: `Bearer ${token}` },
-			cache: "no-store",
-		});
-		const json = await res.json().catch(() => null);
-		return json?.data || null;
-	} catch (error) {
-		console.error(`Fetch maintenance ${id} error:`, error);
-		return null;
-	}
-}
-
-export async function deleteMaintenance(id: string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-	try {
-		const res = await fetch(`${API_URL}/api/maintenance/${id}`, {
-			method: "DELETE",
-			headers: { Authorization: `Bearer ${token}` },
-		});
-		if (!res.ok) {
-			const errorData = await res.json().catch(() => null);
-			throw new Error(
-				errorData?.error || errorData?.message || "Failed to delete maintenance",
-			);
-		}
-		return { success: true };
-	} catch (error: any) {
-		console.error("Delete maintenance error:", error);
-		return { success: false, message: error.message };
-	}
-}
-
 export async function deleteEquipment(id: string) {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 
-	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
-	// Encode path param agar tidak bisa menavigasi path lain di host yang sama.
-	const targetUrl = `${baseUrl}/api/equipment/${encodeURIComponent(String(id))}`;
-	console.log("Attempting to delete equipment:", targetUrl);
+	// Host di-pin ke env var; path dibangun via new URL() agar tidak bisa
+	// dinavigasi ke origin/path lain.
+	const targetUrl = new URL(
+		`/api/equipment/${encodeURIComponent(String(id))}`,
+		process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "",
+	);
+	console.log("Attempting to delete equipment:", targetUrl.toString());
 
 	try {
 		const res = await fetch(targetUrl, {
@@ -1305,9 +1069,12 @@ export async function deleteEquipment(id: string) {
 			};
 		}
 		return { success: true };
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Delete equipment error:", error);
-		return { success: false, message: error.message };
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 }
 export async function getEquipmentRepairs() {
@@ -1376,9 +1143,12 @@ export async function completeEquipmentRepair(
 			message: json?.message || "Perbaikan peralatan berhasil disimpan.",
 			data: json?.data,
 		};
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Create equipment repair error:", error);
-		return { success: false, message: error.message };
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 }
 
@@ -1436,9 +1206,12 @@ export async function resubmitApproval(id: string, formData: FormData) {
 			};
 		}
 		return { success: true };
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Resubmit approval error:", error);
-		return { success: false, message: error.message };
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 }
 
@@ -1553,11 +1326,14 @@ export async function createReuseRequest(payload: {
 				"Permintaan penggunaan kembali (reuse) berhasil diajukan.",
 			data: responseData?.data || responseData,
 		};
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Create reuse request error:", error);
 		return {
 			success: false,
-			message: error.message || "Terjadi kesalahan koneksi ke server",
+			message:
+				error instanceof Error
+					? error.message
+					: String(error) || "Terjadi kesalahan koneksi ke server",
 		};
 	}
 }
@@ -1837,11 +1613,12 @@ export async function updateReuseRequestStatus(
 				lastError?.error ||
 				`Gagal memproses approval reuse (HTTP ${lastStatus}).`,
 		};
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Review reuse request error:", error);
 		return {
 			success: false,
-			message: error?.message || "Gagal terhubung ke server.",
+			message:
+				error instanceof Error ? error.message : "Gagal terhubung ke server.",
 		};
 	}
 }
@@ -1896,8 +1673,11 @@ export async function approveRevalidationEquipment(
 			};
 		}
 		return { success: true, message: json?.message, data: json?.data };
-	} catch (error: any) {
+	} catch (error) {
 		console.error("Approve revalidation error:", error);
-		return { success: false, message: error.message };
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
 	}
 }

@@ -329,8 +329,8 @@ export default function ValidasiUlangPage() {
 				setModalError(result.message || "Gagal menyimpan re-validasi ke database.");
 			}
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		} catch (err: any) {
-			setModalError(err.message || "Terjadi kesalahan koneksi ke database.");
+		} catch (err) {
+			setModalError(err instanceof Error ? err.message : "Terjadi kesalahan koneksi ke database.");
 		} finally {
 			setIsSubmitting(false);
 		}

@@ -405,10 +405,10 @@ export default function PerbaikanAlatPage() {
 					message: `Gagal menyelesaikan perbaikan: ${result.message || "Terjadi kesalahan pada server"}`,
 				});
 			}
-		} catch (err: any) {
+		} catch (err) {
 			setNotification({
 				type: "error",
-				message: `Terjadi kesalahan koneksi: ${err.message || "Gagal terhubung ke server"}`,
+				message: `Terjadi kesalahan koneksi: ${err instanceof Error ? err.message : "Gagal terhubung ke server"}`,
 			});
 		} finally {
 			setIsSubmitting(false);

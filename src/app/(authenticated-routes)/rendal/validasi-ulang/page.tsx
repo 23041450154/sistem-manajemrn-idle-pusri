@@ -299,11 +299,11 @@ export default function RendalValidasiUlangPage() {
 				});
 			}
 			setTimeout(() => setNotification(null), 3000);
-		} catch (err: any) {
+		} catch (err) {
 			console.error(err);
 			setNotification({
 				type: "error",
-				message: `Gagal menyetujui validasi ulang: ${err.message || "Terjadi kesalahan"}`,
+				message: `Gagal menyetujui validasi ulang: ${err instanceof Error ? err.message : "Terjadi kesalahan"}`,
 			});
 		} finally {
 			setIsSubmitting(false);

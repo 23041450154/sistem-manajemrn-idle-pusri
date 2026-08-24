@@ -348,7 +348,7 @@ export default function UnitKerjaKatalogPage() {
       });
 
       setReuseRequests(reqList);
-    } catch (err: any) {
+    } catch (err) {
       console.error("Error loading data:", err);
       setError("Gagal memuat katalog data peralatan.");
     } finally {
@@ -582,10 +582,10 @@ export default function UnitKerjaKatalogPage() {
           res.message || "Gagal mengirim pengajuan reuse.",
         );
       }
-    } catch (err: any) {
+    } catch (err) {
       showNotification(
         "error",
-        err?.message || "Terjadi kesalahan sistem saat pengajuan.",
+        err instanceof Error ? err.message : "Terjadi kesalahan sistem saat pengajuan.",
       );
     } finally {
       setIsSubmitting(false);

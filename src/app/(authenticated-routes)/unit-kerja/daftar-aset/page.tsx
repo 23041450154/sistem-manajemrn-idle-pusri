@@ -411,10 +411,10 @@ export default function DaftarAsetPage() {
 					res?.message || "Gagal mengirim pengajuan pemakaian.",
 				);
 			}
-		} catch (err: any) {
+		} catch (err) {
 			console.error("Submit error:", err);
 			setRequestErrorMessage(
-				err?.message || "Terjadi kesalahan sistem saat mengirim pengajuan.",
+				err instanceof Error ? err.message : "Terjadi kesalahan sistem saat mengirim pengajuan.",
 			);
 		} finally {
 			setIsSubmittingRequest(false);

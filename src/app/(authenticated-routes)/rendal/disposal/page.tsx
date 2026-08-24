@@ -168,7 +168,7 @@ export default function VerifikasiDisposalPage() {
 			setInspections(insData || []);
 			setDisposals(dispData || []);
 			setMethods(methData || []);
-		} catch (err: any) {
+		} catch (err) {
 			console.error(err);
 			setError("Gagal memuat data dari server.");
 		} finally {

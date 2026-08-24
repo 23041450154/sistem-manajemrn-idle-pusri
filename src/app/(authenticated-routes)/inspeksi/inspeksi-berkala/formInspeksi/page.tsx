@@ -175,8 +175,8 @@ export default function FormInspeksiPage() {
 				showToast("error", response.message || "Gagal menyimpan hasil inspeksi.");
 				setLoading(false);
 			}
-		} catch (error: any) {
-			showToast("error", error?.message || "Terjadi kesalahan sistem.");
+		} catch (error) {
+			showToast("error", error instanceof Error ? error.message : "Terjadi kesalahan sistem.");
 			setLoading(false);
 		}
 	};

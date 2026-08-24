@@ -563,10 +563,10 @@ export default function ManajemenInspeksi() {
 					message: `Gagal memvalidasi: ${res.message || "Kesalahan sistem"}`,
 				});
 			}
-		} catch (err: any) {
+		} catch (err) {
 			setNotification({
 				type: "error",
-				message: `Terjadi kesalahan: ${err.message}`,
+				message: `Terjadi kesalahan: ${err instanceof Error ? err.message : String(err)}`,
 			});
 		} finally {
 			setIsSubmitting(false);

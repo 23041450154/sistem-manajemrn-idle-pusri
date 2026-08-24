@@ -1,16 +1,16 @@
 # Graph Report - sistem-manajemrn-idle-pusri  (2026-08-24)
 
 ## Corpus Check
-- 126 files · ~279,357 words
+- 126 files · ~278,757 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 688 nodes · 1267 edges · 43 communities (35 shown, 8 thin omitted)
+- 677 nodes · 1255 edges · 49 communities (37 shown, 12 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 5 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `b039ef79`
+- Built from commit: `b1b0ecf7`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -28,13 +28,19 @@
 - ActionMenu.tsx
 - inspeksi-berkala/page.tsx
 - api.ts
+- package.json
 - DESIGN.md — Idle Equipment Console
+- react
 - Sistem Manajemen Idle Equipment PUSRI
 - pemeliharaan/dashboard/page.tsx
 - 1. Pemetaan Peran Pengguna (User Roles) & Tanggung Jawab
 - PRODUCT.md
+- clsx
+- next
 - buttonVariants
+- tailwind-merge
 - open-in-terminal/manifest.json
+- tw-animate-css
 - claude-code-ide/manifest.json
 - check-repair-payload.mjs
 - check-equipment-form.mjs
@@ -77,11 +83,11 @@
 ## Import Cycles
 - None detected.
 
-## Communities (43 total, 8 thin omitted)
+## Communities (49 total, 12 thin omitted)
 
 ### Community 0 - "getEquipments"
 Cohesion: 0.07
-Nodes (67): approveRevalidationEquipment(), createReuseRequest(), createRevalidation(), deleteEquipment(), getApprovalById(), getApprovals(), getAttachmentsByEquipmentId(), getConditions() (+59 more)
+Nodes (70): approveRevalidationEquipment(), createReuseRequest(), createRevalidation(), deleteEquipment(), getApprovalById(), getApprovals(), getAttachmentsByEquipmentId(), getConditions() (+62 more)
 
 ### Community 1 - "auth.ts"
 Cohesion: 0.07
@@ -93,19 +99,19 @@ Nodes (28): __awaiter(), buildDefaultTerminalAppSetting(), buildLaunchCommand(),
 
 ### Community 3 - "shared.tsx"
 Cohesion: 0.11
-Nodes (22): getEquipmentById(), KatalogDetailPage(), KatalogItemMinimal, RequestModalButton(), EquipmentCard(), KatalogClient(), uniq(), KatalogPage() (+14 more)
+Nodes (21): KatalogDetailPage(), KatalogItemMinimal, RequestModalButton(), EquipmentCard(), KatalogClient(), uniq(), KatalogPage(), metadata (+13 more)
 
 ### Community 4 - "compilerOptions"
 Cohesion: 0.07
 Nodes (28): dom, dom.iterable, esnext, **/*.mts, .next/dev/types/**/*.ts, next-env.d.ts, .next/types/**/*.ts, node_modules (+20 more)
 
 ### Community 5 - "dependencies"
-Cohesion: 0.07
-Nodes (29): @base-ui/react, class-variance-authority, clsx, lucide-react, next, nextjs-toploader, dependencies, @base-ui/react (+21 more)
+Cohesion: 0.12
+Nodes (17): @base-ui/react, class-variance-authority, lucide-react, nextjs-toploader, dependencies, @base-ui/react, class-variance-authority, lucide-react (+9 more)
 
 ### Community 6 - "devDependencies"
-Cohesion: 0.08
-Nodes (25): eslint, eslint-config-next, devDependencies, eslint, eslint-config-next, tailwindcss, @tailwindcss/postcss, @types/node (+17 more)
+Cohesion: 0.12
+Nodes (17): eslint, eslint-config-next, devDependencies, eslint, eslint-config-next, tailwindcss, @tailwindcss/postcss, @types/node (+9 more)
 
 ### Community 7 - "components.json"
 Cohesion: 0.09
@@ -128,12 +134,20 @@ Cohesion: 0.17
 Nodes (12): eq(), NOW, Equipment, InspectionItem, InspeksiAntreanPage(), EquipmentLike, InspectionLike, inspectionQueue() (+4 more)
 
 ### Community 12 - "api.ts"
-Cohesion: 0.05
-Nodes (46): absoluteFileUrl(), approveDisposal(), createDisposalRequest(), createEquipment(), createInspection(), DisposalItemDTO, getDisposalMethods(), getDisposals() (+38 more)
+Cohesion: 0.07
+Nodes (45): absoluteFileUrl(), approveDisposal(), createDisposalRequest(), createEquipment(), DisposalItemDTO, getDisposalMethods(), getDisposals(), getFunctionalLocations() (+37 more)
+
+### Community 13 - "package.json"
+Cohesion: 0.22
+Nodes (8): name, private, scripts, build, dev, lint, start, version
 
 ### Community 14 - "DESIGN.md — Idle Equipment Console"
 Cohesion: 0.14
 Nodes (13): Accessibility, Brand, Color System, Component Patterns, DESIGN.md — Idle Equipment Console, Elevation, Grid, Image Style (+5 more)
+
+### Community 15 - "react"
+Cohesion: 0.67
+Nodes (3): react, react, UnitKerjaDashboard()
 
 ### Community 16 - "Sistem Manajemen Idle Equipment PUSRI"
 Cohesion: 0.15
@@ -153,7 +167,7 @@ Nodes (10): Anti-references, Brand voice, Constraints, Key messages, Missing fac
 
 ### Community 22 - "buttonVariants"
 Cohesion: 0.06
-Nodes (32): getReuseRequests(), ManajerDashboardPage(), RendalDashboard(), ApiRow, EquipmentItem, ReuseRequestItem, UnitKerjaDashboardPage(), formatDate() (+24 more)
+Nodes (31): InspeksiDashboardPage(), ManajerDashboardPage(), RendalDashboard(), ApiRow, EquipmentItem, ReuseRequestItem, formatDate(), getPageWindow() (+23 more)
 
 ### Community 24 - "open-in-terminal/manifest.json"
 Cohesion: 0.20
@@ -186,22 +200,22 @@ Nodes (3): doc, fs, PDFDocument
 ## Knowledge Gaps
 - **256 isolated node(s):** `21st`, `npx`, `@ui-layouts/mcp`, `id`, `name` (+251 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **8 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `getEquipments()` connect `getEquipments` to `auth.ts`, `shared.tsx`, `dependencies`, `inspeksi-berkala/page.tsx`, `api.ts`, `pemeliharaan/dashboard/page.tsx`, `buttonVariants`?**
-  _High betweenness centrality (0.111) - this node is a cross-community bridge._
-- **Why does `dependencies` connect `dependencies` to `devDependencies`?**
-  _High betweenness centrality (0.089) - this node is a cross-community bridge._
+- **Why does `getEquipments()` connect `getEquipments` to `auth.ts`, `shared.tsx`, `inspeksi-berkala/page.tsx`, `api.ts`, `pemeliharaan/dashboard/page.tsx`, `buttonVariants`?**
+  _High betweenness centrality (0.114) - this node is a cross-community bridge._
+- **Why does `UnitKerjaDashboard()` connect `react` to `getEquipments`?**
+  _High betweenness centrality (0.090) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `dependencies` to `package.json`, `react`, `clsx`, `next`, `tailwind-merge`, `tw-animate-css`?**
+  _High betweenness centrality (0.090) - this node is a cross-community bridge._
 - **What connects `21st`, `npx`, `@ui-layouts/mcp` to the rest of the system?**
   _256 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `getEquipments` be split into smaller, more focused modules?**
-  _Cohesion score 0.07046070460704607 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.06582633053221289 - nodes in this community are weakly interconnected._
 - **Should `auth.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.07062146892655367 - nodes in this community are weakly interconnected._
 - **Should `open-in-terminal/main.js` be split into smaller, more focused modules?**
   _Cohesion score 0.09565217391304348 - nodes in this community are weakly interconnected._
-- **Should `shared.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.10873440285204991 - nodes in this community are weakly interconnected._
