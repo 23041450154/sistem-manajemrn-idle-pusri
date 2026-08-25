@@ -94,7 +94,7 @@ Entitas utama:
 - **IdleDeclaration** — pernyataan peralatan menjadi idle (alasan, kondisi, status preservasi, lokasi).
 - **EquipmentInspection** — hasil inspeksi (kondisi mekanikal/elektrikal, estimasi biaya refurbish, tindakan yang diperlukan).
 - **ReuseRequest** — permintaan penggunaan kembali (proyek, plant, biaya, estimasi cost avoidance).
-- **DisposalRequest** — permintaan penghapusan (metode disposal, nilai scrap).
+- **DisposalRequest** — permintaan penghapusan (metode disposal, nilai ).
 - **ApprovalRequest** + **ApprovalStep** — alur persetujuan berjenjang (mis. Kepala Seksi → Manager Teknik → GM Operasi).
 - **EquipmentAttachment** — lampiran/dokumen polimorfik (reference_table + reference_id).
 

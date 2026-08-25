@@ -51,6 +51,12 @@ export default async function RegisterEquipmentPage({
 				originalValue: found.original_value
 					? Number(found.original_value).toLocaleString("id-ID")
 					: "",
+				bookValue: found.book_value
+					? Number(found.book_value).toLocaleString("id-ID")
+					: "",
+				estimatedReuseValue: found.estimated_reuse_value
+					? Number(found.estimated_reuse_value).toLocaleString("id-ID")
+					: "",
 				idleReason: found.idle_declaration?.idle_reason || found.idle_reason || "",
 				storageLocationId: String(
 					found.storage_location_id ||
@@ -71,7 +77,6 @@ export default async function RegisterEquipmentPage({
 			storageLocations={storageLocList}
 			funcLocs={funcLocList}
 			initialData={initialData}
-			existingEquipments={equipments}
 		/>
 	);
 }

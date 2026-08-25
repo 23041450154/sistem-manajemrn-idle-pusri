@@ -2,7 +2,6 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { completeEquipmentRepair } from "@/action/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
@@ -22,6 +21,7 @@ import {
 	ChevronRight,
 	AlertCircle,
 	ImageOff,
+	Eye,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 
@@ -100,6 +100,10 @@ export default function PerbaikanAlatClient({
 	const [selectedAsset, setSelectedAsset] =
 		useState<MaintenanceEquipment | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	// Modal detail equipment & status perbaikannya.
+	const [detailAsset, setDetailAsset] = useState<MaintenanceEquipment | null>(
+		null,
+	);
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
 
 	const today = () => new Date().toISOString().split("T")[0];
@@ -587,7 +591,15 @@ export default function PerbaikanAlatClient({
 											{asset.terakhirDiperbarui}
 										</td>
 										<td className="px-3 py-3 text-center">
-											<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
+											<div className="flex justify-center items-center gap-2 opacity-90 group-hover:opacity-100 transition-opacity">
+												<button
+													onClick={() => setDetailAsset(asset)}
+													className="inline-flex items-center justify-center gap-1.5 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2.5 py-1.5 rounded-[4px] text-[13px] font-bold transition-all"
+													title="Lihat detail equipment & perbaikan"
+												>
+													<Eye className="w-3.5 h-3.5" />
+													Detail
+												</button>
 												{asset.status === "REPAIR" ? (
 													<button
 														onClick={() => handleOpenModal(asset)}
@@ -664,7 +676,7 @@ export default function PerbaikanAlatClient({
 						role="dialog"
 						aria-modal="true"
 						aria-label={`Pencatatan hasil perbaikan ${selectedAsset.kodeAlat}`}
-						className="bg-white rounded-[4px] shadow-[0_8px_24px_-4px_rgb(15_23_42_/_0.12)] w-full max-w-4xl overflow-hidden border border-[#E6E8EA] flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+						className="bg-white rounded-[4px] shadow-[0_8px_24px_-4px_rgb(15_23_42_/_0.12)] w-full max-w-6xl overflow-hidden border border-[#E6E8EA] flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
 					>
 						{/* Modal Header */}
 						<div className="flex items-center justify-between px-5 py-4 border-b border-[#E6E8EA] bg-[#0A356A]">
@@ -691,7 +703,7 @@ export default function PerbaikanAlatClient({
 							</button>
 						</div>
 
-						<div className="grid grid-cols-1 lg:grid-cols-[300px_1fr] overflow-y-auto flex-1 divide-y lg:divide-y-0 lg:divide-x divide-[#E6E8EA]">
+						<div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] overflow-y-auto flex-1 divide-y lg:divide-y-0 lg:divide-x divide-[#E6E8EA]">
 							{/* Detail Equipment */}
 							<aside className="p-5 space-y-4 bg-[#F8FAFC]">
 								<h3 className="text-[13px] font-semibold text-[#0F172A]">
@@ -704,15 +716,14 @@ export default function PerbaikanAlatClient({
 										<button
 											type="button"
 											onClick={() => setPreviewImage(selectedAsset.foto[0])}
-											className="block w-full aspect-[4/3] overflow-hidden rounded-[4px] border border-[#E6E8EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#334155] focus:ring-offset-1"
+											className="relative block w-full aspect-[4/3] overflow-hidden rounded-[4px] border border-[#E6E8EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#334155] focus:ring-offset-1"
 											aria-label="Perbesar foto utama peralatan"
 										>
-											<Image
+											{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+											<img
 												src={selectedAsset.foto[0]}
 												alt={`Foto peralatan ${selectedAsset.namaAlat}`}
-												fill
-												sizes="(max-width: 768px) 100vw, 300px"
-												className="object-cover"
+												className="absolute inset-0 w-full h-full object-cover"
 											/>
 										</button>
 										{selectedAsset.foto.length > 1 && (
@@ -722,14 +733,13 @@ export default function PerbaikanAlatClient({
 														key={url}
 														type="button"
 														onClick={() => setPreviewImage(url)}
-														className="aspect-square overflow-hidden rounded-[4px] border border-[#E6E8EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#334155] focus:ring-offset-1"
+														className="relative aspect-square overflow-hidden rounded-[4px] border border-[#E6E8EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#334155] focus:ring-offset-1"
 														aria-label={`Perbesar foto peralatan ${i + 2}`}
 													>
-														<Image
+														{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+														<img
 															src={url}
-															fill
-															sizes="80px"
-															className="object-cover"
+															className="absolute inset-0 w-full h-full object-cover"
 															alt=""
 														/>
 													</button>
@@ -959,13 +969,12 @@ export default function PerbaikanAlatClient({
 					onClick={() => setPreviewImage(null)}
 					className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-[#0F172A]/80 animate-in fade-in duration-200"
 				>
-					<div className="relative w-[92vw] max-w-5xl h-[85vh]">
-						<Image
+					<div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center">
+						{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+						<img
 							src={previewImage}
 							alt="Pratinjau foto peralatan"
-							fill
-							sizes="92vw"
-							className="object-contain rounded-[4px] border border-white/20"
+							className="max-w-full max-h-full object-contain rounded-[4px] border border-white/20"
 						/>
 					</div>
 					<X
@@ -974,6 +983,161 @@ export default function PerbaikanAlatClient({
 					/>
 				</button>
 			)}
+			{/* Modal Detail Equipment & Perbaikan */}
+			{detailAsset && (
+				<div
+					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200"
+					onClick={() => setDetailAsset(null)}
+				>
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-label={`Detail equipment ${detailAsset.kodeAlat}`}
+						className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
+							<div className="flex items-center gap-3">
+								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
+									<Eye className="w-5 h-5 text-white" />
+								</div>
+								<div>
+									<h2 className="text-base font-bold text-white leading-tight">
+										Detail Equipment
+									</h2>
+									<p className="text-xs text-blue-100 font-medium mt-0.5">
+										{detailAsset.kodeAlat} · {detailAsset.namaAlat}
+									</p>
+								</div>
+							</div>
+							<button
+								onClick={() => setDetailAsset(null)}
+								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+							>
+								<X className="w-5 h-5" />
+							</button>
+						</div>
+
+						<div className="p-6 overflow-y-auto flex flex-col gap-5">
+							{/* Status Perbaikan */}
+							<div className="border border-gray-100 rounded-lg p-3.5 bg-gray-50 flex items-center justify-between">
+								<div>
+									<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+										Status Perbaikan
+									</p>
+									<div className="mt-1">
+										<StatusBadge status={detailAsset.status} />
+									</div>
+								</div>
+								<div className="text-right">
+									<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+										Terakhir Diperbarui
+									</p>
+									<p className="text-sm font-medium text-gray-800 mt-1">
+										{detailAsset.terakhirDiperbarui}
+									</p>
+								</div>
+							</div>
+
+							{/* Foto */}
+							{detailAsset.foto.length > 0 && (
+								<div className="grid grid-cols-3 gap-2">
+									{detailAsset.foto.slice(0, 6).map((url, idx) => (
+										<button
+											key={url}
+											type="button"
+											onClick={() => setPreviewImage(url)}
+											title={`Perbesar foto ${idx + 1}`}
+											className="relative aspect-video border border-gray-200 rounded-lg overflow-hidden bg-gray-100 hover:border-[#0A356A] transition-all"
+										>
+											{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+											<img
+												src={url}
+												alt={`Foto peralatan ${idx + 1}`}
+												className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+											/>
+										</button>
+									))}
+								</div>
+							)}
+
+							{/* Spesifikasi */}
+							<div className="grid grid-cols-2 gap-x-4 gap-y-3.5">
+								{[
+									["Tipe Objek", detailAsset.tipeObjek],
+									["Plant", detailAsset.plant],
+									["Lokasi Penyimpanan", detailAsset.lokasiPenyimpanan],
+									["Area (FuncLoc)", detailAsset.funcLoc],
+									["Vendor / Merk", detailAsset.vendor],
+									["Tahun", detailAsset.tahun ? String(detailAsset.tahun) : "-"],
+									["Kondisi", detailAsset.kondisi],
+									["Idle Sejak", detailAsset.idleSejak],
+								].map(([label, value]) => (
+									<div key={label}>
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+											{label}
+										</p>
+										<p className="text-sm font-semibold text-gray-800">{value}</p>
+									</div>
+								))}
+							</div>
+
+							{/* Nilai Aset */}
+							<div className="border-t border-gray-100 pt-4">
+								<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+									Nilai Aset
+								</p>
+								<div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3">
+									{[
+										["Nilai Perolehan", detailAsset.nilaiPerolehan],
+										["Nilai Buku", detailAsset.nilaiBuku],
+										["Estimasi Pakai Ulang", detailAsset.estimasiNilaiGunaUlang],
+									].map(([label, value]) => (
+										<div key={label as string}>
+											<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+												{label}
+											</p>
+											<p className="text-sm font-bold text-emerald-700">
+												{rupiah(value as number)}
+											</p>
+										</div>
+									))}
+								</div>
+							</div>
+
+							{/* Alasan Idle & Catatan */}
+							<div>
+								<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+									Alasan Idle
+								</p>
+								<p className="text-sm text-gray-700 leading-relaxed">
+									{detailAsset.alasanIdle || "-"}
+								</p>
+							</div>
+							{detailAsset.catatan && (
+								<div>
+									<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+										Catatan Tambahan
+									</p>
+									<p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 leading-relaxed whitespace-pre-line">
+										{detailAsset.catatan}
+									</p>
+								</div>
+							)}
+						</div>
+
+						<div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end bg-gray-50">
+							<button
+								onClick={() => setDetailAsset(null)}
+								className="px-5 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors shadow-sm"
+							>
+								Tutup
+							</button>
+						</div>
+					</div>
+				</div>
+			)}
+
 			<ConfirmDialog
 				open={isConfirmOpen}
 				onClose={() => setIsConfirmOpen(false)}

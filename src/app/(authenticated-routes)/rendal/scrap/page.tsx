@@ -24,6 +24,7 @@ import {
 	XCircle,
 	AlertCircle,
 	Upload,
+	Paperclip,
 	X,
 	ChevronRight,
 	Loader2,
@@ -103,8 +104,12 @@ export default function RendalScrapPage() {
 	// Form Fields State
 	const [verificationDate, setVerificationDate] = useState("");
 	const [disposalMethodId, setDisposalMethodId] = useState("");
+	// Nilai scrap (Rp) — field struct backend CreateDisposalRequest.scrap_value.
+	const [scrapValue, setScrapValue] = useState("");
 	const [justification, setJustification] = useState("");
-	const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+	// Dokumen pendukung: banyak file (gambar/PDF) + preview thumbnail.
+	const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+	const [fileError, setFileError] = useState<string | null>(null);
 	// Hasil validasi teknik (GET /api/validation) — sumber alasan & rekomendasi scrap.
 	const [assetValidation, setAssetValidation] = useState<any>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -292,7 +297,9 @@ export default function RendalScrapPage() {
 		setDisposalMethodId(defaultMethod);
 
 		setJustification("");
-		setUploadedFile(null);
+		setScrapValue("");
+		setUploadedFiles([]);
+		setFileError(null);
 		setIsModalOpen(true);
 
 		const validations = await getValidations(asset.id);
@@ -337,6 +344,22 @@ export default function RendalScrapPage() {
 		[assetValidation, assetInspection],
 	);
 
+	/** Tambah file pendukung (maks 5MB/file) untuk preview & upload. */
+	const addSupportingFiles = (files: FileList | null) => {
+		if (!files?.length) return;
+		const valid: File[] = [];
+		let err: string | null = null;
+		for (const f of Array.from(files)) {
+			if (f.size > 5 * 1024 * 1024) {
+				err = `Ukuran file ${f.name} melebihi batas 5MB.`;
+				continue;
+			}
+			valid.push(f);
+		}
+		setFileError(err);
+		setUploadedFiles((prev) => [...prev, ...valid]);
+	};
+
 	const handleSubmitVerification = async (e?: React.FormEvent) => {
 		e?.preventDefault();
 		if (!selectedAsset) return;
@@ -352,7 +375,7 @@ export default function RendalScrapPage() {
 			const payload = {
 				equipment_id: Number(selectedAsset.id),
 				disposal_method_id: targetMethodId,
-				scrap_value: 0,
+				scrap_value: Number(scrapValue.replace(/\./g, "")) || 0,
 				disposal_date: verificationDate,
 				justification:
 					justification.trim() ||
@@ -361,14 +384,14 @@ export default function RendalScrapPage() {
 
 			const res = await createDisposalRequest(payload);
 			if (res.success) {
-				if (uploadedFile) {
+				for (const file of uploadedFiles) {
 					const up = await uploadAttachment(
 						selectedAsset.id,
-						uploadedFile,
+						file,
 						"disposal_attachment",
 					);
 					if (!up.success) {
-						console.error("Gagal upload dokumen scrap:", up.message);
+						console.error("Gagal upload dokumen scrap:", file.name, up.message);
 					}
 				}
 
@@ -387,7 +410,7 @@ export default function RendalScrapPage() {
 					equipment_name: selectedAsset.namaAlat,
 					// Label optimistis; nama final tetap dari backend setelah loadData().
 					disposal_method: selectedMethod?.name || "-",
-					scrap_value: 0,
+					scrap_value: Number(scrapValue.replace(/\./g, "")) || 0,
 					plant: selectedAsset.plant,
 					justification:
 						justification.trim() ||
@@ -997,6 +1020,51 @@ export default function RendalScrapPage() {
 
 									<div>
 										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+											Metode Penghapusan
+										</label>
+										<select
+											value={disposalMethodId}
+											onChange={(e) => setDisposalMethodId(e.target.value)}
+											className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] text-gray-800"
+										>
+											{methods.length === 0 && <option value="">Memuat metode...</option>}
+											{methods.map((m) => (
+												<option key={m.id} value={String(m.id)}>
+													{m.name}
+												</option>
+											))}
+										</select>
+									</div>
+
+									<div>
+										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
+											Nilai Scrap (Rp)
+										</label>
+										<div className="relative">
+											<span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">
+												Rp
+											</span>
+											<input
+												type="text"
+												inputMode="numeric"
+												placeholder="0"
+												value={scrapValue}
+												onChange={(e) =>
+													setScrapValue(
+														e.target.value.replace(/\D/g, "")
+															? Number(e.target.value.replace(/\D/g, "")).toLocaleString(
+																	"id-ID",
+																)
+															: "",
+													)
+												}
+												className="w-full pl-9 pr-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] text-gray-800"
+											/>
+										</div>
+									</div>
+
+									<div>
+										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
 											Catatan Permintaan (Justifikasi)
 										</label>
 										<textarea
@@ -1016,19 +1084,70 @@ export default function RendalScrapPage() {
 											<input
 												type="file"
 												accept=".pdf,.png,.jpg,.jpeg"
-												onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
+												multiple
+												onChange={(e) => {
+													addSupportingFiles(e.target.files);
+													e.target.value = ""; // reset agar file sama bisa dipilih lagi
+												}}
 												className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 											/>
 											<Upload className="w-6 h-6 text-gray-400 mb-1.5" />
-											<span className="text-xs font-semibold text-gray-600">
-												{uploadedFile
-													? uploadedFile.name
-													: "Klik atau seret file PDF / Gambar pendukung"}
+											<span className="text-xs font-semibold text-gray-600 text-center px-4">
+												{uploadedFiles.length > 0
+													? `${uploadedFiles.length} file dipilih — klik untuk menambah lagi`
+													: "Klik atau seret file PDF / Gambar pendukung (bisa lebih dari satu)"}
 											</span>
 											<span className="text-[10px] text-gray-400 mt-0.5">
-												Maks. 5MB (Optional)
+												Maks. 5MB per file (Optional)
 											</span>
 										</div>
+
+										{/* Preview file terpilih */}
+										{uploadedFiles.length > 0 && (
+											<div className="mt-2 grid grid-cols-3 gap-2">
+												{uploadedFiles.map((file, i) => {
+													const isImage = file.type.startsWith("image/");
+													return (
+														<div
+															key={`${file.name}-${i}`}
+															title={file.name}
+															className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white"
+														>
+															<div className="h-16 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+																{isImage ? (
+																	// eslint-disable-next-line @next/next/no-img-element -- URL blob lokal (createObjectURL) tak bisa lewat next/image
+																	<img
+																		src={URL.createObjectURL(file)}
+																		alt={file.name}
+																		className="w-full h-full object-cover"
+																	/>
+																) : (
+																	<FileText className="w-6 h-6 text-gray-400" />
+																)}
+															</div>
+															<p className="text-[9px] text-gray-600 truncate px-1 py-0.5 text-center">
+																{file.name}
+															</p>
+															<button
+																type="button"
+																onClick={() =>
+																	setUploadedFiles((prev) => prev.filter((_, idx) => idx !== i))
+																}
+																className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+																aria-label={`Hapus ${file.name}`}
+															>
+																<X className="w-3 h-3" />
+															</button>
+														</div>
+													);
+												})}
+											</div>
+										)}
+										{fileError && (
+											<p className="text-[11px] text-red-500 mt-1.5 font-medium">
+												* {fileError}
+											</p>
+										)}
 									</div>
 								</div>
 							</div>

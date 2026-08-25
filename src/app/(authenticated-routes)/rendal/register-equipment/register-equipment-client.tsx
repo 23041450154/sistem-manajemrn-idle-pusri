@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useRef, useMemo } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
 	Save,
 	Info,
@@ -16,13 +16,16 @@ import {
 import Link from "next/link";
 import {
 	createEquipment,
+	getEquipmentCodes,
 	updateEquipment,
 	uploadAttachment,
 } from "@/action/api";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import YearPicker from "@/components/YearPicker";
-import AutocompleteInput from "@/components/AutocompleteInput";
+import AutocompleteInput, {
+	type AutocompleteOption,
+} from "@/components/AutocompleteInput";
 
 export interface MasterOption {
 	id: number;
@@ -38,6 +41,8 @@ export interface RegisterInitialData {
 	vendor: string;
 	year: string;
 	originalValue: string;
+	bookValue: string;
+	estimatedReuseValue: string;
 	idleReason: string;
 	storageLocationId: string;
 	notes: string;
@@ -52,10 +57,46 @@ const EMPTY_FORM: RegisterInitialData = {
 	vendor: "",
 	year: "",
 	originalValue: "",
+	bookValue: "",
+	estimatedReuseValue: "",
 	idleReason: "",
 	storageLocationId: "",
 	notes: "",
 };
+
+/** Input rupiah dengan prefix Rp + pemisah ribuan id-ID (opsional, tanpa validasi wajib). */
+function RupiahField({
+	label,
+	name,
+	value,
+	onChange,
+}: {
+	label: string;
+	name: string;
+	value: string;
+	onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) {
+	return (
+		<div className="space-y-1.5">
+			<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">
+				{label}
+			</label>
+			<div className="relative">
+				<span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">
+					Rp
+				</span>
+				<input
+					type="text"
+					name={name}
+					value={value}
+					onChange={onChange}
+					placeholder="0"
+					className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0556B3] outline-none transition-all"
+				/>
+			</div>
+		</div>
+	);
+}
 
 /** Client Component: form registrasi/revisi — data awal & master di-fetch Server Component. */
 export default function RegisterEquipmentClient({
@@ -65,7 +106,6 @@ export default function RegisterEquipmentClient({
 	storageLocations,
 	funcLocs,
 	initialData,
-	existingEquipments = [],
 }: {
 	editId: string | null;
 	objectTypes: MasterOption[];
@@ -73,8 +113,6 @@ export default function RegisterEquipmentClient({
 	storageLocations: MasterOption[];
 	funcLocs: MasterOption[];
 	initialData: RegisterInitialData | null;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	existingEquipments?: any[];
 }) {
 	const router = useRouter();
 	const fileInputRef = useRef<HTMLInputElement>(null);
@@ -98,64 +136,41 @@ export default function RegisterEquipmentClient({
 		initialData ?? EMPTY_FORM,
 	);
 
-	// Suggestions untuk autocomplete Kode Aset dari data master/existing equipments
-	const equipmentSuggestions = useMemo(() => {
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		const map = new Map<string, { value: string; label: string; sublabel: string; raw: any }>();
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		existingEquipments.forEach((eq: any) => {
-			const code = eq.equipment_code || eq.equipmentCode || "";
-			if (code && !map.has(code)) {
-				map.set(code, {
-					value: code,
-					label: code,
-					sublabel: [eq.name, eq.plant_name || eq.plant?.name].filter(Boolean).join(" • "),
-					raw: eq,
-				});
-			}
-		});
-		return Array.from(map.values());
-	}, [existingEquipments]);
+	// Kode Aset/Tag: dropdown dari master backend (/equipment-codes).
+	// Belum mengetik → daftar awal (backend batasi 50, urut kode);
+	// mengetik → debounce 300ms → GET ?search=prefix (LIKE 'x%').
+	const [codeOptions, setCodeOptions] = useState<AutocompleteOption[]>([]);
+	useEffect(() => {
+		const q = formData.equipmentCode.trim();
+		const t = setTimeout(
+			async () => {
+				const rows = await getEquipmentCodes(q || undefined);
+				setCodeOptions(
+					rows.map((r) => ({
+						id: r.id,
+						value: r.code,
+						label: r.code,
+						sublabel: r.description,
+						raw: r,
+					})),
+				);
+			},
+			q ? 300 : 0,
+		);
+		return () => clearTimeout(t);
+	}, [formData.equipmentCode]);
 
 	const handleEquipmentCodeChange = (
 		value: string,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
-		option?: any,
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- signature wajib cocok dgn onChange AutocompleteInput
+		_option?: AutocompleteOption,
 	) => {
 		setTouched((prev) => ({
 			...prev,
 			equipmentCode: true,
 		}));
-
-		if (option?.raw) {
-			const raw = option.raw;
-			setFormData((prev) => ({
-				...prev,
-				equipmentCode: value,
-				name: prev.name || raw.name || "",
-				plantId:
-					prev.plantId || (raw.id_plant ? String(raw.id_plant) : prev.plantId),
-				objectTypeId:
-					prev.objectTypeId ||
-					(raw.id_object_type || raw.object_type_id
-						? String(raw.id_object_type || raw.object_type_id)
-						: prev.objectTypeId),
-				funcLocId:
-					prev.funcLocId ||
-					(raw.id_func_loc || raw.func_loc_id
-						? String(raw.id_func_loc || raw.func_loc_id)
-						: prev.funcLocId),
-				storageLocationId:
-					prev.storageLocationId ||
-					(raw.id_storage_location || raw.storage_location_id
-						? String(raw.id_storage_location || raw.storage_location_id)
-						: prev.storageLocationId),
-				vendor: prev.vendor || raw.vendor || "",
-				year: prev.year || (raw.year ? String(raw.year) : ""),
-			}));
-		} else {
-			setFormData((prev) => ({ ...prev, equipmentCode: value }));
-		}
+		// Nama Peralatan sengaja TIDAK diisi otomatis dari description — user isi manual.
+		setFormData((prev) => ({ ...prev, equipmentCode: value }));
 	};
 
 	const handleSelectChange = (name: string, value: string) => {
@@ -183,7 +198,11 @@ export default function RegisterEquipmentClient({
 			value = value.slice(0, 50);
 		}
 
-		if (name === "originalValue") {
+		if (
+			name === "originalValue" ||
+			name === "bookValue" ||
+			name === "estimatedReuseValue"
+		) {
 			const rawValue = value.replace(/\D/g, "");
 			value = rawValue ? parseInt(rawValue, 10).toLocaleString("id-ID") : "";
 		}
@@ -300,6 +319,9 @@ export default function RegisterEquipmentClient({
 				vendor: formData.vendor,
 				year: Number(formData.year) || new Date().getFullYear(),
 				original_value: Number(formData.originalValue.replace(/\./g, "")) || 0,
+				book_value: Number(formData.bookValue.replace(/\./g, "")) || 0,
+				estimated_reuse_value:
+					Number(formData.estimatedReuseValue.replace(/\./g, "")) || 0,
 				idle_reason: formData.idleReason,
 				notes: formData.notes,
 			});
@@ -336,6 +358,14 @@ export default function RegisterEquipmentClient({
 		fd.append(
 			"original_value",
 			String(Number(formData.originalValue.replace(/\./g, "")) || 0),
+		);
+		fd.append(
+			"book_value",
+			String(Number(formData.bookValue.replace(/\./g, "")) || 0),
+		);
+		fd.append(
+			"estimated_reuse_value",
+			String(Number(formData.estimatedReuseValue.replace(/\./g, "")) || 0),
 		);
 		fd.append("idle_reason", formData.idleReason);
 		fd.append("notes", formData.notes);
@@ -433,10 +463,11 @@ export default function RegisterEquipmentClient({
 									mode="text"
 									name="equipmentCode"
 									maxLength={50}
+									showOnFocus
 									value={formData.equipmentCode}
 									onChange={handleEquipmentCodeChange}
 									onBlur={() => handleSelectBlur("equipmentCode")}
-									options={equipmentSuggestions}
+									options={codeOptions}
 									placeholder="Ketik kode aset..."
 									hasError={
 										(showValidationErrors || touched.equipmentCode) &&
@@ -492,6 +523,7 @@ export default function RegisterEquipmentClient({
 								<AutocompleteInput
 									mode="select"
 									name="objectTypeId"
+									showOnFocus
 									value={formData.objectTypeId}
 									onChange={(val) => handleSelectChange("objectTypeId", val)}
 									onBlur={() => handleSelectBlur("objectTypeId")}
@@ -517,6 +549,7 @@ export default function RegisterEquipmentClient({
 								<AutocompleteInput
 									mode="select"
 									name="plantId"
+									showOnFocus
 									value={formData.plantId}
 									onChange={(val) => handleSelectChange("plantId", val)}
 									onBlur={() => handleSelectBlur("plantId")}
@@ -542,10 +575,9 @@ export default function RegisterEquipmentClient({
 								<AutocompleteInput
 									mode="select"
 									name="storageLocationId"
+									showOnFocus
 									value={formData.storageLocationId}
-									onChange={(val) =>
-										handleSelectChange("storageLocationId", val)
-									}
+									onChange={(val) => handleSelectChange("storageLocationId", val)}
 									onBlur={() => handleSelectBlur("storageLocationId")}
 									options={storageLocations}
 									placeholder="Ketik lokasi simpan..."
@@ -559,6 +591,7 @@ export default function RegisterEquipmentClient({
 								<AutocompleteInput
 									mode="select"
 									name="funcLocId"
+									showOnFocus
 									value={formData.funcLocId}
 									onChange={(val) => handleSelectChange("funcLocId", val)}
 									onBlur={() => handleSelectBlur("funcLocId")}
@@ -572,7 +605,7 @@ export default function RegisterEquipmentClient({
 							<div className="col-span-full border-t border-gray-100 my-1"></div>
 
 							{/* Baris 4: Spesifikasi Khusus */}
-							<div className="space-y-1.5">
+							<div className="space-y-1.5 lg:col-span-2">
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									VENDOR / MERK <span className="text-red-500">*</span>
 								</label>
@@ -606,24 +639,33 @@ export default function RegisterEquipmentClient({
 									placeholder="Pilih tahun perolehan"
 								/>
 							</div>
-							<div className="space-y-1.5">
-								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">
-									NILAI PEROLEHAN{" "}
+
+							{/* Baris 5: Nilai Aset — satu baris penuh, 3 kolom sejajar */}
+							<div className="sm:col-span-2 lg:col-span-3">
+								<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+									NILAI ASET{" "}
 									<span className="text-gray-400 lowercase font-normal">
 										(Rp, opsional)
 									</span>
-								</label>
-								<div className="relative">
-									<span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">
-										Rp
-									</span>
-									<input
-										type="text"
+								</p>
+								<div className="grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-4">
+									<RupiahField
+										label="Nilai Perolehan"
 										name="originalValue"
 										value={formData.originalValue}
 										onChange={handleChange}
-										placeholder="0"
-										className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0556B3] outline-none transition-all"
+									/>
+									<RupiahField
+										label="Nilai Buku"
+										name="bookValue"
+										value={formData.bookValue}
+										onChange={handleChange}
+									/>
+									<RupiahField
+										label="Estimasi Pakai Ulang"
+										name="estimatedReuseValue"
+										value={formData.estimatedReuseValue}
+										onChange={handleChange}
 									/>
 								</div>
 							</div>

@@ -1,7 +1,6 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
-import Image from "next/image";
+import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -37,6 +36,8 @@ export interface Equipment {
 	vendor?: string;
 	year?: string | number;
 	originalValue?: number;
+	bookValue?: number;
+	estimatedReuseValue?: number;
 	notes?: string;
 	idleReason?: string;
 	photos?: string[];
@@ -44,6 +45,10 @@ export interface Equipment {
 }
 
 /** Client Component: interaksi (search/filter/sort/paginasi/modal) — data di-fetch Server Component. */
+
+/** path file_url dari backend bisa "uploads/.." tanpa leading slash. */
+const toPhotoUrl = (photo: string) =>
+	photo.startsWith("http") || photo.startsWith("/") ? photo : `/${photo}`;
 export default function RendalIdleClient({
 	equipments,
 }: {
@@ -64,6 +69,13 @@ export default function RendalIdleClient({
 
 	// State untuk Modal Detail
 	const [detailModal, setDetailModal] = useState<Equipment | null>(null);
+	// Foto utama di modal detail — default 0 = fallback ke Foto 1.
+	const [activePhotoIdx, setActivePhotoIdx] = useState(0);
+	const detailPhotos = detailModal?.photos ?? [];
+	const safePhotoIdx = Math.min(
+		activePhotoIdx,
+		Math.max(detailPhotos.length - 1, 0),
+	);
 
 	const ITEMS_PER_PAGE = 10;
 
@@ -464,7 +476,10 @@ export default function RendalIdleClient({
 										<td className="px-2 py-2 text-center">
 											<div className="flex justify-center items-center opacity-90 group-hover:opacity-100 transition-opacity">
 												<button
-													onClick={() => setDetailModal(item)}
+													onClick={() => {
+														setDetailModal(item);
+														setActivePhotoIdx(0);
+													}}
 													className="inline-flex items-center justify-center gap-1 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2 py-1 rounded text-[11px] font-bold transition-all shadow-sm"
 													title="Lihat Detail"
 												>
@@ -634,15 +649,21 @@ export default function RendalIdleClient({
 											{detailModal.funcLoc || "-"}
 										</p>
 									</div>
-									<div className="col-span-2">
-										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Nilai Perolehan
-										</p>
-										<p className="text-sm font-bold text-emerald-700">
-											{detailModal.originalValue
-												? `Rp ${Number(detailModal.originalValue).toLocaleString("id-ID")}`
-												: "Rp 0"}
-										</p>
+									<div className="col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3.5">
+										{[
+											["Nilai Perolehan", detailModal.originalValue],
+											["Nilai Buku", detailModal.bookValue],
+											["Estimasi Pakai Ulang", detailModal.estimatedReuseValue],
+										].map(([label, value]) => (
+											<div key={label as string}>
+												<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+													{label}
+												</p>
+												<p className="text-sm font-bold text-emerald-700">
+													{value ? `Rp ${Number(value).toLocaleString("id-ID")}` : "Rp 0"}
+												</p>
+											</div>
+										))}
 									</div>
 								</div>
 							</div>
@@ -687,36 +708,53 @@ export default function RendalIdleClient({
 							</div>
 
 							{/* Section 4: Foto Peralatan */}
-							{detailModal.photos && detailModal.photos.length > 0 && (
+							{detailPhotos.length > 0 && (
 								<div>
 									<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">
 										Foto Peralatan
 									</h3>
-									<div className="grid grid-cols-3 gap-2.5">
-										{detailModal.photos.map((photo, index) => {
-											const photoUrl =
-												photo.startsWith("http") || photo.startsWith("/")
-													? photo
-													: `/${photo}`;
-											return (
-												<a
-													key={index}
-													href={photoUrl}
-													target="_blank"
-													rel="noopener noreferrer"
-													className="group relative border border-gray-200 rounded-lg overflow-hidden aspect-video bg-gray-100 hover:border-[#0A356A] transition-all shadow-sm"
-												>
-													<Image
-														src={photoUrl}
-														alt={`Foto ${index + 1}`}
-														fill
-														sizes="(max-width: 768px) 50vw, 300px"
-														className="object-cover transition-all group-hover:scale-105"
-													/>
-												</a>
-											);
-										})}
-									</div>
+									{/* ponytail: <img> polos disengaja — next/image optimizer gagal memuat
+									    foto /uploads backend sehingga tampak kosong; URL langsung terbukti jalan. */}
+									<a
+										href={toPhotoUrl(detailPhotos[safePhotoIdx])}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="group relative block border border-gray-200 rounded-lg overflow-hidden bg-gray-50 hover:border-[#0A356A] transition-all shadow-sm"
+									>
+										{/* eslint-disable-next-line @next/next/no-img-element -- lihat catatan ponytail di atas */}
+										<img
+											src={toPhotoUrl(detailPhotos[safePhotoIdx])}
+											alt={`Foto ${safePhotoIdx + 1}`}
+											className="w-full h-56 object-contain bg-white"
+										/>
+										<span className="absolute bottom-2 right-2 text-[10px] font-bold text-gray-500 bg-white/85 px-2 py-0.5 rounded pointer-events-none">
+											Foto {safePhotoIdx + 1}/{detailPhotos.length}
+										</span>
+									</a>
+
+									{detailPhotos.length > 1 && (
+										<div className="grid grid-cols-4 gap-2 mt-2.5">
+											{detailPhotos.map((photo, index) => {
+												const isActive = index === safePhotoIdx;
+												return (
+													<button
+														key={index}
+														type="button"
+														onClick={() => setActivePhotoIdx(index)}
+														title={`Lihat Foto ${index + 1}`}
+														className={`relative border rounded-lg overflow-hidden aspect-video bg-gray-100 transition-all ${isActive ? "border-[#0556B3] ring-2 ring-[#0556B3]/30" : "border-gray-200 hover:border-[#0A356A]"}`}
+													>
+														{/* eslint-disable-next-line @next/next/no-img-element -- lihat catatan ponytail di atas */}
+														<img
+															src={toPhotoUrl(photo)}
+															alt={`Thumbnail Foto ${index + 1}`}
+															className="w-full h-full object-cover"
+														/>
+													</button>
+												);
+											})}
+										</div>
+									)}
 								</div>
 							)}
 						</div>

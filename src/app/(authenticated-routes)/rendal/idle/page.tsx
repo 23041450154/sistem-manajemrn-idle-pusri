@@ -88,7 +88,11 @@ export default async function RendalIdlePage() {
 						: item.func_loc?.name || "-",
 				vendor: item.vendor || "-",
 				year: item.year || item.year_of_purchase || "-",
-				originalValue: item.original_value || item.book_value || 0,
+				// ponytail: fallback book_value dihapus — nilai perolehan ≠ nilai buku.
+				// bookValue & estimatedReuseValue ditampilkan di modal Detail Aset Idle.
+				originalValue: item.original_value || 0,
+				bookValue: item.book_value || 0,
+				estimatedReuseValue: item.estimated_reuse_value || 0,
 				notes: item.notes || "-",
 				idleReason: item.idle_reason || "-",
 				photos: item.attachments

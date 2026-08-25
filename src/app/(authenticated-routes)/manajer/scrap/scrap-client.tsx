@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import Image from "next/image";
 import { useRouter } from "next/navigation";
 import {
   Eye,
@@ -795,12 +794,11 @@ export default function ManajerScrapClient({
                         className="group relative w-36 h-36 bg-gray-100 rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:shadow-md transition-all"
                         onClick={() => setPreviewImage(att.file_url)}
                       >
-                        <Image
+                        {/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+                        <img
                           src={att.file_url}
                           alt={att.caption || `Bukti ${idx + 1}`}
-                          fill
-                          sizes="144px"
-                          className="object-cover group-hover:scale-105 transition-transform duration-200"
+                          className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
                         />
                         <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/80 to-transparent p-2 text-white text-[10px] font-semibold truncate">
                           {att.caption || `Bukti ${idx + 1}`}
@@ -1079,13 +1077,12 @@ export default function ManajerScrapClient({
           >
             <X className="w-6 h-6" />
           </button>
-          <div className="relative w-[92vw] max-w-5xl h-[85vh]">
-            <Image
+          <div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center">
+            {/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+            <img
               src={previewImage}
               alt="Preview Physical Evidence"
-              fill
-              sizes="92vw"
-              className="object-contain rounded-xl shadow-2xl"
+              className="max-w-full max-h-full object-contain rounded-xl shadow-2xl"
               onClick={(e) => e.stopPropagation()}
             />
           </div>

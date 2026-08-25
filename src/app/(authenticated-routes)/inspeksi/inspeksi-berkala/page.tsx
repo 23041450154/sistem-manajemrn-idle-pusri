@@ -77,6 +77,17 @@ export default async function InspeksiAntreanPage() {
 				require_action_name:
 					ins.require_action?.name || ins.require_action_name || "-",
 				status_name: "Selesai",
+				// ponytail: URL foto dinormalisasi di sini (bukan di getInspections) karena
+				// action tsb mengembalikan mentahan; backslash Windows & path tanpa leading "/".
+				photos: Array.isArray(ins.attachments)
+					? ins.attachments
+							.map((att: any) => {
+								const url = String(att.file_url || att.url || "").replace(/\\/g, "/");
+								if (!url) return "";
+								return url.startsWith("http") || url.startsWith("/") ? url : `/${url}`;
+							})
+							.filter(Boolean)
+					: [],
 			};
 		});
 		riwayat.sort((a, b) => {

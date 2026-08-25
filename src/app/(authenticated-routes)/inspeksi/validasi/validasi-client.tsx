@@ -5,7 +5,6 @@
 
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import {
 	Search,
 	Eye,
@@ -81,7 +80,6 @@ export default function ManajemenInspeksiClient({
 }) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
-
 
 	// Filter States
 	const [searchInput, setSearchInput] = useState("");
@@ -304,7 +302,6 @@ export default function ManajemenInspeksiClient({
 		try {
 			const isUtilizable = hasilPemeriksaan === "Layak";
 			const notes = catatan || rekomendasi;
-
 
 			const isRevision = selectedAsset.statusPersetujuan === "NEED_REVISION";
 			let res;
@@ -929,7 +926,7 @@ export default function ManajemenInspeksiClient({
 							</tr>
 						</thead>
 						<tbody className="bg-white">
-						{paginatedAssets.length === 0 ? (
+							{paginatedAssets.length === 0 ? (
 								<tr>
 									<td colSpan={7} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
@@ -1271,7 +1268,7 @@ export default function ManajemenInspeksiClient({
 														title={`Foto ${idx + 1}`}
 													>
 														{/* Thumbnail 64px (h-16): tetap <img> sesuai keputusan handoff */}
-																										{/* eslint-disable-next-line @next/next/no-img-element -- thumbnail ≤64px, tetap <img> sesuai keputusan handoff */}
+														{/* eslint-disable-next-line @next/next/no-img-element -- thumbnail ≤64px, tetap <img> sesuai keputusan handoff */}
 														<img
 															src={att.file_url || att.url}
 															alt={`Foto Aset ${idx + 1}`}
@@ -1628,7 +1625,7 @@ export default function ManajemenInspeksiClient({
 																{isImage ? (
 																	<div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
 																		{/* <img> wajib: URL blob lokal (createObjectURL) tak bisa lewat next/image remotePatterns */}
-																																		{/* eslint-disable-next-line @next/next/no-img-element -- URL blob lokal tidak dapat melewati next/image remotePatterns */}
+																		{/* eslint-disable-next-line @next/next/no-img-element -- URL blob lokal tidak dapat melewati next/image remotePatterns */}
 																		<img
 																			src={previewUrl!}
 																			alt={file.name}
@@ -1699,12 +1696,11 @@ export default function ManajemenInspeksiClient({
 																	key={idx}
 																	className="relative border border-gray-200 rounded overflow-hidden aspect-video bg-gray-50"
 																>
-																	<Image
+																	{/* eslint-disable-next-line @next/next/no-img-element -- lihat catatan ponytail di atas */}
+																	<img
 																		src={att.file_url || att.url}
-																		className="object-cover"
+																		className="absolute inset-0 w-full h-full object-cover"
 																		alt="Foto Lama"
-																		fill
-																		sizes="(max-width: 1024px) 45vw, 380px"
 																	/>
 																	<div className="absolute inset-0 bg-black/40 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
 																		<span className="text-[10px] text-white font-medium truncate p-1">
@@ -1906,11 +1902,10 @@ export default function ManajemenInspeksiClient({
 											className="border border-gray-200 rounded overflow-hidden flex flex-col bg-white cursor-pointer hover:border-[#0A356A] transition-colors group"
 										>
 											<div className="relative h-20 bg-gray-100 flex items-center justify-center overflow-hidden">
-												<Image
+												{/* eslint-disable-next-line @next/next/no-img-element -- lihat catatan ponytail di atas */}
+												<img
 													src={att.file_url || att.url}
-													fill
-													sizes="160px"
-													className="object-cover group-hover:scale-105 transition-transform duration-300"
+													className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
 													alt={`Foto ${idx + 1}`}
 												/>
 											</div>
@@ -2007,13 +2002,12 @@ export default function ManajemenInspeksiClient({
 					>
 						<X className="w-6 h-6" />
 					</button>
-					<div className="relative w-[92vw] max-w-5xl h-[85vh]">
-						<Image
+					<div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center">
+						{/* eslint-disable-next-line @next/next/no-img-element -- lihat catatan ponytail di atas */}
+						<img
 							src={previewImage}
-							alt="Preview"
-							fill
-							sizes="92vw"
-							className="object-contain rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
+							alt="Preview Foto"
+							className="max-w-full max-h-full object-contain rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
 							onClick={(e) => e.stopPropagation()}
 						/>
 					</div>

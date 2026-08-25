@@ -38,6 +38,8 @@ interface AutocompleteInputProps {
 	className?: string;
 	emptyMessage?: string;
 	autoComplete?: string;
+	/** Buka dropdown saat fokus meski belum mengetik (tampilkan semua opsi). */
+	showOnFocus?: boolean;
 }
 
 export default function AutocompleteInput({
@@ -57,6 +59,7 @@ export default function AutocompleteInput({
 	className = "",
 	emptyMessage = "Tidak ada saran yang cocok.",
 	autoComplete = "off",
+	showOnFocus = false,
 }: AutocompleteInputProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [inputValue, setInputValue] = useState("");
@@ -99,23 +102,28 @@ export default function AutocompleteInput({
 		);
 	}, [normalizedOptions, value, mode]);
 
-	// Synchronize input text with external value
-	useEffect(() => {
+	// Synchronize input text with external value.
+	// ponytail: pakai pattern "adjust state during render" (react.dev) — pengganti
+	// useEffect+setState yang dilarang rule react-hooks/set-state-in-effect.
+	const [lastSyncedValue, setLastSyncedValue] = useState<
+		string | number | undefined
+	>(value);
+	if (value !== lastSyncedValue) {
+		setLastSyncedValue(value);
 		if (mode === "select") {
-			if (selectedOption) {
-				setInputValue(selectedOption.label ?? "");
-			} else if (!value) {
-				setInputValue("");
-			}
+			setInputValue(selectedOption ? (selectedOption.label ?? "") : "");
 		} else {
 			setInputValue(String(value ?? ""));
 		}
-	}, [value, selectedOption, mode]);
+	}
 
 	// Filter options based on typed input ONLY by label (name/tag), not description
 	const filteredOptions = useMemo(() => {
 		const query = inputValue.toLowerCase().trim();
-		if (query.length < minChars) return [];
+		if (query.length < minChars) {
+			// Belum mengetik + showOnFocus → tampilkan seluruh opsi (urut label).
+			return showOnFocus ? normalizedOptions : [];
+		}
 
 		const matched = normalizedOptions.filter((opt) => {
 			const label = (opt.label ?? "").toLowerCase();
@@ -132,7 +140,7 @@ export default function AutocompleteInput({
 			if (!aStarts && bStarts) return 1;
 			return aLabel.localeCompare(bLabel);
 		});
-	}, [normalizedOptions, inputValue, minChars]);
+	}, [normalizedOptions, inputValue, minChars, showOnFocus]);
 
 	// Handle close
 	const handleClose = useCallback(() => {
@@ -193,6 +201,10 @@ export default function AutocompleteInput({
 		if (text.trim().length >= minChars) {
 			setIsOpen(true);
 			setHighlightedIndex(0);
+		} else if (showOnFocus) {
+			// Input dikosongkan → kembali tampilkan daftar lengkap.
+			setIsOpen(true);
+			setHighlightedIndex(0);
 		} else {
 			setIsOpen(false);
 			setHighlightedIndex(-1);
@@ -231,7 +243,7 @@ export default function AutocompleteInput({
 	// Handle keyboard navigation
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
 		if (e.key === "ArrowDown") {
-			if (!isOpen && inputValue.trim().length >= minChars) {
+			if (!isOpen && (inputValue.trim().length >= minChars || showOnFocus)) {
 				e.preventDefault();
 				setIsOpen(true);
 				setHighlightedIndex(0);
@@ -278,7 +290,7 @@ export default function AutocompleteInput({
 	const showClear = clearable && !disabled && Boolean(inputValue);
 	const shouldShowPopup =
 		isOpen &&
-		inputValue.trim().length >= minChars &&
+		(inputValue.trim().length >= minChars || showOnFocus) &&
 		normalizedOptions.length > 0;
 
 	return (
@@ -295,6 +307,7 @@ export default function AutocompleteInput({
 					placeholder={placeholder}
 					onChange={handleInputChange}
 					onFocus={() => {
+						if (showOnFocus && !disabled) setIsOpen(true);
 						if (onFocus) onFocus();
 					}}
 					onKeyDown={handleKeyDown}

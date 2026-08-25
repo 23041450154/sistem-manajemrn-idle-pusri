@@ -5,7 +5,6 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import {
 	Eye,
 	X,
@@ -46,6 +45,7 @@ export interface RequestAsset {
 	objectType: Lookup | null;
 	namaAset: string;
 	plant: Lookup | null;
+	funcLoc: Lookup | null;
 	storage: StorageLocation | null;
 	tanggalPengajuan: string;
 	statusAset: string;
@@ -712,7 +712,9 @@ export default function ManajerApproveClient({
 										<p className="text-[12px] text-gray-500 font-medium mb-1">
 											Functional Location:
 										</p>
-										<p className="text-[13px] font-bold text-gray-900">FL-P1-0023</p>
+										<p className="text-[13px] font-bold text-gray-900">
+											{selectedAsset.funcLoc?.name ?? "-"}
+										</p>
 									</div>
 									<div>
 										<p className="text-[12px] text-gray-500 font-medium mb-1">
@@ -763,12 +765,11 @@ export default function ManajerApproveClient({
 													className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-square"
 													onClick={() => setPreviewImage(att.file_url || att.url)}
 												>
-													<Image
+													{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+													<img
 														src={att.file_url || att.url}
 														alt={att.description || att.file_name || `Foto ${idx + 1}`}
-														fill
-														sizes="(max-width: 768px) 33vw, 250px"
-														className="object-cover transition-transform group-hover:scale-105"
+														className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
 													/>
 													<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
 														<Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -1009,11 +1010,10 @@ export default function ManajerApproveClient({
 												className="relative w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
 												onClick={() => setPreviewImage(att.file_url || att.url)}
 											>
-												<Image
+												{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+												<img
 													src={att.file_url || att.url}
-													fill
-													sizes="96px"
-													className="object-cover"
+													className="absolute inset-0 w-full h-full object-cover"
 													alt={`Foto ${idx + 1}`}
 												/>
 											</div>
@@ -1220,13 +1220,12 @@ export default function ManajerApproveClient({
 					>
 						<X className="w-6 h-6" />
 					</button>
-					<div className="relative w-[92vw] max-w-5xl h-[85vh]">
-						<Image
+					<div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center">
+						{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+						<img
 							src={previewImage}
-							alt="Preview"
-							fill
-							sizes="92vw"
-							className="object-contain rounded-lg shadow-2xl"
+							alt="Preview Foto"
+							className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
 							onClick={(e) => e.stopPropagation()}
 						/>
 					</div>

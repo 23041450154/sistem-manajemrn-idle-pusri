@@ -5,7 +5,6 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import Image from "next/image";
 import { getAttachmentsByEquipmentId, createReuseRequest } from "@/action/api";
 import { statusBadgeStyle, statusText } from "@/lib/equipment-status";
 import KatalogClient from "../katalog/katalog-client";
@@ -19,6 +18,7 @@ import {
 	Eye,
 	Send,
 	X,
+	CheckCircle2,
 	FileText,
 	ImageOff,
 	Info,
@@ -90,6 +90,8 @@ export default function DaftarAsetClient({
 	const [requestErrorMessage, setRequestErrorMessage] = useState<string | null>(
 		null,
 	);
+	// Toaster sukses pengajuan — lalu redirect ke riwayat permintaan.
+	const [successToast, setSuccessToast] = useState<string | null>(null);
 
 	const [requestFormData, setRequestFormData] = useState({
 		requesting_project: "",
@@ -100,7 +102,6 @@ export default function DaftarAsetClient({
 		justification: "",
 		notes: "",
 	});
-
 
 	const plantOptions = useMemo(
 		() =>
@@ -297,9 +298,13 @@ export default function DaftarAsetClient({
 			if (res && res.success) {
 				// Server action sudah revalidateApp(); tarik payload RSC terbaru
 				// (aset terajukan otomatis keluar dari daftar di server).
-				router.refresh();
 				setRequestModalAsset(null);
 				if (isDetailOpen) setIsDetailOpen(false);
+				// Toaster sukses, lalu arahkan ke riwayat permintaan.
+				setSuccessToast(
+					`Pengajuan pemakaian ${requestModalAsset.equipment_code} berhasil dikirim.`,
+				);
+				setTimeout(() => router.push("/unit-kerja/riwayat-permintaan"), 1200);
 			} else {
 				setRequestErrorMessage(
 					res?.message || "Gagal mengirim pengajuan pemakaian.",
@@ -348,14 +353,22 @@ export default function DaftarAsetClient({
 		[attachments],
 	);
 
-	const requestPhotos = useMemo(
-		() =>
-			normalizedAttachments.filter(
-				(att) =>
-					IMAGE_URL_PATTERN.test(att.url) && !failedPhotoUrls.includes(att.url),
-			),
-		[normalizedAttachments, failedPhotoUrls],
-	);
+	const requestPhotos = useMemo(() => {
+		// ponytail: backend bisa mengirim URL foto yang sama di beberapa attachment;
+		// dedupe per URL agar key React & galeri tidak duplikat.
+		const seen = new Set<string>();
+		return normalizedAttachments.filter((att) => {
+			if (
+				!IMAGE_URL_PATTERN.test(att.url) ||
+				failedPhotoUrls.includes(att.url) ||
+				seen.has(att.url)
+			) {
+				return false;
+			}
+			seen.add(att.url);
+			return true;
+		});
+	}, [normalizedAttachments, failedPhotoUrls]);
 
 	const requestDocuments = useMemo(
 		() => normalizedAttachments.filter((att) => !IMAGE_URL_PATTERN.test(att.url)),
@@ -364,6 +377,18 @@ export default function DaftarAsetClient({
 
 	return (
 		<div className="max-w-7xl mx-auto pt-2 pb-8">
+			{/* Toaster Sukses Pengajuan — di tengah layar, di atas konten/modal */}
+			{successToast && (
+				<div className="fixed inset-0 z-[9999] flex items-center justify-center bg-white/60 backdrop-blur-[2px] animate-in fade-in duration-200 pointer-events-none">
+					<div className="bg-white border border-gray-200 rounded-2xl shadow-2xl w-56 p-8 flex flex-col items-center gap-3 text-center animate-in zoom-in-95 duration-200">
+						<CheckCircle2 className="w-12 h-12 text-emerald-500" />
+						<span className="text-sm font-semibold text-gray-900 leading-snug">
+							{successToast}
+						</span>
+					</div>
+				</div>
+			)}
+
 			{/* Page Header */}
 			<div className="mb-3">
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
@@ -1013,12 +1038,11 @@ export default function DaftarAsetClient({
 											<Loader2 className="w-5 h-5 animate-spin" />
 										</div>
 									) : requestPhotos.length > 0 ? (
-										<Image
+										/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */
+										<img
 											src={requestPhotos[activePhotoIndex]?.url}
 											alt={`Foto peralatan ${requestModalAsset.name}`}
-											fill
-											sizes="(max-width: 1024px) 100vw, 384px"
-											className="w-full h-full object-cover"
+											className="absolute inset-0 w-full h-full object-cover"
 											onError={() =>
 												setFailedPhotoUrls((prev) => [
 													...prev,
@@ -1051,12 +1075,11 @@ export default function DaftarAsetClient({
 														: "border border-[#E6E8EA] hover:border-[#64748B]"
 												}`}
 											>
-												<Image
+												{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+												<img
 													src={photo.url}
 													alt=""
-													fill
-													sizes="56px"
-													className="w-full h-full object-cover"
+													className="absolute inset-0 w-full h-full object-cover"
 												/>
 											</button>
 										))}

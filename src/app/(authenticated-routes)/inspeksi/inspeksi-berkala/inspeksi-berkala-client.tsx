@@ -14,6 +14,8 @@ import {
 	ClipboardCheck,
 	ChevronRight,
 	CheckCircle2,
+	Eye,
+	X,
 } from "lucide-react";
 import Link from "next/link";
 import { type LastInspection } from "@/lib/inspection-schedule";
@@ -45,6 +47,7 @@ export interface InspectionItem {
 	condition_name?: string;
 	require_action_name?: string;
 	status_name?: string;
+	photos?: string[];
 }
 
 /** Client Component: interaksi tab/filter/sort/paginasi — data di-fetch Server Component. */
@@ -62,6 +65,8 @@ export default function InspeksiBerkalaClient({
 	const [filterPlant, setFilterPlant] = useState("");
 	const [filterTipeObjek, setFilterTipeObjek] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
+	// Modal detail riwayat inspeksi.
+	const [detailIns, setDetailIns] = useState<InspectionItem | null>(null);
 	const ITEMS_PER_PAGE = 10;
 
 	const [sortConfig, setSortConfig] = useState<{
@@ -446,6 +451,9 @@ export default function InspeksiBerkalaClient({
 										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center whitespace-nowrap">
 											Status
 										</th>
+										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center whitespace-nowrap">
+											Aksi
+										</th>
 									</>
 								)}
 							</tr>
@@ -579,6 +587,16 @@ export default function InspeksiBerkalaClient({
 													{row.status_name}
 												</span>
 											</td>
+											<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
+												<button
+													onClick={() => setDetailIns(row)}
+													className="inline-flex items-center gap-1 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2.5 py-1 rounded text-[12px] font-bold transition-all"
+													title="Lihat Detail Inspeksi"
+												>
+													<Eye className="w-3.5 h-3.5" />
+													Detail
+												</button>
+											</td>
 										</tr>
 									);
 								})
@@ -625,6 +643,110 @@ export default function InspeksiBerkalaClient({
 						</button>
 					</div>
 				</div>
+
+				{/* Modal Detail Riwayat Inspeksi */}
+				{detailIns && (
+					<div
+						className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200"
+						onClick={() => setDetailIns(null)}
+					>
+						<div
+							className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200"
+							onClick={(e) => e.stopPropagation()}
+						>
+							<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
+								<div className="flex items-center gap-3">
+									<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
+										<Eye className="w-5 h-5 text-white" />
+									</div>
+									<div>
+										<h2 className="text-base font-bold text-white leading-tight">
+											Detail Inspeksi Berkala
+										</h2>
+										<p className="text-xs text-blue-100 font-medium mt-0.5">
+											{detailIns.equipment_code}
+										</p>
+									</div>
+								</div>
+								<button
+									onClick={() => setDetailIns(null)}
+									className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+								>
+									<X className="w-5 h-5" />
+								</button>
+							</div>
+
+							<div className="p-6 overflow-y-auto">
+								<div className="grid grid-cols-2 gap-x-6 gap-y-4">
+									{[
+										["Kode Alat", detailIns.equipment_code],
+										["Nama Peralatan", detailIns.equipment_name],
+										["Jenis Aset", detailIns.object_type],
+										["Plant", detailIns.plant],
+										[
+											"Tanggal Inspeksi",
+											detailIns.inspection_date
+												? new Date(detailIns.inspection_date).toISOString().split("T")[0]
+												: "-",
+										],
+										["Kondisi", detailIns.condition_name],
+										["Tindak Lanjut", detailIns.require_action_name],
+										["Status", detailIns.status_name],
+									].map(([label, value]) => (
+										<div key={label}>
+											<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+												{label}
+											</p>
+											<p className="text-sm font-medium text-gray-800">{value || "-"}</p>
+										</div>
+									))}
+									<div className="col-span-2">
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1">
+											Catatan / Hasil Inspeksi
+										</p>
+										<p className="text-sm text-gray-700 bg-gray-50 border border-gray-100 rounded-lg p-3 whitespace-pre-line leading-relaxed">
+											{detailIns.notes || "Tidak ada catatan."}
+										</p>
+									</div>
+									{(detailIns.photos?.length ?? 0) > 0 && (
+										<div className="col-span-2">
+											<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5">
+												Foto Inspeksi
+											</p>
+											<div className="grid grid-cols-3 gap-2">
+												{detailIns.photos!.map((photo, idx) => (
+													<a
+														key={idx}
+														href={photo}
+														target="_blank"
+														rel="noopener noreferrer"
+														className="relative aspect-video border border-gray-200 rounded-lg overflow-hidden bg-gray-100 hover:border-[#0A356A] transition-all"
+													>
+														{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+														<img
+															src={photo}
+															alt={`Foto Inspeksi ${idx + 1}`}
+															className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-300"
+														/>
+													</a>
+												))}
+											</div>
+										</div>
+									)}
+								</div>
+							</div>
+
+							<div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end bg-gray-50">
+								<button
+									onClick={() => setDetailIns(null)}
+									className="px-5 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors shadow-sm"
+								>
+									Tutup
+								</button>
+							</div>
+						</div>
+					</div>
+				)}
 			</div>
 		</div>
 	);

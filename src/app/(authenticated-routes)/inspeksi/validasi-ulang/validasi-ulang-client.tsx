@@ -71,7 +71,6 @@ export default function InspeksiValidasiUlangClient({
 	} | null>(null);
 	const [modalError, setModalError] = useState<string | null>(null);
 
-
 	const plantOptions = useMemo(
 		() =>
 			[...new Set(items.map((e) => e.plant).filter((v) => v && v !== "-"))].sort(),
@@ -191,12 +190,14 @@ export default function InspeksiValidasiUlangClient({
 					});
 				} else if (hasilStatus === "DISPOSAL_RECOMMENDED") {
 					setNotification({
-						type: "error",
+						// ponytail: tetap "success" — operasinya BERHASIL; kabar tidak enaknya
+						// cukup lewat teks pesan, jangan pakai ikon error.
+						type: "success",
 						message: `Validasi ulang ${selectedAsset.kodeAlat} berhasil disimpan: Tidak layak pakai, status DISPOSAL_RECOMMENDED (usulan scrap).`,
 					});
 				} else {
 					setNotification({
-						type: "error",
+						type: "success",
 						message: `Validasi ulang ${selectedAsset.kodeAlat} berhasil disimpan: Masih perlu perbaikan, status kembali ke REPAIR.`,
 					});
 				}
@@ -425,7 +426,7 @@ export default function InspeksiValidasiUlangClient({
 							</tr>
 						</thead>
 						<tbody className="bg-white">
-						{paginatedItems.length === 0 ? (
+							{paginatedItems.length === 0 ? (
 								<tr>
 									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">

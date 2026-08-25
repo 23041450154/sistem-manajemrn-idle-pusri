@@ -73,7 +73,7 @@ export interface ReuseRequestApi {
 		name?: string;
 		plant?: { name?: string; description?: string };
 	};
-	requested_by_user?: { name?: string; npp?: string };
+	requested_by_user?: { name?: string; npp?: string; email?: string };
 }
 
 /** Client Component: interaksi (tab/filter/paginasi/review approve-revisi) — data di-fetch Server Component. */
@@ -715,7 +715,7 @@ export default function ManajerPeminjamanClient({
 											</div>
 											<div>
 												<span className="text-[10px] font-semibold text-slate-400 uppercase block">
-													No. Telepon / HP
+													Email
 												</span>
 												<span className="font-medium text-slate-700 block mt-0.5 font-mono">
 													{selectedRequest.contact_phone || "-"}

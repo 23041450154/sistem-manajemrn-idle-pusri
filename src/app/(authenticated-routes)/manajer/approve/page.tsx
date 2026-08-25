@@ -59,6 +59,7 @@ export default async function ManajerApprovePage() {
 			objectType: item.object_type ?? eq?.object_type ?? null,
 			namaAset: item.equipment_name || eq?.name || "-",
 			plant: item.plant ?? eq?.plant ?? null,
+			funcLoc: item.func_loc ?? eq?.func_loc ?? null,
 			storage: item.storage_location ?? eq?.storage_location ?? null,
 			tanggalPengajuan: item.request_date
 				? new Date(item.request_date).toISOString().split("T")[0]

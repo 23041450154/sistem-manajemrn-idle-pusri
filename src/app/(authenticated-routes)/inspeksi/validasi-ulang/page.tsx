@@ -15,6 +15,7 @@ const INCLUDED_STATUSES = [
 	"READY_TO_USE",
 	"SCRAP",
 	"DISPOSAL_VERIFIED",
+	"DISPOSAL_RECOMMENDED",
 ];
 
 /** Server Component — fetch + filter visibilitas + mapping murni di server.

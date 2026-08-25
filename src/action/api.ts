@@ -55,6 +55,30 @@ export async function uploadAttachment(
 	}
 }
 
+/**
+ * Daftar kode aset master (GET /api/equipment-codes).
+ * search opsional: prefix match "code LIKE x%" untuk autocomplete Kode Aset/Tag.
+ */
+export async function getEquipmentCodes(
+	search?: string,
+): Promise<{ id: number; code: string; description: string }[]> {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+
+	try {
+		const qs = search ? `?search=${encodeURIComponent(search)}` : "";
+		const res = await fetch(`${API_URL}/api/equipment-codes${qs}`, {
+			headers: { Authorization: `Bearer ${token}` },
+			cache: "no-store",
+		});
+		if (!res.ok) return [];
+		return await res.json();
+	} catch (error) {
+		console.error("Fetch equipment codes error:", error);
+		return [];
+	}
+}
+
 export async function getEquipments() {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
@@ -86,7 +110,7 @@ export async function getEquipments() {
 				}
 			});
 		}
-		return data;
+		return flattenEquipmentCode(data);
 	} catch (error) {
 		console.error("Fetch equipment error:", error);
 		return [];
@@ -130,6 +154,24 @@ function absoluteFileUrl(raw?: string | null): string {
  * approval_id diambil dari GET /api/approvals/disposal karena review dilakukan
  * lewat PATCH /api/approvals/disposal/:approvalId/review, bukan lewat id disposal.
  */
+/**
+ * ponytail: backend kini mengirim equipment_code sebagai relasi {id, code, description},
+ * sementara seluruh UI mengharap string kode. Flatten sekali di lapisan fetch
+ * (row + row.equipment) agar semua halaman aman tanpa edit per komponen.
+ */
+function flattenEquipmentCode<T>(data: T): T {
+	const rows = Array.isArray(data) ? data : data ? [data] : [];
+	rows.forEach((row: any) => {
+		[row, row?.equipment, row?.master_equipment].forEach((t) => {
+			if (!t || typeof t !== "object") return;
+			if (t.equipment_code && typeof t.equipment_code === "object") {
+				t.equipment_code = t.equipment_code.code ?? "";
+			}
+		});
+	});
+	return data;
+}
+
 export async function getDisposals(): Promise<DisposalItemDTO[]> {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
@@ -149,7 +191,7 @@ export async function getDisposals(): Promise<DisposalItemDTO[]> {
 			return [];
 		}
 
-		const list = (await dispRes.json())?.data || [];
+		const list = flattenEquipmentCode((await dispRes.json())?.data || []);
 		if (!Array.isArray(list)) return [];
 
 		// reference_id approval == id disposal request.
@@ -368,7 +410,7 @@ export async function getApprovals(kind: ApprovalKind = "validation") {
 		});
 		if (!res.ok) return [];
 		const json = await res.json();
-		return json.data || [];
+		return flattenEquipmentCode(json.data || []);
 	} catch (error) {
 		console.error(`Fetch approvals (${kind}) error:`, error);
 		return [];
@@ -389,7 +431,7 @@ export async function getApprovalById(
 		});
 		if (!res.ok) return null;
 		const json = await res.json();
-		return json.data || null;
+		return flattenEquipmentCode(json.data || null);
 	} catch (error) {
 		console.error(`Fetch approval ${id} error:`, error);
 		return null;
@@ -413,7 +455,7 @@ export async function getValidations(equipmentId?: string | number) {
 		});
 		if (!res.ok) return [];
 		const json = await res.json();
-		return json.data || [];
+		return flattenEquipmentCode(json.data || []);
 	} catch (error) {
 		console.error("Fetch validations error:", error);
 		return [];
@@ -631,7 +673,7 @@ export async function getInspections() {
 		});
 		if (!res.ok) return [];
 		const json = await res.json();
-		return json.data || [];
+		return flattenEquipmentCode(json.data || []);
 	} catch (error) {
 		console.error("Fetch inspections error:", error);
 		return [];
@@ -866,7 +908,7 @@ export async function getEquipmentById(id: string) {
 		});
 		if (!res.ok) return null;
 		const json = await res.json();
-		const item = json.data || json;
+		const item = flattenEquipmentCode(json.data || json);
 		if (item && item.attachments && Array.isArray(item.attachments)) {
 			item.attachments.forEach((att: any) => {
 				let url = att.file_url || att.fileUrl || att.url || "";
@@ -1077,7 +1119,7 @@ export async function getEquipmentRepairs() {
 		});
 		if (!res.ok) return [];
 		const json = await res.json();
-		return Array.isArray(json) ? json : json.data || [];
+		return flattenEquipmentCode(Array.isArray(json) ? json : json.data || []);
 	} catch (error) {
 		console.error("Fetch equipment repairs error:", error);
 		return [];
@@ -1375,6 +1417,8 @@ export async function getReuseRequests(scope: "mine" | "all" = "mine") {
 		}
 
 		if (!Array.isArray(list)) return [];
+		// ponytail: backend kirim equipment_code sbg objek relasi — samakan dgn action lain.
+		list = flattenEquipmentCode(list);
 
 		const approvalByRef = new Map<string, any>();
 		if (appRes?.ok) {

@@ -42,7 +42,8 @@ export default async function ManajerPeminjamanPage() {
 				estimated_cost_avoidance: Number(item.estimated_cost_avoidance) || 0,
 				contact_person: item.requested_by_user?.name || "-",
 				contact_npp: item.requested_by_user?.npp || "-",
-				contact_phone: "-",
+				// ponytail: users tidak punya kolom telepon — email dipakai sebagai kontak.
+				contact_phone: item.requested_by_user?.email || "-",
 				// Backend mengembalikan approval_status = APPROVED setelah
 				// Manager menyetujui. Variasi casing dipertahankan agar tidak
 				// kembali tampil sebagai PENDING saat data dimuat ulang.
