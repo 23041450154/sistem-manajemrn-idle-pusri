@@ -20,13 +20,15 @@ const assetState = (raw: string): Asset["statusAset"] =>
 
 /** Server Component — resolusi status persetujuan (approval) & filter NEED_REVISION di server. */
 export default async function RevisiValidasiPage() {
-	const [data, objTypes, approvalsRes, user, conditionsData] = await Promise.all([
-		getEquipments().catch(() => []),
-		getObjectTypes().catch(() => []),
-		getApprovals().catch(() => []),
-		getCurrentUserAction().catch(() => null),
-		getConditions().catch(() => []),
-	]);
+	const [data, objTypes, approvalsRes, user, conditionsData] = await Promise.all(
+		[
+			getEquipments().catch(() => []),
+			getObjectTypes().catch(() => []),
+			getApprovals().catch(() => []),
+			getCurrentUserAction().catch(() => null),
+			getConditions().catch(() => []),
+		],
+	);
 
 	const conditions = Array.isArray(conditionsData) ? conditionsData : [];
 	const approvalsData = Array.isArray(approvalsRes)
@@ -96,8 +98,7 @@ export default async function RevisiValidasiPage() {
 		} else if (statusAset === "VALIDATED") {
 			const app = approvalsData.find(
 				(a: any) =>
-					a.equipment_id === Number(item.id) ||
-					a.equipment?.id === Number(item.id),
+					a.equipment_id === Number(item.id) || a.equipment?.id === Number(item.id),
 			);
 			if (app) {
 				if (app.approval_status === "REVISION_REQUIRED") {
