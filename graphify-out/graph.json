@@ -1302,7 +1302,7 @@
       "_origin": "ast",
       "id": "next_config",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "next.config.ts"
     },
     {
@@ -1313,7 +1313,7 @@
       "_origin": "ast",
       "id": "next_config_apiurlfromenv",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "apiurlfromenv()"
     },
     {
@@ -1324,7 +1324,7 @@
       "_origin": "ast",
       "id": "next_config_apiurl",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "apiurl"
     },
     {
@@ -1335,7 +1335,7 @@
       "_origin": "ast",
       "id": "next_config_nextconfig",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "nextconfig"
     },
     {
@@ -1345,8 +1345,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "package",
-      "community": 28,
-      "community_name": "package.json",
+      "community": 6,
+      "community_name": "devDependencies",
       "norm_label": "package.json"
     },
     {
@@ -1356,8 +1356,8 @@
       "source_location": "L2",
       "_origin": "ast",
       "id": "package_name",
-      "community": 28,
-      "community_name": "package.json",
+      "community": 6,
+      "community_name": "devDependencies",
       "norm_label": "name"
     },
     {
@@ -1367,8 +1367,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "package_version",
-      "community": 28,
-      "community_name": "package.json",
+      "community": 6,
+      "community_name": "devDependencies",
       "norm_label": "version"
     },
     {
@@ -1378,8 +1378,8 @@
       "source_location": "L4",
       "_origin": "ast",
       "id": "package_private",
-      "community": 28,
-      "community_name": "package.json",
+      "community": 6,
+      "community_name": "devDependencies",
       "norm_label": "private"
     },
     {
@@ -1389,8 +1389,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "package_scripts",
-      "community": 28,
-      "community_name": "package.json",
+      "community": 6,
+      "community_name": "devDependencies",
       "norm_label": "scripts"
     },
     {
@@ -1400,8 +1400,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "package_scripts_dev",
-      "community": 28,
-      "community_name": "package.json",
+      "community": 6,
+      "community_name": "devDependencies",
       "norm_label": "dev"
     },
     {
@@ -1411,8 +1411,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "package_scripts_build",
-      "community": 28,
-      "community_name": "package.json",
+      "community": 6,
+      "community_name": "devDependencies",
       "norm_label": "build"
     },
     {
@@ -1422,8 +1422,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "package_scripts_start",
-      "community": 28,
-      "community_name": "package.json",
+      "community": 6,
+      "community_name": "devDependencies",
       "norm_label": "start"
     },
     {
@@ -1433,8 +1433,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "package_scripts_lint",
-      "community": 28,
-      "community_name": "package.json",
+      "community": 6,
+      "community_name": "devDependencies",
       "norm_label": "lint"
     },
     {
@@ -1499,8 +1499,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "package_dependencies_clsx",
-      "community": 31,
-      "community_name": "clsx",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "clsx"
     },
     {
@@ -1510,8 +1510,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "clsx",
-      "community": 31,
-      "community_name": "clsx",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "clsx"
     },
     {
@@ -1521,8 +1521,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "package_dependencies_lucide_react",
-      "community": 57,
-      "community_name": "lucide-react",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "lucide-react"
     },
     {
@@ -1532,8 +1532,8 @@
       "source_location": "L15",
       "_origin": "ast",
       "id": "lucide_react",
-      "community": 57,
-      "community_name": "lucide-react",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "lucide-react"
     },
     {
@@ -1587,8 +1587,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "package_dependencies_pdfkit",
-      "community": 58,
-      "community_name": "pdfkit",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "pdfkit"
     },
     {
@@ -1598,8 +1598,8 @@
       "source_location": "L18",
       "_origin": "ast",
       "id": "pdfkit",
-      "community": 58,
-      "community_name": "pdfkit",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "pdfkit"
     },
     {
@@ -1653,8 +1653,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "package_dependencies_recharts",
-      "community": 59,
-      "community_name": "recharts",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "recharts"
     },
     {
@@ -1664,8 +1664,8 @@
       "source_location": "L21",
       "_origin": "ast",
       "id": "recharts",
-      "community": 59,
-      "community_name": "recharts",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "recharts"
     },
     {
@@ -1675,8 +1675,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "package_dependencies_shadcn",
-      "community": 60,
-      "community_name": "shadcn",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "shadcn"
     },
     {
@@ -1686,8 +1686,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "shadcn",
-      "community": 60,
-      "community_name": "shadcn",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "shadcn"
     },
     {
@@ -1719,8 +1719,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "package_dependencies_tw_animate_css",
-      "community": 41,
-      "community_name": "tw-animate-css",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "tw-animate-css"
     },
     {
@@ -1730,8 +1730,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "tw_animate_css",
-      "community": 41,
-      "community_name": "tw-animate-css",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "tw-animate-css"
     },
     {
@@ -2302,7 +2302,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_action_api",
-      "community": 38,
+      "community": 23,
       "community_name": "action/api.ts",
       "norm_label": "action/api.ts"
     },
@@ -2313,8 +2313,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_action_api_uploadattachment",
-      "community": 38,
-      "community_name": "action/api.ts",
+      "community": 21,
+      "community_name": "rendal/disposal/page.tsx",
       "norm_label": "uploadattachment()"
     },
     {
@@ -2325,7 +2325,7 @@
       "_origin": "ast",
       "id": "src_action_api_getequipments",
       "community": 23,
-      "community_name": "getEquipments",
+      "community_name": "action/api.ts",
       "norm_label": "getequipments()"
     },
     {
@@ -2346,7 +2346,7 @@
       "source_location": "L117",
       "_origin": "ast",
       "id": "src_action_api_absolutefileurl",
-      "community": 38,
+      "community": 23,
       "community_name": "action/api.ts",
       "norm_label": "absolutefileurl()"
     },
@@ -2357,7 +2357,7 @@
       "source_location": "L133",
       "_origin": "ast",
       "id": "src_action_api_getdisposals",
-      "community": 38,
+      "community": 23,
       "community_name": "action/api.ts",
       "norm_label": "getdisposals()"
     },
@@ -2390,8 +2390,8 @@
       "source_location": "L360",
       "_origin": "ast",
       "id": "src_action_api_getapprovals",
-      "community": 44,
-      "community_name": "getApprovals",
+      "community": 23,
+      "community_name": "action/api.ts",
       "norm_label": "getapprovals()"
     },
     {
@@ -2402,7 +2402,7 @@
       "_origin": "ast",
       "id": "src_action_api_getapprovalbyid",
       "community": 22,
-      "community_name": "validasi/page.tsx",
+      "community_name": "approve-client.tsx",
       "norm_label": "getapprovalbyid()"
     },
     {
@@ -2424,7 +2424,7 @@
       "_origin": "ast",
       "id": "src_action_api_validateequipment",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "validateequipment()"
     },
     {
@@ -2434,8 +2434,8 @@
       "source_location": "L484",
       "_origin": "ast",
       "id": "src_action_api_createrevalidation",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "createrevalidation()"
     },
     {
@@ -2446,7 +2446,7 @@
       "_origin": "ast",
       "id": "src_action_api_reviewapproval",
       "community": 22,
-      "community_name": "validasi/page.tsx",
+      "community_name": "approve-client.tsx",
       "norm_label": "reviewapproval()"
     },
     {
@@ -2457,7 +2457,7 @@
       "_origin": "ast",
       "id": "src_action_api_startreviewapproval",
       "community": 22,
-      "community_name": "validasi/page.tsx",
+      "community_name": "approve-client.tsx",
       "norm_label": "startreviewapproval()"
     },
     {
@@ -2478,8 +2478,8 @@
       "source_location": "L641",
       "_origin": "ast",
       "id": "src_action_api_submitinspectiondata",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "submitinspectiondata()"
     },
     {
@@ -2490,7 +2490,7 @@
       "_origin": "ast",
       "id": "src_action_api_getconditions",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "getconditions()"
     },
     {
@@ -2500,8 +2500,8 @@
       "source_location": "L711",
       "_origin": "ast",
       "id": "src_action_api_getobjecttypes",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 20,
+      "community_name": "validasi/page.tsx",
       "norm_label": "getobjecttypes()"
     },
     {
@@ -2511,8 +2511,8 @@
       "source_location": "L741",
       "_origin": "ast",
       "id": "src_action_api_getplants",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 38,
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "getplants()"
     },
     {
@@ -2523,7 +2523,7 @@
       "_origin": "ast",
       "id": "src_action_api_getstoragelocations",
       "community": 23,
-      "community_name": "getEquipments",
+      "community_name": "action/api.ts",
       "norm_label": "getstoragelocations()"
     },
     {
@@ -2534,7 +2534,7 @@
       "_origin": "ast",
       "id": "src_action_api_getrequireactions",
       "community": 23,
-      "community_name": "getEquipments",
+      "community_name": "action/api.ts",
       "norm_label": "getrequireactions()"
     },
     {
@@ -2545,7 +2545,7 @@
       "_origin": "ast",
       "id": "src_action_api_createequipment",
       "community": 38,
-      "community_name": "action/api.ts",
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "createequipment()"
     },
     {
@@ -2555,8 +2555,8 @@
       "source_location": "L858",
       "_origin": "ast",
       "id": "src_action_api_getequipmentbyid",
-      "community": 3,
-      "community_name": "shared.tsx",
+      "community": 22,
+      "community_name": "approve-client.tsx",
       "norm_label": "getequipmentbyid()"
     },
     {
@@ -2567,7 +2567,7 @@
       "_origin": "ast",
       "id": "src_action_api_updateequipment",
       "community": 38,
-      "community_name": "action/api.ts",
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "updateequipment()"
     },
     {
@@ -2577,8 +2577,8 @@
       "source_location": "L925",
       "_origin": "ast",
       "id": "src_action_api_getattachmentsbyequipmentid",
-      "community": 22,
-      "community_name": "validasi/page.tsx",
+      "community": 11,
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "getattachmentsbyequipmentid()"
     },
     {
@@ -2589,7 +2589,7 @@
       "_origin": "ast",
       "id": "src_action_api_deleteequipment",
       "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "deleteequipment()"
     },
     {
@@ -2600,7 +2600,7 @@
       "_origin": "ast",
       "id": "src_action_api_getequipmentrepairs",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "getequipmentrepairs()"
     },
     {
@@ -2610,7 +2610,7 @@
       "source_location": "L1087",
       "_origin": "ast",
       "id": "src_action_api_completeequipmentrepair",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "completeequipmentrepair()"
     },
@@ -2621,7 +2621,7 @@
       "source_location": "L1148",
       "_origin": "ast",
       "id": "src_action_api_findlatestinspectionid",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "findlatestinspectionid()"
     },
@@ -2632,8 +2632,8 @@
       "source_location": "L1175",
       "_origin": "ast",
       "id": "src_action_api_resubmitapproval",
-      "community": 38,
-      "community_name": "action/api.ts",
+      "community": 20,
+      "community_name": "validasi/page.tsx",
       "norm_label": "resubmitapproval()"
     },
     {
@@ -2643,8 +2643,8 @@
       "source_location": "L1210",
       "_origin": "ast",
       "id": "src_action_api_createreuserequest",
-      "community": 51,
-      "community_name": "createReuseRequest",
+      "community": 11,
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "createreuserequest()"
     },
     {
@@ -2654,8 +2654,8 @@
       "source_location": "L1342",
       "_origin": "ast",
       "id": "src_action_api_getreuserequests",
-      "community": 12,
-      "community_name": "buttonVariants",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "getreuserequests()"
     },
     {
@@ -2665,8 +2665,8 @@
       "source_location": "L1439",
       "_origin": "ast",
       "id": "src_action_api_getfunctionallocations",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 38,
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "getfunctionallocations()"
     },
     {
@@ -2698,8 +2698,8 @@
       "source_location": "L1629",
       "_origin": "ast",
       "id": "src_action_api_approverevalidationequipment",
-      "community": 44,
-      "community_name": "getApprovals",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "approverevalidationequipment()"
     },
     {
@@ -2787,7 +2787,7 @@
       "_origin": "ast",
       "id": "src_action_master",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "master.ts"
     },
     {
@@ -2798,7 +2798,7 @@
       "_origin": "ast",
       "id": "src_action_master_str",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "str()"
     },
     {
@@ -2809,7 +2809,7 @@
       "_origin": "ast",
       "id": "src_action_master_masteritem",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "masteritem"
     },
     {
@@ -2820,7 +2820,7 @@
       "_origin": "ast",
       "id": "src_action_master_result",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "result"
     },
     {
@@ -2831,7 +2831,7 @@
       "_origin": "ast",
       "id": "src_action_master_authheaders",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "authheaders()"
     },
     {
@@ -2842,7 +2842,7 @@
       "_origin": "ast",
       "id": "src_action_master_resolve",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "resolve()"
     },
     {
@@ -2853,7 +2853,7 @@
       "_origin": "ast",
       "id": "src_action_master_fail",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "fail()"
     },
     {
@@ -2864,7 +2864,7 @@
       "_origin": "ast",
       "id": "src_action_master_getmasteritems",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "getmasteritems()"
     },
     {
@@ -2875,7 +2875,7 @@
       "_origin": "ast",
       "id": "src_action_master_createmasteritem",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "createmasteritem()"
     },
     {
@@ -2886,7 +2886,7 @@
       "_origin": "ast",
       "id": "src_action_master_updatemasteritem",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "updatemasteritem()"
     },
     {
@@ -2897,7 +2897,7 @@
       "_origin": "ast",
       "id": "src_action_master_deletemasteritem",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "deletemasteritem()"
     },
     {
@@ -2995,8 +2995,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_auth_login_preview_confirm_page",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "preview-confirm/page.tsx"
     },
     {
@@ -3006,8 +3006,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_app_auth_login_preview_confirm_page_previewconfirmpage",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "previewconfirmpage()"
     },
     {
@@ -3040,7 +3040,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page",
       "community": 23,
-      "community_name": "getEquipments",
+      "community_name": "action/api.ts",
       "norm_label": "admin/dashboard/page.tsx"
     },
     {
@@ -3051,7 +3051,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page_modules",
       "community": 23,
-      "community_name": "getEquipments",
+      "community_name": "action/api.ts",
       "norm_label": "modules"
     },
     {
@@ -3062,7 +3062,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_dashboard_page_admindashboardpage",
       "community": 23,
-      "community_name": "getEquipments",
+      "community_name": "action/api.ts",
       "norm_label": "admindashboardpage()"
     },
     {
@@ -3073,7 +3073,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_equipment_page",
       "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "admin/equipment/page.tsx"
     },
     {
@@ -3084,7 +3084,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_equipment_page_equipmentrow",
       "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "equipmentrow"
     },
     {
@@ -3095,7 +3095,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_equipment_page_nameof",
       "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "nameof()"
     },
     {
@@ -3106,7 +3106,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_equipment_page_plantof",
       "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "plantof()"
     },
     {
@@ -3117,7 +3117,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_equipment_page_equipmentmanagementpage",
       "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "equipmentmanagementpage()"
     },
     {
@@ -3150,7 +3150,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_master_slug_page",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "[slug]/page.tsx"
     },
     {
@@ -3161,7 +3161,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_master_slug_page_generatestaticparams",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "generatestaticparams()"
     },
     {
@@ -3172,7 +3172,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_master_slug_page_masterentitypage",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "masterentitypage()"
     },
     {
@@ -3183,7 +3183,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_master_page",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "master/page.tsx"
     },
     {
@@ -3194,7 +3194,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_admin_master_page_masterdatapage",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "masterdatapage()"
     },
     {
@@ -3226,8 +3226,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_dashboard_dashboard_client",
-      "community": 12,
-      "community_name": "buttonVariants",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "inspeksi/dashboard/dashboard-client.tsx"
     },
     {
@@ -3237,8 +3237,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_dashboard_dashboard_client_inspeksidashboardclient",
-      "community": 12,
-      "community_name": "buttonVariants",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "inspeksidashboardclient()"
     },
     {
@@ -3249,7 +3249,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_dashboard_page",
       "community": 23,
-      "community_name": "getEquipments",
+      "community_name": "action/api.ts",
       "norm_label": "inspeksi/dashboard/page.tsx"
     },
     {
@@ -3260,7 +3260,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_dashboard_page_inspeksidashboardpage",
       "community": 23,
-      "community_name": "getEquipments",
+      "community_name": "action/api.ts",
       "norm_label": "inspeksidashboardpage()"
     },
     {
@@ -3292,8 +3292,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_forminspeksi_form_inspeksi_client",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "form-inspeksi-client.tsx"
     },
     {
@@ -3303,8 +3303,8 @@
       "source_location": "L24",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_forminspeksi_form_inspeksi_client_forminspeksiclient",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "forminspeksiclient()"
     },
     {
@@ -3315,7 +3315,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_forminspeksi_page",
       "community": 23,
-      "community_name": "getEquipments",
+      "community_name": "action/api.ts",
       "norm_label": "forminspeksi/page.tsx"
     },
     {
@@ -3326,7 +3326,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_forminspeksi_page_forminspeksipage",
       "community": 23,
-      "community_name": "getEquipments",
+      "community_name": "action/api.ts",
       "norm_label": "forminspeksipage()"
     },
     {
@@ -3391,8 +3391,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_inspeksi_berkala_page_inspeksiantreanpage",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 13,
+      "community_name": "inspection-schedule.ts",
       "norm_label": "inspeksiantreanpage()"
     },
     {
@@ -3425,7 +3425,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_revisi_validasi_page",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "revisi-validasi/page.tsx"
     },
     {
@@ -3436,7 +3436,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_revisi_validasi_page_assetstate",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "assetstate"
     },
     {
@@ -3447,7 +3447,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_revisi_validasi_page_approvalstate",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "approvalstate"
     },
     {
@@ -3458,7 +3458,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_revisi_validasi_page_asset",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "asset"
     },
     {
@@ -3469,7 +3469,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_revisi_validasi_page_revisivalidasipage",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "revisivalidasipage()"
     },
     {
@@ -3479,31 +3479,64 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "inspeksi/validasi-ulang/page.tsx"
     },
     {
-      "label": "RevalidasiItem",
+      "label": "INCLUDED_STATUSES",
       "file_type": "code",
       "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
-      "source_location": "L22",
+      "source_location": "L11",
       "_origin": "ast",
-      "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_revalidasiitem",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
-      "norm_label": "revalidasiitem"
+      "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_included_statuses",
+      "community": 9,
+      "community_name": "revalidateApp",
+      "norm_label": "included_statuses"
     },
     {
       "label": "ValidasiUlangPage()",
       "file_type": "code",
       "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
-      "source_location": "L40",
+      "source_location": "L22",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_validasiulangpage",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "validasiulangpage()"
+    },
+    {
+      "label": "inspeksi/validasi-ulang/validasi-ulang-client.tsx",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/validasi-ulang-client.tsx",
+      "source_location": "L1",
+      "_origin": "ast",
+      "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client",
+      "community": 9,
+      "community_name": "revalidateApp",
+      "norm_label": "inspeksi/validasi-ulang/validasi-ulang-client.tsx"
+    },
+    {
+      "label": "RevalidasiItem",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/validasi-ulang-client.tsx",
+      "source_location": "L23",
+      "_origin": "ast",
+      "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client_revalidasiitem",
+      "community": 9,
+      "community_name": "revalidateApp",
+      "norm_label": "revalidasiitem"
+    },
+    {
+      "label": "InspeksiValidasiUlangClient()",
+      "file_type": "code",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/validasi-ulang-client.tsx",
+      "source_location": "L41",
+      "_origin": "ast",
+      "id": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client_inspeksivalidasiulangclient",
+      "community": 9,
+      "community_name": "revalidateApp",
+      "norm_label": "inspeksivalidasiulangclient()"
     },
     {
       "label": "validasi/page.tsx",
@@ -3512,7 +3545,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_page",
-      "community": 22,
+      "community": 20,
       "community_name": "validasi/page.tsx",
       "norm_label": "validasi/page.tsx"
     },
@@ -3523,7 +3556,7 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_page_assetstate",
-      "community": 22,
+      "community": 20,
       "community_name": "validasi/page.tsx",
       "norm_label": "assetstate"
     },
@@ -3534,7 +3567,7 @@
       "source_location": "L47",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_page_approvalstate",
-      "community": 22,
+      "community": 20,
       "community_name": "validasi/page.tsx",
       "norm_label": "approvalstate"
     },
@@ -3545,7 +3578,7 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_page_status_by_id",
-      "community": 22,
+      "community": 20,
       "community_name": "validasi/page.tsx",
       "norm_label": "status_by_id"
     },
@@ -3556,7 +3589,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_page_asset",
-      "community": 22,
+      "community": 20,
       "community_name": "validasi/page.tsx",
       "norm_label": "asset"
     },
@@ -3567,7 +3600,7 @@
       "source_location": "L88",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_inspeksi_validasi_page_manajemeninspeksi",
-      "community": 22,
+      "community": 20,
       "community_name": "validasi/page.tsx",
       "norm_label": "manajemeninspeksi()"
     },
@@ -3623,7 +3656,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_approve_approve_client",
       "community": 22,
-      "community_name": "validasi/page.tsx",
+      "community_name": "approve-client.tsx",
       "norm_label": "approve-client.tsx"
     },
     {
@@ -3634,7 +3667,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_approve_approve_client_lookup",
       "community": 22,
-      "community_name": "validasi/page.tsx",
+      "community_name": "approve-client.tsx",
       "norm_label": "lookup"
     },
     {
@@ -3645,7 +3678,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_approve_approve_client_storagelocation",
       "community": 22,
-      "community_name": "validasi/page.tsx",
+      "community_name": "approve-client.tsx",
       "norm_label": "storagelocation"
     },
     {
@@ -3655,8 +3688,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_approve_approve_client_requestasset",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 22,
+      "community_name": "approve-client.tsx",
       "norm_label": "requestasset"
     },
     {
@@ -3667,7 +3700,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_approve_approve_client_approval_status_label",
       "community": 22,
-      "community_name": "validasi/page.tsx",
+      "community_name": "approve-client.tsx",
       "norm_label": "approval_status_label"
     },
     {
@@ -3678,7 +3711,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_approve_approve_client_formatrupiah",
       "community": 22,
-      "community_name": "validasi/page.tsx",
+      "community_name": "approve-client.tsx",
       "norm_label": "formatrupiah()"
     },
     {
@@ -3689,7 +3722,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_approve_approve_client_condition_result",
       "community": 22,
-      "community_name": "validasi/page.tsx",
+      "community_name": "approve-client.tsx",
       "norm_label": "condition_result"
     },
     {
@@ -3700,7 +3733,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_approve_approve_client_manajerapproveclient",
       "community": 22,
-      "community_name": "validasi/page.tsx",
+      "community_name": "approve-client.tsx",
       "norm_label": "manajerapproveclient()"
     },
     {
@@ -3710,8 +3743,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_approve_page",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 22,
+      "community_name": "approve-client.tsx",
       "norm_label": "approve/page.tsx"
     },
     {
@@ -3721,8 +3754,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_approve_page_approval_status_label",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 22,
+      "community_name": "approve-client.tsx",
       "norm_label": "approval_status_label"
     },
     {
@@ -3733,7 +3766,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_approve_page_manajerapprovepage",
       "community": 23,
-      "community_name": "getEquipments",
+      "community_name": "action/api.ts",
       "norm_label": "manajerapprovepage()"
     },
     {
@@ -3798,7 +3831,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_disposal_page",
-      "community": 38,
+      "community": 23,
       "community_name": "action/api.ts",
       "norm_label": "manajer/disposal/page.tsx"
     },
@@ -3809,7 +3842,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_disposal_page_manajerdisposalpage",
-      "community": 38,
+      "community": 23,
       "community_name": "action/api.ts",
       "norm_label": "manajerdisposalpage()"
     },
@@ -3908,7 +3941,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_scrap_page",
-      "community": 38,
+      "community": 23,
       "community_name": "action/api.ts",
       "norm_label": "manajer/scrap/page.tsx"
     },
@@ -3919,7 +3952,7 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_manajer_scrap_page_manajerscrappage",
-      "community": 38,
+      "community": 23,
       "community_name": "action/api.ts",
       "norm_label": "manajerscrappage()"
     },
@@ -3964,7 +3997,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_dashboard_page",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "pemeliharaan/dashboard/page.tsx"
     },
     {
@@ -3975,7 +4008,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_dashboard_page_equipment",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "equipment"
     },
     {
@@ -3986,7 +4019,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_dashboard_page_repair",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "repair"
     },
     {
@@ -3997,7 +4030,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_dashboard_page_str",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "str()"
     },
     {
@@ -4008,7 +4041,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_dashboard_page_relativetime",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "relativetime()"
     },
     {
@@ -4019,7 +4052,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_dashboard_page_status_color",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "status_color"
     },
     {
@@ -4030,7 +4063,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_dashboard_page_stage_owner",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "stage_owner"
     },
     {
@@ -4041,7 +4074,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_dashboard_page_kpicard",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "kpicard()"
     },
     {
@@ -4052,7 +4085,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_dashboard_page_pemeliharaandashboardpage",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "pemeliharaandashboardpage()"
     },
     {
@@ -4106,7 +4139,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_perbaikan_alat_page",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "perbaikan-alat/page.tsx"
     },
@@ -4117,7 +4150,7 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_perbaikan_alat_page_perbaikanalatpage",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "perbaikanalatpage()"
     },
@@ -4128,7 +4161,7 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_perbaikan_alat_perbaikan_alat_client",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "perbaikan-alat-client.tsx"
     },
@@ -4139,7 +4172,7 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_perbaikan_alat_perbaikan_alat_client_maintenanceequipment",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "maintenanceequipment"
     },
@@ -4150,7 +4183,7 @@
       "source_location": "L51",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_perbaikan_alat_perbaikan_alat_client_rupiah",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "rupiah()"
     },
@@ -4161,7 +4194,7 @@
       "source_location": "L53",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_perbaikan_alat_perbaikan_alat_client_tabs",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "tabs"
     },
@@ -4172,7 +4205,7 @@
       "source_location": "L60",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_perbaikan_alat_perbaikan_alat_client_empty_hint",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "empty_hint"
     },
@@ -4183,7 +4216,7 @@
       "source_location": "L68",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_perbaikan_alat_perbaikan_alat_client_statusbadge",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "statusbadge()"
     },
@@ -4194,7 +4227,7 @@
       "source_location": "L80",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_pemeliharaan_perbaikan_alat_perbaikan_alat_client_perbaikanalatclient",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "perbaikanalatclient()"
     },
@@ -4326,8 +4359,8 @@
       "source_location": "L46",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_idle_idle_client_rendalidleclient",
-      "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community": 0,
+      "community_name": "equipment-status.ts",
       "norm_label": "rendalidleclient()"
     },
     {
@@ -4414,8 +4447,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page",
-      "community": 44,
-      "community_name": "getApprovals",
+      "community": 23,
+      "community_name": "action/api.ts",
       "norm_label": "laporan/page.tsx"
     },
     {
@@ -4425,8 +4458,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_buildauditlogs",
-      "community": 44,
-      "community_name": "getApprovals",
+      "community": 23,
+      "community_name": "action/api.ts",
       "norm_label": "buildauditlogs()"
     },
     {
@@ -4436,8 +4469,8 @@
       "source_location": "L130",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_laporan_page_rendallaporanpage",
-      "community": 44,
-      "community_name": "getApprovals",
+      "community": 23,
+      "community_name": "action/api.ts",
       "norm_label": "rendallaporanpage()"
     },
     {
@@ -4491,8 +4524,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_page",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 38,
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "register-equipment/page.tsx"
     },
     {
@@ -4502,8 +4535,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_page_registerequipmentpage",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 38,
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "registerequipmentpage()"
     },
     {
@@ -4514,7 +4547,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_register_equipment_client",
       "community": 38,
-      "community_name": "action/api.ts",
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "register-equipment-client.tsx"
     },
     {
@@ -4524,8 +4557,8 @@
       "source_location": "L26",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_register_equipment_client_masteroption",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 38,
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "masteroption"
     },
     {
@@ -4535,8 +4568,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_register_equipment_client_registerinitialdata",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 38,
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "registerinitialdata"
     },
     {
@@ -4547,7 +4580,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_register_equipment_client_empty_form",
       "community": 38,
-      "community_name": "action/api.ts",
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "empty_form"
     },
     {
@@ -4558,7 +4591,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_register_equipment_register_equipment_client_registerequipmentclient",
       "community": 38,
-      "community_name": "action/api.ts",
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "registerequipmentclient()"
     },
     {
@@ -4634,8 +4667,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_page",
-      "community": 44,
-      "community_name": "getApprovals",
+      "community": 23,
+      "community_name": "action/api.ts",
       "norm_label": "rendal/validasi-ulang/page.tsx"
     },
     {
@@ -4645,20 +4678,20 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_page_rendalvalidasiulangpage",
-      "community": 44,
-      "community_name": "getApprovals",
+      "community": 23,
+      "community_name": "action/api.ts",
       "norm_label": "rendalvalidasiulangpage()"
     },
     {
-      "label": "validasi-ulang-client.tsx",
+      "label": "rendal/validasi-ulang/validasi-ulang-client.tsx",
       "file_type": "code",
       "source_file": "src/app/(authenticated-routes)/rendal/validasi-ulang/validasi-ulang-client.tsx",
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_validasi_ulang_client",
-      "community": 44,
-      "community_name": "getApprovals",
-      "norm_label": "validasi-ulang-client.tsx"
+      "community": 9,
+      "community_name": "revalidateApp",
+      "norm_label": "rendal/validasi-ulang/validasi-ulang-client.tsx"
     },
     {
       "label": "ValidasiUlangItem",
@@ -4667,8 +4700,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_validasi_ulang_client_validasiulangitem",
-      "community": 44,
-      "community_name": "getApprovals",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "validasiulangitem"
     },
     {
@@ -4678,8 +4711,8 @@
       "source_location": "L36",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_rendal_validasi_ulang_validasi_ulang_client_rendalvalidasiulangclient",
-      "community": 44,
-      "community_name": "getApprovals",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "rendalvalidasiulangclient()"
     },
     {
@@ -4689,8 +4722,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_daftar_aset_client",
-      "community": 3,
-      "community_name": "shared.tsx",
+      "community": 11,
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "daftar-aset-client.tsx"
     },
     {
@@ -4700,8 +4733,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_daftar_aset_client_equipmentitem",
-      "community": 3,
-      "community_name": "shared.tsx",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "equipmentitem"
     },
     {
@@ -4711,8 +4744,8 @@
       "source_location": "L49",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_daftar_aset_client_visible_statuses",
-      "community": 3,
-      "community_name": "shared.tsx",
+      "community": 11,
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "visible_statuses"
     },
     {
@@ -4722,8 +4755,8 @@
       "source_location": "L57",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_daftar_aset_client_daftarasetclient",
-      "community": 3,
-      "community_name": "shared.tsx",
+      "community": 11,
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "daftarasetclient()"
     },
     {
@@ -4733,8 +4766,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page",
-      "community": 3,
-      "community_name": "shared.tsx",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "daftar-aset/page.tsx"
     },
     {
@@ -4744,8 +4777,8 @@
       "source_location": "L9",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_visible_statuses",
-      "community": 3,
-      "community_name": "shared.tsx",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "visible_statuses"
     },
     {
@@ -4755,8 +4788,8 @@
       "source_location": "L12",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_daftar_aset_page_daftarasetpage",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "daftarasetpage()"
     },
     {
@@ -4810,8 +4843,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page",
-      "community": 12,
-      "community_name": "buttonVariants",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "unit-kerja/dashboard/page.tsx"
     },
     {
@@ -4821,8 +4854,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_apirow",
-      "community": 12,
-      "community_name": "buttonVariants",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "apirow"
     },
     {
@@ -4832,8 +4865,8 @@
       "source_location": "L10",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_str",
-      "community": 12,
-      "community_name": "buttonVariants",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "str()"
     },
     {
@@ -4843,8 +4876,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_equipmentitem",
-      "community": 12,
-      "community_name": "buttonVariants",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "equipmentitem"
     },
     {
@@ -4854,8 +4887,8 @@
       "source_location": "L30",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_reuserequestitem",
-      "community": 12,
-      "community_name": "buttonVariants",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "reuserequestitem"
     },
     {
@@ -4865,8 +4898,8 @@
       "source_location": "L41",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_dashboard_page_unitkerjadashboardpage",
-      "community": 12,
-      "community_name": "buttonVariants",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "unitkerjadashboardpage()"
     },
     {
@@ -4876,8 +4909,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_equipment_page",
-      "community": 3,
-      "community_name": "shared.tsx",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "unit-kerja/equipment/page.tsx"
     },
     {
@@ -4887,8 +4920,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_equipment_page_unitkerjaequipmentpage",
-      "community": 3,
-      "community_name": "shared.tsx",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "unitkerjaequipmentpage()"
     },
     {
@@ -4899,7 +4932,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_idle_client",
       "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "unit-kerja/idle/idle-client.tsx"
     },
     {
@@ -4909,8 +4942,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_idle_client_equipmentitem",
-      "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "equipmentitem"
     },
     {
@@ -4920,8 +4953,8 @@
       "source_location": "L50",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_idle_client_reuserequestitem",
-      "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "reuserequestitem"
     },
     {
@@ -4932,7 +4965,7 @@
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_idle_client_unitkerjaidleclient",
       "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "unitkerjaidleclient()"
     },
     {
@@ -4942,8 +4975,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_page",
-      "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "unit-kerja/idle/page.tsx"
     },
     {
@@ -4953,8 +4986,8 @@
       "source_location": "L14",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_idle_page_unitkerjaidlepage",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "unitkerjaidlepage()"
     },
     {
@@ -5019,8 +5052,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button",
-      "community": 51,
-      "community_name": "createReuseRequest",
+      "community": 11,
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "request-modal-button.tsx"
     },
     {
@@ -5030,8 +5063,8 @@
       "source_location": "L8",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button_katalogitemminimal",
-      "community": 51,
-      "community_name": "createReuseRequest",
+      "community": 11,
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "katalogitemminimal"
     },
     {
@@ -5041,8 +5074,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_app_authenticated_routes_unit_kerja_katalog_id_request_modal_button_requestmodalbutton",
-      "community": 51,
-      "community_name": "createReuseRequest",
+      "community": 11,
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "requestmodalbutton()"
     },
     {
@@ -5603,7 +5636,7 @@
       "_origin": "ast",
       "id": "src_components_analogtimepicker",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "analogtimepicker.tsx"
     },
     {
@@ -5614,7 +5647,7 @@
       "_origin": "ast",
       "id": "src_components_analogtimepicker_analogtimepickerprops",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "analogtimepickerprops"
     },
     {
@@ -5625,7 +5658,7 @@
       "_origin": "ast",
       "id": "src_components_analogtimepicker_analogtimepicker",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "analogtimepicker()"
     },
     {
@@ -5635,8 +5668,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_chartsection",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "chartsection.tsx"
     },
     {
@@ -5646,8 +5679,8 @@
       "source_location": "L20",
       "_origin": "ast",
       "id": "src_components_chartsection_chartsection",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "chartsection()"
     },
     {
@@ -5657,8 +5690,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_confirmdialog",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "confirmdialog.tsx"
     },
     {
@@ -5668,8 +5701,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_components_confirmdialog_tone",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "tone"
     },
     {
@@ -5679,8 +5712,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_components_confirmdialog_confirmdialogprops",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "confirmdialogprops"
     },
     {
@@ -5690,8 +5723,8 @@
       "source_location": "L22",
       "_origin": "ast",
       "id": "src_components_confirmdialog_tone_styles",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "tone_styles"
     },
     {
@@ -5701,8 +5734,8 @@
       "source_location": "L42",
       "_origin": "ast",
       "id": "src_components_confirmdialog_confirmdialog",
-      "community": 17,
-      "community_name": "ConfirmDialog.tsx",
+      "community": 21,
+      "community_name": "rendal/disposal/page.tsx",
       "norm_label": "confirmdialog()"
     },
     {
@@ -5745,8 +5778,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_dashboards_rendaldashboard",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "rendaldashboard.tsx"
     },
     {
@@ -5756,8 +5789,8 @@
       "source_location": "L19",
       "_origin": "ast",
       "id": "src_components_dashboards_rendaldashboard_rendaldashboard",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "rendaldashboard()"
     },
     {
@@ -5767,8 +5800,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_dashboards_unitkerjadashboard",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 0,
+      "community_name": "equipment-status.ts",
       "norm_label": "unitkerjadashboard.tsx"
     },
     {
@@ -5778,8 +5811,8 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_components_dashboards_unitkerjadashboard_apirow",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 0,
+      "community_name": "equipment-status.ts",
       "norm_label": "apirow"
     },
     {
@@ -5789,8 +5822,8 @@
       "source_location": "L31",
       "_origin": "ast",
       "id": "src_components_dashboards_unitkerjadashboard_unitkerjadashboard",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 5,
+      "community_name": "dependencies",
       "norm_label": "unitkerjadashboard()"
     },
     {
@@ -5867,7 +5900,7 @@
       "_origin": "ast",
       "id": "src_components_manajemeninspeksi",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "manajemeninspeksi.tsx"
     },
     {
@@ -5878,7 +5911,7 @@
       "_origin": "ast",
       "id": "src_components_manajemeninspeksi_assetstate",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "assetstate"
     },
     {
@@ -5889,7 +5922,7 @@
       "_origin": "ast",
       "id": "src_components_manajemeninspeksi_approvalstate",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "approvalstate"
     },
     {
@@ -5900,7 +5933,7 @@
       "_origin": "ast",
       "id": "src_components_manajemeninspeksi_asset",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "asset"
     },
     {
@@ -5911,7 +5944,7 @@
       "_origin": "ast",
       "id": "src_components_manajemeninspeksi_manajemeninspeksi",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "manajemeninspeksi()"
     },
     {
@@ -5922,7 +5955,7 @@
       "_origin": "ast",
       "id": "src_components_masterdatatable",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "masterdatatable.tsx"
     },
     {
@@ -5933,7 +5966,7 @@
       "_origin": "ast",
       "id": "src_components_masterdatatable_masterdatatable",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "masterdatatable()"
     },
     {
@@ -5943,8 +5976,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_recentactivities",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "recentactivities.tsx"
     },
     {
@@ -5954,8 +5987,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_components_recentactivities_activity",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "activity"
     },
     {
@@ -5965,8 +5998,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_components_recentactivities_recentactivities",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "recentactivities()"
     },
     {
@@ -6053,8 +6086,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_statcard",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "statcard.tsx"
     },
     {
@@ -6064,8 +6097,8 @@
       "source_location": "L3",
       "_origin": "ast",
       "id": "src_components_statcard_statcardprops",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "statcardprops"
     },
     {
@@ -6075,8 +6108,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_components_statcard_statcard",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "statcard()"
     },
     {
@@ -6086,8 +6119,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_upcominginspections",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "upcominginspections.tsx"
     },
     {
@@ -6097,8 +6130,8 @@
       "source_location": "L5",
       "_origin": "ast",
       "id": "src_components_upcominginspections_apirow",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "apirow"
     },
     {
@@ -6108,8 +6141,8 @@
       "source_location": "L7",
       "_origin": "ast",
       "id": "src_components_upcominginspections_inspectionrow",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "inspectionrow"
     },
     {
@@ -6119,8 +6152,8 @@
       "source_location": "L17",
       "_origin": "ast",
       "id": "src_components_upcominginspections_upcominginspections",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "upcominginspections()"
     },
     {
@@ -6130,8 +6163,8 @@
       "source_location": "L1",
       "_origin": "ast",
       "id": "src_components_yearpicker",
-      "community": 56,
-      "community_name": "YearPicker.tsx",
+      "community": 38,
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "yearpicker.tsx"
     },
     {
@@ -6141,8 +6174,8 @@
       "source_location": "L6",
       "_origin": "ast",
       "id": "src_components_yearpicker_yearpickerprops",
-      "community": 56,
-      "community_name": "YearPicker.tsx",
+      "community": 38,
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "yearpickerprops"
     },
     {
@@ -6152,8 +6185,8 @@
       "source_location": "L16",
       "_origin": "ast",
       "id": "src_components_yearpicker_yearpicker",
-      "community": 56,
-      "community_name": "YearPicker.tsx",
+      "community": 38,
+      "community_name": "register-equipment-client.tsx",
       "norm_label": "yearpicker()"
     },
     {
@@ -6197,7 +6230,7 @@
       "_origin": "ast",
       "id": "src_config_api",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "config/api.ts"
     },
     {
@@ -6251,8 +6284,8 @@
       "source_location": "L27",
       "_origin": "ast",
       "id": "src_lib_approvals_disposaldisplaystatus",
-      "community": 38,
-      "community_name": "action/api.ts",
+      "community": 30,
+      "community_name": "peminjaman/page.tsx",
       "norm_label": "disposaldisplaystatus"
     },
     {
@@ -6295,7 +6328,7 @@
       "source_location": "L29",
       "_origin": "ast",
       "id": "src_lib_equipment_status_repairflowstatus",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "repairflowstatus"
     },
@@ -6318,7 +6351,7 @@
       "_origin": "ast",
       "id": "src_lib_equipment_status_repair_status_label",
       "community": 15,
-      "community_name": "pemeliharaan/dashboard/page.tsx",
+      "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "repair_status_label"
     },
     {
@@ -6340,7 +6373,7 @@
       "_origin": "ast",
       "id": "src_lib_equipment_status_equipmentstatus",
       "community": 20,
-      "community_name": "revisi-validasi/page.tsx",
+      "community_name": "validasi/page.tsx",
       "norm_label": "equipmentstatus"
     },
     {
@@ -6361,8 +6394,8 @@
       "source_location": "L84",
       "_origin": "ast",
       "id": "src_lib_equipment_status_statusname",
-      "community": 23,
-      "community_name": "getEquipments",
+      "community": 17,
+      "community_name": "statusName",
       "norm_label": "statusname()"
     },
     {
@@ -6373,7 +6406,7 @@
       "_origin": "ast",
       "id": "src_lib_equipment_status_statustext",
       "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "statustext()"
     },
     {
@@ -6383,8 +6416,8 @@
       "source_location": "L118",
       "_origin": "ast",
       "id": "src_lib_equipment_status_statusgroup",
-      "community": 39,
-      "community_name": "RendalDashboard.tsx",
+      "community": 12,
+      "community_name": "buttonVariants",
       "norm_label": "statusgroup"
     },
     {
@@ -6417,7 +6450,7 @@
       "_origin": "ast",
       "id": "src_lib_equipment_status_statusbadgestyle",
       "community": 11,
-      "community_name": "unit-kerja/idle/page.tsx",
+      "community_name": "daftar-aset-client.tsx",
       "norm_label": "statusbadgestyle()"
     },
     {
@@ -6427,7 +6460,7 @@
       "source_location": "L152",
       "_origin": "ast",
       "id": "src_lib_equipment_status_rupiah",
-      "community": 25,
+      "community": 15,
       "community_name": "perbaikan-alat-client.tsx",
       "norm_label": "rupiah()"
     },
@@ -6527,7 +6560,7 @@
       "_origin": "ast",
       "id": "src_lib_master_entities",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "master-entities.ts"
     },
     {
@@ -6538,7 +6571,7 @@
       "_origin": "ast",
       "id": "src_lib_master_entities_masterentity",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "masterentity"
     },
     {
@@ -6549,7 +6582,7 @@
       "_origin": "ast",
       "id": "src_lib_master_entities_master_entities",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "master_entities"
     },
     {
@@ -6560,7 +6593,7 @@
       "_origin": "ast",
       "id": "src_lib_master_entities_findmasterentity",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "findmasterentity()"
     },
     {
@@ -6571,7 +6604,7 @@
       "_origin": "ast",
       "id": "src_lib_revalidate",
       "community": 9,
-      "community_name": "master.ts",
+      "community_name": "revalidateApp",
       "norm_label": "revalidate.ts"
     },
     {
@@ -6581,8 +6614,8 @@
       "source_location": "L11",
       "_origin": "ast",
       "id": "src_lib_revalidate_revalidateapp",
-      "community": 38,
-      "community_name": "action/api.ts",
+      "community": 9,
+      "community_name": "revalidateApp",
       "norm_label": "revalidateapp()"
     },
     {
@@ -11620,10 +11653,22 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
-      "source_location": "L4",
+      "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
+      "target": "src_action_api",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/validasi-ulang-client.tsx",
+      "source_location": "L5",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client",
       "target": "src_action_api",
       "confidence_score": 1.0
     },
@@ -12304,7 +12349,7 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
-      "source_location": "L4",
+      "source_location": "L1",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
@@ -12317,7 +12362,7 @@
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
       "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
-      "source_location": "L75",
+      "source_location": "L23",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_validasiulangpage",
@@ -13479,11 +13524,11 @@
       "relation": "imports",
       "context": "import",
       "confidence": "EXTRACTED",
-      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
-      "source_location": "L4",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/validasi-ulang-client.tsx",
+      "source_location": "L5",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client",
       "target": "src_action_api_createrevalidation",
       "confidence_score": 1.0
     },
@@ -13492,11 +13537,11 @@
       "context": "call",
       "confidence": "EXTRACTED",
       "confidence_score": 1.0,
-      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
-      "source_location": "L311",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/validasi-ulang-client.tsx",
+      "source_location": "L181",
       "weight": 1.0,
       "_origin": "ast",
-      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_validasiulangpage",
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client_inspeksivalidasiulangclient",
       "target": "src_action_api_createrevalidation"
     },
     {
@@ -17367,18 +17412,18 @@
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
-      "source_location": "L22",
+      "source_location": "L11",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
-      "target": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_revalidasiitem",
+      "target": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_included_statuses",
       "confidence_score": 1.0
     },
     {
       "relation": "contains",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
-      "source_location": "L40",
+      "source_location": "L22",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
@@ -17390,11 +17435,11 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
-      "source_location": "L5",
+      "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
-      "target": "src_components_confirmdialog",
+      "target": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client",
       "confidence_score": 1.0
     },
     {
@@ -17402,10 +17447,104 @@
       "context": "import",
       "confidence": "EXTRACTED",
       "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
-      "source_location": "L5",
+      "source_location": "L3",
       "weight": 1.0,
       "_origin": "ast",
       "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
+      "target": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client_revalidasiitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
+      "target": "src_lib_equipment_status",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
+      "source_location": "L2",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page",
+      "target": "src_lib_equipment_status_statusname",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "references",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
+      "source_location": "L30",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_validasiulangpage",
+      "target": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_included_statuses"
+    },
+    {
+      "relation": "calls",
+      "context": "call",
+      "confidence": "EXTRACTED",
+      "confidence_score": 1.0,
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/page.tsx",
+      "source_location": "L27",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_page_validasiulangpage",
+      "target": "src_lib_equipment_status_statusname"
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/validasi-ulang-client.tsx",
+      "source_location": "L41",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client",
+      "target": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client_inspeksivalidasiulangclient",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "contains",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/validasi-ulang-client.tsx",
+      "source_location": "L23",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client",
+      "target": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client_revalidasiitem",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports_from",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/validasi-ulang-client.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client",
+      "target": "src_components_confirmdialog",
+      "confidence_score": 1.0
+    },
+    {
+      "relation": "imports",
+      "context": "import",
+      "confidence": "EXTRACTED",
+      "source_file": "src/app/(authenticated-routes)/inspeksi/validasi-ulang/validasi-ulang-client.tsx",
+      "source_location": "L6",
+      "weight": 1.0,
+      "_origin": "ast",
+      "source": "src_app_authenticated_routes_inspeksi_validasi_ulang_validasi_ulang_client",
       "target": "src_components_confirmdialog_confirmdialog",
       "confidence_score": 1.0
     },
@@ -24385,5 +24524,5 @@
     }
   ],
   "hyperedges": [],
-  "built_at_commit": "ce8e61d70345e7ff469e89a67e424e1dee780c8f"
+  "built_at_commit": "42588e2b83d70374a241301b17c1fd1b5dbf79fc"
 }
