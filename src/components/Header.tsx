@@ -1,7 +1,6 @@
 "use client";
 
-import { Search, Bell, HelpCircle, LogOut, Menu } from "lucide-react";
-import Image from "next/image";
+import { Bell, HelpCircle, LogOut, Menu } from "lucide-react";
 import { useState } from "react";
 import { logoutAction } from "@/action/auth";
 import { ConfirmDialog } from "@/components/ConfirmDialog";

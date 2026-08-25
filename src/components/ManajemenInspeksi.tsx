@@ -38,11 +38,7 @@ import {
 	getValidations,
 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
-import {
-	type EquipmentStatus,
-	statusBadgeStyle,
-	statusText,
-} from "@/lib/equipment-status";
+import { type EquipmentStatus } from "@/lib/equipment-status";
 
 // Tipe Data
 type AssetState = EquipmentStatus | "REJECTED";
@@ -515,8 +511,14 @@ export default function ManajemenInspeksi() {
 			});
 		} else {
 			filtered.sort((a, b) => {
-				const timeA = a.tanggalRegistrasi && a.tanggalRegistrasi !== "-" ? new Date(a.tanggalRegistrasi).getTime() : 0;
-				const timeB = b.tanggalRegistrasi && b.tanggalRegistrasi !== "-" ? new Date(b.tanggalRegistrasi).getTime() : 0;
+				const timeA =
+					a.tanggalRegistrasi && a.tanggalRegistrasi !== "-"
+						? new Date(a.tanggalRegistrasi).getTime()
+						: 0;
+				const timeB =
+					b.tanggalRegistrasi && b.tanggalRegistrasi !== "-"
+						? new Date(b.tanggalRegistrasi).getTime()
+						: 0;
 				if (timeB !== timeA) return timeB - timeA;
 				return (Number(b.id) || 0) - (Number(a.id) || 0);
 			});

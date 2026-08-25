@@ -4,11 +4,7 @@ import { cookies } from "next/headers";
 import type { LoginRequest, LoginResponse, User } from "../types/Auth";
 import { redirect } from "next/navigation";
 import { homePathForRole, normalizeRole } from "../lib/roles";
-
-const API_URL =
-  process.env.NEXT_PUBLIC_API_URL ||
-  process.env.API_URL ||
-  "https://api.testing.naufal.me";
+import { API_URL } from "@/config/api";
 
 function cookieConfig(maxAge: number) {
   return {
@@ -20,7 +16,8 @@ function cookieConfig(maxAge: number) {
   };
 }
 
-export async function login(data: LoginRequest): Promise<LoginResponse> {
+// Dipakai internal oleh loginAction; tidak diekspor (knip: dead export).
+async function login(data: LoginRequest): Promise<LoginResponse> {
   try {
     const controller = new AbortController();
     const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout

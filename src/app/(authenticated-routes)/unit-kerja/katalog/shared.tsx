@@ -1,9 +1,13 @@
 import { Boxes } from "lucide-react";
+import Image from "next/image";
 import type { EquipmentState, KatalogDetail } from "./types";
 
 /* DESIGN.md status hues — five workflow states, no sixth.
    Tailwind class, not inline style, so the token stays the single source. */
-export const STATE_STYLE: Record<EquipmentState, { label: string; badge: string }> = {
+export const STATE_STYLE: Record<
+  EquipmentState,
+  { label: string; badge: string }
+> = {
   registered: {
     label: "Menunggu validasi",
     badge: "bg-[#E0F2FE] text-[#0284C7]",
@@ -28,7 +32,8 @@ export function toState(status?: string, condition?: string): EquipmentState {
   if (s.includes("DISPOSAL")) return "disposal";
   if (s.includes("REJECT") || s.includes("TIDAK LAYAK")) return "rejected";
   if (s.includes("REPAIR") || s.includes("PERBAIKAN")) return "repair";
-  if (s.includes("READY") || s.includes("VALIDATED") || s.includes("APPROVED")) return "ready";
+  if (s.includes("READY") || s.includes("VALIDATED") || s.includes("APPROVED"))
+    return "ready";
   return "registered";
 }
 
@@ -63,13 +68,20 @@ function relName(value: unknown): string | undefined {
   return undefined;
 }
 
-export function normalizeEquipment(raw: Record<string, unknown>): KatalogDetail {
+export function normalizeEquipment(
+  raw: Record<string, unknown>,
+): KatalogDetail {
   const status = relName(raw.status) ?? str(raw.status_name);
   const condition = relName(raw.condition) ?? str(raw.condition_name);
-  const storage = raw.storage_location as Record<string, unknown> | string | undefined;
+  const storage = raw.storage_location as
+    | Record<string, unknown>
+    | string
+    | undefined;
   const plant =
     relName(raw.plant) ??
-    (storage && typeof storage === "object" ? relName(storage.plant) : undefined) ??
+    (storage && typeof storage === "object"
+      ? relName(storage.plant)
+      : undefined) ??
     str(raw.plant_description);
   const images = pickImages(raw);
 
@@ -106,10 +118,13 @@ export function EquipmentThumb({
   src,
   alt,
   className = "",
+  sizes = "(max-width: 1024px) 100vw, 33vw",
 }: {
   src?: string;
   alt: string;
   className?: string;
+  /** Hint ukuran render untuk optimasi next/image (fill). */
+  sizes?: string;
 }) {
   if (!src) {
     return (
@@ -122,11 +137,18 @@ export function EquipmentThumb({
       </div>
     );
   }
-  /* ponytail: plain <img> — upload host is the API domain behind a /uploads
-     rewrite, so next/image would need remotePatterns config for zero gain here.
-     Upgrade path: add images.remotePatterns in next.config.ts and swap in <Image>. */
+  /* fill + wrapper: dimensi ditentukan className pemanggil (aspect-/w-/h-),
+     sama seperti perilaku <img> lama. Host diizinkan via images.remotePatterns. */
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img src={src} alt={alt} loading="lazy" className={`object-cover ${className}`} />
+    <span className={`relative block overflow-hidden ${className}`}>
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        sizes={sizes}
+        loading="lazy"
+        className="object-cover"
+      />
+    </span>
   );
 }

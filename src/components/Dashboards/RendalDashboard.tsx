@@ -7,26 +7,32 @@ import {
   CheckCircle,
   Wrench,
   Clock,
-  FileQuestion,
 } from "lucide-react";
 import { StatCard } from "@/components/StatCard";
 import { ChartSection } from "@/components/ChartSection";
 import { UpcomingInspections } from "@/components/UpcomingInspections";
 import { RecentActivities } from "@/components/RecentActivities";
 import { buttonVariants } from "@/components/ui/button";
-import { getEquipments } from "@/action/api";
+import { getEquipments, getInspections, getObjectTypes } from "@/action/api";
+import { statusGroup } from "@/lib/equipment-status";
 
 export default async function RendalDashboard() {
-  const equipments: { status?: { name?: string } }[] =
-    (await getEquipments()) || [];
+  // Satu fetch per sumber data untuk seluruh dashboard (kartu + chart + tabel).
+  const [equipments, inspections, objectTypes] = await Promise.all([
+    getEquipments(),
+    getInspections(),
+    getObjectTypes(),
+  ]);
+  const equipmentList = (equipments as { status?: { name?: string } }[]) || [];
 
-  const totalPeralatan = equipments.length;
-  const countBy = (name: string) =>
-    equipments.filter((e) => e.status?.name === name).length;
-  const idleCount = countBy("IDLE");
-  const readyCount = countBy("READY_TO_REUSE");
-  const repairCount = countBy("DALAM_PERBAIKAN");
-  const inspectionCount = countBy("REGISTERED");
+  const totalPeralatan = equipmentList.length;
+  const countBy = (group: "pending" | "repair" | "ready" | "scrap") =>
+    equipmentList.filter((e) => statusGroup(e) === group).length;
+  // Kartu mengikuti kelompok status yang sama dengan chart & dashboard lain.
+  const idleCount = countBy("pending");
+  const readyCount = countBy("ready");
+  const repairCount = countBy("repair");
+  const inspectionCount = countBy("pending");
 
   return (
     <div className="page-container">
@@ -39,13 +45,13 @@ export default async function RendalDashboard() {
           </p>
         </div>
         <div className="header-actions">
-          <button
-            type="button"
+          <Link
+            href="/rendal/laporan"
             className={buttonVariants({ variant: "brandOutline", size: "lg" })}
           >
             <FileText className="w-4 h-4" />
             Buat Laporan
-          </button>
+          </Link>
           <Link
             href="/rendal/register-equipment"
             className={buttonVariants({ variant: "brand", size: "lg" })}
@@ -62,7 +68,6 @@ export default async function RendalDashboard() {
           title="Total Peralatan"
           value={totalPeralatan.toString()}
           icon={Server}
-          trend="12%"
           iconBgColor="bg-blue-50"
           iconColor="text-[#0556B3]"
         />
@@ -94,25 +99,21 @@ export default async function RendalDashboard() {
           iconBgColor="bg-orange-50"
           iconColor="text-orange-500"
         />
-        <StatCard
-          title="Permintaan"
-          value="0"
-          icon={FileQuestion}
-          iconBgColor="bg-blue-50"
-          iconColor="text-[#0556B3]"
-        />
       </div>
 
       {/* Charts Section */}
-      <ChartSection />
+      <ChartSection equipments={equipments || []} />
 
       {/* Bottom Section: Tables & Activity */}
       <div className="bottom-grid">
         <div className="upcoming-wrapper">
-          <UpcomingInspections />
+          <UpcomingInspections
+            inspections={inspections || []}
+            objectTypes={objectTypes || []}
+          />
         </div>
         <div>
-          <RecentActivities />
+          <RecentActivities equipments={equipments || []} />
         </div>
       </div>
     </div>

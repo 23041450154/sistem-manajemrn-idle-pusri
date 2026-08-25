@@ -2,11 +2,8 @@
 
 import { cookies } from "next/headers";
 import { findMasterEntity, type MasterEntity } from "@/lib/master-entities";
-
-const API_URL =
-	process.env.NEXT_PUBLIC_API_URL ||
-	process.env.API_URL ||
-	"https://api.testing.naufal.me";
+import { API_URL } from "@/config/api";
+import { revalidateApp } from "@/lib/revalidate";
 
 /** Safely extract a string from a value that may be a nested object. */
 function str(val: unknown): string | undefined {
@@ -97,7 +94,9 @@ export async function createMasterItem(
 			headers: { ...(await authHeaders()), "Content-Type": "application/json" },
 			body: JSON.stringify(body),
 		});
-		return res.ok ? { success: true } : await fail(res);
+		if (!res.ok) return await fail(res);
+		revalidateApp();
+		return { success: true };
 	} catch (error) {
 		return { success: false, message: (error as Error).message };
 	}
@@ -124,7 +123,9 @@ export async function updateMasterItem(
 			headers: { ...(await authHeaders()), "Content-Type": "application/json" },
 			body: JSON.stringify(body),
 		});
-		return res.ok ? { success: true } : await fail(res);
+		if (!res.ok) return await fail(res);
+		revalidateApp();
+		return { success: true };
 	} catch (error) {
 		return { success: false, message: (error as Error).message };
 	}
@@ -143,7 +144,9 @@ export async function deleteMasterItem(
 			method: "DELETE",
 			headers: await authHeaders(),
 		});
-		return res.ok ? { success: true } : await fail(res);
+		if (!res.ok) return await fail(res);
+		revalidateApp();
+		return { success: true };
 	} catch (error) {
 		return { success: false, message: (error as Error).message };
 	}

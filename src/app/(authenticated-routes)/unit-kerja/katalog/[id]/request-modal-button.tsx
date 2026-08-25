@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import { Send, X, Loader2, AlertCircle } from "lucide-react";
 import { createReuseRequest } from "@/action/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -12,11 +11,9 @@ interface KatalogItemMinimal {
 	name: string;
 	plant: string;
 	objectType: string;
-	estimatedReuseValue?: number;
 }
 
 export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
-	const router = useRouter();
 	const [isOpen, setIsOpen] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -25,16 +22,14 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 	const today = new Date().toISOString().split("T")[0];
 
 	const [formData, setFormData] = useState({
-		target_plant: eq.plant || "Plant PUSRI IB",
-		installation_location: "Area Pabrik Utama",
-		start_date: today,
-		end_date: "",
-		justification:
-			"Diperlukan untuk memperlancar operasional dan efisiensi unit kerja.",
-		estimated_cost_avoidance: eq.estimatedReuseValue || 150000000,
-		contact_person: "Budi Santoso",
-		contact_npp: "100002",
-		contact_phone: "0812-7890-1122",
+		// Kontrak backend POST /api/reuse-request (request/reuse_request.go):
+		// requestingProject & requestingPlant required — diisi dari plant aset,
+		// bukan nilai karangan.
+		requestingPlant: eq.plant || "",
+		installationLocation: "",
+		reuseDate: today,
+		estimatedNewPurchaseCost: "",
+		justification: "",
 	});
 
 	const handleOpen = () => {
@@ -52,8 +47,18 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 		e?.preventDefault();
 		if (isSubmitting) return;
 
-		if (!formData.installation_location.trim()) {
+		if (!formData.requestingPlant.trim()) {
+			setError("Plant pengusul wajib diisi.");
+			return;
+		}
+
+		if (!formData.installationLocation.trim()) {
 			setError("Lokasi pemasangan / penggunaan wajib diisi.");
+			return;
+		}
+
+		if (!(Number(formData.estimatedNewPurchaseCost) > 0)) {
+			setError("Estimasi biaya pembelian baru wajib diisi (> 0).");
 			return;
 		}
 
@@ -66,20 +71,14 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 		setError(null);
 
 		try {
-			const reqNumber = `REQ-REUSE-${Date.now().toString().slice(-6)}`;
 			const result = await createReuseRequest({
 				equipment_id: eq.id,
-				request_number: reqNumber,
-				target_plant: formData.target_plant,
-				installation_location: formData.installation_location,
-				requesting_unit: formData.installation_location,
-				start_date: formData.start_date,
-				end_date: formData.end_date || undefined,
+				requestingProject: formData.requestingPlant,
+				requestingPlant: formData.requestingPlant,
+				installationLocation: formData.installationLocation,
+				reuseDate: formData.reuseDate,
+				estimatedNewPurchaseCost: Number(formData.estimatedNewPurchaseCost) || 0,
 				justification: formData.justification,
-				estimated_cost_avoidance: Number(formData.estimated_cost_avoidance) || 0,
-				contact_person: formData.contact_person,
-				contact_npp: formData.contact_npp,
-				contact_phone: formData.contact_phone,
 			});
 
 			if (result && result.success) {
@@ -170,9 +169,9 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 									</label>
 									<input
 										type="text"
-										value={formData.target_plant}
+										value={formData.requestingPlant}
 										onChange={(e) =>
-											setFormData({ ...formData, target_plant: e.target.value })
+											setFormData({ ...formData, requestingPlant: e.target.value })
 										}
 										required
 										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
@@ -184,9 +183,9 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 									</label>
 									<input
 										type="text"
-										value={formData.installation_location}
+										value={formData.installationLocation}
 										onChange={(e) =>
-											setFormData({ ...formData, installation_location: e.target.value })
+											setFormData({ ...formData, installationLocation: e.target.value })
 										}
 										required
 										placeholder="misal: Area Pabrik III"
@@ -195,17 +194,17 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 								</div>
 							</div>
 
-							{/* Dates */}
+							{/* Tanggal & Estimasi Biaya */}
 							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 								<div>
 									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Tanggal Mulai Pemakaian <span className="text-red-500">*</span>
+										Tanggal Pemakaian <span className="text-red-500">*</span>
 									</label>
 									<input
 										type="date"
-										value={formData.start_date}
+										value={formData.reuseDate}
 										onChange={(e) =>
-											setFormData({ ...formData, start_date: e.target.value })
+											setFormData({ ...formData, reuseDate: e.target.value })
 										}
 										required
 										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
@@ -213,17 +212,20 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 								</div>
 								<div>
 									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Estimasi Cost Avoidance (Rp)
+										Estimasi Biaya Beli Baru (Rp) <span className="text-red-500">*</span>
 									</label>
 									<input
 										type="number"
-										value={formData.estimated_cost_avoidance}
+										value={formData.estimatedNewPurchaseCost}
 										onChange={(e) =>
 											setFormData({
 												...formData,
-												estimated_cost_avoidance: Number(e.target.value) || 0,
+												estimatedNewPurchaseCost: e.target.value,
 											})
 										}
+										required
+										min={1}
+										placeholder="misal: 150000000"
 										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
 									/>
 								</div>
@@ -244,23 +246,6 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 									placeholder="Tuliskan justifikasi pemakaian peralatan ini..."
 									className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none resize-none"
 								/>
-							</div>
-
-							{/* Contact Person */}
-							<div className="bg-gray-50/80 rounded-lg p-3 border border-gray-200 space-y-2">
-								<p className="text-[11px] font-bold text-gray-500 uppercase tracking-wider">
-									Kontak Penanggung Jawab
-								</p>
-								<div className="grid grid-cols-2 gap-2 text-xs">
-									<div>
-										<span className="text-gray-500">Nama:</span>{" "}
-										<strong className="text-gray-800">{formData.contact_person}</strong>
-									</div>
-									<div>
-										<span className="text-gray-500">NPP:</span>{" "}
-										<strong className="text-gray-800">{formData.contact_npp}</strong>
-									</div>
-								</div>
 							</div>
 
 							{/* Footer Actions */}

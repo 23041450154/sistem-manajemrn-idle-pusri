@@ -95,6 +95,38 @@ export const statusText = (raw?: string | null) =>
 	statusName(raw).replace(/_/g, " ");
 
 /**
+ * Kelompok status untuk kartu ringkasan/pie dashboard.
+ * Satu definisi untuk semua role-view — menggantikan tiga salinan filter
+ * magic-number (id === 1..8) yang dulu saling beda hasil.
+ */
+export type StatusGroup = "pending" | "repair" | "ready" | "scrap";
+
+const STATUS_GROUP: Record<string, StatusGroup> = {
+	REGISTERED: "pending",
+	REPAIR: "repair",
+	REPAIR_COMPLETED: "repair",
+	REVALIDATION: "repair",
+	REJECTED: "repair",
+	VALIDATED: "ready",
+	READY_TO_USE: "ready",
+	REUSED: "ready",
+	DISPOSAL_RECOMMENDED: "scrap",
+	SCRAP: "scrap",
+};
+
+/** Kelompok status equipment; null = status tidak dikenal/tidak ada. */
+export function statusGroup(equipment: {
+	status?: { name?: string } | null;
+	statusAset?: string | null;
+}): StatusGroup | null {
+	const raw = String(
+		equipment.status?.name || equipment.statusAset || "",
+	).trim();
+	if (!raw) return null;
+	return STATUS_GROUP[statusName(raw)] ?? null;
+}
+
+/**
  * Warna badge per status kanonik — DESIGN.md five-hue system.
  * Transparent fill, 1px border + text in the state hue:
  *   biru #0556B3 menunggu/proses berikutnya · amber #B45309 dalam pengerjaan

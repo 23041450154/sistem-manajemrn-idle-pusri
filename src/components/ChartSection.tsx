@@ -14,66 +14,25 @@ import {
 } from "recharts";
 import { ChevronDown } from "lucide-react";
 
-import { useEffect, useState } from "react";
-import { getEquipments } from "@/action/api";
+import { statusGroup, type StatusGroup } from "@/lib/equipment-status";
 
-export function ChartSection() {
-  const [data, setData] = useState<Record<string, unknown>[]>([]);
-
-  useEffect(() => {
-    async function fetch() {
-      try {
-        const equipments = await getEquipments();
-        setData(equipments || []);
-      } catch (error) {
-        console.error(error);
-      }
-    }
-    fetch();
-  }, []);
+/** Client Component hanya untuk render chart (recharts butuh DOM); data dari RendalDashboard. */
+export function ChartSection({
+  equipments,
+}: {
+  equipments: Record<string, unknown>[];
+}) {
+  const data = equipments || [];
 
   const totalAset = data.length;
 
-  // Calculate pieData
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const readyCount = data.filter((e: any) => {
-    const st = (
-      typeof e.status === "object" ? e.status?.name : e.status || ""
-    ).toUpperCase();
-    const id = Number(e.status_id || e.status?.id || 0);
-    return (
-      id === 6 ||
-      id === 2 ||
-      st.includes("READY") ||
-      st.includes("VALID") ||
-      st === "IDLE"
-    );
-  }).length;
+  // Hitung status via satu util bersama (lib/equipment-status).
+  const countByGroup = (group: StatusGroup) =>
+    data.filter((e) => statusGroup(e) === group).length;
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const idleCount = data.filter((e: any) => {
-    const st = (
-      typeof e.status === "object" ? e.status?.name : e.status || ""
-    ).toUpperCase();
-    const id = Number(e.status_id || e.status?.id || 0);
-    return id === 1 || st.includes("REGISTER") || st.includes("PENDING");
-  }).length;
-
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const repairCount = data.filter((e: any) => {
-    const st = (
-      typeof e.status === "object" ? e.status?.name : e.status || ""
-    ).toUpperCase();
-    const id = Number(e.status_id || e.status?.id || 0);
-    return (
-      id === 3 ||
-      id === 4 ||
-      id === 5 ||
-      st.includes("PERBAIKAN") ||
-      st.includes("REPAIR") ||
-      st.includes("MAINTENANCE")
-    );
-  }).length;
+  const readyCount = countByGroup("ready");
+  const idleCount = countByGroup("pending");
+  const repairCount = countByGroup("repair");
 
   const readyPct =
     totalAset > 0 ? Math.round((readyCount / totalAset) * 100) : 0;

@@ -1,8 +1,6 @@
 "use client";
 
-import { useState } from "react";
 import { X, AlertTriangle } from "lucide-react";
-
 interface DeleteConfirmDialogProps {
   open: boolean;
   onClose: () => void;
@@ -36,9 +34,14 @@ export function DeleteConfirmDialog({
             </div>
             <div className="flex-1">
               <h3 className="text-[15px] font-bold text-gray-900">{title}</h3>
-              <p className="mt-1.5 text-[13px] text-gray-600 leading-relaxed">{description}</p>
+              <p className="mt-1.5 text-[13px] text-gray-600 leading-relaxed">
+                {description}
+              </p>
             </div>
-            <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors">
+            <button
+              onClick={onClose}
+              className="text-gray-400 hover:text-gray-600 transition-colors"
+            >
               <X className="h-4 w-4" />
             </button>
           </div>

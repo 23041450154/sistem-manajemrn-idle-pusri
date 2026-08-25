@@ -11,6 +11,7 @@ import {
 	getDisposalMethods,
 	createDisposalRequest,
 	getValidations,
+	uploadAttachment,
 } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -167,8 +168,14 @@ export default function VerifikasiDisposalPage() {
 			});
 
 			mappedEq.sort((a: any, b: any) => {
-				const timeA = a.tanggalRegistrasi && a.tanggalRegistrasi !== "-" ? new Date(a.tanggalRegistrasi).getTime() : 0;
-				const timeB = b.tanggalRegistrasi && b.tanggalRegistrasi !== "-" ? new Date(b.tanggalRegistrasi).getTime() : 0;
+				const timeA =
+					a.tanggalRegistrasi && a.tanggalRegistrasi !== "-"
+						? new Date(a.tanggalRegistrasi).getTime()
+						: 0;
+				const timeB =
+					b.tanggalRegistrasi && b.tanggalRegistrasi !== "-"
+						? new Date(b.tanggalRegistrasi).getTime()
+						: 0;
 				if (timeB !== timeA) return timeB - timeA;
 				return (Number(b.id) || 0) - (Number(a.id) || 0);
 			});
@@ -317,21 +324,15 @@ export default function VerifikasiDisposalPage() {
 			const res = await createDisposalRequest(payload);
 			if (res.success) {
 				if (uploadedFile) {
-					const fd = new FormData();
-					fd.append("equipment_id", selectedAsset.id);
-					fd.append("file", uploadedFile);
-					fd.append("category", "disposal_attachment");
-
-					const tokenMatch = document.cookie.match(/(^|;)\s*token\s*=\s*([^;]+)/);
-					const token = tokenMatch ? tokenMatch[2] : "";
-					const API_URL =
-						process.env.NEXT_PUBLIC_API_URL || "https://api.testing.naufal.me";
-
-					await fetch(`${API_URL}/api/attachments/upload`, {
-						method: "POST",
-						headers: { Authorization: `Bearer ${token}` },
-						body: fd,
-					}).catch((err) => console.error("Error uploading disposal doc:", err));
+					const up = await uploadAttachment(
+						selectedAsset.id,
+						uploadedFile,
+						"disposal_attachment",
+					);
+					if (!up.success) {
+						// Usulan sudah terkirim; kegagalan lampiran tidak membatalkan alur.
+						showToast("error", `Dokumen gagal diunggah: ${up.message}`);
+					}
 				}
 
 				showToast(

@@ -17,7 +17,8 @@ export interface AutocompleteOption {
 	sublabel?: string;
 	code?: string;
 	description?: string;
-	[key: string]: unknown;
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	raw?: any;
 }
 
 interface AutocompleteInputProps {

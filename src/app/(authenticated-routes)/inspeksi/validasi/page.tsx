@@ -12,7 +12,6 @@ import {
 	X,
 	Check,
 	Save,
-	Clock,
 	UploadCloud,
 	Paperclip,
 	RefreshCw,
@@ -25,7 +24,6 @@ import {
 	Info,
 } from "lucide-react";
 
-import AnalogTimePicker from "@/components/AnalogTimePicker";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 import {
@@ -42,12 +40,7 @@ import {
 	resubmitApproval,
 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
-import {
-	type EquipmentStatus,
-	statusBadgeStyle,
-	statusName,
-	statusText,
-} from "@/lib/equipment-status";
+import { type EquipmentStatus, statusName } from "@/lib/equipment-status";
 
 // Tipe Data
 type AssetState = EquipmentStatus | "REJECTED";
@@ -720,8 +713,14 @@ export default function ManajemenInspeksi() {
 			});
 		} else {
 			filtered.sort((a, b) => {
-				const timeA = a.tanggalRegistrasi && a.tanggalRegistrasi !== "-" ? new Date(a.tanggalRegistrasi).getTime() : 0;
-				const timeB = b.tanggalRegistrasi && b.tanggalRegistrasi !== "-" ? new Date(b.tanggalRegistrasi).getTime() : 0;
+				const timeA =
+					a.tanggalRegistrasi && a.tanggalRegistrasi !== "-"
+						? new Date(a.tanggalRegistrasi).getTime()
+						: 0;
+				const timeB =
+					b.tanggalRegistrasi && b.tanggalRegistrasi !== "-"
+						? new Date(b.tanggalRegistrasi).getTime()
+						: 0;
 				if (timeB !== timeA) return timeB - timeA;
 				return (Number(b.id) || 0) - (Number(a.id) || 0);
 			});
@@ -898,13 +897,6 @@ export default function ManajemenInspeksi() {
 	const isReadOnly =
 		selectedAsset?.statusPersetujuan === "IN_REVIEW" ||
 		selectedAsset?.statusPersetujuan === "APPROVED";
-
-	const pendingCount = assets.filter(
-		(a) =>
-			a.statusPersetujuan === "NONE" ||
-			a.statusPersetujuan === "PENDING_REVIEW" ||
-			a.statusPersetujuan === "NEED_REVISION",
-	).length;
 
 	const handleSort = (key: keyof Asset) => {
 		let direction: "asc" | "desc" = "asc";

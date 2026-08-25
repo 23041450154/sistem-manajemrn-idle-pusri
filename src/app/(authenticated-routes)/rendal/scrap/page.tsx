@@ -11,6 +11,7 @@ import {
 	getDisposalMethods,
 	createDisposalRequest,
 	getValidations,
+	uploadAttachment,
 } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -181,8 +182,14 @@ export default function RendalScrapPage() {
 			});
 
 			mappedEq.sort((a: any, b: any) => {
-				const timeA = a.tanggalRegistrasi && a.tanggalRegistrasi !== "-" ? new Date(a.tanggalRegistrasi).getTime() : 0;
-				const timeB = b.tanggalRegistrasi && b.tanggalRegistrasi !== "-" ? new Date(b.tanggalRegistrasi).getTime() : 0;
+				const timeA =
+					a.tanggalRegistrasi && a.tanggalRegistrasi !== "-"
+						? new Date(a.tanggalRegistrasi).getTime()
+						: 0;
+				const timeB =
+					b.tanggalRegistrasi && b.tanggalRegistrasi !== "-"
+						? new Date(b.tanggalRegistrasi).getTime()
+						: 0;
 				if (timeB !== timeA) return timeB - timeA;
 				return (Number(b.id) || 0) - (Number(a.id) || 0);
 			});
@@ -355,26 +362,21 @@ export default function RendalScrapPage() {
 			const res = await createDisposalRequest(payload);
 			if (res.success) {
 				if (uploadedFile) {
-					const fd = new FormData();
-					fd.append("equipment_id", selectedAsset.id);
-					fd.append("file", uploadedFile);
-					fd.append("category", "disposal_attachment");
-
-					const tokenMatch = document.cookie.match(/(^|;)\s*token\s*=\s*([^;]+)/);
-					const token = tokenMatch ? tokenMatch[2] : "";
-					const API_URL =
-						process.env.NEXT_PUBLIC_API_URL || "https://api.testing.naufal.me";
-
-					await fetch(`${API_URL}/api/attachments/upload`, {
-						method: "POST",
-						headers: { Authorization: `Bearer ${token}` },
-						body: fd,
-					}).catch((err) => console.error("Error uploading scrap doc:", err));
+					const up = await uploadAttachment(
+						selectedAsset.id,
+						uploadedFile,
+						"disposal_attachment",
+					);
+					if (!up.success) {
+						console.error("Gagal upload dokumen scrap:", up.message);
+					}
 				}
 
 				// Update local state so item instantly moves from Inbox to History with PENDING status
 				const selectedMethod = methods.find(
-					(m) => Number(m.id) === targetMethodId || String(m.id) === String(disposalMethodId),
+					(m) =>
+						Number(m.id) === targetMethodId ||
+						String(m.id) === String(disposalMethodId),
 				);
 				const newDisposalItem: DisposalItem = {
 					id: String(res.data?.id || `DSP-${Date.now()}`),
@@ -383,7 +385,8 @@ export default function RendalScrapPage() {
 					equipment_id: String(selectedAsset.id),
 					equipment_code: selectedAsset.kodeAlat,
 					equipment_name: selectedAsset.namaAlat,
-					disposal_method: selectedMethod?.name || "Scrap (Besi Tua)",
+					// Label optimistis; nama final tetap dari backend setelah loadData().
+					disposal_method: selectedMethod?.name || "-",
 					scrap_value: 0,
 					plant: selectedAsset.plant,
 					justification:
