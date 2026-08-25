@@ -69,7 +69,6 @@ export default function InspeksiBerkalaClient({
 		direction: "asc" | "desc";
 	} | null>(null);
 
-
 	// Halaman di-reset lewat handler filter (bukan effect) agar tak memicu cascading render.
 
 	const plantOptions = useMemo(

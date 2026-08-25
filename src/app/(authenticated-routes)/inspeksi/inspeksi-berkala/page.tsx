@@ -63,8 +63,7 @@ export default async function InspeksiAntreanPage() {
 				equipment_id: ins.equipment_id,
 				equipment_code:
 					ins.equipment_code || eq.equipment_code || `EQ-${ins.equipment_id}`,
-				equipment_name:
-					ins.equipment_name || eq.name || "Equipment Tanpa Nama",
+				equipment_name: ins.equipment_name || eq.name || "Equipment Tanpa Nama",
 				plant: plantStr,
 				object_type: typeStr,
 				inspection_date:
