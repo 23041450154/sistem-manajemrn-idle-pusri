@@ -12,6 +12,7 @@ import UnitKerjaIdleClient, {
 
 /** Server Component — fetch katalog+riwayat+user, filter & mapping murni di server. */
 export default async function UnitKerjaIdlePage() {
+	// Action sudah balik [] saat HTTP gagal; .catch jaring pengaman error tak terduga.
 	const [rawEqList, objTypes, rawRequests, user] = await Promise.all([
 		getEquipments().catch(() => []),
 		getObjectTypes().catch(() => []),

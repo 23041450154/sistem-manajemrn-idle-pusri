@@ -330,8 +330,8 @@
     "semantic_hash": ""
   },
   "src/app/(authenticated-routes)/unit-kerja/daftar-aset/page.tsx": {
-    "mtime": 1787639255.224743,
-    "ast_hash": "8db6cf31800059f725ab4c6efe94f299",
+    "mtime": 1787654614.0672283,
+    "ast_hash": "aea42a88a102b70a9b36a88c055ee805",
     "semantic_hash": ""
   },
   "src/app/(authenticated-routes)/unit-kerja/dashboard/page.tsx": {
@@ -345,8 +345,8 @@
     "semantic_hash": ""
   },
   "src/app/(authenticated-routes)/unit-kerja/idle/page.tsx": {
-    "mtime": 1787654107.371642,
-    "ast_hash": "a0b796f4f228a8836441b6d0bf963b8e",
+    "mtime": 1787654649.1743352,
+    "ast_hash": "f225b6aef1f5f0d16aa6daf8ff89e3a9",
     "semantic_hash": ""
   },
   "src/app/(authenticated-routes)/unit-kerja/katalog/[id]/gallery.tsx": {
@@ -842,6 +842,11 @@
   "src/app/(authenticated-routes)/unit-kerja/idle/idle-client.tsx": {
     "mtime": 1787654149.5822468,
     "ast_hash": "9990bf5d0d48d01ce8071278e2c9291d",
+    "semantic_hash": ""
+  },
+  "src/app/(authenticated-routes)/unit-kerja/daftar-aset/daftar-aset-client.tsx": {
+    "mtime": 1787654588.3971064,
+    "ast_hash": "4676cc4ad209f410ea48a3349e3652be",
     "semantic_hash": ""
   }
 }
