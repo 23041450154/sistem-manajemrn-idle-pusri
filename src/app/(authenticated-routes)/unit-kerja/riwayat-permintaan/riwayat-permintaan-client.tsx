@@ -1,7 +1,6 @@
 "use client";
 
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
- 
 
 import { useState, useMemo, useEffect } from "react";
 import { useRouter } from "next/navigation";

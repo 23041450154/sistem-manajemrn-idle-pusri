@@ -88,8 +88,7 @@ export default async function RiwayatPermintaanPage({
 					? r.justification
 					: "Kebutuhan operasional unit kerja.",
 			estimated_cost_avoidance:
-				Number(r.estimated_cost_avoidance || r.estimatedCostAvoidance) ||
-				undefined,
+				Number(r.estimated_cost_avoidance || r.estimatedCostAvoidance) || undefined,
 			contact_person:
 				typeof r.contact_person === "string" ? r.contact_person : "-",
 			contact_npp: String(r.contact_npp || r.contactNpp || "-"),
