@@ -112,42 +112,53 @@ export default function ManajerPeminjamanClient({
 	// terpisah), jadi tidak ada effect yang menyalin state ke state.
 	const filteredRequests = useMemo(() => {
 		const query = searchInput || search;
-		return requests.filter((req) => {
-			const isAwaitingDecision = req.status === "PENDING" || req.status === "IN_REVIEW";
-			const matchTab = listTab === "inbox" ? isAwaitingDecision : !isAwaitingDecision;
-			const matchSearch = query
-				? req.request_number.toLowerCase().includes(query.toLowerCase()) ||
-					req.equipment_code.toLowerCase().includes(query.toLowerCase()) ||
-					req.equipment_name.toLowerCase().includes(query.toLowerCase()) ||
-					req.requesting_unit.toLowerCase().includes(query.toLowerCase())
-				: true;
-			const matchPlant =
-				plant !== "Semua Plant" ? req.target_plant === plant : true;
-			const matchStatus =
-				status !== "Semua Status"
-					? (status === "Disetujui" && req.status === "APPROVED") ||
-						(status === "Ditolak" && req.status === "REJECTED") ||
-						(status === "Perlu Revisi" &&
-							req.status === "REVISION_REQUESTED") ||
-						(status === "Menunggu Review" &&
-							(req.status === "PENDING" || req.status === "IN_REVIEW"))
+		return requests
+			.filter((req) => {
+				const isAwaitingDecision =
+					req.status === "PENDING" || req.status === "IN_REVIEW";
+				const matchTab =
+					listTab === "inbox" ? isAwaitingDecision : !isAwaitingDecision;
+				const matchSearch = query
+					? req.request_number.toLowerCase().includes(query.toLowerCase()) ||
+						req.equipment_code.toLowerCase().includes(query.toLowerCase()) ||
+						req.equipment_name.toLowerCase().includes(query.toLowerCase()) ||
+						req.requesting_unit.toLowerCase().includes(query.toLowerCase())
 					: true;
+				const matchPlant =
+					plant !== "Semua Plant" ? req.target_plant === plant : true;
+				const matchStatus =
+					status !== "Semua Status"
+						? (status === "Disetujui" && req.status === "APPROVED") ||
+							(status === "Ditolak" && req.status === "REJECTED") ||
+							(status === "Perlu Revisi" && req.status === "REVISION_REQUESTED") ||
+							(status === "Menunggu Review" &&
+								(req.status === "PENDING" || req.status === "IN_REVIEW"))
+						: true;
 
-			let matchDate = true;
-			if (startDate && endDate) {
-				const reqDate = new Date(req.start_date);
-				matchDate =
-					reqDate >= new Date(startDate) && reqDate <= new Date(endDate);
-			} else if (startDate) {
-				matchDate = req.start_date.startsWith(startDate);
-			}
-			return matchTab && matchSearch && matchPlant && matchStatus && matchDate;
-		}).sort((a, b) => {
-			const aTime = Date.parse(a.created_at || "") || 0;
-			const bTime = Date.parse(b.created_at || "") || 0;
-			return bTime - aTime;
-		});
-	}, [requests, listTab, search, searchInput, plant, status, startDate, endDate]);
+				let matchDate = true;
+				if (startDate && endDate) {
+					const reqDate = new Date(req.start_date);
+					matchDate = reqDate >= new Date(startDate) && reqDate <= new Date(endDate);
+				} else if (startDate) {
+					matchDate = req.start_date.startsWith(startDate);
+				}
+				return matchTab && matchSearch && matchPlant && matchStatus && matchDate;
+			})
+			.sort((a, b) => {
+				const aTime = Date.parse(a.created_at || "") || 0;
+				const bTime = Date.parse(b.created_at || "") || 0;
+				return bTime - aTime;
+			});
+	}, [
+		requests,
+		listTab,
+		search,
+		searchInput,
+		plant,
+		status,
+		startDate,
+		endDate,
+	]);
 
 	const inboxCount = requests.filter(
 		(req) => req.status === "PENDING" || req.status === "IN_REVIEW",
@@ -270,9 +281,7 @@ export default function ManajerPeminjamanClient({
 			{notification && (
 				<div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
 					<CheckCircle2 className="w-4 h-4 text-emerald-400" />
-					<span className="text-[13px] font-medium">
-						{notification.message}
-					</span>
+					<span className="text-[13px] font-medium">{notification.message}</span>
 				</div>
 			)}
 
@@ -295,7 +304,9 @@ export default function ManajerPeminjamanClient({
 						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${listTab === "inbox" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
 					>
 						Antrean Persetujuan
-						<span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${listTab === "inbox" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}>
+						<span
+							className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${listTab === "inbox" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}
+						>
 							{inboxCount}
 						</span>
 					</button>
@@ -308,7 +319,9 @@ export default function ManajerPeminjamanClient({
 						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${listTab === "history" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
 					>
 						Riwayat Persetujuan
-						<span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${listTab === "history" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}>
+						<span
+							className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${listTab === "history" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}
+						>
 							{historyCount}
 						</span>
 					</button>
@@ -421,10 +434,7 @@ export default function ManajerPeminjamanClient({
 					<tbody className="bg-white divide-y divide-gray-100">
 						{paginatedRequests.length === 0 ? (
 							<tr>
-								<td
-									colSpan={9}
-									className="px-4 py-8 text-center text-sm text-gray-500"
-								>
+								<td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">
 									Tidak ada data pengajuan peminjaman.
 								</td>
 							</tr>
@@ -491,11 +501,8 @@ export default function ManajerPeminjamanClient({
 					<div className="px-4 py-3 bg-white border-t border-gray-200 flex items-center justify-between">
 						<span className="text-xs text-gray-500 font-medium">
 							Menampilkan{" "}
-							{Math.min(
-								(page - 1) * ITEMS_PER_PAGE + 1,
-								filteredRequests.length,
-							)}{" "}
-							- {Math.min(page * ITEMS_PER_PAGE, filteredRequests.length)} dari{" "}
+							{Math.min((page - 1) * ITEMS_PER_PAGE + 1, filteredRequests.length)} -{" "}
+							{Math.min(page * ITEMS_PER_PAGE, filteredRequests.length)} dari{" "}
 							{filteredRequests.length} data
 						</span>
 						<div className="flex items-center gap-1.5">
@@ -508,22 +515,20 @@ export default function ManajerPeminjamanClient({
 								Prev
 							</button>
 							<div className="flex items-center gap-1">
-								{Array.from({ length: totalPages }, (_, i) => i + 1).map(
-									(p) => (
-										<button
-											key={p}
-											type="button"
-											onClick={() => setCurrentPage(p)}
-											className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors ${
-												page === p
-													? "bg-[#0A356A] text-white"
-													: "text-gray-600 hover:bg-gray-100"
-											}`}
-										>
-											{p}
-										</button>
-									),
-								)}
+								{Array.from({ length: totalPages }, (_, i) => i + 1).map((p) => (
+									<button
+										key={p}
+										type="button"
+										onClick={() => setCurrentPage(p)}
+										className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors ${
+											page === p
+												? "bg-[#0A356A] text-white"
+												: "text-gray-600 hover:bg-gray-100"
+										}`}
+									>
+										{p}
+									</button>
+								))}
 							</div>
 							<button
 								type="button"
@@ -761,20 +766,15 @@ export default function ManajerPeminjamanClient({
 												<div className="absolute -left-6 top-1 w-3 h-3 rounded-full bg-white border-2 border-[#0A356A]" />
 												<div className="bg-slate-50 p-3.5 rounded-xl border border-slate-200 space-y-1">
 													<div className="flex items-center justify-between">
-														<h5 className="text-xs font-bold text-slate-900">
-															{h.title}
-														</h5>
+														<h5 className="text-xs font-bold text-slate-900">{h.title}</h5>
 														<span className="text-[10px] font-medium text-slate-400">
-															{new Date(h.timestamp).toLocaleDateString(
-																"id-ID",
-																{
-																	day: "2-digit",
-																	month: "short",
-																	year: "numeric",
-																	hour: "2-digit",
-																	minute: "2-digit",
-																},
-															)}
+															{new Date(h.timestamp).toLocaleDateString("id-ID", {
+																day: "2-digit",
+																month: "short",
+																year: "numeric",
+																hour: "2-digit",
+																minute: "2-digit",
+															})}
 														</span>
 													</div>
 													<p className="text-xs text-slate-600 font-medium">
