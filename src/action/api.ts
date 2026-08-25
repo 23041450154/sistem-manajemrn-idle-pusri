@@ -9,11 +9,51 @@ import {
 	type DisposalDisplayStatus,
 	disposalDisplayStatus,
 } from "@/lib/approvals";
+import { API_URL } from "@/config/api";
+import { revalidateApp } from "@/lib/revalidate";
 
-const API_URL =
-	process.env.NEXT_PUBLIC_API_URL ||
-	process.env.API_URL ||
-	"https://api.testing.naufal.me";
+/**
+ * Upload attachment ke POST /api/attachments/upload (multipart).
+ * Menggantikan fetch manual dari client yang sebelumnya mem-parse cookie
+ * dan menduplikasi base URL. Token dibaca dari cookie httpOnly di server.
+ */
+export async function uploadAttachment(
+	equipmentId: string | number,
+	file: File,
+	category: string,
+): Promise<{ success: boolean; message?: string }> {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+
+	try {
+		const fd = new FormData();
+		fd.append("equipment_id", String(equipmentId));
+		fd.append("file", file);
+		fd.append("category", category);
+
+		const res = await fetch(`${API_URL}/api/attachments/upload`, {
+			method: "POST",
+			headers: { Authorization: `Bearer ${token}` },
+			body: fd,
+		});
+
+		if (!res.ok) {
+			const err = await res.json().catch(() => null);
+			return {
+				success: false,
+				message: err?.message || `Gagal upload attachment (HTTP ${res.status})`,
+			};
+		}
+		revalidateApp();
+		return { success: true };
+	} catch (error) {
+		console.error("Upload attachment error:", error);
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
+	}
+}
 
 export async function getEquipments() {
 	const cookieStore = await cookies();
@@ -219,6 +259,7 @@ export async function approveDisposal(
 				message: json?.message || `Gagal memproses disposal (HTTP ${res.status})`,
 			};
 		}
+		revalidateApp();
 		return { success: true, message: json?.message, data: json?.data };
 	} catch (error) {
 		console.error("Approve disposal error:", error);
@@ -429,6 +470,7 @@ export async function validateEquipment(
 		}
 
 		const json = await res.json().catch(() => null);
+		revalidateApp();
 		return { success: true, data: json?.data };
 	} catch (error) {
 		console.error("Validate equipment error:", error);
@@ -486,6 +528,7 @@ export async function createRevalidation(
 		}
 
 		const json = await res.json().catch(() => null);
+		revalidateApp();
 		return { success: true, data: json?.data };
 	} catch (error) {
 		console.error("Create revalidation error:", error);
@@ -530,6 +573,7 @@ export async function reviewApproval(
 			};
 		}
 
+		revalidateApp();
 		return { success: true };
 	} catch (error) {
 		console.error("Review approval error:", error);
@@ -565,6 +609,7 @@ export async function startReviewApproval(id: string) {
 			};
 		}
 
+		revalidateApp();
 		return { success: true };
 	} catch (error) {
 		console.error("Start review approval error:", error);
@@ -622,6 +667,7 @@ export async function submitInspectionData(formData: FormData) {
 			const responseData = await res.json().catch(() => null);
 			const newStatus =
 				responseData?.data?.status || responseData?.status || "VALIDATED";
+			revalidateApp();
 			return {
 				success: true,
 				new_status: newStatus,
@@ -798,6 +844,7 @@ export async function createEquipment(formData: FormData) {
 			);
 		}
 		const responseData = await res.json().catch(() => null);
+		revalidateApp();
 		return { success: true, data: responseData?.data || responseData };
 	} catch (error) {
 		console.error("Create equipment error:", error);
@@ -864,6 +911,7 @@ export async function updateEquipment(id: string, payload: any) {
 		}
 		const responseData = await res.json().catch(() => null);
 
+		revalidateApp();
 		return { success: true, data: responseData?.data };
 	} catch (error) {
 		console.error("Update equipment error:", error);
@@ -872,66 +920,6 @@ export async function updateEquipment(id: string, payload: any) {
 			message: error instanceof Error ? error.message : String(error),
 		};
 	}
-}
-
-export async function uploadEquipmentAttachment(formData: FormData) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-	const equipmentId =
-		formData.get("equipment_id") || formData.get("reference_id");
-	const file = formData.get("file");
-	console.log(
-		"uploadEquipmentAttachment called. equipment_id:",
-		equipmentId,
-		"file name:",
-		file && (file as File).name,
-		"file size:",
-		file && (file as File).size,
-		"category:",
-		formData.get("category"),
-	);
-
-	const newFormData = new FormData();
-	for (const [key, value] of formData.entries()) {
-		newFormData.append(key, value);
-	}
-
-	const endpoints = [
-		`${API_URL}/api/attachments/upload`,
-		`${API_URL}/api/attachments`,
-		...(equipmentId
-			? [
-					`${API_URL}/api/equipment/${equipmentId}/attachments`,
-					`${API_URL}/api/equipment/${equipmentId}/upload`,
-				]
-			: []),
-	];
-
-	for (const endpoint of endpoints) {
-		try {
-			const res = await fetch(endpoint, {
-				method: "POST",
-				headers: {
-					Authorization: `Bearer ${token}`,
-				},
-				body: newFormData,
-			});
-			if (res.ok) {
-				const data = await res.json();
-				console.log(`Upload attachment success at ${endpoint}:`, data);
-				return { success: true, data: data.data || data };
-			} else {
-				console.warn(
-					`Upload attempt failed at ${endpoint} with status ${res.status}:`,
-					await res.text(),
-				);
-			}
-		} catch (e) {
-			console.warn(`Upload attempt exception at ${endpoint}:`, e);
-		}
-	}
-
-	return { success: false, message: "Gagal mengunggah foto ke backend" };
 }
 
 export async function getAttachmentsByEquipmentId(equipmentId: string) {
@@ -1069,6 +1057,7 @@ export async function deleteEquipment(id: string) {
 				message: errorData?.message || `HTTP Error ${res.status} at ${targetUrl}`,
 			};
 		}
+		revalidateApp();
 		return { success: true };
 	} catch (error) {
 		console.error("Delete equipment error:", error);
@@ -1139,6 +1128,7 @@ export async function completeEquipmentRepair(
 				message: json?.message || json?.error || `HTTP Error ${res.status}`,
 			};
 		}
+		revalidateApp();
 		return {
 			success: true,
 			message: json?.message || "Perbaikan peralatan berhasil disimpan.",
@@ -1206,6 +1196,7 @@ export async function resubmitApproval(id: string, formData: FormData) {
 					errorData?.message || errorData?.error || `HTTP Error ${res.status}`,
 			};
 		}
+		revalidateApp();
 		return { success: true };
 	} catch (error) {
 		console.error("Resubmit approval error:", error);
@@ -1320,6 +1311,7 @@ export async function createReuseRequest(payload: {
 			};
 		}
 		const responseData = await res.json().catch(() => null);
+		revalidateApp();
 		return {
 			success: true,
 			message:
@@ -1593,6 +1585,7 @@ export async function updateReuseRequestStatus(
 			);
 			const json = await res.json().catch(() => null);
 			if (res.ok) {
+				revalidateApp();
 				return {
 					success: true,
 					message:
@@ -1673,6 +1666,7 @@ export async function approveRevalidationEquipment(
 					json?.message || `Gagal menyetujui validasi ulang (HTTP ${res.status})`,
 			};
 		}
+		revalidateApp();
 		return { success: true, message: json?.message, data: json?.data };
 	} catch (error) {
 		console.error("Approve revalidation error:", error);

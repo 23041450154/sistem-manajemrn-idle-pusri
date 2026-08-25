@@ -6,11 +6,7 @@ import {
   Settings,
   Package,
   Bell,
-  Download,
   MoreHorizontal,
-  Wrench,
-  ShieldAlert,
-  Cog,
 } from "lucide-react";
 import {
   BarChart,
@@ -23,10 +19,10 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from "recharts";
 
 import { getEquipments, getReuseRequests } from "@/action/api";
+import { statusGroup, type StatusGroup } from "@/lib/equipment-status";
 
 /* ponytail: payload API legacy tetap untyped sampai backend mengekspor DTO bersama. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -57,42 +53,13 @@ export default function UnitKerjaDashboard() {
 
   const totalAset = data.length;
 
-  const readyCount = data.filter((a) => {
-    const st = (
-      typeof a.status === "object" ? a.status?.name : a.status || ""
-    ).toUpperCase();
-    const id = Number(a.status_id || a.status?.id || 0);
-    return (
-      id === 6 ||
-      id === 2 ||
-      st.includes("READY") ||
-      st.includes("VALID") ||
-      st === "IDLE"
-    );
-  }).length;
+  // Hitung status via satu util bersama (lib/equipment-status).
+  const countByGroup = (group: StatusGroup) =>
+    data.filter((a) => statusGroup(a) === group).length;
 
-  const idleCount = data.filter((a) => {
-    const st = (
-      typeof a.status === "object" ? a.status?.name : a.status || ""
-    ).toUpperCase();
-    const id = Number(a.status_id || a.status?.id || 0);
-    return id === 1 || st.includes("REGISTER") || st.includes("PENDING");
-  }).length;
-
-  const rusakCount = data.filter((a) => {
-    const st = (
-      typeof a.status === "object" ? a.status?.name : a.status || ""
-    ).toUpperCase();
-    const id = Number(a.status_id || a.status?.id || 0);
-    return (
-      id === 3 ||
-      id === 4 ||
-      id === 5 ||
-      st.includes("PERBAIKAN") ||
-      st.includes("REPAIR") ||
-      st.includes("MAINTENANCE")
-    );
-  }).length;
+  const readyCount = countByGroup("ready");
+  const idleCount = countByGroup("pending");
+  const rusakCount = countByGroup("repair");
 
   const pieData = [
     { name: "Siap Digunakan", value: readyCount, color: "#10B981" },
@@ -118,7 +85,6 @@ export default function UnitKerjaDashboard() {
     value: plants[key],
   }));
 
-  const readyToReuseCount = readyCount;
   const permintaanMenunggu = reuseRequests.filter((r) => {
     const s = (r.status || r.approval_status || "").toUpperCase();
     return s.includes("PENDING") || s.includes("REVIEW");
@@ -136,10 +102,6 @@ export default function UnitKerjaDashboard() {
             Ikhtisar aset dan aktivitas operasional harian.
           </p>
         </div>
-        <button className="flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors shadow-sm">
-          <Download className="w-4 h-4" />
-          Export Data
-        </button>
       </div>
 
       {/* KPI Cards */}
@@ -318,8 +280,6 @@ export default function UnitKerjaDashboard() {
                   axisLine={false}
                   tickLine={false}
                   tick={{ fill: "#6b7280", fontSize: 12 }}
-                  ticks={[0, 250, 500]}
-                  domain={[0, 500]}
                 />
                 <Tooltip
                   cursor={{ fill: "#f9fafb" }}

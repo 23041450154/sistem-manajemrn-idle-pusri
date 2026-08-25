@@ -178,8 +178,14 @@ export default function ManajerApprovePage() {
 				});
 
 				mappedData.sort((a: any, b: any) => {
-					const timeA = a.tanggalPengajuan && a.tanggalPengajuan !== "-" ? new Date(a.tanggalPengajuan).getTime() : 0;
-					const timeB = b.tanggalPengajuan && b.tanggalPengajuan !== "-" ? new Date(b.tanggalPengajuan).getTime() : 0;
+					const timeA =
+						a.tanggalPengajuan && a.tanggalPengajuan !== "-"
+							? new Date(a.tanggalPengajuan).getTime()
+							: 0;
+					const timeB =
+						b.tanggalPengajuan && b.tanggalPengajuan !== "-"
+							? new Date(b.tanggalPengajuan).getTime()
+							: 0;
 					if (timeB !== timeA) return timeB - timeA;
 					return (Number(b.id) || 0) - (Number(a.id) || 0);
 				});
@@ -233,13 +239,26 @@ export default function ManajerApprovePage() {
 
 	const handleMulaiReview = async () => {
 		if (selectedAsset && selectedAsset.approvalStatus === "PENDING") {
+			let res: { success: boolean; message?: string };
 			try {
-				const res = await startReviewApproval(selectedAsset.id);
-				if (!res.success) {
-					console.error("Failed to start review on backend:", res.message);
-				}
+				res = await startReviewApproval(selectedAsset.id);
 			} catch (err) {
-				console.error(err);
+				res = {
+					success: false,
+					message: err instanceof Error ? err.message : String(err),
+				};
+			}
+
+			// Transisi gagal = status TIDAK berubah. Jangan update UI optimistis
+			// kalau backend menolak, supaya inbox tetap mencerminkan state server.
+			if (!res.success) {
+				console.error("Failed to start review on backend:", res.message);
+				setNotification({
+					type: "error",
+					message: `Gagal memulai review: ${res.message || "coba lagi"}.`,
+				});
+				setTimeout(() => setNotification(null), 3000);
+				return;
 			}
 
 			const toInReview = (req: RequestAsset) =>
@@ -353,7 +372,8 @@ export default function ManajerApprovePage() {
 		return requests.filter((req) => {
 			const isAwaitingDecision =
 				req.approvalStatus === "PENDING" || req.approvalStatus === "IN_REVIEW";
-			const matchTab = activeTab === "inbox" ? isAwaitingDecision : !isAwaitingDecision;
+			const matchTab =
+				activeTab === "inbox" ? isAwaitingDecision : !isAwaitingDecision;
 			const matchSearch = query
 				? req.nomorRequest.toLowerCase().includes(query.toLowerCase()) ||
 					req.kodeAset.toLowerCase().includes(query.toLowerCase()) ||
@@ -373,10 +393,20 @@ export default function ManajerApprovePage() {
 			}
 			return matchTab && matchSearch && matchPlant && matchStatus && matchDate;
 		});
-	}, [requests, activeTab, search, searchInput, plant, status, startDate, endDate]);
+	}, [
+		requests,
+		activeTab,
+		search,
+		searchInput,
+		plant,
+		status,
+		startDate,
+		endDate,
+	]);
 
 	const inboxCount = requests.filter(
-		(req) => req.approvalStatus === "PENDING" || req.approvalStatus === "IN_REVIEW",
+		(req) =>
+			req.approvalStatus === "PENDING" || req.approvalStatus === "IN_REVIEW",
 	).length;
 	const historyCount = requests.length - inboxCount;
 
@@ -456,7 +486,9 @@ export default function ManajerApprovePage() {
 						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${activeTab === "inbox" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
 					>
 						Antrean Persetujuan
-						<span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${activeTab === "inbox" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}>
+						<span
+							className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${activeTab === "inbox" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}
+						>
 							{inboxCount}
 						</span>
 					</button>
@@ -469,7 +501,9 @@ export default function ManajerApprovePage() {
 						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${activeTab === "history" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
 					>
 						Riwayat Persetujuan
-						<span className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${activeTab === "history" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}>
+						<span
+							className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${activeTab === "history" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}
+						>
 							{historyCount}
 						</span>
 					</button>
@@ -477,75 +511,75 @@ export default function ManajerApprovePage() {
 				{/* Toolbar / Filters (Identik dengan halaman Inspeksi Validasi) */}
 				<div className="border-b border-gray-200 bg-white p-4">
 					<div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
-					{/* Search */}
-					<div className="flex w-full gap-2 xl:w-[360px] xl:shrink-0">
-						<div className="relative min-w-0 flex-1">
-							<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-							<input
-								type="text"
-								placeholder="Cari request, kode, atau nama..."
-								value={searchInput}
-								onChange={(e) => {
-									setSearchInput(e.target.value);
-									setSearch(e.target.value);
-								}}
-								className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pr-4 pl-9 text-[13px] font-medium placeholder:text-gray-400 focus:border-[#0A356A] focus:bg-white focus:ring-1 focus:ring-[#0A356A] focus:outline-none"
-							/>
+						{/* Search */}
+						<div className="flex w-full gap-2 xl:w-[360px] xl:shrink-0">
+							<div className="relative min-w-0 flex-1">
+								<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+								<input
+									type="text"
+									placeholder="Cari request, kode, atau nama..."
+									value={searchInput}
+									onChange={(e) => {
+										setSearchInput(e.target.value);
+										setSearch(e.target.value);
+									}}
+									className="h-10 w-full rounded-lg border border-gray-200 bg-gray-50 py-1.5 pr-4 pl-9 text-[13px] font-medium placeholder:text-gray-400 focus:border-[#0A356A] focus:bg-white focus:ring-1 focus:ring-[#0A356A] focus:outline-none"
+								/>
+							</div>
+							<button
+								type="button"
+								onClick={() => setSearch(searchInput)}
+								className="h-10 shrink-0 rounded-lg bg-[#0A356A] px-3.5 text-[13px] font-semibold whitespace-nowrap text-white shadow-xs transition-colors hover:bg-[#062854] cursor-pointer"
+							>
+								Cari
+							</button>
 						</div>
-						<button
-							type="button"
-							onClick={() => setSearch(searchInput)}
-							className="h-10 shrink-0 rounded-lg bg-[#0A356A] px-3.5 text-[13px] font-semibold whitespace-nowrap text-white shadow-xs transition-colors hover:bg-[#062854] cursor-pointer"
-						>
-							Cari
-						</button>
-					</div>
 
-					{/* Filter Group */}
-					<div className="grid w-full grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center xl:w-auto xl:flex-nowrap">
-						<select
-							value={plant}
-							onChange={(e) => setPlant(e.target.value)}
-							className="h-10 min-w-0 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-medium text-gray-700 outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] sm:w-[115px] cursor-pointer"
-						>
-							<option value="Semua Plant">Semua Plant</option>
-							{plants.map((p: any) => (
-								<option key={p.id} value={p.name}>
-									{p.description || p.name}
-								</option>
-							))}
-						</select>
+						{/* Filter Group */}
+						<div className="grid w-full grid-cols-2 gap-2 sm:flex sm:flex-wrap sm:items-center xl:w-auto xl:flex-nowrap">
+							<select
+								value={plant}
+								onChange={(e) => setPlant(e.target.value)}
+								className="h-10 min-w-0 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-medium text-gray-700 outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] sm:w-[115px] cursor-pointer"
+							>
+								<option value="Semua Plant">Semua Plant</option>
+								{plants.map((p: any) => (
+									<option key={p.id} value={p.name}>
+										{p.description || p.name}
+									</option>
+								))}
+							</select>
 
-						<select
-							value={status}
-							onChange={(e) => setStatus(e.target.value)}
-							className="h-10 min-w-0 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-medium text-gray-700 outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] sm:w-[120px] cursor-pointer"
-						>
-							<option value="Semua Status">Semua Status</option>
-							<option value="PENDING">Menunggu Review</option>
-							<option value="IN_REVIEW">Sedang Direview</option>
-							<option value="REVISION_REQUIRED">Perlu Revisi</option>
-							<option value="APPROVED">Disetujui</option>
-						</select>
+							<select
+								value={status}
+								onChange={(e) => setStatus(e.target.value)}
+								className="h-10 min-w-0 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-medium text-gray-700 outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] sm:w-[120px] cursor-pointer"
+							>
+								<option value="Semua Status">Semua Status</option>
+								<option value="PENDING">Menunggu Review</option>
+								<option value="IN_REVIEW">Sedang Direview</option>
+								<option value="REVISION_REQUIRED">Perlu Revisi</option>
+								<option value="APPROVED">Disetujui</option>
+							</select>
 
-						<input
-							type="date"
-							value={startDate}
-							onChange={(e) => setStartDate(e.target.value)}
-							className="h-10 min-w-0 rounded-lg border border-gray-200 bg-white px-3 text-[13px] font-medium text-gray-700 outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] sm:min-w-[140px] cursor-pointer"
-						/>
+							<input
+								type="date"
+								value={startDate}
+								onChange={(e) => setStartDate(e.target.value)}
+								className="h-10 min-w-0 rounded-lg border border-gray-200 bg-white px-3 text-[13px] font-medium text-gray-700 outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] sm:min-w-[140px] cursor-pointer"
+							/>
 
-						{/* Reset Button */}
-						<button
-							type="button"
-							onClick={handleReset}
-							className="flex h-10 items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 text-[13px] font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800 whitespace-nowrap cursor-pointer"
-							title="Reset semua filter"
-						>
-							<RefreshCw className="w-3.5 h-3.5" />
-							Reset
-						</button>
-					</div>
+							{/* Reset Button */}
+							<button
+								type="button"
+								onClick={handleReset}
+								className="flex h-10 items-center justify-center gap-1.5 rounded-lg border border-gray-200 px-3 text-[13px] font-semibold text-gray-600 transition-colors hover:bg-gray-100 hover:text-gray-800 whitespace-nowrap cursor-pointer"
+								title="Reset semua filter"
+							>
+								<RefreshCw className="w-3.5 h-3.5" />
+								Reset
+							</button>
+						</div>
 					</div>
 				</div>
 				<div className="overflow-x-auto">

@@ -4,7 +4,7 @@
    Upgrade path: generate types dari swagger_dump.json backend. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import {
   getEquipments,
   getObjectTypes,
@@ -22,10 +22,8 @@ import {
   Search,
   Eye,
   X,
-  ChevronRight,
   Send,
   CheckCircle2,
-  Clock,
   AlertCircle,
   FileSpreadsheet,
   RefreshCw,
@@ -33,8 +31,6 @@ import {
   ArrowUp,
   ArrowDown,
   Plus,
-  UserCheck,
-  Wrench,
   Info,
 } from "lucide-react";
 
@@ -275,9 +271,13 @@ export default function UnitKerjaKatalogPage() {
           if (req.equipmentId) requestedEqIdSet.add(String(req.equipmentId));
           if (req.equipment?.id) requestedEqIdSet.add(String(req.equipment.id));
           if (req.equipment_code)
-            requestedEqIdSet.add(String(req.equipment_code).trim().toLowerCase());
+            requestedEqIdSet.add(
+              String(req.equipment_code).trim().toLowerCase(),
+            );
           if (req.equipmentCode)
-            requestedEqIdSet.add(String(req.equipmentCode).trim().toLowerCase());
+            requestedEqIdSet.add(
+              String(req.equipmentCode).trim().toLowerCase(),
+            );
           if (req.equipment?.equipment_code)
             requestedEqIdSet.add(
               String(req.equipment.equipment_code).trim().toLowerCase(),
@@ -291,7 +291,9 @@ export default function UnitKerjaKatalogPage() {
           (e) =>
             e.status_name === "READY_TO_USE" &&
             !requestedEqIdSet.has(String(e.id)) &&
-            !requestedEqIdSet.has(String(e.equipment_code).trim().toLowerCase()),
+            !requestedEqIdSet.has(
+              String(e.equipment_code).trim().toLowerCase(),
+            ),
         ),
       );
 
@@ -623,7 +625,9 @@ export default function UnitKerjaKatalogPage() {
     } catch (err) {
       showNotification(
         "error",
-        err instanceof Error ? err.message : "Terjadi kesalahan sistem saat pengajuan.",
+        err instanceof Error
+          ? err.message
+          : "Terjadi kesalahan sistem saat pengajuan.",
       );
     } finally {
       setIsSubmitting(false);
@@ -903,6 +907,15 @@ export default function UnitKerjaKatalogPage() {
                       className="px-5 py-12 text-center text-gray-500"
                     >
                       Memuat data katalog...
+                    </td>
+                  </tr>
+                ) : error ? (
+                  <tr>
+                    <td
+                      colSpan={9}
+                      className="px-5 py-12 text-center text-red-600"
+                    >
+                      {error}
                     </td>
                   </tr>
                 ) : paginatedEquipments.length === 0 ? (

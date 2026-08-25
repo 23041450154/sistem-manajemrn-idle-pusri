@@ -60,7 +60,7 @@ export default function EquipmentManagementPage() {
     try {
       const data = await getEquipments();
       if (Array.isArray(data)) {
-        data.sort((a: any, b: any) => {
+        data.sort((a, b) => {
           const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
           const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
           if (timeB !== timeA) return timeB - timeA;

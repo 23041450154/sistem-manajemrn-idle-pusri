@@ -4,6 +4,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import { useEffect, useState, useMemo } from "react";
+import Image from "next/image";
 import {
 	getEquipments,
 	getObjectTypes,
@@ -30,7 +31,6 @@ import {
 	FileText,
 	ImageOff,
 	Info,
-	ArrowUpDown,
 	LayoutGrid,
 	List,
 } from "lucide-react";
@@ -57,6 +57,11 @@ interface EquipmentItem {
 /** Unit Kerja hanya melihat aset siap pakai + yang sedang diperbaiki. */
 const VISIBLE_STATUSES = ["READY_TO_USE", "REPAIR"];
 
+/* Lampiran dipisah: yang bisa dirender sebagai gambar vs dokumen.
+   ponytail: klasifikasi lewat ekstensi URL. Kalau backend nanti mengirim
+   mime_type, ganti ke field itu. */
+const IMAGE_URL_PATTERN = /\.(jpe?g|png|webp|gif|avif)(\?|$)/i;
+
 export default function DaftarAsetPage() {
 	const [equipments, setEquipments] = useState<EquipmentItem[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
@@ -74,15 +79,9 @@ export default function DaftarAsetPage() {
 
 	// Pagination & Sorting
 	const [currentPage, setCurrentPage] = useState(1);
-	const [sortConfig, setSortConfig] = useState<{
-		key: keyof EquipmentItem;
-		direction: "asc" | "desc";
-	} | null>(null);
 
 	// Detail Modal
-	const [selectedAsset, setSelectedAsset] = useState<EquipmentItem | null>(
-		null,
-	);
+	const [selectedAsset, setSelectedAsset] = useState<EquipmentItem | null>(null);
 	const [isDetailOpen, setIsDetailOpen] = useState(false);
 	const [attachments, setAttachments] = useState<any[]>([]);
 	const [isLoadingAttachments, setIsLoadingAttachments] = useState(false);
@@ -93,9 +92,6 @@ export default function DaftarAsetPage() {
 	const [requestModalAsset, setRequestModalAsset] =
 		useState<EquipmentItem | null>(null);
 	const [isSubmittingRequest, setIsSubmittingRequest] = useState(false);
-	const [requestSuccessMessage, setRequestSuccessMessage] = useState<
-		string | null
-	>(null);
 	const [requestErrorMessage, setRequestErrorMessage] = useState<string | null>(
 		null,
 	);
@@ -147,9 +143,7 @@ export default function DaftarAsetPage() {
 						if (!isVisible) return false;
 
 						const itemId = String(item.id);
-						const itemCode = String(
-							item.equipment_code || item.kodeAlat || "",
-						)
+						const itemCode = String(item.equipment_code || item.kodeAlat || "")
 							.trim()
 							.toLowerCase();
 						// Sembunyikan equipment yang sudah diajukan permintaan
@@ -237,8 +231,14 @@ export default function DaftarAsetPage() {
 					});
 
 				mapped.sort((a: any, b: any) => {
-					const timeA = a.created_at && a.created_at !== "-" ? new Date(a.created_at).getTime() : 0;
-					const timeB = b.created_at && b.created_at !== "-" ? new Date(b.created_at).getTime() : 0;
+					const timeA =
+						a.created_at && a.created_at !== "-"
+							? new Date(a.created_at).getTime()
+							: 0;
+					const timeB =
+						b.created_at && b.created_at !== "-"
+							? new Date(b.created_at).getTime()
+							: 0;
 					if (timeB !== timeA) return timeB - timeA;
 					return (Number(b.id) || 0) - (Number(a.id) || 0);
 				});
@@ -455,9 +455,6 @@ export default function DaftarAsetPage() {
 			if (res && res.success) {
 				const requestedId = requestModalAsset.id;
 				const requestedCode = requestModalAsset.equipment_code;
-				setRequestSuccessMessage(
-					`Permintaan untuk peralatan "${requestModalAsset.name}" (${requestModalAsset.equipment_code}) berhasil diajukan.`,
-				);
 				setEquipments((prev) =>
 					prev.filter(
 						(e) => e.id !== requestedId && e.equipment_code !== requestedCode,
@@ -473,7 +470,9 @@ export default function DaftarAsetPage() {
 		} catch (err) {
 			console.error("Submit error:", err);
 			setRequestErrorMessage(
-				err instanceof Error ? err.message : "Terjadi kesalahan sistem saat mengirim pengajuan.",
+				err instanceof Error
+					? err.message
+					: "Terjadi kesalahan sistem saat mengirim pengajuan.",
 			);
 		} finally {
 			setIsSubmittingRequest(false);
@@ -499,7 +498,6 @@ export default function DaftarAsetPage() {
 	/* Lampiran dipisah: yang bisa dirender sebagai gambar vs dokumen.
 	   ponytail: klasifikasi lewat ekstensi URL. Kalau backend nanti mengirim
 	   mime_type, ganti ke field itu. */
-	const IMAGE_URL_PATTERN = /\.(jpe?g|png|webp|gif|avif)(\?|$)/i;
 
 	const normalizedAttachments = useMemo(
 		() =>
@@ -823,7 +821,10 @@ export default function DaftarAsetPage() {
 											{asset.equipment_code}
 										</td>
 										<td className="px-2.5 py-2.5 text-[13px] font-medium text-gray-900 w-[240px] max-w-[280px]">
-											<span className="line-clamp-2 block leading-tight" title={asset.name}>
+											<span
+												className="line-clamp-2 block leading-tight"
+												title={asset.name}
+											>
 												{asset.name}
 											</span>
 										</td>
@@ -1186,10 +1187,11 @@ export default function DaftarAsetPage() {
 											<Loader2 className="w-5 h-5 animate-spin" />
 										</div>
 									) : requestPhotos.length > 0 ? (
-										/* eslint-disable-next-line @next/next/no-img-element */
-										<img
+										<Image
 											src={requestPhotos[activePhotoIndex]?.url}
 											alt={`Foto peralatan ${requestModalAsset.name}`}
+											fill
+											sizes="(max-width: 1024px) 100vw, 384px"
 											className="w-full h-full object-cover"
 											onError={() =>
 												setFailedPhotoUrls((prev) => [
@@ -1217,16 +1219,17 @@ export default function DaftarAsetPage() {
 												onClick={() => setActivePhotoIndex(idx)}
 												aria-label={`Lihat foto ${idx + 1}`}
 												aria-pressed={idx === activePhotoIndex}
-												className={`w-14 h-14 overflow-hidden bg-[#F2F3F4] rounded-lg transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155] cursor-pointer ${
+												className={`relative w-14 h-14 overflow-hidden bg-[#F2F3F4] rounded-lg transition-colors duration-150 ease-out focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155] cursor-pointer ${
 													idx === activePhotoIndex
 														? "border-2 border-brand"
 														: "border border-[#E6E8EA] hover:border-[#64748B]"
 												}`}
 											>
-												{/* eslint-disable-next-line @next/next/no-img-element */}
-												<img
+												<Image
 													src={photo.url}
 													alt=""
+													fill
+													sizes="56px"
 													className="w-full h-full object-cover"
 												/>
 											</button>

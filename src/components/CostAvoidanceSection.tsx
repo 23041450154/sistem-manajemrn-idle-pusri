@@ -1,12 +1,6 @@
 "use client";
 
-import {
-	Tooltip,
-	ResponsiveContainer,
-	PieChart,
-	Pie,
-	Cell,
-} from "recharts";
+import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import {
 	Recycle,
 	Clock,
@@ -17,6 +11,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getEquipments, getDisposals } from "@/action/api";
+import { statusGroup } from "@/lib/equipment-status";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 type Equipment = any;
@@ -57,53 +52,23 @@ export function CostAvoidanceSection() {
 	let scrapCount = 0;
 
 	equipments.forEach((e: Equipment) => {
-		const st = (
-			typeof e.status === "object" ? e.status?.name : e.status || e.statusAset || ""
-		)
-			.toUpperCase()
-			.trim();
-		const id = Number(e.status_id || e.status?.id || 0);
 		const eqId = String(e.id || "");
+		const group = statusGroup(e);
 
-		// 1. Scrap / Disposal
-		if (
-			id === 8 ||
-			st.includes("SCRAP") ||
-			st.includes("DISPOS") ||
-			st.includes("TIDAK LAYAK") ||
-			st.includes("CONDEMNED") ||
-			st.includes("RUSAK_BERAT") ||
-			st.includes("RUSAK BERAT") ||
-			(eqId && disposalEquipmentIds.has(eqId))
-		) {
+		// 1. Scrap / Disposal — item di daftar disposal selalu dihitung scrap
+		//    meski statusnya belum berubah.
+		if (group === "scrap" || disposalEquipmentIds.has(eqId)) {
 			scrapCount++;
 		}
-		// 2. Dalam Perbaikan
-		else if (
-			id === 3 ||
-			id === 4 ||
-			id === 5 ||
-			st.includes("PERBAIKAN") ||
-			st.includes("REPAIR") ||
-			st.includes("MAINTENANCE") ||
-			st.includes("REVALIDATION") ||
-			st.includes("REVALIDASI") ||
-			st === "REJECTED"
-		) {
+		// 2. Dalam Perbaikan (termasuk REJECTED)
+		else if (group === "repair") {
 			dalamPerbaikanCount++;
 		}
-		// 3. Ready to Use / Idle / Validated
-		else if (
-			id === 6 ||
-			id === 2 ||
-			id === 7 ||
-			st.includes("READY") ||
-			st.includes("VALID") ||
-			st === "IDLE"
-		) {
+		// 3. Ready to Use / Validated / Reused
+		else if (group === "ready") {
 			readyCount++;
 		}
-		// 4. Menunggu Validasi (Status awal / Registered / Pending)
+		// 4. Menunggu Validasi (Registered / status tidak dikenal)
 		else {
 			menungguValidasiCount++;
 		}
@@ -112,13 +77,11 @@ export function CostAvoidanceSection() {
 	const totalUnit = equipments.length;
 
 	// --- Dynamic Recent Activities ---
-	const sortedEquipments = [...equipments].sort(
-		(a: Equipment, b: Equipment) => {
-			const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
-			const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
-			return dateB - dateA;
-		},
-	);
+	const sortedEquipments = [...equipments].sort((a: Equipment, b: Equipment) => {
+		const dateA = new Date(a.updated_at || a.created_at || 0).getTime();
+		const dateB = new Date(b.updated_at || b.created_at || 0).getTime();
+		return dateB - dateA;
+	});
 
 	const recentActivities = sortedEquipments.slice(0, 4).map((e: Equipment) => {
 		const name = e.name || e.namaAlat || e.nama_alat || "Peralatan";
@@ -130,7 +93,11 @@ export function CostAvoidanceSection() {
 			text = `Peralatan ${name} (${tag}) baru diregistrasi oleh Rendal`;
 		} else if (status === "VALIDATED") {
 			text = `Inspeksi selesai: ${name} (${tag}) tervalidasi & menunggu approval`;
-		} else if (status === "READY_TO_REUSE" || status === "READY TO USE" || status === "READY TO REUSE") {
+		} else if (
+			status === "READY_TO_REUSE" ||
+			status === "READY TO USE" ||
+			status === "READY TO REUSE"
+		) {
 			text = `Peralatan ${name} (${tag}) siap digunakan kembali (Ready to Use)`;
 		} else if (status === "REJECTED") {
 			text = `Peralatan ${name} (${tag}) selesai diinspeksi dengan status ditolak/revisi`;
@@ -243,10 +210,7 @@ export function CostAvoidanceSection() {
 					{/* Perlu Tindakan */}
 					<div className="bg-white rounded border border-[#E6E8EA] p-5">
 						<h3 className="text-[14px] font-semibold text-[#0F172A] mb-3 flex items-center gap-2">
-							<AlertCircle
-								className="w-4 h-4 text-[#B45309]"
-								aria-hidden="true"
-							/>
+							<AlertCircle className="w-4 h-4 text-[#B45309]" aria-hidden="true" />
 							Perlu Tindakan Hari Ini
 						</h3>
 						<div className="divide-y divide-[#E6E8EA] border-t border-[#E6E8EA]">
@@ -322,9 +286,7 @@ export function CostAvoidanceSection() {
 											✓
 										</div>
 										<div className="flex-1">
-											<p className="text-[13px] text-gray-700 font-medium">
-												{act.text}
-											</p>
+											<p className="text-[13px] text-gray-700 font-medium">{act.text}</p>
 											<span className="text-[10px] text-gray-400 font-medium block mt-0.5">
 												{act.time}
 											</span>
@@ -397,15 +359,11 @@ export function CostAvoidanceSection() {
 										className="w-2.5 h-2.5 rounded-full"
 										style={{ backgroundColor: item.color }}
 									></span>
-									<span className="text-gray-600 font-semibold">
-										{item.name}
-									</span>
+									<span className="text-gray-600 font-semibold">{item.name}</span>
 								</div>
 								<span className="font-bold text-gray-800 bg-gray-50 px-2 py-0.5 rounded border border-[#E6E8EA] text-xs">
 									{item.value} Unit (
-									{totalUnit > 0
-										? Math.round((item.value / totalUnit) * 100)
-										: 0}
+									{totalUnit > 0 ? Math.round((item.value / totalUnit) * 100) : 0}
 									%)
 								</span>
 							</div>
@@ -413,7 +371,6 @@ export function CostAvoidanceSection() {
 					</div>
 				</div>
 			</div>
-
 		</div>
 	);
 }

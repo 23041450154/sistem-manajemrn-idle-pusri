@@ -1,6 +1,3 @@
-"use client";
-
-import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import {
   Wrench,
@@ -11,7 +8,6 @@ import {
   MapPin,
   Layers,
   FileText,
-  RefreshCw,
 } from "lucide-react";
 import {
   getEquipments,
@@ -47,23 +43,30 @@ const MODULES = [
   },
 ];
 
-export default function AdminDashboardPage() {
-  const [stats, setStats] = useState({
-    totalEquipment: 0,
-    totalCategories: 0,
-    totalStorage: 0,
-    totalDisposals: 0,
-  });
-  const [recentEquipments, setRecentEquipments] = useState<
-    Array<{
-      id?: number | string;
-      name?: string | { name?: string };
-      plant?: string | { name?: string; description?: string };
-      status?: string | { name?: string };
-      equipment_code?: string;
-    }>
-  >([]);
-  const [isLoading, setIsLoading] = useState(true);
+/** Server Component penuh — tidak ada interaktivitas, data di-fetch di server. */
+export default async function AdminDashboardPage() {
+  const [eqList, objTypes, storageLocs, disposals] = await Promise.all([
+    getEquipments(),
+    getObjectTypes(),
+    getStorageLocations(),
+    getDisposals(),
+  ]);
+
+  const stats = {
+    totalEquipment: eqList.length,
+    totalCategories: objTypes.length,
+    totalStorage: storageLocs.length,
+    totalDisposals: disposals.length,
+  };
+
+  type RecentEquipment = {
+    id?: number | string;
+    name?: string | { name?: string };
+    plant?: string | { name?: string; description?: string };
+    status?: string | { name?: string };
+    equipment_code?: string;
+  };
+  const recentEquipments = (eqList || []).slice(0, 5) as RecentEquipment[];
 
   const today = new Date().toLocaleDateString("id-ID", {
     weekday: "long",
@@ -71,35 +74,6 @@ export default function AdminDashboardPage() {
     month: "long",
     year: "numeric",
   });
-
-  useEffect(() => {
-    async function loadAdminMetrics() {
-      setIsLoading(true);
-      try {
-        const [eqList, objTypes, storageLocs, disposals] = await Promise.all([
-          getEquipments(),
-          getObjectTypes(),
-          getStorageLocations(),
-          getDisposals(),
-        ]);
-
-        setStats({
-          totalEquipment: eqList.length,
-          totalCategories: objTypes.length,
-          totalStorage: storageLocs.length,
-          totalDisposals: disposals.length,
-        });
-
-        setRecentEquipments(eqList.slice(0, 5));
-      } catch (err) {
-        console.error("Error loading admin metrics:", err);
-      } finally {
-        setIsLoading(false);
-      }
-    }
-
-    loadAdminMetrics();
-  }, []);
 
   const kpis = [
     {
@@ -174,11 +148,7 @@ export default function AdminDashboardPage() {
               </div>
             </div>
             <div className="text-3xl font-bold text-slate-900 tracking-tight">
-              {isLoading ? (
-                <RefreshCw className="w-6 h-6 animate-spin text-slate-300" />
-              ) : (
-                value
-              )}
+              {value}
             </div>
             <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
               {caption}
@@ -230,12 +200,7 @@ export default function AdminDashboardPage() {
           </div>
 
           <div className="divide-y divide-slate-100 flex-1">
-            {isLoading ? (
-              <div className="px-5 py-8 text-center text-xs text-slate-400">
-                <RefreshCw className="w-5 h-5 animate-spin mx-auto mb-2 text-[#0A356A]" />
-                Memuat data...
-              </div>
-            ) : recentEquipments.length === 0 ? (
+            {recentEquipments.length === 0 ? (
               <div className="px-5 py-8 text-center text-xs text-slate-400">
                 Belum ada data peralatan.
               </div>

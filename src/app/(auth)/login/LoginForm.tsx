@@ -1,9 +1,8 @@
 "use client";
 
 import { loginAction } from "@/action/auth";
-import React, { useState, useActionState, useRef, useEffect } from "react";
+import { useState, useActionState, useRef, useEffect } from "react";
 import Image from "next/image";
-import styles from "./LoginPage.module.css";
 import type { LoginResponse } from "@/types/Auth";
 
 const initialState: LoginResponse = {
@@ -12,6 +11,11 @@ const initialState: LoginResponse = {
   token: null,
 };
 
+/* Kelas input bersama: fokus brand #0A356A + hack deteksi autofill browser
+   (animasi kosong onAutoFillStart/Cancel di globals.css -> onAnimationStart). */
+const INPUT_CLS =
+  "w-full rounded-md border border-gray-300 py-3 pr-4 pl-11 text-sm text-gray-900 outline-none transition-[border-color,box-shadow] [&::-ms-clear]:hidden [&::-ms-reveal]:hidden [&:-webkit-autofill]:animate-[onAutoFillStart_0s_both] [&:not(:-webkit-autofill)]:animate-[onAutoFillCancel_0s_both] focus:border-[#0A356A] focus:ring-2 focus:ring-[#0A356A]/10";
+
 export default function LoginForm() {
   const [state, formAction, pending] = useActionState(
     loginAction,
@@ -19,17 +23,21 @@ export default function LoginForm() {
   );
   const [showPassword, setShowPassword] = useState(false);
   const [npp, setNpp] = useState("");
-  const [password, setPassword] = useState("");
+  const [, setPassword] = useState("");
   const nppRef = useRef<HTMLInputElement>(null);
   const passwordRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const syncValues = () => {
-      if (nppRef.current && nppRef.current.value !== npp) {
-        setNpp(nppRef.current.value);
+      // Functional update supaya tidak perlu memasukkan npp/password ke deps
+      // (React bailout kalau nilai sama), tanpa stale closure.
+      if (nppRef.current) {
+        const v = nppRef.current.value;
+        setNpp((prev) => (v !== prev ? v : prev));
       }
-      if (passwordRef.current && passwordRef.current.value !== password) {
-        setPassword(passwordRef.current.value);
+      if (passwordRef.current) {
+        const v = passwordRef.current.value;
+        setPassword((prev) => (v !== prev ? v : prev));
       }
     };
 
@@ -85,33 +93,38 @@ export default function LoginForm() {
   };
 
   return (
-    <div className={styles.container}>
+    <div className="flex min-h-dvh flex-col bg-white font-sans animate-in fade-in slide-in-from-bottom-1 duration-500 lg:min-h-screen lg:flex-row">
       {/* Left Panel */}
-      <div className={styles.leftPanel}>
-        <div className={styles.leftPanelContent}>
-          <div className={styles.logoContainer}>
+      <div className="relative flex flex-none flex-col items-center justify-center bg-cover bg-center bg-[#0b1a30] bg-[linear-gradient(rgba(11,26,48,0.48),rgba(15,34,64,0.52)),url('/backgroundLeftPanel.webp')] px-4 pt-6 pb-10 text-center text-white sm:px-6 lg:flex-[1.2] lg:p-12">
+        <div className="flex w-full flex-col items-center -translate-y-6 lg:-translate-y-10">
+          <div className="mb-2 flex items-center justify-center lg:mb-4">
             <Image
               src="/logo-white-hd.png"
               alt="Logo PUSRI"
               width={160}
               height={160}
               priority
-              style={{ objectFit: "contain" }}
+              className="object-contain opacity-95 [filter:drop-shadow(0_2px_6px_rgba(255,255,255,0.15))_drop-shadow(0_4px_12px_rgba(0,0,0,0.25))]"
             />
           </div>
-          <div className={styles.leftPanelTitleContainer}>
-            <span className={styles.titleSub}>Selamat Datang di</span>
-            <h1 className={styles.titleMain}>Manajemen Idle Equipment</h1>
-            <span className={styles.titleCompany}>
+          <div className="flex max-w-[850px] flex-col items-center [text-shadow:0_2px_4px_rgba(0,0,0,0.4)]">
+            <span className="mb-3 text-[1.35rem] font-semibold text-white">
+              Selamat Datang di
+            </span>
+            <h1 className="m-0 mb-4 text-[2.5rem] leading-[1.25] font-bold tracking-[-0.5px] text-white">
+              Manajemen Idle Equipment
+            </h1>
+            <span className="mb-6 text-2xl font-medium text-white/90">
               PT Pupuk Sriwidjaja Palembang
             </span>
           </div>
 
-          <div className={styles.infoBox}>
-            <h3 className={styles.infoBoxTitle}>
+          {/* Kartu info disembunyikan di layar sempit (≤lg) seperti CSS lama */}
+          <div className="hidden rounded-2xl border border-white/[0.12] bg-slate-900/80 px-6 py-[1.1rem] text-center shadow-[0_10px_30px_rgba(0,0,0,0.25)] backdrop-blur-sm transition-transform duration-300 max-w-[500px] hover:-translate-y-1 lg:block">
+            <h3 className="m-0 mb-3 text-lg font-bold tracking-wide text-white">
               Sistem Manajemen Idle Equipment
             </h3>
-            <p className={styles.infoBoxText}>
+            <p className="m-0 text-[0.95rem] leading-relaxed text-gray-200">
               Platform terpusat untuk mengelola aset idle secara efisien,
               mendukung proses registrasi, inspeksi, validasi, dan pemeliharaan
               di PT Pupuk Sriwidjaja Palembang.
@@ -121,11 +134,13 @@ export default function LoginForm() {
       </div>
 
       {/* Right Panel */}
-      <div className={styles.rightPanel}>
-        <div className={styles.formContainer}>
-          <div className={styles.header}>
-            <h2 className={styles.title}>Selamat Datang</h2>
-            <p className={styles.subtitle}>
+      <div className="relative -mt-[30px] flex w-full flex-col overflow-y-auto rounded-t-3xl bg-white lg:mt-0 lg:min-w-[520px] lg:flex-[0.9] lg:rounded-t-none lg:max-w-[680px]">
+        <div className="flex flex-1 flex-col justify-center px-5 py-6 lg:px-16 lg:py-8">
+          <div className="mb-6 text-center">
+            <h2 className="m-0 mb-2 text-[1.35rem] font-bold text-gray-900 min-[481px]:text-[1.75rem]">
+              Selamat Datang
+            </h2>
+            <p className="m-0 text-sm text-gray-500">
               Silakan masuk menggunakan akun Anda atau menggunakan SSO.
             </p>
           </div>
@@ -133,30 +148,24 @@ export default function LoginForm() {
           <form action={formAction}>
             {state.message && !state.status && (
               <div
-                style={{
-                  color: "#ef4444",
-                  backgroundColor: "#fef2f2",
-                  border: "1px solid #fee2e2",
-                  borderRadius: "0.375rem",
-                  padding: "0.75rem 1rem",
-                  marginBottom: "1rem",
-                  fontSize: "0.875rem",
-                  textAlign: "center",
-                }}
+                className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3 text-center text-sm text-red-500"
                 role="alert"
               >
                 {state.message}
               </div>
             )}
 
-            <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="npp">
+            <div className="mb-5">
+              <label
+                className="mb-2 block text-sm font-medium text-gray-600"
+                htmlFor="npp"
+              >
                 Nomor Pokok Pegawai (NPP)
               </label>
-              <div className={styles.inputWrapper}>
+              <div className="relative flex items-center">
                 {/* ID Card Icon */}
                 <svg
-                  className={styles.inputIcon}
+                  className="absolute left-4 h-5 w-5 text-gray-400"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
@@ -178,7 +187,7 @@ export default function LoginForm() {
                   id="npp"
                   name="npp"
                   type="text"
-                  className={styles.input}
+                  className={INPUT_CLS}
                   placeholder="Masukan NPP"
                   autoComplete="username"
                   defaultValue=""
@@ -197,14 +206,17 @@ export default function LoginForm() {
               </div>
             </div>
 
-            <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="password">
+            <div className="mb-5">
+              <label
+                className="mb-2 block text-sm font-medium text-gray-600"
+                htmlFor="password"
+              >
                 Password
               </label>
-              <div className={styles.inputWrapper}>
+              <div className="relative flex items-center">
                 {/* Lock Icon */}
                 <svg
-                  className={styles.inputIcon}
+                  className="absolute left-4 h-5 w-5 text-gray-400"
                   xmlns="http://www.w3.org/2000/svg"
                   width="24"
                   height="24"
@@ -230,7 +242,7 @@ export default function LoginForm() {
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
-                  className={styles.input}
+                  className={INPUT_CLS}
                   placeholder="••••••••"
                   autoComplete="current-password"
                   defaultValue=""
@@ -248,7 +260,7 @@ export default function LoginForm() {
                 />
                 <button
                   type="button"
-                  className={styles.passwordToggle}
+                  className="absolute right-4 flex cursor-pointer items-center justify-center border-none bg-transparent p-0 text-gray-400 hover:text-gray-600"
                   onClick={togglePasswordVisibility}
                   aria-label="Toggle password visibility"
                 >
@@ -289,23 +301,26 @@ export default function LoginForm() {
               </div>
             </div>
 
-            <div className={styles.formActions}>
-              <label className={styles.rememberMe}>
+            <div className="mb-6 flex items-center justify-between">
+              <label className="flex cursor-pointer items-center gap-2">
                 <input
                   type="checkbox"
                   name="rememberMe"
-                  className={styles.checkbox}
+                  className="h-4 w-4 cursor-pointer rounded border border-gray-300"
                 />
-                <span className={styles.rememberText}>Ingat Saya</span>
+                <span className="text-sm text-gray-600">Ingat Saya</span>
               </label>
-              <a href="#" className={styles.forgotPassword}>
+              <a
+                href="#"
+                className="text-sm font-medium text-[#0A356A] no-underline hover:underline"
+              >
                 Lupa Password?
               </a>
             </div>
 
             <button
               type="submit"
-              className={styles.submitButton}
+              className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border-none bg-[#0A356A] py-3.5 text-sm font-semibold text-white transition-colors hover:bg-[#062854] disabled:cursor-not-allowed disabled:bg-gray-400 disabled:opacity-70 max-[480px]:py-4"
               disabled={npp.length < 5 || pending}
             >
               {pending ? "MEMPROSES..." : "MASUK"}
@@ -328,10 +343,12 @@ export default function LoginForm() {
             </button>
           </form>
 
-          <div className={styles.divider}>ATAU</div>
+          <div className="my-4 flex items-center gap-3 text-sm text-gray-500 before:flex-1 before:border-b before:border-gray-200 before:content-[''] after:flex-1 after:border-b after:border-gray-200 after:content-['']">
+            ATAU
+          </div>
           <button
             type="button"
-            className={styles.ssoButton}
+            className="flex w-full cursor-pointer items-center justify-center gap-2 rounded-md border border-gray-300 bg-white py-3.5 text-sm font-semibold text-gray-700 shadow-sm transition-[background-color,box-shadow] hover:bg-gray-50 max-[480px]:py-4"
             onClick={redirectLogin}
           >
             {/* Shield/Security Icon for SSO */}
@@ -351,17 +368,17 @@ export default function LoginForm() {
             Masuk dengan SSO
           </button>
 
-          <div className={styles.helpText}>
+          <div className="mt-6 text-center text-xs text-gray-500">
             Kesulitan mengakses akun?{" "}
-            <a href="#" className={styles.helpLink}>
+            <a href="#" className="text-[#0A356A] no-underline hover:underline">
               Hubungi Admin IT
             </a>
           </div>
         </div>
 
         {/* Footer */}
-        <div className={styles.footer}>
-          <div className={styles.supportInfo}>
+        <div className="flex items-center justify-between border-t border-gray-200 px-6 py-4 text-xs text-gray-500 lg:px-12">
+          <div className="flex items-center gap-2">
             <span>&copy; PT Pupuk Sriwidjaja Palembang</span>
           </div>
           <div>Versi Aplikasi 1.0 Build 1.0</div>

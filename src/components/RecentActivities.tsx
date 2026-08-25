@@ -1,43 +1,27 @@
-"use client";
 import { Plus } from "lucide-react";
-import { useEffect, useState } from "react";
-import { getEquipments } from "@/action/api";
 
 type Activity = {
   title: string;
   time: string;
-  icon: typeof Plus;
   iconBg: string;
   iconColor: string;
 };
 
-export function RecentActivities() {
-  const [activities, setActivities] = useState<Activity[]>([]);
-
-  useEffect(() => {
-    async function fetch() {
-      try {
-        const equipments: Record<string, unknown>[] = await getEquipments();
-        if (equipments && equipments.length > 0) {
-          // just taking first 5 equipments as 'registered' activities
-          setActivities(
-            equipments.slice(0, 5).map((e) => ({
-              title: `${String(e.name)} didaftarkan`,
-              time: e.created_at
-                ? new Date(String(e.created_at)).toLocaleDateString()
-                : "Hari ini",
-              icon: Plus,
-              iconBg: "bg-[#0556B3]",
-              iconColor: "text-white",
-            })),
-          );
-        }
-      } catch (err) {
-        console.error(err);
-      }
-    }
-    fetch();
-  }, []);
+/** Server Component — data dari RendalDashboard (satu fetch untuk semua anak). */
+export function RecentActivities({
+  equipments,
+}: {
+  equipments: Record<string, unknown>[];
+}) {
+  // just taking first 5 equipments as 'registered' activities
+  const activities: Activity[] = (equipments || []).slice(0, 5).map((e) => ({
+    title: `${String(e.name)} didaftarkan`,
+    time: e.created_at
+      ? new Date(String(e.created_at)).toLocaleDateString()
+      : "Hari ini",
+    iconBg: "bg-[#0556B3]",
+    iconColor: "text-white",
+  }));
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm flex flex-col h-full">
@@ -55,7 +39,7 @@ export function RecentActivities() {
                 <div
                   className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 border-2 border-white ${item.iconBg} ${item.iconColor} shadow-sm`}
                 >
-                  <item.icon className="w-4 h-4" />
+                  <Plus className="w-4 h-4" />
                 </div>
                 <div>
                   <p className="text-sm text-gray-800 font-medium leading-tight">

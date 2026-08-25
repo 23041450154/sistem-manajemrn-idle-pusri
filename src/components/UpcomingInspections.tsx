@@ -1,8 +1,6 @@
-"use client";
+/* Server Component — data dari RendalDashboard (satu fetch untuk semua anak). */
 /* ponytail: payload API legacy tetap untyped sampai backend mengekspor DTO bersama. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useEffect, useState } from "react";
-import { getInspections, getObjectTypes } from "@/action/api";
 
 type ApiRow = Record<string, any>;
 
@@ -16,57 +14,42 @@ type InspectionRow = {
   statusColor: string;
 };
 
-export function UpcomingInspections() {
-  const [inspections, setInspections] = useState<InspectionRow[]>([]);
-
-  useEffect(() => {
-    async function fetch() {
-      try {
-        const [data, objTypes] = await Promise.all([
-          getInspections(),
-          getObjectTypes(),
-        ]);
-        if (data) {
-          // just taking first 5 if available
-          setInspections(
-            data.slice(0, 5).map((d: ApiRow) => {
-              let typeName = "Tipe";
-              const eq = d.equipment;
-              if (eq) {
-                if (eq.object_type?.name) typeName = eq.object_type.name;
-                else if (eq.objectType?.name) typeName = eq.objectType.name;
-                else {
-                  const otId =
-                    eq.id_object_type || eq.object_type_id || eq.objectTypeId;
-                  if (otId && objTypes) {
-                    const found = objTypes.find(
-                      (o: ApiRow) => o.id === otId || o.id === Number(otId),
-                    );
-                    if (found) typeName = found.name;
-                  }
-                }
-              }
-
-              return {
-                name: eq?.name || "Peralatan",
-                type: typeName,
-                id: eq?.equipment_code || "-",
-                dept: eq?.plant || "-",
-                date: d.inspection_date
-                  ? new Date(d.inspection_date).toLocaleDateString()
-                  : "-",
-                status: d.inspection_status || "MENDATANG",
-                statusColor: "bg-orange-100 text-orange-700",
-              };
-            }),
+export function UpcomingInspections({
+  inspections,
+  objectTypes,
+}: {
+  inspections: ApiRow[];
+  objectTypes: ApiRow[];
+}) {
+  const rows: InspectionRow[] = (inspections || []).slice(0, 5).map((d) => {
+    let typeName = "Tipe";
+    const eq = d.equipment;
+    if (eq) {
+      if (eq.object_type?.name) typeName = eq.object_type.name;
+      else if (eq.objectType?.name) typeName = eq.objectType.name;
+      else {
+        const otId = eq.id_object_type || eq.object_type_id || eq.objectTypeId;
+        if (otId && objectTypes) {
+          const found = objectTypes.find(
+            (o: ApiRow) => o.id === otId || o.id === Number(otId),
           );
+          if (found) typeName = found.name;
         }
-      } catch (err) {
-        console.error(err);
       }
     }
-    fetch();
-  }, []);
+
+    return {
+      name: eq?.name || "Peralatan",
+      type: typeName,
+      id: eq?.equipment_code || "-",
+      dept: eq?.plant || "-",
+      date: d.inspection_date
+        ? new Date(d.inspection_date).toLocaleDateString()
+        : "-",
+      status: d.inspection_status || "MENDATANG",
+      statusColor: "bg-orange-100 text-orange-700",
+    };
+  });
 
   return (
     <div className="bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-full">
@@ -100,8 +83,8 @@ export function UpcomingInspections() {
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
-            {inspections.length > 0 ? (
-              inspections.map((item, idx) => (
+            {rows.length > 0 ? (
+              rows.map((item, idx) => (
                 <tr key={idx} className="hover:bg-gray-50/50 transition-colors">
                   <td className="py-4 px-6">
                     <p className="text-sm font-bold text-gray-800">

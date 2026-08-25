@@ -7,6 +7,7 @@ import React, { useEffect, useState, useMemo, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { getReuseRequests } from "@/action/api";
 import { buttonVariants } from "@/components/ui/button";
+import { formatDate } from "@/lib/utils";
 import {
 	CheckCircle2,
 	ChevronRight,
@@ -47,8 +48,16 @@ const STATUS_META: Record<
 	ReuseRequestItem["status"],
 	{ label: string; bg: string; text: string }
 > = {
-	PENDING: { label: "Menunggu Persetujuan", bg: "bg-[#FEF3C7]", text: "text-[#B45309]" },
-	IN_REVIEW: { label: "Dalam Peninjauan", bg: "bg-[#FEF3C7]", text: "text-[#B45309]" },
+	PENDING: {
+		label: "Menunggu Persetujuan",
+		bg: "bg-[#FEF3C7]",
+		text: "text-[#B45309]",
+	},
+	IN_REVIEW: {
+		label: "Dalam Peninjauan",
+		bg: "bg-[#FEF3C7]",
+		text: "text-[#B45309]",
+	},
 	APPROVED: { label: "Disetujui", bg: "bg-[#DCFCE7]", text: "text-[#16A34A]" },
 	REJECTED: { label: "Ditolak", bg: "bg-[#FEE2E2]", text: "text-[#DC2626]" },
 };
@@ -82,16 +91,6 @@ function getPageWindow(current: number, total: number): (number | "gap")[] {
 		prev = p;
 	}
 	return out;
-}
-
-function formatDate(iso: string) {
-	const d = new Date(iso);
-	if (Number.isNaN(d.getTime())) return iso;
-	return new Intl.DateTimeFormat("id-ID", {
-		day: "numeric",
-		month: "short",
-		year: "numeric",
-	}).format(d);
 }
 
 function RiwayatPermintaanContent() {
@@ -588,7 +587,12 @@ function RiwayatPermintaanContent() {
 									No
 								</th>
 								{sortableTh("request_number", "No. Pengajuan", "left", "w-[180px]")}
-								{sortableTh("equipment_name", "Nama Alat", "left", "w-[240px] max-w-[260px]")}
+								{sortableTh(
+									"equipment_name",
+									"Nama Alat",
+									"left",
+									"w-[240px] max-w-[260px]",
+								)}
 								{sortableTh("target_plant", "Plant", "left", "w-[160px]")}
 								{sortableTh("start_date", "Tgl Permintaan", "center", "w-[140px]")}
 								<th

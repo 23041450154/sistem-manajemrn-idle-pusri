@@ -152,20 +152,24 @@ export default function ValidasiUlangPage() {
 						alasanIdle: item.idle_reason || item.alasan_idle || "-",
 					};
 				});
-				filtered.sort((a: any, b: any) => {
-					const timeA = a.tanggalSelesai && a.tanggalSelesai !== "-" ? new Date(a.tanggalSelesai).getTime() : 0;
-					const timeB = b.tanggalSelesai && b.tanggalSelesai !== "-" ? new Date(b.tanggalSelesai).getTime() : 0;
-					if (timeB !== timeA) return timeB - timeA;
-					return (Number(b.id) || 0) - (Number(a.id) || 0);
-				});
+			filtered.sort((a, b) => {
+				const timeA =
+					a.tanggalSelesai && a.tanggalSelesai !== "-"
+						? new Date(a.tanggalSelesai).getTime()
+						: 0;
+				const timeB =
+					b.tanggalSelesai && b.tanggalSelesai !== "-"
+						? new Date(b.tanggalSelesai).getTime()
+						: 0;
+				if (timeB !== timeA) return timeB - timeA;
+				return (Number(b.id) || 0) - (Number(a.id) || 0);
+			});
 		}
 
 		return { items: filtered };
 	};
 
-	const applyRevalidasiData = (result: {
-		items: RevalidasiItem[];
-	}) => {
+	const applyRevalidasiData = (result: { items: RevalidasiItem[] }) => {
 		setItems(result.items);
 	};
 
@@ -304,14 +308,10 @@ export default function ValidasiUlangPage() {
 		setIsSubmitting(true);
 		setModalError(null);
 		try {
-			const result = await createRevalidation(
-				selectedAsset.id,
-				hasilStatus,
-				{
-					notes,
-					followupRecommendation,
-				},
-			);
+			const result = await createRevalidation(selectedAsset.id, hasilStatus, {
+				notes,
+				followupRecommendation,
+			});
 
 			if (result.success) {
 				if (hasilStatus === "REVALIDATION") {
@@ -336,9 +336,12 @@ export default function ValidasiUlangPage() {
 			} else {
 				setModalError(result.message || "Gagal menyimpan re-validasi ke database.");
 			}
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		} catch (err) {
-			setModalError(err instanceof Error ? err.message : "Terjadi kesalahan koneksi ke database.");
+			setModalError(
+				err instanceof Error
+					? err.message
+					: "Terjadi kesalahan koneksi ke database.",
+			);
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -346,8 +349,7 @@ export default function ValidasiUlangPage() {
 
 	const getConditionBadge = (kondisi: string) => {
 		const k = (kondisi || "").toUpperCase();
-		if (k === "BAIK" || k === "BAGUS")
-			return "bg-[#DCFCE7] text-[#16A34A]";
+		if (k === "BAIK" || k === "BAGUS") return "bg-[#DCFCE7] text-[#16A34A]";
 		if (k === "-" || !k) return "bg-gray-100 text-gray-500";
 		if (k.includes("RUSAK BERAT") || k.includes("SCRAP"))
 			return "bg-[#FEE2E2] text-[#DC2626]";
@@ -756,27 +758,43 @@ export default function ValidasiUlangPage() {
 								<div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
 									<div className="bg-[#F2F3F4] border border-[#E6E8EA] rounded p-3 grid grid-cols-2 gap-3 text-xs">
 										<div>
-											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Kode Alat</p>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">
+												Kode Alat
+											</p>
 											<p className="font-bold text-[#0F172A]">{selectedAsset.kodeAlat}</p>
 										</div>
 										<div>
-											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Nama Peralatan</p>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">
+												Nama Peralatan
+											</p>
 											<p className="font-bold text-[#0F172A]">{selectedAsset.namaAlat}</p>
 										</div>
 										<div>
-											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Tipe Objek</p>
-											<p className="font-semibold text-[#0F172A]">{selectedAsset.tipeObjek}</p>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">
+												Tipe Objek
+											</p>
+											<p className="font-semibold text-[#0F172A]">
+												{selectedAsset.tipeObjek}
+											</p>
 										</div>
 										<div>
-											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Plant</p>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">
+												Plant
+											</p>
 											<p className="font-semibold text-[#0F172A]">{selectedAsset.plant}</p>
 										</div>
 										<div>
-											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Lokasi Simpan</p>
-											<p className="font-semibold text-[#0F172A]">{selectedAsset.lokasiPenyimpanan}</p>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">
+												Lokasi Simpan
+											</p>
+											<p className="font-semibold text-[#0F172A]">
+												{selectedAsset.lokasiPenyimpanan}
+											</p>
 										</div>
 										<div>
-											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Kondisi</p>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">
+												Kondisi
+											</p>
 											<div className="mt-0.5">
 												<span
 													className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${getConditionBadge(selectedAsset.kondisiSebelumnya)}`}
@@ -786,11 +804,17 @@ export default function ValidasiUlangPage() {
 											</div>
 										</div>
 										<div>
-											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Tanggal Selesai</p>
-											<p className="font-semibold text-[#0F172A]">{selectedAsset.tanggalSelesai}</p>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">
+												Tanggal Selesai
+											</p>
+											<p className="font-semibold text-[#0F172A]">
+												{selectedAsset.tanggalSelesai}
+											</p>
 										</div>
 										<div>
-											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">Status Aset</p>
+											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">
+												Status Aset
+											</p>
 											<div className="mt-0.5">
 												<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#DCFCE7] text-[#16A34A]">
 													VALIDATED
@@ -802,22 +826,32 @@ export default function ValidasiUlangPage() {
 									<div className="bg-white border border-[#E6E8EA] rounded p-3 space-y-2 text-xs">
 										<div className="flex justify-between py-1 border-b border-gray-100">
 											<span className="text-[#64748B] font-medium">Vendor / Pabrikan</span>
-											<span className="font-semibold text-[#0F172A]">{selectedAsset.vendor || "-"}</span>
+											<span className="font-semibold text-[#0F172A]">
+												{selectedAsset.vendor || "-"}
+											</span>
 										</div>
 										<div className="flex justify-between py-1 border-b border-gray-100">
 											<span className="text-[#64748B] font-medium">No. Seri</span>
-											<span className="font-semibold text-[#0F172A]">{selectedAsset.serialNumber || "-"}</span>
+											<span className="font-semibold text-[#0F172A]">
+												{selectedAsset.serialNumber || "-"}
+											</span>
 										</div>
 										<div className="flex justify-between py-1 border-b border-gray-100">
 											<span className="text-[#64748B] font-medium">Tahun</span>
-											<span className="font-semibold text-[#0F172A]">{selectedAsset.tahun || "-"}</span>
+											<span className="font-semibold text-[#0F172A]">
+												{selectedAsset.tahun || "-"}
+											</span>
 										</div>
 										<div className="flex justify-between py-1 border-b border-gray-100">
 											<span className="text-[#64748B] font-medium">Alasan Idle</span>
-											<span className="font-semibold text-[#0F172A]">{selectedAsset.alasanIdle || "-"}</span>
+											<span className="font-semibold text-[#0F172A]">
+												{selectedAsset.alasanIdle || "-"}
+											</span>
 										</div>
 										<div className="pt-1">
-											<span className="text-[#64748B] font-medium block mb-1">Catatan</span>
+											<span className="text-[#64748B] font-medium block mb-1">
+												Catatan
+											</span>
 											<p className="text-[#0F172A] leading-relaxed bg-gray-50 p-2 rounded border border-gray-100">
 												{selectedAsset.catatan || "-"}
 											</p>
@@ -888,97 +922,104 @@ export default function ValidasiUlangPage() {
 									</div>
 
 									{/* Hasil Validasi Ulang (status tujuan) */}
-								<div>
-									<label className="text-xs font-bold text-gray-700 block mb-1.5">
-										Hasil Validasi Ulang <span className="text-[#DC2626]">*</span>
-									</label>
-									<div className="grid grid-cols-1 gap-2">
-										{[
-											{
-												value: "REVALIDATION",
-												title: "Perbaikan Berhasil",
-												desc: "Aset layak, lanjut ke persetujuan Rendal",
-											},
-											{
-												value: "REPAIR",
-												title: "Masih Perlu Perbaikan",
-												desc: "Kembali ke antrean perbaikan",
-											},
-											{
-												value: "DISPOSAL_RECOMMENDED",
-												title: "Tidak Layak Pakai",
-												desc: "Usul scrap / penghapusan",
-											},
-										].map((opt) => (
-											<label
-												key={opt.value}
-												className={`flex items-start gap-2.5 border rounded p-2.5 cursor-pointer transition-all ${
-													hasilStatus === opt.value
-														? "border-[#0A356A] bg-blue-50/40"
-														: "border-gray-200 bg-white hover:bg-gray-50"
-												}`}
-											>
-												<input
-													type="radio"
-													name="hasil-validasi-ulang"
-													value={opt.value}
-													checked={hasilStatus === opt.value}
-													onChange={(e) => setHasilStatus(e.target.value)}
-													className="mt-0.5 accent-[#0A356A]"
-												/>
-												<span>
-													<span className="block text-sm font-semibold text-gray-800">
-														{opt.title}
+									<div>
+										<label className="text-xs font-bold text-gray-700 block mb-1.5">
+											Hasil Validasi Ulang <span className="text-[#DC2626]">*</span>
+										</label>
+										<div className="grid grid-cols-1 gap-2">
+											{[
+												{
+													value: "REVALIDATION",
+													title: "Perbaikan Berhasil",
+													desc: "Aset layak, lanjut ke persetujuan Rendal",
+												},
+												{
+													value: "REPAIR",
+													title: "Masih Perlu Perbaikan",
+													desc: "Kembali ke antrean perbaikan",
+												},
+												{
+													value: "DISPOSAL_RECOMMENDED",
+													title: "Tidak Layak Pakai",
+													desc: "Usul scrap / penghapusan",
+												},
+											].map((opt) => (
+												<label
+													key={opt.value}
+													className={`flex items-start gap-2.5 border rounded p-2.5 cursor-pointer transition-all ${
+														hasilStatus === opt.value
+															? "border-[#0A356A] bg-blue-50/40"
+															: "border-gray-200 bg-white hover:bg-gray-50"
+													}`}
+												>
+													<input
+														type="radio"
+														name="hasil-validasi-ulang"
+														value={opt.value}
+														checked={hasilStatus === opt.value}
+														onChange={(e) => setHasilStatus(e.target.value)}
+														className="mt-0.5 accent-[#0A356A]"
+													/>
+													<span>
+														<span className="block text-sm font-semibold text-gray-800">
+															{opt.title}
+														</span>
+														<span className="block text-[11px] text-gray-500">
+															→ Status {opt.value.replace(/_/g, " ")} — {opt.desc}
+														</span>
 													</span>
-													<span className="block text-[11px] text-gray-500">
-														→ Status {opt.value.replace(/_/g, " ")} — {opt.desc}
-													</span>
-												</span>
-											</label>
-										))}
+												</label>
+											))}
+										</div>
+
+										{/* Dynamic Impact Indicator Card */}
+										{hasilStatus === "REVALIDATION" && (
+											<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#059669] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
+												<CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
+												<div>
+													<p className="font-bold text-[#059669]">
+														Status Naik ke REVALIDATION
+													</p>
+													<p className="text-[11px] text-[#059669] mt-0.5 leading-relaxed">
+														Perbaikan dinyatakan berhasil. Aset akan diteruskan ke{" "}
+														<strong>Rendal Pemeliharaan</strong> untuk persetujuan status{" "}
+														<strong>Ready to Use</strong>.
+													</p>
+												</div>
+											</div>
+										)}
+										{hasilStatus === "REPAIR" && (
+											<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#B45309] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
+												<Wrench className="w-4 h-4 text-[#B45309] shrink-0 mt-0.5" />
+												<div>
+													<p className="font-bold text-[#B45309]">
+														Status Kembali ke REPAIR
+													</p>
+													<p className="text-[11px] text-[#B45309] mt-0.5 leading-relaxed">
+														Aset masih mengalami kendala teknis dan akan dikembalikan ke
+														antrean perbaikan <strong>Pemeliharaan Lapangan</strong>.
+													</p>
+												</div>
+											</div>
+										)}
+										{hasilStatus === "DISPOSAL_RECOMMENDED" && (
+											<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#DC2626] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
+												<Trash2 className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
+												<div>
+													<p className="font-bold text-[#DC2626]">
+														Status Dialihkan ke DISPOSAL_RECOMMENDED
+													</p>
+													<p className="text-[11px] text-[#DC2626] mt-0.5 leading-relaxed">
+														Kerusakan berat dan tidak ekonomis diperbaiki. Aset
+														direkomendasikan untuk proses usulan{" "}
+														<strong>Scrap / Penghapusan</strong>.
+													</p>
+												</div>
+											</div>
+										)}
 									</div>
 
-									{/* Dynamic Impact Indicator Card */}
-									{hasilStatus === "REVALIDATION" && (
-										<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#059669] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
-											<CheckCircle2 className="w-4 h-4 text-[#059669] shrink-0 mt-0.5" />
-											<div>
-												<p className="font-bold text-[#059669]">Status Naik ke REVALIDATION</p>
-												<p className="text-[11px] text-[#059669] mt-0.5 leading-relaxed">
-													Perbaikan dinyatakan berhasil. Aset akan diteruskan ke{" "}
-													<strong>Rendal Pemeliharaan</strong> untuk persetujuan status{" "}
-													<strong>Ready to Use</strong>.
-												</p>
-											</div>
-										</div>
-									)}
-									{hasilStatus === "REPAIR" && (
-										<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#B45309] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
-											<Wrench className="w-4 h-4 text-[#B45309] shrink-0 mt-0.5" />
-											<div>
-												<p className="font-bold text-[#B45309]">Status Kembali ke REPAIR</p>
-												<p className="text-[11px] text-[#B45309] mt-0.5 leading-relaxed">
-													Aset masih mengalami kendala teknis dan akan dikembalikan ke antrean
-													perbaikan <strong>Pemeliharaan Lapangan</strong>.
-												</p>
-											</div>
-										</div>
-									)}
-									{hasilStatus === "DISPOSAL_RECOMMENDED" && (
-										<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#DC2626] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
-											<Trash2 className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
-											<div>
-												<p className="font-bold text-[#DC2626]">Status Dialihkan ke DISPOSAL_RECOMMENDED</p>
-												<p className="text-[11px] text-[#DC2626] mt-0.5 leading-relaxed">
-													Kerusakan berat dan tidak ekonomis diperbaiki. Aset direkomendasikan
-													untuk proses usulan <strong>Scrap / Penghapusan</strong>.
-												</p>
-											</div>
-										</div>
-									)}
-								</div>
-
-								{/* Catatan */}
+									{/* Catatan */}
 									<div>
 										<label className="text-xs font-bold text-gray-700 block mb-1.5">
 											Catatan Pemeriksaan

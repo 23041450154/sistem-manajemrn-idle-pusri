@@ -221,3 +221,22 @@
     margin: 0 !important;
   }
 }
+/* Autofill detection hack (login): animasi kosong untuk memicu
+   onAnimationStart di input saat browser mengisi otomatis. */
+@keyframes onAutoFillStart {
+  from {
+    /**/
+  }
+  to {
+    /**/
+  }
+}
+
+@keyframes onAutoFillCancel {
+  from {
+    /**/
+  }
+  to {
+    /**/
+  }
+}

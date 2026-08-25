@@ -6,11 +6,9 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
 import {
 	Search,
-	Eye,
 	Edit,
 	AlertCircle,
 	X,
-	Check,
 	Save,
 	Clock,
 	UploadCloud,
@@ -18,12 +16,9 @@ import {
 	RefreshCw,
 	XCircle,
 	CheckCircle2,
-	ChevronRight,
 	ArrowUpDown,
 	ArrowUp,
 	ArrowDown,
-	Download,
-	Info,
 } from "lucide-react";
 
 import AnalogTimePicker from "@/components/AnalogTimePicker";
@@ -35,16 +30,10 @@ import {
 	validateEquipment,
 	getObjectTypes,
 	getApprovals,
-	getAttachmentsByEquipmentId,
-	uploadEquipmentAttachment,
+	uploadAttachment,
 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
-import {
-	type EquipmentStatus,
-	statusBadgeStyle,
-	statusName,
-	statusText,
-} from "@/lib/equipment-status";
+import { type EquipmentStatus, statusName } from "@/lib/equipment-status";
 
 // Tipe Data
 type AssetState = EquipmentStatus | "REJECTED";
@@ -222,7 +211,6 @@ export default function RevisiValidasiPage() {
 		type: "success" | "error";
 		message: string;
 	} | null>(null);
-	const [attachments, setAttachments] = useState<any[]>([]);
 
 	useEffect(() => {
 		const timer = setTimeout(() => {
@@ -254,28 +242,6 @@ export default function RevisiValidasiPage() {
 	const [jamMulai, setJamMulai] = useState("08:00");
 	const [jamSelesai, setJamSelesai] = useState("09:00");
 
-	const handleTimeInput = (
-		value: string,
-		setter: React.Dispatch<React.SetStateAction<string>>,
-	) => {
-		const numbers = value.replace(/\D/g, "");
-		if (numbers.length > 4) return;
-		let formatted = numbers;
-		if (numbers.length >= 3) {
-			formatted = `${numbers.slice(0, 2)}:${numbers.slice(2)}`;
-		}
-
-		if (formatted.length >= 2) {
-			const h = parseInt(formatted.slice(0, 2), 10);
-			if (h > 23) formatted = `23${formatted.slice(2)}`;
-		}
-		if (formatted.length === 5) {
-			const m = parseInt(formatted.slice(3, 5), 10);
-			if (m > 59) formatted = `${formatted.slice(0, 3)}59`;
-		}
-
-		setter(formatted);
-	};
 	const [lokasi, setLokasi] = useState("");
 	const [showValidationErrors, setShowValidationErrors] = useState(false);
 
@@ -306,17 +272,7 @@ export default function RevisiValidasiPage() {
 		setUploadedFiles([]); // Reset files
 		setShowValidationErrors(false);
 		setFileError(null);
-		setAttachments([]);
 		setPreviewImage(null);
-
-		try {
-			const attsData = await getAttachmentsByEquipmentId(asset.id);
-			if (attsData && Array.isArray(attsData)) {
-				setAttachments(attsData);
-			}
-		} catch (err) {
-			console.error(err);
-		}
 
 		setHasilPemeriksaan(
 			asset.statusAset === "REJECTED" ? "Tidak Layak" : "Layak",
@@ -352,40 +308,27 @@ export default function RevisiValidasiPage() {
 			);
 
 			if (res.success) {
+				const failures: string[] = [];
 				if (uploadedFiles && uploadedFiles.length > 0) {
-					try {
-						const tokenMatch = document.cookie.match(/(^|;)\s*token\s*=\s*([^;]+)/);
-						const token = tokenMatch ? tokenMatch[2] : "";
-						const API_URL =
-							process.env.NEXT_PUBLIC_API_URL || "https://api.testing.naufal.me";
-
-						for (const file of uploadedFiles) {
-							const fd = new FormData();
-							fd.append("equipment_id", selectedAsset.id);
-							fd.append("file", file);
-							fd.append("category", "inspection_photo");
-
-							const resUpload = await fetch(`${API_URL}/api/attachments/upload`, {
-								method: "POST",
-								headers: {
-									Authorization: `Bearer ${token}`,
-								},
-								body: fd,
-							});
-							if (!resUpload.ok) {
-								console.error("Gagal upload file:", file.name, await resUpload.text());
-							} else {
-								console.log("Upload berhasil:", await resUpload.json());
-							}
+					// Lampiran gagal upload tidak membatalkan revisi yang sudah terkirim.
+					for (const file of uploadedFiles) {
+						const up = await uploadAttachment(
+							selectedAsset.id,
+							file,
+							"inspection_photo",
+						);
+						if (!up.success) {
+							failures.push(file.name);
+							console.error("Gagal upload file:", file.name, up.message);
 						}
-					} catch (err) {
-						console.error("Error during file upload:", err);
 					}
 				}
 
 				setNotification({
 					type: "success",
-					message: "Revisi validasi berhasil disubmit ke sistem.",
+					message: failures.length
+						? `Revisi validasi terkirim, namun ${failures.length} foto gagal diunggah: ${failures.join(", ")}`
+						: "Revisi validasi berhasil disubmit ke sistem.",
 				});
 
 				// Remove processed equipment from revisi list
@@ -504,8 +447,14 @@ export default function RevisiValidasiPage() {
 			});
 		} else {
 			filtered.sort((a, b) => {
-				const timeA = a.tanggalRegistrasi && a.tanggalRegistrasi !== "-" ? new Date(a.tanggalRegistrasi).getTime() : 0;
-				const timeB = b.tanggalRegistrasi && b.tanggalRegistrasi !== "-" ? new Date(b.tanggalRegistrasi).getTime() : 0;
+				const timeA =
+					a.tanggalRegistrasi && a.tanggalRegistrasi !== "-"
+						? new Date(a.tanggalRegistrasi).getTime()
+						: 0;
+				const timeB =
+					b.tanggalRegistrasi && b.tanggalRegistrasi !== "-"
+						? new Date(b.tanggalRegistrasi).getTime()
+						: 0;
 				if (timeB !== timeA) return timeB - timeA;
 				return (Number(b.id) || 0) - (Number(a.id) || 0);
 			});
