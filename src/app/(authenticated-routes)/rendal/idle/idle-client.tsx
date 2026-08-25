@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useEffect, useState, useMemo } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import {
@@ -705,10 +706,12 @@ export default function RendalIdleClient({
 													rel="noopener noreferrer"
 													className="group relative border border-gray-200 rounded-lg overflow-hidden aspect-video bg-gray-100 hover:border-[#0A356A] transition-all shadow-sm"
 												>
-													<img
+													<Image
 														src={photoUrl}
 														alt={`Foto ${index + 1}`}
-														className="w-full h-full object-cover transition-all group-hover:scale-105"
+														fill
+														sizes="(max-width: 768px) 50vw, 300px"
+														className="object-cover transition-all group-hover:scale-105"
 													/>
 												</a>
 											);

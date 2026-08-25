@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { completeEquipmentRepair } from "@/action/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
@@ -706,11 +707,12 @@ export default function PerbaikanAlatClient({
 											className="block w-full aspect-[4/3] overflow-hidden rounded-[4px] border border-[#E6E8EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#334155] focus:ring-offset-1"
 											aria-label="Perbesar foto utama peralatan"
 										>
-											{/* eslint-disable-next-line @next/next/no-img-element -- file_url berasal dari host backend dinamis, tidak terdaftar di images.remotePatterns */}
-											<img
+											<Image
 												src={selectedAsset.foto[0]}
 												alt={`Foto peralatan ${selectedAsset.namaAlat}`}
-												className="w-full h-full object-cover"
+												fill
+												sizes="(max-width: 768px) 100vw, 300px"
+												className="object-cover"
 											/>
 										</button>
 										{selectedAsset.foto.length > 1 && (
@@ -723,8 +725,13 @@ export default function PerbaikanAlatClient({
 														className="aspect-square overflow-hidden rounded-[4px] border border-[#E6E8EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#334155] focus:ring-offset-1"
 														aria-label={`Perbesar foto peralatan ${i + 2}`}
 													>
-														{/* eslint-disable-next-line @next/next/no-img-element -- lihat catatan foto utama */}
-														<img src={url} alt="" className="w-full h-full object-cover" />
+														<Image
+															src={url}
+															fill
+															sizes="80px"
+															className="object-cover"
+															alt=""
+														/>
 													</button>
 												))}
 											</div>
@@ -952,12 +959,15 @@ export default function PerbaikanAlatClient({
 					onClick={() => setPreviewImage(null)}
 					className="fixed inset-0 z-[110] flex items-center justify-center p-6 bg-[#0F172A]/80 animate-in fade-in duration-200"
 				>
-					{/* eslint-disable-next-line @next/next/no-img-element -- file_url berasal dari host backend dinamis */}
-					<img
-						src={previewImage}
-						alt="Pratinjau foto peralatan"
-						className="max-w-full max-h-full object-contain rounded-[4px] border border-white/20"
-					/>
+					<div className="relative w-[92vw] max-w-5xl h-[85vh]">
+						<Image
+							src={previewImage}
+							alt="Pratinjau foto peralatan"
+							fill
+							sizes="92vw"
+							className="object-contain rounded-[4px] border border-white/20"
+						/>
+					</div>
 					<X
 						className="absolute top-5 right-5 w-5 h-5 text-white/80"
 						aria-hidden="true"

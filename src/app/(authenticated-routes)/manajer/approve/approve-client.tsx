@@ -5,6 +5,7 @@
 
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import {
 	Eye,
 	X,
@@ -762,10 +763,12 @@ export default function ManajerApproveClient({
 													className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-square"
 													onClick={() => setPreviewImage(att.file_url || att.url)}
 												>
-													<img
+													<Image
 														src={att.file_url || att.url}
 														alt={att.description || att.file_name || `Foto ${idx + 1}`}
-														className="w-full h-full object-cover transition-transform group-hover:scale-105"
+														fill
+														sizes="(max-width: 768px) 33vw, 250px"
+														className="object-cover transition-transform group-hover:scale-105"
 													/>
 													<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
 														<Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -1003,12 +1006,14 @@ export default function ManajerApproveClient({
 										attachments.slice(0, 2).map((att: any, idx: number) => (
 											<div
 												key={idx}
-												className="w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
+												className="relative w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
 												onClick={() => setPreviewImage(att.file_url || att.url)}
 											>
-												<img
+												<Image
 													src={att.file_url || att.url}
-													className="object-cover w-full h-full"
+													fill
+													sizes="96px"
+													className="object-cover"
 													alt={`Foto ${idx + 1}`}
 												/>
 											</div>
@@ -1215,12 +1220,16 @@ export default function ManajerApproveClient({
 					>
 						<X className="w-6 h-6" />
 					</button>
-					<img
-						src={previewImage}
-						alt="Preview"
-						className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
-						onClick={(e) => e.stopPropagation()}
-					/>
+					<div className="relative w-[92vw] max-w-5xl h-[85vh]">
+						<Image
+							src={previewImage}
+							alt="Preview"
+							fill
+							sizes="92vw"
+							className="object-contain rounded-lg shadow-2xl"
+							onClick={(e) => e.stopPropagation()}
+						/>
+					</div>
 				</div>
 			)}
 		</div>

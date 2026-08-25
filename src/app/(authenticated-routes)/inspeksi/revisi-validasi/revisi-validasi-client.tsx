@@ -2,6 +2,7 @@
 
 /* ponytail: payload API legacy tetap untyped sampai backend mengekspor DTO bersama. */
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import Image from "next/image";
 import {
 	Search,
 	Edit,
@@ -1117,6 +1118,8 @@ export default function RevisiValidasiClient({
 														>
 															{isImage ? (
 																<div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+																	{/* <img> wajib: URL blob lokal (createObjectURL) tak bisa lewat next/image remotePatterns */}
+																	{/* eslint-disable-next-line @next/next/no-img-element -- URL blob lokal (createObjectURL) tidak dapat melewati next/image remotePatterns */}
 																	<img
 																		src={previewUrl!}
 																		alt={file.name}
@@ -1207,12 +1210,16 @@ export default function RevisiValidasiClient({
 					>
 						<X className="w-6 h-6" />
 					</button>
-					<img
-						src={previewImage}
-						alt="Preview"
-						className="max-w-full max-h-full object-contain rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
-						onClick={(e) => e.stopPropagation()}
-					/>
+					<div className="relative w-[92vw] max-w-5xl h-[85vh]">
+						<Image
+							src={previewImage}
+							alt="Preview"
+							fill
+							sizes="92vw"
+							className="object-contain rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
+							onClick={(e) => e.stopPropagation()}
+						/>
+					</div>
 				</div>
 			)}
 

@@ -746,6 +746,8 @@ export default function RegisterEquipmentClient({
 													>
 														{isImage ? (
 															<div className="h-16 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+																{/* <img> wajib: URL blob lokal (createObjectURL) tak bisa lewat next/image remotePatterns */}
+																{/* eslint-disable-next-line @next/next/no-img-element -- URL blob lokal (createObjectURL) tidak dapat melewati next/image remotePatterns */}
 																<img
 																	src={previewUrl!}
 																	alt={file.name}

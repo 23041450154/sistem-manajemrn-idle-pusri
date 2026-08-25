@@ -616,6 +616,8 @@ export default function FormInspeksiClient({
 												key={idx}
 												className="relative group rounded-md overflow-hidden border border-gray-200 aspect-square bg-gray-100"
 											>
+												{/* <img> wajib: URL blob lokal (createObjectURL) tak bisa lewat next/image remotePatterns */}
+												{/* eslint-disable-next-line @next/next/no-img-element -- URL blob lokal (createObjectURL) tidak dapat melewati next/image remotePatterns */}
 												<img
 													src={URL.createObjectURL(file)}
 													alt={`Preview ${idx}`}

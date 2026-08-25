@@ -5,6 +5,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import React, { useEffect, useState, useMemo } from "react";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { createReuseRequest, getAttachmentsByEquipmentId } from "@/action/api";
 import { statusBadgeStyle, statusText } from "@/lib/equipment-status";
@@ -1053,11 +1054,13 @@ export default function UnitKerjaIdleClient({
                         className="h-28 bg-gray-100 rounded-lg border border-gray-200 overflow-hidden cursor-pointer hover:opacity-90 transition-opacity relative group"
                         onClick={() => setPreviewImage(att.file_url || att.url)}
                       >
-                        <img
-                          src={att.file_url || att.url}
-                          alt={`Lampiran ${idx + 1}`}
-                          className="w-full h-full object-cover"
-                        />
+<Image
+	src={att.file_url || att.url}
+	alt={`Lampiran ${idx + 1}`}
+	fill
+	sizes="(max-width: 768px) 33vw, 256px"
+	className="object-cover"
+/>
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white text-[11px] font-medium">
                           Lihat Foto
                         </div>
@@ -1175,6 +1178,8 @@ export default function UnitKerjaIdleClient({
                             }
                             title={`Foto ${idx + 1}`}
                           >
+{/* Thumbnail ≤64px (h-10 w-14): tetap <img> sesuai keputusan handoff */}
+                            {/* eslint-disable-next-line @next/next/no-img-element -- thumbnail ≤64px, tetap <img> sesuai keputusan handoff */}
                             <img
                               src={att.file_url || att.url}
                               alt={`Foto Aset ${idx + 1}`}
@@ -1395,12 +1400,14 @@ export default function UnitKerjaIdleClient({
           className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
           onClick={() => setPreviewImage(null)}
         >
-          <div className="relative max-w-4xl max-h-[90vh] overflow-hidden rounded-lg">
-            <img
-              src={previewImage}
-              alt="Preview Lampiran Foto"
-              className="w-full h-full object-contain max-h-[85vh]"
-            />
+          <div className="relative w-[92vw] max-w-4xl h-[85vh] overflow-hidden rounded-lg">
+<Image
+	src={previewImage}
+	alt="Preview Lampiran Foto"
+	fill
+	sizes="92vw"
+	className="object-contain"
+/>
             <button
               onClick={() => setPreviewImage(null)}
               className="absolute top-2 right-2 bg-black/50 text-white p-1.5 rounded-full hover:bg-black/80 transition-colors"
