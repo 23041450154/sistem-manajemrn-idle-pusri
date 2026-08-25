@@ -1,21 +1,21 @@
 # Graph Report - sistem-manajemrn-idle-pusri  (2026-08-25)
 
 ## Corpus Check
-- 142 files · ~278,438 words
+- 143 files · ~278,354 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 714 nodes · 1410 edges · 56 communities (45 shown, 11 thin omitted)
+- 716 nodes · 1415 edges · 56 communities (45 shown, 11 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 5 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `c570f235`
+- Built from commit: `5459a6fb`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- equipment-status.ts
+- rendal/idle/page.tsx
 - auth.ts
 - open-in-terminal/main.js
 - shared.tsx
@@ -26,18 +26,18 @@
 - claude-code-ide/main.js
 - master.ts
 - Handoff — Lanjutan Audit & Cleanup Frontend Idle PUSRI
-- approve-client.tsx
+- equipment-status.ts
 - buttonVariants
-- inspeksi-berkala/page.tsx
+- inspection-schedule.ts
 - DESIGN.md — Idle Equipment Console
 - next.config.ts
 - Sistem Manajemen Idle Equipment PUSRI
-- ConfirmDialog.tsx
+- action/api.ts
 - 1. Pemetaan Peran Pengguna (User Roles) & Tanggung Jawab
 - PRODUCT.md
 - revisi-validasi/page.tsx
 - rendal/disposal/page.tsx
-- action/api.ts
+- validasi/page.tsx
 - getEquipments
 - open-in-terminal/manifest.json
 - perbaikan-alat-client.tsx
@@ -45,14 +45,14 @@
 - check-repair-payload.mjs
 - package.json
 - check-equipment-form.mjs
-- peminjaman/page.tsx
+- getDisposals
 - clsx
 - ui-layouts-mcp
 - check-scrap-reason.mjs
 - README.md
 - generate-pdf.js
 - This is NOT the Next.js you know
-- getObjectTypes
+- register-equipment-client.tsx
 - react
 - DeleteConfirmDialog.tsx
 - tw-animate-css
@@ -91,9 +91,9 @@
 
 ## Communities (56 total, 11 thin omitted)
 
-### Community 0 - "equipment-status.ts"
-Cohesion: 0.21
-Nodes (11): AssetState, Equipment, RendalIdleClient(), assetState(), RendalIdlePage(), ALIASES, EQUIPMENT_STATUS, REPAIR_FLOW (+3 more)
+### Community 0 - "rendal/idle/page.tsx"
+Cohesion: 0.43
+Nodes (5): AssetState, Equipment, RendalIdleClient(), assetState(), EQUIPMENT_STATUS
 
 ### Community 1 - "auth.ts"
 Cohesion: 0.09
@@ -135,17 +135,17 @@ Nodes (14): authHeaders(), createMasterItem(), deleteMasterItem(), fail(), getMa
 Cohesion: 0.22
 Nodes (8): Aturan main (dari user, jangan dilanggar), Handoff — Lanjutan Audit & Cleanup Frontend Idle PUSRI, Konteks project (fakta penting), Konvensi yang sudah dibangun — WAJIB dipertahankan, SISA KERJA 1 — 6a-2: Konversi RSC halaman inbox besar, SISA KERJA 2 — 24 `<img>` modal preview foto, SISA KERJA 3 — Backend Go (`~/Documents/pusri`, repo terpisah), Verifikasi wajib tiap akhir langkah
 
-### Community 11 - "approve-client.tsx"
-Cohesion: 0.17
-Nodes (21): createReuseRequest(), deleteEquipment(), getApprovalById(), getAttachmentsByEquipmentId(), getEquipmentById(), reviewApproval(), EquipmentManagementPage(), EquipmentRow (+13 more)
+### Community 11 - "equipment-status.ts"
+Cohesion: 0.13
+Nodes (19): deleteEquipment(), EquipmentManagementPage(), EquipmentRow, nameOf(), plantOf(), DaftarAsetClient(), EquipmentItem, VISIBLE_STATUSES (+11 more)
 
 ### Community 12 - "buttonVariants"
 Cohesion: 0.06
-Nodes (41): Error(), InspeksiDashboardClient(), ManajerDashboardPage(), DisposalItem, ManajerDisposalClient(), RendalDashboard(), actionTypeConfig, AuditLogEntry (+33 more)
+Nodes (41): approveDisposal(), DisposalItemDTO, Error(), InspeksiDashboardClient(), ManajerDashboardPage(), DisposalItem, ManajerDisposalClient(), DisposalItem (+33 more)
 
-### Community 13 - "inspeksi-berkala/page.tsx"
-Cohesion: 0.17
-Nodes (12): eq(), NOW, Equipment, InspectionItem, InspeksiAntreanPage(), EquipmentLike, InspectionLike, inspectionQueue() (+4 more)
+### Community 13 - "inspection-schedule.ts"
+Cohesion: 0.18
+Nodes (11): eq(), NOW, Equipment, InspectionItem, EquipmentLike, InspectionLike, inspectionQueue(), LastInspection (+3 more)
 
 ### Community 14 - "DESIGN.md — Idle Equipment Console"
 Cohesion: 0.14
@@ -155,9 +155,9 @@ Nodes (13): Accessibility, Brand, Color System, Component Patterns, DESIGN.md �
 Cohesion: 0.15
 Nodes (12): API Backend, Arsitektur, Autentikasi, Backend (`backend-idle/`), Cara Menjalankan, Catatan & Status Pengembangan, Frontend (`src/`), Model Data (Backend) (+4 more)
 
-### Community 17 - "ConfirmDialog.tsx"
-Cohesion: 0.10
-Nodes (19): approveRevalidationEquipment(), createEquipment(), createRevalidation(), updateEquipment(), RevalidasiItem, ValidasiUlangPage(), EMPTY_FORM, MasterOption (+11 more)
+### Community 17 - "action/api.ts"
+Cohesion: 0.14
+Nodes (19): approveRevalidationEquipment(), createReuseRequest(), createRevalidation(), getRequireActions(), resubmitApproval(), submitInspectionData(), uploadAttachment(), FormInspeksiPage() (+11 more)
 
 ### Community 18 - "1. Pemetaan Peran Pengguna (User Roles) & Tanggung Jawab"
 Cohesion: 0.17
@@ -172,16 +172,16 @@ Cohesion: 0.21
 Nodes (9): ApprovalState, Asset, AssetState, AnalogTimePicker(), AnalogTimePickerProps, ApprovalState, Asset, AssetState (+1 more)
 
 ### Community 21 - "rendal/disposal/page.tsx"
-Cohesion: 0.13
-Nodes (22): apiUrl, absoluteFileUrl(), createDisposalRequest(), getDisposalMethods(), getDisposals(), getInspections(), getValidations(), ManajerDisposalPage() (+14 more)
+Cohesion: 0.16
+Nodes (16): apiUrl, createDisposalRequest(), getDisposalMethods(), getEquipmentRepairs(), getInspections(), InspeksiAntreanPage(), DisposalItem, DisposalMethod (+8 more)
 
-### Community 22 - "action/api.ts"
-Cohesion: 0.17
-Nodes (19): approveDisposal(), DisposalItemDTO, getConditions(), getRequireActions(), resubmitApproval(), startReviewApproval(), submitInspectionData(), uploadAttachment() (+11 more)
+### Community 22 - "validasi/page.tsx"
+Cohesion: 0.16
+Nodes (17): getApprovalById(), getAttachmentsByEquipmentId(), getEquipmentById(), getValidations(), reviewApproval(), startReviewApproval(), ApprovalState, Asset (+9 more)
 
 ### Community 23 - "getEquipments"
-Cohesion: 0.12
-Nodes (21): getApprovals(), getEquipments(), getReuseRequests(), InspeksiDashboardPage(), RequestAsset, APPROVAL_STATUS_LABEL, ManajerApprovePage(), RendalValidasiUlangPage() (+13 more)
+Cohesion: 0.15
+Nodes (24): getApprovals(), getConditions(), getEquipments(), getObjectTypes(), getPlants(), getReuseRequests(), validateEquipment(), InspeksiDashboardPage() (+16 more)
 
 ### Community 24 - "open-in-terminal/manifest.json"
 Cohesion: 0.20
@@ -189,7 +189,7 @@ Nodes (9): author, authorUrl, description, fundingUrl, id, isDesktopOnly, minApp
 
 ### Community 25 - "perbaikan-alat-client.tsx"
 Cohesion: 0.13
-Nodes (19): completeEquipmentRepair(), findLatestInspectionId(), getEquipmentRepairs(), Equipment, PemeliharaanDashboardPage(), relativeTime(), Repair, STAGE_OWNER (+11 more)
+Nodes (18): completeEquipmentRepair(), findLatestInspectionId(), Equipment, PemeliharaanDashboardPage(), relativeTime(), Repair, STAGE_OWNER, STATUS_COLOR (+10 more)
 
 ### Community 26 - "claude-code-ide/manifest.json"
 Cohesion: 0.22
@@ -207,9 +207,9 @@ Nodes (8): name, private, scripts, build, dev, lint, start, version
 Cohesion: 0.25
 Nodes (7): api, appended, body, createFn, optional, page, required
 
-### Community 30 - "peminjaman/page.tsx"
-Cohesion: 0.27
-Nodes (8): updateReuseRequestStatus(), ManajerPeminjamanPage(), ManajerPeminjamanClient(), ReuseRequest, ReuseRequestApi, ApprovalKind, disposalDisplayStatus, reuseDisplayStatus
+### Community 30 - "getDisposals"
+Cohesion: 0.10
+Nodes (21): absoluteFileUrl(), getDisposals(), getStorageLocations(), updateReuseRequestStatus(), AdminDashboardPage(), MODULES, ManajerDisposalPage(), ManajerPeminjamanPage() (+13 more)
 
 ### Community 32 - "ui-layouts-mcp"
 Cohesion: 0.40
@@ -223,16 +223,16 @@ Nodes (3): Deploy on Vercel, Getting Started, Learn More
 Cohesion: 0.50
 Nodes (3): doc, fs, PDFDocument
 
-### Community 38 - "getObjectTypes"
-Cohesion: 0.42
-Nodes (7): getFunctionalLocations(), getObjectTypes(), getPlants(), getStorageLocations(), AdminDashboardPage(), MODULES, RegisterEquipmentPage()
+### Community 38 - "register-equipment-client.tsx"
+Cohesion: 0.22
+Nodes (9): createEquipment(), getFunctionalLocations(), updateEquipment(), RegisterEquipmentPage(), EMPTY_FORM, MasterOption, RegisterEquipmentClient(), RegisterInitialData (+1 more)
 
 ### Community 39 - "react"
 Cohesion: 0.67
 Nodes (3): react, react, UnitKerjaDashboard()
 
 ## Knowledge Gaps
-- **255 isolated node(s):** `21st`, `npx`, `@ui-layouts/mcp`, `id`, `name` (+250 more)
+- **253 isolated node(s):** `21st`, `npx`, `@ui-layouts/mcp`, `id`, `name` (+248 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **11 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -246,7 +246,7 @@ _Questions this graph is uniquely positioned to answer:_
 - **Why does `react` connect `react` to `dependencies`?**
   _High betweenness centrality (0.086) - this node is a cross-community bridge._
 - **What connects `21st`, `npx`, `@ui-layouts/mcp` to the rest of the system?**
-  _255 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _253 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `auth.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.08579234972677596 - nodes in this community are weakly interconnected._
 - **Should `open-in-terminal/main.js` be split into smaller, more focused modules?**

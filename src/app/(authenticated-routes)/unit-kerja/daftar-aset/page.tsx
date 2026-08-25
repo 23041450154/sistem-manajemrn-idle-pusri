@@ -86,10 +86,7 @@ export default async function DaftarAsetPage() {
 				let storageLoc = "Gudang Utama Pusri";
 				if (typeof item.storage_location === "string")
 					storageLoc = item.storage_location;
-				else if (
-					item.storage_location &&
-					typeof item.storage_location === "object"
-				)
+				else if (item.storage_location && typeof item.storage_location === "object")
 					storageLoc = item.storage_location.name || "Gudang Utama Pusri";
 
 				// Nama status kanonik dari backend (lihat lib/equipment-status).
@@ -100,8 +97,7 @@ export default async function DaftarAsetPage() {
 				let conditionStr = "Baik";
 				if (typeof item.condition === "object")
 					conditionStr = item.condition?.name || "Baik";
-				else if (typeof item.condition === "string")
-					conditionStr = item.condition;
+				else if (typeof item.condition === "string") conditionStr = item.condition;
 
 				return {
 					id: String(item.id),
@@ -115,9 +111,7 @@ export default async function DaftarAsetPage() {
 					condition_name: conditionStr.replace(/_/g, " "),
 					storage_location: String(storageLoc),
 					serial_number: String(item.serial_number || "SN-2026-X89"),
-					vendor: String(
-						item.vendor || item.manufacturer || "PT Utama Engineering",
-					),
+					vendor: String(item.vendor || item.manufacturer || "PT Utama Engineering"),
 					year_of_purchase: Number(item.year_of_purchase) || 2020,
 					book_value: Number(item.book_value) || 120000000,
 					specifications: String(
@@ -134,13 +128,9 @@ export default async function DaftarAsetPage() {
 
 		equipments.sort((a, b) => {
 			const timeA =
-				a.created_at && a.created_at !== "-"
-					? new Date(a.created_at).getTime()
-					: 0;
+				a.created_at && a.created_at !== "-" ? new Date(a.created_at).getTime() : 0;
 			const timeB =
-				b.created_at && b.created_at !== "-"
-					? new Date(b.created_at).getTime()
-					: 0;
+				b.created_at && b.created_at !== "-" ? new Date(b.created_at).getTime() : 0;
 			if (timeB !== timeA) return timeB - timeA;
 			return (Number(b.id) || 0) - (Number(a.id) || 0);
 		});
