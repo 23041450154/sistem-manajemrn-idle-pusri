@@ -24,9 +24,7 @@ export default async function ValidasiUlangPage() {
 
 	const items: RevalidasiItem[] = (Array.isArray(data) ? data : [])
 		.filter((item: any) => {
-			const s = statusName(
-				String(item.status?.name || item.statusAset || ""),
-			);
+			const s = statusName(String(item.status?.name || item.statusAset || ""));
 			return INCLUDED_STATUSES.includes(s);
 		})
 		.map((item: any): RevalidasiItem => {
@@ -63,9 +61,7 @@ export default async function ValidasiUlangPage() {
 					: item.created_at
 						? new Date(item.created_at).toISOString().split("T")[0]
 						: new Date().toISOString().split("T")[0],
-				statusAset: statusName(
-					String(item.status?.name || item.statusAset || ""),
-				),
+				statusAset: statusName(String(item.status?.name || item.statusAset || "")),
 				catatan: item.notes || item.description || "-",
 				vendor: item.vendor || item.manufacture || "-",
 				serialNumber: item.serial_number || item.no_seri || "-",
