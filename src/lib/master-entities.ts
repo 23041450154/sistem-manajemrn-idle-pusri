@@ -15,6 +15,7 @@ export type MasterEntity = {
 	/** Butuh relasi plant (storage location). */
 	needsPlant?: boolean;
 	placeholder: string;
+	hidden?: boolean;
 };
 
 export const MASTER_ENTITIES: MasterEntity[] = [
@@ -50,6 +51,7 @@ export const MASTER_ENTITIES: MasterEntity[] = [
 		adminPath: "/api/admin/status",
 		nameField: "name",
 		placeholder: "Contoh: Idle, Ready To Use",
+		hidden: true,
 	},
 	{
 		slug: "disposal-method",

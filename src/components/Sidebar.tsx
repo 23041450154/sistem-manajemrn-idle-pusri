@@ -372,7 +372,7 @@ export function Sidebar({ role }: { role?: string }) {
 									</button>
 									{masterDataOpen && (
 										<ul className="mt-1 ml-4 space-y-1">
-											{MASTER_ENTITIES.map((entity) => {
+											{MASTER_ENTITIES.filter((entity) => !entity.hidden).map((entity) => {
 												const childActive = pathname === `/admin/master/${entity.slug}`;
 												return (
 													<li key={entity.slug}>

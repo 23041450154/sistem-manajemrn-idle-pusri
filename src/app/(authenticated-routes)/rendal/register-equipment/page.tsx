@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useMemo } from "react";
 import {
 	Save,
 	Info,
@@ -29,6 +29,7 @@ import {
 import { useRouter, useSearchParams } from "next/navigation";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import YearPicker from "@/components/YearPicker";
+import AutocompleteInput from "@/components/AutocompleteInput";
 
 export default function RegisterEquipmentPage() {
 	const router = useRouter();
@@ -52,6 +53,8 @@ export default function RegisterEquipmentPage() {
 		message: string;
 	} | null>(null);
 
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	const [existingEquipments, setExistingEquipments] = useState<any[]>([]);
 	const [objectTypes, setObjectTypes] = useState<{ id: number; name: string }[]>(
 		[],
 	);
@@ -84,12 +87,13 @@ export default function RegisterEquipmentPage() {
 					getPlants(),
 					getStorageLocations(),
 					getFunctionalLocations(),
-					editId ? getEquipments() : Promise.resolve([]),
+					getEquipments(),
 				]);
 			setObjectTypes(objs);
 			setPlants(plantsList);
 			setStorageLocations(storageLocList);
 			setFuncLocs(funcLocList);
+			setExistingEquipments(equipments);
 
 			// ponytail: backend equipment shape belum punya DTO frontend bersama.
 			// eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -127,6 +131,66 @@ export default function RegisterEquipmentPage() {
 		}
 		loadData();
 	}, [editId]);
+
+	// Suggestions untuk autocomplete Kode Aset dari data master/existing equipments
+	const equipmentSuggestions = useMemo(() => {
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		const map = new Map<string, { value: string; label: string; sublabel: string; raw: any }>();
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		existingEquipments.forEach((eq: any) => {
+			const code = eq.equipment_code || eq.equipmentCode || "";
+			if (code && !map.has(code)) {
+				map.set(code, {
+					value: code,
+					label: code,
+					sublabel: [eq.name, eq.plant_name || eq.plant?.name].filter(Boolean).join(" • "),
+					raw: eq,
+				});
+			}
+		});
+		return Array.from(map.values());
+	}, [existingEquipments]);
+
+	const handleEquipmentCodeChange = (
+		value: string,
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
+		option?: any,
+	) => {
+		setTouched((prev) => ({
+			...prev,
+			equipmentCode: true,
+		}));
+
+		if (option?.raw) {
+			const raw = option.raw;
+			setFormData((prev) => ({
+				...prev,
+				equipmentCode: value,
+				name: prev.name || raw.name || "",
+				plantId:
+					prev.plantId || (raw.id_plant ? String(raw.id_plant) : prev.plantId),
+				objectTypeId:
+					prev.objectTypeId ||
+					(raw.id_object_type || raw.object_type_id
+						? String(raw.id_object_type || raw.object_type_id)
+						: prev.objectTypeId),
+				funcLocId:
+					prev.funcLocId ||
+					(raw.id_func_loc || raw.func_loc_id
+						? String(raw.id_func_loc || raw.func_loc_id)
+						: prev.funcLocId),
+				storageLocationId:
+					prev.storageLocationId ||
+					(raw.id_storage_location || raw.storage_location_id
+						? String(raw.id_storage_location || raw.storage_location_id)
+						: prev.storageLocationId),
+				vendor: prev.vendor || raw.vendor || "",
+				year: prev.year || (raw.year ? String(raw.year) : ""),
+			}));
+		} else {
+			setFormData((prev) => ({ ...prev, equipmentCode: value }));
+		}
+	};
 
 	const handleChange = (
 		e: React.ChangeEvent<
@@ -174,6 +238,19 @@ export default function RegisterEquipmentPage() {
 		if (target.name) {
 			setTouched((prev) => ({ ...prev, [target.name]: true }));
 		}
+	};
+
+	const handleSelectChange = (name: string, value: string) => {
+		setTouched((prev) => ({
+			...prev,
+			[name]: true,
+			...(!formData.equipmentCode ? { equipmentCode: true } : {}),
+		}));
+		setFormData((prev) => ({ ...prev, [name]: value }));
+	};
+
+	const handleSelectBlur = (name: string) => {
+		setTouched((prev) => ({ ...prev, [name]: true }));
 	};
 
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -432,15 +509,20 @@ export default function RegisterEquipmentPage() {
 										Maks 50 karakter
 									</span>
 								</div>
-								<input
-									onBlur={handleBlur}
-									maxLength={50}
-									type="text"
+								<AutocompleteInput
+									mode="text"
 									name="equipmentCode"
+									maxLength={50}
 									value={formData.equipmentCode}
-									onChange={handleChange}
-									placeholder="Masukkan kode aset..."
-									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all ${(showValidationErrors || touched.equipmentCode) && !formData.equipmentCode ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
+									onChange={handleEquipmentCodeChange}
+									onBlur={() => handleSelectBlur("equipmentCode")}
+									options={equipmentSuggestions}
+									placeholder="Ketik kode aset..."
+									hasError={
+										(showValidationErrors || touched.equipmentCode) &&
+										!formData.equipmentCode
+									}
+									emptyMessage="Tidak ada kode aset yang cocok."
 								/>
 								{(showValidationErrors || touched.equipmentCode) &&
 									!formData.equipmentCode && (
@@ -487,22 +569,20 @@ export default function RegisterEquipmentPage() {
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									KATEGORI (TIPE) <span className="text-red-500">*</span>
 								</label>
-								<select
-									onBlur={handleBlur}
+								<AutocompleteInput
+									mode="select"
 									name="objectTypeId"
 									value={formData.objectTypeId}
-									onChange={handleChange}
-									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white ${(showValidationErrors || touched.objectTypeId) && !formData.objectTypeId ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.objectTypeId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
-								>
-									<option value="" disabled>
-										Pilih Kategori...
-									</option>
-									{objectTypes.map((type: { id: number; name: string }) => (
-										<option key={type.id} value={type.id} className="text-gray-900">
-											{type.name}
-										</option>
-									))}
-								</select>
+									onChange={(val) => handleSelectChange("objectTypeId", val)}
+									onBlur={() => handleSelectBlur("objectTypeId")}
+									options={objectTypes}
+									placeholder="Ketik kategori..."
+									hasError={
+										(showValidationErrors || touched.objectTypeId) &&
+										!formData.objectTypeId
+									}
+									emptyMessage="Kategori tidak ditemukan."
+								/>
 								{(showValidationErrors || touched.objectTypeId) &&
 									!formData.objectTypeId && (
 										<p className="text-[10px] text-red-500 mt-1 font-medium">
@@ -514,22 +594,19 @@ export default function RegisterEquipmentPage() {
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									PABRIK / PLANT <span className="text-red-500">*</span>
 								</label>
-								<select
-									onBlur={handleBlur}
+								<AutocompleteInput
+									mode="select"
 									name="plantId"
 									value={formData.plantId}
-									onChange={handleChange}
-									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white ${(showValidationErrors || touched.plantId) && !formData.plantId ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 text-gray-900 bg-red-50/10" : !formData.plantId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
-								>
-									<option value="" disabled>
-										Pilih Pabrik...
-									</option>
-									{plants.map((p) => (
-										<option key={p.id} value={p.id} className="text-gray-900">
-											{p.name}
-										</option>
-									))}
-								</select>
+									onChange={(val) => handleSelectChange("plantId", val)}
+									onBlur={() => handleSelectBlur("plantId")}
+									options={plants}
+									placeholder="Ketik pabrik / plant..."
+									hasError={
+										(showValidationErrors || touched.plantId) && !formData.plantId
+									}
+									emptyMessage="Pabrik tidak ditemukan."
+								/>
 								{(showValidationErrors || touched.plantId) && !formData.plantId && (
 									<p className="text-[10px] text-red-500 mt-1 font-medium">
 										* Pabrik / Plant wajib dipilih.
@@ -542,41 +619,33 @@ export default function RegisterEquipmentPage() {
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									LOKASI PENYIMPANAN
 								</label>
-								<select
-									onBlur={handleBlur}
+								<AutocompleteInput
+									mode="select"
 									name="storageLocationId"
 									value={formData.storageLocationId}
-									onChange={handleChange}
-									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all bg-white ${!formData.storageLocationId ? "border-gray-300 text-gray-400 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]" : "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
-								>
-									<option value="" disabled>
-										Pilih Lokasi Simpan...
-									</option>
-									{storageLocations.map((loc: { id: number; name: string }) => (
-										<option key={loc.id} value={loc.id} className="text-gray-900">
-											{loc.name}
-										</option>
-									))}
-								</select>
+									onChange={(val) =>
+										handleSelectChange("storageLocationId", val)
+									}
+									onBlur={() => handleSelectBlur("storageLocationId")}
+									options={storageLocations}
+									placeholder="Ketik lokasi simpan..."
+									emptyMessage="Lokasi penyimpanan tidak ditemukan."
+								/>
 							</div>
 							<div className="space-y-1.5 lg:col-span-2">
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									AREA (FUNCLOC)
 								</label>
-								<select
-									onBlur={handleBlur}
+								<AutocompleteInput
+									mode="select"
 									name="funcLocId"
 									value={formData.funcLocId}
-									onChange={handleChange}
-									className={`w-full px-3 py-2 text-sm border border-gray-300 rounded outline-none transition-all bg-white focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3] ${formData.funcLocId ? "text-gray-900" : "text-gray-400"}`}
-								>
-									<option value="">Pilih functional location...</option>
-									{funcLocs.map((fl) => (
-										<option key={fl.id} value={fl.id} className="text-gray-900">
-											{fl.name}
-										</option>
-									))}
-								</select>
+									onChange={(val) => handleSelectChange("funcLocId", val)}
+									onBlur={() => handleSelectBlur("funcLocId")}
+									options={funcLocs}
+									placeholder="Ketik functional location..."
+									emptyMessage="Functional location tidak ditemukan."
+								/>
 							</div>
 
 							{/* Garis Pemisah Visual */}

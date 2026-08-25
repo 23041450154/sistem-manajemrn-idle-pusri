@@ -3,7 +3,7 @@ import { MasterDataTable } from "@/components/MasterDataTable";
 import { MASTER_ENTITIES, findMasterEntity } from "@/lib/master-entities";
 
 export function generateStaticParams() {
-	return MASTER_ENTITIES.map((e) => ({ slug: e.slug }));
+	return MASTER_ENTITIES.filter((e) => !e.hidden).map((e) => ({ slug: e.slug }));
 }
 
 export default async function MasterEntityPage({
@@ -13,7 +13,7 @@ export default async function MasterEntityPage({
 }) {
 	const { slug } = await params;
 	const entity = findMasterEntity(slug);
-	if (!entity) notFound();
+	if (!entity || entity.hidden) notFound();
 
 	return <MasterDataTable entity={entity} />;
 }
