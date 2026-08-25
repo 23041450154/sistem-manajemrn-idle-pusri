@@ -22,10 +22,7 @@ import {
 	getEquipmentById,
 	getValidations,
 } from "@/action/api";
-import {
-	statusBadgeStyle,
-	statusText,
-} from "@/lib/equipment-status";
+import { statusBadgeStyle, statusText } from "@/lib/equipment-status";
 
 type Lookup = {
 	id: number;

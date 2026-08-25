@@ -1,13 +1,7 @@
-import {
-	getApprovals,
-	getEquipments,
-	getPlants,
-} from "@/action/api";
+import { getApprovals, getEquipments, getPlants } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
 import { statusName } from "@/lib/equipment-status";
-import ManajerApproveClient, {
-	type RequestAsset,
-} from "./approve-client";
+import ManajerApproveClient, { type RequestAsset } from "./approve-client";
 
 /* ponytail: payload API legacy tetap untyped sampai backend mengekspor DTO bersama. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -41,9 +35,8 @@ export default async function ManajerApprovePage() {
 		});
 	}
 
-	const requests: RequestAsset[] = (Array.isArray(approvalsData)
-		? approvalsData
-		: []
+	const requests: RequestAsset[] = (
+		Array.isArray(approvalsData) ? approvalsData : []
 	).map((item: any): RequestAsset => {
 		const equipmentId = item.equipment_id || item.equipment?.id;
 		const eq = equipmentMap.get(Number(equipmentId)) || item.equipment;

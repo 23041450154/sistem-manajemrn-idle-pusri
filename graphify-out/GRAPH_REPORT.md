@@ -1,16 +1,16 @@
 # Graph Report - sistem-manajemrn-idle-pusri  (2026-08-25)
 
 ## Corpus Check
-- 139 files · ~278,517 words
+- 140 files · ~278,485 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 708 nodes · 1395 edges · 54 communities (42 shown, 12 thin omitted)
+- 709 nodes · 1398 edges · 53 communities (41 shown, 12 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 5 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `79b6e351`
+- Built from commit: `11976666`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -37,15 +37,14 @@
 - PRODUCT.md
 - RendalDashboard.tsx
 - YearPicker.tsx
-- riwayat-permintaan/page.tsx
+- getReuseRequests
 - perbaikan-alat-client.tsx
 - open-in-terminal/manifest.json
-- peminjaman/page.tsx
+- @base-ui/react
 - claude-code-ide/manifest.json
 - check-repair-payload.mjs
 - package.json
 - check-equipment-form.mjs
-- class-variance-authority
 - clsx
 - ui-layouts-mcp
 - check-scrap-reason.mjs
@@ -76,7 +75,7 @@
 - `PemeliharaanDashboardPage()` --indirect_call--> `eq()`  [INFERRED]
   src/app/(authenticated-routes)/pemeliharaan/dashboard/page.tsx → scripts/check-inspection-schedule.mjs
 - `getPageWindow()` --indirect_call--> `p()`  [INFERRED]
-  src/app/(authenticated-routes)/unit-kerja/riwayat-permintaan/page.tsx → .obsidian/plugins/claude-code-ide/main.js
+  src/app/(authenticated-routes)/unit-kerja/riwayat-permintaan/riwayat-permintaan-client.tsx → .obsidian/plugins/claude-code-ide/main.js
 - `str()` --indirect_call--> `v()`  [INFERRED]
   src/app/(authenticated-routes)/unit-kerja/dashboard/page.tsx → .obsidian/plugins/claude-code-ide/main.js
 - `approveRevalidationEquipment()` --references--> `apiUrl`  [EXTRACTED]
@@ -87,7 +86,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (54 total, 12 thin omitted)
+## Communities (53 total, 12 thin omitted)
 
 ### Community 0 - "equipment-status.ts"
 Cohesion: 0.18
@@ -102,8 +101,8 @@ Cohesion: 0.10
 Nodes (28): __awaiter(), buildDefaultTerminalAppSetting(), buildLaunchCommand(), buildMacLaunch(), buildUnixLaunch(), buildWindowsLaunch(), DEFAULT_SETTINGS, defaultTerminalApp() (+20 more)
 
 ### Community 3 - "shared.tsx"
-Cohesion: 0.09
-Nodes (26): createReuseRequest(), getReuseRequests(), DaftarAsetPage(), EquipmentItem, VISIBLE_STATUSES, KatalogDetailPage(), KatalogItemMinimal, RequestModalButton() (+18 more)
+Cohesion: 0.10
+Nodes (25): createReuseRequest(), DaftarAsetPage(), EquipmentItem, VISIBLE_STATUSES, KatalogDetailPage(), KatalogItemMinimal, RequestModalButton(), EquipmentCard() (+17 more)
 
 ### Community 4 - "compilerOptions"
 Cohesion: 0.07
@@ -111,7 +110,7 @@ Nodes (28): dom, dom.iterable, esnext, **/*.mts, .next/dev/types/**/*.ts, next-e
 
 ### Community 5 - "dependencies"
 Cohesion: 0.13
-Nodes (15): @base-ui/react, lucide-react, next, nextjs-toploader, dependencies, @base-ui/react, lucide-react, next (+7 more)
+Nodes (15): class-variance-authority, lucide-react, next, nextjs-toploader, dependencies, class-variance-authority, lucide-react, next (+7 more)
 
 ### Community 6 - "devDependencies"
 Cohesion: 0.12
@@ -173,9 +172,9 @@ Nodes (10): Anti-references, Brand voice, Constraints, Key messages, Missing fac
 Cohesion: 0.20
 Nodes (10): ChartSection(), RendalDashboard(), Activity, RecentActivities(), StatCard(), StatCardProps, ApiRow, InspectionRow (+2 more)
 
-### Community 22 - "riwayat-permintaan/page.tsx"
-Cohesion: 0.10
-Nodes (22): approveDisposal(), DisposalItemDTO, DisposalItem, ManajerDisposalClient(), DisposalItem, ManajerScrapClient(), actionTypeConfig, AuditLogEntry (+14 more)
+### Community 22 - "getReuseRequests"
+Cohesion: 0.07
+Nodes (31): approveDisposal(), DisposalItemDTO, getReuseRequests(), updateReuseRequestStatus(), DisposalItem, ManajerDisposalClient(), ManajerPeminjamanPage(), ManajerPeminjamanClient() (+23 more)
 
 ### Community 23 - "perbaikan-alat-client.tsx"
 Cohesion: 0.27
@@ -184,10 +183,6 @@ Nodes (10): completeEquipmentRepair(), findLatestInspectionId(), PerbaikanAlatPa
 ### Community 24 - "open-in-terminal/manifest.json"
 Cohesion: 0.20
 Nodes (9): author, authorUrl, description, fundingUrl, id, isDesktopOnly, minAppVersion, name (+1 more)
-
-### Community 25 - "peminjaman/page.tsx"
-Cohesion: 0.31
-Nodes (7): updateReuseRequestStatus(), ManajerPeminjamanPage(), ManajerPeminjamanClient(), ReuseRequest, ReuseRequestApi, ApprovalKind, reuseDisplayStatus
 
 ### Community 26 - "claude-code-ide/manifest.json"
 Cohesion: 0.22
@@ -218,7 +213,7 @@ Cohesion: 0.50
 Nodes (3): doc, fs, PDFDocument
 
 ## Knowledge Gaps
-- **257 isolated node(s):** `21st`, `npx`, `@ui-layouts/mcp`, `id`, `name` (+252 more)
+- **256 isolated node(s):** `21st`, `npx`, `@ui-layouts/mcp`, `id`, `name` (+251 more)
   These have ≤1 connection - possible missing edges or undocumented components.
 - **12 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
@@ -227,15 +222,15 @@ _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `UnitKerjaDashboard()` connect `equipment-status.ts` to `RendalDashboard.tsx`?**
   _High betweenness centrality (0.088) - this node is a cross-community bridge._
-- **Why does `dependencies` connect `dependencies` to `equipment-status.ts`, `pdfkit`, `shadcn`, `tw-animate-css`, `package.json`, `class-variance-authority`, `clsx`?**
+- **Why does `dependencies` connect `dependencies` to `equipment-status.ts`, `pdfkit`, `shadcn`, `tw-animate-css`, `@base-ui/react`, `package.json`, `clsx`?**
   _High betweenness centrality (0.087) - this node is a cross-community bridge._
 - **Why does `react` connect `equipment-status.ts` to `dependencies`?**
   _High betweenness centrality (0.086) - this node is a cross-community bridge._
 - **What connects `21st`, `npx`, `@ui-layouts/mcp` to the rest of the system?**
-  _257 weakly-connected nodes found - possible documentation gaps or missing edges._
+  _256 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `auth.ts` be split into smaller, more focused modules?**
   _Cohesion score 0.08579234972677596 - nodes in this community are weakly interconnected._
 - **Should `open-in-terminal/main.js` be split into smaller, more focused modules?**
   _Cohesion score 0.09565217391304348 - nodes in this community are weakly interconnected._
 - **Should `shared.tsx` be split into smaller, more focused modules?**
-  _Cohesion score 0.09390243902439024 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.09615384615384616 - nodes in this community are weakly interconnected._
