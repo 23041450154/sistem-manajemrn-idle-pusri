@@ -7,6 +7,7 @@ import {
 	type EquipmentStatus,
 	EQUIPMENT_STATUS,
 	statusText,
+	statusName,
 } from "@/lib/equipment-status";
 import {
 	Search,
@@ -111,7 +112,9 @@ export default function RendalIdleClient({
 				item.namaAlat?.toLowerCase().includes(query);
 			const matchPlant = plantFilter === "Semua" || item.plant === plantFilter;
 			const matchStatus =
-				statusFilter === "Semua" || item.statusAset === statusFilter;
+				statusFilter === "Semua" ||
+				item.statusAset === statusFilter ||
+				statusName(item.statusAset) === statusName(statusFilter);
 			return matchSearch && matchPlant && matchStatus;
 		});
 
@@ -156,12 +159,13 @@ export default function RendalIdleClient({
 		return result;
 	}, [equipments, search, plantFilter, statusFilter, sortConfig]);
 
-	const paginatedData = useMemo(() => {
-		const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
-		return filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
-	}, [filteredData, currentPage]);
+	const totalPages = Math.max(1, Math.ceil(filteredData.length / ITEMS_PER_PAGE));
+	const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
 
-	const totalPages = Math.ceil(filteredData.length / ITEMS_PER_PAGE) || 1;
+	const paginatedData = useMemo(() => {
+		const startIndex = (safeCurrentPage - 1) * ITEMS_PER_PAGE;
+		return filteredData.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+	}, [filteredData, safeCurrentPage]);
 
 	const handleSort = (key: keyof Equipment) => {
 		let direction: "asc" | "desc" = "asc";
@@ -437,7 +441,7 @@ export default function RendalIdleClient({
 										className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
 									>
 										<td className="px-2 py-2 text-gray-500 font-medium text-center truncate">
-											{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+											{(safeCurrentPage - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
 										<td
 											className="px-2 py-2 font-semibold text-[#0A356A] text-left truncate"
@@ -495,29 +499,29 @@ export default function RendalIdleClient({
 
 				{/* Pagination Footer */}
 				{filteredData.length > 0 && (
-					<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
+					<div className="px-5 py-3 border-t border-gray-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
 						<span className="text-[11px] font-medium text-gray-500">
 							Menampilkan{" "}
-							{filteredData.length === 0 ? 0 : (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
-							- {Math.min(currentPage * ITEMS_PER_PAGE, filteredData.length)} dari{" "}
+							{filteredData.length === 0 ? 0 : (safeCurrentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
+							- {Math.min(safeCurrentPage * ITEMS_PER_PAGE, filteredData.length)} dari{" "}
 							{filteredData.length} data ({ITEMS_PER_PAGE} baris/halaman)
 						</span>
 						<div className="flex items-center gap-1.5">
 							<button
 								onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
-								disabled={currentPage === 1}
+								disabled={safeCurrentPage === 1}
 								className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
 							>
-								Prev
+								Sebelumnya
 							</button>
 							<div className="flex items-center gap-1">
-								{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map(
+								{Array.from({ length: totalPages }, (_, i) => i + 1).map(
 									(page) => (
 										<button
 											key={page}
 											onClick={() => setCurrentPage(page)}
-											className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
-												currentPage === page
+											className={`min-w-[24px] h-6 px-1.5 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
+												safeCurrentPage === page
 													? "bg-[#0A356A] text-white"
 													: "text-gray-600 hover:bg-gray-100"
 											}`}
@@ -529,12 +533,12 @@ export default function RendalIdleClient({
 							</div>
 							<button
 								onClick={() =>
-									setCurrentPage((p) => Math.min(Math.max(1, totalPages), p + 1))
+									setCurrentPage((p) => Math.min(totalPages, p + 1))
 								}
-								disabled={currentPage === Math.max(1, totalPages)}
+								disabled={safeCurrentPage === totalPages}
 								className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
 							>
-								Next
+								Selanjutnya
 							</button>
 						</div>
 					</div>

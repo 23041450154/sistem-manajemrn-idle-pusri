@@ -18,7 +18,9 @@ const assetState = (raw: string): AssetState =>
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-/** Server Component — fetch + filter + mapping murni di server, interaksi di client. */
+export const dynamic = "force-dynamic";
+
+/** Server Component — fetch + mapping di server, interaksi/filter di client. */
 export default async function RendalIdlePage() {
 	const [data, objTypes] = await Promise.all([
 		getEquipments().catch(() => []),
@@ -35,15 +37,6 @@ export default async function RendalIdlePage() {
 	});
 
 	const equipments: Equipment[] = (Array.isArray(data) ? data : [])
-		.filter((item: any) => {
-			// Daftar registrasi aset idle: status pending, ready, & repair.
-			const rawStatus =
-				(typeof item.status === "string" ? item.status : item.status?.name) || "";
-			// REUSED = sudah keluar dari idle pool (dipakai kembali) — jangan tampil.
-			if (statusName(rawStatus) === "REUSED") return false;
-			const group = statusGroup({ statusAset: rawStatus });
-			return group === "pending" || group === "ready" || group === "repair";
-		})
 		.map((item: any): Equipment => {
 			let objectTypeName = "Belum Ditentukan";
 			if (item.object_type?.name) {
