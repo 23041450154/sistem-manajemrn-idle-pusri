@@ -1,5 +1,4 @@
 import { Boxes } from "lucide-react";
-import Image from "next/image";
 import type { EquipmentState, KatalogDetail } from "./types";
 
 /* DESIGN.md status hues — five workflow states, no sixth.
@@ -118,13 +117,10 @@ export function EquipmentThumb({
   src,
   alt,
   className = "",
-  sizes = "(max-width: 1024px) 100vw, 33vw",
 }: {
   src?: string;
   alt: string;
   className?: string;
-  /** Hint ukuran render untuk optimasi next/image (fill). */
-  sizes?: string;
 }) {
   if (!src) {
     return (
@@ -141,13 +137,12 @@ export function EquipmentThumb({
      sama seperti perilaku <img> lama. Host diizinkan via images.remotePatterns. */
   return (
     <span className={`relative block overflow-hidden ${className}`}>
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+      <img
         src={src}
         alt={alt}
-        fill
-        sizes={sizes}
+        className="absolute inset-0 w-full h-full object-cover"
         loading="lazy"
-        className="object-cover"
       />
     </span>
   );

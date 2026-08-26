@@ -2,7 +2,6 @@
 
 import { loginAction } from "@/action/auth";
 import { useState, useActionState, useRef, useEffect } from "react";
-import Image from "next/image";
 import type { LoginResponse } from "@/types/Auth";
 
 const initialState: LoginResponse = {
@@ -98,12 +97,12 @@ export default function LoginForm() {
       <div className="relative flex flex-none flex-col items-center justify-center bg-cover bg-center bg-[#0b1a30] bg-[linear-gradient(rgba(11,26,48,0.48),rgba(15,34,64,0.52)),url('/backgroundLeftPanel.webp')] px-4 pt-6 pb-10 text-center text-white sm:px-6 lg:flex-[1.2] lg:p-12">
         <div className="flex w-full flex-col items-center -translate-y-6 lg:-translate-y-10">
           <div className="mb-2 flex items-center justify-center lg:mb-4">
-            <Image
+            {/* eslint-disable-next-line @next/next/no-img-element -- konsisten dgn halaman lain, hindari image optimizer */}
+            <img
               src="/logo-white-hd.png"
               alt="Logo PUSRI"
               width={160}
               height={160}
-              priority
               className="object-contain opacity-95 [filter:drop-shadow(0_2px_6px_rgba(255,255,255,0.15))_drop-shadow(0_4px_12px_rgba(0,0,0,0.25))]"
             />
           </div>

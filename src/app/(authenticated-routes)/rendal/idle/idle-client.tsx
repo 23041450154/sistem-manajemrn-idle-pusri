@@ -199,10 +199,7 @@ export default function RendalIdleClient({
 			READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
 		};
 
-		let displayStatus = (status || "").replace(/_/g, " ");
-		if (displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
-			displayStatus = "READY TO USE";
-		}
+		const displayStatus = (status || "").replace(/_/g, " ");
 
 		const style = styles[displayStatus] || styles[status] || styles.SCRAP;
 		return (

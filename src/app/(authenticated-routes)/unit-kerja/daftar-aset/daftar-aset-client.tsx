@@ -43,6 +43,8 @@ export interface EquipmentItem {
 	capacity: string;
 	notes: string;
 	created_at: string;
+	/** Sudah dinormalisasi jadi URL absolut oleh getEquipments(). */
+	attachments?: { file_url?: string; fileUrl?: string; url?: string }[];
 }
 
 /** Unit Kerja hanya melihat aset siap pakai + yang sedang diperbaiki. */

@@ -123,6 +123,8 @@ export default async function DaftarAsetPage() {
 					capacity: String(item.capacity || "-"),
 					notes: item.notes || "-",
 					created_at: item.created_at || "-",
+					// Foto aset utk katalog (normalizeEquipment membaca field ini).
+					attachments: item.attachments,
 				};
 			});
 

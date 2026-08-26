@@ -2,7 +2,6 @@
 
 /* ponytail: payload API legacy tetap untyped sampai backend mengekspor DTO bersama. */
 import React, { useState, useMemo, useRef, useEffect } from "react";
-import Image from "next/image";
 import {
 	Search,
 	Edit,
@@ -623,7 +622,7 @@ export default function RevisiValidasiClient({
 							</tr>
 						</thead>
 						<tbody className="bg-white">
-						{paginatedAssets.length === 0 ? (
+							{paginatedAssets.length === 0 ? (
 								<tr>
 									<td colSpan={8} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
@@ -1211,12 +1210,11 @@ export default function RevisiValidasiClient({
 						<X className="w-6 h-6" />
 					</button>
 					<div className="relative w-[92vw] max-w-5xl h-[85vh]">
-						<Image
+						{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+						<img
 							src={previewImage}
 							alt="Preview"
-							fill
-							sizes="92vw"
-							className="object-contain rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
+							className="absolute inset-0 w-full h-full object-contain rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
 							onClick={(e) => e.stopPropagation()}
 						/>
 					</div>

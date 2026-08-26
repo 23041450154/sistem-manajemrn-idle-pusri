@@ -39,6 +39,8 @@ export default async function RendalIdlePage() {
 			// Daftar registrasi aset idle: status pending, ready, & repair.
 			const rawStatus =
 				(typeof item.status === "string" ? item.status : item.status?.name) || "";
+			// REUSED = sudah keluar dari idle pool (dipakai kembali) — jangan tampil.
+			if (statusName(rawStatus) === "REUSED") return false;
 			const group = statusGroup({ statusAset: rawStatus });
 			return group === "pending" || group === "ready" || group === "repair";
 		})

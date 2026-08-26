@@ -5,7 +5,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 import Link from "next/link";
-import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { normalizeRole } from "@/lib/roles";
 import { MASTER_ENTITIES } from "@/lib/master-entities";
@@ -290,7 +289,8 @@ export function Sidebar({ role }: { role?: string }) {
 			>
 				<div className="p-6 flex items-center justify-between gap-3">
 					<div className="flex items-center gap-3">
-						<Image
+						{/* eslint-disable-next-line @next/next/no-img-element -- konsisten dgn halaman lain, hindari image optimizer */}
+						<img
 							src="/images (2) 1.png"
 							alt="Logo PUSRI"
 							width={52}
