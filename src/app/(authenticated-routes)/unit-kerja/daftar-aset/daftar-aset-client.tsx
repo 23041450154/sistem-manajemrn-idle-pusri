@@ -15,7 +15,6 @@ import {
 	Loader2,
 	ChevronRight,
 	AlertCircle,
-	Eye,
 	Send,
 	X,
 	CheckCircle2,
@@ -709,14 +708,6 @@ export default function DaftarAsetClient({
 										</td>
 										<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
 											<div className="flex items-center justify-center gap-1.5">
-												<button
-													onClick={() => openDetailModal(asset)}
-													className="p-1.5 text-gray-500 hover:text-[#0A356A] hover:bg-gray-100 rounded-lg transition-colors"
-													title="Lihat Detail"
-												>
-													<Eye className="w-4 h-4" />
-												</button>
-
 												{asset.status_name === "READY_TO_USE" ? (
 													<button
 														type="button"
