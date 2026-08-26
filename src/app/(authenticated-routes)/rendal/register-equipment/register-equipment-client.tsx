@@ -31,6 +31,10 @@ export interface MasterEquipmentCode {
 	id: number;
 	code: string;
 	description: string;
+	// FK opsional dari backend — dipakai auto-fill kategori/plant/funcloc saat kode aset dipilih.
+	object_type_id?: number;
+	plant_id?: number;
+	func_loc_id?: number;
 }
 
 export interface MasterOption {
@@ -185,16 +189,61 @@ export default function RegisterEquipmentClient({
 		return () => clearTimeout(t);
 	}, [formData.equipmentCode]);
 
+	// Kode aset yang sedang auto-fill field turunannya (nama/kategori/plant/funcloc);
+	// null = belum ada auto-fill. Dipakai untuk membersihkan field saat kode dilepas.
+	const autoFilledRef = useRef<{
+		code: string;
+		name: string;
+		objectTypeId: string;
+		plantId: string;
+		funcLocId: string;
+	} | null>(null);
+
 	const handleEquipmentCodeChange = (
 		value: string,
-		// eslint-disable-next-line @typescript-eslint/no-unused-vars -- signature wajib cocok dgn onChange AutocompleteInput
-		_option?: AutocompleteOption,
+		option?: AutocompleteOption,
 	) => {
 		setTouched((prev) => ({
 			...prev,
 			equipmentCode: true,
 		}));
-		// Nama Peralatan sengaja TIDAK diisi otomatis dari description — user isi manual.
+
+		const raw = option?.raw as MasterEquipmentCode | undefined;
+		if (raw && value) {
+			// Kode aset dipilih → auto-fill nama (description), kategori, plant, dan funcloc.
+			const objectTypeId = raw.object_type_id ? String(raw.object_type_id) : "";
+			const plantId = raw.plant_id ? String(raw.plant_id) : "";
+			const funcLocId = raw.func_loc_id ? String(raw.func_loc_id) : "";
+			const name = raw.description || "";
+			autoFilledRef.current = {
+				code: value,
+				name,
+				objectTypeId,
+				plantId,
+				funcLocId,
+			};
+			setFormData((prev) => ({
+				...prev,
+				equipmentCode: value,
+				name,
+				objectTypeId,
+				plantId,
+				funcLocId,
+			}));
+			return;
+		}
+
+		// Kode aset dikosongkan / diubah dari kode yang terpilih → bersihkan hasil auto-fill.
+		if (autoFilledRef.current && value !== autoFilledRef.current.code) {
+			autoFilledRef.current = null;
+			setFormData((prev) => ({
+				...prev,
+				name: "",
+				objectTypeId: "",
+				plantId: "",
+				funcLocId: "",
+			}));
+		}
 		setFormData((prev) => ({ ...prev, equipmentCode: value }));
 	};
 
@@ -635,17 +684,15 @@ export default function RegisterEquipmentClient({
 									options={funcLocs}
 									placeholder="Ketik functional location..."
 									hasError={
-										(showValidationErrors || touched.funcLocId) &&
-										!formData.funcLocId
+										(showValidationErrors || touched.funcLocId) && !formData.funcLocId
 									}
 									emptyMessage="Functional location tidak ditemukan."
 								/>
-								{(showValidationErrors || touched.funcLocId) &&
-									!formData.funcLocId && (
-										<p className="text-[10px] text-red-500 mt-1 font-medium">
-											* Area (Funcloc) wajib dipilih.
-										</p>
-									)}
+								{(showValidationErrors || touched.funcLocId) && !formData.funcLocId && (
+									<p className="text-[10px] text-red-500 mt-1 font-medium">
+										* Area (Funcloc) wajib dipilih.
+									</p>
+								)}
 							</div>
 
 							{/* Garis Pemisah Visual */}

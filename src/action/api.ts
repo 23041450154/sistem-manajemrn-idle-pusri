@@ -55,13 +55,23 @@ export async function uploadAttachment(
 	}
 }
 
+/** Baris master kode aset — FK opsional (auto-fill kategori/plant/funcloc di form registrasi). */
+export type EquipmentCodeRow = {
+	id: number;
+	code: string;
+	description: string;
+	object_type_id?: number;
+	plant_id?: number;
+	func_loc_id?: number;
+};
+
 /**
  * Daftar kode aset master (GET /api/equipment-codes).
  * search opsional: prefix match "code LIKE x%" untuk autocomplete Kode Aset/Tag.
  */
 export async function getEquipmentCodes(
 	search?: string,
-): Promise<{ id: number; code: string; description: string }[]> {
+): Promise<EquipmentCodeRow[]> {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
 
