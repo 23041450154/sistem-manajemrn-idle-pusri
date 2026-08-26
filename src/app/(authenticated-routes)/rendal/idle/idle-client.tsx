@@ -193,6 +193,7 @@ export default function RendalIdleClient({
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
 			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
 			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
+			REVALIDATION: "bg-[#FEF3C7] text-[#B45309]",
 			REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
 			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
 			READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",

@@ -66,13 +66,30 @@ export async function getEquipmentCodes(
 	const token = cookieStore.get("token")?.value;
 
 	try {
-		const qs = search ? `?search=${encodeURIComponent(search)}` : "";
+		const trimmed = search?.trim();
+		const qs = trimmed ? `?search=${encodeURIComponent(trimmed)}` : "";
 		const res = await fetch(`${API_URL}/api/equipment-codes${qs}`, {
 			headers: { Authorization: `Bearer ${token}` },
 			cache: "no-store",
 		});
-		if (!res.ok) return [];
-		return await res.json();
+		if (res.ok) {
+			const data = await res.json();
+			if (Array.isArray(data) && data.length > 0) return data;
+			// Jika search huruf kecil tidak menemukan hasil (karena DB case-sensitive), coba huruf kapital
+			if (trimmed && trimmed !== trimmed.toUpperCase()) {
+				const upperQs = `?search=${encodeURIComponent(trimmed.toUpperCase())}`;
+				const upperRes = await fetch(`${API_URL}/api/equipment-codes${upperQs}`, {
+					headers: { Authorization: `Bearer ${token}` },
+					cache: "no-store",
+				});
+				if (upperRes.ok) {
+					const upperData = await upperRes.json();
+					if (Array.isArray(upperData) && upperData.length > 0) return upperData;
+				}
+			}
+			return Array.isArray(data) ? data : [];
+		}
+		return [];
 	} catch (error) {
 		console.error("Fetch equipment codes error:", error);
 		return [];

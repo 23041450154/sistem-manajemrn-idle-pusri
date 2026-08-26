@@ -117,7 +117,7 @@ export default function AutocompleteInput({
 		}
 	}
 
-	// Filter options based on typed input ONLY by label (name/tag), not description
+	// Filter options based on typed input by label (code/name) OR sublabel (description)
 	const filteredOptions = useMemo(() => {
 		const query = inputValue.toLowerCase().trim();
 		if (query.length < minChars) {
@@ -127,17 +127,32 @@ export default function AutocompleteInput({
 
 		const matched = normalizedOptions.filter((opt) => {
 			const label = (opt.label ?? "").toLowerCase();
-			return label.includes(query);
+			const sublabel = (opt.sublabel ?? "").toLowerCase();
+			return label.includes(query) || sublabel.includes(query);
 		});
 
-		// Sort so items starting with query come first
+		// Sort so items starting with query come first (label match prioritized over sublabel)
 		return matched.sort((a, b) => {
 			const aLabel = (a.label ?? "").toLowerCase();
 			const bLabel = (b.label ?? "").toLowerCase();
-			const aStarts = aLabel.startsWith(query);
-			const bStarts = bLabel.startsWith(query);
-			if (aStarts && !bStarts) return -1;
-			if (!aStarts && bStarts) return 1;
+			const aSub = (a.sublabel ?? "").toLowerCase();
+			const bSub = (b.sublabel ?? "").toLowerCase();
+
+			const aLabelStarts = aLabel.startsWith(query);
+			const bLabelStarts = bLabel.startsWith(query);
+			if (aLabelStarts && !bLabelStarts) return -1;
+			if (!aLabelStarts && bLabelStarts) return 1;
+
+			const aSubStarts = aSub.startsWith(query);
+			const bSubStarts = bSub.startsWith(query);
+			if (aSubStarts && !bSubStarts) return -1;
+			if (!aSubStarts && bSubStarts) return 1;
+
+			const aLabelInc = aLabel.includes(query);
+			const bLabelInc = bLabel.includes(query);
+			if (aLabelInc && !bLabelInc) return -1;
+			if (!aLabelInc && bLabelInc) return 1;
+
 			return aLabel.localeCompare(bLabel);
 		});
 	}, [normalizedOptions, inputValue, minChars, showOnFocus]);
@@ -289,9 +304,7 @@ export default function AutocompleteInput({
 
 	const showClear = clearable && !disabled && Boolean(inputValue);
 	const shouldShowPopup =
-		isOpen &&
-		(inputValue.trim().length >= minChars || showOnFocus) &&
-		normalizedOptions.length > 0;
+		isOpen && (inputValue.trim().length >= minChars || showOnFocus);
 
 	return (
 		<div ref={containerRef} className={`relative w-full ${className}`}>
@@ -306,6 +319,9 @@ export default function AutocompleteInput({
 					autoComplete={autoComplete}
 					placeholder={placeholder}
 					onChange={handleInputChange}
+					onClick={() => {
+						if (showOnFocus && !disabled) setIsOpen(true);
+					}}
 					onFocus={() => {
 						if (showOnFocus && !disabled) setIsOpen(true);
 						if (onFocus) onFocus();

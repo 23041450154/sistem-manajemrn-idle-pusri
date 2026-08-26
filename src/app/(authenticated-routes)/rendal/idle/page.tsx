@@ -36,12 +36,11 @@ export default async function RendalIdlePage() {
 
 	const equipments: Equipment[] = (Array.isArray(data) ? data : [])
 		.filter((item: any) => {
-			// Daftar registrasi aset idle: hanya status pending & ready.
-			// repair/scrap/tidak dikenal dibuang — pengganti salinan magic-number lama.
+			// Daftar registrasi aset idle: status pending, ready, & repair.
 			const rawStatus =
 				(typeof item.status === "string" ? item.status : item.status?.name) || "";
 			const group = statusGroup({ statusAset: rawStatus });
-			return group === "pending" || group === "ready";
+			return group === "pending" || group === "ready" || group === "repair";
 		})
 		.map((item: any): Equipment => {
 			let objectTypeName = "Belum Ditentukan";

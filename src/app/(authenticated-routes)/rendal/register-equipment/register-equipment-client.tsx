@@ -27,6 +27,12 @@ import AutocompleteInput, {
 	type AutocompleteOption,
 } from "@/components/AutocompleteInput";
 
+export interface MasterEquipmentCode {
+	id: number;
+	code: string;
+	description: string;
+}
+
 export interface MasterOption {
 	id: number;
 	name: string;
@@ -105,6 +111,7 @@ export default function RegisterEquipmentClient({
 	plants,
 	storageLocations,
 	funcLocs,
+	initialEquipmentCodes = [],
 	initialData,
 }: {
 	editId: string | null;
@@ -112,6 +119,7 @@ export default function RegisterEquipmentClient({
 	plants: MasterOption[];
 	storageLocations: MasterOption[];
 	funcLocs: MasterOption[];
+	initialEquipmentCodes?: MasterEquipmentCode[];
 	initialData: RegisterInitialData | null;
 }) {
 	const router = useRouter();
@@ -137,25 +145,42 @@ export default function RegisterEquipmentClient({
 	);
 
 	// Kode Aset/Tag: dropdown dari master backend (/equipment-codes).
-	// Belum mengetik → daftar awal (backend batasi 50, urut kode);
-	// mengetik → debounce 300ms → GET ?search=prefix (LIKE 'x%').
-	const [codeOptions, setCodeOptions] = useState<AutocompleteOption[]>([]);
+	// Inisialisasi awal langsung dari server component agar instan dan tidak kedip/kosong.
+	const [codeOptions, setCodeOptions] = useState<AutocompleteOption[]>(() =>
+		initialEquipmentCodes.map((r) => ({
+			id: r.id,
+			value: r.code,
+			label: r.code,
+			sublabel: r.description,
+			raw: r,
+		})),
+	);
+
 	useEffect(() => {
 		const q = formData.equipmentCode.trim();
 		const t = setTimeout(
 			async () => {
 				const rows = await getEquipmentCodes(q || undefined);
-				setCodeOptions(
-					rows.map((r) => ({
-						id: r.id,
-						value: r.code,
-						label: r.code,
-						sublabel: r.description,
-						raw: r,
-					})),
-				);
+				if (Array.isArray(rows) && rows.length > 0) {
+					setCodeOptions((prev) => {
+						const map = new Map<string, AutocompleteOption>();
+						// Simpan daftar opsi sebelumnya agar pencarian lokal tetap kaya
+						prev.forEach((opt) => map.set(String(opt.value || opt.label), opt));
+						// Masukkan opsi baru dari respon backend
+						rows.forEach((r) =>
+							map.set(r.code, {
+								id: r.id,
+								value: r.code,
+								label: r.code,
+								sublabel: r.description,
+								raw: r,
+							}),
+						);
+						return Array.from(map.values());
+					});
+				}
 			},
-			q ? 300 : 0,
+			q ? 200 : 0,
 		);
 		return () => clearTimeout(t);
 	}, [formData.equipmentCode]);
@@ -296,6 +321,8 @@ export default function RegisterEquipmentClient({
 			!formData.name ||
 			!formData.objectTypeId ||
 			!formData.plantId ||
+			!formData.storageLocationId ||
+			!formData.funcLocId ||
 			!formData.vendor ||
 			!formData.idleReason
 		) {
@@ -570,7 +597,7 @@ export default function RegisterEquipmentClient({
 							{/* Baris 3: Area */}
 							<div className="space-y-1.5 lg:col-span-1">
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-									LOKASI PENYIMPANAN
+									LOKASI PENYIMPANAN <span className="text-red-500">*</span>
 								</label>
 								<AutocompleteInput
 									mode="select"
@@ -581,12 +608,22 @@ export default function RegisterEquipmentClient({
 									onBlur={() => handleSelectBlur("storageLocationId")}
 									options={storageLocations}
 									placeholder="Ketik lokasi simpan..."
+									hasError={
+										(showValidationErrors || touched.storageLocationId) &&
+										!formData.storageLocationId
+									}
 									emptyMessage="Lokasi penyimpanan tidak ditemukan."
 								/>
+								{(showValidationErrors || touched.storageLocationId) &&
+									!formData.storageLocationId && (
+										<p className="text-[10px] text-red-500 mt-1 font-medium">
+											* Lokasi penyimpanan wajib dipilih.
+										</p>
+									)}
 							</div>
 							<div className="space-y-1.5 lg:col-span-2">
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-									AREA (FUNCLOC)
+									AREA (FUNCLOC) <span className="text-red-500">*</span>
 								</label>
 								<AutocompleteInput
 									mode="select"
@@ -597,8 +634,18 @@ export default function RegisterEquipmentClient({
 									onBlur={() => handleSelectBlur("funcLocId")}
 									options={funcLocs}
 									placeholder="Ketik functional location..."
+									hasError={
+										(showValidationErrors || touched.funcLocId) &&
+										!formData.funcLocId
+									}
 									emptyMessage="Functional location tidak ditemukan."
 								/>
+								{(showValidationErrors || touched.funcLocId) &&
+									!formData.funcLocId && (
+										<p className="text-[10px] text-red-500 mt-1 font-medium">
+											* Area (Funcloc) wajib dipilih.
+										</p>
+									)}
 							</div>
 
 							{/* Garis Pemisah Visual */}
@@ -845,7 +892,22 @@ export default function RegisterEquipmentClient({
 						</Link>
 						<button
 							type="button"
-							onClick={() => setIsConfirmOpen(true)}
+							onClick={() => {
+								if (
+									!formData.equipmentCode ||
+									!formData.name ||
+									!formData.objectTypeId ||
+									!formData.plantId ||
+									!formData.storageLocationId ||
+									!formData.funcLocId ||
+									!formData.vendor ||
+									!formData.idleReason
+								) {
+									setShowValidationErrors(true);
+									return;
+								}
+								setIsConfirmOpen(true);
+							}}
 							disabled={isSubmitting}
 							className="w-full px-5 py-2.5 rounded bg-[#0A356A] hover:bg-[#0556B3] text-white text-sm font-bold transition-all shadow-md flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
 						>

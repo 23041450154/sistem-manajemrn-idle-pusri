@@ -1,4 +1,5 @@
 import {
+	getEquipmentCodes,
 	getEquipments,
 	getFunctionalLocations,
 	getObjectTypes,
@@ -20,14 +21,21 @@ export default async function RegisterEquipmentPage({
 }) {
 	const { editId } = await searchParams;
 
-	const [objs, plantsList, storageLocList, funcLocList, equipments] =
-		await Promise.all([
-			getObjectTypes().catch(() => []),
-			getPlants().catch(() => []),
-			getStorageLocations().catch(() => []),
-			getFunctionalLocations().catch(() => []),
-			getEquipments().catch(() => [] as any[]),
-		]);
+	const [
+		objs,
+		plantsList,
+		storageLocList,
+		funcLocList,
+		equipments,
+		initialEquipmentCodes,
+	] = await Promise.all([
+		getObjectTypes().catch(() => []),
+		getPlants().catch(() => []),
+		getStorageLocations().catch(() => []),
+		getFunctionalLocations().catch(() => []),
+		getEquipments().catch(() => [] as any[]),
+		getEquipmentCodes().catch(() => []),
+	]);
 
 	let initialData: RegisterInitialData | null = null;
 	if (editId) {
@@ -76,6 +84,7 @@ export default async function RegisterEquipmentPage({
 			plants={plantsList}
 			storageLocations={storageLocList}
 			funcLocs={funcLocList}
+			initialEquipmentCodes={initialEquipmentCodes}
 			initialData={initialData}
 		/>
 	);
