@@ -47,9 +47,6 @@ export interface EquipmentItem {
 	attachments?: { file_url?: string; fileUrl?: string; url?: string }[];
 }
 
-/** Unit Kerja hanya melihat aset siap pakai + yang sedang diperbaiki. */
-const VISIBLE_STATUSES = ["READY_TO_USE", "REPAIR"];
-
 /* Lampiran dipisah: yang bisa dirender sebagai gambar vs dokumen.
    ponytail: klasifikasi lewat ekstensi URL. Kalau backend nanti mengirim
    mime_type, ganti ke field itu. */

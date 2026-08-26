@@ -24,7 +24,6 @@ import {
 	XCircle,
 	AlertCircle,
 	Upload,
-	Paperclip,
 	X,
 	ChevronRight,
 	Loader2,
@@ -564,17 +563,12 @@ export default function RendalScrapPage() {
 								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
 							/>
 						</div>
-						<button
-							onClick={() => setSearch(searchInput)}
-							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm cursor-pointer"
-						>
-							Cari
-						</button>
 						{(search || searchInput) && (
 							<button
 								onClick={() => {
 									setSearch("");
 									setSearchInput("");
+									setCurrentPage(1);
 								}}
 								className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap cursor-pointer"
 							>

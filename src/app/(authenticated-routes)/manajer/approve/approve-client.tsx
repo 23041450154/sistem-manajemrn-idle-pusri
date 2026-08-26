@@ -448,7 +448,7 @@ export default function ManajerApproveClient({
 							<select
 								value={status}
 								onChange={(e) => setStatus(e.target.value)}
-								className="h-10 min-w-0 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-medium text-gray-700 outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] sm:w-[120px] cursor-pointer"
+								className="h-10 min-w-0 rounded-lg border border-gray-200 bg-white px-2.5 text-[12px] font-medium text-gray-700 outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] sm:w-[130px] cursor-pointer"
 							>
 								<option value="Semua Status">Semua Status</option>
 								<option value="PENDING">Menunggu Review</option>

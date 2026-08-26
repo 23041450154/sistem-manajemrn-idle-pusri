@@ -550,6 +550,62 @@ export async function validateEquipment(
 	}
 }
 
+export async function updateValidation(
+	validationId: string | number,
+	conditionId: number,
+	notes: string,
+	opts?: {
+		startAt?: string;
+		endAt?: string;
+		followupRecommendation?: string;
+		photos?: File[];
+	},
+) {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+
+	const today = new Date().toISOString().split("T")[0];
+	const formData = new FormData();
+	formData.append("condition_id", String(conditionId));
+	formData.append("start_at", opts?.startAt || today);
+	formData.append("end_at", opts?.endAt || opts?.startAt || today);
+	formData.append("notes", notes);
+	if (opts?.followupRecommendation) {
+		formData.append("followup_recommendation", opts.followupRecommendation);
+	}
+	for (const photo of opts?.photos ?? []) {
+		formData.append("photos", photo);
+	}
+
+	try {
+		const res = await fetch(`${API_URL}/api/validation/${validationId}`, {
+			method: "PATCH",
+			headers: {
+				Authorization: `Bearer ${token}`,
+			},
+			body: formData,
+		});
+
+		if (!res.ok) {
+			const errorData = await res.json().catch(() => null);
+			return {
+				success: false,
+				message: errorData?.message || `HTTP Error ${res.status}`,
+			};
+		}
+
+		const json = await res.json().catch(() => null);
+		revalidateApp();
+		return { success: true, data: json?.data };
+	} catch (error) {
+		console.error("Update validation error:", error);
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
+	}
+}
+
 export async function createRevalidation(
 	equipmentId: string,
 	// Status tujuan hasil validasi ulang: REVALIDATION | REPAIR | DISPOSAL_RECOMMENDED.

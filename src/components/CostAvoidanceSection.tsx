@@ -2,12 +2,12 @@
 
 import { Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import {
-	Recycle,
 	Clock,
-	Wrench,
-	CheckCircle,
 	AlertCircle,
 	Check,
+	FileText,
+	CheckCircle2,
+	AlertTriangle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { getEquipments, getDisposals } from "@/action/api";
@@ -146,32 +146,32 @@ export function CostAvoidanceSection() {
 	// Data-driven so the four cards cannot drift apart (they previously differed only by hue).
 	const kpis = [
 		{
+			label: "Total Peralatan",
+			value: totalUnit,
+			caption: "Total aset idle terdaftar",
+			rule: "#334155",
+			icon: FileText,
+		},
+		{
 			label: "Menunggu Validasi",
 			value: menungguValidasiCount,
-			caption: "Aset baru diajukan",
+			caption: "Baru terdaftar, belum diperiksa",
 			rule: "#0556B3",
 			icon: Clock,
 		},
 		{
-			label: "Dalam Perbaikan",
-			value: dalamPerbaikanCount,
-			caption: "Aset butuh pemeliharaan",
-			rule: "#B45309",
-			icon: Wrench,
-		},
-		{
-			label: "Ready to Use",
+			label: "Tervalidasi / Ready",
 			value: readyCount,
-			caption: "Siap digunakan kembali",
+			caption: "Layak operasional",
 			rule: "#059669",
-			icon: CheckCircle,
+			icon: CheckCircle2,
 		},
 		{
-			label: "Menunggu Scrap",
-			value: scrapCount,
-			caption: "Proses penghapusan aset",
-			rule: "#475569",
-			icon: Recycle,
+			label: "Perbaikan / Scrap",
+			value: dalamPerbaikanCount + scrapCount,
+			caption: "Rusak atau tidak layak",
+			rule: "#B45309",
+			icon: AlertTriangle,
 		},
 	];
 

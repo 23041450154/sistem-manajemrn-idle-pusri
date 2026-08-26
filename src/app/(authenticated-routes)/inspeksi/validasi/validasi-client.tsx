@@ -29,6 +29,7 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 
 import {
 	validateEquipment,
+	updateValidation,
 	getAttachmentsByEquipmentId,
 	getInspections,
 	getValidations,
@@ -66,6 +67,7 @@ export interface Asset {
 	nilaiPerolehan: string;
 	kondisi: string;
 	pemohon: string;
+	approvalId?: string;
 }
 
 /** Client Component: interaksi tabel/modal inspeksi — data di-fetch Server Component. */
@@ -104,6 +106,7 @@ export default function ManajemenInspeksiClient({
 	const [managerNotes, setManagerNotes] = useState("");
 	const [approvalId, setApprovalId] = useState("");
 	const [requiredActionId, setRequiredActionId] = useState("");
+	const [validationId, setValidationId] = useState("");
 
 	useEffect(() => {
 		// Jalankan scroll setelah render DOM selasai
@@ -191,27 +194,10 @@ export default function ManajemenInspeksiClient({
 		setAttachments([]);
 		setPreviewImage(null);
 		setManagerNotes("");
-		setApprovalId("");
+		setApprovalId(asset.approvalId || "");
 		setRequiredActionId("");
 		setInspectionNumber("");
-
-		try {
-			const validations = await getValidations(asset.id);
-			if (validations.length > 0) {
-				setInspectionNumber(validations[0].inspection_number || "");
-			}
-		} catch (err) {
-			console.error(err);
-		}
-
-		try {
-			const attsData = await getAttachmentsByEquipmentId(asset.id);
-			if (attsData && Array.isArray(attsData)) {
-				setAttachments(attsData);
-			}
-		} catch (err) {
-			console.error(err);
-		}
+		setValidationId("");
 
 		// Reset Form jika status belum divalidasi (baru pertama kali)
 		if (asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE") {
@@ -228,14 +214,53 @@ export default function ManajemenInspeksiClient({
 					? "Tidak Layak"
 					: "Layak",
 			);
-			setConditionId("");
+			const matchedCond = conditions.find(
+				(c) =>
+					c.name.toLowerCase().replace(/_/g, " ") ===
+					(asset.kondisi || "").toLowerCase().replace(/_/g, " "),
+			);
+			setConditionId(matchedCond ? matchedCond.id.toString() : "");
 			setCatatan("");
 			setRekomendasi("");
 			setTglMulai(new Date().toISOString().split("T")[0]);
 			setTglSelesai(new Date().toISOString().split("T")[0]);
+		}
 
+		try {
+			const validations = await getValidations(asset.id);
+			if (validations && validations.length > 0) {
+				const latest = validations[0];
+				if (latest.id) {
+					setValidationId(String(latest.id));
+				}
+				setInspectionNumber(latest.inspection_number || "");
+				if (asset.statusPersetujuan === "NEED_REVISION" || asset.statusPersetujuan === "PENDING_REVIEW") {
+					if (latest.notes) setCatatan(latest.notes);
+					if (latest.followup_recommendation) setRekomendasi(latest.followup_recommendation);
+					if (latest.start_at) {
+						setTglMulai(new Date(latest.start_at).toISOString().split("T")[0]);
+					}
+					if (latest.end_at) {
+						setTglSelesai(new Date(latest.end_at).toISOString().split("T")[0]);
+					}
+				}
+			}
+		} catch (err) {
+			console.error("Gagal mengambil data validasi:", err);
+		}
+
+		try {
+			const attsData = await getAttachmentsByEquipmentId(asset.id);
+			if (attsData && Array.isArray(attsData)) {
+				setAttachments(attsData);
+			}
+		} catch (err) {
+			console.error("Gagal mengambil data lampiran:", err);
+		}
+
+		if (asset.statusPersetujuan !== "NONE") {
 			try {
-				// Ambil data inspeksi sebelumnya secara dinamis dari database
+				// Ambil data inspeksi sebelumnya secara dinamis jika ada
 				const allInsps = await getInspections();
 				const myInsps = (allInsps || []).filter(
 					(i: any) => i.equipment_id === Number(asset.id),
@@ -243,35 +268,33 @@ export default function ManajemenInspeksiClient({
 				if (myInsps.length > 0) {
 					myInsps.sort((a: any, b: any) => b.id - a.id);
 					const latest = myInsps[0];
-					setHasilPemeriksaan(latest.is_utilizable ? "Layak" : "Tidak Layak");
-					setConditionId(latest.condition_id?.toString() || "");
-					setCatatan(latest.notes || "");
-					setRekomendasi(latest.mechanical_condition || "");
-					setRequiredActionId(
-						latest.require_action_id ? latest.require_action_id.toString() : "",
-					);
-					const prevStart = latest.start_at || latest.inspection_date;
-					const prevEnd = latest.end_at || prevStart;
-					if (prevStart) {
-						setTglMulai(new Date(prevStart).toISOString().split("T")[0]);
+					if (latest.require_action_id) {
+						setRequiredActionId(latest.require_action_id.toString());
 					}
-					if (prevEnd) {
-						setTglSelesai(new Date(prevEnd).toISOString().split("T")[0]);
+					if (latest.notes && !catatan) {
+						setCatatan(latest.notes);
 					}
 				}
+			} catch (err) {
+				console.error("Gagal mengambil data inspeksi:", err);
+			}
 
-				// Ambil catatan penolakan manajer secara dinamis
+			try {
+				// Ambil catatan penolakan / revisi manajer secara dinamis
 				const approvalsRes = await getApprovals();
 				const approvalsData = Array.isArray(approvalsRes)
 					? approvalsRes
 					: approvalsRes?.data || [];
 				const app = approvalsData.find(
-					(a: any) => a.equipment_id === Number(asset.id),
+					(a: any) =>
+						String(a.equipment_id) === String(asset.id) ||
+						String(a.equipment?.id) === String(asset.id),
 				);
-				if (app) {
-					setApprovalId(app.id.toString());
-					if (app.approval_status === "REVISION_REQUIRED") {
-						const detail = await getApprovalById(app.id);
+				const targetAppId = app?.id?.toString() || asset.approvalId || "";
+				if (targetAppId) {
+					setApprovalId(targetAppId);
+					if (asset.statusPersetujuan === "NEED_REVISION" || app?.approval_status === "REVISION_REQUIRED") {
+						const detail = await getApprovalById(targetAppId);
 						if (detail && detail.steps) {
 							const revisionStep = detail.steps.find(
 								(s: any) => s.approval_status === "REVISION_REQUIRED",
@@ -301,15 +324,39 @@ export default function ManajemenInspeksiClient({
 
 		try {
 			const isUtilizable = hasilPemeriksaan === "Layak";
-			const notes = catatan || rekomendasi;
+			const notes = (catatan || rekomendasi || "Hasil validasi").trim();
 
 			const isRevision = selectedAsset.statusPersetujuan === "NEED_REVISION";
 			let res;
 
 			if (isRevision) {
+				let targetApprovalId = approvalId || selectedAsset.approvalId;
+				if (!targetApprovalId) {
+					const approvalsRes = await getApprovals();
+					const approvalsData = Array.isArray(approvalsRes)
+						? approvalsRes
+						: approvalsRes?.data || [];
+					const app = approvalsData.find(
+						(a: any) =>
+							String(a.equipment_id) === String(selectedAsset.id) ||
+							String(a.equipment?.id) === String(selectedAsset.id),
+					);
+					if (app) {
+						targetApprovalId = String(app.id);
+					}
+				}
+
+				if (!targetApprovalId) {
+					setNotification({
+						type: "error",
+						message: "Gagal memproses revisi: ID Approval tidak ditemukan.",
+					});
+					return;
+				}
+
 				const formData = new FormData();
 				formData.append("is_utilizable", isUtilizable ? "true" : "false");
-				formData.append("notes", catatan.trim());
+				formData.append("notes", notes);
 				if (isUtilizable && requiredActionId) {
 					formData.append("required_action", requiredActionId);
 				}
@@ -318,7 +365,47 @@ export default function ManajemenInspeksiClient({
 						formData.append("photos", file);
 					});
 				}
-				res = await resubmitApproval(approvalId, formData);
+				res = await resubmitApproval(targetApprovalId, formData);
+			} else if (
+				validationId ||
+				selectedAsset.statusAset === "VALIDATED" ||
+				selectedAsset.statusPersetujuan === "PENDING_REVIEW"
+			) {
+				// Mode Ubah Validasi: panggil PATCH /api/validation/:id
+				let targetValidationId = validationId;
+				if (!targetValidationId) {
+					const valids = await getValidations(selectedAsset.id);
+					if (valids && valids.length > 0) {
+						targetValidationId = String(valids[0].id);
+					}
+				}
+
+				if (targetValidationId) {
+					res = await updateValidation(
+						targetValidationId,
+						Number(effectiveConditionId),
+						notes,
+						{
+							startAt: tglMulai,
+							endAt: tglSelesai,
+							followupRecommendation: rekomendasi,
+							photos: uploadedFiles,
+						},
+					);
+				} else {
+					res = await validateEquipment(
+						selectedAsset.id,
+						isUtilizable,
+						Number(effectiveConditionId),
+						notes,
+						{
+							startAt: tglMulai,
+							endAt: tglSelesai,
+							followupRecommendation: rekomendasi,
+							photos: uploadedFiles,
+						},
+					);
+				}
 			} else {
 				res = await validateEquipment(
 					selectedAsset.id,
@@ -472,12 +559,15 @@ export default function ManajemenInspeksiClient({
 
 			let matchStatus = false;
 			if (statusFilter === "Semua") matchStatus = true;
-			else if (statusFilter === "ACTION_NEEDED")
-				matchStatus =
-					a.statusPersetujuan === "NONE" ||
-					a.statusPersetujuan === "PENDING_REVIEW" ||
-					a.statusPersetujuan === "NEED_REVISION";
-			else if (statusFilter === "NEED_REVISION")
+			else if (statusFilter === "ACTION_NEEDED") {
+				const showInspeksi =
+					a.statusAset === "REGISTERED" && a.statusPersetujuan === "NONE";
+				const showUbah =
+					a.statusAset === "VALIDATED" &&
+					a.statusPersetujuan === "PENDING_REVIEW";
+				const showRevisi = a.statusPersetujuan === "NEED_REVISION";
+				matchStatus = showInspeksi || showUbah || showRevisi;
+			} else if (statusFilter === "NEED_REVISION")
 				matchStatus = a.statusPersetujuan === "NEED_REVISION";
 			else if (statusFilter === "SCRAP")
 				matchStatus =
@@ -665,17 +755,17 @@ export default function ManajemenInspeksiClient({
 	const validateForm = () => {
 		if (!hasilPemeriksaan || !effectiveConditionId || !isDateRangeValid)
 			return false;
-		if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
 
 		const isRevision = selectedAsset?.statusPersetujuan === "NEED_REVISION";
-		// Foto tidak lagi wajib diisi (selalu lolos validasi)
-		const totalPhotosOk = true;
 
-		const actionOk = isRevision
-			? hasilPemeriksaan !== "Layak" || !!requiredActionId
-			: true;
+		if (isRevision) {
+			if (!catatan.trim()) return false;
+			if (uploadedFiles.length === 1) return false;
+		} else {
+			if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
+		}
 
-		return totalPhotosOk && actionOk;
+		return true;
 	};
 
 	const handleSaveClick = () => {
@@ -837,6 +927,7 @@ export default function ManajemenInspeksiClient({
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[140px] cursor-pointer"
 						>
 							<option value="Semua">Semua Status</option>
+							<option value="ACTION_NEEDED">Perlu Tindakan</option>
 							<option value="REGISTERED">REGISTERED</option>
 							<option value="VALIDATED">VALIDATED</option>
 							<option value="NEED_REVISION">Perlu Revisi</option>
@@ -1477,44 +1568,6 @@ export default function ManajemenInspeksiClient({
 											</p>
 										)}
 									</div>
-
-									{/* Dropdown Required Action Khusus Mode Revisi & Layak */}
-									{selectedAsset.statusPersetujuan === "NEED_REVISION" &&
-										hasilPemeriksaan === "Layak" && (
-											<div className="col-span-12 mt-2">
-												<div className="flex justify-between items-end mb-1">
-													<label className="block text-[11px] font-semibold text-gray-700">
-														Perbaikan Khusus <span className="text-[#DC2626]">*</span>
-													</label>
-													<span className="text-[9px] font-bold text-[#DC2626] border border-[#DC2626] px-1 py-0.5 rounded-sm">
-														Wajib
-													</span>
-												</div>
-												<select
-													value={requiredActionId}
-													onChange={(e) => setRequiredActionId(e.target.value)}
-													className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${
-														showValidationErrors && !requiredActionId
-															? "border-[#DC2626] focus:border-[#DC2626]"
-															: "border-gray-300 focus:border-[#0A356A]"
-													}`}
-												>
-													<option value="" disabled>
-														Pilih Tindakan Perbaikan...
-													</option>
-													{requireActions.map((action: any) => (
-														<option key={action.id} value={action.id.toString()}>
-															{action.name}
-														</option>
-													))}
-												</select>
-												{showValidationErrors && !requiredActionId && (
-													<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
-														* Tindakan Perbaikan wajib dipilih saat layak.
-													</p>
-												)}
-											</div>
-										)}
 								</div>
 
 								{/* Row 3: Catatan & Rekomendasi (simetris 6/6) */}
@@ -1524,10 +1577,16 @@ export default function ManajemenInspeksiClient({
 											Catatan Pemeriksaan{" "}
 											<span
 												className={
-													hasilPemeriksaan === "Tidak Layak" ? "text-[#DC2626]" : ""
+													hasilPemeriksaan === "Tidak Layak" ||
+													selectedAsset.statusPersetujuan === "NEED_REVISION"
+														? "text-[#DC2626]"
+														: ""
 												}
 											>
-												{hasilPemeriksaan === "Tidak Layak" ? "*" : ""}
+												{hasilPemeriksaan === "Tidak Layak" ||
+												selectedAsset.statusPersetujuan === "NEED_REVISION"
+													? "*"
+													: ""}
 											</span>
 										</label>
 										<textarea
@@ -1536,21 +1595,28 @@ export default function ManajemenInspeksiClient({
 											onChange={(e) => setCatatan(e.target.value)}
 											disabled={isReadOnly}
 											placeholder={
-												hasilPemeriksaan === "Tidak Layak"
-													? "Tuliskan alasan (wajib)..."
+												hasilPemeriksaan === "Tidak Layak" ||
+												selectedAsset.statusPersetujuan === "NEED_REVISION"
+													? "Tuliskan catatan pemeriksaan (wajib)..."
 													: "Tuliskan hasil pemeriksaan..."
 											}
 											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 resize-none transition-all ${
-												hasilPemeriksaan === "Tidak Layak" && !catatan.trim()
+												(hasilPemeriksaan === "Tidak Layak" ||
+													selectedAsset.statusPersetujuan === "NEED_REVISION") &&
+												!catatan.trim() &&
+												showValidationErrors
 													? "border-[#DC2626] focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
 													: "border-gray-300 focus:border-[#0A356A]"
 											}`}
 										/>
-										{hasilPemeriksaan === "Tidak Layak" && !catatan.trim() && (
-											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
-												* Harus diisi agar bisa disimpan.
-											</p>
-										)}
+										{(hasilPemeriksaan === "Tidak Layak" ||
+											selectedAsset.statusPersetujuan === "NEED_REVISION") &&
+											!catatan.trim() &&
+											showValidationErrors && (
+												<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
+													* Catatan pemeriksaan wajib diisi.
+												</p>
+											)}
 									</div>
 									<div className="col-span-12 md:col-span-6">
 										<label className="block text-[11px] font-semibold text-gray-700 mb-1">
@@ -1600,6 +1666,9 @@ export default function ManajemenInspeksiClient({
 											</div>
 											<span className="text-[11px] text-gray-500 font-medium text-center">
 												Format: JPG, PNG, PDF (Max 5MB)
+												{selectedAsset.statusPersetujuan === "NEED_REVISION"
+													? " — Minimal 2 file jika mengunggah foto baru"
+													: ""}
 											</span>
 
 											{uploadedFiles.length === 0 && (
@@ -1668,6 +1737,14 @@ export default function ManajemenInspeksiClient({
 												* {fileError}
 											</p>
 										)}
+
+										{showValidationErrors &&
+											selectedAsset.statusPersetujuan === "NEED_REVISION" &&
+											uploadedFiles.length === 1 && (
+												<p className="text-[10px] text-[#DC2626] mt-1.5 font-medium">
+													* Minimal 2 file foto jika mengunggah foto baru.
+												</p>
+											)}
 
 										{/* Tampilkan Foto Validasi Lama (Milik User) agar Tidak Hilang / Tak Terlihat */}
 										{selectedAsset.statusPersetujuan === "NEED_REVISION" &&
@@ -2021,8 +2098,16 @@ export default function ManajemenInspeksiClient({
 					setIsConfirmOpen(false);
 					handleSave();
 				}}
-				title="Kirim Hasil Validasi?"
-				description={`Status aset ${selectedAsset?.kodeAlat ?? ""} akan diperbarui sesuai hasil pemeriksaan dan diteruskan ke alur persetujuan.`}
+				title={
+					selectedAsset?.statusPersetujuan === "NEED_REVISION"
+						? "Kirim Revisi Validasi?"
+						: "Kirim Hasil Validasi?"
+				}
+				description={
+					selectedAsset?.statusPersetujuan === "NEED_REVISION"
+						? `Hasil revisi validasi untuk ${selectedAsset?.kodeAlat ?? ""} akan dikirim ulang ke Manajer Rendal untuk ditinjau kembali.`
+						: `Status aset ${selectedAsset?.kodeAlat ?? ""} akan diperbarui sesuai hasil pemeriksaan dan diteruskan ke alur persetujuan.`
+				}
 				confirmLabel="Ya, Kirim"
 				pendingLabel="Mengirim..."
 				isPending={isSubmitting}

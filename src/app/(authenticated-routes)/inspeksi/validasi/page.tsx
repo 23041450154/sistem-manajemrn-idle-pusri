@@ -181,7 +181,8 @@ export default async function ValidasiPage() {
 			}
 		}
 
-		return { ...item, statusAset, statusPersetujuan };
+		const approvalId = app ? String(app.id) : undefined;
+		return { ...item, statusAset, statusPersetujuan, approvalId };
 	});
 
 	// Sort data by ID descending (newest first)

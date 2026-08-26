@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
 import { createRevalidation } from "@/action/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -18,6 +18,8 @@ import {
 	Wrench,
 	Trash2,
 	Eye,
+	UploadCloud,
+	Paperclip,
 } from "lucide-react";
 
 export interface RevalidasiItem {
@@ -63,6 +65,14 @@ export default function InspeksiValidasiUlangClient({
 	const [hasilStatus, setHasilStatus] = useState("");
 	const [notes, setNotes] = useState("");
 	const [followupRecommendation, setFollowupRecommendation] = useState("");
+	const [tglMulai, setTglMulai] = useState(
+		new Date().toISOString().split("T")[0],
+	);
+	const [tglSelesai, setTglSelesai] = useState(
+		new Date().toISOString().split("T")[0],
+	);
+	const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+	const [showValidationErrors, setShowValidationErrors] = useState(false);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [notification, setNotification] = useState<{
@@ -70,6 +80,22 @@ export default function InspeksiValidasiUlangClient({
 		message: string;
 	} | null>(null);
 	const [modalError, setModalError] = useState<string | null>(null);
+
+	const fileInputRef = useRef<HTMLInputElement>(null);
+	const isDateRangeValid = !!tglMulai && !!tglSelesai && tglSelesai >= tglMulai;
+
+	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		if (!e.target.files) return;
+		const newFiles = Array.from(e.target.files);
+		setUploadedFiles((prev) => [...prev, ...newFiles]);
+		if (fileInputRef.current) {
+			fileInputRef.current.value = "";
+		}
+	};
+
+	const removeFile = (index: number) => {
+		setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
+	};
 
 	const plantOptions = useMemo(
 		() =>
@@ -152,6 +178,10 @@ export default function InspeksiValidasiUlangClient({
 		setHasilStatus("");
 		setNotes("");
 		setFollowupRecommendation("");
+		setTglMulai(new Date().toISOString().split("T")[0]);
+		setTglSelesai(new Date().toISOString().split("T")[0]);
+		setUploadedFiles([]);
+		setShowValidationErrors(false);
 		setModalError(null);
 		setIsModalOpen(true);
 	};
@@ -163,23 +193,58 @@ export default function InspeksiValidasiUlangClient({
 		setHasilStatus("");
 		setNotes("");
 		setFollowupRecommendation("");
+		setTglMulai(new Date().toISOString().split("T")[0]);
+		setTglSelesai(new Date().toISOString().split("T")[0]);
+		setUploadedFiles([]);
+		setShowValidationErrors(false);
 		setModalError(null);
+	};
+
+	const handleInitiateSubmit = () => {
+		setShowValidationErrors(true);
+		if (!hasilStatus) {
+			setModalError("Hasil validasi ulang wajib dipilih.");
+			return;
+		}
+		if (!tglMulai) {
+			setModalError("Tanggal mulai pemeriksaan wajib diisi.");
+			return;
+		}
+		if (!tglSelesai) {
+			setModalError("Tanggal berakhir pemeriksaan wajib diisi.");
+			return;
+		}
+		if (tglSelesai < tglMulai) {
+			setModalError("Tanggal berakhir tidak boleh sebelum tanggal mulai.");
+			return;
+		}
+		if (!notes.trim()) {
+			setModalError("Catatan pemeriksaan wajib diisi.");
+			return;
+		}
+		setModalError(null);
+		setIsConfirmOpen(true);
 	};
 
 	const handleSubmit = async (e?: React.FormEvent) => {
 		e?.preventDefault();
 		if (!selectedAsset || !hasilStatus || isSubmitting) return;
 
-		if (!notes.trim()) {
-			setModalError("Catatan / temuan inspeksi wajib diisi.");
+		const isRangeValid = !!tglMulai && !!tglSelesai && tglSelesai >= tglMulai;
+		if (!isRangeValid || !notes.trim()) {
+			setShowValidationErrors(true);
+			setModalError("Mohon lengkapi semua field wajib bertanda (*).");
 			return;
 		}
 		setIsSubmitting(true);
 		setModalError(null);
 		try {
 			const result = await createRevalidation(selectedAsset.id, hasilStatus, {
-				notes,
-				followupRecommendation,
+				startAt: tglMulai,
+				endAt: tglSelesai,
+				notes: notes.trim(),
+				followupRecommendation: followupRecommendation.trim() || undefined,
+				photos: uploadedFiles,
 			});
 
 			if (result.success) {
@@ -590,7 +655,7 @@ export default function InspeksiValidasiUlangClient({
 			{/* Modal Validasi / Detail Perbaikan Alat */}
 			{isModalOpen && selectedAsset && (
 				<div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0F172A]/50 p-4 animate-in fade-in duration-200">
-					<div className="bg-white rounded w-full max-w-lg overflow-hidden border border-[#E6E8EA] flex flex-col max-h-[90vh] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] animate-in zoom-in-95 fade-in duration-200">
+					<div className="bg-white rounded w-full max-w-xl overflow-hidden border border-[#E6E8EA] flex flex-col max-h-[90vh] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] animate-in zoom-in-95 fade-in duration-200">
 						{modalMode === "DETAIL" ? (
 							<>
 								{/* Detail Header */}
@@ -737,54 +802,113 @@ export default function InspeksiValidasiUlangClient({
 									<div className="min-w-0">
 										<h2
 											id="modal-title"
-											className="text-[14px] font-semibold leading-tight text-[#0F172A]"
+											className="text-[14px] font-semibold leading-tight text-[#0F172A] flex items-center gap-2"
 										>
+											<ClipboardCheck className="w-4 h-4 text-[#0A356A]" />
 											Validasi Perbaikan Alat
 										</h2>
 										<p className="mt-0.5 truncate font-mono text-[12px] text-[#64748B]">
 											{selectedAsset.kodeAlat} · {selectedAsset.namaAlat}
 										</p>
 									</div>
-									<button
-										onClick={handleCloseModal}
-										aria-label="Tutup dialog"
-										className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-[#64748B] transition-colors duration-150 hover:bg-[#F2F3F4] hover:text-[#0F172A]"
-									>
-										<X className="h-4 w-4" />
-									</button>
+									<div className="flex items-center gap-2 shrink-0">
+										<span className="text-[11px] font-bold text-[#DC2626] border border-[#DC2626]/30 bg-red-50 px-2 py-0.5 rounded">
+											* Wajib diisi
+										</span>
+										<button
+											onClick={handleCloseModal}
+											aria-label="Tutup dialog"
+											className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-[#64748B] transition-colors duration-150 hover:bg-[#F2F3F4] hover:text-[#0F172A]"
+										>
+											<X className="h-4 w-4" />
+										</button>
+									</div>
 								</div>
 
 								{/* Modal Body */}
 								<div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
 									{/* Info Aset */}
-									<div className="bg-gray-50 rounded p-3 border border-gray-200 grid grid-cols-2 gap-2 text-xs">
+									<div className="bg-[#F2F3F4] rounded p-3 border border-[#E6E8EA] grid grid-cols-2 gap-2 text-xs">
 										<div>
-											<p className="text-gray-500 font-medium">Tipe Objek</p>
-											<p className="text-gray-800 font-semibold">
+											<p className="text-gray-500 font-medium text-[11px]">Tipe Objek</p>
+											<p className="text-gray-800 font-semibold text-[13px]">
 												{selectedAsset.tipeObjek}
 											</p>
 										</div>
 										<div>
-											<p className="text-gray-500 font-medium">Plant</p>
-											<p className="text-gray-800 font-semibold">{selectedAsset.plant}</p>
+											<p className="text-gray-500 font-medium text-[11px]">Plant</p>
+											<p className="text-gray-800 font-semibold text-[13px]">
+												{selectedAsset.plant}
+											</p>
 										</div>
 										<div>
-											<p className="text-gray-500 font-medium">Lokasi</p>
-											<p className="text-gray-800 font-semibold">
+											<p className="text-gray-500 font-medium text-[11px]">Lokasi Simpan</p>
+											<p className="text-gray-800 font-semibold text-[13px]">
 												{selectedAsset.lokasiPenyimpanan}
 											</p>
 										</div>
 										<div>
-											<p className="text-gray-500 font-medium">Kondisi Sebelumnya</p>
-											<p className="text-gray-800 font-semibold">
-												{selectedAsset.kondisiSebelumnya}
-											</p>
+											<p className="text-gray-500 font-medium text-[11px]">Kondisi Sebelumnya</p>
+											<div className="mt-0.5">
+												<span
+													className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${getConditionBadge(selectedAsset.kondisiSebelumnya)}`}
+												>
+													{selectedAsset.kondisiSebelumnya}
+												</span>
+											</div>
+										</div>
+									</div>
+
+									{/* Waktu Pemeriksaan (Tanggal Mulai & Tanggal Berakhir) */}
+									<div className="grid grid-cols-12 gap-3">
+										<div className="col-span-12 sm:col-span-6">
+											<label
+												htmlFor="tgl-mulai"
+												className="block text-[11px] font-semibold text-gray-700 mb-1"
+											>
+												Tanggal Mulai Pemeriksaan <span className="text-[#DC2626]">*</span>
+											</label>
+											<input
+												id="tgl-mulai"
+												type="date"
+												value={tglMulai}
+												onChange={(e) => setTglMulai(e.target.value)}
+												className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${showValidationErrors && !tglMulai ? "border-[#DC2626] focus:border-[#DC2626]" : "border-gray-300 focus:border-[#0A356A]"}`}
+											/>
+											{showValidationErrors && !tglMulai && (
+												<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
+													* Tanggal mulai wajib diisi.
+												</p>
+											)}
+										</div>
+										<div className="col-span-12 sm:col-span-6">
+											<label
+												htmlFor="tgl-selesai"
+												className="block text-[11px] font-semibold text-gray-700 mb-1"
+											>
+												Tanggal Berakhir Pemeriksaan <span className="text-[#DC2626]">*</span>
+											</label>
+											<input
+												id="tgl-selesai"
+												type="date"
+												value={tglSelesai}
+												min={tglMulai}
+												onChange={(e) => setTglSelesai(e.target.value)}
+												className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none ${showValidationErrors && !isDateRangeValid ? "border-[#DC2626] focus:border-[#DC2626]" : "border-gray-300 focus:border-[#0A356A]"}`}
+											/>
+											{showValidationErrors && !isDateRangeValid && (
+												<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
+													{tglSelesai
+														? "* Tidak boleh sebelum tanggal mulai."
+														: "* Tanggal berakhir wajib diisi."}
+												</p>
+											)}
 										</div>
 									</div>
 
 									{/* Hasil Validasi Ulang (status tujuan) */}
 									<div>
-										<label className="text-xs font-bold text-gray-700 block mb-1.5">
+										<label className="text-[11px] font-semibold text-gray-700 block mb-1.5">
 											Hasil Validasi Ulang <span className="text-[#DC2626]">*</span>
 										</label>
 										<div className="grid grid-cols-1 gap-2">
@@ -809,9 +933,9 @@ export default function InspeksiValidasiUlangClient({
 													key={opt.value}
 													className={`flex items-start gap-2.5 border rounded p-2.5 cursor-pointer transition-all ${
 														hasilStatus === opt.value
-															? "border-[#0A356A] bg-blue-50/40"
+															? "border-[#0A356A] bg-blue-50/40 ring-1 ring-[#0A356A]"
 															: "border-gray-200 bg-white hover:bg-gray-50"
-													}`}
+													} ${showValidationErrors && !hasilStatus ? "border-[#DC2626]" : ""}`}
 												>
 													<input
 														type="radio"
@@ -832,6 +956,11 @@ export default function InspeksiValidasiUlangClient({
 												</label>
 											))}
 										</div>
+										{showValidationErrors && !hasilStatus && (
+											<p className="text-[10px] text-[#DC2626] mt-1 font-medium">
+												* Hasil validasi ulang wajib dipilih.
+											</p>
+										)}
 
 										{/* Dynamic Impact Indicator Card */}
 										{hasilStatus === "REVALIDATION" && (
@@ -882,30 +1011,124 @@ export default function InspeksiValidasiUlangClient({
 
 									{/* Catatan */}
 									<div>
-										<label className="text-xs font-bold text-gray-700 block mb-1.5">
-											Catatan Pemeriksaan
+										<label className="text-[11px] font-semibold text-gray-700 block mb-1.5">
+											Catatan Pemeriksaan <span className="text-[#DC2626]">*</span>
 										</label>
 										<textarea
 											value={notes}
 											onChange={(e) => setNotes(e.target.value)}
 											rows={3}
-											placeholder="Hasil pemeriksaan visual, fungsi mekanik/elektrik, dll."
-											className="w-full px-3 py-2 text-sm border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all resize-none"
+											placeholder="Hasil pemeriksaan visual, fungsi mekanik/elektrik, dll. (wajib)..."
+											className={`w-full px-3 py-2 text-sm border rounded bg-gray-50 focus:bg-white outline-none transition-all resize-none ${
+												showValidationErrors && !notes.trim()
+													? "border-[#DC2626] focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
+													: "border-gray-200 focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"
+											}`}
 										/>
+										{showValidationErrors && !notes.trim() && (
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
+												* Catatan pemeriksaan wajib diisi.
+											</p>
+										)}
 									</div>
 
-									{/* Rekomendasi */}
+									{/* Rekomendasi Tindak Lanjut */}
 									<div>
-										<label className="text-xs font-bold text-gray-700 block mb-1.5">
-											Rekomendasi Tindak Lanjut
+										<label className="text-[11px] font-semibold text-gray-700 block mb-1.5">
+											Rekomendasi Tindak Lanjut{" "}
+											<span className="text-gray-400 font-normal text-[11px]">(Opsional)</span>
 										</label>
 										<input
 											type="text"
 											value={followupRecommendation}
 											onChange={(e) => setFollowupRecommendation(e.target.value)}
-											placeholder="Misal: Dapat dimobilisasi segera"
+											placeholder="Misal: Dapat dimobilisasi segera atau perlu kalibrasi berkala..."
 											className="w-full px-3 py-2 text-sm border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all"
 										/>
+									</div>
+
+									{/* Foto Bukti Pemeriksaan */}
+									<div>
+										<div className="flex items-center justify-between mb-1.5">
+											<label className="text-[11px] font-semibold text-gray-700">
+												Foto Bukti Pemeriksaan{" "}
+												<span className="text-gray-400 font-normal text-[11px]">(Opsional)</span>
+											</label>
+											{uploadedFiles.length > 0 && (
+												<span className="text-[11px] font-medium text-gray-500">
+													{uploadedFiles.length} berkas dipilih
+												</span>
+											)}
+										</div>
+										<input
+											type="file"
+											multiple
+											className="hidden"
+											ref={fileInputRef}
+											onChange={handleFileChange}
+											accept="image/jpeg,image/png,image/jpg,.pdf"
+										/>
+										<div
+											onClick={() => fileInputRef.current?.click()}
+											className="border-2 border-dashed border-gray-300 rounded p-3.5 flex flex-col items-center justify-center cursor-pointer hover:bg-gray-50 hover:border-[#0A356A] transition-all bg-gray-50"
+										>
+											{uploadedFiles.length === 0 ? (
+												<>
+													<UploadCloud className="w-5 h-5 text-gray-400 mb-1" />
+													<p className="text-[12px] font-bold text-[#0A356A] text-center">
+														Klik untuk Unggah Foto Bukti
+													</p>
+													<p className="text-[10px] text-gray-500 text-center font-medium">
+														JPG, PNG, PDF maks 5 MB
+													</p>
+												</>
+											) : (
+												<div className="w-full" onClick={(e) => e.stopPropagation()}>
+													<div className="grid grid-cols-3 sm:grid-cols-4 gap-2 w-full mb-2">
+														{uploadedFiles.map((file, idx) => {
+															const isImage = file.type.startsWith("image/");
+															return (
+																<div
+																	key={idx}
+																	className="relative group rounded overflow-hidden border border-gray-200 aspect-square bg-gray-100 flex items-center justify-center"
+																>
+																	{isImage ? (
+																		/* eslint-disable-next-line @next/next/no-img-element */
+																		<img
+																			src={URL.createObjectURL(file)}
+																			alt={`Foto ${idx + 1}`}
+																			className="w-full h-full object-cover"
+																		/>
+																	) : (
+																		<div className="flex flex-col items-center p-2 text-center">
+																			<Paperclip className="w-6 h-6 text-gray-400" />
+																			<span className="text-[9px] text-gray-600 truncate max-w-full">
+																				{file.name}
+																			</span>
+																		</div>
+																	)}
+																	<button
+																		type="button"
+																		onClick={() => removeFile(idx)}
+																		className="absolute top-1 right-1 bg-red-600 text-white p-1 rounded-full opacity-80 hover:opacity-100 transition-opacity"
+																		title="Hapus foto"
+																	>
+																		<X className="w-3 h-3" />
+																	</button>
+																</div>
+															);
+														})}
+													</div>
+													<button
+														type="button"
+														onClick={() => fileInputRef.current?.click()}
+														className="w-full py-1.5 text-[11px] font-bold text-[#0A356A] bg-white rounded border border-[#E6E8EA] hover:bg-gray-50 flex items-center justify-center gap-1.5 transition-colors"
+													>
+														<UploadCloud className="w-3.5 h-3.5" /> Tambah Berkas Lainnya
+													</button>
+												</div>
+											)}
+										</div>
 									</div>
 
 									{/* Error */}
@@ -927,8 +1150,8 @@ export default function InspeksiValidasiUlangClient({
 										Batal
 									</button>
 									<button
-										onClick={() => setIsConfirmOpen(true)}
-										disabled={isSubmitting || !hasilStatus}
+										onClick={handleInitiateSubmit}
+										disabled={isSubmitting}
 										className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
 									>
 										{isSubmitting ? (

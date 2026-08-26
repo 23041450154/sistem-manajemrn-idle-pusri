@@ -374,6 +374,7 @@ export default function ManajerPeminjamanClient({
 						>
 							<option value="Semua Status">Semua Status</option>
 							<option value="Menunggu Review">Menunggu Review</option>
+							<option value="Perlu Revisi">Perlu Revisi</option>
 							<option value="Disetujui">Disetujui</option>
 							<option value="Ditolak">Ditolak</option>
 						</select>

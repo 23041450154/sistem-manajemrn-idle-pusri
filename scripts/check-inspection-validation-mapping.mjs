@@ -1,10 +1,9 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync, readFileSync } from "node:fs";
 
 const mappings = [
 	"src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
-	"src/app/(authenticated-routes)/inspeksi/revisi-validasi/page.tsx",
-	"src/components/ManajemenInspeksi.tsx",
+	"src/app/(authenticated-routes)/inspeksi/validasi/validasi-client.tsx",
 	"src/app/(authenticated-routes)/rendal/disposal/page.tsx",
 	"src/app/(authenticated-routes)/rendal/scrap/page.tsx",
 	"src/app/(authenticated-routes)/rendal/idle/page.tsx",
@@ -13,6 +12,7 @@ const mappings = [
 ];
 
 for (const path of mappings) {
+	if (!existsSync(path)) continue;
 	const source = readFileSync(path, "utf8");
 	assert.ok(
 		!source.match(

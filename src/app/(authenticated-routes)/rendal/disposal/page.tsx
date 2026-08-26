@@ -206,9 +206,10 @@ export default function VerifikasiDisposalPage() {
 	}, []);
 
 	// Reset halaman saat filter berubah — adjust during render (pola resmi React).
-	const [prevSearch, setPrevSearch] = useState(search);
-	if (prevSearch !== search) {
-		setPrevSearch(search);
+	const filterKey = search;
+	const [prevFilterKey, setPrevFilterKey] = useState(filterKey);
+	if (prevFilterKey !== filterKey) {
+		setPrevFilterKey(filterKey);
 		setCurrentPage(1);
 	}
 
@@ -442,26 +443,20 @@ export default function VerifikasiDisposalPage() {
 								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
 							/>
 						</div>
-						<button
-							onClick={() => setSearch(searchInput)}
-							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
-						>
-							Cari
-						</button>
+						{(search || searchInput) && (
+							<button
+								onClick={() => {
+									setSearch("");
+									setSearchInput("");
+									setCurrentPage(1);
+								}}
+								className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
+							>
+								<RefreshCw className="w-3.5 h-3.5" />
+								Reset
+							</button>
+						)}
 					</div>
-
-					{(search || searchInput) && (
-						<button
-							onClick={() => {
-								setSearch("");
-								setSearchInput("");
-							}}
-							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
-						>
-							<RefreshCw className="w-3.5 h-3.5" />
-							Reset
-						</button>
-					)}
 				</div>
 
 				{/* Table */}
