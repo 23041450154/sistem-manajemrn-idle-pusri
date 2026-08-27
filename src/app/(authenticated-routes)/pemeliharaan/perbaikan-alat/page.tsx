@@ -8,7 +8,7 @@ import PerbaikanAlatClient, {
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 /** Lampiran equipment bisa berupa dokumen; galeri hanya menampilkan berkas gambar. */
-const IMAGE_FILE = /\.(png|jpe?g|webp|gif|avif)$/i;
+const IMAGE_FILE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?.*)?$/i;
 
 /** Server Component — fetch sekali di server, mapping murni, lalu pass ke client. */
 export default async function PerbaikanAlatPage() {

@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import { completeEquipmentRepair } from "@/action/api";
+import { completeEquipmentRepair, getAttachmentsByEquipmentId } from "@/action/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
 	REPAIR_STATUS_LABEL,
@@ -24,6 +24,31 @@ import {
 	Eye,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+
+const IMAGE_FILE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?.*)?$/i;
+
+function extractPhotoUrls(attachments: unknown[]): string[] {
+	if (!Array.isArray(attachments)) return [];
+	const urls: string[] = [];
+	for (const a of attachments) {
+		if (typeof a === "string") {
+			if (a && (IMAGE_FILE.test(a) || a.startsWith("http"))) {
+				urls.push(a);
+			}
+			continue;
+		}
+		if (a && typeof a === "object") {
+			const item = a as Record<string, unknown>;
+			const url = String(item.file_url || item.fileUrl || item.url || "").trim();
+			if (!url) continue;
+			const fileType = String(item.file_type || item.mime_type || "").toLowerCase();
+			if (fileType.startsWith("image/") || IMAGE_FILE.test(url)) {
+				urls.push(url);
+			}
+		}
+	}
+	return Array.from(new Set(urls));
+}
 
 export interface MaintenanceEquipment {
 	id: string;
@@ -100,10 +125,15 @@ export default function PerbaikanAlatClient({
 	const [selectedAsset, setSelectedAsset] =
 		useState<MaintenanceEquipment | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
+	const [selectedPhotos, setSelectedPhotos] = useState<string[]>([]);
+	const [isLoadingSelectedPhotos, setIsLoadingSelectedPhotos] = useState(false);
+
 	// Modal detail equipment & status perbaikannya.
 	const [detailAsset, setDetailAsset] = useState<MaintenanceEquipment | null>(
 		null,
 	);
+	const [detailPhotos, setDetailPhotos] = useState<string[]>([]);
+	const [isLoadingDetailPhotos, setIsLoadingDetailPhotos] = useState(false);
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
 
 	const today = () => new Date().toISOString().split("T")[0];
@@ -233,8 +263,9 @@ export default function PerbaikanAlatClient({
 		setDisplayCost(`Rp ${formatted}`);
 	};
 
-	const handleOpenModal = (asset: MaintenanceEquipment) => {
+	const handleOpenModal = async (asset: MaintenanceEquipment) => {
 		setSelectedAsset(asset);
+		setSelectedPhotos(asset.foto || []);
 		setActualCost("0");
 		setDisplayCost("Rp 0");
 		setStartAt(today());
@@ -243,12 +274,53 @@ export default function PerbaikanAlatClient({
 		setNotes("");
 		setPreservationStatus("");
 		setIsModalOpen(true);
+		setIsLoadingSelectedPhotos(true);
+
+		try {
+			const atts = await getAttachmentsByEquipmentId(asset.id);
+			const urls = extractPhotoUrls(atts);
+			if (urls.length > 0) {
+				const merged = Array.from(new Set([...(asset.foto || []), ...urls]));
+				setSelectedPhotos(merged);
+			}
+		} catch (err) {
+			console.error("Gagal memuat foto peralatan:", err);
+		} finally {
+			setIsLoadingSelectedPhotos(false);
+		}
 	};
 
 	const handleCloseModal = () => {
 		if (isSubmitting) return;
 		setIsModalOpen(false);
 		setSelectedAsset(null);
+		setSelectedPhotos([]);
+		setIsLoadingSelectedPhotos(false);
+	};
+
+	const handleOpenDetail = async (asset: MaintenanceEquipment) => {
+		setDetailAsset(asset);
+		setDetailPhotos(asset.foto || []);
+		setIsLoadingDetailPhotos(true);
+
+		try {
+			const atts = await getAttachmentsByEquipmentId(asset.id);
+			const urls = extractPhotoUrls(atts);
+			if (urls.length > 0) {
+				const merged = Array.from(new Set([...(asset.foto || []), ...urls]));
+				setDetailPhotos(merged);
+			}
+		} catch (err) {
+			console.error("Gagal memuat foto detail peralatan:", err);
+		} finally {
+			setIsLoadingDetailPhotos(false);
+		}
+	};
+
+	const handleCloseDetail = () => {
+		setDetailAsset(null);
+		setDetailPhotos([]);
+		setIsLoadingDetailPhotos(false);
 	};
 
 	// Backend: actual_cost validate:"required,gt=0" — nol ditolak.
@@ -298,6 +370,8 @@ export default function PerbaikanAlatClient({
 
 				setIsModalOpen(false);
 				setSelectedAsset(null);
+				setSelectedPhotos([]);
+				setIsLoadingSelectedPhotos(false);
 
 				setTimeout(() => {
 					setNotification(null);
@@ -593,7 +667,7 @@ export default function PerbaikanAlatClient({
 										<td className="px-3 py-3 text-center">
 											<div className="flex justify-center items-center gap-2 opacity-90 group-hover:opacity-100 transition-opacity">
 												<button
-													onClick={() => setDetailAsset(asset)}
+													onClick={() => handleOpenDetail(asset)}
 													className="inline-flex items-center justify-center gap-1.5 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2.5 py-1.5 rounded-[4px] text-[13px] font-bold transition-all"
 													title="Lihat detail equipment & perbaikan"
 												>
@@ -711,37 +785,48 @@ export default function PerbaikanAlatClient({
 								</h3>
 
 								{/* Foto */}
-								{selectedAsset.foto.length > 0 ? (
+								{isLoadingSelectedPhotos && selectedPhotos.length === 0 ? (
+									<div className="aspect-[4/3] rounded-[4px] border border-[#E6E8EA] bg-white flex flex-col items-center justify-center gap-2 text-[#64748B]">
+										<Loader2 className="w-5 h-5 animate-spin text-[#0A356A]" />
+										<p className="text-[12px]">Memuat foto peralatan...</p>
+									</div>
+								) : selectedPhotos.length > 0 ? (
 									<div className="space-y-2">
 										<button
 											type="button"
-											onClick={() => setPreviewImage(selectedAsset.foto[0])}
-											className="relative block w-full aspect-[4/3] overflow-hidden rounded-[4px] border border-[#E6E8EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#334155] focus:ring-offset-1"
+											onClick={() => setPreviewImage(selectedPhotos[0])}
+											className="relative block w-full aspect-[4/3] overflow-hidden rounded-[4px] border border-[#E6E8EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#334155] focus:ring-offset-1 group"
 											aria-label="Perbesar foto utama peralatan"
 										>
 											{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
 											<img
-												src={selectedAsset.foto[0]}
+												src={selectedPhotos[0]}
 												alt={`Foto peralatan ${selectedAsset.namaAlat}`}
-												className="absolute inset-0 w-full h-full object-cover"
+												className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
 											/>
+											<div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+												<Eye className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+											</div>
 										</button>
-										{selectedAsset.foto.length > 1 && (
+										{selectedPhotos.length > 1 && (
 											<div className="grid grid-cols-4 gap-2">
-												{selectedAsset.foto.slice(1, 5).map((url, i) => (
+												{selectedPhotos.slice(1, 5).map((url, i) => (
 													<button
-														key={url}
+														key={url + i}
 														type="button"
 														onClick={() => setPreviewImage(url)}
-														className="relative aspect-square overflow-hidden rounded-[4px] border border-[#E6E8EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#334155] focus:ring-offset-1"
+														className="relative aspect-square overflow-hidden rounded-[4px] border border-[#E6E8EA] bg-white focus:outline-none focus:ring-2 focus:ring-[#334155] focus:ring-offset-1 group"
 														aria-label={`Perbesar foto peralatan ${i + 2}`}
 													>
 														{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
 														<img
 															src={url}
-															className="absolute inset-0 w-full h-full object-cover"
+															className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
 															alt=""
 														/>
+														<div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+															<Eye className="w-3.5 h-3.5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+														</div>
 													</button>
 												))}
 											</div>
@@ -987,7 +1072,7 @@ export default function PerbaikanAlatClient({
 			{detailAsset && (
 				<div
 					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200"
-					onClick={() => setDetailAsset(null)}
+					onClick={handleCloseDetail}
 				>
 					<div
 						role="dialog"
@@ -1011,7 +1096,7 @@ export default function PerbaikanAlatClient({
 								</div>
 							</div>
 							<button
-								onClick={() => setDetailAsset(null)}
+								onClick={handleCloseDetail}
 								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
 							>
 								<X className="w-5 h-5" />
@@ -1040,24 +1125,50 @@ export default function PerbaikanAlatClient({
 							</div>
 
 							{/* Foto */}
-							{detailAsset.foto.length > 0 && (
-								<div className="grid grid-cols-3 gap-2">
-									{detailAsset.foto.slice(0, 6).map((url, idx) => (
-										<button
-											key={url}
-											type="button"
-											onClick={() => setPreviewImage(url)}
-											title={`Perbesar foto ${idx + 1}`}
-											className="relative aspect-video border border-gray-200 rounded-lg overflow-hidden bg-gray-100 hover:border-[#0A356A] transition-all"
-										>
-											{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
-											<img
-												src={url}
-												alt={`Foto peralatan ${idx + 1}`}
-												className="absolute inset-0 w-full h-full object-cover hover:scale-105 transition-transform duration-300"
-											/>
-										</button>
-									))}
+							{isLoadingDetailPhotos && detailPhotos.length === 0 ? (
+								<div className="border border-gray-100 rounded-lg p-6 bg-gray-50 flex flex-col items-center justify-center gap-2 text-gray-400">
+									<Loader2 className="w-5 h-5 animate-spin text-[#0A356A]" />
+									<p className="text-xs text-gray-500">Memuat foto peralatan...</p>
+								</div>
+							) : detailPhotos.length > 0 ? (
+								<div>
+									<div className="flex items-center justify-between mb-2">
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+											Foto Peralatan ({detailPhotos.length})
+										</p>
+										{isLoadingDetailPhotos && (
+											<span className="flex items-center gap-1 text-[11px] text-gray-400">
+												<Loader2 className="w-3 h-3 animate-spin text-[#0A356A]" />
+												Memperbarui...
+											</span>
+										)}
+									</div>
+									<div className="grid grid-cols-3 gap-2">
+										{detailPhotos.map((url, idx) => (
+											<button
+												key={url + idx}
+												type="button"
+												onClick={() => setPreviewImage(url)}
+												title={`Perbesar foto ${idx + 1}`}
+												className="relative aspect-video border border-gray-200 rounded-lg overflow-hidden bg-gray-100 hover:border-[#0A356A] transition-all group"
+											>
+												{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+												<img
+													src={url}
+													alt={`Foto peralatan ${idx + 1}`}
+													className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+												/>
+												<div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+													<Eye className="w-4 h-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+												</div>
+											</button>
+										))}
+									</div>
+								</div>
+							) : (
+								<div className="border border-gray-100 rounded-lg p-4 bg-gray-50 flex flex-col items-center justify-center gap-1.5 text-gray-400">
+									<ImageOff className="w-5 h-5" aria-hidden="true" />
+									<p className="text-xs text-gray-500">Belum ada foto peralatan.</p>
 								</div>
 							)}
 
@@ -1128,7 +1239,7 @@ export default function PerbaikanAlatClient({
 
 						<div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end bg-gray-50">
 							<button
-								onClick={() => setDetailAsset(null)}
+								onClick={handleCloseDetail}
 								className="px-5 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors shadow-sm"
 							>
 								Tutup

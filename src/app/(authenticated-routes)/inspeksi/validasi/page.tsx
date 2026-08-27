@@ -188,15 +188,9 @@ export default async function ValidasiPage() {
 	// Sort data by ID descending (newest first)
 	mappedWithApproval.sort((a, b) => Number(b.id) - Number(a.id));
 
-	// Revalidation & repair-completed items belong strictly in /inspeksi/validasi-ulang,
-	// exclude both from /inspeksi/validasi
-	const assets: Asset[] = mappedWithApproval.filter(
-		(a) => a.statusAset !== "REVALIDATION" && a.statusAset !== "REPAIR_COMPLETED",
-	);
-
 	return (
 		<ManajemenInspeksiClient
-			assets={assets}
+			assets={mappedWithApproval}
 			conditions={conditions}
 			requireActions={requireActions}
 		/>

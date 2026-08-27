@@ -268,6 +268,8 @@ export default function InspeksiValidasiUlangClient({
 				}
 
 				handleCloseModal();
+				setActiveTab("riwayat");
+				setCurrentPage(1);
 				// Server action sudah revalidateApp(); tarik payload RSC terbaru.
 				router.refresh();
 			} else {

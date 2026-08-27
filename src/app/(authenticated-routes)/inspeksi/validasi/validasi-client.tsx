@@ -90,6 +90,14 @@ export default function ManajemenInspeksiClient({
 	const [statusFilter, setStatusFilter] = useState("Semua");
 	const [dateFilter, setDateFilter] = useState("");
 
+	const plantOptions = useMemo(() => {
+		const set = new Set<string>();
+		assets.forEach((a) => {
+			if (a.plant && a.plant !== "-") set.add(a.plant);
+		});
+		return Array.from(set).sort();
+	}, [assets]);
+
 	// Modal & Form States
 	const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -210,7 +218,11 @@ export default function ManajemenInspeksiClient({
 		} else {
 			// Jika statusnya Ubah Validasi atau Perlu Revisi, muat data yang sudah pernah diisi
 			setHasilPemeriksaan(
-				asset.statusAset === "REJECTED" || asset.statusAset === "SCRAP"
+				asset.statusAset === "REJECTED" ||
+					asset.statusAset === "SCRAP" ||
+					asset.statusAset === "DISPOSAL_RECOMMENDED" ||
+					asset.statusAset === "REPAIR" ||
+					asset.statusAset === "REPAIR_COMPLETED"
 					? "Tidak Layak"
 					: "Layak",
 			);
@@ -428,6 +440,14 @@ export default function ManajemenInspeksiClient({
 
 				setNotification({ type: "success", message: successMessage });
 
+				// Jika peralatan masuk ke Riwayat Validasi (misal: Tidak Layak -> REPAIR / SCRAP),
+				// arahkan langsung ke tab Riwayat. Jika tetap di antrean (Layak / VALIDATED), biarkan di tab saat ini.
+				const willGoToRiwayat = !isUtilizable;
+				if (willGoToRiwayat) {
+					setActiveTab("riwayat");
+					setCurrentPage(1);
+				}
+
 				// Server action sudah revalidateApp(); tarik payload RSC terbaru
 				// (status persetujuan aset dihitung ulang dari approval backend).
 				router.refresh();
@@ -520,11 +540,13 @@ export default function ManajemenInspeksiClient({
 			normStatus === "SCRAP" || normStatus === "DISPOSAL_RECOMMENDED";
 		const isRevalidation = normStatus === "REVALIDATION";
 		const isRejected = normStatus === "REJECTED" || normApproval === "REJECTED";
+		const isRepair =
+			normStatus === "REPAIR" || normStatus === "REPAIR_COMPLETED";
 
 		const isUnderReview =
 			normApproval === "IN_REVIEW" || normApproval === "PENDING_REVIEW";
 
-		if (isRevalidation || isScrap) return true;
+		if (isRevalidation || isScrap || isRepair) return true;
 		if (
 			isUnderReview &&
 			normStatus !== "REGISTERED" &&
@@ -532,7 +554,7 @@ export default function ManajemenInspeksiClient({
 		)
 			return true;
 
-		return isReady || isRejected;
+		return isReady || isRejected || isRepair;
 	};
 
 	// Counts untuk tab navigation
@@ -572,6 +594,9 @@ export default function ManajemenInspeksiClient({
 			else if (statusFilter === "SCRAP")
 				matchStatus =
 					a.statusAset === "SCRAP" || a.statusAset === "DISPOSAL_RECOMMENDED";
+			else if (statusFilter === "REPAIR")
+				matchStatus =
+					a.statusAset === "REPAIR" || a.statusAset === "REPAIR_COMPLETED";
 			else if (statusFilter === "REVALIDATION")
 				matchStatus = a.statusAset === "REVALIDATION";
 			else matchStatus = a.statusAset === statusFilter;
@@ -915,10 +940,11 @@ export default function ManajemenInspeksiClient({
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="Semua">Semua Plant</option>
-							<option value="P-1">Plant 1</option>
-							<option value="P-2">Plant 2</option>
-							<option value="P-3">Plant 3</option>
-							<option value="P-4">Plant 4</option>
+							{plantOptions.map((p) => (
+								<option key={p} value={p}>
+									{p}
+								</option>
+							))}
 						</select>
 
 						<select
@@ -932,7 +958,7 @@ export default function ManajemenInspeksiClient({
 							<option value="VALIDATED">VALIDATED</option>
 							<option value="NEED_REVISION">Perlu Revisi</option>
 							<option value="READY_TO_USE">READY TO USE</option>
-							<option value="REPAIR">REPAIR</option>
+							<option value="REPAIR">REPAIR (Dalam / Selesai Perbaikan)</option>
 							<option value="SCRAP">SCRAP / DISPOSAL RECOMMENDED</option>
 							<option value="REJECTED">Ditolak</option>
 						</select>
