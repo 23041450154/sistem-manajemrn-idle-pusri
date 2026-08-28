@@ -1,10 +1,11 @@
 "use client";
 
-import { Bell, HelpCircle, LogOut, Menu } from "lucide-react";
+import { LogOut, Menu } from "lucide-react";
 import { useState } from "react";
 import { logoutAction } from "@/action/auth";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useSidebar } from "./SidebarProvider";
+import { NotificationDropdown } from "@/components/NotificationDropdown";
 
 /* ponytail: payload user legacy bervariasi (langsung / dibungkus {user}, NPP di
    npp / contact_npp / contactNpp). Longgarkan sampai DTO bersama tersedia. */
@@ -51,14 +52,8 @@ export function Header({ user }: { user?: HeaderUser }) {
       </div>
 
       <div className="flex items-center gap-3 md:gap-6">
-        <div className="flex items-center gap-2 md:gap-4 text-gray-500">
-          <button className="hover:text-gray-700 transition-colors relative">
-            <Bell className="w-5 h-5" />
-            <span className="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border border-white"></span>
-          </button>
-          <button className="hover:text-gray-700 transition-colors hidden sm:block">
-            <HelpCircle className="w-5 h-5" />
-          </button>
+        <div className="flex items-center">
+          <NotificationDropdown role={currentUser?.role || user?.role} />
         </div>
 
         <div className="h-8 w-px bg-gray-200 hidden sm:block"></div>
