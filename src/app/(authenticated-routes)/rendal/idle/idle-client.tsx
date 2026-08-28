@@ -194,6 +194,12 @@ export default function RendalIdleClient({
 			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
 			DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+			"DISPOSAL RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
+			"DISPOSAL RECOMENDED": "bg-[#FEF3C7] text-[#B45309]",
+			"SCRAP RECOMENDED": "bg-[#FEF3C7] text-[#B45309]",
+			"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
+			SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+			SCRAP_RECOMENDED: "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
 			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
 			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
@@ -203,7 +209,15 @@ export default function RendalIdleClient({
 			READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
 		};
 
-		const displayStatus = (status || "").replace(/_/g, " ");
+		let displayStatus = (status || "").replace(/_/g, " ");
+		if (
+			status === "DISPOSAL_RECOMMENDED" ||
+			displayStatus === "DISPOSAL RECOMMENDED" ||
+			displayStatus === "DISPOSAL RECOMENDED" ||
+			displayStatus === "SCRAP RECOMMENDED"
+		) {
+			displayStatus = "SCRAP RECOMENDED";
+		}
 
 		const style = styles[displayStatus] || styles[status] || styles.SCRAP;
 		return (
@@ -323,7 +337,9 @@ export default function RendalIdleClient({
 							<option value="Semua">Semua Status</option>
 							{EQUIPMENT_STATUS.map((s) => (
 								<option key={s} value={s}>
-									{statusText(s)}
+									{s === "DISPOSAL_RECOMMENDED"
+										? "SCRAP RECOMENDED"
+										: statusText(s)}
 								</option>
 							))}
 							<option value="REJECTED">REJECTED</option>

@@ -33,7 +33,6 @@ interface ReuseRequestItem {
 	equipment_code: string;
 	equipment_name: string;
 	installation_location: string;
-	estimated_cost_avoidance?: number;
 	status: string;
 }
 
@@ -86,8 +85,6 @@ export default async function UnitKerjaDashboardPage() {
 				equipment.name,
 			),
 			installation_location: str(r.installation_location, r.installationLocation),
-			estimated_cost_avoidance:
-				Number(r.estimated_cost_avoidance ?? r.estimatedCostAvoidance) || 0,
 			status: str(r.status, r.approval_status, r.approvalStatus, "PENDING"),
 		};
 	});

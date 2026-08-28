@@ -167,7 +167,11 @@ export default async function ValidasiPage() {
 			// statusAset sudah kanonik (statusName), jadi cukup cek nama backend.
 			if (statusAset === "REGISTERED") {
 				statusPersetujuan = "NONE";
-			} else if (statusAset === "READY_TO_USE" || statusAset === "REUSED") {
+			} else if (
+				statusAset === "READY_TO_USE" ||
+				statusAset === "REUSED" ||
+				statusAset === "REPAIR"
+			) {
 				statusPersetujuan = "APPROVED";
 			} else if (
 				statusAset === "VALIDATED" ||

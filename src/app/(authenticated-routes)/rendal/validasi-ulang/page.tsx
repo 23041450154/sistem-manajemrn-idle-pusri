@@ -22,12 +22,24 @@ export default async function RendalValidasiUlangPage() {
 			? approvalsRaw
 			: [];
 
+	const approvalsEquipmentIdSet = new Set(
+		approvalsList
+			.map((a: any) =>
+				String(a.equipment_id || a.equipment?.id || a.reference_id || ""),
+			)
+			.filter(Boolean),
+	);
+
 	const items: ValidasiUlangItem[] = (Array.isArray(data) ? data : [])
 		.filter((item: any) => {
-			const statusName = canonStatus(item.status?.name || item.statusAset);
-			const isRevalidation = statusName === "REVALIDATION";
-			const isReadyToUse = statusName === "READY_TO_USE";
-			return isRevalidation || isReadyToUse;
+			const s = canonStatus(item.status?.name || item.statusAset || item.status);
+			const isRevalStatus =
+				s === "REVALIDATION" ||
+				s === "REVALIDASI" ||
+				s === "REPAIR_COMPLETED" ||
+				s === "READY_TO_USE";
+			const hasApproval = approvalsEquipmentIdSet.has(String(item.id));
+			return isRevalStatus || hasApproval;
 		})
 		.map((item: any): ValidasiUlangItem => {
 			const plantStr =
@@ -47,21 +59,24 @@ export default async function RendalValidasiUlangPage() {
 					? item.condition
 					: item.condition?.name || "BAGUS";
 
-			const statusName = String(
-				item.status?.name || item.statusAset || "",
-			).toUpperCase();
+			const statusName = canonStatus(
+				item.status?.name || item.statusAset || item.status || "",
+			);
 			const isReady = statusName === "READY_TO_USE";
 
 			const matchingApproval = approvalsList.find(
 				(a: any) =>
 					String(a.equipment_id) === String(item.id) ||
-					String(a.equipment?.id) === String(item.id),
+					String(a.equipment?.id) === String(item.id) ||
+					String(a.reference_id) === String(item.id),
 			);
 
-			const displayStatus = isReady ? "READY_TO_USE" : "REVALIDATION";
+			const displayStatus = isReady ? "READY_TO_USE" : statusName || "REVALIDATION";
 
 			const approvalStatus =
-				matchingApproval?.approval_status || (isReady ? "APPROVED" : "PENDING");
+				matchingApproval?.approval_status ||
+				matchingApproval?.status ||
+				(isReady ? "APPROVED" : "PENDING");
 
 			return {
 				id: String(item.id),

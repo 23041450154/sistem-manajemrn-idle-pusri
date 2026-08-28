@@ -44,6 +44,9 @@ export default function RendalValidasiUlangClient({
 	const [searchQuery, setSearchQuery] = useState("");
 	const [filterPlant, setFilterPlant] = useState("");
 	const [filterTipeObjek, setFilterTipeObjek] = useState("");
+	const [filterStatus, setFilterStatus] = useState("");
+	const [filterKondisi, setFilterKondisi] = useState("");
+	const [filterLokasi, setFilterLokasi] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
 	const [sortConfig, setSortConfig] = useState<{
 		key: keyof ValidasiUlangItem;
@@ -78,12 +81,39 @@ export default function RendalValidasiUlangClient({
 		[items],
 	);
 
+	const kondisiOptions = useMemo(
+		() =>
+			[
+				...new Set(items.map((e) => e.kondisi).filter((v) => v && v !== "-")),
+			].sort(),
+		[items],
+	);
+
+	const lokasiOptions = useMemo(
+		() =>
+			[
+				...new Set(
+					items.map((e) => e.lokasiPenyimpanan).filter((v) => v && v !== "-"),
+				),
+			].sort(),
+		[items],
+	);
+
+	const isItemCompleted = (item: ValidasiUlangItem) => {
+		const appStatus = (item.approvalStatus || "").toUpperCase();
+		return (
+			item.statusAset === "READY_TO_USE" ||
+			appStatus === "APPROVED" ||
+			appStatus === "REJECTED"
+		);
+	};
+
 	const antreanCount = useMemo(() => {
-		return items.filter((item) => item.statusAset !== "READY_TO_USE").length;
+		return items.filter((item) => !isItemCompleted(item)).length;
 	}, [items]);
 
 	const riwayatCount = useMemo(() => {
-		return items.filter((item) => item.statusAset === "READY_TO_USE").length;
+		return items.filter((item) => isItemCompleted(item)).length;
 	}, [items]);
 
 	const handleSearch = () => setSearchQuery(searchInput);
@@ -93,6 +123,9 @@ export default function RendalValidasiUlangClient({
 		setSearchQuery("");
 		setFilterPlant("");
 		setFilterTipeObjek("");
+		setFilterStatus("");
+		setFilterKondisi("");
+		setFilterLokasi("");
 		setCurrentPage(1);
 		setSortConfig(null);
 	};
@@ -101,8 +134,8 @@ export default function RendalValidasiUlangClient({
 		let result = items;
 
 		result = result.filter((item) => {
-			const isReady = item.statusAset === "READY_TO_USE";
-			return activeTab === "antrean" ? !isReady : isReady;
+			const completed = isItemCompleted(item);
+			return activeTab === "antrean" ? !completed : completed;
 		});
 
 		if (searchQuery.trim()) {
@@ -113,12 +146,45 @@ export default function RendalValidasiUlangClient({
 					item.namaAlat.toLowerCase().includes(q) ||
 					item.tipeObjek.toLowerCase().includes(q) ||
 					item.plant.toLowerCase().includes(q) ||
-					item.lokasiPenyimpanan.toLowerCase().includes(q),
+					item.lokasiPenyimpanan.toLowerCase().includes(q) ||
+					item.kondisi.toLowerCase().includes(q),
 			);
 		}
 		if (filterPlant) result = result.filter((item) => item.plant === filterPlant);
 		if (filterTipeObjek)
 			result = result.filter((item) => item.tipeObjek === filterTipeObjek);
+		if (filterKondisi)
+			result = result.filter(
+				(item) => item.kondisi.toUpperCase() === filterKondisi.toUpperCase(),
+			);
+		if (filterLokasi)
+			result = result.filter((item) => item.lokasiPenyimpanan === filterLokasi);
+		if (filterStatus) {
+			result = result.filter((item) => {
+				const appStatus = (item.approvalStatus || "").toUpperCase();
+				const assetSt = (item.statusAset || "").toUpperCase();
+				if (filterStatus === "PENDING") {
+					return appStatus === "PENDING" || assetSt === "REVALIDATION";
+				}
+				if (filterStatus === "APPROVED") {
+					return appStatus === "APPROVED" || assetSt === "READY_TO_USE";
+				}
+				if (filterStatus === "REJECTED") {
+					return appStatus === "REJECTED" || assetSt === "REJECTED";
+				}
+				if (filterStatus === "REVISION") {
+					return (
+						appStatus === "REVISION" ||
+						appStatus === "REVISION_REQUIRED" ||
+						appStatus === "REVISION_REQUESTED"
+					);
+				}
+				if (filterStatus === "IN_REVIEW") {
+					return appStatus === "IN_REVIEW";
+				}
+				return appStatus === filterStatus || assetSt === filterStatus;
+			});
+		}
 
 		if (sortConfig) {
 			result = [...result].sort((a, b) => {
@@ -131,7 +197,17 @@ export default function RendalValidasiUlangClient({
 		}
 
 		return result;
-	}, [items, activeTab, searchQuery, filterPlant, filterTipeObjek, sortConfig]);
+	}, [
+		items,
+		activeTab,
+		searchQuery,
+		filterPlant,
+		filterTipeObjek,
+		filterStatus,
+		filterKondisi,
+		filterLokasi,
+		sortConfig,
+	]);
 
 	const ITEMS_PER_PAGE = 10;
 	const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
@@ -358,16 +434,19 @@ export default function RendalValidasiUlangClient({
 				</div>
 
 				{/* Toolbar */}
-				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
+				<div className="p-3 border-b border-gray-200 bg-white flex flex-col xl:flex-row gap-3 justify-between items-start xl:items-center">
 					{/* Search */}
-					<div className="flex w-full lg:w-auto gap-2">
-						<div className="relative flex-1 lg:w-72">
+					<div className="flex w-full xl:w-auto gap-2">
+						<div className="relative flex-1 xl:w-72">
 							<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
 							<input
 								type="text"
-								placeholder="Cari kode atau nama alat..."
+								placeholder="Cari kode, nama alat, lokasi..."
 								value={searchInput}
-								onChange={(e) => setSearchInput(e.target.value)}
+								onChange={(e) => {
+									setSearchInput(e.target.value);
+									setSearchQuery(e.target.value);
+								}}
 								onKeyDown={(e) => e.key === "Enter" && handleSearch()}
 								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
 							/>
@@ -381,10 +460,14 @@ export default function RendalValidasiUlangClient({
 					</div>
 
 					{/* Filter Group */}
-					<div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+					<div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+						{/* Plant Filter */}
 						<select
 							value={filterPlant}
-							onChange={(e) => setFilterPlant(e.target.value)}
+							onChange={(e) => {
+								setFilterPlant(e.target.value);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Plant</option>
@@ -395,9 +478,13 @@ export default function RendalValidasiUlangClient({
 							))}
 						</select>
 
+						{/* Tipe Objek Filter */}
 						<select
 							value={filterTipeObjek}
-							onChange={(e) => setFilterTipeObjek(e.target.value)}
+							onChange={(e) => {
+								setFilterTipeObjek(e.target.value);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Tipe</option>
@@ -407,6 +494,61 @@ export default function RendalValidasiUlangClient({
 								</option>
 							))}
 						</select>
+
+						{/* Status Persetujuan Filter */}
+						<select
+							value={filterStatus}
+							onChange={(e) => {
+								setFilterStatus(e.target.value);
+								setCurrentPage(1);
+							}}
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
+						>
+							<option value="">Semua Status</option>
+							<option value="PENDING">Menunggu Persetujuan</option>
+							<option value="IN_REVIEW">Sedang Direview</option>
+							<option value="APPROVED">Disetujui</option>
+							<option value="REJECTED">Ditolak</option>
+							<option value="REVISION">Perlu Revisi</option>
+						</select>
+
+						{/* Kondisi Filter */}
+						{kondisiOptions.length > 0 && (
+							<select
+								value={filterKondisi}
+								onChange={(e) => {
+									setFilterKondisi(e.target.value);
+									setCurrentPage(1);
+								}}
+								className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							>
+								<option value="">Semua Kondisi</option>
+								{kondisiOptions.map((k) => (
+									<option key={k} value={k}>
+										{k}
+									</option>
+								))}
+							</select>
+						)}
+
+						{/* Lokasi Penyimpanan Filter */}
+						{lokasiOptions.length > 0 && (
+							<select
+								value={filterLokasi}
+								onChange={(e) => {
+									setFilterLokasi(e.target.value);
+									setCurrentPage(1);
+								}}
+								className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
+							>
+								<option value="">Semua Lokasi</option>
+								{lokasiOptions.map((l) => (
+									<option key={l} value={l}>
+										{l}
+									</option>
+								))}
+							</select>
+						)}
 
 						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
 
@@ -471,14 +613,24 @@ export default function RendalValidasiUlangClient({
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
-												{searchQuery || filterPlant || filterTipeObjek
+												{searchQuery ||
+												filterPlant ||
+												filterTipeObjek ||
+												filterStatus ||
+												filterKondisi ||
+												filterLokasi
 													? "Hasil Pencarian Tidak Ditemukan"
 													: activeTab === "antrean"
 														? "Tidak Ada Antrean Persetujuan"
 														: "Belum Ada Riwayat Persetujuan"}
 											</p>
 											<p className="text-[11px] text-gray-500 mt-1">
-												{searchQuery || filterPlant || filterTipeObjek
+												{searchQuery ||
+												filterPlant ||
+												filterTipeObjek ||
+												filterStatus ||
+												filterKondisi ||
+												filterLokasi
 													? "Coba sesuaikan kata kunci atau filter pencarian Anda."
 													: activeTab === "antrean"
 														? "Peralatan yang divalidasi ulang oleh Inspeksi Teknik akan muncul di sini."

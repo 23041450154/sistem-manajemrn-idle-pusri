@@ -21,7 +21,7 @@ import {
 	FileText,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { statusName } from "@/lib/equipment-status";
+import { statusGroup, statusName } from "@/lib/equipment-status";
 
 /** Client Component: interaktif (search/filter) — data di-fetch Server Component. */
 export default function InspeksiDashboardClient({
@@ -36,33 +36,22 @@ export default function InspeksiDashboardClient({
 
 	const pendingAssets = useMemo(() => {
 		return equipments.filter((eq) => {
-			const st = statusName(
-				typeof eq.status === "string" ? eq.status : eq.status?.name,
-			);
-			return st === "REGISTERED" || st === "";
+			const group = statusGroup(eq);
+			return group === "pending" || !group;
 		});
 	}, [equipments]);
 
 	const validatedAssetsCount = useMemo(() => {
 		return equipments.filter((eq) => {
-			const st = statusName(
-				typeof eq.status === "string" ? eq.status : eq.status?.name,
-			);
-			return st === "VALIDATED" || st === "READY_TO_USE" || st === "REUSED";
+			const group = statusGroup(eq);
+			return group === "ready";
 		}).length;
 	}, [equipments]);
 
 	const repairOrScrapCount = useMemo(() => {
 		return equipments.filter((eq) => {
-			const st = statusName(
-				typeof eq.status === "string" ? eq.status : eq.status?.name,
-			);
-			return (
-				st === "REPAIR" ||
-				st === "SCRAP" ||
-				st === "DISPOSAL_RECOMMENDED" ||
-				st === "REJECTED"
-			);
+			const group = statusGroup(eq);
+			return group === "repair" || group === "scrap";
 		}).length;
 	}, [equipments]);
 
@@ -199,34 +188,47 @@ export default function InspeksiDashboardClient({
 			{/* Module Shortcuts */}
 			<section
 				aria-label="Modul inspeksi"
-				className="rounded border border-[#E6E8EA] bg-white"
+				className="overflow-hidden rounded border border-[#E6E8EA] bg-white"
 			>
 				<ul className="divide-y divide-[#E6E8EA]">
 					{modules.map((mod) => (
 						<li key={mod.href}>
 							<Link
 								href={mod.href}
-								className="group flex items-center gap-4 px-5 py-4 transition-colors duration-150 hover:bg-[#F2F3F4]"
+								className="group relative flex items-center gap-4 px-5 py-4 transition-all duration-200 ease-in-out hover:bg-[#F8FAFC] hover:pl-6"
 							>
+								{/* Left accent bar on hover */}
 								<span
-									className="flex h-9 w-9 shrink-0 items-center justify-center rounded border"
+									className="absolute inset-y-0 left-0 w-1 opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+									style={{ backgroundColor: mod.rule }}
+									aria-hidden="true"
+								/>
+								<span
+									className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border bg-white transition-all duration-200 ease-in-out group-hover:scale-110 group-hover:shadow-sm"
 									style={{ borderColor: mod.rule, color: mod.rule }}
 								>
-									<mod.icon className="h-4 w-4" aria-hidden="true" />
+									<mod.icon className="h-4 w-4 transition-transform duration-200 group-hover:rotate-3" aria-hidden="true" />
 								</span>
 								<span className="min-w-0 flex-1">
-									<span className="block truncate text-[14px] font-semibold text-[#0F172A]">
+									<span className="block truncate text-[14px] font-semibold text-[#0F172A] transition-colors duration-200 group-hover:text-[#0A356A]">
 										{mod.title}
 									</span>
-									<span className="mt-0.5 block truncate text-[13px] text-[#64748B]">
+									<span className="mt-0.5 block truncate text-[13px] text-[#64748B] transition-colors duration-200 group-hover:text-[#334155]">
 										{mod.purpose}
 									</span>
 								</span>
-								<span className="hidden shrink-0 text-[12px] font-medium text-[#64748B] sm:block">
+								<span
+									className="hidden shrink-0 items-center rounded-full border px-2.5 py-0.5 text-[11px] font-semibold transition-all duration-200 ease-in-out group-hover:scale-105 sm:inline-flex"
+									style={{
+										borderColor: `${mod.rule}40`,
+										color: mod.rule,
+										backgroundColor: `${mod.rule}10`,
+									}}
+								>
 									{mod.tag}
 								</span>
 								<ChevronRight
-									className="h-4 w-4 shrink-0 text-[#64748B] transition-colors duration-150 group-hover:text-[#0A356A]"
+									className="h-4 w-4 shrink-0 text-[#64748B] transition-all duration-200 ease-in-out group-hover:translate-x-1.5 group-hover:text-[#0A356A]"
 									aria-hidden="true"
 								/>
 							</Link>

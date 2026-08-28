@@ -129,6 +129,10 @@ export default async function DaftarAsetPage() {
 			});
 
 		equipments.sort((a, b) => {
+			const priorityA = a.status_name === "READY_TO_USE" ? 0 : 1;
+			const priorityB = b.status_name === "READY_TO_USE" ? 0 : 1;
+			if (priorityA !== priorityB) return priorityA - priorityB;
+
 			const timeA =
 				a.created_at && a.created_at !== "-" ? new Date(a.created_at).getTime() : 0;
 			const timeB =

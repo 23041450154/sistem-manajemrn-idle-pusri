@@ -186,16 +186,16 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 				)}
 			</div>
 
-			<div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden min-h-[420px]">
+			<div className="bg-white border border-slate-200 rounded-2xl shadow-sm overflow-hidden">
 				{isLoading ? (
-					<div className="flex flex-col items-center justify-center h-64">
+					<div className="flex flex-col items-center justify-center py-12">
 						<Loader2 className="w-8 h-8 text-[#0A356A] animate-spin mb-3" />
 						<p className="text-xs font-semibold text-slate-500">
 							Memuat data {entity.label}...
 						</p>
 					</div>
 				) : items.length === 0 ? (
-					<div className="flex flex-col items-center justify-center h-64 text-center px-4">
+					<div className="flex flex-col items-center justify-center py-12 text-center px-4">
 						<div className="w-12 h-12 bg-slate-100 text-[#0A356A] rounded-2xl flex items-center justify-center mb-3">
 							<Database className="w-6 h-6" />
 						</div>
@@ -227,11 +227,6 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 									<th className="px-6 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
 										Deskripsi
 									</th>
-									{!readOnly && (
-										<th className="px-6 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider text-right">
-											Aksi
-										</th>
-									)}
 								</tr>
 							</thead>
 							<tbody className="bg-white divide-y divide-slate-100">
@@ -256,28 +251,6 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 												<span className="text-slate-300">-</span>
 											)}
 										</td>
-										{!readOnly && (
-											<td className="px-6 py-4 whitespace-nowrap text-right">
-												<div className="inline-flex items-center gap-1.5">
-													<button
-														onClick={() => openEdit(item)}
-														className="inline-flex items-center gap-1.5 text-slate-400 hover:bg-blue-50 hover:text-[#0A356A] border border-transparent hover:border-blue-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-														title={`Ubah ${entity.label}`}
-													>
-														<Pencil className="w-3.5 h-3.5" />
-														Ubah
-													</button>
-													<button
-														onClick={() => setDeleting(item)}
-														className="inline-flex items-center gap-1.5 text-slate-400 hover:bg-red-50 hover:text-red-600 border border-transparent hover:border-red-200 px-3 py-1.5 rounded-lg text-xs font-bold transition-all"
-														title={`Hapus ${entity.label}`}
-													>
-														<Trash2 className="w-3.5 h-3.5" />
-														Hapus
-													</button>
-												</div>
-											</td>
-										)}
 									</tr>
 								))}
 							</tbody>

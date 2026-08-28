@@ -215,7 +215,7 @@ export default function PemeliharaanDashboardPage() {
 					new Date(b.updated_at || b.created_at || 0).getTime() -
 					new Date(a.updated_at || a.created_at || 0).getTime(),
 			)
-			.slice(0, 8);
+			.slice(0, 6);
 	}, [equipments]);
 
 	if (isLoading) {
@@ -342,109 +342,166 @@ export default function PemeliharaanDashboardPage() {
 			</div>
 
 			{/* Antrean per plant + aktivitas */}
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-				<div className="lg:col-span-2 bg-white border border-[#E6E8EA] rounded-[4px]">
-					<div className="px-5 py-4 border-b border-[#E6E8EA]">
-						<h2 className="text-[14px] font-semibold text-[#0F172A]">
-							Antrean Perbaikan per Plant
-						</h2>
-						<p className="text-[12px] text-[#64748B] mt-0.5">
-							Enam plant dengan antrean terbanyak. Menentukan ke mana tim dikirim lebih
-							dulu.
-						</p>
-					</div>
-					<div className="p-5">
-						{plantBarData.length === 0 ? (
-							<div className="flex items-center gap-2 py-10 justify-center text-[13px] text-[#475569]">
-								<Check className="w-4 h-4 text-[#059669] shrink-0" aria-hidden="true" />
-								Antrean kosong. Tidak ada aset berstatus REPAIR.
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4 items-stretch">
+				<div className="lg:col-span-2 bg-white border border-[#E6E8EA] rounded-[4px] flex flex-col justify-between">
+					<div>
+						<div className="px-5 py-4 border-b border-[#E6E8EA] flex items-center justify-between gap-2">
+							<div>
+								<h2 className="text-[14px] font-semibold text-[#0F172A]">
+									Antrean Perbaikan per Plant
+								</h2>
+								<p className="text-[12px] text-[#64748B] mt-0.5">
+									Enam plant dengan antrean terbanyak. Menentukan ke mana tim dikirim lebih
+									dulu.
+								</p>
 							</div>
-						) : (
-							<ResponsiveContainer width="100%" height={220}>
-								<BarChart
-									data={plantBarData}
-									margin={{ top: 4, right: 8, left: 0, bottom: 0 }}
-								>
-									<CartesianGrid
-										strokeDasharray="3 3"
-										stroke="#E6E8EA"
-										vertical={false}
-									/>
-									<XAxis
-										dataKey="plant"
-										tick={{ fontSize: 12, fill: "#64748B" }}
-										tickLine={false}
-										axisLine={{ stroke: "#E6E8EA" }}
-									/>
-									<YAxis
-										tick={{ fontSize: 12, fill: "#64748B" }}
-										tickLine={false}
-										axisLine={false}
-										allowDecimals={false}
-										width={32}
-									/>
-									<Tooltip
-										contentStyle={{
-											fontSize: "12px",
-											borderRadius: "4px",
-											border: "1px solid #E6E8EA",
-											boxShadow: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
-										}}
-										formatter={(value) => [`${value} aset`, "Antrean"]}
-									/>
-									<Bar
-										dataKey="count"
-										name="Antrean"
-										fill={STATUS_COLOR.REPAIR}
-										maxBarSize={32}
-									/>
-								</BarChart>
-							</ResponsiveContainer>
-						)}
+							<span className="text-[12px] font-semibold text-[#B45309] bg-[#FEF3C7] border border-[#FDE68A] px-2.5 py-1 rounded-[4px] shrink-0">
+								{groups.antrean.length} Aset Total
+							</span>
+						</div>
+						<div className="p-5">
+							{plantBarData.length === 0 ? (
+								<div className="flex items-center gap-2 py-12 justify-center text-[13px] text-[#475569]">
+									<Check className="w-4 h-4 text-[#059669] shrink-0" aria-hidden="true" />
+									Antrean kosong. Tidak ada aset berstatus REPAIR.
+								</div>
+							) : (
+								<>
+									<div className="w-full h-[220px]">
+										<ResponsiveContainer width="100%" height="100%">
+											<BarChart
+												data={plantBarData}
+												margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
+											>
+												<CartesianGrid
+													strokeDasharray="3 3"
+													stroke="#E6E8EA"
+													vertical={false}
+												/>
+												<XAxis
+													dataKey="plant"
+													tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+													tickLine={false}
+													axisLine={{ stroke: "#E6E8EA" }}
+												/>
+												<YAxis
+													tick={{ fontSize: 12, fill: "#64748B" }}
+													tickLine={false}
+													axisLine={false}
+													allowDecimals={false}
+													width={32}
+												/>
+												<Tooltip
+													contentStyle={{
+														fontSize: "12px",
+														borderRadius: "4px",
+														border: "1px solid #E6E8EA",
+														boxShadow: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
+													}}
+													formatter={(value) => [`${value} aset`, "Antrean"]}
+												/>
+												<Bar
+													dataKey="count"
+													name="Antrean"
+													fill={STATUS_COLOR.REPAIR}
+													radius={[4, 4, 0, 0]}
+													maxBarSize={36}
+												/>
+											</BarChart>
+										</ResponsiveContainer>
+									</div>
+
+									{/* Quick breakdown grid of top plants */}
+									<div className="mt-4 pt-4 border-t border-[#E6E8EA] grid grid-cols-2 sm:grid-cols-3 gap-2.5">
+										{plantBarData.map((item) => (
+											<div
+												key={item.plant}
+												className="flex items-center justify-between bg-[#F8FAFC] border border-[#E6E8EA] rounded-[4px] px-3.5 py-2"
+											>
+												<span className="text-[13px] font-medium text-[#334155] truncate">
+													{item.plant}
+												</span>
+												<span className="text-[13px] font-semibold text-[#0F172A] tabular-nums ml-2 shrink-0">
+													{item.count}{" "}
+													<span className="text-[11px] font-normal text-[#64748B]">
+														aset
+													</span>
+												</span>
+											</div>
+										))}
+									</div>
+								</>
+							)}
+						</div>
 					</div>
 				</div>
 
-				<div className="bg-white border border-[#E6E8EA] rounded-[4px]">
-					<div className="px-5 py-4 border-b border-[#E6E8EA]">
-						<h2 className="text-[14px] font-semibold text-[#0F172A]">
-							Perubahan Terakhir
-						</h2>
-						<p className="text-[12px] text-[#64748B] mt-0.5">
-							Aset yang statusnya paling baru berubah.
-						</p>
+				<div className="bg-white border border-[#E6E8EA] rounded-[4px] flex flex-col justify-between">
+					<div>
+						<div className="px-5 py-4 border-b border-[#E6E8EA]">
+							<h2 className="text-[14px] font-semibold text-[#0F172A]">
+								Perubahan Terakhir
+							</h2>
+							<p className="text-[12px] text-[#64748B] mt-0.5">
+								Aset yang statusnya paling baru berubah.
+							</p>
+						</div>
+						{recentActivity.length === 0 ? (
+							<p className="px-5 py-8 text-[13px] text-[#64748B]">
+								Belum ada perubahan status.
+							</p>
+						) : (
+							<ul className="divide-y divide-[#E6E8EA]">
+								{recentActivity.map((eq) => {
+									const status = repairFlowStatus(eq) ?? "REPAIR";
+									return (
+										<li
+											key={eq.id}
+											className="relative flex items-start gap-3.5 px-5 py-3.5 hover:bg-[#F8FAFC] transition-colors duration-150"
+										>
+											<span
+												className="w-1 self-stretch rounded-full shrink-0 my-0.5"
+												style={{ backgroundColor: STATUS_COLOR[status] }}
+												aria-hidden="true"
+											/>
+											<div className="min-w-0 flex-1">
+												<div className="flex items-center gap-2 flex-wrap">
+													<span className="font-mono text-[13px] font-semibold text-[#0F172A]">
+														{eq.equipment_code || "-"}
+													</span>
+													{eq.name && (
+														<span className="text-[13px] text-[#475569] truncate">
+															{str(eq.name)}
+														</span>
+													)}
+												</div>
+												<div className="flex items-center gap-2 mt-1.5 flex-wrap">
+													<span
+														className="inline-flex items-center gap-1.5 text-[13px] sm:text-[14px] font-semibold"
+														style={{ color: STATUS_COLOR[status] }}
+													>
+														<span
+															className="w-1.5 h-1.5 rounded-full shrink-0"
+															style={{ backgroundColor: STATUS_COLOR[status] }}
+															aria-hidden="true"
+														/>
+														{REPAIR_STATUS_LABEL[status]}
+													</span>
+													<span className="text-[#CBD5E1]">·</span>
+													<span className="text-[13px] font-medium text-[#64748B]">
+														{relativeTime(eq.updated_at || eq.created_at)}
+													</span>
+												</div>
+											</div>
+										</li>
+									);
+								})}
+							</ul>
+						)}
 					</div>
-					{recentActivity.length === 0 ? (
-						<p className="px-5 py-8 text-[13px] text-[#64748B]">
-							Belum ada perubahan status.
-						</p>
-					) : (
-						<ul className="divide-y divide-[#E6E8EA]">
-							{recentActivity.map((eq) => {
-								const status = repairFlowStatus(eq) ?? "REPAIR";
-								return (
-									<li key={eq.id} className="flex items-start gap-3 px-5 py-3">
-										<span
-											className="w-0.5 self-stretch shrink-0"
-											style={{ backgroundColor: STATUS_COLOR[status] }}
-											aria-hidden="true"
-										/>
-										<div className="min-w-0 flex-1">
-											<p className="text-[13px] font-semibold text-[#0F172A] truncate">
-												{eq.equipment_code || "-"} {str(eq.name)}
-											</p>
-											<p className="text-[12px] text-[#64748B] mt-0.5 truncate">
-												{REPAIR_STATUS_LABEL[status]} ·{" "}
-												{relativeTime(eq.updated_at || eq.created_at)}
-											</p>
-										</div>
-									</li>
-								);
-							})}
-						</ul>
-					)}
 					<Link
 						href="/pemeliharaan/perbaikan-alat"
-						className="flex items-center justify-between px-5 py-3 border-t border-[#E6E8EA] text-[13px] font-medium text-[#0A356A] hover:bg-[#F2F3F4] transition-colors duration-[140ms] ease-out"
+						className="flex items-center justify-between px-5 py-3.5 border-t border-[#E6E8EA] text-[13px] font-medium text-[#0A356A] hover:bg-[#F2F3F4] transition-colors duration-[140ms] ease-out"
 					>
 						Buka daftar perbaikan
 						<ChevronRight className="w-4 h-4" aria-hidden="true" />

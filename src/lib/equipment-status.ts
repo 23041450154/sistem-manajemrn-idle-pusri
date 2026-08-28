@@ -27,10 +27,16 @@ const ALIASES: Record<string, RepairFlowStatus> = {
 
 /** Ambil status alur perbaikan dari record equipment; null = di luar alur ini. */
 export function repairFlowStatus(equipment: {
-	status?: { name?: string } | null;
+	status?: { name?: string } | string | null;
 	statusAset?: string | null;
 }): RepairFlowStatus | null {
-	const raw = String(equipment.status?.name || equipment.statusAset || "")
+	const raw = String(
+		(typeof equipment.status === "string"
+			? equipment.status
+			: equipment.status?.name) ||
+			equipment.statusAset ||
+			"",
+	)
 		.trim()
 		.toUpperCase();
 	if (!raw) return null;
@@ -75,6 +81,7 @@ const STATUS_ALIASES: Record<string, EquipmentStatus> = {
 	MAINTENANCE: "REPAIR",
 	REVALIDASI: "REVALIDATION",
 	SCRAP_RECOMMENDED: "DISPOSAL_RECOMMENDED",
+	SCRAP_RECOMENDED: "DISPOSAL_RECOMMENDED",
 	RUSAK_BERAT: "SCRAP",
 	CONDEMNED: "SCRAP",
 	DISPOSED: "SCRAP",
@@ -116,11 +123,15 @@ const STATUS_GROUP: Record<string, StatusGroup> = {
 
 /** Kelompok status equipment; null = status tidak dikenal/tidak ada. */
 export function statusGroup(equipment: {
-	status?: { name?: string } | null;
+	status?: { name?: string } | string | null;
 	statusAset?: string | null;
 }): StatusGroup | null {
 	const raw = String(
-		equipment.status?.name || equipment.statusAset || "",
+		(typeof equipment.status === "string"
+			? equipment.status
+			: equipment.status?.name) ||
+			equipment.statusAset ||
+			"",
 	).trim();
 	if (!raw) return null;
 	return STATUS_GROUP[statusName(raw)] ?? null;

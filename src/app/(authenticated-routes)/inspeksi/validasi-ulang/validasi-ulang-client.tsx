@@ -16,7 +16,6 @@ import {
 	Save,
 	XCircle,
 	Wrench,
-	Trash2,
 	Eye,
 	UploadCloud,
 	Paperclip,
@@ -60,8 +59,7 @@ export default function InspeksiValidasiUlangClient({
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [modalMode, setModalMode] = useState<"VALIDASI" | "DETAIL">("VALIDASI");
 	// Hasil validasi ulang dipilih sebagai STATUS tujuan (bukan kondisi):
-	// REVALIDATION = perbaikan berhasil, REPAIR = masih perlu perbaikan,
-	// DISPOSAL_RECOMMENDED = usul scrap.
+	// REVALIDATION = perbaikan berhasil, REPAIR = masih perlu perbaikan.
 	const [hasilStatus, setHasilStatus] = useState("");
 	const [notes, setNotes] = useState("");
 	const [followupRecommendation, setFollowupRecommendation] = useState("");
@@ -252,13 +250,6 @@ export default function InspeksiValidasiUlangClient({
 					setNotification({
 						type: "success",
 						message: `Validasi ulang ${selectedAsset.kodeAlat} berhasil disimpan: Perbaikan dinyatakan BERHASIL, status naik ke REVALIDATION (menunggu persetujuan Rendal).`,
-					});
-				} else if (hasilStatus === "DISPOSAL_RECOMMENDED") {
-					setNotification({
-						// ponytail: tetap "success" — operasinya BERHASIL; kabar tidak enaknya
-						// cukup lewat teks pesan, jangan pakai ikon error.
-						type: "success",
-						message: `Validasi ulang ${selectedAsset.kodeAlat} berhasil disimpan: Tidak layak pakai, status DISPOSAL_RECOMMENDED (usulan scrap).`,
 					});
 				} else {
 					setNotification({
@@ -925,11 +916,6 @@ export default function InspeksiValidasiUlangClient({
 													title: "Masih Perlu Perbaikan",
 													desc: "Kembali ke antrean perbaikan",
 												},
-												{
-													value: "DISPOSAL_RECOMMENDED",
-													title: "Tidak Layak Pakai",
-													desc: "Usul scrap / penghapusan",
-												},
 											].map((opt) => (
 												<label
 													key={opt.value}
@@ -994,21 +980,6 @@ export default function InspeksiValidasiUlangClient({
 												</div>
 											</div>
 										)}
-										{hasilStatus === "DISPOSAL_RECOMMENDED" && (
-											<div className="mt-2 animate-in fade-in slide-in-from-top-1 duration-200 border border-[#DC2626] bg-white rounded p-3 text-xs text-[#334155] flex items-start gap-2.5">
-												<Trash2 className="w-4 h-4 text-[#DC2626] shrink-0 mt-0.5" />
-												<div>
-													<p className="font-bold text-[#DC2626]">
-														Status Dialihkan ke DISPOSAL_RECOMMENDED
-													</p>
-													<p className="text-[11px] text-[#DC2626] mt-0.5 leading-relaxed">
-														Kerusakan berat dan tidak ekonomis diperbaiki. Aset
-														direkomendasikan untuk proses usulan{" "}
-														<strong>Scrap / Penghapusan</strong>.
-													</p>
-												</div>
-											</div>
-										)}
 									</div>
 
 									{/* Catatan */}
@@ -1018,7 +989,10 @@ export default function InspeksiValidasiUlangClient({
 										</label>
 										<textarea
 											value={notes}
-											onChange={(e) => setNotes(e.target.value)}
+											onChange={(e) => {
+												setNotes(e.target.value);
+												if (modalError) setModalError(null);
+											}}
 											rows={3}
 											placeholder="Hasil pemeriksaan visual, fungsi mekanik/elektrik, dll. (wajib)..."
 											className={`w-full px-3 py-2 text-sm border rounded bg-gray-50 focus:bg-white outline-none transition-all resize-none ${

@@ -19,7 +19,6 @@ interface ReuseRequestItem {
 	equipment_code: string;
 	equipment_name: string;
 	installation_location: string;
-	estimated_cost_avoidance?: number;
 	status: string;
 }
 
@@ -35,17 +34,13 @@ export default function UnitKerjaDashboardContent({
 
 	const readyToUseCount = equipments.length;
 	const totalSubmittedRequests = reuseRequests.length;
-	const approvedRequests = reuseRequests.filter((r) =>
-		r.status.toUpperCase().includes("APPROV"),
-	);
 	const pendingRequestsCount = reuseRequests.filter(
 		(r) =>
 			r.status.toUpperCase().includes("PENDING") ||
 			r.status.toUpperCase().includes("REVIEW"),
 	).length;
-	const totalCostAvoidance = approvedRequests.reduce(
-		(sum, item) => sum + (item.estimated_cost_avoidance || 0),
-		0,
+	const approvedRequests = reuseRequests.filter((r) =>
+		r.status.toUpperCase().includes("APPROV"),
 	);
 
 	const getStatusBadge = (status: string) => {
@@ -121,9 +116,17 @@ export default function UnitKerjaDashboardContent({
 					<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-1">
 						{String(totalSubmittedRequests)}
 					</p>
-					<p className="text-[12px] text-[#64748B] mt-1">
-						{pendingRequestsCount} menunggu review
+					<p className="text-[12px] text-[#64748B] mt-1">Seluruh riwayat unit</p>
+				</div>
+				<div
+					className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2"
+					style={{ borderLeftColor: "#B45309" }}
+				>
+					<p className="text-[12px] font-medium text-[#64748B]">Menunggu review</p>
+					<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-1">
+						{String(pendingRequestsCount)}
 					</p>
+					<p className="text-[12px] text-[#64748B] mt-1">Dalam evaluasi Rendal</p>
 				</div>
 				<div
 					className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2"
@@ -134,16 +137,6 @@ export default function UnitKerjaDashboardContent({
 						{String(approvedRequests.length)}
 					</p>
 					<p className="text-[12px] text-[#64748B] mt-1">Siap dimobilisasi</p>
-				</div>
-				<div
-					className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2"
-					style={{ borderLeftColor: "#475569" }}
-				>
-					<p className="text-[12px] font-medium text-[#64748B]">Cost avoidance</p>
-					<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-1">
-						{`Rp ${totalCostAvoidance.toLocaleString("id-ID")}`}
-					</p>
-					<p className="text-[12px] text-[#64748B] mt-1">Dari pengajuan disetujui</p>
 				</div>
 			</div>
 

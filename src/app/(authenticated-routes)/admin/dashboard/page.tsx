@@ -185,7 +185,7 @@ export default async function AdminDashboardPage() {
         </div>
 
         {/* Recent Equipment */}
-        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col">
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-sm flex flex-col h-fit">
           <div className="px-5 py-4 border-b border-slate-100 flex items-center justify-between">
             <h3 className="text-sm font-bold text-slate-900 flex items-center gap-2">
               <FileText className="w-4 h-4 text-[#0A356A]" />
