@@ -16,8 +16,8 @@ import {
 	CheckCheck,
 	Loader2,
 	RefreshCw,
-	Sparkles,
 	Inbox,
+	FileText,
 } from "lucide-react";
 import { normalizeRole } from "@/lib/roles";
 import {
@@ -25,7 +25,9 @@ import {
 	getApprovals,
 	getReuseRequests,
 	getDisposals,
+	getEquipmentRepairs,
 } from "@/action/api";
+import { statusName } from "@/lib/equipment-status";
 import { formatDate } from "@/lib/utils";
 
 export interface NotificationItem {
@@ -86,7 +88,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 		}
 	}, [storageKey]);
 
-	// Fetch notifications based on role
+	// Fetch dynamic notifications directly from database records based on role
 	const fetchNotifications = useCallback(async () => {
 		setIsLoading(true);
 		try {
@@ -103,21 +105,24 @@ export function NotificationDropdown({ role }: { role?: string }) {
 						? approvalsData
 						: (approvalsData as any)?.data || [];
 
-					// 1. Aset REGISTERED (menunggu validasi inspeksi pertama)
+					// 1. Data peralatan dari DB yang berstatus REGISTERED (menunggu validasi kelayakan pertama)
 					if (Array.isArray(equipments)) {
 						equipments.forEach((item: any) => {
-							const rawStatus = String(
-								item.status?.name || item.statusAset || "",
-							).toUpperCase();
-							const statusId = item.status_id || item.status?.id;
+							const rawStatus = typeof item.status === "object" ? item.status?.name : item.status;
+							const norm = statusName(rawStatus || item.statusAset || "");
 
-							if (statusId === 1 || rawStatus === "REGISTERED") {
+							if (norm === "REGISTERED") {
 								const code = item.equipment_code || item.kodeAlat || `EQ-${item.id}`;
-								const name = item.name || item.namaAlat || "Equipment";
+								const name = item.name || item.namaAlat || "Peralatan";
+								const plant =
+									item.plant_description ||
+									(typeof item.plant === "object" ? item.plant?.name : item.plant) ||
+									"-";
+
 								items.push({
 									id: `insp-reg-${item.id}`,
-									title: "Aset Baru Menunggu Validasi",
-									message: `Peralatan ${code} (${name}) siap divalidasi teknis oleh Inspeksi.`,
+									title: `Menunggu Validasi: ${code}`,
+									message: `Peralatan ${name} (${plant}) baru didaftarkan dan memerlukan pemeriksaan kelayakan teknis.`,
 									timestamp: item.created_at || new Date().toISOString(),
 									href: "/inspeksi/validasi",
 									category: "validation",
@@ -126,18 +131,14 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								});
 							}
 
-							// 2. Aset REPAIR_COMPLETED (menunggu validasi ulang perbaikan)
-							if (
-								statusId === 4 ||
-								rawStatus === "REPAIR_COMPLETED" ||
-								rawStatus === "REPAIR COMPLETED"
-							) {
+							// 2. Data peralatan dari DB yang berstatus REPAIR_COMPLETED (menunggu validasi ulang)
+							if (norm === "REPAIR_COMPLETED") {
 								const code = item.equipment_code || item.kodeAlat || `EQ-${item.id}`;
-								const name = item.name || item.namaAlat || "Equipment";
+								const name = item.name || item.namaAlat || "Peralatan";
 								items.push({
 									id: `insp-repair-${item.id}`,
-									title: "Peralatan Selesai Perbaikan",
-									message: `Perbaikan alat ${code} (${name}) selesai dan memerlukan validasi ulang.`,
+									title: `Perbaikan Selesai: ${code}`,
+									message: `Peralatan ${name} telah selesai diperbaiki oleh tim Pemeliharaan dan siap divalidasi ulang.`,
 									timestamp: item.updated_at || item.created_at || new Date().toISOString(),
 									href: "/inspeksi/validasi-ulang",
 									category: "repair",
@@ -148,7 +149,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 						});
 					}
 
-					// 3. Revisi Validasi dari Manajer
+					// 3. Catatan revisi validasi dari Manajer yang tersimpan di DB
 					approvalsList.forEach((app: any) => {
 						const approvalStatus = String(
 							app.approval_status || app.status || "",
@@ -162,14 +163,16 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								app.equipment_code ||
 								`EQ-${app.equipment_id || app.id}`;
 							const name = app.equipment?.name || app.equipment_name || "Aset";
+							const notes = app.notes || app.review_notes || "Perlu perbaikan catatan temuan lapangan.";
+
 							items.push({
 								id: `insp-rev-${app.id}`,
-								title: "Perlu Revisi Validasi",
-								message: `Validasi untuk ${code} (${name}) memiliki catatan revisi dari Manajer.`,
+								title: `Revisi Validasi: ${code}`,
+								message: `Catatan Manajer: "${notes}" untuk aset ${name}.`,
 								timestamp: app.updated_at || app.created_at || new Date().toISOString(),
 								href: "/inspeksi/validasi",
 								category: "validation",
-								badgeText: "Revisi",
+								badgeText: "Perlu Revisi",
 								badgeColor: "#B45309",
 							});
 						}
@@ -186,7 +189,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 
 					const toList = (v: any) => (Array.isArray(v) ? v : v?.data || []);
 
-					// 1. Persetujuan Validasi
+					// 1. Antrean persetujuan validasi dari database
 					toList(valApps).forEach((app: any) => {
 						const status = String(
 							app.approval_status || app.status || "",
@@ -200,20 +203,22 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								app.equipment_code ||
 								`EQ-${app.equipment_id || app.id}`;
 							const name = app.equipment?.name || app.equipment_name || "Aset";
+							const reqNum = app.request_number || app.requestNumber || `VAL-${app.id}`;
+
 							items.push({
 								id: `mgr-val-${app.id}`,
-								title: "Persetujuan Validasi Kelayakan",
+								title: `Persetujuan Validasi (${reqNum})`,
 								message: `Hasil validasi teknis ${code} (${name}) menunggu keputusan Anda.`,
 								timestamp: app.created_at || new Date().toISOString(),
 								href: "/manajer/approve",
 								category: "validation",
-								badgeText: "Menunggu",
+								badgeText: "Validasi",
 								badgeColor: "#0556B3",
 							});
 						}
 					});
 
-					// 2. Persetujuan Peminjaman
+					// 2. Antrean persetujuan peminjaman/reuse dari database
 					toList(reuseApps).forEach((app: any) => {
 						const status = String(
 							app.approval_status || app.status || "",
@@ -227,20 +232,22 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								app.equipment_code ||
 								`EQ-${app.equipment_id || app.id}`;
 							const name = app.equipment?.name || app.equipment_name || "Aset";
+							const reqNum = app.request_number || app.requestNumber || `REQ-${app.id}`;
+
 							items.push({
 								id: `mgr-reuse-${app.id}`,
-								title: "Persetujuan Peminjaman Aset",
+								title: `Persetujuan Peminjaman (${reqNum})`,
 								message: `Permohonan reuse alat ${code} (${name}) menunggu persetujuan Manajer.`,
 								timestamp: app.created_at || new Date().toISOString(),
 								href: "/manajer/peminjaman",
 								category: "reuse",
-								badgeText: "Reuse",
+								badgeText: "Peminjaman",
 								badgeColor: "#059669",
 							});
 						}
 					});
 
-					// 3. Persetujuan Scrap
+					// 3. Antrean persetujuan scrap/disposal dari database
 					toList(dispApps).forEach((app: any) => {
 						const status = String(
 							app.approval_status || app.status || "",
@@ -254,9 +261,11 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								app.equipment_code ||
 								`EQ-${app.equipment_id || app.id}`;
 							const name = app.equipment?.name || app.equipment_name || "Aset";
+							const dispNum = app.disposal_number || app.disposalNumber || `DSP-${app.id}`;
+
 							items.push({
 								id: `mgr-disp-${app.id}`,
-								title: "Persetujuan Usulan Scrap",
+								title: `Persetujuan Usulan Scrap (${dispNum})`,
 								message: `Usulan penghapusan aset ${code} (${name}) menunggu verifikasi Manajer.`,
 								timestamp: app.created_at || new Date().toISOString(),
 								href: "/manajer/scrap",
@@ -277,43 +286,33 @@ export function NotificationDropdown({ role }: { role?: string }) {
 
 					if (Array.isArray(equipments)) {
 						equipments.forEach((item: any) => {
-							const rawStatus = String(
-								item.status?.name || item.statusAset || "",
-							).toUpperCase();
-							const statusId = item.status_id || item.status?.id;
+							const rawStatus = typeof item.status === "object" ? item.status?.name : item.status;
+							const norm = statusName(rawStatus || item.statusAset || "");
 
-							// 1. Evaluasi Validasi Ulang (status REVALIDATION)
-							if (
-								statusId === 5 ||
-								rawStatus === "REVALIDATION" ||
-								rawStatus === "REVALIDASI"
-							) {
+							// 1. Data peralatan berstatus REVALIDATION (evaluasi hasil validasi ulang)
+							if (norm === "REVALIDATION") {
 								const code = item.equipment_code || item.kodeAlat || `EQ-${item.id}`;
 								const name = item.name || item.namaAlat || "Equipment";
 								items.push({
 									id: `rdl-reval-${item.id}`,
-									title: "Tindak Lanjut Validasi Ulang",
-									message: `Peralatan ${code} (${name}) selesai divalidasi ulang dan menunggu evaluasi Rendal.`,
+									title: `Evaluasi Validasi Ulang: ${code}`,
+									message: `Peralatan ${name} telah selesai divalidasi ulang dan menunggu evaluasi Rendal.`,
 									timestamp: item.updated_at || item.created_at || new Date().toISOString(),
 									href: "/rendal/validasi-ulang",
 									category: "repair",
-									badgeText: "Evaluasi",
+									badgeText: "Validasi Ulang",
 									badgeColor: "#0556B3",
 								});
 							}
 
-							// 2. Rekomendasi Scrap
-							if (
-								rawStatus === "DISPOSAL_RECOMMENDED" ||
-								rawStatus === "SCRAP_RECOMMENDED" ||
-								rawStatus === "SCRAP_RECOMENDED"
-							) {
+							// 2. Data peralatan berstatus DISPOSAL_RECOMMENDED
+							if (norm === "DISPOSAL_RECOMMENDED") {
 								const code = item.equipment_code || item.kodeAlat || `EQ-${item.id}`;
 								const name = item.name || item.namaAlat || "Equipment";
 								items.push({
 									id: `rdl-scrap-${item.id}`,
-									title: "Rekomendasi Scrap Aset",
-									message: `Peralatan ${code} (${name}) siap diproses usulan scrap ke Manajer.`,
+									title: `Rekomendasi Scrap: ${code}`,
+									message: `Peralatan ${name} direkomendasikan untuk diajukan penghapusan (scrap) ke Manajer.`,
 									timestamp: item.updated_at || item.created_at || new Date().toISOString(),
 									href: "/rendal/scrap",
 									category: "disposal",
@@ -322,14 +321,18 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								});
 							}
 
-							// 3. Aset Baru Terdaftar (REGISTERED)
-							if (statusId === 1 || rawStatus === "REGISTERED") {
+							// 3. Data peralatan baru terdaftar (REGISTERED)
+							if (norm === "REGISTERED") {
 								const code = item.equipment_code || item.kodeAlat || `EQ-${item.id}`;
 								const name = item.name || item.namaAlat || "Equipment";
+								const plant =
+									item.plant_description ||
+									(typeof item.plant === "object" ? item.plant?.name : item.plant) ||
+									"-";
 								items.push({
 									id: `rdl-reg-${item.id}`,
-									title: "Aset Baru Terdaftar",
-									message: `Peralatan ${code} (${name}) baru terdaftar di database idle.`,
+									title: `Aset Baru Terdaftar: ${code}`,
+									message: `Peralatan ${name} (${plant}) tercatat di sistem idle dan menunggu validasi.`,
 									timestamp: item.created_at || new Date().toISOString(),
 									href: "/rendal/idle",
 									category: "system",
@@ -340,7 +343,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 						});
 					}
 
-					// 4. Permintaan Reuse Baru
+					// 4. Data permohonan reuse dari unit kerja di database
 					if (Array.isArray(reuseRequests)) {
 						reuseRequests.forEach((req: any) => {
 							const status = String(
@@ -351,14 +354,17 @@ export function NotificationDropdown({ role }: { role?: string }) {
 									req.equipment_code ||
 									req.equipment?.equipment_code ||
 									`EQ-${req.equipment_id || req.id}`;
+								const reqNum = req.request_number || req.requestNumber || `REQ-${req.id}`;
+								const loc = req.installation_location || req.installationLocation || "Unit Kerja";
+
 								items.push({
 									id: `rdl-reuse-${req.id}`,
-									title: "Permintaan Peminjaman / Reuse",
-									message: `Pengajuan reuse untuk alat ${code} menunggu tindak lanjut Rendal.`,
+									title: `Permintaan Reuse: ${reqNum}`,
+									message: `Permohonan reuse alat ${code} untuk lokasi ${loc} menunggu peninjauan Rendal.`,
 									timestamp: req.created_at || req.requested_at || new Date().toISOString(),
 									href: "/rendal/idle",
 									category: "reuse",
-									badgeText: "Pengajuan Unit",
+									badgeText: "Menunggu Review",
 									badgeColor: "#059669",
 								});
 							}
@@ -368,26 +374,41 @@ export function NotificationDropdown({ role }: { role?: string }) {
 				}
 
 				case "PEMELIHARAAN_LAPANGAN": {
-					const equipments = await getEquipments().catch(() => []);
+					const [equipments, repairs] = await Promise.all([
+						getEquipments().catch(() => []),
+						getEquipmentRepairs().catch(() => []),
+					]);
+
 					if (Array.isArray(equipments)) {
 						equipments.forEach((item: any) => {
-							const rawStatus = String(
-								item.status?.name || item.statusAset || "",
-							).toUpperCase();
-							const statusId = item.status_id || item.status?.id;
+							const rawStatus = typeof item.status === "object" ? item.status?.name : item.status;
+							const norm = statusName(rawStatus || item.statusAset || "");
 
-							if (
-								statusId === 3 ||
-								rawStatus === "REPAIR" ||
-								rawStatus === "MAINTENANCE" ||
-								rawStatus === "DALAM_PERBAIKAN"
-							) {
+							if (norm === "REPAIR") {
 								const code = item.equipment_code || item.kodeAlat || `EQ-${item.id}`;
 								const name = item.name || item.namaAlat || "Equipment";
+								const plant =
+									item.plant_description ||
+									(typeof item.plant === "object" ? item.plant?.name : item.plant) ||
+									"-";
+
+								// Cari detail repair bila ada di DB
+								const matchingRepair = Array.isArray(repairs)
+									? repairs.find(
+											(r: any) =>
+												String(r.equipment_id) === String(item.id) ||
+												String(r.equipment?.id) === String(item.id),
+										)
+									: null;
+
+								const workDesc = matchingRepair?.work_description || matchingRepair?.notes;
+
 								items.push({
 									id: `mnt-rep-${item.id}`,
-									title: "Perintah Perbaikan Alat",
-									message: `Peralatan ${code} (${name}) dijadwalkan untuk perbaikan/pemeliharaan.`,
+									title: `Perintah Perbaikan: ${code}`,
+									message: workDesc
+										? `Aset ${name} (${plant}): ${workDesc}`
+										: `Peralatan ${name} (${plant}) dialokasikan untuk pemeliharaan/perbaikan.`,
 									timestamp: item.updated_at || item.created_at || new Date().toISOString(),
 									href: "/pemeliharaan/perbaikan-alat",
 									category: "repair",
@@ -406,10 +427,10 @@ export function NotificationDropdown({ role }: { role?: string }) {
 						getEquipments().catch(() => []),
 					]);
 
-					// 1. Status Permintaan Peminjaman Saya
+					// 1. Status pengajuan peminjaman milik unit kerja yang login dari DB
 					if (Array.isArray(myRequests)) {
 						myRequests.forEach((req: any) => {
-							const status = String(
+							const rawStatus = String(
 								req.status || req.approval_status || "",
 							).toUpperCase();
 							const code =
@@ -417,34 +438,35 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								req.equipment?.equipment_code ||
 								`EQ-${req.equipment_id || req.id}`;
 							const name = req.equipment_name || req.equipment?.name || "Aset";
+							const reqNum = req.request_number || req.requestNumber || `REQ-${req.id}`;
 
-							if (status.includes("APPROV")) {
+							if (rawStatus.includes("APPROV")) {
 								items.push({
-									id: `uk-req-${req.id}`,
-									title: "Permintaan Reuse Disetujui",
-									message: `Pengajuan peminjaman ${code} (${name}) telah disetujui Rendal. Siap dimobilisasi.`,
+									id: `uk-req-app-${req.id}`,
+									title: `Pengajuan Disetujui: ${reqNum}`,
+									message: `Permohonan peminjaman ${code} (${name}) telah disetujui Rendal. Siap dimobilisasi.`,
 									timestamp: req.updated_at || req.created_at || new Date().toISOString(),
 									href: "/unit-kerja/riwayat-permintaan",
 									category: "reuse",
 									badgeText: "Disetujui",
 									badgeColor: "#059669",
 								});
-							} else if (status.includes("REJECT")) {
+							} else if (rawStatus.includes("REJECT")) {
 								items.push({
-									id: `uk-req-${req.id}`,
-									title: "Permintaan Reuse Ditolak",
-									message: `Pengajuan peminjaman ${code} (${name}) tidak dapat dipenuhi.`,
+									id: `uk-req-rej-${req.id}`,
+									title: `Pengajuan Ditolak: ${reqNum}`,
+									message: `Permohonan peminjaman ${code} (${name}) tidak disetujui.`,
 									timestamp: req.updated_at || req.created_at || new Date().toISOString(),
 									href: "/unit-kerja/riwayat-permintaan",
 									category: "reuse",
 									badgeText: "Ditolak",
 									badgeColor: "#DC2626",
 								});
-							} else if (status.includes("PENDING") || status.includes("REVIEW")) {
+							} else if (rawStatus.includes("PENDING") || rawStatus.includes("REVIEW")) {
 								items.push({
-									id: `uk-req-${req.id}`,
-									title: "Permintaan Dalam Evaluasi",
-									message: `Pengajuan peminjaman ${code} (${name}) sedang direview Rendal.`,
+									id: `uk-req-pen-${req.id}`,
+									title: `Pengajuan Direview: ${reqNum}`,
+									message: `Permohonan peminjaman ${code} (${name}) sedang dalam peninjauan Rendal.`,
 									timestamp: req.created_at || new Date().toISOString(),
 									href: "/unit-kerja/riwayat-permintaan",
 									category: "reuse",
@@ -455,26 +477,30 @@ export function NotificationDropdown({ role }: { role?: string }) {
 						});
 					}
 
-					// 2. Aset Ready to Use Terbaru (maks 4 teratas)
+					// 2. Data peralatan yang BENAR-BENAR BERSTATUS READY_TO_USE (bukan repair / perbaikan / scrap / pending)
 					if (Array.isArray(equipments)) {
-						const readyList = equipments.filter((item: any) => {
-							const rawStatus = String(
-								item.status?.name || item.statusAset || "",
-							).toUpperCase();
-							const statusId = item.status_id || item.status?.id;
-							return statusId === 2 || rawStatus === "READY_TO_USE";
+						const strictlyReadyList = equipments.filter((item: any) => {
+							const rawStatus = typeof item.status === "object" ? item.status?.name : item.status;
+							const norm = statusName(rawStatus || item.statusAset || "");
+							// Strict check: HANYA READY_TO_USE, tidak boleh status repair, perbaikan, revalidasi, dll.
+							return norm === "READY_TO_USE";
 						});
 
-						readyList.slice(0, 4).forEach((item: any) => {
+						strictlyReadyList.slice(0, 5).forEach((item: any) => {
 							const code = item.equipment_code || item.kodeAlat || `EQ-${item.id}`;
 							const name = item.name || item.namaAlat || "Equipment";
+							const plant =
+								item.plant_description ||
+								(typeof item.plant === "object" ? item.plant?.name : item.plant) ||
+								"-";
+
 							items.push({
 								id: `uk-ready-${item.id}`,
-								title: "Aset Siap Pakai Tersedia",
-								message: `Peralatan ${code} (${name}) siap digunakan kembali di unit operasi.`,
+								title: `Aset Siap Pakai: ${code}`,
+								message: `Peralatan ${name} (${plant}) dalam kondisi siap pakai (Ready to Use) dan dapat diajukan peminjaman.`,
 								timestamp: item.updated_at || item.created_at || new Date().toISOString(),
 								href: "/unit-kerja/daftar-aset",
-								category: "system",
+								category: "reuse",
 								badgeText: "Ready to Use",
 								badgeColor: "#059669",
 							});
@@ -484,32 +510,58 @@ export function NotificationDropdown({ role }: { role?: string }) {
 				}
 
 				case "ADMIN": {
-					const equipments = await getEquipments().catch(() => []);
+					const [equipments, valApps] = await Promise.all([
+						getEquipments().catch(() => []),
+						getApprovals("validation").catch(() => []),
+					]);
+
+					// 1. Data aset baru terdaftar
 					if (Array.isArray(equipments)) {
-						equipments.slice(0, 8).forEach((item: any) => {
-							const rawStatus = String(
-								item.status?.name || item.statusAset || "",
-							).toUpperCase();
+						const newEquips = equipments.filter((e: any) => {
+							const rawStatus = typeof e.status === "object" ? e.status?.name : e.status;
+							return statusName(rawStatus || e.statusAset || "") === "REGISTERED";
+						});
+
+						newEquips.slice(0, 5).forEach((item: any) => {
 							const code = item.equipment_code || item.kodeAlat || `EQ-${item.id}`;
 							const name = item.name || item.namaAlat || "Equipment";
-
 							items.push({
-								id: `admin-eq-${item.id}`,
-								title: `Aset: ${rawStatus || "TERDAFTAR"}`,
-								message: `Data aset ${code} (${name}) tercatat pada sistem idle.`,
-								timestamp: item.updated_at || item.created_at || new Date().toISOString(),
+								id: `admin-reg-${item.id}`,
+								title: `Registrasi Aset Baru: ${code}`,
+								message: `Peralatan ${name} berhasil tercatat di database sistem idle.`,
+								timestamp: item.created_at || new Date().toISOString(),
 								href: "/admin/equipment",
 								category: "system",
-								badgeText: rawStatus || "Info",
+								badgeText: "Registrasi",
 								badgeColor: "#0556B3",
 							});
 						});
 					}
+
+					// 2. Ringkasan antrean persetujuan yang sedang berjalan di sistem
+					const valList = Array.isArray(valApps) ? valApps : (valApps as any)?.data || [];
+					valList.slice(0, 3).forEach((app: any) => {
+						const code =
+							app.equipment?.equipment_code ||
+							app.equipment_code ||
+							`EQ-${app.equipment_id || app.id}`;
+						const status = String(app.approval_status || app.status || "").toUpperCase();
+						items.push({
+							id: `admin-val-${app.id}`,
+							title: `Approval Validasi: ${code}`,
+							message: `Status proses validasi di database: ${status}.`,
+							timestamp: app.updated_at || app.created_at || new Date().toISOString(),
+							href: "/admin/equipment",
+							category: "validation",
+							badgeText: status,
+							badgeColor: status === "PENDING" ? "#B45309" : "#0556B3",
+						});
+					});
 					break;
 				}
 			}
 
-			// Urutkan notifikasi dari yang terbaru
+			// Urutkan semua notifikasi dari rekaman tanggal terbaru di database
 			items.sort((a, b) => {
 				const timeA = a.timestamp ? new Date(a.timestamp).getTime() : 0;
 				const timeB = b.timestamp ? new Date(b.timestamp).getTime() : 0;
@@ -518,15 +570,17 @@ export function NotificationDropdown({ role }: { role?: string }) {
 
 			setNotifications(items);
 		} catch (err) {
-			console.error("Gagal memuat notifikasi:", err);
+			console.error("Gagal memuat data notifikasi dari database:", err);
 		} finally {
 			setIsLoading(false);
 		}
 	}, [userRole]);
 
-	// Fetch on mount or pathname change
+	// Fetch on mount, pathname change, and auto-poll every 30 seconds
 	useEffect(() => {
 		fetchNotifications();
+		const interval = setInterval(fetchNotifications, 30000);
+		return () => clearInterval(interval);
 	}, [fetchNotifications, pathname]);
 
 	// Close on click outside or escape key
@@ -598,7 +652,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 				return <Trash2 className="w-4 h-4 text-[#475569]" />;
 			case "system":
 			default:
-				return <Sparkles className="w-4 h-4 text-[#0A356A]" />;
+				return <FileText className="w-4 h-4 text-[#0A356A]" />;
 		}
 	};
 
@@ -659,7 +713,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								onClick={fetchNotifications}
 								disabled={isLoading}
 								className="p-1 text-gray-400 hover:text-gray-700 rounded transition-colors disabled:opacity-50"
-								title="Segarkan notifikasi"
+								title="Segarkan notifikasi dari database"
 							>
 								<RefreshCw
 									className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`}
@@ -710,7 +764,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 						{isLoading && notifications.length === 0 ? (
 							<div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
 								<Loader2 className="w-6 h-6 animate-spin text-[#0556B3] mb-2" />
-								<p className="text-[12px]">Memuat notifikasi aktivitas...</p>
+								<p className="text-[12px]">Memuat data notifikasi dari database...</p>
 							</div>
 						) : filteredNotifications.length === 0 ? (
 							<div className="flex flex-col items-center justify-center py-10 px-4 text-center">
@@ -729,7 +783,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								<p className="text-[11px] text-gray-500 mt-0.5 max-w-[240px]">
 									{activeTab === "unread"
 										? "Tidak ada antrean atau notifikasi baru yang belum dibuka."
-										: "Aktivitas baru terkait peran Anda akan muncul di sini."}
+										: "Aktivitas baru dari database sesuai peran Anda akan muncul di sini."}
 								</p>
 							</div>
 						) : (
@@ -806,7 +860,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 					{notifications.length > 0 && (
 						<div className="px-4 py-2.5 bg-gray-50 border-t border-gray-100 text-center">
 							<p className="text-[11px] text-gray-500">
-								Notifikasi disesuaikan otomatis dengan peran Anda
+								Menampilkan data langsung dari database sesuai peran Anda
 							</p>
 						</div>
 					)}
