@@ -68,6 +68,7 @@ export const EQUIPMENT_STATUS = [
 	"READY_TO_USE",
 	"REUSED",
 	"DISPOSAL_RECOMMENDED",
+	"SCRAP_REQUEST",
 	"SCRAP",
 ] as const;
 
@@ -82,6 +83,8 @@ const STATUS_ALIASES: Record<string, EquipmentStatus> = {
 	REVALIDASI: "REVALIDATION",
 	SCRAP_RECOMMENDED: "DISPOSAL_RECOMMENDED",
 	SCRAP_RECOMENDED: "DISPOSAL_RECOMMENDED",
+	SCRAP_REQUESTED: "SCRAP_REQUEST",
+	"SCRAP REQUEST": "SCRAP_REQUEST",
 	RUSAK_BERAT: "SCRAP",
 	CONDEMNED: "SCRAP",
 	DISPOSED: "SCRAP",
@@ -118,6 +121,7 @@ const STATUS_GROUP: Record<string, StatusGroup> = {
 	READY_TO_USE: "ready",
 	REUSED: "ready",
 	DISPOSAL_RECOMMENDED: "scrap",
+	SCRAP_REQUEST: "scrap",
 	SCRAP: "scrap",
 };
 
@@ -153,6 +157,7 @@ const STATUS_BADGE_STYLE: Record<string, string> = {
 	READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
 	REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
 	DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+	SCRAP_REQUEST: "bg-[#FEE2E2] text-[#DC2626]",
 	SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
 	REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 };

@@ -144,6 +144,14 @@ export default function RendalScrapPage() {
 				}
 			});
 
+			// Build a map of equipment IDs that already have a submitted disposal request
+			const submittedDisposalMap = new Map<string, any>();
+			(dispData || []).forEach((d: any) => {
+				if (d.equipment_id) {
+					submittedDisposalMap.set(String(d.equipment_id), d);
+				}
+			});
+
 			const mappedEq = (eqData || []).map((item: any) => {
 				const rawStatus =
 					(typeof item.status === "string" ? item.status : item.status?.name) || "";
@@ -153,12 +161,21 @@ export default function RendalScrapPage() {
 				// Nama status kanonik dari backend (lihat lib/equipment-status).
 				let normalizedStatus = statusName(rawStatus);
 
-				// Aset dengan hasil inspeksi tidak layak dianggap DISPOSAL_RECOMMENDED
-				// walau status di DB belum sempat diperbarui.
+				// Aset yang sudah diajukan scrap menjadi SCRAP_REQUEST / SCRAP
 				const eqId = item.id?.toString() || "-";
-				if (
+				const dispItem = submittedDisposalMap.get(eqId);
+
+				if (dispItem) {
+					if (dispItem.status === "DISPOSED" || dispItem.status === "APPROVED") {
+						normalizedStatus = "SCRAP";
+					} else if (dispItem.status === "REJECTED") {
+						normalizedStatus = "REJECTED";
+					} else {
+						normalizedStatus = "SCRAP_REQUEST";
+					}
+				} else if (
 					disposalInspectedIds.has(eqId) &&
-					!["DISPOSAL_RECOMMENDED", "SCRAP"].includes(normalizedStatus)
+					!["DISPOSAL_RECOMMENDED", "SCRAP", "SCRAP_REQUEST"].includes(normalizedStatus)
 				) {
 					normalizedStatus = "DISPOSAL_RECOMMENDED";
 				}
@@ -267,6 +284,82 @@ export default function RendalScrapPage() {
 		});
 	}, [disposals, search]);
 
+	const equipmentMap = useMemo(() => {
+		const map = new Map<string, Equipment>();
+		equipments.forEach((eq) => map.set(String(eq.id), eq));
+		return map;
+	}, [equipments]);
+
+	// UI Helpers matching inspeksi/validasi design
+	const getStatusAsetBadge = (status: string) => {
+		const styles: Record<string, string> = {
+			REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
+			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
+			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
+			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
+			"RUSAK BERAT": "bg-[#FEE2E2] text-[#DC2626]",
+			RUSAK_BERAT: "bg-[#FEE2E2] text-[#DC2626]",
+			SCRAP_REQUEST: "bg-[#FEF3C7] text-[#B45309]",
+			"SCRAP REQUEST": "bg-[#FEF3C7] text-[#B45309]",
+			DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
+			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
+			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
+			REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
+			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
+			READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
+		};
+
+		let displayStatus = (status || "").replace(/_/g, " ");
+		if (displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
+			displayStatus = "READY TO USE";
+		}
+
+		const style = styles[displayStatus] || styles[status] || styles.SCRAP;
+		return (
+			<span
+				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${style}`}
+			>
+				{displayStatus}
+			</span>
+		);
+	};
+
+	const getApprovalBadge = (status?: string | null) => {
+		const styles: Record<string, string> = {
+			NONE: "bg-gray-100 text-gray-500",
+			PENDING_REVIEW: "bg-[#FEF9C3] text-[#CA8A04]",
+			PENDING: "bg-[#FEF9C3] text-[#CA8A04]",
+			IN_REVIEW: "bg-[#E0F2FE] text-[#0284C7]",
+			APPROVED: "bg-[#DCFCE7] text-[#16A34A]",
+			DISPOSED: "bg-[#DCFCE7] text-[#16A34A]",
+			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
+			NEED_REVISION: "bg-[#F3E8FF] text-[#9333EA]",
+			REVISION: "bg-[#F3E8FF] text-[#9333EA]",
+			REVISION_REQUIRED: "bg-[#F3E8FF] text-[#9333EA]",
+		};
+		const labels: Record<string, string> = {
+			NONE: "-",
+			PENDING_REVIEW: "Menunggu Manajer",
+			PENDING: "Menunggu Manajer",
+			IN_REVIEW: "Sedang Direview",
+			APPROVED: "Disetujui Manajer",
+			DISPOSED: "Disetujui Manajer",
+			REJECTED: "Ditolak Manajer",
+			NEED_REVISION: "Perlu Revisi",
+			REVISION: "Perlu Revisi",
+			REVISION_REQUIRED: "Perlu Revisi",
+		};
+		const raw = (status || "PENDING").toUpperCase();
+		return (
+			<span
+				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${styles[raw] || "bg-gray-100 text-gray-500"}`}
+			>
+				{labels[raw] || raw.replace(/_/g, " ")}
+			</span>
+		);
+	};
+
 	const currentListLength =
 		activeTab === "inbox" ? pendingAssets.length : historyRequests.length;
 
@@ -289,11 +382,7 @@ export default function RendalScrapPage() {
 		const todayStr = new Date().toISOString().split("T")[0];
 		setVerificationDate(todayStr);
 
-		const defaultMethod =
-			methods.find((m) => m.name.toLowerCase() === "scrap")?.id?.toString() ||
-			methods[0]?.id?.toString() ||
-			"";
-		setDisposalMethodId(defaultMethod);
+		setDisposalMethodId("");
 
 		setJustification("");
 		setScrapValue("");
@@ -363,13 +452,14 @@ export default function RendalScrapPage() {
 		e?.preventDefault();
 		if (!selectedAsset) return;
 
+		if (!disposalMethodId) {
+			showToast("error", "Silakan pilih metode penghapusan terlebih dahulu.");
+			return;
+		}
+
 		setIsSubmitting(true);
 		try {
-			const targetMethodId =
-				Number(disposalMethodId) ||
-				methods.find((m) => m.name.toLowerCase().includes("scrap"))?.id ||
-				methods[0]?.id ||
-				1;
+			const targetMethodId = Number(disposalMethodId);
 
 			const payload = {
 				equipment_id: Number(selectedAsset.id),
@@ -423,7 +513,7 @@ export default function RendalScrapPage() {
 				// Update equipment status in state
 				setEquipments((prev) =>
 					prev.map((eq) =>
-						eq.id === selectedAsset.id ? { ...eq, statusAset: "SCRAP" } : eq,
+						eq.id === selectedAsset.id ? { ...eq, statusAset: "SCRAP_REQUEST" } : eq,
 					),
 				);
 
@@ -679,9 +769,7 @@ export default function RendalScrapPage() {
 												{asset.jenisAlat}
 											</td>
 											<td className="px-2 py-2 text-center whitespace-nowrap">
-												<span className="inline-block px-2.5 py-0.5 text-[11px] font-bold rounded-full bg-red-100 text-red-800">
-													RUSAK BERAT
-												</span>
+												{getStatusAsetBadge(asset.statusAset || "RUSAK BERAT")}
 											</td>
 											<td className="px-2 py-2 text-center w-[90px]">
 												<button
@@ -709,19 +797,25 @@ export default function RendalScrapPage() {
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[120px]">
 										No. Pengajuan
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[110px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[105px]">
 										Kode Alat
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[160px]">
 										Nama Peralatan
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[120px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[65px]">
+										Plant
+									</th>
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[110px]">
 										Metode Scrap
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[140px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[100px]">
+										Status Aset
+									</th>
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[135px]">
 										Status Persetujuan
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[90px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[85px]">
 										Aksi
 									</th>
 								</tr>
@@ -730,7 +824,7 @@ export default function RendalScrapPage() {
 								{isLoading ? (
 									<tr>
 										<td
-											colSpan={7}
+											colSpan={9}
 											className="px-4 py-8 text-center text-xs text-gray-500"
 										>
 											<div className="flex flex-col items-center">
@@ -742,7 +836,7 @@ export default function RendalScrapPage() {
 								) : paginatedHistory.length === 0 ? (
 									<tr>
 										<td
-											colSpan={7}
+											colSpan={9}
 											className="px-4 py-8 text-center text-xs text-gray-500"
 										>
 											<div className="flex flex-col items-center">
@@ -755,64 +849,77 @@ export default function RendalScrapPage() {
 										</td>
 									</tr>
 								) : (
-									paginatedHistory.map((item, index) => (
-										<tr
-											key={item.id}
-											className="hover:bg-gray-50/50 transition-colors h-[48px]"
-										>
-											<td className="px-2 py-2 text-xs text-gray-500 font-medium text-center">
-												{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
-											</td>
-											<td className="px-2 py-2 text-xs font-bold text-[#0A356A] text-center truncate">
-												{item.disposal_number || "-"}
-											</td>
-											<td className="px-2 py-2 text-xs font-bold text-gray-900 text-center truncate">
-												{item.equipment_code || "-"}
-											</td>
-											<td
-												className="px-2 py-2 text-xs font-semibold text-gray-800 text-left truncate"
-												title={item.equipment_name}
+									paginatedHistory.map((item, index) => {
+										const eq = equipmentMap.get(String(item.equipment_id));
+										const assetStatus =
+											eq?.statusAset ||
+											(item.status === "DISPOSED" || item.status === "APPROVED"
+												? "SCRAP"
+												: item.status === "REJECTED"
+													? "REJECTED"
+													: "SCRAP_REQUEST");
+										const plantName =
+											item.plant && item.plant !== "-" ? item.plant : eq?.plant || "-";
+
+										return (
+											<tr
+												key={item.id}
+												className="hover:bg-gray-50/50 transition-colors h-[48px]"
 											>
-												<span className="leading-tight line-clamp-2 block text-left">
-													{item.equipment_name || "-"}
-												</span>
-											</td>
-											<td className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate">
-												{item.disposal_method || "Scrap"}
-											</td>
-											<td className="px-2 py-2 text-center whitespace-nowrap">
-												{item.status === "DISPOSED" || item.status === "APPROVED" ? (
-													<span className="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
-														<CheckCircle2 className="w-3 h-3" />
-														Disetujui Manajer
-													</span>
-												) : item.status === "REJECTED" ? (
-													<span className="inline-flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
-														<XCircle className="w-3 h-3" />
-														Ditolak Manajer
-													</span>
-												) : (
-													<span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
-														<Clock className="w-3 h-3" />
-														Menunggu Manajer
-													</span>
-												)}
-											</td>
-											<td className="px-2 py-2 text-center w-[90px]">
-												<button
-													type="button"
-													onClick={() => {
-														setSelectedHistoryItem(item);
-														setIsDetailOpen(true);
-													}}
-													className="inline-flex items-center justify-center gap-1 bg-[#0A356A] text-white px-2.5 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
+												<td className="px-2 py-2 text-xs text-gray-500 font-medium text-center">
+													{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
+												</td>
+												<td
+													className="px-2 py-2 text-xs font-bold text-[#0A356A] text-center truncate"
+													title={item.disposal_number}
 												>
-													<Eye className="w-3.5 h-3.5" />
-													Detail
-												</button>
-											</td>
-										</tr>
-									))
+													{item.disposal_number || "-"}
+												</td>
+												<td
+													className="px-2 py-2 text-xs font-bold text-gray-900 text-center truncate"
+													title={item.equipment_code}
+												>
+													{item.equipment_code || "-"}
+												</td>
+												<td
+													className="px-2 py-2 text-xs font-semibold text-gray-800 text-left truncate"
+													title={item.equipment_name}
+												>
+													<span className="leading-tight line-clamp-2 block text-left">
+														{item.equipment_name || "-"}
+													</span>
+												</td>
+												<td className="px-2 py-2 text-xs text-gray-600 font-medium text-center truncate">
+													{plantName}
+												</td>
+												<td
+													className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate"
+													title={item.disposal_method}
+												>
+													{item.disposal_method || "Scrap"}
+												</td>
+												<td className="px-2 py-2 text-center whitespace-nowrap">
+													{getStatusAsetBadge(assetStatus)}
+												</td>
+												<td className="px-2 py-2 text-center whitespace-nowrap">
+													{getApprovalBadge(item.status)}
+												</td>
+												<td className="px-2 py-2 text-center w-[85px]">
+													<button
+														type="button"
+														onClick={() => {
+															setSelectedHistoryItem(item);
+															setIsDetailOpen(true);
+														}}
+														className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
+													>
+														<Eye className="w-3.5 h-3.5" />
+														Detail
+													</button>
+												</td>
+											</tr>
+										);
+									})
 								)}
 							</tbody>
 						</table>
@@ -1014,16 +1121,20 @@ export default function RendalScrapPage() {
 
 									<div>
 										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-											Metode Penghapusan
+											Metode Penghapusan <span className="text-red-500">*</span>
 										</label>
 										<select
 											value={disposalMethodId}
 											onChange={(e) => setDisposalMethodId(e.target.value)}
-											className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] text-gray-800"
+											className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] transition-colors ${
+												!disposalMethodId ? "text-gray-400" : "text-gray-800"
+											}`}
 										>
-											{methods.length === 0 && <option value="">Memuat metode...</option>}
+											<option value="" disabled className="text-gray-400">
+												Pilih Metode
+											</option>
 											{methods.map((m) => (
-												<option key={m.id} value={String(m.id)}>
+												<option key={m.id} value={String(m.id)} className="text-gray-800">
 													{m.name}
 												</option>
 											))}
@@ -1031,9 +1142,12 @@ export default function RendalScrapPage() {
 									</div>
 
 									<div>
-										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-											Nilai Scrap (Rp)
-										</label>
+										<div className="flex items-center justify-between mb-1.5">
+											<label className="block text-xs font-bold text-gray-700 uppercase">
+												Nilai Scrap (Rp)
+											</label>
+											<span className="text-[11px] text-gray-400 font-medium">Opsional</span>
+										</div>
 										<div className="relative">
 											<span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">
 												Rp
@@ -1041,7 +1155,7 @@ export default function RendalScrapPage() {
 											<input
 												type="text"
 												inputMode="numeric"
-												placeholder="0"
+												placeholder="0 (opsional)"
 												value={scrapValue}
 												onChange={(e) =>
 													setScrapValue(
@@ -1058,12 +1172,15 @@ export default function RendalScrapPage() {
 									</div>
 
 									<div>
-										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-											Catatan Permintaan (Justifikasi)
-										</label>
+										<div className="flex items-center justify-between mb-1.5">
+											<label className="block text-xs font-bold text-gray-700 uppercase">
+												Catatan Permintaan (Justifikasi)
+											</label>
+											<span className="text-[11px] text-gray-400 font-medium">Opsional</span>
+										</div>
 										<textarea
 											rows={3}
-											placeholder="Masukkan catatan pendukung atau justifikasi tambahan..."
+											placeholder="Masukkan catatan pendukung atau justifikasi tambahan (opsional)..."
 											value={justification}
 											onChange={(e) => setJustification(e.target.value)}
 											className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] text-gray-800"
@@ -1071,9 +1188,12 @@ export default function RendalScrapPage() {
 									</div>
 
 									<div>
-										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-											Dokumen Pendukung
-										</label>
+										<div className="flex items-center justify-between mb-1.5">
+											<label className="block text-xs font-bold text-gray-700 uppercase">
+												Dokumen Pendukung
+											</label>
+											<span className="text-[11px] text-gray-400 font-medium">Opsional</span>
+										</div>
 										<div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center bg-gray-50/50 hover:bg-blue-50/40 hover:border-[#0A356A] transition-colors relative">
 											<input
 												type="file"
@@ -1089,10 +1209,10 @@ export default function RendalScrapPage() {
 											<span className="text-xs font-semibold text-gray-600 text-center px-4">
 												{uploadedFiles.length > 0
 													? `${uploadedFiles.length} file dipilih — klik untuk menambah lagi`
-													: "Klik atau seret file PDF / Gambar pendukung (bisa lebih dari satu)"}
+													: "Klik atau seret file PDF / Gambar pendukung (opsional, bisa lebih dari satu)"}
 											</span>
 											<span className="text-[10px] text-gray-400 mt-0.5">
-												Maks. 5MB per file (Optional)
+												Maks. 5MB per file (Opsional)
 											</span>
 										</div>
 
@@ -1158,7 +1278,16 @@ export default function RendalScrapPage() {
 								</button>
 								<button
 									type="button"
-									onClick={() => setIsConfirmOpen(true)}
+									onClick={() => {
+										if (!disposalMethodId) {
+											showToast(
+												"error",
+												"Silakan pilih metode penghapusan terlebih dahulu.",
+											);
+											return;
+										}
+										setIsConfirmOpen(true);
+									}}
 									disabled={isSubmitting}
 									className="px-5 py-2 bg-[#0A356A] hover:bg-[#062854] text-white rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2 cursor-pointer"
 								>
@@ -1226,7 +1355,9 @@ export default function RendalScrapPage() {
 									<div>
 										<p className="text-[10px] font-bold text-gray-400 uppercase">Plant</p>
 										<p className="text-xs font-medium text-gray-700">
-											{selectedHistoryItem.plant || "-"}
+											{selectedHistoryItem.plant ||
+												equipmentMap.get(String(selectedHistoryItem.equipment_id))?.plant ||
+												"-"}
 										</p>
 									</div>
 									<div>
@@ -1251,24 +1382,38 @@ export default function RendalScrapPage() {
 									</div>
 									<div>
 										<p className="text-[10px] font-bold text-gray-400 uppercase">
+											Nilai Scrap
+										</p>
+										<p className="text-xs font-semibold text-gray-800">
+											{selectedHistoryItem.scrap_value
+												? `Rp ${Number(selectedHistoryItem.scrap_value).toLocaleString("id-ID")}`
+												: "Rp 0"}
+										</p>
+									</div>
+									<div>
+										<p className="text-[10px] font-bold text-gray-400 uppercase">
+											Status Aset
+										</p>
+										<div className="mt-0.5">
+											{getStatusAsetBadge(
+												equipmentMap.get(String(selectedHistoryItem.equipment_id))
+													?.statusAset ||
+													(selectedHistoryItem.status === "DISPOSED" ||
+													selectedHistoryItem.status === "APPROVED"
+														? "SCRAP"
+														: selectedHistoryItem.status === "REJECTED"
+															? "REJECTED"
+															: "SCRAP_REQUEST"),
+											)}
+										</div>
+									</div>
+									<div>
+										<p className="text-[10px] font-bold text-gray-400 uppercase">
 											Status Persetujuan
 										</p>
-										<span className="inline-block mt-0.5">
-											{selectedHistoryItem.status === "DISPOSED" ||
-											selectedHistoryItem.status === "APPROVED" ? (
-												<span className="inline-flex items-center gap-1 bg-green-50 text-green-700 border border-green-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
-													<CheckCircle2 className="w-3 h-3" /> Disetujui Manajer
-												</span>
-											) : selectedHistoryItem.status === "REJECTED" ? (
-												<span className="inline-flex items-center gap-1 bg-red-50 text-red-700 border border-red-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
-													<XCircle className="w-3 h-3" /> Ditolak Manajer
-												</span>
-											) : (
-												<span className="inline-flex items-center gap-1 bg-amber-50 text-amber-700 border border-amber-200 px-2 py-0.5 rounded-full text-[10px] font-bold">
-													<Clock className="w-3 h-3" /> Menunggu Manajer
-												</span>
-											)}
-										</span>
+										<div className="mt-0.5">
+											{getApprovalBadge(selectedHistoryItem.status)}
+										</div>
 									</div>
 								</div>
 								<div>
