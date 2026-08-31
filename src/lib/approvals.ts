@@ -11,24 +11,21 @@ export type ApprovalKind =
 	| "reuse"
 	| "revalidation";
 
-/** Status disposal/scrap yang dipakai halaman Manajer. */
+/** Status disposal/scrap yang dipakai halaman Manajer & Rendal. */
 export type DisposalDisplayStatus =
 	| "PENDING"
+	| "IN_REVIEW"
+	| "APPROVED"
 	| "DISPOSED"
 	| "REJECTED"
 	| "REVISION_REQUIRED";
 
-/**
- * IN_REVIEW dipetakan ke PENDING karena halaman Manajer tidak punya tahap
- * "mulai review" untuk disposal — item tetap harus tampil di inbox.
- * ponytail: kalau nanti ada tombol "Mulai Review" untuk disposal, tambahkan
- * IN_REVIEW sebagai status tersendiri di sini dan di filter inbox.
- */
 export function disposalDisplayStatus(
 	approvalStatus?: string | null,
 ): DisposalDisplayStatus {
 	switch (String(approvalStatus || "PENDING").toUpperCase()) {
 		case "APPROVED":
+			return "APPROVED";
 		case "DISPOSED":
 			return "DISPOSED";
 		case "REJECTED":
@@ -36,6 +33,8 @@ export function disposalDisplayStatus(
 		case "REVISION_REQUIRED":
 		case "REVISION":
 			return "REVISION_REQUIRED";
+		case "IN_REVIEW":
+			return "IN_REVIEW";
 		case "SCRAP_REQUEST":
 		case "SCRAP_REQUESTED":
 		case "PENDING":
