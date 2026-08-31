@@ -4,11 +4,16 @@
       "url": "https://21st.dev/api/mcp",
       "headers": {
         "x-api-key": "21st_sk_65a130364fe195ff90d65c67af194ccee81e63b15cac4502568c2982d5e8ca12"
-      }
+      },
+      "directTools": true
     },
     "ui-layouts-mcp": {
       "command": "npx",
-      "args": ["-y", "@ui-layouts/mcp"]
+      "args": [
+        "-y",
+        "@ui-layouts/mcp"
+      ],
+      "directTools": true
     }
   }
 }

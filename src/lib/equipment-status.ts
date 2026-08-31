@@ -68,6 +68,7 @@ export const EQUIPMENT_STATUS = [
 	"READY_TO_USE",
 	"REUSED",
 	"DISPOSAL_RECOMMENDED",
+	"SCRAP_REQUESTED",
 	"SCRAP",
 ] as const;
 
@@ -118,6 +119,7 @@ const STATUS_GROUP: Record<string, StatusGroup> = {
 	READY_TO_USE: "ready",
 	REUSED: "ready",
 	DISPOSAL_RECOMMENDED: "scrap",
+	SCRAP_REQUESTED: "scrap",
 	SCRAP: "scrap",
 };
 
@@ -153,6 +155,7 @@ const STATUS_BADGE_STYLE: Record<string, string> = {
 	READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
 	REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
 	DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+	SCRAP_REQUESTED: "bg-[#E0F2FE] text-[#0284C7]",
 	SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
 	REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 };

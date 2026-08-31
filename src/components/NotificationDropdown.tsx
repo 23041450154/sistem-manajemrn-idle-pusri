@@ -8,15 +8,12 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
 	Bell,
-	CheckCircle2,
 	Wrench,
 	Clock,
 	HandCoins,
 	Trash2,
-	CheckCheck,
 	Loader2,
 	RefreshCw,
-	Inbox,
 	FileText,
 } from "lucide-react";
 import { normalizeRole } from "@/lib/roles";
@@ -24,7 +21,6 @@ import {
 	getEquipments,
 	getApprovals,
 	getReuseRequests,
-	getDisposals,
 	getEquipmentRepairs,
 } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
@@ -108,7 +104,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 					// 1. Data peralatan dari DB yang berstatus REGISTERED (menunggu validasi kelayakan pertama)
 					if (Array.isArray(equipments)) {
 						equipments.forEach((item: any) => {
-							const rawStatus = typeof item.status === "object" ? item.status?.name : item.status;
+							const rawStatus =
+								typeof item.status === "object" ? item.status?.name : item.status;
 							const norm = statusName(rawStatus || item.statusAset || "");
 
 							if (norm === "REGISTERED") {
@@ -139,7 +136,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 									id: `insp-repair-${item.id}`,
 									title: `Perbaikan Selesai: ${code}`,
 									message: `Peralatan ${name} telah selesai diperbaiki oleh tim Pemeliharaan dan siap divalidasi ulang.`,
-									timestamp: item.updated_at || item.created_at || new Date().toISOString(),
+									timestamp:
+										item.updated_at || item.created_at || new Date().toISOString(),
 									href: "/inspeksi/validasi-ulang",
 									category: "repair",
 									badgeText: "Validasi Ulang",
@@ -163,7 +161,10 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								app.equipment_code ||
 								`EQ-${app.equipment_id || app.id}`;
 							const name = app.equipment?.name || app.equipment_name || "Aset";
-							const notes = app.notes || app.review_notes || "Perlu perbaikan catatan temuan lapangan.";
+							const notes =
+								app.notes ||
+								app.review_notes ||
+								"Perlu perbaikan catatan temuan lapangan.";
 
 							items.push({
 								id: `insp-rev-${app.id}`,
@@ -203,7 +204,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								app.equipment_code ||
 								`EQ-${app.equipment_id || app.id}`;
 							const name = app.equipment?.name || app.equipment_name || "Aset";
-							const reqNum = app.request_number || app.requestNumber || `VAL-${app.id}`;
+							const reqNum =
+								app.request_number || app.requestNumber || `VAL-${app.id}`;
 
 							items.push({
 								id: `mgr-val-${app.id}`,
@@ -232,7 +234,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								app.equipment_code ||
 								`EQ-${app.equipment_id || app.id}`;
 							const name = app.equipment?.name || app.equipment_name || "Aset";
-							const reqNum = app.request_number || app.requestNumber || `REQ-${app.id}`;
+							const reqNum =
+								app.request_number || app.requestNumber || `REQ-${app.id}`;
 
 							items.push({
 								id: `mgr-reuse-${app.id}`,
@@ -261,7 +264,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								app.equipment_code ||
 								`EQ-${app.equipment_id || app.id}`;
 							const name = app.equipment?.name || app.equipment_name || "Aset";
-							const dispNum = app.disposal_number || app.disposalNumber || `DSP-${app.id}`;
+							const dispNum =
+								app.disposal_number || app.disposalNumber || `DSP-${app.id}`;
 
 							items.push({
 								id: `mgr-disp-${app.id}`,
@@ -286,7 +290,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 
 					if (Array.isArray(equipments)) {
 						equipments.forEach((item: any) => {
-							const rawStatus = typeof item.status === "object" ? item.status?.name : item.status;
+							const rawStatus =
+								typeof item.status === "object" ? item.status?.name : item.status;
 							const norm = statusName(rawStatus || item.statusAset || "");
 
 							// 1. Data peralatan berstatus REVALIDATION (evaluasi hasil validasi ulang)
@@ -297,7 +302,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 									id: `rdl-reval-${item.id}`,
 									title: `Evaluasi Validasi Ulang: ${code}`,
 									message: `Peralatan ${name} telah selesai divalidasi ulang dan menunggu evaluasi Rendal.`,
-									timestamp: item.updated_at || item.created_at || new Date().toISOString(),
+									timestamp:
+										item.updated_at || item.created_at || new Date().toISOString(),
 									href: "/rendal/validasi-ulang",
 									category: "repair",
 									badgeText: "Validasi Ulang",
@@ -313,7 +319,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 									id: `rdl-scrap-${item.id}`,
 									title: `Rekomendasi Scrap: ${code}`,
 									message: `Peralatan ${name} direkomendasikan untuk diajukan penghapusan (scrap) ke Manajer.`,
-									timestamp: item.updated_at || item.created_at || new Date().toISOString(),
+									timestamp:
+										item.updated_at || item.created_at || new Date().toISOString(),
 									href: "/rendal/scrap",
 									category: "disposal",
 									badgeText: "Usulan Scrap",
@@ -354,14 +361,17 @@ export function NotificationDropdown({ role }: { role?: string }) {
 									req.equipment_code ||
 									req.equipment?.equipment_code ||
 									`EQ-${req.equipment_id || req.id}`;
-								const reqNum = req.request_number || req.requestNumber || `REQ-${req.id}`;
-								const loc = req.installation_location || req.installationLocation || "Unit Kerja";
+								const reqNum =
+									req.request_number || req.requestNumber || `REQ-${req.id}`;
+								const loc =
+									req.installation_location || req.installationLocation || "Unit Kerja";
 
 								items.push({
 									id: `rdl-reuse-${req.id}`,
 									title: `Permintaan Reuse: ${reqNum}`,
 									message: `Permohonan reuse alat ${code} untuk lokasi ${loc} menunggu peninjauan Rendal.`,
-									timestamp: req.created_at || req.requested_at || new Date().toISOString(),
+									timestamp:
+										req.created_at || req.requested_at || new Date().toISOString(),
 									href: "/rendal/idle",
 									category: "reuse",
 									badgeText: "Menunggu Review",
@@ -381,7 +391,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 
 					if (Array.isArray(equipments)) {
 						equipments.forEach((item: any) => {
-							const rawStatus = typeof item.status === "object" ? item.status?.name : item.status;
+							const rawStatus =
+								typeof item.status === "object" ? item.status?.name : item.status;
 							const norm = statusName(rawStatus || item.statusAset || "");
 
 							if (norm === "REPAIR") {
@@ -401,7 +412,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 										)
 									: null;
 
-								const workDesc = matchingRepair?.work_description || matchingRepair?.notes;
+								const workDesc =
+									matchingRepair?.work_description || matchingRepair?.notes;
 
 								items.push({
 									id: `mnt-rep-${item.id}`,
@@ -409,7 +421,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 									message: workDesc
 										? `Aset ${name} (${plant}): ${workDesc}`
 										: `Peralatan ${name} (${plant}) dialokasikan untuk pemeliharaan/perbaikan.`,
-									timestamp: item.updated_at || item.created_at || new Date().toISOString(),
+									timestamp:
+										item.updated_at || item.created_at || new Date().toISOString(),
 									href: "/pemeliharaan/perbaikan-alat",
 									category: "repair",
 									badgeText: "Perbaikan",
@@ -438,14 +451,16 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								req.equipment?.equipment_code ||
 								`EQ-${req.equipment_id || req.id}`;
 							const name = req.equipment_name || req.equipment?.name || "Aset";
-							const reqNum = req.request_number || req.requestNumber || `REQ-${req.id}`;
+							const reqNum =
+								req.request_number || req.requestNumber || `REQ-${req.id}`;
 
 							if (rawStatus.includes("APPROV")) {
 								items.push({
 									id: `uk-req-app-${req.id}`,
 									title: `Pengajuan Disetujui: ${reqNum}`,
 									message: `Permohonan peminjaman ${code} (${name}) telah disetujui Rendal. Siap dimobilisasi.`,
-									timestamp: req.updated_at || req.created_at || new Date().toISOString(),
+									timestamp:
+										req.updated_at || req.created_at || new Date().toISOString(),
 									href: "/unit-kerja/riwayat-permintaan",
 									category: "reuse",
 									badgeText: "Disetujui",
@@ -456,13 +471,17 @@ export function NotificationDropdown({ role }: { role?: string }) {
 									id: `uk-req-rej-${req.id}`,
 									title: `Pengajuan Ditolak: ${reqNum}`,
 									message: `Permohonan peminjaman ${code} (${name}) tidak disetujui.`,
-									timestamp: req.updated_at || req.created_at || new Date().toISOString(),
+									timestamp:
+										req.updated_at || req.created_at || new Date().toISOString(),
 									href: "/unit-kerja/riwayat-permintaan",
 									category: "reuse",
 									badgeText: "Ditolak",
 									badgeColor: "#DC2626",
 								});
-							} else if (rawStatus.includes("PENDING") || rawStatus.includes("REVIEW")) {
+							} else if (
+								rawStatus.includes("PENDING") ||
+								rawStatus.includes("REVIEW")
+							) {
 								items.push({
 									id: `uk-req-pen-${req.id}`,
 									title: `Pengajuan Direview: ${reqNum}`,
@@ -480,7 +499,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 					// 2. Data peralatan yang BENAR-BENAR BERSTATUS READY_TO_USE (bukan repair / perbaikan / scrap / pending)
 					if (Array.isArray(equipments)) {
 						const strictlyReadyList = equipments.filter((item: any) => {
-							const rawStatus = typeof item.status === "object" ? item.status?.name : item.status;
+							const rawStatus =
+								typeof item.status === "object" ? item.status?.name : item.status;
 							const norm = statusName(rawStatus || item.statusAset || "");
 							// Strict check: HANYA READY_TO_USE, tidak boleh status repair, perbaikan, revalidasi, dll.
 							return norm === "READY_TO_USE";
@@ -498,7 +518,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								id: `uk-ready-${item.id}`,
 								title: `Aset Siap Pakai: ${code}`,
 								message: `Peralatan ${name} (${plant}) dalam kondisi siap pakai (Ready to Use) dan dapat diajukan peminjaman.`,
-								timestamp: item.updated_at || item.created_at || new Date().toISOString(),
+								timestamp:
+									item.updated_at || item.created_at || new Date().toISOString(),
 								href: "/unit-kerja/daftar-aset",
 								category: "reuse",
 								badgeText: "Ready to Use",
@@ -518,7 +539,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 					// 1. Data aset baru terdaftar
 					if (Array.isArray(equipments)) {
 						const newEquips = equipments.filter((e: any) => {
-							const rawStatus = typeof e.status === "object" ? e.status?.name : e.status;
+							const rawStatus =
+								typeof e.status === "object" ? e.status?.name : e.status;
 							return statusName(rawStatus || e.statusAset || "") === "REGISTERED";
 						});
 
@@ -539,13 +561,17 @@ export function NotificationDropdown({ role }: { role?: string }) {
 					}
 
 					// 2. Ringkasan antrean persetujuan yang sedang berjalan di sistem
-					const valList = Array.isArray(valApps) ? valApps : (valApps as any)?.data || [];
+					const valList = Array.isArray(valApps)
+						? valApps
+						: (valApps as any)?.data || [];
 					valList.slice(0, 3).forEach((app: any) => {
 						const code =
 							app.equipment?.equipment_code ||
 							app.equipment_code ||
 							`EQ-${app.equipment_id || app.id}`;
-						const status = String(app.approval_status || app.status || "").toUpperCase();
+						const status = String(
+							app.approval_status || app.status || "",
+						).toUpperCase();
 						items.push({
 							id: `admin-val-${app.id}`,
 							title: `Approval Validasi: ${code}`,
@@ -656,39 +682,23 @@ export function NotificationDropdown({ role }: { role?: string }) {
 		}
 	};
 
-	const getCategoryBg = (category: NotificationItem["category"]) => {
-		switch (category) {
-			case "validation":
-				return "bg-blue-50";
-			case "repair":
-				return "bg-amber-50";
-			case "reuse":
-				return "bg-emerald-50";
-			case "disposal":
-				return "bg-slate-100";
-			case "system":
-			default:
-				return "bg-indigo-50";
-		}
-	};
-
 	return (
 		<div className="relative" ref={dropdownRef}>
 			{/* Bell Trigger Button */}
 			<button
 				type="button"
 				onClick={() => setIsOpen(!isOpen)}
-				className="p-1.5 text-gray-500 hover:text-[#0A356A] hover:bg-gray-100 rounded-lg transition-colors relative focus:outline-none"
+				className="relative p-1.5 text-gray-500 hover:text-[#0A356A] hover:bg-gray-100 rounded-lg transition-colors focus:outline-none"
 				aria-label="Buka notifikasi aktivitas"
 				aria-expanded={isOpen}
 			>
-				<Bell className="w-5 h-5" />
+				<Bell size={18} strokeWidth={2} aria-hidden="true" />
 				{unreadCount > 0 && (
 					<span
-						className="absolute top-0 right-0 flex items-center justify-center min-w-[17px] h-[17px] px-1 text-[10px] font-bold text-white bg-[#DC2626] rounded-full border-2 border-white tabular-nums animate-in zoom-in-50 duration-200"
+						className="absolute -top-1.5 -right-1.5 flex items-center justify-center min-w-[18px] h-[18px] px-1 text-[10px] font-bold text-white bg-[#DC2626] rounded-full border-2 border-white tabular-nums"
 						title={`${unreadCount} notifikasi belum dibaca`}
 					>
-						{unreadCount > 9 ? "9+" : unreadCount}
+						{unreadCount > 99 ? "99+" : unreadCount}
 					</span>
 				)}
 			</button>
@@ -696,18 +706,39 @@ export function NotificationDropdown({ role }: { role?: string }) {
 			{/* Dropdown Popover */}
 			{isOpen && (
 				<div className="absolute right-0 mt-2 w-80 sm:w-[380px] bg-white rounded-xl shadow-2xl border border-gray-200 z-50 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-150">
-					{/* Header */}
-					<div className="px-4 py-3 border-b border-gray-100 bg-white flex items-center justify-between">
-						<div className="flex items-center gap-2">
-							<h3 className="text-[14px] font-bold text-[#0F172A]">Notifikasi</h3>
-							{unreadCount > 0 && (
-								<span className="px-2 py-0.5 text-[10px] font-semibold bg-blue-100 text-[#0556B3] rounded-full tabular-nums">
-									{unreadCount} baru
-								</span>
-							)}
+					{/* Header: Tabs + Mark All */}
+					<div className="flex items-center justify-between border-b border-gray-100 px-3 py-2">
+						<div className="flex items-center gap-1 rounded-lg bg-gray-100 p-0.5">
+							<button
+								type="button"
+								onClick={() => setActiveTab("all")}
+								className={`px-2.5 py-1 text-[13px] font-medium rounded-md transition-colors ${
+									activeTab === "all"
+										? "bg-white text-[#0A356A] shadow-sm"
+										: "text-gray-500 hover:text-gray-800"
+								}`}
+							>
+								Semua
+							</button>
+							<button
+								type="button"
+								onClick={() => setActiveTab("unread")}
+								className={`px-2.5 py-1 text-[13px] font-medium rounded-md transition-colors inline-flex items-center gap-1 ${
+									activeTab === "unread"
+										? "bg-white text-[#0A356A] shadow-sm"
+										: "text-gray-500 hover:text-gray-800"
+								}`}
+							>
+								Belum dibaca
+								{unreadCount > 0 && (
+									<span className="min-w-4 h-4 px-1 rounded-full bg-[#0A356A] text-white text-[10px] font-bold flex items-center justify-center tabular-nums">
+										{unreadCount > 99 ? "99+" : unreadCount}
+									</span>
+								)}
+							</button>
 						</div>
 
-						<div className="flex items-center gap-2">
+						<div className="flex items-center gap-1">
 							<button
 								type="button"
 								onClick={fetchNotifications}
@@ -724,67 +755,26 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								<button
 									type="button"
 									onClick={markAllAsRead}
-									className="text-[11px] font-medium text-[#0556B3] hover:underline inline-flex items-center gap-1"
+									className="text-xs font-medium text-gray-500 hover:underline"
 								>
-									<CheckCheck className="w-3 h-3" />
 									Tandai dibaca
 								</button>
 							)}
 						</div>
 					</div>
 
-					{/* Tabs */}
-					<div className="px-4 pt-2 border-b border-gray-100 bg-gray-50/70 flex gap-2">
-						<button
-							type="button"
-							onClick={() => setActiveTab("all")}
-							className={`pb-2 text-[12px] font-semibold border-b-2 transition-colors ${
-								activeTab === "all"
-									? "border-[#0556B3] text-[#0556B3]"
-									: "border-transparent text-gray-500 hover:text-gray-800"
-							}`}
-						>
-							Semua ({notifications.length})
-						</button>
-						<button
-							type="button"
-							onClick={() => setActiveTab("unread")}
-							className={`pb-2 text-[12px] font-semibold border-b-2 transition-colors ${
-								activeTab === "unread"
-									? "border-[#0556B3] text-[#0556B3]"
-									: "border-transparent text-gray-500 hover:text-gray-800"
-							}`}
-						>
-							Belum Dibaca ({unreadCount})
-						</button>
-					</div>
-
 					{/* Notifications List */}
-					<div className="max-h-[360px] overflow-y-auto divide-y divide-gray-100">
+					<div className="max-h-80 overflow-y-auto">
 						{isLoading && notifications.length === 0 ? (
-							<div className="flex flex-col items-center justify-center py-12 text-center text-gray-400">
-								<Loader2 className="w-6 h-6 animate-spin text-[#0556B3] mb-2" />
-								<p className="text-[12px]">Memuat data notifikasi dari database...</p>
+							<div className="flex flex-col items-center justify-center py-10 text-center text-gray-400">
+								<Loader2 className="w-5 h-5 animate-spin text-[#0556B3] mb-2" />
+								<p className="text-xs">Memuat data dari database...</p>
 							</div>
 						) : filteredNotifications.length === 0 ? (
-							<div className="flex flex-col items-center justify-center py-10 px-4 text-center">
-								<div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center text-gray-400 mb-2">
-									{activeTab === "unread" ? (
-										<CheckCircle2 className="w-5 h-5 text-[#059669]" />
-									) : (
-										<Inbox className="w-5 h-5" />
-									)}
-								</div>
-								<p className="text-[13px] font-semibold text-gray-700">
-									{activeTab === "unread"
-										? "Semua notifikasi telah dibaca"
-										: "Belum ada notifikasi"}
-								</p>
-								<p className="text-[11px] text-gray-500 mt-0.5 max-w-[240px]">
-									{activeTab === "unread"
-										? "Tidak ada antrean atau notifikasi baru yang belum dibuka."
-										: "Aktivitas baru dari database sesuai peran Anda akan muncul di sini."}
-								</p>
+							<div className="px-3 py-8 text-center text-sm text-gray-400">
+								{activeTab === "unread"
+									? "Semua notifikasi telah dibaca"
+									: "Belum ada notifikasi"}
 							</div>
 						) : (
 							filteredNotifications.map((notif) => {
@@ -797,59 +787,31 @@ export function NotificationDropdown({ role }: { role?: string }) {
 											markAsRead(notif.id);
 											setIsOpen(false);
 										}}
-										className={`block p-3.5 transition-colors hover:bg-gray-50 text-left ${
-											!isRead ? "bg-blue-50/30" : ""
-										}`}
+										className="flex w-full items-start gap-3 border-b border-gray-100 last:border-b-0 px-3 py-3 text-left hover:bg-gray-50 transition-colors"
 									>
-										<div className="flex items-start gap-3">
-											{/* Icon Circle */}
-											<div
-												className={`w-8 h-8 rounded-lg shrink-0 flex items-center justify-center ${getCategoryBg(
-													notif.category,
-												)}`}
-											>
-												{getCategoryIcon(notif.category)}
-											</div>
-
-											{/* Content */}
-											<div className="flex-1 min-w-0">
-												<div className="flex items-center justify-between gap-1 mb-0.5">
-													<p
-														className={`text-[12px] truncate ${
-															!isRead
-																? "font-bold text-[#0F172A]"
-																: "font-semibold text-gray-800"
-														}`}
-													>
-														{notif.title}
-													</p>
-													{!isRead && (
-														<span className="w-2 h-2 rounded-full bg-[#0556B3] shrink-0"></span>
-													)}
-												</div>
-
-												<p className="text-[11px] text-gray-600 line-clamp-2 leading-relaxed">
-													{notif.message}
-												</p>
-
-												<div className="flex items-center justify-between mt-1.5 pt-1 border-t border-gray-100/60">
-													<span className="text-[10px] text-gray-400 tabular-nums">
-														{formatRelativeTime(notif.timestamp)}
-													</span>
-													{notif.badgeText && (
-														<span
-															className="text-[9px] font-semibold px-1.5 py-0.5 rounded"
-															style={{
-																backgroundColor: `${notif.badgeColor || "#64748B"}15`,
-																color: notif.badgeColor || "#64748B",
-															}}
-														>
-															{notif.badgeText}
-														</span>
-													)}
-												</div>
-											</div>
+										<div className="mt-0.5 text-gray-400 shrink-0">
+											{getCategoryIcon(notif.category)}
 										</div>
+										<div className="flex-1 min-w-0 space-y-0.5">
+											<p
+												className={`text-sm truncate ${
+													isRead
+														? "font-medium text-gray-800/80"
+														: "font-semibold text-gray-900"
+												}`}
+											>
+												{notif.title}
+											</p>
+											<p className="text-xs text-gray-500 line-clamp-2 leading-relaxed">
+												{notif.message}
+											</p>
+											<p className="text-xs text-gray-400">
+												{formatRelativeTime(notif.timestamp)}
+											</p>
+										</div>
+										{!isRead && (
+											<span className="mt-1.5 inline-block size-2 shrink-0 rounded-full bg-[#0556B3]" />
+										)}
 									</Link>
 								);
 							})
@@ -858,8 +820,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 
 					{/* Footer */}
 					{notifications.length > 0 && (
-						<div className="px-4 py-2.5 bg-gray-50 border-t border-gray-100 text-center">
-							<p className="text-[11px] text-gray-500">
+						<div className="px-3 py-2 border-t border-gray-100 bg-gray-50 text-center">
+							<p className="text-xs text-gray-500">
 								Menampilkan data langsung dari database sesuai peran Anda
 							</p>
 						</div>

@@ -22,11 +22,8 @@ export function proxy(request: NextRequest) {
   // Jika ada token tapi di public path (seperti /login)
   if (token && isPublicPath) {
     if (!userCookie) {
-      // Token ada tapi userCookie hilang/rusak: hapus token dan ijinkan ke login
-      const response = NextResponse.next();
-      response.cookies.delete("token");
-      response.cookies.delete("user");
-      return response;
+      // Callback SSO hanya membuat token; halaman root mengambil user lewat /auth/me.
+      return NextResponse.redirect(new URL("/", request.url));
     }
 
     try {
@@ -99,14 +96,7 @@ export function proxy(request: NextRequest) {
     }
   }
 
-  // Jika token ada tapi userCookie tidak ada pada protected path
-  if (token && !userCookie && !isPublicPath) {
-    const loginUrl = new URL("/login", request.url);
-    const response = NextResponse.redirect(loginUrl);
-    response.cookies.delete("token");
-    response.cookies.delete("user");
-    return response;
-  }
+  // Tanpa userCookie, layout tetap memvalidasi token dan mengambil user via /auth/me.
 
   return NextResponse.next();
 }

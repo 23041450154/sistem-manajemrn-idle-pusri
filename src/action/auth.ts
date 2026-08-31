@@ -135,9 +135,31 @@ export async function getCurrentUserAction() {
     }
   }
 
+  // ponytail: callback SSO backend hanya memberi cookie token. Ambil user saat
+  // dibutuhkan; tambah cache session jika trafik /auth/me nanti jadi masalah.
+  try {
+    const res = await fetch(`${API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    const result = await res.json().catch(() => null);
+    const user: User | undefined = result?.data;
+
+    if (res.ok && user?.name) {
+      return {
+        status: true,
+        message: "user ditemukan",
+        token,
+        user,
+      };
+    }
+  } catch (error) {
+    console.error("Gagal mengambil user SSO:", error);
+  }
+
   return {
     status: false,
-    message: "terjadi kesalahan",
+    message: "user tidak ditemukan",
     token: null,
     user: null,
   };

@@ -158,7 +158,9 @@ export default function RendalScrapPage() {
 				const eqId = item.id?.toString() || "-";
 				if (
 					disposalInspectedIds.has(eqId) &&
-					!["DISPOSAL_RECOMMENDED", "SCRAP"].includes(normalizedStatus)
+					!["DISPOSAL_RECOMMENDED", "SCRAP_REQUESTED", "SCRAP"].includes(
+						normalizedStatus,
+					)
 				) {
 					normalizedStatus = "DISPOSAL_RECOMMENDED";
 				}
@@ -420,10 +422,12 @@ export default function RendalScrapPage() {
 
 				setDisposals((prev) => [newDisposalItem, ...prev]);
 
-				// Update equipment status in state
+				// Samakan optimistic state dengan transisi backend saat request dibuat.
 				setEquipments((prev) =>
 					prev.map((eq) =>
-						eq.id === selectedAsset.id ? { ...eq, statusAset: "SCRAP" } : eq,
+						eq.id === selectedAsset.id
+							? { ...eq, statusAset: "SCRAP_REQUESTED" }
+							: eq,
 					),
 				);
 

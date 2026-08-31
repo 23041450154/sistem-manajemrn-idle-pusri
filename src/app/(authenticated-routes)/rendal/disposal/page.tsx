@@ -140,7 +140,9 @@ export default function VerifikasiDisposalPage() {
 				const eqId = item.id?.toString() || "-";
 				if (
 					disposalInspectedIds.has(eqId) &&
-					!["DISPOSAL_RECOMMENDED", "SCRAP"].includes(normalizedStatus)
+					!["DISPOSAL_RECOMMENDED", "SCRAP_REQUESTED", "SCRAP"].includes(
+						normalizedStatus,
+					)
 				) {
 					normalizedStatus = "DISPOSAL_RECOMMENDED";
 				}
