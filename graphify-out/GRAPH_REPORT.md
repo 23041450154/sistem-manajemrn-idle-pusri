@@ -2,7 +2,7 @@
 
 ## Corpus Check
 
-- 150 files · ~282,034 words
+- 150 files · ~282,397 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
@@ -13,7 +13,7 @@
 
 ## Graph Freshness
 
-- Built from commit: `b054879d`
+- Built from commit: `11980200`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -34,7 +34,7 @@
 - perbaikan-alat-client.tsx
 - inspection-schedule.ts
 - DESIGN.md — Idle Equipment Console
-- clsx
+- class-variance-authority
 - Sistem Manajemen Idle Equipment PUSRI
 - buttonVariants
 - 1. Pemetaan Peran Pengguna (User Roles) & Tanggung Jawab
@@ -125,7 +125,7 @@ Nodes (28): dom, dom.iterable, esnext, **/*.mts, .next/dev/types/**/*.ts, next-e
 ### Community 5 - "dependencies"
 
 Cohesion: 0.12
-Nodes (17): @base-ui/react, class-variance-authority, lucide-react, nextjs-toploader, dependencies, @base-ui/react, class-variance-authority, lucide-react (+9 more)
+Nodes (17): @base-ui/react, clsx, lucide-react, nextjs-toploader, dependencies, @base-ui/react, clsx, lucide-react (+9 more)
 
 ### Community 6 - "devDependencies"
 
@@ -274,7 +274,7 @@ _Questions this graph is uniquely positioned to answer:*
 
 - **Why does `UnitKerjaDashboard()` connect `react` to `RendalDashboard.tsx`, `getEquipments`?**
   *High betweenness centrality (0.085) - this node is a cross-community bridge.*
-- **Why does `dependencies` connect `dependencies` to `next`, `tailwind-merge`, `package.json`, `clsx`, `tw-animate-css`, `react`?**
+- **Why does `dependencies` connect `dependencies` to `next`, `tailwind-merge`, `package.json`, `class-variance-authority`, `tw-animate-css`, `react`?**
   *High betweenness centrality (0.084) - this node is a cross-community bridge.*
 - **Why does `react` connect `react` to `dependencies`?**
   *High betweenness centrality (0.084) - this node is a cross-community bridge.*

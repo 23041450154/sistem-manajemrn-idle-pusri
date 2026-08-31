@@ -29,12 +29,16 @@ export function disposalDisplayStatus(
 ): DisposalDisplayStatus {
 	switch (String(approvalStatus || "PENDING").toUpperCase()) {
 		case "APPROVED":
+		case "DISPOSED":
 			return "DISPOSED";
 		case "REJECTED":
 			return "REJECTED";
 		case "REVISION_REQUIRED":
 		case "REVISION":
 			return "REVISION_REQUIRED";
+		case "SCRAP_REQUEST":
+		case "SCRAP_REQUESTED":
+		case "PENDING":
 		default:
 			return "PENDING";
 	}
