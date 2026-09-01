@@ -1,5 +1,15 @@
-import { getEquipments, getApprovals, getPlants, getObjectTypes } from "@/action/api";
-import { statusName as canonStatus } from "@/lib/equipment-status";
+import {
+	getEquipments,
+	getApprovals,
+	getPlants,
+	getObjectTypes,
+	getConditions,
+	getStorageLocations,
+} from "@/action/api";
+import {
+	statusName as canonStatus,
+	formatCondition,
+} from "@/lib/equipment-status";
 import RendalValidasiUlangClient, {
 	type ValidasiUlangItem,
 } from "./validasi-ulang-client";
@@ -11,16 +21,29 @@ export const dynamic = "force-dynamic";
 
 /** Server Component — fetch + mapping murni di server, interaksi di client. */
 export default async function RendalValidasiUlangPage() {
-	const [data, approvalsData, plantsData, objTypesData] = await Promise.all([
+	const [
+		data,
+		approvalsData,
+		plantsData,
+		objTypesData,
+		conditionsData,
+		storageLocationsData,
+	] = await Promise.all([
 		getEquipments().catch(() => []),
 		// Halaman ini menangani validasi ulang -> approval jenis REVALIDATION.
 		getApprovals("revalidation").catch(() => []),
 		getPlants().catch(() => []),
 		getObjectTypes().catch(() => []),
+		getConditions().catch(() => []),
+		getStorageLocations().catch(() => []),
 	]);
 
 	const plants = Array.isArray(plantsData) ? plantsData : [];
 	const objTypes = Array.isArray(objTypesData) ? objTypesData : [];
+	const conditions = Array.isArray(conditionsData) ? conditionsData : [];
+	const storageLocations = Array.isArray(storageLocationsData)
+		? storageLocationsData
+		: [];
 
 	// Map untuk lookup cepat dari database master data
 	const plantMap = new Map<string | number, any>();
@@ -41,6 +64,26 @@ export default async function RendalValidasiUlangPage() {
 			objTypeMap.set(String(o.id), o);
 		}
 		if (o.name) objTypeMap.set(o.name, o);
+	});
+
+	const storageLocMap = new Map<string | number, any>();
+	storageLocations.forEach((s: any) => {
+		if (s.id != null) {
+			storageLocMap.set(s.id, s);
+			storageLocMap.set(Number(s.id), s);
+			storageLocMap.set(String(s.id), s);
+		}
+		if (s.name) storageLocMap.set(s.name, s);
+	});
+
+	const conditionMap = new Map<string | number, any>();
+	conditions.forEach((c: any) => {
+		if (c.id != null) {
+			conditionMap.set(c.id, c);
+			conditionMap.set(Number(c.id), c);
+			conditionMap.set(String(c.id), c);
+		}
+		if (c.name) conditionMap.set(c.name, c);
 	});
 
 	const approvalsRaw = (approvalsData as any)?.data;
@@ -100,14 +143,31 @@ export default async function RendalValidasiUlangPage() {
 				}
 			}
 
-			const storageStr =
-				typeof item.storage_location === "string"
-					? item.storage_location
-					: item.storage_location?.name || "-";
-			const conditionStr =
-				typeof item.condition === "string"
-					? item.condition
-					: item.condition?.name || "BAGUS";
+			// 3. Ambil lokasi penyimpanan dari database relasi / lookup master storage location
+			let storageStr = "-";
+			if (typeof item.storage_location === "string" && item.storage_location.trim() && item.storage_location !== "-") {
+				storageStr = item.storage_location;
+			} else if (item.storage_location?.name || item.storage_location?.description) {
+				storageStr = item.storage_location.name || item.storage_location.description;
+			} else if (item.storageLocation?.name) {
+				storageStr = item.storageLocation.name;
+			} else {
+				const slId = item.storage_location_id ?? item.storageLocationId ?? item.id_storage_location;
+				if (slId != null && storageLocMap.has(slId)) {
+					const sl = storageLocMap.get(slId);
+					storageStr = sl.name || sl.description || "-";
+				}
+			}
+
+			// 4. Ambil kondisi dari database relasi / lookup master condition
+			let conditionRaw = item.condition;
+			if (!conditionRaw && (item.condition_id != null || item.conditionId != null || item.id_condition != null)) {
+				const cId = item.condition_id ?? item.conditionId ?? item.id_condition;
+				if (conditionMap.has(cId)) {
+					conditionRaw = conditionMap.get(cId);
+				}
+			}
+			const conditionStr = formatCondition(conditionRaw) || "Bagus";
 
 			const statusName = canonStatus(
 				item.status?.name || item.statusAset || item.status || "",
@@ -138,7 +198,7 @@ export default async function RendalValidasiUlangPage() {
 				tipeObjek: objectTypeStr,
 				plant: plantStr,
 				lokasiPenyimpanan: storageStr,
-				kondisi: conditionStr.replace(/_/g, " "),
+				kondisi: conditionStr,
 				tanggalRevalidasi: item.updated_at
 					? new Date(item.updated_at).toISOString().split("T")[0]
 					: item.created_at
@@ -168,6 +228,8 @@ export default async function RendalValidasiUlangPage() {
 			items={items}
 			plants={plants}
 			objectTypes={objTypes}
+			conditions={conditions}
+			storageLocations={storageLocations}
 		/>
 	);
 }
