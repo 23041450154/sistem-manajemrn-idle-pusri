@@ -385,13 +385,17 @@ export default function ManajerScrapClient({
                     </td>
                     {activeTab === "history" && (
                       <td className="px-3 py-3 text-center whitespace-nowrap">
-                        {item.status === "DISPOSED" ? (
+                        {item.status === "DISPOSED" || item.status === "APPROVED" ? (
                           <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#DCFCE7] text-[#16A34A]">
                             Disetujui
                           </span>
                         ) : item.status === "REJECTED" ? (
                           <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEE2E2] text-[#DC2626]">
                             Ditolak
+                          </span>
+                        ) : item.status === "REVISION_REQUIRED" ? (
+                          <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#F3E8FF] text-[#9333EA]">
+                            Perlu Revisi
                           </span>
                         ) : (
                           <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEF3C7] text-[#B45309]">

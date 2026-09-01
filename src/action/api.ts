@@ -151,7 +151,9 @@ export type DisposalItemDTO = {
 	equipment_id: string;
 	equipment_code: string;
 	equipment_name: string;
+	disposal_method_id?: number;
 	disposal_method: string;
+	disposal_date?: string;
 	scrap_value: number;
 	book_value: number;
 	original_value: number;
@@ -242,7 +244,9 @@ export async function getDisposals(): Promise<DisposalItemDTO[]> {
 				equipment_id: String(item.equipment_id ?? eq.id ?? ""),
 				equipment_code: eq.equipment_code || "-",
 				equipment_name: eq.name || "-",
+				disposal_method_id: item.disposal_method_id ?? item.disposal_method?.id,
 				disposal_method: item.disposal_method?.name || "-",
+				disposal_date: item.disposal_date,
 				scrap_value: Number(item.scrap_value) || 0,
 				book_value: Number(eq.book_value) || 0,
 				original_value: Number(eq.original_value) || 0,
@@ -255,7 +259,7 @@ export async function getDisposals(): Promise<DisposalItemDTO[]> {
 				),
 				created_at: item.created_at || new Date().toISOString(),
 				created_by_name: item.created_by_user?.name,
-				notes: item.notes,
+				notes: item.notes || approval?.notes,
 				attachments: atts.map((a: any) => ({
 					id: String(a.id),
 					file_url: absoluteFileUrl(a.file_url),
@@ -417,6 +421,80 @@ export async function createDisposalRequest(payload: {
 				error instanceof Error
 					? error.message
 					: "Terjadi kesalahan saat mengirim permintaan scrap.",
+		};
+	}
+}
+
+/**
+ * Revisi usulan disposal yang diminta revisi oleh Manajer (status REVISION_REQUIRED).
+ * PATCH /api/disposal/:id/revise (role RENDAL_PEMELIHARAAN).
+ */
+export async function reviseDisposalRequest(
+	id: string | number,
+	payload: {
+		disposal_method_id?: number;
+		scrap_value?: number;
+		disposal_date?: string;
+		justification?: string;
+	},
+) {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+	const headers = {
+		"Content-Type": "application/json",
+		Authorization: `Bearer ${token}`,
+	};
+
+	const cleanPayload: Record<string, any> = {};
+	if (payload.disposal_method_id !== undefined && payload.disposal_method_id !== null) {
+		cleanPayload.disposal_method_id = Number(payload.disposal_method_id);
+	}
+	if (payload.scrap_value !== undefined && payload.scrap_value !== null) {
+		cleanPayload.scrap_value = Number(payload.scrap_value) || 0;
+	}
+	if (payload.disposal_date !== undefined && payload.disposal_date !== null) {
+		cleanPayload.disposal_date = payload.disposal_date
+			? payload.disposal_date.split("T")[0]
+			: new Date().toISOString().split("T")[0];
+	}
+	if (payload.justification !== undefined && payload.justification !== null) {
+		cleanPayload.justification = payload.justification;
+	}
+
+	try {
+		const res = await fetch(`${API_URL}/api/disposal/${id}/revise`, {
+			method: "PATCH",
+			headers,
+			body: JSON.stringify(cleanPayload),
+		});
+
+		const json = await res.json().catch(() => null);
+		if (!res.ok) {
+			return {
+				success: false,
+				message:
+					json?.message ||
+					json?.error ||
+					`Gagal menyimpan revisi permintaan scrap (HTTP ${res.status}).`,
+			};
+		}
+
+		revalidateApp();
+		return {
+			success: true,
+			message:
+				json?.message ||
+				"Revisi permintaan scrap berhasil disimpan dan dikirim kembali ke Manajer.",
+			data: json?.data,
+		};
+	} catch (error) {
+		console.error("Revise disposal request error:", error);
+		return {
+			success: false,
+			message:
+				error instanceof Error
+					? error.message
+					: "Terjadi kesalahan saat mengirim revisi permintaan scrap.",
 		};
 	}
 }

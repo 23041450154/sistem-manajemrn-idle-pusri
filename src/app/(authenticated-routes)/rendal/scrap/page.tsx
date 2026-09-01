@@ -10,6 +10,7 @@ import {
 	getInspections,
 	getDisposalMethods,
 	createDisposalRequest,
+	reviseDisposalRequest,
 	getValidations,
 	uploadAttachment,
 } from "@/action/api";
@@ -69,11 +70,14 @@ interface DisposalItem {
 	disposal_number: string;
 	equipment_code?: string;
 	equipment_name?: string;
+	disposal_method_id?: number;
 	disposal_method?: string;
+	disposal_date?: string;
 	scrap_value?: number;
 	plant?: string;
 	justification?: string;
 	status?: string;
+	notes?: string;
 	created_at?: string;
 }
 
@@ -94,6 +98,9 @@ export default function RendalScrapPage() {
 	const ITEMS_PER_PAGE = 10;
 
 	// Modal State
+	const [modalMode, setModalMode] = useState<"create" | "revise">("create");
+	const [selectedReviseItem, setSelectedReviseItem] =
+		useState<DisposalItem | null>(null);
 	const [selectedAsset, setSelectedAsset] = useState<Equipment | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [selectedHistoryItem, setSelectedHistoryItem] =
@@ -135,8 +142,8 @@ export default function RendalScrapPage() {
 			inspArr.forEach((ins: any) => {
 				const isDisposal =
 					ins.is_utilizable === false ||
-					String(ins.require_action_id) === "4" ||
 					ins.require_action?.name?.toLowerCase().includes("disposal") ||
+					ins.require_action?.name?.toLowerCase().includes("scrap") ||
 					ins.condition?.name?.toUpperCase() === "RUSAK_BERAT" ||
 					ins.condition?.name?.toUpperCase() === "RUSAK BERAT";
 				if (isDisposal && ins.equipment_id) {
@@ -262,7 +269,10 @@ export default function RendalScrapPage() {
 		const disposalStatuses = new Set(["DISPOSAL_RECOMMENDED", "SCRAP"]);
 		return equipments.filter((eq) => {
 			const isRecommended = disposalStatuses.has(statusName(eq.statusAset));
-			const isNotSubmitted = !submittedIds.has(eq.id);
+			const isNotSubmitted =
+				!submittedIds.has(eq.id) &&
+				statusName(eq.statusAset) !== "SCRAP_REQUESTED" &&
+				statusName(eq.statusAset) !== "SCRAP";
 			const matchSearch =
 				!query ||
 				eq.kodeAlat.toLowerCase().includes(query) ||
@@ -301,8 +311,10 @@ export default function RendalScrapPage() {
 			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
 			"RUSAK BERAT": "bg-[#FEE2E2] text-[#DC2626]",
 			RUSAK_BERAT: "bg-[#FEE2E2] text-[#DC2626]",
-			SCRAP_REQUESTED: "bg-[#E0F2FE] text-[#0284C7]",
-			"SCRAP REQUESTED": "bg-[#E0F2FE] text-[#0284C7]",
+			SCRAP_REQUESTED: "bg-[#FEF3C7] text-[#B45309]",
+			"SCRAP REQUESTED": "bg-[#FEF3C7] text-[#B45309]",
+			SCRAP_REQUEST: "bg-[#FEF3C7] text-[#B45309]",
+			"SCRAP REQUEST": "bg-[#FEF3C7] text-[#B45309]",
 			DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
 			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
@@ -378,6 +390,8 @@ export default function RendalScrapPage() {
 	const totalPages = Math.ceil(currentListLength / ITEMS_PER_PAGE) || 1;
 
 	const handleOpenVerification = async (asset: Equipment) => {
+		setModalMode("create");
+		setSelectedReviseItem(null);
 		setSelectedAsset(asset);
 		setAssetValidation(null);
 
@@ -385,7 +399,6 @@ export default function RendalScrapPage() {
 		setVerificationDate(todayStr);
 
 		setDisposalMethodId("");
-
 		setJustification("");
 		setScrapValue("");
 		setUploadedFiles([]);
@@ -393,6 +406,54 @@ export default function RendalScrapPage() {
 		setIsModalOpen(true);
 
 		const validations = await getValidations(asset.id);
+		if (Array.isArray(validations) && validations.length > 0) {
+			setAssetValidation(validations[0]);
+		}
+	};
+
+	const handleOpenRevision = async (item: DisposalItem) => {
+		setModalMode("revise");
+		setSelectedReviseItem(item);
+
+		const eq = equipmentMap.get(String(item.equipment_id)) || {
+			id: String(item.equipment_id),
+			kodeAlat: item.equipment_code || "-",
+			namaAlat: item.equipment_name || "-",
+			plant: item.plant || "-",
+			jenisAlat: "-",
+			tanggalRegistrasi: "-",
+			statusAset: "SCRAP_REQUESTED",
+			storageLocation: "-",
+			funcLoc: "-",
+			vendor: "-",
+			year: "-",
+			originalValue: 0,
+			notes: "-",
+		};
+		setSelectedAsset(eq);
+		setAssetValidation(null);
+
+		const dispDateStr = item.disposal_date
+			? item.disposal_date.split("T")[0]
+			: new Date().toISOString().split("T")[0];
+		setVerificationDate(dispDateStr);
+
+		const methodId = item.disposal_method_id
+			? String(item.disposal_method_id)
+			: methods.find((m) => m.name === item.disposal_method)?.id
+				? String(methods.find((m) => m.name === item.disposal_method)?.id)
+				: "";
+		setDisposalMethodId(methodId);
+
+		setScrapValue(
+			item.scrap_value ? Number(item.scrap_value).toLocaleString("id-ID") : "",
+		);
+		setJustification(item.justification || "");
+		setUploadedFiles([]);
+		setFileError(null);
+		setIsModalOpen(true);
+
+		const validations = await getValidations(item.equipment_id);
 		if (Array.isArray(validations) && validations.length > 0) {
 			setAssetValidation(validations[0]);
 		}
@@ -462,80 +523,115 @@ export default function RendalScrapPage() {
 		setIsSubmitting(true);
 		try {
 			const targetMethodId = Number(disposalMethodId);
+			const cleanScrapVal = Number(scrapValue.replace(/\./g, "")) || 0;
 
-			const payload = {
-				equipment_id: Number(selectedAsset.id),
-				disposal_method_id: targetMethodId,
-				scrap_value: Number(scrapValue.replace(/\./g, "")) || 0,
-				disposal_date: verificationDate,
-				justification:
-					justification.trim() ||
-					"Diverifikasi oleh Rendal Pemeliharaan untuk pengajuan scrap.",
-			};
+			if (modalMode === "revise" && selectedReviseItem) {
+				const payload = {
+					disposal_method_id: targetMethodId,
+					scrap_value: cleanScrapVal,
+					disposal_date: verificationDate,
+					justification:
+						justification.trim() ||
+						"Revisi permohonan scrap dari Rendal Pemeliharaan.",
+				};
 
-			const res = await createDisposalRequest(payload);
-			if (res.success) {
-				for (const file of uploadedFiles) {
-					const up = await uploadAttachment(
-						selectedAsset.id,
-						file,
-						"disposal_attachment",
-					);
-					if (!up.success) {
-						console.error("Gagal upload dokumen scrap:", file.name, up.message);
+				const res = await reviseDisposalRequest(selectedReviseItem.id, payload);
+				if (res.success) {
+					for (const file of uploadedFiles) {
+						const up = await uploadAttachment(
+							selectedAsset.id,
+							file,
+							"disposal_attachment",
+						);
+						if (!up.success) {
+							console.error("Gagal upload dokumen scrap:", file.name, up.message);
+						}
 					}
-				}
 
-				// Update local state so item instantly moves from Inbox to History with PENDING status
-				const selectedMethod = methods.find(
-					(m) =>
-						Number(m.id) === targetMethodId ||
-						String(m.id) === String(disposalMethodId),
-				);
-				const newDisposalItem: DisposalItem = {
-					id: String(res.data?.id || `DSP-${Date.now()}`),
-					// Nomor usulan berasal dari backend (DISP-<tahun>-<seq>).
-					disposal_number: res.data?.disposal_number || "-",
-					equipment_id: String(selectedAsset.id),
-					equipment_code: selectedAsset.kodeAlat,
-					equipment_name: selectedAsset.namaAlat,
-					// Label optimistis; nama final tetap dari backend setelah loadData().
-					disposal_method: selectedMethod?.name || "-",
-					scrap_value: Number(scrapValue.replace(/\./g, "")) || 0,
-					plant: selectedAsset.plant,
+					showToast(
+						"success",
+						"Revisi permintaan scrap berhasil diajukan dan dikirim kembali ke Manajer!",
+					);
+					setIsModalOpen(false);
+					await loadData();
+				} else {
+					showToast("error", res.message || "Gagal menyimpan revisi permintaan scrap.");
+				}
+			} else {
+				const payload = {
+					equipment_id: Number(selectedAsset.id),
+					disposal_method_id: targetMethodId,
+					scrap_value: cleanScrapVal,
+					disposal_date: verificationDate,
 					justification:
 						justification.trim() ||
 						"Diverifikasi oleh Rendal Pemeliharaan untuk pengajuan scrap.",
-					status: "PENDING",
-					created_at: new Date().toISOString(),
 				};
 
-				setDisposals((prev) => [newDisposalItem, ...prev]);
+				const res = await createDisposalRequest(payload);
+				if (res.success) {
+					for (const file of uploadedFiles) {
+						const up = await uploadAttachment(
+							selectedAsset.id,
+							file,
+							"disposal_attachment",
+						);
+						if (!up.success) {
+							console.error("Gagal upload dokumen scrap:", file.name, up.message);
+						}
+					}
 
-				// Samakan optimistic state dengan transisi backend saat request dibuat.
-				setEquipments((prev) =>
-					prev.map((eq) =>
-						eq.id === selectedAsset.id
-							? { ...eq, statusAset: "SCRAP_REQUESTED" }
-							: eq,
-					),
-				);
+					// Update local state so item instantly moves from Inbox to History with PENDING status
+					const selectedMethod = methods.find(
+						(m) =>
+							Number(m.id) === targetMethodId ||
+							String(m.id) === String(disposalMethodId),
+					);
+					const newDisposalItem: DisposalItem = {
+						id: String(res.data?.id || `DSP-${Date.now()}`),
+						// Nomor usulan berasal dari backend (DISP-<tahun>-<seq>).
+						disposal_number: res.data?.disposal_number || "-",
+						equipment_id: String(selectedAsset.id),
+						equipment_code: selectedAsset.kodeAlat,
+						equipment_name: selectedAsset.namaAlat,
+						disposal_method_id: targetMethodId,
+						// Label optimistis; nama final tetap dari backend setelah loadData().
+						disposal_method: selectedMethod?.name || "-",
+						disposal_date: verificationDate,
+						scrap_value: cleanScrapVal,
+						plant: selectedAsset.plant,
+						justification:
+							justification.trim() ||
+							"Diverifikasi oleh Rendal Pemeliharaan untuk pengajuan scrap.",
+						status: "PENDING",
+						created_at: new Date().toISOString(),
+					};
 
-				showToast(
-					"success",
-					"Permintaan scrap berhasil diajukan dan dikirim ke Manajer!",
-				);
-				setIsModalOpen(false);
-				setActiveTab("history");
-				await loadData();
-			} else {
-				showToast("error", res.message || "Gagal menyimpan permintaan scrap.");
+					setDisposals((prev) => [newDisposalItem, ...prev]);
+
+					// Update equipment status in state
+					setEquipments((prev) =>
+						prev.map((eq) =>
+							eq.id === selectedAsset.id ? { ...eq, statusAset: "SCRAP_REQUESTED" } : eq,
+						),
+					);
+
+					showToast(
+						"success",
+						"Permintaan scrap berhasil diajukan dan dikirim ke Manajer!",
+					);
+					setIsModalOpen(false);
+					setActiveTab("history");
+					await loadData();
+				} else {
+					showToast("error", res.message || "Gagal menyimpan permintaan scrap.");
+				}
 			}
 		} catch (err) {
 			console.error(err);
 			showToast(
 				"error",
-				"Terjadi kesalahan sistem saat mengirim permintaan scrap.",
+				"Terjadi kesalahan sistem saat memproses permintaan scrap.",
 			);
 		} finally {
 			setIsSubmitting(false);
@@ -819,7 +915,7 @@ export default function RendalScrapPage() {
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[135px]">
 										Status Persetujuan
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[85px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[140px]">
 										Aksi
 									</th>
 								</tr>
@@ -908,18 +1004,33 @@ export default function RendalScrapPage() {
 												<td className="px-2 py-2 text-center whitespace-nowrap">
 													{getApprovalBadge(item.status)}
 												</td>
-												<td className="px-2 py-2 text-center w-[85px]">
-													<button
-														type="button"
-														onClick={() => {
-															setSelectedHistoryItem(item);
-															setIsDetailOpen(true);
-														}}
-														className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
-													>
-														<Eye className="w-3.5 h-3.5" />
-														Detail
-													</button>
+												<td className="px-2 py-2 text-center w-[140px]">
+													<div className="flex items-center justify-center gap-1.5">
+														<button
+															type="button"
+															onClick={() => {
+																setSelectedHistoryItem(item);
+																setIsDetailOpen(true);
+															}}
+															className="inline-flex items-center justify-center gap-1 bg-[#0A356A] text-white px-2.5 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
+														>
+															<Eye className="w-3.5 h-3.5" />
+															Detail
+														</button>
+														{(item.status === "REVISION_REQUIRED" ||
+															item.status === "NEED_REVISION" ||
+															item.status === "REVISION") && (
+															<button
+																type="button"
+																onClick={() => handleOpenRevision(item)}
+																className="inline-flex items-center justify-center gap-1 bg-[#7C3AED] text-white px-2.5 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#6D28D9] transition-colors whitespace-nowrap shadow-2xs cursor-pointer animate-pulse"
+																title="Perbaiki usulan scrap sesuai catatan Manajer"
+															>
+																<RefreshCw className="w-3.5 h-3.5" />
+																Revisi
+															</button>
+														)}
+													</div>
 												</td>
 											</tr>
 										);
@@ -978,7 +1089,7 @@ export default function RendalScrapPage() {
 				)}
 			</div>
 
-			{/* Modal Form Permintaan Scrap (Tab 1: Antrean Request) */}
+			{/* Modal Form Permintaan / Revisi Scrap */}
 			{isModalOpen && selectedAsset && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 					<div
@@ -991,11 +1102,17 @@ export default function RendalScrapPage() {
 						<div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3] flex items-center justify-between">
 							<div className="flex items-center gap-3">
 								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
-									<Trash2 className="w-5 h-5 text-white" />
+									{modalMode === "revise" ? (
+										<RefreshCw className="w-5 h-5 text-white" />
+									) : (
+										<Trash2 className="w-5 h-5 text-white" />
+									)}
 								</div>
 								<div>
 									<h2 className="text-base font-bold text-white leading-tight">
-										Form Permintaan Scrap Aset
+										{modalMode === "revise"
+											? "Form Revisi Permintaan Scrap"
+											: "Form Permintaan Scrap Aset"}
 									</h2>
 									<p className="text-xs text-blue-100 mt-0.5">
 										{selectedAsset.kodeAlat} - {selectedAsset.namaAlat}
@@ -1016,6 +1133,24 @@ export default function RendalScrapPage() {
 							className="flex-1 overflow-y-auto flex flex-col"
 						>
 							<div className="p-6 flex flex-col gap-5">
+								{/* Alert Catatan Revisi dari Manajer (hanya tampil saat mode revisi) */}
+								{modalMode === "revise" && selectedReviseItem?.notes && (
+									<div className="bg-purple-50 border border-purple-200 rounded-lg p-4 flex items-start gap-3">
+										<AlertCircle className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+										<div className="flex-1">
+											<h4 className="text-xs font-bold text-purple-900 uppercase">
+												Catatan Revisi dari Manajer Rendal
+											</h4>
+											<p className="text-xs text-purple-800 mt-1 leading-relaxed italic bg-white/80 p-2.5 rounded border border-purple-200">
+												&quot;{selectedReviseItem.notes}&quot;
+											</p>
+											<p className="text-[11px] text-purple-600 mt-1.5 font-medium">
+												* Silakan perbarui data usulan scrap di bawah ini sesuai arahan Manajer, lalu kirim ulang.
+											</p>
+										</div>
+									</div>
+								)}
+
 								{/* Read Only Asset Info */}
 								<div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
 									<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3 flex items-center gap-1.5">
@@ -1091,10 +1226,12 @@ export default function RendalScrapPage() {
 									</div>
 								</div>
 
-								{/* Form Verifikasi */}
+								{/* Form Verifikasi / Revisi */}
 								<div className="flex flex-col gap-4">
 									<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-1">
-										Form Permintaan Scrap
+										{modalMode === "revise"
+											? "Form Revisi Permintaan Scrap"
+											: "Form Permintaan Scrap"}
 									</h3>
 
 									<div className="grid grid-cols-2 gap-4">
@@ -1104,7 +1241,11 @@ export default function RendalScrapPage() {
 											</label>
 											<input
 												type="text"
-												value="Digenerate otomatis oleh sistem"
+												value={
+													modalMode === "revise"
+														? selectedReviseItem?.disposal_number || "-"
+														: "Digenerate otomatis oleh sistem"
+												}
 												readOnly
 												className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-100 italic text-gray-500 cursor-not-allowed"
 											/>
@@ -1302,7 +1443,11 @@ export default function RendalScrapPage() {
 									className="px-5 py-2 bg-[#0A356A] hover:bg-[#062854] text-white rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2 cursor-pointer"
 								>
 									{isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : null}
-									{isSubmitting ? "Mengirim..." : "Kirim ke Manajer"}
+									{isSubmitting
+										? "Mengirim..."
+										: modalMode === "revise"
+											? "Kirim Ulang Revisi"
+											: "Kirim ke Manajer"}
 								</button>
 							</div>
 						</form>
@@ -1437,6 +1582,16 @@ export default function RendalScrapPage() {
 										&quot;
 									</p>
 								</div>
+								{selectedHistoryItem.notes && (
+									<div>
+										<p className="text-[10px] font-bold text-purple-700 uppercase">
+											Catatan Revisi / Keputusan dari Manajer
+										</p>
+										<p className="text-xs text-purple-900 mt-1 bg-purple-50 p-2.5 rounded-lg border border-purple-200 leading-relaxed italic">
+											&quot;{selectedHistoryItem.notes}&quot;
+										</p>
+									</div>
+								)}
 							</div>
 						</div>
 
@@ -1459,9 +1614,13 @@ export default function RendalScrapPage() {
 					setIsConfirmOpen(false);
 					handleSubmitVerification();
 				}}
-				title="Kirim Usulan Scrap?"
-				description={`${selectedAsset?.kodeAlat ?? ""} — Usulan scrap akan dikirim dan masuk proses penghapusan aset.`}
-				confirmLabel="Ya, Kirim"
+				title={modalMode === "revise" ? "Kirim Ulang Revisi Scrap?" : "Kirim Usulan Scrap?"}
+				description={`${selectedAsset?.kodeAlat ?? ""} — ${
+					modalMode === "revise"
+						? "Revisi usulan scrap akan dikirim kembali ke Manajer Rendal untuk ditinjau ulang."
+						: "Usulan scrap akan dikirim dan masuk proses penghapusan aset."
+				}`}
+				confirmLabel={modalMode === "revise" ? "Ya, Kirim Revisi" : "Ya, Kirim"}
 				pendingLabel="Memproses..."
 				isPending={isSubmitting}
 			/>
