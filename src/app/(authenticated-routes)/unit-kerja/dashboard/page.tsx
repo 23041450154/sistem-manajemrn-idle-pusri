@@ -1,4 +1,4 @@
-import { getEquipments, getReuseRequests } from "@/action/api";
+import { getEquipments, getObjectTypes, getReuseRequests } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
 // Data di-fetch server-side; interaksi ada di ./dashboard-client.
 import UnitKerjaDashboardContent from "./dashboard-client";
@@ -19,15 +19,16 @@ const str = (...vals: unknown[]): string => {
 	return "-";
 };
 
-interface EquipmentItem {
+export interface EquipmentItem {
 	id: string;
 	equipment_code: string;
 	name: string;
 	plant: string;
+	category: string;
 	status_name: string;
 }
 
-interface ReuseRequestItem {
+export interface ReuseRequestItem {
 	id: string;
 	request_number: string;
 	equipment_code: string;
@@ -38,22 +39,40 @@ interface ReuseRequestItem {
 
 /** Server Component — satu fetch di server, hasil dipetakan lalu diteruskan ke client. */
 export default async function UnitKerjaDashboardPage() {
-	const [rawEqList, rawRequests] = await Promise.all([
+	const [rawEqList, rawRequests, rawObjTypes] = await Promise.all([
 		getEquipments().catch(() => []),
 		getReuseRequests().catch(() => []),
+		getObjectTypes().catch(() => []),
 	]);
 
+	const objTypes = Array.isArray(rawObjTypes) ? rawObjTypes : [];
 	const equipmentById = new Map<string, ApiRow>(
 		(rawEqList || []).map((item: ApiRow) => [String(item.id), item]),
 	);
 
 	const mappedEquipments: EquipmentItem[] = (rawEqList || []).map(
-		(item: ApiRow) => {
+		(item: any) => {
+			let objectTypeName = "Lainnya";
+			if (item.object_type?.name) {
+				objectTypeName = item.object_type.name;
+			} else if (item.objectType?.name) {
+				objectTypeName = item.objectType.name;
+			} else {
+				const otId = item.id_object_type || item.object_type_id || item.objectTypeId;
+				if (otId && objTypes.length > 0) {
+					const found = objTypes.find(
+						(o: any) => o.id === otId || o.id === Number(otId),
+					);
+					if (found) objectTypeName = found.name;
+				}
+			}
+
 			return {
 				id: String(item.id),
 				equipment_code: str(item.equipment_code, `EQ-${item.id}`),
 				name: str(item.name, item.nama),
 				plant: str(item.plant),
+				category: objectTypeName,
 				status_name: statusName(str(item.status, "")),
 			};
 		},

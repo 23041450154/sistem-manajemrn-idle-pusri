@@ -549,14 +549,25 @@ export default function ManajerApproveClient({
 										<td className="px-2 py-2 text-center">
 											{getApprovalBadge(req.approvalStatus, req.statusLabel)}
 										</td>
-										<td className="px-2 py-2 text-center w-[80px]">
-											<button
-												onClick={() => openModal(req)}
-												className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors w-full"
-											>
-												<Eye className="w-3.5 h-3.5" />
-												Detail
-											</button>
+										<td className="px-2 py-2 text-center w-[90px]">
+											{req.approvalStatus === "PENDING" ||
+											req.approvalStatus === "IN_REVIEW" ? (
+												<button
+													onClick={() => openModal(req)}
+													className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors w-full"
+												>
+													<CheckCircle2 className="w-3.5 h-3.5" />
+													Setujui
+												</button>
+											) : (
+												<button
+													onClick={() => openModal(req)}
+													className="inline-flex items-center justify-center gap-1.5 bg-gray-100 text-gray-700 hover:bg-gray-200 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors w-full"
+												>
+													<Eye className="w-3.5 h-3.5" />
+													Detail
+												</button>
+											)}
 										</td>
 									</tr>
 								))

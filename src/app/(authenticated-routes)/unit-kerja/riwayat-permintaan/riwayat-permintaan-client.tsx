@@ -695,31 +695,53 @@ function RiwayatPermintaanContent({
 							</section>
 
 							{/* Contact Person */}
-							<section>
-								<h3 className="text-[13px] font-semibold text-[#0F172A]">
-									Penanggung Jawab
-								</h3>
-								<dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-3">
-									<div>
-										<dt className="text-[12px] text-[#64748B]">Nama</dt>
-										<dd className="mt-0.5 text-[13px] font-medium text-[#0F172A]">
-											{selectedRequest.contact_person}
-										</dd>
-									</div>
-									<div>
-										<dt className="text-[12px] text-[#64748B]">NPP</dt>
-										<dd className="mt-0.5 text-[13px] font-medium text-[#0F172A] tabular-nums">
-											{selectedRequest.contact_npp}
-										</dd>
-									</div>
-									<div>
-										<dt className="text-[12px] text-[#64748B]">Telepon</dt>
-										<dd className="mt-0.5 text-[13px] font-medium text-[#0F172A] tabular-nums">
-											{selectedRequest.contact_phone}
-										</dd>
-									</div>
-								</dl>
-							</section>
+							{(Boolean(
+								selectedRequest.contact_person &&
+									selectedRequest.contact_person !== "-",
+							) ||
+								Boolean(
+									selectedRequest.contact_npp &&
+										selectedRequest.contact_npp !== "-",
+								) ||
+								Boolean(
+									selectedRequest.contact_phone &&
+										selectedRequest.contact_phone !== "-",
+								)) && (
+								<section>
+									<h3 className="text-[13px] font-semibold text-[#0F172A]">
+										Penanggung Jawab
+									</h3>
+									<dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-3">
+										{selectedRequest.contact_person &&
+											selectedRequest.contact_person !== "-" && (
+												<div>
+													<dt className="text-[12px] text-[#64748B]">Nama</dt>
+													<dd className="mt-0.5 text-[13px] font-medium text-[#0F172A]">
+														{selectedRequest.contact_person}
+													</dd>
+												</div>
+											)}
+										{selectedRequest.contact_npp &&
+											selectedRequest.contact_npp !== "-" && (
+												<div>
+													<dt className="text-[12px] text-[#64748B]">NPP</dt>
+													<dd className="mt-0.5 text-[13px] font-medium text-[#0F172A] tabular-nums">
+														{selectedRequest.contact_npp}
+													</dd>
+												</div>
+											)}
+										{selectedRequest.contact_phone &&
+											selectedRequest.contact_phone !== "-" && (
+												<div>
+													<dt className="text-[12px] text-[#64748B]">Kontak / Telepon</dt>
+													<dd className="mt-0.5 text-[13px] font-medium text-[#0F172A] tabular-nums">
+														{selectedRequest.contact_phone}
+													</dd>
+												</div>
+											)}
+									</dl>
+								</section>
+							)}
 						</div>
 
 						{/* Footer */}
