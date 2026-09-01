@@ -110,15 +110,15 @@ export default async function DaftarAsetPage() {
 					status_name: normalizedStatus,
 					condition_name: conditionStr.replace(/_/g, " "),
 					storage_location: String(storageLoc),
-					serial_number: String(item.serial_number || "SN-2026-X89"),
-					vendor: String(item.vendor || item.manufacturer || "PT Utama Engineering"),
-					year_of_purchase: Number(item.year_of_purchase) || 2020,
-					book_value: Number(item.book_value) || 120000000,
+					serial_number: String(item.serial_number || item.serialNumber || "-"),
+					vendor: String(item.vendor || item.manufacturer || "-"),
+					year_of_purchase: Number(item.year_of_purchase || item.yearOfPurchase) || (item.year_of_purchase ? Number(item.year_of_purchase) : 0),
+					book_value: Number(item.book_value || item.bookValue) || 0,
 					specifications: String(
 						item.specifications ||
 							item.specification ||
 							item.description ||
-							"Spesifikasi standar operasional pabrik",
+							"-",
 					),
 					capacity: String(item.capacity || "-"),
 					notes: item.notes || "-",

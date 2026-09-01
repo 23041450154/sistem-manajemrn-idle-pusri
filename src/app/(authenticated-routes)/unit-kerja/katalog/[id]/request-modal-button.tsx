@@ -225,7 +225,7 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 										}
 										required
 										min={1}
-										placeholder="misal: 150000000"
+										placeholder="0"
 										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
 									/>
 								</div>
