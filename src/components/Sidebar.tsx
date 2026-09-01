@@ -20,6 +20,7 @@ import {
 	ChevronRight,
 	History,
 	RefreshCw,
+	Users,
 } from "lucide-react";
 import { useSidebar } from "./SidebarProvider";
 import { useState, useEffect } from "react";
@@ -163,6 +164,7 @@ export function Sidebar({ role }: { role?: string }) {
 			mainNavItems = [
 				{ name: "Dashboard", href: "/admin/dashboard", icon: LayoutDashboard },
 				{ name: "Peralatan", href: "/admin/equipment", icon: Wrench },
+				{ name: "Pengguna", href: "/admin/users", icon: Users },
 			];
 			break;
 

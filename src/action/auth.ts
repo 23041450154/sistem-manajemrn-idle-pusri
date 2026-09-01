@@ -167,24 +167,11 @@ export async function getCurrentUserAction() {
 
 export async function logoutAction() {
   const cookieStorage = await cookies();
-  const token = cookieStorage.get("token")?.value;
-
-  if (token) {
-    try {
-      await fetch(`${API_URL}/api/auth/logout`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-    } catch (error) {
-      console.error("Gagal memanggil API logout:", error);
-    }
-  }
-
   cookieStorage.delete("token");
   cookieStorage.delete("user");
-  redirect("/login");
+
+  const ssoBaseUrl = process.env.NEXT_PUBLIC_API_SSO?.replace(/\/$/, "");
+  return ssoBaseUrl ? `${ssoBaseUrl}/api/logout` : null;
 }
 
 export async function ssoCallbackAction(
