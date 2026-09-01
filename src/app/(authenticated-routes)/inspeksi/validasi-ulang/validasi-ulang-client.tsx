@@ -21,6 +21,8 @@ import {
 	Paperclip,
 } from "lucide-react";
 
+import { formatCondition } from "@/lib/equipment-status";
+
 export interface RevalidasiItem {
 	id: string;
 	kodeAlat: string;
@@ -38,17 +40,29 @@ export interface RevalidasiItem {
 	alasanIdle?: string;
 }
 
+interface InspeksiValidasiUlangClientProps {
+	items: RevalidasiItem[];
+	plants?: any[];
+	storageLocations?: any[];
+	conditions?: any[];
+	objectTypes?: any[];
+}
+
 /** Client Component: interaksi tab/filter/modal validasi — data di-fetch Server Component. */
 export default function InspeksiValidasiUlangClient({
 	items,
-}: {
-	items: RevalidasiItem[];
-}) {
+	plants = [],
+	storageLocations = [],
+	conditions = [],
+	objectTypes = [],
+}: InspeksiValidasiUlangClientProps) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [filterPlant, setFilterPlant] = useState("");
+	const [filterLokasi, setFilterLokasi] = useState("");
+	const [filterKondisi, setFilterKondisi] = useState("");
 	const [filterTipeObjek, setFilterTipeObjek] = useState("");
 	const [currentPage, setCurrentPage] = useState(1);
 
@@ -95,19 +109,51 @@ export default function InspeksiValidasiUlangClient({
 		setUploadedFiles((prev) => prev.filter((_, i) => i !== index));
 	};
 
-	const plantOptions = useMemo(
-		() =>
-			[...new Set(items.map((e) => e.plant).filter((v) => v && v !== "-"))].sort(),
-		[items],
-	);
+	// 1. Opsi Plant dari database
+	const plantOptions = useMemo(() => {
+		const dbPlants = (plants || [])
+			.map((p: any) => (typeof p === "string" ? p : p?.name || p?.code || ""))
+			.filter((v: string) => v && v !== "-");
+		const itemPlants = items
+			.map((e) => e.plant)
+			.filter((v) => v && v !== "-");
+		return [...new Set([...dbPlants, ...itemPlants])].sort();
+	}, [plants, items]);
 
-	const tipeObjekOptions = useMemo(
-		() =>
-			[
-				...new Set(items.map((e) => e.tipeObjek).filter((v) => v && v !== "-")),
-			].sort(),
-		[items],
-	);
+	// 2. Opsi Lokasi dari database
+	const lokasiOptions = useMemo(() => {
+		const dbLocs = (storageLocations || [])
+			.map((s: any) =>
+				typeof s === "string" ? s : s?.name || s?.description || "",
+			)
+			.filter((v: string) => v && v !== "-");
+		const itemLocs = items
+			.map((e) => e.lokasiPenyimpanan)
+			.filter((v) => v && v !== "-");
+		return [...new Set([...dbLocs, ...itemLocs])].sort();
+	}, [storageLocations, items]);
+
+	// 3. Opsi Kondisi dari database
+	const kondisiOptions = useMemo(() => {
+		const dbConds = (conditions || [])
+			.map((c: any) => formatCondition(c))
+			.filter((v: string) => v && v !== "-");
+		const itemConds = items
+			.map((e) => e.kondisiSebelumnya)
+			.filter((v) => v && v !== "-");
+		return [...new Set([...dbConds, ...itemConds])].sort();
+	}, [conditions, items]);
+
+	// 4. Opsi Tipe Objek dari database
+	const tipeObjekOptions = useMemo(() => {
+		const dbTypes = (objectTypes || [])
+			.map((t: any) => (typeof t === "string" ? t : t?.name || ""))
+			.filter((v: string) => v && v !== "-");
+		const itemTypes = items
+			.map((e) => e.tipeObjek)
+			.filter((v) => v && v !== "-");
+		return [...new Set([...dbTypes, ...itemTypes])].sort();
+	}, [objectTypes, items]);
 
 	const isAntreanItem = (item: RevalidasiItem) =>
 		item.statusAset === "REPAIR_COMPLETED";
@@ -142,10 +188,24 @@ export default function InspeksiValidasiUlangClient({
 			);
 		}
 		if (filterPlant) result = result.filter((item) => item.plant === filterPlant);
+		if (filterLokasi)
+			result = result.filter((item) => item.lokasiPenyimpanan === filterLokasi);
+		if (filterKondisi)
+			result = result.filter(
+				(item) => item.kondisiSebelumnya === filterKondisi,
+			);
 		if (filterTipeObjek)
 			result = result.filter((item) => item.tipeObjek === filterTipeObjek);
 		return result;
-	}, [items, activeTab, searchQuery, filterPlant, filterTipeObjek]);
+	}, [
+		items,
+		activeTab,
+		searchQuery,
+		filterPlant,
+		filterLokasi,
+		filterKondisi,
+		filterTipeObjek,
+	]);
 
 	const ITEMS_PER_PAGE = 10;
 	const totalPages = Math.ceil(filteredItems.length / ITEMS_PER_PAGE) || 1;
@@ -163,6 +223,8 @@ export default function InspeksiValidasiUlangClient({
 		setSearchInput("");
 		setSearchQuery("");
 		setFilterPlant("");
+		setFilterLokasi("");
+		setFilterKondisi("");
 		setFilterTipeObjek("");
 		setCurrentPage(1);
 	};
@@ -411,7 +473,10 @@ export default function InspeksiValidasiUlangClient({
 					<div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
 						<select
 							value={filterPlant}
-							onChange={(e) => setFilterPlant(e.target.value)}
+							onChange={(e) => {
+								setFilterPlant(e.target.value);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Plant</option>
@@ -423,8 +488,43 @@ export default function InspeksiValidasiUlangClient({
 						</select>
 
 						<select
+							value={filterLokasi}
+							onChange={(e) => {
+								setFilterLokasi(e.target.value);
+								setCurrentPage(1);
+							}}
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+						>
+							<option value="">Semua Lokasi</option>
+							{lokasiOptions.map((l) => (
+								<option key={l} value={l}>
+									{l}
+								</option>
+							))}
+						</select>
+
+						<select
+							value={filterKondisi}
+							onChange={(e) => {
+								setFilterKondisi(e.target.value);
+								setCurrentPage(1);
+							}}
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+						>
+							<option value="">Semua Kondisi</option>
+							{kondisiOptions.map((k) => (
+								<option key={k} value={k}>
+									{k}
+								</option>
+							))}
+						</select>
+
+						<select
 							value={filterTipeObjek}
-							onChange={(e) => setFilterTipeObjek(e.target.value)}
+							onChange={(e) => {
+								setFilterTipeObjek(e.target.value);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Tipe</option>
@@ -490,14 +590,22 @@ export default function InspeksiValidasiUlangClient({
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
-												{searchQuery || filterPlant || filterTipeObjek
+												{searchQuery ||
+												filterPlant ||
+												filterLokasi ||
+												filterKondisi ||
+												filterTipeObjek
 													? "Hasil Pencarian Tidak Ditemukan"
 													: activeTab === "antrean"
 														? "Tidak Ada Antrean Validasi Perbaikan"
 														: "Belum Ada Riwayat Validasi Perbaikan"}
 											</p>
 											<p className="text-[11px] text-gray-500 mt-1">
-												{searchQuery || filterPlant || filterTipeObjek
+												{searchQuery ||
+												filterPlant ||
+												filterLokasi ||
+												filterKondisi ||
+												filterTipeObjek
 													? "Coba sesuaikan kata kunci atau filter pencarian Anda."
 													: activeTab === "antrean"
 														? "Aset yang telah selesai diperbaiki oleh Pemeliharaan Lapangan akan muncul di sini."

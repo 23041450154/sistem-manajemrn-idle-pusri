@@ -1,4 +1,4 @@
-import { getEquipments, getApprovals } from "@/action/api";
+import { getEquipments, getApprovals, getPlants, getObjectTypes } from "@/action/api";
 import { statusName as canonStatus } from "@/lib/equipment-status";
 import RendalValidasiUlangClient, {
 	type ValidasiUlangItem,
@@ -7,13 +7,41 @@ import RendalValidasiUlangClient, {
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
+export const dynamic = "force-dynamic";
+
 /** Server Component — fetch + mapping murni di server, interaksi di client. */
 export default async function RendalValidasiUlangPage() {
-	const [data, approvalsData] = await Promise.all([
+	const [data, approvalsData, plantsData, objTypesData] = await Promise.all([
 		getEquipments().catch(() => []),
 		// Halaman ini menangani validasi ulang -> approval jenis REVALIDATION.
 		getApprovals("revalidation").catch(() => []),
+		getPlants().catch(() => []),
+		getObjectTypes().catch(() => []),
 	]);
+
+	const plants = Array.isArray(plantsData) ? plantsData : [];
+	const objTypes = Array.isArray(objTypesData) ? objTypesData : [];
+
+	// Map untuk lookup cepat dari database master data
+	const plantMap = new Map<string | number, any>();
+	plants.forEach((p: any) => {
+		if (p.id != null) {
+			plantMap.set(p.id, p);
+			plantMap.set(Number(p.id), p);
+			plantMap.set(String(p.id), p);
+		}
+		if (p.name) plantMap.set(p.name, p);
+	});
+
+	const objTypeMap = new Map<string | number, any>();
+	objTypes.forEach((o: any) => {
+		if (o.id != null) {
+			objTypeMap.set(o.id, o);
+			objTypeMap.set(Number(o.id), o);
+			objTypeMap.set(String(o.id), o);
+		}
+		if (o.name) objTypeMap.set(o.name, o);
+	});
 
 	const approvalsRaw = (approvalsData as any)?.data;
 	const approvalsList: any[] = Array.isArray(approvalsData)
@@ -42,18 +70,40 @@ export default async function RendalValidasiUlangPage() {
 			return isRevalStatus || hasApproval;
 		})
 		.map((item: any): ValidasiUlangItem => {
-			const plantStr =
-				typeof item.plant === "string"
-					? item.plant
-					: item.plant?.name || item.plant?.description || "-";
+			// 1. Ambil plant dari database relasi / lookup master plant
+			let plantStr = "-";
+			if (typeof item.plant === "string" && item.plant.trim() && item.plant !== "-") {
+				plantStr = item.plant;
+			} else if (item.plant?.name || item.plant?.description) {
+				plantStr = item.plant.name || item.plant.description;
+			} else {
+				const pId = item.plant_id ?? item.plantId ?? item.id_plant;
+				if (pId != null && plantMap.has(pId)) {
+					const p = plantMap.get(pId);
+					plantStr = p.name || p.description || "-";
+				}
+			}
+
+			// 2. Ambil tipe objek dari database relasi / lookup master object type
+			let objectTypeStr = "-";
+			if (typeof item.object_type === "string" && item.object_type.trim() && item.object_type !== "-") {
+				objectTypeStr = item.object_type;
+			} else if (item.object_type?.name) {
+				objectTypeStr = item.object_type.name;
+			} else if (item.objectType?.name) {
+				objectTypeStr = item.objectType.name;
+			} else {
+				const otId = item.object_type_id ?? item.objectTypeId ?? item.id_object_type;
+				if (otId != null && objTypeMap.has(otId)) {
+					const ot = objTypeMap.get(otId);
+					objectTypeStr = ot.name || "-";
+				}
+			}
+
 			const storageStr =
 				typeof item.storage_location === "string"
 					? item.storage_location
 					: item.storage_location?.name || "-";
-			const objectTypeStr =
-				typeof item.object_type === "string"
-					? item.object_type
-					: item.object_type?.name || "-";
 			const conditionStr =
 				typeof item.condition === "string"
 					? item.condition
@@ -113,5 +163,11 @@ export default async function RendalValidasiUlangPage() {
 		return (Number(b.id) || 0) - (Number(a.id) || 0);
 	});
 
-	return <RendalValidasiUlangClient items={items} />;
+	return (
+		<RendalValidasiUlangClient
+			items={items}
+			plants={plants}
+			objectTypes={objTypes}
+		/>
+	);
 }

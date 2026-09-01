@@ -835,7 +835,7 @@ export default function PerbaikanAlatClient({
 								) : (
 									<div className="aspect-[4/3] rounded-[4px] border border-[#E6E8EA] bg-white flex flex-col items-center justify-center gap-1.5 text-[#64748B]">
 										<ImageOff className="w-5 h-5" aria-hidden="true" />
-										<p className="text-[12px]">Belum ada foto peralatan.</p>
+										<p className="text-[12px]">Foto peralatan belum diunggah.</p>
 									</div>
 								)}
 
@@ -1168,7 +1168,7 @@ export default function PerbaikanAlatClient({
 							) : (
 								<div className="border border-gray-100 rounded-lg p-4 bg-gray-50 flex flex-col items-center justify-center gap-1.5 text-gray-400">
 									<ImageOff className="w-5 h-5" aria-hidden="true" />
-									<p className="text-xs text-gray-500">Belum ada foto peralatan.</p>
+									<p className="text-xs text-gray-500">Foto peralatan belum diunggah.</p>
 								</div>
 							)}
 

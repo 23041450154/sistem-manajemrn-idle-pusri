@@ -167,5 +167,70 @@ const STATUS_BADGE_STYLE: Record<string, string> = {
 export const statusBadgeStyle = (raw?: string | null) =>
 	STATUS_BADGE_STYLE[statusName(raw)] ?? "bg-gray-100 text-gray-700";
 
-export const rupiah = (value: number) =>
-	`Rp ${new Intl.NumberFormat("id-ID").format(Math.round(value))}`;
+export const rupiah = (value?: number | string | null) => {
+	const num = Number(value);
+	if (value == null || isNaN(num)) return "Rp 0";
+	return `Rp ${new Intl.NumberFormat("id-ID").format(Math.round(num))}`;
+};
+
+/** Pemetaan kode SAP plant Pusri ke nama pabrik yang ramah pengguna. */
+export const PLANT_NAME_MAP: Record<string, string> = {
+	F001: "Pabrik IB",
+	F002: "Pabrik IIB",
+	F003: "Pabrik III",
+	F004: "Pabrik IV",
+	F005: "Pabrik V (NPK)",
+	F601: "Utilitas / STG",
+	F000: "Kantor Pusat",
+};
+
+/**
+ * Mengambil kode plant langsung dari database (F001, F002, F003, F004, F005, F601, dsb).
+ */
+export function formatPlantDisplay(
+	plantRaw: unknown,
+	storageLocRaw?: unknown,
+	plantDescRaw?: unknown,
+): string {
+	if (typeof plantRaw === "string" && plantRaw.trim() && plantRaw !== "-") {
+		return plantRaw.trim();
+	}
+	if (plantRaw && typeof plantRaw === "object") {
+		const obj = plantRaw as Record<string, unknown>;
+		if (typeof obj.name === "string" && obj.name.trim() && obj.name !== "-") {
+			return obj.name.trim();
+		}
+		if (typeof obj.code === "string" && obj.code.trim() && obj.code !== "-") {
+			return obj.code.trim();
+		}
+		if (typeof obj.description === "string" && obj.description.trim() && obj.description !== "-") {
+			return obj.description.trim();
+		}
+	}
+	if (typeof plantDescRaw === "string" && plantDescRaw.trim() && plantDescRaw !== "-") {
+		return plantDescRaw.trim();
+	}
+	return "-";
+}
+
+/**
+ * Format teks kondisi alat tanpa underscore (misal: "RUSAK_RINGAN" -> "Rusak Ringan").
+ */
+export function formatCondition(val: unknown): string {
+	if (val == null) return "-";
+	let raw = "";
+	if (typeof val === "string") {
+		raw = val;
+	} else if (typeof val === "object") {
+		const obj = val as Record<string, unknown>;
+		raw = String(obj.name || obj.description || "");
+	}
+	raw = raw.replace(/_/g, " ").trim();
+	if (!raw || raw === "-") return "-";
+	return raw
+		.split(/\s+/)
+		.map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
+		.join(" ");
+}
+
+

@@ -75,10 +75,12 @@ export default function ManajemenInspeksiClient({
 	assets,
 	conditions,
 	requireActions,
+	plants = [],
 }: {
 	assets: Asset[];
 	conditions: Array<{ id: number; name: string }>;
 	requireActions: any[];
+	plants?: any[];
 }) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
@@ -90,13 +92,16 @@ export default function ManajemenInspeksiClient({
 	const [statusFilter, setStatusFilter] = useState("Semua");
 	const [dateFilter, setDateFilter] = useState("");
 
+	// Opsi filter Plant diambil langsung dari database master plants, digabung dengan data aset
 	const plantOptions = useMemo(() => {
-		const set = new Set<string>();
-		assets.forEach((a) => {
-			if (a.plant && a.plant !== "-") set.add(a.plant);
-		});
-		return Array.from(set).sort();
-	}, [assets]);
+		const dbPlants = (plants || [])
+			.map((p: any) => (typeof p === "string" ? p : p?.name || p?.code || ""))
+			.filter((v: string) => v && v !== "-");
+		const itemPlants = assets
+			.map((a) => a.plant)
+			.filter((v) => v && v !== "-");
+		return [...new Set([...dbPlants, ...itemPlants])].sort();
+	}, [plants, assets]);
 
 	// Modal & Form States
 	const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
@@ -953,7 +958,6 @@ export default function ManajemenInspeksiClient({
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[140px] cursor-pointer"
 						>
 							<option value="Semua">Semua Status</option>
-							<option value="ACTION_NEEDED">Perlu Tindakan</option>
 							<option value="REGISTERED">REGISTERED</option>
 							<option value="VALIDATED">VALIDATED</option>
 							<option value="NEED_REVISION">Perlu Revisi</option>
@@ -1022,6 +1026,15 @@ export default function ManajemenInspeksiClient({
 								<th
 									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center whitespace-nowrap"
 									title="Klik untuk mengurutkan"
+									onClick={() => handleSort("tanggalRegistrasi")}
+								>
+									<div className="flex items-center justify-center">
+										Tgl Registrasi {getSortIcon("tanggalRegistrasi")}
+									</div>
+								</th>
+								<th
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center whitespace-nowrap"
+									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("statusAset")}
 								>
 									<div className="flex items-center justify-center">
@@ -1045,7 +1058,7 @@ export default function ManajemenInspeksiClient({
 						<tbody className="bg-white">
 							{paginatedAssets.length === 0 ? (
 								<tr>
-									<td colSpan={7} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={8} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-7 h-7 text-gray-300 mb-2" />
 											{search ||
@@ -1108,6 +1121,9 @@ export default function ManajemenInspeksiClient({
 											</td>
 											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center">
 												{asset.jenisAlat}
+											</td>
+											<td className="px-3 py-3 text-[14px] text-gray-600 font-medium text-center whitespace-nowrap tabular-nums">
+												{asset.tanggalRegistrasi || "-"}
 											</td>
 											<td className="px-3 py-3 text-[15px] text-center">
 												<div className="flex justify-center">

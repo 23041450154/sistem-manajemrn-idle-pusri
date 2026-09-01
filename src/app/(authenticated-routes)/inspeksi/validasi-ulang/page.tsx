@@ -1,5 +1,15 @@
-import { getEquipments } from "@/action/api";
-import { statusName } from "@/lib/equipment-status";
+import {
+	getEquipments,
+	getPlants,
+	getStorageLocations,
+	getConditions,
+	getObjectTypes,
+} from "@/action/api";
+import {
+	statusName,
+	formatPlantDisplay,
+	formatCondition,
+} from "@/lib/equipment-status";
 import InspeksiValidasiUlangClient, {
 	type RevalidasiItem,
 } from "./validasi-ulang-client";
@@ -21,7 +31,26 @@ const INCLUDED_STATUSES = [
 /** Server Component — fetch + filter visibilitas + mapping murni di server.
  * Pengganti salinan filter magic-number status_id === 4/5/6/8. */
 export default async function ValidasiUlangPage() {
-	const data = await getEquipments().catch(() => []);
+	const [
+		data,
+		plantsData,
+		storageLocationsData,
+		conditionsData,
+		objTypesData,
+	] = await Promise.all([
+		getEquipments().catch(() => []),
+		getPlants().catch(() => []),
+		getStorageLocations().catch(() => []),
+		getConditions().catch(() => []),
+		getObjectTypes().catch(() => []),
+	]);
+
+	const plants = Array.isArray(plantsData) ? plantsData : [];
+	const storageLocations = Array.isArray(storageLocationsData)
+		? storageLocationsData
+		: [];
+	const conditions = Array.isArray(conditionsData) ? conditionsData : [];
+	const objectTypes = Array.isArray(objTypesData) ? objTypesData : [];
 
 	const items: RevalidasiItem[] = (Array.isArray(data) ? data : [])
 		.filter((item: any) => {
@@ -29,10 +58,11 @@ export default async function ValidasiUlangPage() {
 			return INCLUDED_STATUSES.includes(s);
 		})
 		.map((item: any): RevalidasiItem => {
-			const plantStr =
-				typeof item.plant === "string"
-					? item.plant
-					: item.plant?.name || item.plant?.description || "-";
+			const plantStr = formatPlantDisplay(
+				item.plant,
+				item.storage_location,
+				item.plant_description,
+			);
 			const storageStr =
 				typeof item.storage_location === "string"
 					? item.storage_location
@@ -41,10 +71,7 @@ export default async function ValidasiUlangPage() {
 				typeof item.object_type === "string"
 					? item.object_type
 					: item.object_type?.name || "-";
-			const conditionStr =
-				typeof item.condition === "string"
-					? item.condition
-					: item.condition?.name || "-";
+			const conditionStr = formatCondition(item.condition);
 
 			return {
 				id: String(item.id),
@@ -56,7 +83,7 @@ export default async function ValidasiUlangPage() {
 				tipeObjek: objectTypeStr,
 				plant: plantStr,
 				lokasiPenyimpanan: storageStr,
-				kondisiSebelumnya: conditionStr.replace(/_/g, " "),
+				kondisiSebelumnya: conditionStr,
 				tanggalSelesai: item.updated_at
 					? new Date(item.updated_at).toISOString().split("T")[0]
 					: item.created_at
@@ -84,5 +111,13 @@ export default async function ValidasiUlangPage() {
 		return (Number(b.id) || 0) - (Number(a.id) || 0);
 	});
 
-	return <InspeksiValidasiUlangClient items={items} />;
+	return (
+		<InspeksiValidasiUlangClient
+			items={items}
+			plants={plants}
+			storageLocations={storageLocations}
+			conditions={conditions}
+			objectTypes={objectTypes}
+		/>
+	);
 }

@@ -8,6 +8,7 @@ import {
 	EQUIPMENT_STATUS,
 	statusText,
 	statusName,
+	formatPlantDisplay,
 } from "@/lib/equipment-status";
 import {
 	Search,
@@ -45,6 +46,11 @@ export interface Equipment {
 	createdAt?: string;
 }
 
+interface RendalIdleClientProps {
+	equipments: Equipment[];
+	plants?: any[];
+}
+
 /** Client Component: interaksi (search/filter/sort/paginasi/modal) — data di-fetch Server Component. */
 
 /** path file_url dari backend bisa "uploads/.." tanpa leading slash. */
@@ -52,9 +58,8 @@ const toPhotoUrl = (photo: string) =>
 	photo.startsWith("http") || photo.startsWith("/") ? photo : `/${photo}`;
 export default function RendalIdleClient({
 	equipments,
-}: {
-	equipments: Equipment[];
-}) {
+	plants = [],
+}: RendalIdleClientProps) {
 	const router = useRouter();
 
 	// States untuk Filter & Pagination
@@ -85,13 +90,16 @@ export default function RendalIdleClient({
 		setCurrentPage(1);
 	}, [search, plantFilter, statusFilter]);
 
-	const plantOptions = useMemo(
-		() =>
-			[
-				...new Set(equipments.map((e) => e.plant).filter((v) => v && v !== "-")),
-			].sort(),
-		[equipments],
-	);
+	// Opsi filter Plant diambil langsung dari database master plants, digabung dengan data item
+	const plantOptions = useMemo(() => {
+		const dbPlants = (plants || [])
+			.map((p: any) => (typeof p === "string" ? p : p?.name || p?.code || ""))
+			.filter((v: string) => v && v !== "-");
+		const itemPlants = equipments
+			.map((e) => e.plant)
+			.filter((v) => v && v !== "-");
+		return [...new Set([...dbPlants, ...itemPlants])].sort();
+	}, [plants, equipments]);
 
 	const handleReset = () => {
 		setSearch("");

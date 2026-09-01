@@ -1,6 +1,7 @@
-import { getEquipments, getObjectTypes } from "@/action/api";
+import { getEquipments, getObjectTypes, getPlants } from "@/action/api";
 import {
 	EQUIPMENT_STATUS,
+	formatPlantDisplay,
 	statusGroup,
 	statusName,
 } from "@/lib/equipment-status";
@@ -22,10 +23,13 @@ export const dynamic = "force-dynamic";
 
 /** Server Component — fetch + mapping di server, interaksi/filter di client. */
 export default async function RendalIdlePage() {
-	const [data, objTypes] = await Promise.all([
+	const [data, objTypes, plantsData] = await Promise.all([
 		getEquipments().catch(() => []),
 		getObjectTypes().catch(() => []),
+		getPlants().catch(() => []),
 	]);
+
+	const plants = Array.isArray(plantsData) ? plantsData : [];
 
 	(Array.isArray(data) ? data : []).sort((a: any, b: any) => {
 		const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -58,14 +62,17 @@ export default async function RendalIdlePage() {
 				(typeof item.status === "string" ? item.status : item.status?.name) || "";
 			const statusStr = assetState(statusName(rawStatus));
 
+			const plantFormatted = formatPlantDisplay(
+				item.plant,
+				item.storage_location,
+				item.plant_description,
+			);
+
 			return {
 				id: item.id?.toString() || "-",
 				kodeAlat: item.equipment_code || item.kodeAlat || `EQ-${item.id}`,
 				namaAlat: item.name || item.namaAlat || "Equipment Tanpa Nama",
-				plant:
-					(typeof item.plant === "object" ? item.plant?.name : item.plant) ||
-					item.plant_description ||
-					"-",
+				plant: plantFormatted,
 				jenisAlat: objectTypeName,
 				tanggalRegistrasi: item.created_at
 					? new Date(item.created_at).toISOString().split("T")[0]
@@ -106,5 +113,5 @@ export default async function RendalIdlePage() {
 			};
 		});
 
-	return <RendalIdleClient equipments={equipments} />;
+	return <RendalIdleClient equipments={equipments} plants={plants} />;
 }

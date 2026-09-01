@@ -23,6 +23,8 @@ import {
 	Info,
 	LayoutGrid,
 	List,
+	Eye,
+	Wrench,
 } from "lucide-react";
 
 export interface EquipmentItem {
@@ -42,6 +44,9 @@ export interface EquipmentItem {
 	capacity: string;
 	notes: string;
 	created_at: string;
+	func_loc?: string;
+	idle_reason?: string;
+	estimated_reuse_value?: number;
 	/** Sudah dinormalisasi jadi URL absolut oleh getEquipments(). */
 	attachments?: { file_url?: string; fileUrl?: string; url?: string }[];
 }
@@ -667,15 +672,27 @@ export default function DaftarAsetClient({
 											{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
 										<td className="px-2.5 py-2.5 text-[13px] font-semibold text-[#0A356A] whitespace-nowrap">
-											{asset.equipment_code}
+											<button
+												type="button"
+												onClick={() => openDetailModal(asset)}
+												className="hover:underline text-left font-semibold text-[#0A356A] cursor-pointer"
+											>
+												{asset.equipment_code}
+											</button>
 										</td>
 										<td className="px-2.5 py-2.5 text-[13px] font-medium text-gray-900 w-[240px] max-w-[280px]">
-											<span
-												className="line-clamp-2 block leading-tight"
-												title={asset.name}
+											<button
+												type="button"
+												onClick={() => openDetailModal(asset)}
+												className="text-left hover:text-[#0A356A] transition-colors cursor-pointer block w-full"
 											>
-												{asset.name}
-											</span>
+												<span
+													className="line-clamp-2 block leading-tight font-medium"
+													title={asset.name}
+												>
+													{asset.name}
+												</span>
+											</button>
 										</td>
 										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap">
 											{asset.object_type_name}
@@ -718,13 +735,15 @@ export default function DaftarAsetClient({
 														<span>Permintaan</span>
 													</button>
 												) : (
-													<span
-														className="flex items-center gap-1 px-2.5 py-1 bg-gray-100 text-gray-400 text-[12px] font-semibold rounded-lg cursor-not-allowed"
-														title="Aset sedang dalam perbaikan, belum bisa diajukan"
+													<button
+														type="button"
+														onClick={() => openDetailModal(asset)}
+														className="flex items-center gap-1 px-2.5 py-1 bg-white border border-gray-200 text-gray-700 text-[12px] font-semibold rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors cursor-pointer"
+														title="Lihat Detail Peralatan"
 													>
-														<Send className="w-3 h-3" />
-														<span>Permintaan</span>
-													</span>
+														<Eye className="w-3 h-3" />
+														<span>Detail</span>
+													</button>
 												)}
 											</div>
 										</td>
@@ -808,6 +827,23 @@ export default function DaftarAsetClient({
 						</div>
 
 						<div className="p-6 max-h-[75vh] overflow-y-auto space-y-5">
+							{/* Alert jika dalam masa perbaikan */}
+							{selectedAsset.status_name === "REPAIR" && (
+								<div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-900">
+									<Wrench className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+									<div className="space-y-1">
+										<p className="text-[13px] font-bold">
+											Peralatan Sedang Dalam Masa Perbaikan (Maintenance)
+										</p>
+										<p className="text-[12px] text-amber-800 leading-relaxed">
+											Peralatan ini saat ini sedang dalam proses perbaikan teknis oleh Tim Pemeliharaan.
+											Unit Kerja belum dapat mengajukan permintaan aset ini sampai statusnya berubah menjadi{" "}
+											<strong>Siap Digunakan (READY TO USE)</strong> setelah melewati tahap validasi ulang.
+										</p>
+									</div>
+								</div>
+							)}
+
 							{/* Core Info Box */}
 							<div className="bg-gray-50 border border-gray-200 rounded-lg p-4 grid grid-cols-1 sm:grid-cols-2 gap-4 text-[13px]">
 								<div>
@@ -914,6 +950,66 @@ export default function DaftarAsetClient({
 									</div>
 								</div>
 							</div>
+
+							{/* Rincian Status Perbaikan */}
+							{selectedAsset.status_name === "REPAIR" && (
+								<div className="bg-amber-50/40 border border-amber-200 rounded-xl p-4 space-y-3">
+									<h3 className="font-bold text-amber-950 border-b border-amber-200 pb-1.5 text-[14px] flex items-center gap-2">
+										<Wrench className="w-4 h-4 text-amber-700" />
+										Informasi Status Perbaikan (Maintenance)
+									</h3>
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-[13px]">
+										<div>
+											<span className="text-gray-500 block text-[11px] font-semibold uppercase">
+												Status Pemeliharaan
+											</span>
+											<span className="inline-flex items-center px-2 py-0.5 mt-0.5 rounded-full text-[11px] font-bold bg-amber-100 text-amber-800 border border-amber-200">
+												Dalam Perbaikan (REPAIR)
+											</span>
+										</div>
+										<div>
+											<span className="text-gray-500 block text-[11px] font-semibold uppercase">
+												Tahap Alur Selanjutnya
+											</span>
+											<span className="font-medium text-gray-800 block mt-0.5">
+												Validasi Ulang ➔ Siap Digunakan
+											</span>
+										</div>
+										{selectedAsset.func_loc && selectedAsset.func_loc !== "-" && (
+											<div>
+												<span className="text-gray-500 block text-[11px] font-semibold uppercase">
+													Functional Location
+												</span>
+												<span className="font-medium text-gray-800 block mt-0.5">
+													{selectedAsset.func_loc}
+												</span>
+											</div>
+										)}
+										{selectedAsset.idle_reason && selectedAsset.idle_reason !== "-" && (
+											<div>
+												<span className="text-gray-500 block text-[11px] font-semibold uppercase">
+													Alasan Idle / Riwayat
+												</span>
+												<span className="font-medium text-gray-800 block mt-0.5">
+													{selectedAsset.idle_reason}
+												</span>
+											</div>
+										)}
+										<div className="sm:col-span-2">
+											<span className="text-gray-500 block text-[11px] font-semibold uppercase">
+												Catatan Teknis / Keterangan Perbaikan
+											</span>
+											<p className="mt-1 p-2.5 bg-white border border-amber-200/80 rounded-lg text-gray-800 italic text-[12px]">
+												&quot;
+												{selectedAsset.notes && selectedAsset.notes !== "-"
+													? selectedAsset.notes
+													: "Peralatan sedang dalam proses penanganan & perbaikan teknis oleh unit pemeliharaan."}
+												&quot;
+											</p>
+										</div>
+									</div>
+								</div>
+							)}
 
 							{/* Lampiran Files */}
 							<div className="space-y-2 pt-2">

@@ -32,12 +32,18 @@ export interface ValidasiUlangItem {
 	catatanInspeksi?: string;
 }
 
+interface RendalValidasiUlangClientProps {
+	items: ValidasiUlangItem[];
+	plants?: any[];
+	objectTypes?: any[];
+}
+
 /** Client Component: interaksi (tab/search/filter/sort/paginasi/approval) — data di-fetch Server Component. */
 export default function RendalValidasiUlangClient({
 	items,
-}: {
-	items: ValidasiUlangItem[];
-}) {
+	plants = [],
+	objectTypes = [],
+}: RendalValidasiUlangClientProps) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
 	const [searchInput, setSearchInput] = useState("");
@@ -67,19 +73,27 @@ export default function RendalValidasiUlangClient({
 		message: string;
 	} | null>(null);
 
-	const plantOptions = useMemo(
-		() =>
-			[...new Set(items.map((e) => e.plant).filter((v) => v && v !== "-"))].sort(),
-		[items],
-	);
+	// Opsi filter Plant dari database master data
+	const plantOptions = useMemo(() => {
+		const dbPlants = plants
+			.map((p: any) => p.name || p.description || p.plant_name || "")
+			.filter((v: string) => v && v !== "-");
+		const itemPlants = items
+			.map((e) => e.plant)
+			.filter((v) => v && v !== "-");
+		return [...new Set([...dbPlants, ...itemPlants])].sort();
+	}, [plants, items]);
 
-	const tipeObjekOptions = useMemo(
-		() =>
-			[
-				...new Set(items.map((e) => e.tipeObjek).filter((v) => v && v !== "-")),
-			].sort(),
-		[items],
-	);
+	// Opsi filter Tipe Objek dari database master data
+	const tipeObjekOptions = useMemo(() => {
+		const dbTypes = objectTypes
+			.map((o: any) => o.name || o.type_name || "")
+			.filter((v: string) => v && v !== "-");
+		const itemTypes = items
+			.map((e) => e.tipeObjek)
+			.filter((v) => v && v !== "-");
+		return [...new Set([...dbTypes, ...itemTypes])].sort();
+	}, [objectTypes, items]);
 
 	const kondisiOptions = useMemo(
 		() =>

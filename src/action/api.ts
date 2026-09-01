@@ -940,7 +940,7 @@ export async function getObjectTypes() {
 	}
 }
 
-/** Master alasan idle. Backend: GET /api/idle-reason -> { data: [{ id, reason_name, description }] } */
+/** Master daftar plant dari database. Backend: GET /api/plants -> { data: [{ id, name, description }] } */
 export async function getPlants() {
 	const cookieStore = await cookies();
 	const token = cookieStore.get("token")?.value;
@@ -952,7 +952,7 @@ export async function getPlants() {
 		});
 		if (!res.ok) return [];
 		const json = await res.json();
-		return json.data || [];
+		return json.data || (Array.isArray(json) ? json : []);
 	} catch (error) {
 		console.error("Fetch plants error:", error);
 		return [];

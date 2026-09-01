@@ -4,21 +4,30 @@ import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import {
 	CheckSquare,
-	TrendingUp,
+	Server,
 	Trash2,
 	ArrowUpRight,
-	Clock,
-	CheckCircle2,
-	AlertCircle,
 	Check,
 	ArrowRight,
 	ShieldCheck,
-	Coins,
-	FileText,
+	Layers,
 	ChevronRight,
+	CheckCircle2,
+	BarChart3,
 } from "lucide-react";
-import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
-import { statusGroup, statusBadgeStyle, statusText, rupiah } from "@/lib/equipment-status";
+import {
+	ResponsiveContainer,
+	PieChart,
+	Pie,
+	Cell,
+	Tooltip,
+	BarChart,
+	Bar,
+	XAxis,
+	YAxis,
+	CartesianGrid,
+} from "recharts";
+import { statusGroup, formatPlantDisplay } from "@/lib/equipment-status";
 
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -37,6 +46,7 @@ export default function ManajerDashboardClient({
 	disposals,
 }: ManajerDashboardClientProps) {
 	const [activeApprovalTab, setActiveApprovalTab] = useState<"validasi" | "reuse" | "scrap">("validasi");
+	const [chartTab, setChartTab] = useState<"persetujuan" | "plant">("persetujuan");
 
 	// 1. Hitung Pending Approvals
 	const pendingValidations = useMemo(() => {
@@ -62,29 +72,19 @@ export default function ManajerDashboardClient({
 		});
 	}, [disposals]);
 
-	// 2. Hitung Metrik Finansial & Valuasi
+	// 2. Hitung Metrik Status Operasional & Kesiapan Aset
 	const {
-		totalBookValue,
-		totalEstimatedReuseValue,
-		totalCostAvoidance,
 		readyCount,
 		dalamPerbaikanCount,
 		menungguValidasiCount,
 		scrapCount,
 	} = useMemo(() => {
-		let bookVal = 0;
-		let reuseVal = 0;
 		let ready = 0;
 		let repair = 0;
 		let pending = 0;
 		let scrap = 0;
 
 		equipments.forEach((e: any) => {
-			const bv = Number(e.book_value || e.bookValue || e.original_value || 0);
-			const rv = Number(e.estimated_reuse_value || e.estimatedReuseValue || 0);
-			bookVal += bv;
-			reuseVal += rv;
-
 			const group = statusGroup(e);
 			if (group === "ready") ready++;
 			else if (group === "repair") repair++;
@@ -92,55 +92,135 @@ export default function ManajerDashboardClient({
 			else pending++;
 		});
 
-		// Cost avoidance dari reuse requests yang disetujui + estimasi nilai reuse aset siap pakai
-		let avoidanceFromReuseReqs = 0;
-		reuseRequests.forEach((r: any) => {
-			const st = (r.approval_status || r.status || "").toUpperCase();
-			if (st === "APPROVED" || st === "DISETUJUI") {
-				avoidanceFromReuseReqs += Number(r.estimated_cost_avoidance || 0);
-			}
-		});
-
-		// Jika belum ada request approved, gunakan total estimasi reuse value aset ready & reused sebagai basis
-		const calculatedAvoidance =
-			avoidanceFromReuseReqs > 0
-				? avoidanceFromReuseReqs
-				: equipments
-						.filter((e: any) => {
-							const grp = statusGroup(e);
-							return grp === "ready";
-						})
-						.reduce(
-							(sum: number, e: any) =>
-								sum + Number(e.estimated_reuse_value || e.estimatedReuseValue || 0),
-							0,
-						);
-
 		return {
-			totalBookValue: bookVal,
-			totalEstimatedReuseValue: reuseVal,
-			totalCostAvoidance: calculatedAvoidance,
 			readyCount: ready,
 			dalamPerbaikanCount: repair,
 			menungguValidasiCount: pending,
 			scrapCount: scrap,
 		};
-	}, [equipments, reuseRequests]);
+	}, [equipments]);
 
-	// 3. Donut Chart Komposisi Nilai Aset
-	const pieData = useMemo(() => {
+	const totalUnit = equipments.length;
+
+	// Data Grafik 1: Rekapitulasi Alur Persetujuan Manajer
+	const approvalBarData = useMemo(() => {
+		const valApproved = validationApprovals.filter(
+			(a: any) => (a.approval_status || "").toUpperCase() === "APPROVED",
+		).length;
+		const valRejected = validationApprovals.filter((a: any) => {
+			const st = (a.approval_status || "").toUpperCase();
+			return st === "REJECTED" || st === "REVISION_REQUIRED" || st === "REVISION";
+		}).length;
+
+		const reuseApproved = reuseRequests.filter((r: any) => {
+			const st = (r.approval_status || r.status || "").toUpperCase();
+			return st === "APPROVED" || st === "DISETUJUI";
+		}).length;
+		const reuseRejected = reuseRequests.filter((r: any) => {
+			const st = (r.approval_status || r.status || "").toUpperCase();
+			return st === "REJECTED" || st === "DITOLAK";
+		}).length;
+
+		const scrapApproved = disposals.filter((d: any) => {
+			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
+			return st === "APPROVED" || st === "DISETUJUI";
+		}).length;
+		const scrapRejected = disposals.filter((d: any) => {
+			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
+			return st === "REJECTED" || st === "DITOLAK";
+		}).length;
+
+		return [
+			{
+				name: "Validasi",
+				pending: pendingValidations.length,
+				approved: valApproved,
+				rejected: valRejected,
+				total: validationApprovals.length,
+			},
+			{
+				name: "Peminjaman",
+				pending: pendingReuses.length,
+				approved: reuseApproved,
+				rejected: reuseRejected,
+				total: reuseRequests.length,
+			},
+			{
+				name: "Scrap",
+				pending: pendingScraps.length,
+				approved: scrapApproved,
+				rejected: scrapRejected,
+				total: disposals.length,
+			},
+		];
+	}, [validationApprovals, reuseRequests, disposals, pendingValidations, pendingReuses, pendingScraps]);
+
+	// Data Grafik 2: Sebaran Aset Idle per Plant
+	const plantBarData = useMemo(() => {
+		const map = new Map<string, number>();
+		equipments.forEach((e: any) => {
+			const plantName = formatPlantDisplay(
+				e.plant,
+				e.storage_location,
+				e.plant_description,
+			);
+			if (plantName && plantName !== "-") {
+				map.set(plantName, (map.get(plantName) ?? 0) + 1);
+			}
+		});
+		return [...map.entries()]
+			.map(([name, count]) => ({ name, count }))
+			.sort((a, b) => b.count - a.count)
+			.slice(0, 6);
+	}, [equipments]);
+
+	// 3. Donut Chart: Status Keputusan Persetujuan Manajerial
+	const { totalApprovalsCount, pieData } = useMemo(() => {
+		let approved = 0;
+		let pending = 0;
+		let rejected = 0;
+
+		// Validation
+		validationApprovals.forEach((a: any) => {
+			const st = (a.approval_status || "").toUpperCase();
+			if (st === "APPROVED" || st === "DISETUJUI") approved++;
+			else if (st === "REJECTED" || st === "REVISION_REQUIRED" || st === "REVISION") rejected++;
+			else pending++;
+		});
+
+		// Reuse
+		reuseRequests.forEach((r: any) => {
+			const st = (r.approval_status || r.status || "").toUpperCase();
+			if (st === "APPROVED" || st === "DISETUJUI") approved++;
+			else if (st === "REJECTED" || st === "DITOLAK") rejected++;
+			else pending++;
+		});
+
+		// Disposal / Scrap
+		disposals.forEach((d: any) => {
+			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
+			if (st === "APPROVED" || st === "DISETUJUI") approved++;
+			else if (st === "REJECTED" || st === "DITOLAK") rejected++;
+			else pending++;
+		});
+
+		const total = approved + pending + rejected;
+
 		const data = [
-			{ name: "Siap Re-use / Idle", value: readyCount, color: "#059669" },
-			{ name: "Dalam Perbaikan", value: dalamPerbaikanCount, color: "#B45309" },
-			{ name: "Menunggu Approval", value: menungguValidasiCount, color: "#0556B3" },
-			{ name: "Rekomendasi Scrap", value: scrapCount, color: "#DC2626" },
+			{ name: "Sudah Disetujui", value: approved, color: "#059669" },
+			{ name: "Menunggu Review", value: pending, color: "#0556B3" },
+			{ name: "Ditolak / Revisi", value: rejected, color: "#DC2626" },
 		].filter((item) => item.value > 0);
 
 		if (data.length === 0) {
-			data.push({ name: "Belum Ada Data", value: 1, color: "#E6E8EA" });
+			data.push({ name: "Belum Ada Pengajuan", value: 1, color: "#E6E8EA" });
 		}
-		return data;
-	}, [readyCount, dalamPerbaikanCount, menungguValidasiCount, scrapCount]);
+
+		return {
+			totalApprovalsCount: total,
+			pieData: data,
+		};
+	}, [validationApprovals, reuseRequests, disposals]);
 
 	// 4. Log Keputusan Terkini
 	const recentDecisions = useMemo(() => {
@@ -170,32 +250,34 @@ export default function ManajerDashboardClient({
 		return list.slice(0, 4);
 	}, [validationApprovals, reuseRequests]);
 
-	// KPI Cards
+	const totalPendingApprovals =
+		pendingValidations.length + pendingReuses.length + pendingScraps.length;
+
+	// KPI Cards specification (100% Manajerial Approvals Governance)
 	const kpis = [
 		{
-			label: "Total Cost Avoidance",
-			value: rupiah(totalCostAvoidance),
-			caption: "Penghematan pengadaan baru",
-			rule: "#059669",
-			icon: TrendingUp,
-			isCurrency: true,
-		},
-		{
-			label: "Approval Validasi",
-			value: pendingValidations.length.toString(),
-			caption: "Menunggu approval inspeksi",
-			rule: "#0556B3",
+			label: "Total Antrean Persetujuan",
+			value: totalPendingApprovals.toString(),
+			caption: "Menunggu review & keputusan",
+			rule: "#0A356A",
 			icon: CheckSquare,
 		},
 		{
-			label: "Approval Peminjaman",
+			label: "Persetujuan Validasi",
+			value: pendingValidations.length.toString(),
+			caption: "Menunggu approval inspeksi",
+			rule: "#0556B3",
+			icon: Server,
+		},
+		{
+			label: "Persetujuan Peminjaman",
 			value: pendingReuses.length.toString(),
 			caption: "Permohonan reuse unit kerja",
 			rule: "#B45309",
 			icon: ArrowUpRight,
 		},
 		{
-			label: "Approval Scrap & Disposal",
+			label: "Persetujuan Scrap & Disposal",
 			value: pendingScraps.length.toString(),
 			caption: "Usulan penghapusan buku",
 			rule: "#DC2626",
@@ -217,11 +299,7 @@ export default function ManajerDashboardClient({
 							<p className="text-[12px] font-medium text-[#64748B] truncate">
 								{kpi.label}
 							</p>
-							<p
-								className={`${
-									kpi.isCurrency ? "text-[22px] lg:text-[24px]" : "text-[28px]"
-								} leading-none font-semibold text-[#0F172A] tabular-nums mt-2 tracking-[-0.02em]`}
-							>
+							<p className="text-[28px] leading-none font-semibold text-[#0F172A] tabular-nums mt-2 tracking-[-0.02em]">
 								{kpi.value}
 							</p>
 							<p className="text-[12px] text-[#64748B] mt-1.5">{kpi.caption}</p>
@@ -307,6 +385,7 @@ export default function ManajerDashboardClient({
 											const reqDate = item.request_date
 												? new Date(item.request_date).toISOString().split("T")[0]
 												: "-";
+											const category = item.object_type_name || item.equipment?.object_type?.name || "-";
 
 											return (
 												<div
@@ -324,7 +403,7 @@ export default function ManajerDashboardClient({
 															</span>
 														</div>
 														<p className="text-[12px] text-[#64748B] mt-0.5">
-															Plant: {plant} • Diajukan: {reqDate} • No: {item.request_number || `REQ-${item.id}`}
+															Plant: {plant} • Kategori: {category} • Diajukan: {reqDate} • No: {item.request_number || `REQ-${item.id}`}
 														</p>
 													</div>
 													<Link
@@ -366,7 +445,10 @@ export default function ManajerDashboardClient({
 											const code = eq.equipment_code || item.equipment_code || "-";
 											const name = eq.name || item.equipment_name || "Equipment";
 											const pemohon = item.requested_by_user?.name || item.requesting_unit || "Unit Operasi";
-											const avoidance = Number(item.estimated_cost_avoidance) || 0;
+											const targetPlant = item.target_plant || item.installation_location || eq.plant?.name || "-";
+											const reqDate = item.created_at
+												? new Date(item.created_at).toISOString().split("T")[0]
+												: "-";
 
 											return (
 												<div
@@ -384,10 +466,7 @@ export default function ManajerDashboardClient({
 															</span>
 														</div>
 														<p className="text-[12px] text-[#64748B] mt-0.5">
-															Pemohon: {pemohon} • Estimasi Cost Avoidance:{" "}
-															<strong className="text-[#059669] font-bold">
-																{avoidance > 0 ? rupiah(avoidance) : "-"}
-															</strong>
+															Pemohon: {pemohon} • Lokasi/Plant: {targetPlant} • Diajukan: {reqDate} • No: {item.request_number || `REQ-${item.id}`}
 														</p>
 													</div>
 													<Link
@@ -429,7 +508,7 @@ export default function ManajerDashboardClient({
 											const code = eq.equipment_code || item.equipment_code || "-";
 											const name = eq.name || item.equipment_name || "Equipment";
 											const method = item.disposal_method?.name || item.disposal_method || "Scrap";
-											const scrapVal = Number(item.scrap_value || eq.book_value || 0);
+											const reason = item.reason || item.justification || "Kondisi rusak berat & tidak ekonomis";
 
 											return (
 												<div
@@ -447,7 +526,7 @@ export default function ManajerDashboardClient({
 															</span>
 														</div>
 														<p className="text-[12px] text-[#64748B] mt-0.5">
-															Metode: {method} • Nilai: {scrapVal > 0 ? rupiah(scrapVal) : "-"} • Alasan: {item.reason || "Rusak berat"}
+															Metode: {method} • Alasan: {reason} • No: {item.disposal_number || `DSP-${item.id}`}
 														</p>
 													</div>
 													<Link
@@ -475,50 +554,201 @@ export default function ManajerDashboardClient({
 						)}
 					</div>
 
-					{/* Ringkasan Valuasi Finansial */}
+					{/* Grafik Monitoring Persetujuan Manajerial & Sebaran Aset */}
 					<div className="bg-white rounded border border-[#E6E8EA] p-5">
-						<h3 className="text-[14px] font-semibold text-[#0F172A] mb-3 flex items-center gap-2">
-							<Coins className="w-4 h-4 text-[#059669]" />
-							Valuasi Finansial & Potensi Aset Idle
-						</h3>
-						<div className="grid grid-cols-1 sm:grid-cols-3 gap-4 border-t border-[#E6E8EA] pt-3">
-							<div className="p-3 bg-gray-50 rounded border border-[#E6E8EA]">
-								<p className="text-[11px] font-medium text-[#64748B]">Total Nilai Buku (Book Value)</p>
-								<p className="text-[16px] font-bold text-[#0F172A] mt-1 tabular-nums">
-									{rupiah(totalBookValue)}
+						<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+							<div>
+								<h3 className="text-[14px] font-semibold text-[#0F172A] flex items-center gap-2">
+									<BarChart3 className="w-4 h-4 text-[#0A356A]" />
+									{chartTab === "persetujuan"
+										? "Rekapitulasi Alur Persetujuan Manajerial"
+										: "Sebaran Inventaris Aset per Plant"}
+								</h3>
+								<p className="text-[12px] text-[#64748B] mt-0.5">
+									{chartTab === "persetujuan"
+										? "Perbandingan volume pengajuan persetujuan yang ditangani Manajer Rendal"
+										: "Distribusi lokasi fisik aset idle terdaftar di pabrik operasional"}
 								</p>
-								<p className="text-[10px] text-[#64748B] mt-0.5">Nilai aset tercatat di neraca</p>
 							</div>
 
-							<div className="p-3 bg-blue-50/60 rounded border border-blue-100">
-								<p className="text-[11px] font-medium text-blue-800">Estimasi Nilai Pakai Ulang</p>
-								<p className="text-[16px] font-bold text-[#0A356A] mt-1 tabular-nums">
-									{rupiah(totalEstimatedReuseValue)}
-								</p>
-								<p className="text-[10px] text-blue-600 mt-0.5">Potensi recovery reuse</p>
+							{/* Chart Tab selector */}
+							<div className="inline-flex rounded-lg border border-[#E6E8EA] bg-gray-50/70 p-0.5 self-start sm:self-auto">
+								<button
+									type="button"
+									onClick={() => setChartTab("persetujuan")}
+									className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors ${
+										chartTab === "persetujuan"
+											? "bg-white text-[#0A356A] shadow-sm"
+											: "text-[#64748B] hover:text-[#0F172A]"
+									}`}
+								>
+									Alur Persetujuan
+								</button>
+								<button
+									type="button"
+									onClick={() => setChartTab("plant")}
+									className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors ${
+										chartTab === "plant"
+											? "bg-white text-[#0A356A] shadow-sm"
+											: "text-[#64748B] hover:text-[#0F172A]"
+									}`}
+								>
+									Sebaran Plant
+								</button>
 							</div>
+						</div>
 
-							<div className="p-3 bg-emerald-50/60 rounded border border-emerald-100">
-								<p className="text-[11px] font-medium text-emerald-800">Realisasi Cost Avoidance</p>
-								<p className="text-[16px] font-bold text-[#059669] mt-1 tabular-nums">
-									{rupiah(totalCostAvoidance)}
-								</p>
-								<p className="text-[10px] text-emerald-600 mt-0.5">Efisiensi pengadaan riil</p>
-							</div>
+						<div className="border-t border-[#E6E8EA] pt-4">
+							{chartTab === "persetujuan" ? (
+								<div>
+									<div className="w-full h-52">
+										<ResponsiveContainer width="100%" height="100%">
+											<BarChart
+												data={approvalBarData}
+												margin={{ top: 8, right: 12, left: -20, bottom: 0 }}
+											>
+												<CartesianGrid
+													strokeDasharray="3 3"
+													stroke="#E6E8EA"
+													vertical={false}
+												/>
+												<XAxis
+													dataKey="name"
+													tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+													tickLine={false}
+													axisLine={{ stroke: "#E6E8EA" }}
+												/>
+												<YAxis
+													tick={{ fontSize: 12, fill: "#64748B" }}
+													tickLine={false}
+													axisLine={false}
+													allowDecimals={false}
+													width={32}
+												/>
+												<Tooltip
+													contentStyle={{
+														fontSize: "12px",
+														borderRadius: "4px",
+														border: "1px solid #E6E8EA",
+														boxShadow: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
+													}}
+												/>
+												<Bar
+													dataKey="pending"
+													name="Menunggu Review"
+													fill="#0556B3"
+													radius={[3, 3, 0, 0]}
+													maxBarSize={28}
+												/>
+												<Bar
+													dataKey="approved"
+													name="Disetujui"
+													fill="#059669"
+													radius={[3, 3, 0, 0]}
+													maxBarSize={28}
+												/>
+												<Bar
+													dataKey="rejected"
+													name="Ditolak / Revisi"
+													fill="#DC2626"
+													radius={[3, 3, 0, 0]}
+													maxBarSize={28}
+												/>
+											</BarChart>
+										</ResponsiveContainer>
+									</div>
+
+									{/* Legend & mini stats */}
+									<div className="mt-3 pt-3 border-t border-[#E6E8EA] flex flex-wrap items-center justify-between gap-3 text-[12px]">
+										<div className="flex items-center gap-4">
+											<span className="flex items-center gap-1.5 text-[#0556B3] font-medium">
+												<span className="w-2.5 h-2.5 rounded-sm bg-[#0556B3]" />
+												Menunggu ({pendingValidations.length + pendingReuses.length + pendingScraps.length})
+											</span>
+											<span className="flex items-center gap-1.5 text-[#059669] font-medium">
+												<span className="w-2.5 h-2.5 rounded-sm bg-[#059669]" />
+												Disetujui ({approvalBarData.reduce((s, d) => s + d.approved, 0)})
+											</span>
+											<span className="flex items-center gap-1.5 text-[#DC2626] font-medium">
+												<span className="w-2.5 h-2.5 rounded-sm bg-[#DC2626]" />
+												Ditolak ({approvalBarData.reduce((s, d) => s + d.rejected, 0)})
+											</span>
+										</div>
+										<span className="text-[#64748B] text-[11px]">
+											Total {validationApprovals.length + reuseRequests.length + disposals.length} pengajuan tercatat
+										</span>
+									</div>
+								</div>
+							) : (
+								<div>
+									<div className="w-full h-52">
+										<ResponsiveContainer width="100%" height="100%">
+											<BarChart
+												data={plantBarData}
+												margin={{ top: 8, right: 12, left: -20, bottom: 0 }}
+											>
+												<CartesianGrid
+													strokeDasharray="3 3"
+													stroke="#E6E8EA"
+													vertical={false}
+												/>
+												<XAxis
+													dataKey="name"
+													tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+													tickLine={false}
+													axisLine={{ stroke: "#E6E8EA" }}
+												/>
+												<YAxis
+													tick={{ fontSize: 12, fill: "#64748B" }}
+													tickLine={false}
+													axisLine={false}
+													allowDecimals={false}
+													width={32}
+												/>
+												<Tooltip
+													contentStyle={{
+														fontSize: "12px",
+														borderRadius: "4px",
+														border: "1px solid #E6E8EA",
+														boxShadow: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
+													}}
+													formatter={(val) => [`${val} Unit`, "Aset Idle"]}
+												/>
+												<Bar
+													dataKey="count"
+													name="Aset Idle"
+													fill="#0A356A"
+													radius={[3, 3, 0, 0]}
+													maxBarSize={32}
+												/>
+											</BarChart>
+										</ResponsiveContainer>
+									</div>
+
+									<div className="mt-3 pt-3 border-t border-[#E6E8EA] flex items-center justify-between text-[12px]">
+										<span className="text-[#64748B]">
+											Menampilkan {plantBarData.length} plant dengan aset idle terbanyak
+										</span>
+										<span className="font-semibold text-[#0F172A] tabular-nums">
+											{totalUnit} Unit Terdaftar
+										</span>
+									</div>
+								</div>
+							)}
 						</div>
 					</div>
 				</div>
 
 				{/* Right Column (1 col) */}
 				<div className="flex flex-col gap-6">
-					{/* Donut Status Valuasi */}
+					{/* Donut Status Persetujuan Manajerial */}
 					<div className="bg-white rounded border border-[#E6E8EA] p-5 flex flex-col justify-between">
 						<div>
 							<h3 className="text-[14px] font-semibold text-[#0F172A]">
-								Komposisi Kelayakan Aset
+								Status Persetujuan Manajerial
 							</h3>
 							<p className="text-[11px] text-[#64748B] mt-0.5">
-								Sebaran aset idle menurut kesiapan utilisasi
+								Distribusi status keputusan seluruh pengajuan masuk
 							</p>
 						</div>
 
@@ -546,16 +776,16 @@ export default function ManajerDashboardClient({
 											boxShadow: "0 2px 4px rgba(0,0,0,0.05)",
 											fontSize: "12px",
 										}}
-										formatter={(value) => `${value} Unit`}
+										formatter={(value) => `${value} Pengajuan`}
 									/>
 								</PieChart>
 							</ResponsiveContainer>
 							<div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
 								<span className="text-2xl font-bold text-[#0F172A] tabular-nums">
-									{equipments.length}
+									{totalApprovalsCount}
 								</span>
 								<span className="text-[9px] font-semibold text-[#64748B] uppercase tracking-wider">
-									Total Unit
+									Total Pengajuan
 								</span>
 							</div>
 						</div>
@@ -574,9 +804,9 @@ export default function ManajerDashboardClient({
 										<span className="text-[#475569] font-medium">{item.name}</span>
 									</div>
 									<span className="font-semibold text-[#0F172A] tabular-nums bg-gray-50 px-2 py-0.5 rounded border border-[#E6E8EA] text-[11px]">
-										{item.value} Unit (
-										{equipments.length > 0
-											? Math.round((item.value / equipments.length) * 100)
+										{item.value} Pengajuan (
+										{totalApprovalsCount > 0
+											? Math.round((item.value / totalApprovalsCount) * 100)
 											: 0}
 										%)
 									</span>

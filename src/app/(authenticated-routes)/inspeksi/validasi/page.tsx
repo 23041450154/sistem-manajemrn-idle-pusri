@@ -3,10 +3,16 @@ import {
 	getConditions,
 	getEquipments,
 	getObjectTypes,
+	getPlants,
 	getRequireActions,
 } from "@/action/api";
 import { getCurrentUserAction } from "@/action/auth";
-import { EQUIPMENT_STATUS, statusName } from "@/lib/equipment-status";
+import {
+	EQUIPMENT_STATUS,
+	statusName,
+	formatPlantDisplay,
+	formatCondition,
+} from "@/lib/equipment-status";
 import ManajemenInspeksiClient, { type Asset } from "./validasi-client";
 
 /* ponytail: payload API legacy tetap untyped sampai backend mengekspor DTO bersama. */
@@ -52,6 +58,7 @@ export default async function ValidasiPage() {
 		user,
 		conditionsData,
 		requireActionsData,
+		plantsData,
 	] = await Promise.all([
 		getEquipments().catch(() => []),
 		getObjectTypes().catch(() => []),
@@ -59,6 +66,7 @@ export default async function ValidasiPage() {
 		getCurrentUserAction().catch(() => null),
 		getConditions().catch(() => []),
 		getRequireActions().catch(() => []),
+		getPlants().catch(() => []),
 	]);
 
 	const conditions = Array.isArray(conditionsData) ? conditionsData : [];
@@ -68,6 +76,7 @@ export default async function ValidasiPage() {
 	const approvalsData = Array.isArray(approvalsRes)
 		? approvalsRes
 		: approvalsRes?.data || [];
+	const plants = Array.isArray(plantsData) ? plantsData : [];
 	const currentUserNPP = user?.user?.npp || "NPP2304145";
 
 	const mappedData = (Array.isArray(data) ? data : []).map((item: any) => {
@@ -90,7 +99,11 @@ export default async function ValidasiPage() {
 			id: item.id?.toString() || "-",
 			kodeAlat: item.equipment_code,
 			namaAlat: item.name,
-			plant: item.plant?.name || "-",
+			plant: formatPlantDisplay(
+				item.plant,
+				item.storage_location,
+				item.plant_description,
+			),
 			jenisAlat: objectTypeName,
 			tanggalRegistrasi: item.created_at
 				? new Date(item.created_at).toISOString().split("T")[0]
@@ -118,18 +131,7 @@ export default async function ValidasiPage() {
 			nilaiPerolehan: item.original_value
 				? `Rp ${Number(item.original_value).toLocaleString("id-ID")}`
 				: "Rp 0",
-			kondisi: (() => {
-				const c =
-					typeof item.condition === "string" ? item.condition : item.condition?.name;
-				if (!c) return "-";
-				return c
-					.replace(/_/g, " ")
-					.replace(
-						/\w\S*/g,
-						(txt: string) =>
-							txt.charAt(0).toUpperCase() + txt.substr(1).toLowerCase(),
-					);
-			})(),
+			kondisi: formatCondition(item.condition),
 			pemohon: (() => {
 				const p = item.created_by_npp || currentUserNPP;
 				return /^\d/.test(p) ? `NPP${p}` : p;
@@ -197,6 +199,7 @@ export default async function ValidasiPage() {
 			assets={mappedWithApproval}
 			conditions={conditions}
 			requireActions={requireActions}
+			plants={plants}
 		/>
 	);
 }

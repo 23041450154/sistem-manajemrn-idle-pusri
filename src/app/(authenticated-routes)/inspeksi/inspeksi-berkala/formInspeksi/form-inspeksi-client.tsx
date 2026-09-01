@@ -368,10 +368,34 @@ export default function FormInspeksiClient({
 					</div>
 					<div>
 						<p className="text-[11px] font-bold text-gray-500 mb-1">
+							Kondisi Fisik
+						</p>
+						<p className="text-[14px] font-medium text-gray-700">
+							{(typeof equipment?.condition === "object"
+								? equipment?.condition?.name
+								: equipment?.condition) || "BAIK"}
+						</p>
+					</div>
+					<div>
+						<p className="text-[11px] font-bold text-gray-500 mb-1">
 							Tanggal Inspeksi
 						</p>
 						<p className="text-[14px] font-medium text-gray-700">
 							{new Date().toISOString().split("T")[0]}
+						</p>
+					</div>
+
+					{/* Catatan Aset / Catatan Sebelumnya */}
+					<div className="col-span-2 md:col-span-4 mt-1 p-3 bg-blue-50/70 border border-blue-100 rounded text-[13px]">
+						<p className="text-[11px] font-bold text-blue-900 uppercase tracking-wide mb-1">
+							Catatan Aset / Keterangan Sebelumnya:
+						</p>
+						<p className="text-gray-800 italic">
+							{equipment?.notes && equipment?.notes !== "-"
+								? `"${equipment.notes}"`
+								: equipment?.description && equipment?.description !== "-"
+									? `"${equipment.description}"`
+									: "-"}
 						</p>
 					</div>
 				</div>

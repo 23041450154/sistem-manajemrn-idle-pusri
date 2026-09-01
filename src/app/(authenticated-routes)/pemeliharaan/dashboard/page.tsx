@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { getEquipments, getEquipmentRepairs } from "@/action/api";
+import { getEquipments } from "@/action/api";
 import {
 	Loader2,
 	RefreshCw,
@@ -11,18 +11,10 @@ import {
 	Check,
 } from "lucide-react";
 import {
-	ResponsiveContainer,
-	BarChart,
-	Bar,
-	XAxis,
-	YAxis,
-	CartesianGrid,
-	Tooltip,
-} from "recharts";
-import {
 	repairFlowStatus,
 	REPAIR_STATUS_LABEL,
-	rupiah,
+	formatPlantDisplay,
+	formatCondition,
 	type RepairFlowStatus,
 } from "@/lib/equipment-status";
 import { buttonVariants } from "@/components/ui/button";
@@ -36,16 +28,9 @@ interface Equipment {
 	plant?: { id: number; name: string } | string;
 	plant_description?: string;
 	storage_location?: { id: number; name: string } | string;
+	notes?: string;
 	updated_at?: string;
 	created_at?: string;
-}
-
-interface Repair {
-	id: number;
-	equipment_id?: number;
-	actual_cost?: number;
-	start_at?: string;
-	end_at?: string;
 }
 
 function str(val: unknown): string {
@@ -88,47 +73,18 @@ const STAGE_OWNER: Record<RepairFlowStatus, string> = {
 	SCRAP: "Rendal Pemeliharaan",
 };
 
-/** DESIGN.md KPI card: 2px left rule in state hue, value-dominant, no icon tile, no gradient. */
-function KpiCard({
-	label,
-	value,
-	caption,
-	rule,
-}: {
-	label: string;
-	value: string;
-	caption: string;
-	rule: string;
-}) {
-	return (
-		<div
-			className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2"
-			style={{ borderLeftColor: rule }}
-		>
-			<p className="text-[12px] font-medium text-[#64748B]">{label}</p>
-			<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-1">
-				{value}
-			</p>
-			<p className="text-[12px] text-[#64748B] mt-1">{caption}</p>
-		</div>
-	);
-}
-
 export default function PemeliharaanDashboardPage() {
 	const [equipments, setEquipments] = useState<Equipment[]>([]);
-	const [repairs, setRepairs] = useState<Repair[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 
 	const loadData = async () => {
 		setIsLoading(true);
 		try {
-			const [eq, rp] = await Promise.all([getEquipments(), getEquipmentRepairs()]);
+			const eq = await getEquipments();
 			setEquipments(Array.isArray(eq) ? eq : []);
-			setRepairs(Array.isArray(rp) ? rp : []);
 		} catch (err) {
 			console.error("Failed to load dashboard data:", err);
 			setEquipments([]);
-			setRepairs([]);
 		} finally {
 			setIsLoading(false);
 		}
@@ -158,19 +114,6 @@ export default function PemeliharaanDashboardPage() {
 		};
 	}, [equipments]);
 
-	// Biaya nyata dari tabel repair — equipment tidak punya kolom actual_cost.
-	const costSummary = useMemo(() => {
-		const total = repairs.reduce(
-			(sum, r) => sum + (Number(r.actual_cost) || 0),
-			0,
-		);
-		return {
-			total,
-			count: repairs.length,
-			avg: repairs.length ? total / repairs.length : 0,
-		};
-	}, [repairs]);
-
 	// Alur perbaikan itu berurutan, jadi dirender sebagai rail terurut —
 	// bukan donut, yang justru membuang urutan tahapnya.
 	const stages = useMemo(() => {
@@ -193,19 +136,6 @@ export default function PemeliharaanDashboardPage() {
 		() => stages.reduce((sum, s) => sum + s.count, 0),
 		[stages],
 	);
-
-	const plantBarData = useMemo(() => {
-		const map = new Map<string, number>();
-		for (const eq of groups.antrean) {
-			const plant =
-				str(eq.plant) !== "-" ? str(eq.plant) : str(eq.plant_description);
-			map.set(plant, (map.get(plant) ?? 0) + 1);
-		}
-		return [...map.entries()]
-			.map(([plant, count]) => ({ plant, count }))
-			.sort((a, b) => b.count - a.count)
-			.slice(0, 6);
-	}, [groups.antrean]);
 
 	const recentActivity = useMemo(() => {
 		return equipments
@@ -258,34 +188,6 @@ export default function PemeliharaanDashboardPage() {
 						<ArrowRight className="w-4 h-4" aria-hidden="true" />
 					</Link>
 				</div>
-			</div>
-
-			{/* KPI strip */}
-			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-				<KpiCard
-					label="Antrean perbaikan"
-					value={String(groups.antrean.length)}
-					caption="Milik Pemeliharaan, belum dikerjakan"
-					rule={STATUS_COLOR.REPAIR}
-				/>
-				<KpiCard
-					label="Menunggu validasi ulang"
-					value={String(groups.menungguValidasi.length)}
-					caption="Sudah diperbaiki, di Inspeksi Teknik"
-					rule={STATUS_COLOR.REPAIR_COMPLETED}
-				/>
-				<KpiCard
-					label="Siap digunakan"
-					value={String(groups.selesai.length)}
-					caption="Lolos validasi dan persetujuan Rendal"
-					rule={STATUS_COLOR.READY_TO_USE}
-				/>
-				<KpiCard
-					label="Biaya perbaikan tercatat"
-					value={rupiah(costSummary.total)}
-					caption={`${costSummary.count} pekerjaan, rata-rata ${rupiah(costSummary.avg)}`}
-					rule="#475569"
-				/>
 			</div>
 
 			{/* Stage rail — urutan tahap adalah informasinya, jadi dirender berurutan. */}
@@ -348,91 +250,110 @@ export default function PemeliharaanDashboardPage() {
 						<div className="px-5 py-4 border-b border-[#E6E8EA] flex items-center justify-between gap-2">
 							<div>
 								<h2 className="text-[14px] font-semibold text-[#0F172A]">
-									Antrean Perbaikan per Plant
+									Antrean Perbaikan Siap Dikerjakan
 								</h2>
 								<p className="text-[12px] text-[#64748B] mt-0.5">
-									Enam plant dengan antrean terbanyak. Menentukan ke mana tim dikirim lebih
-									dulu.
+									Daftar peralatan berstatus REPAIR yang memerlukan tindakan teknisi lapangan.
 								</p>
 							</div>
-							<span className="text-[12px] font-semibold text-[#B45309] bg-[#FEF3C7] border border-[#FDE68A] px-2.5 py-1 rounded-[4px] shrink-0">
-								{groups.antrean.length} Aset Total
+							<span className="text-[12px] font-semibold text-[#B45309] bg-[#FEF3C7] border border-[#FDE68A] px-2 py-0.5 rounded-[2px] shrink-0 tabular-nums">
+								{groups.antrean.length} Aset
 							</span>
 						</div>
-						<div className="p-5">
-							{plantBarData.length === 0 ? (
+
+						<div>
+							{groups.antrean.length === 0 ? (
 								<div className="flex items-center gap-2 py-12 justify-center text-[13px] text-[#475569]">
 									<Check className="w-4 h-4 text-[#059669] shrink-0" aria-hidden="true" />
 									Antrean kosong. Tidak ada aset berstatus REPAIR.
 								</div>
 							) : (
-								<>
-									<div className="w-full h-[220px]">
-										<ResponsiveContainer width="100%" height="100%">
-											<BarChart
-												data={plantBarData}
-												margin={{ top: 8, right: 12, left: -10, bottom: 0 }}
-											>
-												<CartesianGrid
-													strokeDasharray="3 3"
-													stroke="#E6E8EA"
-													vertical={false}
-												/>
-												<XAxis
-													dataKey="plant"
-													tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
-													tickLine={false}
-													axisLine={{ stroke: "#E6E8EA" }}
-												/>
-												<YAxis
-													tick={{ fontSize: 12, fill: "#64748B" }}
-													tickLine={false}
-													axisLine={false}
-													allowDecimals={false}
-													width={32}
-												/>
-												<Tooltip
-													contentStyle={{
-														fontSize: "12px",
-														borderRadius: "4px",
-														border: "1px solid #E6E8EA",
-														boxShadow: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
-													}}
-													formatter={(value) => [`${value} aset`, "Antrean"]}
-												/>
-												<Bar
-													dataKey="count"
-													name="Antrean"
-													fill={STATUS_COLOR.REPAIR}
-													radius={[4, 4, 0, 0]}
-													maxBarSize={36}
-												/>
-											</BarChart>
-										</ResponsiveContainer>
-									</div>
+								<div className="overflow-x-auto">
+									<table className="w-full text-left border-collapse">
+										<thead>
+											<tr className="bg-[#F2F3F4] border-b border-[#E6E8EA]">
+												<th className="px-4 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] whitespace-nowrap">
+													Kode Alat
+												</th>
+												<th className="px-4 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em]">
+													Nama Peralatan
+												</th>
+												<th className="px-4 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] whitespace-nowrap">
+													Plant
+												</th>
+												<th className="px-4 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] whitespace-nowrap">
+													Kondisi
+												</th>
+												<th className="px-4 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-right whitespace-nowrap">
+													Aksi
+												</th>
+											</tr>
+										</thead>
+										<tbody className="divide-y divide-[#E6E8EA]">
+											{groups.antrean.map((eq) => {
+												const plantCode = formatPlantDisplay(
+													eq.plant,
+													eq.storage_location,
+													eq.plant_description,
+												);
+												const condition = formatCondition(eq.condition);
 
-									{/* Quick breakdown grid of top plants */}
-									<div className="mt-4 pt-4 border-t border-[#E6E8EA] grid grid-cols-2 sm:grid-cols-3 gap-2.5">
-										{plantBarData.map((item) => (
-											<div
-												key={item.plant}
-												className="flex items-center justify-between bg-[#F8FAFC] border border-[#E6E8EA] rounded-[4px] px-3.5 py-2"
-											>
-												<span className="text-[13px] font-medium text-[#334155] truncate">
-													{item.plant}
-												</span>
-												<span className="text-[13px] font-semibold text-[#0F172A] tabular-nums ml-2 shrink-0">
-													{item.count}{" "}
-													<span className="text-[11px] font-normal text-[#64748B]">
-														aset
-													</span>
-												</span>
-											</div>
-										))}
-									</div>
-								</>
+												return (
+													<tr
+														key={eq.id}
+														className="hover:bg-[#F2F3F4]/50 transition-colors"
+													>
+														<td className="px-4 py-2.5 font-mono text-[12px] font-semibold text-[#0A356A] whitespace-nowrap">
+															{eq.equipment_code || "-"}
+														</td>
+														<td className="px-4 py-2.5 text-[13px] text-[#0F172A] max-w-[240px]">
+															<span className="font-medium block truncate">
+																{eq.name || "Equipment Tanpa Nama"}
+															</span>
+															{eq.notes && eq.notes !== "-" && (
+																<span className="text-[11px] text-[#64748B] block truncate mt-0.5">
+																	{eq.notes}
+																</span>
+															)}
+														</td>
+														<td className="px-4 py-2.5 font-mono text-[12px] text-[#334155] whitespace-nowrap">
+															{plantCode}
+														</td>
+														<td className="px-4 py-2.5 whitespace-nowrap">
+															<span className="inline-flex items-center rounded-[2px] px-2 py-0.5 text-[11px] font-semibold bg-[#FEF3C7] text-[#B45309] border border-[#FDE68A]">
+																{condition}
+															</span>
+														</td>
+														<td className="px-4 py-2.5 text-right whitespace-nowrap">
+															<Link
+																href="/pemeliharaan/perbaikan-alat"
+																className="inline-flex items-center gap-1 text-[12px] font-semibold text-white bg-[#0A356A] hover:bg-[#0556B3] px-3 py-1 rounded-[4px] transition-colors"
+															>
+																<span>Kerjakan</span>
+																<ChevronRight className="w-3.5 h-3.5" aria-hidden="true" />
+															</Link>
+														</td>
+													</tr>
+												);
+											})}
+										</tbody>
+									</table>
+								</div>
 							)}
 						</div>
+					</div>
+
+					<div className="px-5 py-3 border-t border-[#E6E8EA] bg-[#F8FAFC] flex items-center justify-between">
+						<span className="text-[12px] text-[#64748B] tabular-nums">
+							{groups.antrean.length} peralatan dalam antrean perbaikan
+						</span>
+						<Link
+							href="/pemeliharaan/perbaikan-alat"
+							className="text-[12px] font-semibold text-[#0A356A] hover:text-[#0556B3] inline-flex items-center gap-1 transition-colors"
+						>
+							<span>Buka Manajemen Perbaikan</span>
+							<ArrowRight className="w-3.5 h-3.5" aria-hidden="true" />
+						</Link>
 					</div>
 				</div>
 

@@ -50,14 +50,20 @@ export interface InspectionItem {
 	photos?: string[];
 }
 
+interface InspeksiBerkalaClientProps {
+	antrean: Equipment[];
+	riwayat: InspectionItem[];
+	plants?: any[];
+	objectTypes?: any[];
+}
+
 /** Client Component: interaksi tab/filter/sort/paginasi — data di-fetch Server Component. */
 export default function InspeksiBerkalaClient({
 	antrean,
 	riwayat,
-}: {
-	antrean: Equipment[];
-	riwayat: InspectionItem[];
-}) {
+	plants = [],
+	objectTypes = [],
+}: InspeksiBerkalaClientProps) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
 	const [searchInput, setSearchInput] = useState("");
@@ -74,33 +80,31 @@ export default function InspeksiBerkalaClient({
 		direction: "asc" | "desc";
 	} | null>(null);
 
-	// Halaman di-reset lewat handler filter (bukan effect) agar tak memicu cascading render.
+	// Opsi Plant diambil langsung dari database master plants, digabung dengan data antrean & riwayat
+	const plantOptions = useMemo(() => {
+		const dbPlants = (plants || [])
+			.map((p: any) => (typeof p === "string" ? p : p?.name || p?.code || ""))
+			.filter((v: string) => v && v !== "-");
+		const itemPlants = [
+			...antrean.map((e) => (typeof e.plant === "string" ? e.plant : e.plant?.name)),
+			...riwayat.map((r) => r.plant),
+		].filter((v): v is string => Boolean(v && v !== "-"));
+		return [...new Set([...dbPlants, ...itemPlants])].sort();
+	}, [plants, antrean, riwayat]);
 
-	const plantOptions = useMemo(
-		() =>
-			[
-				...new Set(
-					antrean
-						.map((e) => (typeof e.plant === "string" ? e.plant : e.plant?.name))
-						.filter((v) => v && v !== "-"),
-				),
-			].sort(),
-		[antrean],
-	);
-
-	const tipeObjekOptions = useMemo(
-		() =>
-			[
-				...new Set(
-					antrean
-						.map((e) =>
-							typeof e.object_type === "string" ? e.object_type : e.object_type?.name,
-						)
-						.filter((v) => v && v !== "-"),
-				),
-			].sort(),
-		[antrean],
-	);
+	// Opsi Tipe Objek diambil langsung dari database master object types
+	const tipeObjekOptions = useMemo(() => {
+		const dbTypes = (objectTypes || [])
+			.map((t: any) => (typeof t === "string" ? t : t?.name || ""))
+			.filter((v: string) => v && v !== "-");
+		const itemTypes = [
+			...antrean.map((e) =>
+				typeof e.object_type === "string" ? e.object_type : e.object_type?.name,
+			),
+			...riwayat.map((r) => r.object_type),
+		].filter((v): v is string => Boolean(v && v !== "-"));
+		return [...new Set([...dbTypes, ...itemTypes])].sort();
+	}, [objectTypes, antrean, riwayat]);
 
 	const handleReset = () => {
 		setSearchInput("");

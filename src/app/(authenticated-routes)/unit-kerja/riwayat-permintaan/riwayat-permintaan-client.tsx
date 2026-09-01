@@ -152,16 +152,6 @@ function RiwayatPermintaanContent({
 		};
 	}, [isDetailOpen]);
 
-	// Statistics
-	const stats = useMemo(() => {
-		const total = items.length;
-		const pending = items.filter((i) => i.status === "PENDING").length;
-		const inReview = items.filter((i) => i.status === "IN_REVIEW").length;
-		const approved = items.filter((i) => i.status === "APPROVED").length;
-		const rejected = items.filter((i) => i.status === "REJECTED").length;
-		return { total, pending, inReview, approved, rejected };
-	}, [items]);
-
 	// Sorting Handler
 	const handleSort = (key: keyof ReuseRequestItem) => {
 		let direction: "asc" | "desc" = "asc";
@@ -253,45 +243,6 @@ function RiwayatPermintaanContent({
 			maximumFractionDigits: 0,
 		}).format(val);
 	};
-
-	// DESIGN.md KPI card: one style, value-dominant, state carried by a 2px left rule.
-	const kpis = [
-		{
-			label: "Total Pengajuan",
-			value: stats.total,
-			caption: "Seluruh riwayat",
-			rule: "#334155",
-			icon: FileText,
-		},
-		{
-			label: "Menunggu Persetujuan",
-			value: stats.pending,
-			caption: "Belum ditinjau",
-			rule: "#B45309",
-			icon: Clock,
-		},
-		{
-			label: "Dalam Peninjauan",
-			value: stats.inReview,
-			caption: "Sedang diperiksa",
-			rule: "#B45309",
-			icon: Eye,
-		},
-		{
-			label: "Disetujui",
-			value: stats.approved,
-			caption: "Siap dipakai",
-			rule: "#059669",
-			icon: CheckCircle2,
-		},
-		{
-			label: "Ditolak",
-			value: stats.rejected,
-			caption: "Tidak disetujui",
-			rule: "#DC2626",
-			icon: XCircle,
-		},
-	];
 
 	const hasActiveFilters = searchQuery !== "" || statusFilter !== "SEMUA";
 
@@ -386,32 +337,6 @@ function RiwayatPermintaanContent({
 					</button>
 				</div>
 			</header>
-
-			{/* KPI Strip */}
-			<div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-5">
-				{kpis.map((kpi) => (
-					<div
-						key={kpi.label}
-						className="flex items-start justify-between gap-3 rounded border border-[#E6E8EA] border-l-2 bg-white p-4"
-						style={{ borderLeftColor: kpi.rule }}
-					>
-						<div className="min-w-0">
-							<p className="truncate text-[12px] font-medium text-[#64748B]">
-								{kpi.label}
-							</p>
-							<p className="mt-2 text-[28px] leading-none font-semibold tracking-[-0.02em] text-[#0F172A] tabular-nums">
-								{kpi.value}
-							</p>
-							<p className="mt-1.5 text-[12px] text-[#64748B]">{kpi.caption}</p>
-						</div>
-						<kpi.icon
-							className="mt-0.5 h-4 w-4 shrink-0"
-							style={{ color: kpi.rule }}
-							aria-hidden="true"
-						/>
-					</div>
-				))}
-			</div>
 
 			{/* Table Panel */}
 			<section

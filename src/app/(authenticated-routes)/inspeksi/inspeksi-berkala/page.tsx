@@ -1,5 +1,11 @@
-import { getEquipments, getInspections } from "@/action/api";
+import {
+	getEquipments,
+	getInspections,
+	getPlants,
+	getObjectTypes,
+} from "@/action/api";
 import { inspectionQueue } from "@/lib/inspection-schedule";
+import { formatPlantDisplay, formatCondition } from "@/lib/equipment-status";
 import InspeksiBerkalaClient, {
 	type Equipment,
 	type InspectionItem,
@@ -10,18 +16,20 @@ import InspeksiBerkalaClient, {
 
 /** Server Component — antrean (via inspectionQueue) & riwayat inspeksi dipetakan di server. */
 export default async function InspeksiAntreanPage() {
-	const [resultEq, resultInsp] = await Promise.all([
+	const [resultEq, resultInsp, plantsData, objTypesData] = await Promise.all([
 		getEquipments().catch(() => []),
 		getInspections().catch(() => []),
+		getPlants().catch(() => []),
+		getObjectTypes().catch(() => []),
 	]);
 
 	const allInspections = Array.isArray(resultInsp) ? resultInsp : [];
+	const plants = Array.isArray(plantsData) ? plantsData : [];
+	const objectTypes = Array.isArray(objTypesData) ? objTypesData : [];
 
 	let antrean: Equipment[] = [];
 	if (Array.isArray(resultEq) && resultEq.length > 0) {
-		// Semua aset READY_TO_USE tetap terdaftar; yang berubah setelah diinspeksi
-		// hanyalah kolom "Inspeksi Terakhir". Interval berbeda per equipment, jadi
-		// tidak ada aset yang dibuang otomatis dari daftar.
+		// Aset yang sudah pernah diinspeksi otomatis keluar dari antrean dan masuk ke tab Riwayat.
 		const queue = inspectionQueue(resultEq as Equipment[], allInspections);
 		queue.sort((a: any, b: any) => {
 			const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
@@ -36,19 +44,17 @@ export default async function InspeksiAntreanPage() {
 	if (allInspections.length > 0) {
 		riwayat = allInspections.map((ins: any): InspectionItem => {
 			const eq = ins.equipment || {};
-			let plantStr = "-";
-			if (typeof eq.plant === "string") plantStr = eq.plant;
-			else if (eq.plant?.name) plantStr = eq.plant.name;
-			else if (eq.plant_description) plantStr = String(eq.plant_description);
+			const plantStr = formatPlantDisplay(
+				eq.plant,
+				eq.storage_location,
+				eq.plant_description,
+			);
 
 			let typeStr = "-";
 			if (typeof eq.object_type === "string") typeStr = eq.object_type;
 			else if (eq.object_type?.name) typeStr = eq.object_type.name;
 			else if (ins.object_type_name) typeStr = ins.object_type_name;
 
-			// Kondisi = snapshot per-inspeksi (condition_id baru di backend).
-			// Data lama sebelum migrasi belum punya snapshot → derive dari
-			// require action, sesuai mapping master require_actions.
 			const requireActionName =
 				ins.require_action?.name || ins.require_action_name || "";
 			const kondisiDariAksi: Record<string, string> = {
@@ -57,6 +63,12 @@ export default async function InspeksiAntreanPage() {
 				Overhaul: "RUSAK_SEDANG",
 				Disposal: "RUSAK_BERAT",
 			};
+
+			const rawCondition =
+				ins.condition?.name ||
+				ins.condition_name ||
+				kondisiDariAksi[requireActionName] ||
+				"-";
 
 			return {
 				id: ins.id,
@@ -69,16 +81,10 @@ export default async function InspeksiAntreanPage() {
 				inspection_date:
 					ins.inspection_date || ins.created_at || new Date().toISOString(),
 				notes: ins.notes || ins.summary || "Inspeksi berkala selesai.",
-				condition_name:
-					ins.condition?.name ||
-					ins.condition_name ||
-					kondisiDariAksi[requireActionName] ||
-					"-",
+				condition_name: formatCondition(rawCondition),
 				require_action_name:
 					ins.require_action?.name || ins.require_action_name || "-",
 				status_name: "Selesai",
-				// ponytail: URL foto dinormalisasi di sini (bukan di getInspections) karena
-				// action tsb mengembalikan mentahan; backslash Windows & path tanpa leading "/".
 				photos: Array.isArray(ins.attachments)
 					? ins.attachments
 							.map((att: any) => {
@@ -98,5 +104,12 @@ export default async function InspeksiAntreanPage() {
 		});
 	}
 
-	return <InspeksiBerkalaClient antrean={antrean} riwayat={riwayat} />;
+	return (
+		<InspeksiBerkalaClient
+			antrean={antrean}
+			riwayat={riwayat}
+			plants={plants}
+			objectTypes={objectTypes}
+		/>
+	);
 }

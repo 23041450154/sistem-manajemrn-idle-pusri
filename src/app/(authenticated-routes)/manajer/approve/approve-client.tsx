@@ -266,7 +266,8 @@ export default function ManajerApproveClient({
 		const query = searchInput || search;
 		return requests.filter((req) => {
 			const isAwaitingDecision =
-				req.approvalStatus === "PENDING" || req.approvalStatus === "IN_REVIEW";
+				(req.approvalStatus === "PENDING" || req.approvalStatus === "IN_REVIEW") &&
+				req.statusAset !== "READY_TO_USE";
 			const matchTab =
 				activeTab === "inbox" ? isAwaitingDecision : !isAwaitingDecision;
 			const matchSearch = query
@@ -301,7 +302,8 @@ export default function ManajerApproveClient({
 
 	const inboxCount = requests.filter(
 		(req) =>
-			req.approvalStatus === "PENDING" || req.approvalStatus === "IN_REVIEW",
+			(req.approvalStatus === "PENDING" || req.approvalStatus === "IN_REVIEW") &&
+			req.statusAset !== "READY_TO_USE",
 	).length;
 	const historyCount = requests.length - inboxCount;
 

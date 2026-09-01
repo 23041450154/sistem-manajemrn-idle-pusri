@@ -57,11 +57,8 @@ function latestInspectionByEquipment(
 }
 
 /**
- * Antrean inspeksi: seluruh aset READY_TO_USE, masing-masing dilengkapi tanggal
- * inspeksi terakhirnya. Aset tidak dibuang setelah diinspeksi — yang berubah hanya
- * tanggalnya, sehingga inspektor bisa melihat mana yang paling lama tak tersentuh.
- *
- * Aset yang belum pernah diinspeksi punya last_inspection_date === null.
+ * Antrean inspeksi: aset READY_TO_USE yang belum pernah dilakukan tindakan inspeksi.
+ * Aset yang sudah pernah diinspeksi otomatis berpindah ke tab Riwayat Inspeksi.
  */
 export function inspectionQueue<T extends EquipmentLike>(
 	equipments: T[],
@@ -70,7 +67,11 @@ export function inspectionQueue<T extends EquipmentLike>(
 	const latest = latestInspectionByEquipment(inspections);
 
 	return equipments
-		.filter((eq) => statusName(eq.status) === INSPECTABLE_STATUS)
+		.filter((eq) => {
+			if (statusName(eq.status) !== INSPECTABLE_STATUS) return false;
+			const hasInspection = latest.has(String(eq.id));
+			return !hasInspection;
+		})
 		.map((eq) => {
 			const last = latest.get(String(eq.id));
 			return {

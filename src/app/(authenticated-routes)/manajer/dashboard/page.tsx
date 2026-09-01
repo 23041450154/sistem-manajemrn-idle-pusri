@@ -21,7 +21,7 @@ export default async function ManajerDashboardPage() {
 				<div>
 					<h1 className="page-title">Dashboard Manajer Rendal</h1>
 					<p className="page-subtitle">
-						Pusat persetujuan manajerial, realisasi cost avoidance, dan valuasi aset idle.
+						Pusat persetujuan manajerial, monitoring kesiapan utilisasi, dan tata kelola aset idle.
 					</p>
 				</div>
 				<div className="header-actions">

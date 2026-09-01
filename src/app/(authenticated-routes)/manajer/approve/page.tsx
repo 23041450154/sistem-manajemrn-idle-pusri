@@ -40,16 +40,22 @@ export default async function ManajerApprovePage() {
 	).map((item: any): RequestAsset => {
 		const equipmentId = item.equipment_id || item.equipment?.id;
 		const eq = equipmentMap.get(Number(equipmentId)) || item.equipment;
-		const approvalStatus = item.approval_status;
-		const statusLabel =
-			item.status_label || APPROVAL_STATUS_LABEL[approvalStatus] || approvalStatus;
-
+		let approvalStatus = item.approval_status;
 		let statusAset = statusName(
 			item.equipment_status || eq?.status?.name || "VALIDATED",
 		);
+
+		// Jika aset sudah READY_TO_USE di database, otomatis anggap approval sudah APPROVED (masuk riwayat)
+		if (statusAset === "READY_TO_USE" && (!approvalStatus || approvalStatus === "PENDING")) {
+			approvalStatus = "APPROVED";
+		}
+
 		if (approvalStatus === "APPROVED") {
 			statusAset = "READY_TO_USE";
 		}
+
+		const statusLabel =
+			item.status_label || APPROVAL_STATUS_LABEL[approvalStatus] || approvalStatus;
 
 		return {
 			id: item.id.toString(),

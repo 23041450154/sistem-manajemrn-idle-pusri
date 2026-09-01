@@ -19,7 +19,12 @@ import {
   FileText,
   Clock,
 } from "lucide-react";
-import { approveDisposal, type DisposalItemDTO } from "@/action/api";
+import {
+  approveDisposal,
+  getValidations,
+  getApprovalById,
+  type DisposalItemDTO,
+} from "@/action/api";
 import { formatDate } from "@/lib/utils";
 
 type DisposalItem = DisposalItemDTO;
@@ -55,6 +60,11 @@ export default function ManajerScrapClient({
   } | null>(null);
   const [previewImage, setPreviewImage] = useState<string | null>(null);
   const [modalError, setModalError] = useState<string | null>(null);
+  // Validasi & approval detail untuk riwayat proses dinamis
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [validationDetail, setValidationDetail] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [approvalDetail, setApprovalDetail] = useState<any>(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -103,9 +113,29 @@ export default function ManajerScrapClient({
     currentPage * ITEMS_PER_PAGE,
   );
 
-  const handleOpenDetail = (item: DisposalItem) => {
+  const handleOpenDetail = async (item: DisposalItem) => {
     setSelectedDisposal(item);
     setIsDetailOpen(true);
+    setValidationDetail(null);
+    setApprovalDetail(null);
+    try {
+      const [valids, appData] = await Promise.all([
+        item.equipment_id
+          ? getValidations(item.equipment_id)
+          : Promise.resolve([]),
+        item.approval_id
+          ? getApprovalById(item.approval_id, "disposal")
+          : Promise.resolve(null),
+      ]);
+      if (Array.isArray(valids) && valids.length > 0) {
+        setValidationDetail(valids[0]);
+      }
+      if (appData) {
+        setApprovalDetail(appData);
+      }
+    } catch (err) {
+      console.error("Gagal memuat riwayat validasi/approval scrap:", err);
+    }
   };
 
   const handleCloseDetail = () => {
@@ -113,6 +143,8 @@ export default function ManajerScrapClient({
     setSelectedDisposal(null);
     setPreviewImage(null);
     setModalError(null);
+    setValidationDetail(null);
+    setApprovalDetail(null);
   };
 
   // Submit Approval (Green Button)
@@ -526,7 +558,8 @@ export default function ManajerScrapClient({
             {/* Content Body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 bg-gray-50/50 space-y-6">
               {/* Alert Status */}
-              {selectedDisposal.status === "PENDING" && (
+              {(selectedDisposal.status === "PENDING" ||
+                selectedDisposal.status === "IN_REVIEW") && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-900">
                   <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <div>
@@ -545,7 +578,8 @@ export default function ManajerScrapClient({
                 </div>
               )}
 
-              {selectedDisposal.status === "DISPOSED" && (
+              {(selectedDisposal.status === "DISPOSED" ||
+                selectedDisposal.status === "APPROVED") && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 text-emerald-900">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
@@ -572,6 +606,21 @@ export default function ManajerScrapClient({
                       Pengajuan scrap ini telah ditolak oleh Manajer Rendal.
                       Status aset dikembalikan menjadi{" "}
                       <strong>READY_TO_REUSE</strong>.
+                    </p>
+                  </div>
+                </div>
+              )}
+
+              {selectedDisposal.status === "REVISION_REQUIRED" && (
+                <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 flex items-start gap-3 text-purple-900">
+                  <AlertCircle className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
+                  <div>
+                    <p className="text-[13px] font-bold">
+                      Pengajuan Perlu Revisi
+                    </p>
+                    <p className="text-[12px] text-purple-800 mt-0.5 leading-relaxed">
+                      Pengajuan scrap ini memerlukan revisi data/dokumen dari
+                      Rendal Pemeliharaan.
                     </p>
                   </div>
                 </div>
@@ -730,21 +779,31 @@ export default function ManajerScrapClient({
                     <tbody className="divide-y divide-gray-100 text-gray-700">
                       <tr>
                         <td className="py-2.5 font-bold">Inspeksi Teknik</td>
-                        <td className="py-2.5">Tim Inspeksi Teknik</td>
+                        <td className="py-2.5">
+                          {validationDetail?.inspector_user?.name ||
+                            "Tim Inspeksi Teknik"}
+                        </td>
                         <td className="py-2.5">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100">
-                            Rusak Berat
+                            {validationDetail?.condition?.name
+                              ? validationDetail.condition.name.replace(/_/g, " ")
+                              : "Rusak Berat"}
                           </span>
                         </td>
                         <td className="py-2.5">
-                          {formatDate(selectedDisposal.created_at)}
+                          {formatDate(
+                            validationDetail?.start_at ||
+                              validationDetail?.created_at ||
+                              selectedDisposal.created_at,
+                          )}
                         </td>
                       </tr>
                       <tr>
                         <td className="py-2.5 font-bold">Pengajuan Scrap</td>
                         <td className="py-2.5">
-                          {selectedDisposal.created_by_name || "Budi Santoso"}{" "}
-                          (Rendal Pemeliharaan)
+                          {selectedDisposal.created_by_name
+                            ? `${selectedDisposal.created_by_name} (Rendal Pemeliharaan)`
+                            : "Budi Santoso (Rendal Pemeliharaan)"}
                         </td>
                         <td className="py-2.5">
                           <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-blue-50 text-blue-700 border border-blue-100">
@@ -752,33 +811,61 @@ export default function ManajerScrapClient({
                           </span>
                         </td>
                         <td className="py-2.5">
-                          {formatDate(selectedDisposal.created_at)}
+                          {formatDate(
+                            selectedDisposal.disposal_date ||
+                              selectedDisposal.created_at,
+                          )}
                         </td>
                       </tr>
-                      {selectedDisposal.status !== "PENDING" && (
-                        <tr>
-                          <td className="py-2.5 font-bold">
-                            Keputusan Manajer
-                          </td>
-                          <td className="py-2.5">
-                            Ahmad Fauzi (Manajer Rendal)
-                          </td>
-                          <td className="py-2.5">
-                            {selectedDisposal.status === "DISPOSED" ? (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100">
-                                Disetujui
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-100">
-                                Ditolak
-                              </span>
-                            )}
-                          </td>
-                          <td className="py-2.5">
-                            {formatDate(selectedDisposal.created_at)}
-                          </td>
-                        </tr>
-                      )}
+                      {selectedDisposal.status !== "PENDING" &&
+                        selectedDisposal.status !== "IN_REVIEW" && (
+                          <tr>
+                            <td className="py-2.5 font-bold">
+                              Keputusan Manajer
+                            </td>
+                            <td className="py-2.5">
+                              {approvalDetail?.steps?.find(
+                                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                (s: any) =>
+                                  s.approval_status === "APPROVED" ||
+                                  s.approval_status === "REJECTED" ||
+                                  s.approval_status === "REVISION_REQUIRED",
+                              )?.approval_name
+                                ? `${
+                                    approvalDetail.steps.find(
+                                      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                                      (s: any) =>
+                                        s.approval_status === "APPROVED" ||
+                                        s.approval_status === "REJECTED" ||
+                                        s.approval_status === "REVISION_REQUIRED",
+                                    ).approval_name
+                                  } (Manajer Rendal)`
+                                : "Ahmad Fauzi (Manajer Rendal)"}
+                            </td>
+                            <td className="py-2.5">
+                              {selectedDisposal.status === "DISPOSED" ||
+                              selectedDisposal.status === "APPROVED" ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100">
+                                  Disetujui
+                                </span>
+                              ) : selectedDisposal.status === "REVISION_REQUIRED" ? (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
+                                  Perlu Revisi
+                                </span>
+                              ) : (
+                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-100">
+                                  Ditolak
+                                </span>
+                              )}
+                            </td>
+                            <td className="py-2.5">
+                              {formatDate(
+                                approvalDetail?.updated_at ||
+                                  selectedDisposal.created_at,
+                              )}
+                            </td>
+                          </tr>
+                        )}
                     </tbody>
                   </table>
                 </div>
@@ -827,7 +914,8 @@ export default function ManajerScrapClient({
                 Tutup
               </button>
 
-              {selectedDisposal.status === "PENDING" && (
+              {(selectedDisposal.status === "PENDING" ||
+                selectedDisposal.status === "IN_REVIEW") && (
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => {

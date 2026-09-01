@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useState } from "react";
-import { Search, PackageSearch, SlidersHorizontal } from "lucide-react";
+import { Search, PackageSearch, SlidersHorizontal, RotateCcw } from "lucide-react";
 import type { KatalogItem } from "./types";
 import { STATE_STYLE, EquipmentThumb, formatRupiah } from "./shared";
 
@@ -23,6 +23,19 @@ export default function KatalogClient({
   const plants = useMemo(() => uniq(items.map((i) => i.plant)), [items]);
   const categories = useMemo(() => uniq(items.map((i) => i.objectType)), [items]);
   const conditions = useMemo(() => uniq(items.map((i) => i.condition)), [items]);
+
+  const isFiltered =
+    query.trim() !== "" ||
+    plant !== ALL ||
+    category !== ALL ||
+    condition !== ALL;
+
+  const handleReset = () => {
+    setQuery("");
+    setPlant(ALL);
+    setCategory(ALL);
+    setCondition(ALL);
+  };
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -74,6 +87,16 @@ export default function KatalogClient({
           <Select label="Plant" value={plant} onChange={setPlant} options={plants} />
           <Select label="Kategori" value={category} onChange={setCategory} options={categories} />
           <Select label="Kondisi" value={condition} onChange={setCondition} options={conditions} />
+          <button
+            type="button"
+            onClick={handleReset}
+            disabled={!isFiltered}
+            title="Reset semua filter"
+            className="flex h-11 items-center gap-1.5 rounded-[4px] border border-[#E6E8EA] bg-white px-3.5 text-[13px] font-medium text-[#334155] transition-colors duration-140 hover:bg-[#F2F3F4] hover:text-[#0F172A] disabled:opacity-40 disabled:cursor-not-allowed focus:ring-2 focus:ring-[#334155] focus:ring-offset-1 focus:outline-none cursor-pointer"
+          >
+            <RotateCcw className="h-3.5 w-3.5 text-[#64748B]" aria-hidden />
+            <span>Reset Filter</span>
+          </button>
         </div>
       </div>
 

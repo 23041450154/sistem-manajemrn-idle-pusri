@@ -87,11 +87,11 @@ export default function UnitKerjaDashboardContent({
 						Muat Ulang
 					</button>
 					<Link
-						href="/unit-kerja/katalog"
+						href="/unit-kerja/daftar-aset"
 						className={buttonVariants({ variant: "brand", size: "lg" })}
 					>
 						<Package className="w-4 h-4" />
-						Katalog Aset
+						Daftar Aset
 					</Link>
 				</div>
 			</div>
@@ -106,7 +106,7 @@ export default function UnitKerjaDashboardContent({
 					<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-1">
 						{String(readyToUseCount)}
 					</p>
-					<p className="text-[12px] text-[#64748B] mt-1">Tersedia di katalog</p>
+					<p className="text-[12px] text-[#64748B] mt-1">Tersedia di daftar aset</p>
 				</div>
 				<div
 					className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2"
@@ -183,14 +183,15 @@ export default function UnitKerjaDashboardContent({
 								{reuseRequests.length === 0 ? (
 									<tr>
 										<td colSpan={4} className="px-4 py-10 text-center">
-											<p className="text-[13px] text-[#0F172A]">
+											<p className="text-[13px] text-[#64748B]">
 												Belum ada pengajuan reuse
 											</p>
 											<Link
-												href="/unit-kerja/katalog"
-												className="text-[12px] font-medium text-[#0A356A] hover:text-[#0556B3] mt-1 inline-block"
+												href="/unit-kerja/daftar-aset"
+												className="text-[12px] font-medium text-[#0A356A] hover:text-[#0556B3] mt-2 inline-flex items-center gap-1"
 											>
-												Buka katalog aset idle
+												Buka Daftar Aset
+												<ArrowRight className="w-3.5 h-3.5" />
 											</Link>
 										</td>
 									</tr>
