@@ -2,7 +2,11 @@ import Link from "next/link";
 import { CheckSquare, Trash2, ArrowUpRight } from "lucide-react";
 import { getEquipments, getApprovals, getReuseRequests, getDisposals } from "@/action/api";
 import { buttonVariants } from "@/components/ui/button";
+import { statusName } from "@/lib/equipment-status";
 import ManajerDashboardClient from "./manajer-dashboard-client";
+
+/* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
 
 export const dynamic = "force-dynamic";
 
@@ -13,6 +17,36 @@ export default async function ManajerDashboardPage() {
 		getReuseRequests("all").catch(() => []),
 		getDisposals().catch(() => []),
 	]);
+
+	const equipmentList = Array.isArray(equipments) ? equipments : [];
+	const equipmentMap = new Map<string, any>();
+	equipmentList.forEach((eq: any) => {
+		if (eq.id != null) equipmentMap.set(String(eq.id), eq);
+	});
+
+	const normalizedValidations = (Array.isArray(validationApprovals) ? validationApprovals : []).map((item: any) => {
+		const equipmentId = item.equipment_id || item.equipment?.id;
+		const eq = (equipmentId != null && equipmentMap.get(String(equipmentId))) || item.equipment;
+		let approvalStatus = item.approval_status;
+		let statusAset = statusName(item.equipment_status || eq?.status?.name || eq?.status || "VALIDATED");
+
+		// Jika aset sudah READY_TO_USE di database, otomatis approval sudah APPROVED (riwayat persetujuan)
+		if (statusAset === "READY_TO_USE" && (!approvalStatus || approvalStatus === "PENDING")) {
+			approvalStatus = "APPROVED";
+		}
+		if (approvalStatus === "APPROVED") {
+			statusAset = "READY_TO_USE";
+		}
+
+		return {
+			...item,
+			equipment: eq || item.equipment,
+			approval_status: approvalStatus || "PENDING",
+			equipment_status: statusAset,
+			equipment_name: item.equipment_name || eq?.name || "Equipment",
+			equipment_code: item.equipment_code || eq?.equipment_code || "-",
+		};
+	});
 
 	return (
 		<div className="page-container">
@@ -51,8 +85,8 @@ export default async function ManajerDashboardPage() {
 
 			{/* Manajer Executive Dashboard Content */}
 			<ManajerDashboardClient
-				equipments={Array.isArray(equipments) ? equipments : []}
-				validationApprovals={Array.isArray(validationApprovals) ? validationApprovals : []}
+				equipments={equipmentList}
+				validationApprovals={normalizedValidations}
 				reuseRequests={Array.isArray(reuseRequests) ? reuseRequests : []}
 				disposals={Array.isArray(disposals) ? disposals : []}
 			/>

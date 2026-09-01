@@ -16,6 +16,7 @@ import {
 	XCircle,
 	Eye,
 } from "lucide-react";
+import { formatCondition } from "@/lib/equipment-status";
 
 export interface ValidasiUlangItem {
 	id: string;
@@ -36,6 +37,8 @@ interface RendalValidasiUlangClientProps {
 	items: ValidasiUlangItem[];
 	plants?: any[];
 	objectTypes?: any[];
+	conditions?: any[];
+	storageLocations?: any[];
 }
 
 /** Client Component: interaksi (tab/search/filter/sort/paginasi/approval) — data di-fetch Server Component. */
@@ -43,6 +46,8 @@ export default function RendalValidasiUlangClient({
 	items,
 	plants = [],
 	objectTypes = [],
+	conditions = [],
+	storageLocations = [],
 }: RendalValidasiUlangClientProps) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
@@ -95,23 +100,29 @@ export default function RendalValidasiUlangClient({
 		return [...new Set([...dbTypes, ...itemTypes])].sort();
 	}, [objectTypes, items]);
 
-	const kondisiOptions = useMemo(
-		() =>
-			[
-				...new Set(items.map((e) => e.kondisi).filter((v) => v && v !== "-")),
-			].sort(),
-		[items],
-	);
+	// Opsi filter Kondisi dari database master data
+	const kondisiOptions = useMemo(() => {
+		const dbConds = conditions
+			.map((c: any) => formatCondition(c))
+			.filter((v: string) => v && v !== "-");
+		const itemConds = items
+			.map((e) => e.kondisi)
+			.filter((v) => v && v !== "-");
+		return [...new Set([...dbConds, ...itemConds])].sort();
+	}, [conditions, items]);
 
-	const lokasiOptions = useMemo(
-		() =>
-			[
-				...new Set(
-					items.map((e) => e.lokasiPenyimpanan).filter((v) => v && v !== "-"),
-				),
-			].sort(),
-		[items],
-	);
+	// Opsi filter Lokasi Penyimpanan dari database master data
+	const lokasiOptions = useMemo(() => {
+		const dbLocs = storageLocations
+			.map((s: any) =>
+				typeof s === "string" ? s : s?.name || s?.description || "",
+			)
+			.filter((v: string) => v && v !== "-");
+		const itemLocs = items
+			.map((e) => e.lokasiPenyimpanan)
+			.filter((v) => v && v !== "-");
+		return [...new Set([...dbLocs, ...itemLocs])].sort();
+	}, [storageLocations, items]);
 
 	const isItemCompleted = (item: ValidasiUlangItem) => {
 		const appStatus = (item.approvalStatus || "").toUpperCase();
@@ -527,42 +538,38 @@ export default function RendalValidasiUlangClient({
 						</select>
 
 						{/* Kondisi Filter */}
-						{kondisiOptions.length > 0 && (
-							<select
-								value={filterKondisi}
-								onChange={(e) => {
-									setFilterKondisi(e.target.value);
-									setCurrentPage(1);
-								}}
-								className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
-							>
-								<option value="">Semua Kondisi</option>
-								{kondisiOptions.map((k) => (
-									<option key={k} value={k}>
-										{k}
-									</option>
-								))}
-							</select>
-						)}
+						<select
+							value={filterKondisi}
+							onChange={(e) => {
+								setFilterKondisi(e.target.value);
+								setCurrentPage(1);
+							}}
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+						>
+							<option value="">Semua Kondisi</option>
+							{kondisiOptions.map((k) => (
+								<option key={k} value={k}>
+									{k}
+								</option>
+							))}
+						</select>
 
 						{/* Lokasi Penyimpanan Filter */}
-						{lokasiOptions.length > 0 && (
-							<select
-								value={filterLokasi}
-								onChange={(e) => {
-									setFilterLokasi(e.target.value);
-									setCurrentPage(1);
-								}}
-								className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
-							>
-								<option value="">Semua Lokasi</option>
-								{lokasiOptions.map((l) => (
-									<option key={l} value={l}>
-										{l}
-									</option>
-								))}
-							</select>
-						)}
+						<select
+							value={filterLokasi}
+							onChange={(e) => {
+								setFilterLokasi(e.target.value);
+								setCurrentPage(1);
+							}}
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
+						>
+							<option value="">Semua Lokasi</option>
+							{lokasiOptions.map((l) => (
+								<option key={l} value={l}>
+									{l}
+								</option>
+							))}
+						</select>
 
 						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
 

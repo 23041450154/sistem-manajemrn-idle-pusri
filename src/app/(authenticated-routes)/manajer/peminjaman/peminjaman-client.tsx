@@ -701,29 +701,36 @@ export default function ManajerPeminjamanClient({
 									</div>
 
 									{/* Card 3: Kontak Pemohon */}
-									<div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-2">
-										<span className="text-[11px] font-bold text-[#0A356A] uppercase tracking-wider block border-b border-slate-100 pb-2">
-											Kontak Person Pemohon
-										</span>
-										<div className="grid grid-cols-2 gap-3 text-xs pt-1">
-											<div>
-												<span className="text-[10px] font-semibold text-slate-400 uppercase block">
-													Nama Kontak
-												</span>
-												<span className="font-bold text-slate-900 block mt-0.5">
-													{selectedRequest.contact_person}
-												</span>
-											</div>
-											<div>
-												<span className="text-[10px] font-semibold text-slate-400 uppercase block">
-													Email
-												</span>
-												<span className="font-medium text-slate-700 block mt-0.5 font-mono">
-													{selectedRequest.contact_phone || "-"}
-												</span>
+									{(Boolean(selectedRequest.contact_person && selectedRequest.contact_person !== "-") ||
+										Boolean(selectedRequest.contact_phone && selectedRequest.contact_phone !== "-")) && (
+										<div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-2">
+											<span className="text-[11px] font-bold text-[#0A356A] uppercase tracking-wider block border-b border-slate-100 pb-2">
+												Kontak Person Pemohon
+											</span>
+											<div className="grid grid-cols-2 gap-3 text-xs pt-1">
+												{selectedRequest.contact_person && selectedRequest.contact_person !== "-" && (
+													<div>
+														<span className="text-[10px] font-semibold text-slate-400 uppercase block">
+															Nama Kontak
+														</span>
+														<span className="font-bold text-slate-900 block mt-0.5">
+															{selectedRequest.contact_person}
+														</span>
+													</div>
+												)}
+												{selectedRequest.contact_phone && selectedRequest.contact_phone !== "-" && (
+													<div>
+														<span className="text-[10px] font-semibold text-slate-400 uppercase block">
+															Email
+														</span>
+														<span className="font-medium text-slate-700 block mt-0.5 font-mono">
+															{selectedRequest.contact_phone}
+														</span>
+													</div>
+												)}
 											</div>
 										</div>
-									</div>
+									)}
 
 									{/* Action Review Form / Catatan */}
 									{selectedRequest.status === "PENDING" ||
@@ -743,13 +750,13 @@ export default function ManajerPeminjamanClient({
 												className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]/20 transition-all resize-none font-medium text-slate-900"
 											/>
 										</div>
-									) : selectedRequest.review_notes ? (
+									) : selectedRequest.review_notes && selectedRequest.review_notes.trim() ? (
 										<div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-1">
 											<span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider block">
 												Catatan Keputusan Manajer
 											</span>
 											<p className="text-xs text-slate-800 font-medium italic bg-slate-50 p-2.5 rounded-lg border border-slate-200">
-												&quot;{selectedRequest.review_notes}&quot;
+												&quot;{selectedRequest.review_notes.trim()}&quot;
 											</p>
 										</div>
 									) : null}

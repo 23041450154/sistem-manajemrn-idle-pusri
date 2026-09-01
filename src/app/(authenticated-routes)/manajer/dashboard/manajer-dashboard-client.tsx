@@ -1,18 +1,12 @@
 "use client";
 
-import React, { useState, useMemo } from "react";
-import Link from "next/link";
+import React, { useMemo } from "react";
 import {
 	CheckSquare,
 	Server,
 	Trash2,
 	ArrowUpRight,
-	Check,
-	ArrowRight,
 	ShieldCheck,
-	Layers,
-	ChevronRight,
-	CheckCircle2,
 	BarChart3,
 } from "lucide-react";
 import {
@@ -27,7 +21,7 @@ import {
 	YAxis,
 	CartesianGrid,
 } from "recharts";
-import { statusGroup, formatPlantDisplay } from "@/lib/equipment-status";
+import { statusGroup } from "@/lib/equipment-status";
 
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -45,8 +39,6 @@ export default function ManajerDashboardClient({
 	reuseRequests,
 	disposals,
 }: ManajerDashboardClientProps) {
-	const [activeApprovalTab, setActiveApprovalTab] = useState<"validasi" | "reuse" | "scrap">("validasi");
-	const [chartTab, setChartTab] = useState<"persetujuan" | "plant">("persetujuan");
 
 	// 1. Hitung Pending Approvals
 	const pendingValidations = useMemo(() => {
@@ -132,21 +124,21 @@ export default function ManajerDashboardClient({
 
 		return [
 			{
-				name: "Validasi",
+				name: "Validasi Kelayakan",
 				pending: pendingValidations.length,
 				approved: valApproved,
 				rejected: valRejected,
 				total: validationApprovals.length,
 			},
 			{
-				name: "Peminjaman",
+				name: "Peminjaman Reuse",
 				pending: pendingReuses.length,
 				approved: reuseApproved,
 				rejected: reuseRejected,
 				total: reuseRequests.length,
 			},
 			{
-				name: "Scrap",
+				name: "Scrap & Disposal",
 				pending: pendingScraps.length,
 				approved: scrapApproved,
 				rejected: scrapRejected,
@@ -154,25 +146,6 @@ export default function ManajerDashboardClient({
 			},
 		];
 	}, [validationApprovals, reuseRequests, disposals, pendingValidations, pendingReuses, pendingScraps]);
-
-	// Data Grafik 2: Sebaran Aset Idle per Plant
-	const plantBarData = useMemo(() => {
-		const map = new Map<string, number>();
-		equipments.forEach((e: any) => {
-			const plantName = formatPlantDisplay(
-				e.plant,
-				e.storage_location,
-				e.plant_description,
-			);
-			if (plantName && plantName !== "-") {
-				map.set(plantName, (map.get(plantName) ?? 0) + 1);
-			}
-		});
-		return [...map.entries()]
-			.map(([name, count]) => ({ name, count }))
-			.sort((a, b) => b.count - a.count)
-			.slice(0, 6);
-	}, [equipments]);
 
 	// 3. Donut Chart: Status Keputusan Persetujuan Manajerial
 	const { totalApprovalsCount, pieData } = useMemo(() => {
@@ -264,22 +237,31 @@ export default function ManajerDashboardClient({
 		},
 		{
 			label: "Persetujuan Validasi",
-			value: pendingValidations.length.toString(),
-			caption: "Menunggu approval inspeksi",
+			value: validationApprovals.length.toString(),
+			caption:
+				pendingValidations.length > 0
+					? `${pendingValidations.length} menunggu, ${approvalBarData[0].approved} disetujui`
+					: `${approvalBarData[0].approved} sudah disetujui`,
 			rule: "#0556B3",
 			icon: Server,
 		},
 		{
 			label: "Persetujuan Peminjaman",
-			value: pendingReuses.length.toString(),
-			caption: "Permohonan reuse unit kerja",
+			value: reuseRequests.length.toString(),
+			caption:
+				pendingReuses.length > 0
+					? `${pendingReuses.length} permohonan baru`
+					: "0 permohonan baru",
 			rule: "#B45309",
 			icon: ArrowUpRight,
 		},
 		{
 			label: "Persetujuan Scrap & Disposal",
-			value: pendingScraps.length.toString(),
-			caption: "Usulan penghapusan buku",
+			value: disposals.length.toString(),
+			caption:
+				pendingScraps.length > 0
+					? `${pendingScraps.length} usulan penghapusan`
+					: "0 usulan penghapusan",
 			rule: "#DC2626",
 			icon: Trash2,
 		},
@@ -313,428 +295,106 @@ export default function ManajerDashboardClient({
 				))}
 			</div>
 
-			{/* 2. Middle Row: Inbox Persetujuan (Left 2 cols) vs Donut & Log Keputusan (Right 1 col) */}
+			{/* 2. Middle Row: Grafik Rekapitulasi Alur Persetujuan (Left 2 cols) vs Donut & Log Keputusan (Right 1 col) */}
 			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 				{/* Left Column (2 cols) */}
-				<div className="lg:col-span-2 flex flex-col gap-6">
-					{/* Inbox Persetujuan Manajer */}
-					<div className="bg-white rounded border border-[#E6E8EA] p-5">
-						<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-							<div>
-								<h3 className="text-[14px] font-semibold text-[#0F172A] flex items-center gap-2">
-									<CheckSquare className="w-4 h-4 text-[#0A356A]" />
-									Pusat Persetujuan Tertunda
-								</h3>
-								<p className="text-[12px] text-[#64748B] mt-0.5">
-									Pengajuan yang memerlukan review dan keputusan Manajer Rendal
-								</p>
-							</div>
-
-							{/* Tab selector */}
-							<div className="inline-flex rounded-lg border border-[#E6E8EA] bg-gray-50/70 p-0.5">
-								<button
-									type="button"
-									onClick={() => setActiveApprovalTab("validasi")}
-									className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors ${
-										activeApprovalTab === "validasi"
-											? "bg-white text-[#0A356A] shadow-sm"
-											: "text-[#64748B] hover:text-[#0F172A]"
-									}`}
-								>
-									Validasi ({pendingValidations.length})
-								</button>
-								<button
-									type="button"
-									onClick={() => setActiveApprovalTab("reuse")}
-									className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors ${
-										activeApprovalTab === "reuse"
-											? "bg-white text-[#0A356A] shadow-sm"
-											: "text-[#64748B] hover:text-[#0F172A]"
-									}`}
-								>
-									Peminjaman ({pendingReuses.length})
-								</button>
-								<button
-									type="button"
-									onClick={() => setActiveApprovalTab("scrap")}
-									className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors ${
-										activeApprovalTab === "scrap"
-											? "bg-white text-[#0A356A] shadow-sm"
-											: "text-[#64748B] hover:text-[#0F172A]"
-									}`}
-								>
-									Scrap ({pendingScraps.length})
-								</button>
-							</div>
-						</div>
-
-						{/* Tab 1: Validasi Kelayakan */}
-						{activeApprovalTab === "validasi" && (
-							<div className="border-t border-[#E6E8EA] pt-2">
-								{pendingValidations.length === 0 ? (
-									<div className="py-8 text-center text-[#64748B] text-[13px] flex flex-col items-center gap-1.5">
-										<Check className="w-5 h-5 text-[#059669]" />
-										<span>Tidak ada pengajuan validasi inspeksi yang tertunda.</span>
-									</div>
-								) : (
-									<div className="divide-y divide-[#E6E8EA]">
-										{pendingValidations.slice(0, 4).map((item: any, idx: number) => {
-											const code = item.equipment_code || item.equipment?.equipment_code || "-";
-											const name = item.equipment_name || item.equipment?.name || "Equipment";
-											const plant = item.plant || item.equipment?.plant?.name || "-";
-											const reqDate = item.request_date
-												? new Date(item.request_date).toISOString().split("T")[0]
-												: "-";
-											const category = item.object_type_name || item.equipment?.object_type?.name || "-";
-
-											return (
-												<div
-													key={item.id || idx}
-													className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50/50 px-2 rounded transition-colors"
-												>
-													<div>
-														<div className="flex items-center gap-2">
-															<span className="font-semibold text-[#0A356A] text-[13px]">
-																{code}
-															</span>
-															<span className="text-gray-300">•</span>
-															<span className="font-medium text-[#0F172A] text-[13px]">
-																{name}
-															</span>
-														</div>
-														<p className="text-[12px] text-[#64748B] mt-0.5">
-															Plant: {plant} • Kategori: {category} • Diajukan: {reqDate} • No: {item.request_number || `REQ-${item.id}`}
-														</p>
-													</div>
-													<Link
-														href="/manajer/approve"
-														className="inline-flex items-center justify-center gap-1 text-[12px] font-semibold text-white bg-[#0A356A] hover:bg-[#0556B3] px-3 py-1.5 rounded transition-colors whitespace-nowrap"
-													>
-														<span>Review Validasi</span>
-														<ChevronRight className="w-3.5 h-3.5" />
-													</Link>
-												</div>
-											);
-										})}
-									</div>
-								)}
-								<div className="mt-3 pt-3 border-t border-[#E6E8EA] flex justify-end">
-									<Link
-										href="/manajer/approve"
-										className="text-[12px] font-semibold text-[#0A356A] hover:text-[#0556B3] flex items-center gap-1"
-									>
-										<span>Buka Halaman Persetujuan Validasi</span>
-										<ArrowRight className="w-3.5 h-3.5" />
-									</Link>
-								</div>
-							</div>
-						)}
-
-						{/* Tab 2: Peminjaman Reuse */}
-						{activeApprovalTab === "reuse" && (
-							<div className="border-t border-[#E6E8EA] pt-2">
-								{pendingReuses.length === 0 ? (
-									<div className="py-8 text-center text-[#64748B] text-[13px] flex flex-col items-center gap-1.5">
-										<Check className="w-5 h-5 text-[#059669]" />
-										<span>Tidak ada permohonan peminjaman reuse yang tertunda.</span>
-									</div>
-								) : (
-									<div className="divide-y divide-[#E6E8EA]">
-										{pendingReuses.slice(0, 4).map((item: any, idx: number) => {
-											const eq = item.equipment || {};
-											const code = eq.equipment_code || item.equipment_code || "-";
-											const name = eq.name || item.equipment_name || "Equipment";
-											const pemohon = item.requested_by_user?.name || item.requesting_unit || "Unit Operasi";
-											const targetPlant = item.target_plant || item.installation_location || eq.plant?.name || "-";
-											const reqDate = item.created_at
-												? new Date(item.created_at).toISOString().split("T")[0]
-												: "-";
-
-											return (
-												<div
-													key={item.id || idx}
-													className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50/50 px-2 rounded transition-colors"
-												>
-													<div>
-														<div className="flex items-center gap-2">
-															<span className="font-semibold text-[#0A356A] text-[13px]">
-																{code}
-															</span>
-															<span className="text-gray-300">•</span>
-															<span className="font-medium text-[#0F172A] text-[13px]">
-																{name}
-															</span>
-														</div>
-														<p className="text-[12px] text-[#64748B] mt-0.5">
-															Pemohon: {pemohon} • Lokasi/Plant: {targetPlant} • Diajukan: {reqDate} • No: {item.request_number || `REQ-${item.id}`}
-														</p>
-													</div>
-													<Link
-														href="/manajer/peminjaman"
-														className="inline-flex items-center justify-center gap-1 text-[12px] font-semibold text-white bg-[#0A356A] hover:bg-[#0556B3] px-3 py-1.5 rounded transition-colors whitespace-nowrap"
-													>
-														<span>Review Peminjaman</span>
-														<ChevronRight className="w-3.5 h-3.5" />
-													</Link>
-												</div>
-											);
-										})}
-									</div>
-								)}
-								<div className="mt-3 pt-3 border-t border-[#E6E8EA] flex justify-end">
-									<Link
-										href="/manajer/peminjaman"
-										className="text-[12px] font-semibold text-[#0A356A] hover:text-[#0556B3] flex items-center gap-1"
-									>
-										<span>Buka Halaman Persetujuan Peminjaman</span>
-										<ArrowRight className="w-3.5 h-3.5" />
-									</Link>
-								</div>
-							</div>
-						)}
-
-						{/* Tab 3: Scrap & Disposal */}
-						{activeApprovalTab === "scrap" && (
-							<div className="border-t border-[#E6E8EA] pt-2">
-								{pendingScraps.length === 0 ? (
-									<div className="py-8 text-center text-[#64748B] text-[13px] flex flex-col items-center gap-1.5">
-										<Check className="w-5 h-5 text-[#059669]" />
-										<span>Tidak ada pengajuan scrap atau disposal yang tertunda.</span>
-									</div>
-								) : (
-									<div className="divide-y divide-[#E6E8EA]">
-										{pendingScraps.slice(0, 4).map((item: any, idx: number) => {
-											const eq = item.equipment || {};
-											const code = eq.equipment_code || item.equipment_code || "-";
-											const name = eq.name || item.equipment_name || "Equipment";
-											const method = item.disposal_method?.name || item.disposal_method || "Scrap";
-											const reason = item.reason || item.justification || "Kondisi rusak berat & tidak ekonomis";
-
-											return (
-												<div
-													key={item.id || idx}
-													className="py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-gray-50/50 px-2 rounded transition-colors"
-												>
-													<div>
-														<div className="flex items-center gap-2">
-															<span className="font-semibold text-[#0A356A] text-[13px]">
-																{code}
-															</span>
-															<span className="text-gray-300">•</span>
-															<span className="font-medium text-[#0F172A] text-[13px]">
-																{name}
-															</span>
-														</div>
-														<p className="text-[12px] text-[#64748B] mt-0.5">
-															Metode: {method} • Alasan: {reason} • No: {item.disposal_number || `DSP-${item.id}`}
-														</p>
-													</div>
-													<Link
-														href="/manajer/scrap"
-														className="inline-flex items-center justify-center gap-1 text-[12px] font-semibold text-white bg-[#0A356A] hover:bg-[#0556B3] px-3 py-1.5 rounded transition-colors whitespace-nowrap"
-													>
-														<span>Review Scrap</span>
-														<ChevronRight className="w-3.5 h-3.5" />
-													</Link>
-												</div>
-											);
-										})}
-									</div>
-								)}
-								<div className="mt-3 pt-3 border-t border-[#E6E8EA] flex justify-end">
-									<Link
-										href="/manajer/scrap"
-										className="text-[12px] font-semibold text-[#0A356A] hover:text-[#0556B3] flex items-center gap-1"
-									>
-										<span>Buka Halaman Persetujuan Scrap</span>
-										<ArrowRight className="w-3.5 h-3.5" />
-									</Link>
-								</div>
-							</div>
-						)}
-					</div>
-
-					{/* Grafik Monitoring Persetujuan Manajerial & Sebaran Aset */}
-					<div className="bg-white rounded border border-[#E6E8EA] p-5">
-						<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-							<div>
+				<div className="lg:col-span-2 flex flex-col">
+					{/* Grafik Rekapitulasi Alur Persetujuan Manajerial */}
+					<div className="bg-white rounded border border-[#E6E8EA] p-5 flex flex-col justify-between h-full">
+						<div>
+							<div className="flex items-center justify-between gap-3 mb-1">
 								<h3 className="text-[14px] font-semibold text-[#0F172A] flex items-center gap-2">
 									<BarChart3 className="w-4 h-4 text-[#0A356A]" />
-									{chartTab === "persetujuan"
-										? "Rekapitulasi Alur Persetujuan Manajerial"
-										: "Sebaran Inventaris Aset per Plant"}
+									Rekapitulasi Alur Persetujuan Manajerial
 								</h3>
-								<p className="text-[12px] text-[#64748B] mt-0.5">
-									{chartTab === "persetujuan"
-										? "Perbandingan volume pengajuan persetujuan yang ditangani Manajer Rendal"
-										: "Distribusi lokasi fisik aset idle terdaftar di pabrik operasional"}
-								</p>
+								<span className="text-[11px] text-[#64748B] font-medium bg-gray-50 px-2.5 py-0.5 rounded border border-[#E6E8EA]">
+									Total {validationApprovals.length + reuseRequests.length + disposals.length} Pengajuan
+								</span>
 							</div>
+							<p className="text-[12px] text-[#64748B] mb-4">
+								Perbandingan volume pengajuan persetujuan yang ditangani Manajer Rendal per kategori alur
+							</p>
 
-							{/* Chart Tab selector */}
-							<div className="inline-flex rounded-lg border border-[#E6E8EA] bg-gray-50/70 p-0.5 self-start sm:self-auto">
-								<button
-									type="button"
-									onClick={() => setChartTab("persetujuan")}
-									className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors ${
-										chartTab === "persetujuan"
-											? "bg-white text-[#0A356A] shadow-sm"
-											: "text-[#64748B] hover:text-[#0F172A]"
-									}`}
-								>
-									Alur Persetujuan
-								</button>
-								<button
-									type="button"
-									onClick={() => setChartTab("plant")}
-									className={`px-2.5 py-1 text-[11px] font-semibold rounded transition-colors ${
-										chartTab === "plant"
-											? "bg-white text-[#0A356A] shadow-sm"
-											: "text-[#64748B] hover:text-[#0F172A]"
-									}`}
-								>
-									Sebaran Plant
-								</button>
+							<div className="border-t border-[#E6E8EA] pt-4">
+								<div className="w-full h-80">
+									<ResponsiveContainer width="100%" height="100%">
+										<BarChart
+											data={approvalBarData}
+											margin={{ top: 12, right: 16, left: -16, bottom: 0 }}
+										>
+											<CartesianGrid
+												strokeDasharray="3 3"
+												stroke="#E6E8EA"
+												vertical={false}
+											/>
+											<XAxis
+												dataKey="name"
+												tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+												tickLine={false}
+												axisLine={{ stroke: "#E6E8EA" }}
+											/>
+											<YAxis
+												tick={{ fontSize: 12, fill: "#64748B" }}
+												tickLine={false}
+												axisLine={false}
+												allowDecimals={false}
+												width={32}
+											/>
+											<Tooltip
+												contentStyle={{
+													fontSize: "12px",
+													borderRadius: "4px",
+													border: "1px solid #E6E8EA",
+													boxShadow: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
+												}}
+												formatter={(value: any, name: any) => [`${value} Pengajuan`, name]}
+											/>
+											<Bar
+												dataKey="pending"
+												name="Menunggu Review"
+												fill="#0556B3"
+												radius={[3, 3, 0, 0]}
+												maxBarSize={32}
+											/>
+											<Bar
+												dataKey="approved"
+												name="Disetujui"
+												fill="#059669"
+												radius={[3, 3, 0, 0]}
+												maxBarSize={32}
+											/>
+											<Bar
+												dataKey="rejected"
+												name="Ditolak / Revisi"
+												fill="#DC2626"
+												radius={[3, 3, 0, 0]}
+												maxBarSize={32}
+											/>
+										</BarChart>
+									</ResponsiveContainer>
+								</div>
+
+								{/* Legend & mini stats */}
+								<div className="mt-4 pt-3 border-t border-[#E6E8EA] flex flex-wrap items-center justify-between gap-3 text-[12px]">
+									<div className="flex items-center gap-4">
+										<span className="flex items-center gap-1.5 text-[#0556B3] font-medium">
+											<span className="w-2.5 h-2.5 rounded-sm bg-[#0556B3]" />
+											Menunggu Review ({pendingValidations.length + pendingReuses.length + pendingScraps.length})
+										</span>
+										<span className="flex items-center gap-1.5 text-[#059669] font-medium">
+											<span className="w-2.5 h-2.5 rounded-sm bg-[#059669]" />
+											Disetujui ({approvalBarData.reduce((s, d) => s + d.approved, 0)})
+										</span>
+										<span className="flex items-center gap-1.5 text-[#DC2626] font-medium">
+											<span className="w-2.5 h-2.5 rounded-sm bg-[#DC2626]" />
+											Ditolak / Revisi ({approvalBarData.reduce((s, d) => s + d.rejected, 0)})
+										</span>
+									</div>
+									<span className="text-[#64748B] text-[11px]">
+										3 Alur: Validasi Kelayakan, Peminjaman Reuse, Scrap & Disposal
+									</span>
+								</div>
 							</div>
-						</div>
-
-						<div className="border-t border-[#E6E8EA] pt-4">
-							{chartTab === "persetujuan" ? (
-								<div>
-									<div className="w-full h-52">
-										<ResponsiveContainer width="100%" height="100%">
-											<BarChart
-												data={approvalBarData}
-												margin={{ top: 8, right: 12, left: -20, bottom: 0 }}
-											>
-												<CartesianGrid
-													strokeDasharray="3 3"
-													stroke="#E6E8EA"
-													vertical={false}
-												/>
-												<XAxis
-													dataKey="name"
-													tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
-													tickLine={false}
-													axisLine={{ stroke: "#E6E8EA" }}
-												/>
-												<YAxis
-													tick={{ fontSize: 12, fill: "#64748B" }}
-													tickLine={false}
-													axisLine={false}
-													allowDecimals={false}
-													width={32}
-												/>
-												<Tooltip
-													contentStyle={{
-														fontSize: "12px",
-														borderRadius: "4px",
-														border: "1px solid #E6E8EA",
-														boxShadow: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
-													}}
-												/>
-												<Bar
-													dataKey="pending"
-													name="Menunggu Review"
-													fill="#0556B3"
-													radius={[3, 3, 0, 0]}
-													maxBarSize={28}
-												/>
-												<Bar
-													dataKey="approved"
-													name="Disetujui"
-													fill="#059669"
-													radius={[3, 3, 0, 0]}
-													maxBarSize={28}
-												/>
-												<Bar
-													dataKey="rejected"
-													name="Ditolak / Revisi"
-													fill="#DC2626"
-													radius={[3, 3, 0, 0]}
-													maxBarSize={28}
-												/>
-											</BarChart>
-										</ResponsiveContainer>
-									</div>
-
-									{/* Legend & mini stats */}
-									<div className="mt-3 pt-3 border-t border-[#E6E8EA] flex flex-wrap items-center justify-between gap-3 text-[12px]">
-										<div className="flex items-center gap-4">
-											<span className="flex items-center gap-1.5 text-[#0556B3] font-medium">
-												<span className="w-2.5 h-2.5 rounded-sm bg-[#0556B3]" />
-												Menunggu ({pendingValidations.length + pendingReuses.length + pendingScraps.length})
-											</span>
-											<span className="flex items-center gap-1.5 text-[#059669] font-medium">
-												<span className="w-2.5 h-2.5 rounded-sm bg-[#059669]" />
-												Disetujui ({approvalBarData.reduce((s, d) => s + d.approved, 0)})
-											</span>
-											<span className="flex items-center gap-1.5 text-[#DC2626] font-medium">
-												<span className="w-2.5 h-2.5 rounded-sm bg-[#DC2626]" />
-												Ditolak ({approvalBarData.reduce((s, d) => s + d.rejected, 0)})
-											</span>
-										</div>
-										<span className="text-[#64748B] text-[11px]">
-											Total {validationApprovals.length + reuseRequests.length + disposals.length} pengajuan tercatat
-										</span>
-									</div>
-								</div>
-							) : (
-								<div>
-									<div className="w-full h-52">
-										<ResponsiveContainer width="100%" height="100%">
-											<BarChart
-												data={plantBarData}
-												margin={{ top: 8, right: 12, left: -20, bottom: 0 }}
-											>
-												<CartesianGrid
-													strokeDasharray="3 3"
-													stroke="#E6E8EA"
-													vertical={false}
-												/>
-												<XAxis
-													dataKey="name"
-													tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
-													tickLine={false}
-													axisLine={{ stroke: "#E6E8EA" }}
-												/>
-												<YAxis
-													tick={{ fontSize: 12, fill: "#64748B" }}
-													tickLine={false}
-													axisLine={false}
-													allowDecimals={false}
-													width={32}
-												/>
-												<Tooltip
-													contentStyle={{
-														fontSize: "12px",
-														borderRadius: "4px",
-														border: "1px solid #E6E8EA",
-														boxShadow: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
-													}}
-													formatter={(val) => [`${val} Unit`, "Aset Idle"]}
-												/>
-												<Bar
-													dataKey="count"
-													name="Aset Idle"
-													fill="#0A356A"
-													radius={[3, 3, 0, 0]}
-													maxBarSize={32}
-												/>
-											</BarChart>
-										</ResponsiveContainer>
-									</div>
-
-									<div className="mt-3 pt-3 border-t border-[#E6E8EA] flex items-center justify-between text-[12px]">
-										<span className="text-[#64748B]">
-											Menampilkan {plantBarData.length} plant dengan aset idle terbanyak
-										</span>
-										<span className="font-semibold text-[#0F172A] tabular-nums">
-											{totalUnit} Unit Terdaftar
-										</span>
-									</div>
-								</div>
-							)}
 						</div>
 					</div>
 				</div>

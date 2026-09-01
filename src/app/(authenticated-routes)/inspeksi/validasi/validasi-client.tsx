@@ -530,36 +530,25 @@ export default function ManajemenInspeksiClient({
 	};
 
 	// Helper untuk mengecek apakah aset masuk ke Riwayat Validasi vs Antrean Validasi.
-	// Antrean Validasi HANYA untuk aset yang memerlukan tindakan aktif dari Inspeksi (Inspeksi baru, Revisi Inspeksi, Ubah Inspeksi).
-	// Semua aset dengan status REVALIDATION, SCRAP / SCRAP RECOMMENDED, atau yang sedang dalam review (IN_REVIEW / PENDING_REVIEW)
-	// dan hanya memiliki tombol 'Detail Info' dipindahkan ke Riwayat Validasi.
+	// Antrean Validasi HANYA untuk aset yang memerlukan tindakan aktif: yaitu REGISTERED dan VALIDATED yang belum final.
+	// Aset dengan status READY_TO_USE, REPAIR, SCRAP, REVALIDATION, REUSED, REJECTED, atau yang persetujuannya APPROVED masuk ke Riwayat Validasi.
 	const isFinalStatus = (asset: Asset) => {
 		const normStatus = statusName(asset.statusAset);
 		const normApproval = (asset.statusPersetujuan || "").toUpperCase();
 
-		const isNeedRevision = normApproval === "NEED_REVISION";
-		if (isNeedRevision) return false;
-
-		const isReady = normStatus === "READY_TO_USE" || normStatus === "REUSED";
-		const isScrap =
-			normStatus === "SCRAP" || normStatus === "DISPOSAL_RECOMMENDED";
-		const isRevalidation = normStatus === "REVALIDATION";
-		const isRejected = normStatus === "REJECTED" || normApproval === "REJECTED";
-		const isRepair =
-			normStatus === "REPAIR" || normStatus === "REPAIR_COMPLETED";
-
-		const isUnderReview =
-			normApproval === "IN_REVIEW" || normApproval === "PENDING_REVIEW";
-
-		if (isRevalidation || isScrap || isRepair) return true;
-		if (
-			isUnderReview &&
-			normStatus !== "REGISTERED" &&
-			normStatus !== "VALIDATED"
-		)
+		// Jika persetujuan sudah disetujui (APPROVED) atau ditolak (REJECTED), masuk ke Riwayat
+		if (normApproval === "APPROVED" || normApproval === "REJECTED") {
 			return true;
+		}
 
-		return isReady || isRejected || isRepair;
+		// Jika status persetujuannya perlu revisi, tetap di Antrean (memerlukan tindakan revisi)
+		if (normApproval === "NEED_REVISION") {
+			return false;
+		}
+
+		// Antrean HANYA untuk aset yang berstatus REGISTERED atau VALIDATED
+		const isActionNeeded = normStatus === "REGISTERED" || normStatus === "VALIDATED";
+		return !isActionNeeded;
 	};
 
 	// Counts untuk tab navigation

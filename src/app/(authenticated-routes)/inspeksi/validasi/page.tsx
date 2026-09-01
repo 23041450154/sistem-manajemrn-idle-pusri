@@ -162,6 +162,8 @@ export default async function ValidasiPage() {
 			} else if (app.approval_status === "REJECTED") {
 				statusPersetujuan = "REJECTED";
 				statusAset = "REJECTED";
+			} else if (String(statusAset) === "READY_TO_USE" || String(statusAset) === "REUSED") {
+				statusPersetujuan = "APPROVED";
 			} else {
 				statusPersetujuan = "PENDING_REVIEW";
 			}
