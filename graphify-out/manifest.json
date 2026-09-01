@@ -140,8 +140,8 @@
     "semantic_hash": ""
   },
   "src/action/master.ts": {
-    "mtime": 1787631560.912547,
-    "ast_hash": "72feb441b56bf362c6a466c25567f018",
+    "mtime": 1788250655.0350723,
+    "ast_hash": "5b89fceffdae85596a8586888eeda2c8",
     "semantic_hash": ""
   },
   "src/app/(auth)/auth/callback/page.tsx": {
@@ -450,8 +450,8 @@
     "semantic_hash": ""
   },
   "src/components/MasterDataTable.tsx": {
-    "mtime": 1787902094.6628132,
-    "ast_hash": "3ac22edccd4ef880560a1e0d0eb11c2b",
+    "mtime": 1788250566.8809824,
+    "ast_hash": "c525a8588c35d97464dec83144376397",
     "semantic_hash": ""
   },
   "src/components/RecentActivities.tsx": {
@@ -510,8 +510,8 @@
     "semantic_hash": ""
   },
   "src/lib/master-entities.ts": {
-    "mtime": 1787663247.2446752,
-    "ast_hash": "58fe3a5c9023d4018c1889261e3d032b",
+    "mtime": 1788250538.2959607,
+    "ast_hash": "940fa0633b08bc39c8129ac260ce4989",
     "semantic_hash": ""
   },
   "src/lib/roles.ts": {

@@ -28,10 +28,12 @@ export const MASTER_ENTITIES: MasterEntity[] = [
 		placeholder: "Contoh: Valve, Rotating Equipment",
 	},
 	{
+		// ponytail: read-only sesuai permintaan admin. Backend punya CRUD
+		// (/api/admin/condition) — set kembali adminPath bila boleh diubah dari UI.
 		slug: "condition",
 		label: "Condition",
 		listPath: "/api/condition",
-		adminPath: "/api/admin/condition",
+		adminPath: null,
 		nameField: "name",
 		placeholder: "Contoh: Baik, Rusak Ringan",
 	},
@@ -45,13 +47,14 @@ export const MASTER_ENTITIES: MasterEntity[] = [
 		placeholder: "Contoh: Gudang Pemeliharaan Sentral",
 	},
 	{
+		// ponytail: read-only sesuai permintaan admin (backend punya CRUD
+		// /api/admin/status). Set kembali adminPath + hidden bila perlu diubah.
 		slug: "status",
 		label: "Status",
 		listPath: "/api/status",
-		adminPath: "/api/admin/status",
+		adminPath: null,
 		nameField: "name",
 		placeholder: "Contoh: Idle, Ready To Use",
-		hidden: true,
 	},
 	{
 		slug: "disposal-method",
@@ -72,10 +75,21 @@ export const MASTER_ENTITIES: MasterEntity[] = [
 		placeholder: "Contoh: PUSRI-IB",
 	},
 	{
+		// Backend hanya expose GET /api/functional-locations (tanpa admin CRUD).
+		slug: "funcloc",
+		label: "Functional Location",
+		listPath: "/api/functional-locations",
+		adminPath: null,
+		nameField: "name",
+		placeholder: "Contoh: PUSRI-IB-PRD-01",
+	},
+	{
+		// ponytail: read-only sesuai permintaan admin. Backend punya CRUD
+		// (/api/admin/require-action) — set kembali adminPath bila boleh diubah.
 		slug: "required-action",
 		label: "Required Action",
 		listPath: "/api/require-action",
-		adminPath: "/api/admin/require-action",
+		adminPath: null,
 		nameField: "name",
 		placeholder: "Contoh: Perlu Overhaul Total",
 	},

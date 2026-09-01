@@ -199,12 +199,10 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 						<div className="w-12 h-12 bg-slate-100 text-[#0A356A] rounded-2xl flex items-center justify-center mb-3">
 							<Database className="w-6 h-6" />
 						</div>
-						<h3 className="text-sm font-bold text-slate-900 mb-1">
-							Belum ada data
-						</h3>
+						<h3 className="text-sm font-bold text-slate-900 mb-1">Belum ada data</h3>
 						<p className="text-xs text-slate-500 max-w-md">
 							{readOnly
-								? "Data plant dikelola dari backend."
+								? `Data ${entity.label} dikelola dari backend.`
 								: `Tambahkan entri ${entity.label} baru.`}
 						</p>
 					</div>
@@ -231,10 +229,7 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 							</thead>
 							<tbody className="bg-white divide-y divide-slate-100">
 								{paginated.map((item) => (
-									<tr
-										key={item.id}
-										className="hover:bg-slate-50/70 transition-colors"
-									>
+									<tr key={item.id} className="hover:bg-slate-50/70 transition-colors">
 										<td className="px-6 py-4 whitespace-nowrap text-xs font-mono font-medium text-slate-400">
 											#{item.id}
 										</td>
@@ -247,9 +242,7 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 											</td>
 										)}
 										<td className="px-6 py-4 text-xs text-slate-500 font-medium max-w-md">
-											{item.description || (
-												<span className="text-slate-300">-</span>
-											)}
+											{item.description || <span className="text-slate-300">-</span>}
 										</td>
 									</tr>
 								))}
@@ -275,26 +268,22 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 									Prev
 								</button>
 								<div className="flex items-center gap-1">
-									{Array.from({ length: totalPages }, (_, i) => i + 1).map(
-										(page) => (
-											<button
-												key={page}
-												onClick={() => setCurrentPage(page)}
-												className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors ${
-													currentPage === page
-														? "bg-[#0A356A] text-white"
-														: "text-slate-600 hover:bg-slate-100"
-												}`}
-											>
-												{page}
-											</button>
-										),
-									)}
+									{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+										<button
+											key={page}
+											onClick={() => setCurrentPage(page)}
+											className={`w-7 h-7 rounded-lg text-xs font-bold flex items-center justify-center transition-colors ${
+												currentPage === page
+													? "bg-[#0A356A] text-white"
+													: "text-slate-600 hover:bg-slate-100"
+											}`}
+										>
+											{page}
+										</button>
+									))}
 								</div>
 								<button
-									onClick={() =>
-										setCurrentPage((p) => Math.min(totalPages, p + 1))
-									}
+									onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
 									disabled={currentPage === totalPages}
 									className="px-3 py-1 text-xs font-semibold text-slate-600 bg-white border border-slate-200 rounded-lg disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 transition-colors"
 								>
@@ -357,9 +346,7 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 										required
 										value={itemPlantId}
 										onChange={(e) =>
-											setItemPlantId(
-												e.target.value === "" ? "" : Number(e.target.value),
-											)
+											setItemPlantId(e.target.value === "" ? "" : Number(e.target.value))
 										}
 										className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none font-semibold text-slate-700 cursor-pointer"
 									>
@@ -439,8 +426,8 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 							<span className="font-bold text-slate-900">
 								&quot;{deleting.name}&quot;
 							</span>
-							. Tindakan ini tidak dapat dibatalkan dan mempengaruhi pilihan
-							dropdown pada modul terkait.
+							. Tindakan ini tidak dapat dibatalkan dan mempengaruhi pilihan dropdown
+							pada modul terkait.
 						</p>
 
 						<div className="flex items-center gap-3 w-full justify-center mt-2">

@@ -57,13 +57,18 @@ export async function getMasterItems(slug: string): Promise<MasterItem[]> {
 		if (!res.ok) return [];
 		const json = await res.json();
 		// idle_reason memakai reason_name; normalisasi ke `name` untuk UI.
+		// Sebagian endpoint (functional-locations) mengembalikan array polos
+		// tanpa pembungkus {data} — dukung keduanya.
+		const rows: Record<string, unknown>[] = Array.isArray(json)
+			? json
+			: json.data || [];
 		// Defensively coerce name/description to strings — the API sometimes
 		// returns nested relation objects instead of scalars.
-		return (json.data || []).map((row: Record<string, unknown>) => ({
+		return rows.map((row) => ({
 			...row,
 			name: str(row[entity.nameField] ?? row.name) ?? "",
 			description: str(row.description),
-		}));
+		})) as MasterItem[];
 	} catch (error) {
 		console.error(`Fetch master ${slug} error:`, error);
 		return [];
