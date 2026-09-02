@@ -1,8 +1,28 @@
 "use client";
 
+import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Package, Send, ArrowRight, RefreshCw } from "lucide-react";
+import {
+	Package,
+	Send,
+	ArrowRight,
+	RefreshCw,
+	BarChart3,
+	PieChart as PieIcon,
+} from "lucide-react";
+import {
+	ResponsiveContainer,
+	BarChart,
+	Bar,
+	XAxis,
+	YAxis,
+	CartesianGrid,
+	Tooltip,
+	PieChart,
+	Pie,
+	Cell,
+} from "recharts";
 import { buttonVariants } from "@/components/ui/button";
 
 interface EquipmentItem {
@@ -10,6 +30,7 @@ interface EquipmentItem {
 	equipment_code: string;
 	name: string;
 	plant: string;
+	category?: string;
 	status_name: string;
 }
 
@@ -22,7 +43,7 @@ interface ReuseRequestItem {
 	status: string;
 }
 
-/** Interaktivitas saja (tombol refresh) — data sudah di-fetch di Server Component. */
+/** Interaktivitas & visualisasi grafik dashboard unit kerja. */
 export default function UnitKerjaDashboardContent({
 	equipments,
 	reuseRequests,
@@ -37,20 +58,92 @@ export default function UnitKerjaDashboardContent({
 	const pendingRequestsCount = reuseRequests.filter(
 		(r) =>
 			r.status.toUpperCase().includes("PENDING") ||
-			r.status.toUpperCase().includes("REVIEW"),
+			r.status.toUpperCase().includes("REVIEW") ||
+			r.status.toUpperCase().includes("MENUNGGU"),
 	).length;
-	const approvedRequests = reuseRequests.filter((r) =>
-		r.status.toUpperCase().includes("APPROV"),
+	const approvedRequests = reuseRequests.filter(
+		(r) =>
+			r.status.toUpperCase().includes("APPROV") ||
+			r.status.toUpperCase().includes("DISETUJUI"),
 	);
+
+	// 1. Data Grafik 1: Visualisasi 4 Metrik Operasional Utama Unit Kerja
+	const metricsBarData = useMemo(() => {
+		return [
+			{
+				name: "Aset Siap Pakai",
+				value: readyToUseCount,
+				fill: "#059669",
+				caption: "Tersedia di daftar aset",
+			},
+			{
+				name: "Total Pengajuan",
+				value: totalSubmittedRequests,
+				fill: "#0556B3",
+				caption: "Seluruh riwayat unit",
+			},
+			{
+				name: "Menunggu Review",
+				value: pendingRequestsCount,
+				fill: "#B45309",
+				caption: "Dalam evaluasi Rendal",
+			},
+			{
+				name: "Disetujui Rendal",
+				value: approvedRequests.length,
+				fill: "#0A356A",
+				caption: "Siap dimobilisasi",
+			},
+		];
+	}, [readyToUseCount, totalSubmittedRequests, pendingRequestsCount, approvedRequests]);
+
+	// 2. Data Grafik 2: Status Pengajuan Reuse Unit Kerja (Donut Chart)
+	const { pieData, totalRequests } = useMemo(() => {
+		let approved = 0;
+		let pending = 0;
+		let rejected = 0;
+
+		reuseRequests.forEach((r) => {
+			const s = r.status.toUpperCase();
+			if (s.includes("APPROV") || s.includes("DISETUJUI")) {
+				approved++;
+			} else if (
+				s.includes("REJECT") ||
+				s.includes("DITOLAK") ||
+				s.includes("REVISI")
+			) {
+				rejected++;
+			} else {
+				pending++;
+			}
+		});
+
+		const total = approved + pending + rejected;
+
+		const data = [
+			{ name: "Disetujui", value: approved, color: "#059669" },
+			{ name: "Menunggu Review", value: pending, color: "#0556B3" },
+			{ name: "Perlu Revisi / Ditolak", value: rejected, color: "#DC2626" },
+		].filter((item) => item.value > 0);
+
+		if (data.length === 0) {
+			data.push({ name: "Belum Ada Pengajuan", value: 1, color: "#E6E8EA" });
+		}
+
+		return {
+			pieData: data,
+			totalRequests: total,
+		};
+	}, [reuseRequests]);
 
 	const getStatusBadge = (status: string) => {
 		const s = status.toUpperCase();
 		let label = "Menunggu Review";
 		let style = "bg-[#FEF3C7] text-[#B45309]";
-		if (s.includes("APPROV")) {
+		if (s.includes("APPROV") || s.includes("DISETUJUI")) {
 			label = "Disetujui";
 			style = "bg-[#DCFCE7] text-[#16A34A]";
-		} else if (s.includes("REJECT")) {
+		} else if (s.includes("REJECT") || s.includes("DITOLAK")) {
 			label = "Ditolak";
 			style = "bg-[#FEE2E2] text-[#DC2626]";
 		} else if (s.includes("REVISI") || s.includes("REVISION")) {
@@ -67,7 +160,7 @@ export default function UnitKerjaDashboardContent({
 	};
 
 	return (
-		<div className="page-container">
+		<div className="page-container flex flex-col gap-6">
 			{/* Header */}
 			<div className="page-header">
 				<div>
@@ -140,7 +233,189 @@ export default function UnitKerjaDashboardContent({
 				</div>
 			</div>
 
-			<div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+			{/* Visualisasi Grafik: Rekapitulasi Metrik Operasional & Donut Status Pengajuan */}
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+				{/* Left: Bar Chart Rekapitulasi 4 Metrik Operasional Unit Kerja */}
+				<div className="lg:col-span-2 bg-white border border-[#E6E8EA] rounded-[4px] p-5 flex flex-col justify-between">
+					<div>
+						<div className="flex items-center justify-between gap-3 mb-1">
+							<h3 className="text-[14px] font-semibold text-[#0F172A] flex items-center gap-2">
+								<BarChart3 className="w-4 h-4 text-[#0A356A]" />
+								Rekapitulasi Operasional & Pengajuan Reuse
+							</h3>
+							<span className="text-[11px] text-[#64748B] font-medium bg-gray-50 px-2.5 py-0.5 rounded border border-[#E6E8EA]">
+								Aktivitas Unit Kerja
+							</span>
+						</div>
+						<p className="text-[12px] text-[#64748B] mb-4">
+							Visualisasi perbandingan ketersediaan aset siap pakai dan status seluruh pengajuan peminjaman
+						</p>
+
+						<div className="border-t border-[#E6E8EA] pt-4">
+							<div className="w-full h-64">
+								<ResponsiveContainer width="100%" height="100%">
+									<BarChart
+										data={metricsBarData}
+										margin={{ top: 12, right: 16, left: -16, bottom: 0 }}
+									>
+										<CartesianGrid
+											strokeDasharray="3 3"
+											stroke="#E6E8EA"
+											vertical={false}
+										/>
+										<XAxis
+											dataKey="name"
+											tick={{ fontSize: 12, fill: "#475569", fontWeight: 500 }}
+											tickLine={false}
+											axisLine={{ stroke: "#E6E8EA" }}
+										/>
+										<YAxis
+											tick={{ fontSize: 12, fill: "#64748B" }}
+											tickLine={false}
+											axisLine={false}
+											allowDecimals={false}
+											width={32}
+										/>
+										<Tooltip
+											contentStyle={{
+												fontSize: "12px",
+												borderRadius: "4px",
+												border: "1px solid #E6E8EA",
+												boxShadow: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
+											}}
+											formatter={(value: any, name: any, item: any) => [
+												`${value} Data`,
+												item.payload.caption || item.payload.name,
+											]}
+										/>
+										<Bar
+											dataKey="value"
+											name="Jumlah"
+											radius={[3, 3, 0, 0]}
+											maxBarSize={48}
+										>
+											{metricsBarData.map((entry, index) => (
+												<Cell key={`bar-cell-${index}`} fill={entry.fill} />
+											))}
+										</Bar>
+									</BarChart>
+								</ResponsiveContainer>
+							</div>
+
+							<div className="mt-4 pt-3 border-t border-[#E6E8EA] flex flex-wrap items-center justify-between gap-3 text-[12px]">
+								<div className="flex flex-wrap items-center gap-4">
+									{metricsBarData.map((item) => (
+										<span
+											key={item.name}
+											className="flex items-center gap-1.5 font-medium text-gray-700"
+										>
+											<span
+												className="w-2.5 h-2.5 rounded-sm"
+												style={{ backgroundColor: item.fill }}
+											/>
+											{item.name} ({item.value})
+										</span>
+									))}
+								</div>
+								<Link
+									href="/unit-kerja/daftar-aset"
+									className="text-[12px] font-medium text-[#0A356A] hover:text-[#0556B3] inline-flex items-center gap-1"
+								>
+									Daftar Aset
+									<ArrowRight className="w-3.5 h-3.5" />
+								</Link>
+							</div>
+						</div>
+					</div>
+				</div>
+
+				{/* Right: Donut Chart Status Pengajuan Reuse Unit Kerja */}
+				<div className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 flex flex-col justify-between">
+					<div>
+						<h3 className="text-[14px] font-semibold text-[#0F172A] flex items-center gap-2">
+							<PieIcon className="w-4 h-4 text-[#0A356A]" />
+							Status Pengajuan Reuse
+						</h3>
+						<p className="text-[12px] text-[#64748B] mt-0.5">
+							Distribusi status pengajuan pinjam pakai unit Anda
+						</p>
+					</div>
+
+					<div className="relative h-44 flex justify-center items-center my-3">
+						<ResponsiveContainer width="100%" height="100%">
+							<PieChart>
+								<Pie
+									data={pieData}
+									cx="50%"
+									cy="50%"
+									innerRadius={48}
+									outerRadius={68}
+									paddingAngle={3}
+									dataKey="value"
+									stroke="none"
+								>
+									{pieData.map((entry, index) => (
+										<Cell key={`cell-${index}`} fill={entry.color} />
+									))}
+								</Pie>
+								<Tooltip
+									contentStyle={{
+										fontSize: "12px",
+										borderRadius: "4px",
+										border: "1px solid #E6E8EA",
+										boxShadow: "0 1px 2px 0 rgb(15 23 42 / 0.04)",
+									}}
+									formatter={(value: any, name: any) => [`${value} Pengajuan`, name]}
+								/>
+							</PieChart>
+						</ResponsiveContainer>
+						<div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
+							<span className="text-[20px] font-bold text-[#0F172A] leading-none tabular-nums">
+								{totalRequests}
+							</span>
+							<span className="text-[10px] text-[#64748B] font-medium mt-0.5">
+								Pengajuan
+							</span>
+						</div>
+					</div>
+
+					<div className="space-y-1.5 pt-3 border-t border-[#E6E8EA]">
+						<div className="flex items-center justify-between text-[11px]">
+							<span className="flex items-center gap-1.5 text-gray-600">
+								<span className="w-2 h-2 rounded-full bg-[#059669]" />
+								Disetujui
+							</span>
+							<span className="font-semibold text-gray-900 tabular-nums">
+								{approvedRequests.length}
+							</span>
+						</div>
+						<div className="flex items-center justify-between text-[11px]">
+							<span className="flex items-center gap-1.5 text-gray-600">
+								<span className="w-2 h-2 rounded-full bg-[#0556B3]" />
+								Menunggu Review
+							</span>
+							<span className="font-semibold text-gray-900 tabular-nums">
+								{pendingRequestsCount}
+							</span>
+						</div>
+						<div className="flex items-center justify-between text-[11px]">
+							<span className="flex items-center gap-1.5 text-gray-600">
+								<span className="w-2 h-2 rounded-full bg-[#DC2626]" />
+								Perlu Revisi / Ditolak
+							</span>
+							<span className="font-semibold text-gray-900 tabular-nums">
+								{Math.max(
+									0,
+									totalRequests - approvedRequests.length - pendingRequestsCount,
+								)}
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			{/* Tabel Pengajuan Terbaru & Katalog Ringkas */}
+			<div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
 				{/* Pengajuan terbaru */}
 				<div className="lg:col-span-2 bg-white border border-[#E6E8EA] rounded-[4px] overflow-hidden">
 					<div className="flex items-center justify-between px-5 py-4 border-b border-[#E6E8EA]">
@@ -197,7 +472,10 @@ export default function UnitKerjaDashboardContent({
 									</tr>
 								) : (
 									reuseRequests.slice(0, 5).map((req) => (
-										<tr key={req.id} className="hover:bg-[#F2F3F4] transition-colors">
+										<tr
+											key={req.id}
+											className="hover:bg-[#F2F3F4] transition-colors"
+										>
 											<td className="px-4 py-2.5 text-[13px] text-[#0A356A] font-medium whitespace-nowrap tabular-nums">
 												{req.request_number}
 											</td>
@@ -246,7 +524,10 @@ export default function UnitKerjaDashboardContent({
 									className="px-5 py-3 flex items-center justify-between gap-3 hover:bg-[#F2F3F4] transition-colors"
 								>
 									<div className="min-w-0">
-										<p className="text-[13px] text-[#0F172A] truncate" title={item.name}>
+										<p
+											className="text-[13px] text-[#0F172A] truncate"
+											title={item.name}
+										>
 											{item.name}
 										</p>
 										<p className="text-[12px] text-[#64748B] tabular-nums truncate">
