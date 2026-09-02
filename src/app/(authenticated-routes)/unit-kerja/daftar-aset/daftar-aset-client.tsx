@@ -1433,7 +1433,7 @@ export default function DaftarAsetClient({
 															})
 														}
 														required
-														placeholder="15.000.000"
+														placeholder="0"
 														className="w-full min-h-10 px-3 py-2 bg-white border border-[#E6E8EA] rounded-r-lg text-[13px] leading-normal text-[#0F172A] tabular-nums placeholder:text-[#64748B] transition-colors duration-150 ease-out hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
 													/>
 												</div>

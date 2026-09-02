@@ -1611,6 +1611,16 @@ export async function getReuseRequests(scope: "mine" | "all" = "mine") {
 				item.approval?.id ??
 				null;
 
+			const reviewNotes =
+				approval?.notes ||
+				approval?.review_notes ||
+				approval?.reviewNotes ||
+				approval?.comment ||
+				approval?.comments ||
+				item.review_notes ||
+				item.approval_notes ||
+				"";
+
 			return {
 				...item,
 				// Backend dapat menghasilkan nomor dengan dash awal ("-REU-").
@@ -1619,6 +1629,7 @@ export async function getReuseRequests(scope: "mine" | "all" = "mine") {
 				// Jangan gunakan ID reuse sebagai fallback: endpoint review membutuhkan
 				// ID ApprovalRequest, bukan ID ReuseRequest.
 				approval_id: foundApprovalId ? String(foundApprovalId) : null,
+				review_notes: typeof reviewNotes === "string" ? reviewNotes.trim() : "",
 				approval_status:
 					// ReuseRequest diperbarui dalam transaksi yang sama saat approval
 					// diputuskan. Prioritaskan nilainya agar tabel tidak tertahan pada

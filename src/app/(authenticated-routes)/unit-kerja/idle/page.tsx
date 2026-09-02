@@ -91,21 +91,21 @@ export default async function UnitKerjaIdlePage() {
 						? String(item.condition?.name || "Baik")
 						: String(item.condition || "Baik / Operasional"),
 				storage_location: String(storageLoc),
-				serial_number: String(item.serial_number || "SN-2026-X89"),
-				vendor: String(item.vendor || item.manufacturer || "PT Utama Engineering"),
-				year_of_purchase: Number(item.year_of_purchase) || 2020,
-				book_value: Number(item.book_value) || 120000000,
-				original_value: Number(item.original_value) || 350000000,
-				estimated_reuse_value: Number(item.estimated_reuse_value) || 250000000,
+				serial_number: String(item.serial_number || item.serialNumber || "-"),
+				vendor: String(item.vendor || item.manufacturer || "-"),
+				year_of_purchase: Number(item.year_of_purchase || item.yearOfPurchase) || (item.year_of_purchase ? Number(item.year_of_purchase) : 0),
+				book_value: Number(item.book_value || item.bookValue) || 0,
+				original_value: Number(item.original_value || item.originalValue) || 0,
+				estimated_reuse_value: Number(item.estimated_reuse_value || item.estimatedReuseValue) || 0,
 				specifications: String(
 					specText ||
-						"Kapasitas 150 m3/h, Tekanan 12 Bar, Material Stainless Steel 316",
+					item.specifications ||
+					item.specification ||
+					item.description ||
+					"-",
 				),
-				capacity: String(item.capacity || "150 m3/h"),
-				notes: String(
-					item.notes ||
-						"Kondisi peralatan siap operasi. Terakhir diinspeksi tim pemeliharaan.",
-				),
+				capacity: String(item.capacity || "-"),
+				notes: String(item.notes || "-"),
 				created_at: String(item.created_at || new Date().toISOString()),
 				raw_data: item,
 			};
