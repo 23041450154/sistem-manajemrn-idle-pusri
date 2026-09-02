@@ -1892,3 +1892,50 @@ export async function approveRevalidationEquipment(
 		};
 	}
 }
+
+/** Fetch ringkasan cost avoidance & saving dari GET /api/financial/summary */
+export async function getFinancialSummary(year?: number): Promise<any> {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+	const baseUrl = API_URL;
+
+	try {
+		const url = new URL(`${baseUrl}/api/financial/summary`);
+		if (year) url.searchParams.set("year", String(year));
+
+		const res = await fetch(url.toString(), {
+			headers: { Authorization: `Bearer ${token}` },
+			next: { revalidate: 30 },
+		});
+		if (!res.ok) return null;
+		const json = await res.json().catch(() => null);
+		return json?.data || null;
+	} catch (err) {
+		console.error("getFinancialSummary error:", err);
+		return null;
+	}
+}
+
+/** Fetch tren saving bulanan dari GET /api/financial/monthly-trend */
+export async function getFinancialMonthlyTrend(year?: number): Promise<any[]> {
+	const cookieStore = await cookies();
+	const token = cookieStore.get("token")?.value;
+	const baseUrl = API_URL;
+
+	try {
+		const url = new URL(`${baseUrl}/api/financial/monthly-trend`);
+		if (year) url.searchParams.set("year", String(year));
+
+		const res = await fetch(url.toString(), {
+			headers: { Authorization: `Bearer ${token}` },
+			next: { revalidate: 30 },
+		});
+		if (!res.ok) return [];
+		const json = await res.json().catch(() => null);
+		return Array.isArray(json?.data) ? json.data : [];
+	} catch (err) {
+		console.error("getFinancialMonthlyTrend error:", err);
+		return [];
+	}
+}
+
