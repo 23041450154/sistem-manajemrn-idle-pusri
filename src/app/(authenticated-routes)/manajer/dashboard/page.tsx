@@ -1,6 +1,13 @@
 import Link from "next/link";
 import { CheckSquare, Trash2, ArrowUpRight } from "lucide-react";
-import { getEquipments, getApprovals, getReuseRequests, getDisposals } from "@/action/api";
+import {
+	getEquipments,
+	getApprovals,
+	getReuseRequests,
+	getDisposals,
+	getFinancialSummary,
+	getFinancialMonthlyTrend,
+} from "@/action/api";
 import { buttonVariants } from "@/components/ui/button";
 import { statusName } from "@/lib/equipment-status";
 import ManajerDashboardClient from "./manajer-dashboard-client";
@@ -11,11 +18,13 @@ import ManajerDashboardClient from "./manajer-dashboard-client";
 export const dynamic = "force-dynamic";
 
 export default async function ManajerDashboardPage() {
-	const [equipments, validationApprovals, reuseRequests, disposals] = await Promise.all([
+	const [equipments, validationApprovals, reuseRequests, disposals, financialSummary, financialTrend] = await Promise.all([
 		getEquipments().catch(() => []),
 		getApprovals("validation").catch(() => []),
 		getReuseRequests("all").catch(() => []),
 		getDisposals().catch(() => []),
+		getFinancialSummary().catch(() => null),
+		getFinancialMonthlyTrend().catch(() => []),
 	]);
 
 	const equipmentList = Array.isArray(equipments) ? equipments : [];
@@ -89,6 +98,8 @@ export default async function ManajerDashboardPage() {
 				validationApprovals={normalizedValidations}
 				reuseRequests={Array.isArray(reuseRequests) ? reuseRequests : []}
 				disposals={Array.isArray(disposals) ? disposals : []}
+				financialSummary={financialSummary}
+				financialTrend={Array.isArray(financialTrend) ? financialTrend : []}
 			/>
 		</div>
 	);
