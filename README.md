@@ -80,22 +80,6 @@ src/
 └── components/# Komponen UI (shadcn/ui + komponen aplikasi)
 ```
 
-## Alur Kerja Git
-
-Repository ini tersinkron dengan dua remote:
-
-- `origin` — GitHub (branch pengembangan `nadhin`)
-- `new-origin` — GitLab internal PUSRI (branch `main` untuk integrasi, `master` protected via Merge Request)
-
-Sinkronisasi biasa:
-
-```bash
-git fetch origin nadhin && git merge origin/nadhin
-git push new-origin HEAD:main
-```
-
-Perubahan ke `master` GitLab dilakukan lewat **Merge Request** `main` → `master`.
-
 ## Lisensi
 
 Untuk penggunaan internal PT PUSRI.
