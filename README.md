@@ -32,13 +32,7 @@ Sumber kebenaran role ada di `src/lib/roles.ts`. Role tidak dikenal otomatis dip
 
 ## Menjalankan Secara Lokal
 
-1. Salin dan isi environment variable:
-
-   ```bash
-   cp .env.example .env   # jika belum ada .env
-   ```
-
-   Minimal isi:
+1. Buat file `.env` di root project:
 
    ```env
    API_URL=<url-backend>
