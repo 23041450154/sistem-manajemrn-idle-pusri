@@ -105,11 +105,11 @@ export default function LoginForm() {
           <div className="mb-2 flex items-center justify-center lg:mb-4">
             {/* eslint-disable-next-line @next/next/no-img-element -- konsisten dgn halaman lain, hindari image optimizer */}
             <img
-              src={withBasePath("/branding/svg-v2/pusri-idle-icon-v2.svg")}
-              alt="Logo SIDE — Sistem Informasi Manajemen Idle Equipment"
-              width={192}
-              height={192}
-              className="h-44 w-44 p-3 object-contain lg:h-48 lg:w-48"
+              src={withBasePath("/logo-white-hd.png")}
+              alt="Logo PUSRI"
+              width={160}
+              height={160}
+              className="object-contain opacity-95 [filter:drop-shadow(0_2px_6px_rgba(255,255,255,0.15))_drop-shadow(0_4px_12px_rgba(0,0,0,0.25))]"
             />
           </div>
           <div className="flex max-w-[850px] flex-col items-center [text-shadow:0_2px_4px_rgba(0,0,0,0.4)]">
@@ -117,12 +117,9 @@ export default function LoginForm() {
               Selamat Datang di
             </span>
             <h1 className="m-0 mb-4 text-[2.5rem] leading-[1.25] font-bold tracking-[-0.5px] text-white">
-              SIDE
+              Manajemen Idle Equipment
             </h1>
-            <p className="mb-3 max-w-md text-lg leading-relaxed font-medium text-white/95 sm:text-xl">
-              Sistem Informasi Manajemen Idle Equipment
-            </p>
-            <span className="mb-6 text-base font-medium text-white/90 sm:text-lg">
+            <span className="mb-6 text-2xl font-medium text-white/90">
               PT Pupuk Sriwidjaja Palembang
             </span>
           </div>
@@ -130,7 +127,7 @@ export default function LoginForm() {
           {/* Kartu info disembunyikan di layar sempit (≤lg) seperti CSS lama */}
           <div className="hidden rounded-2xl border border-white/[0.12] bg-slate-900/80 px-6 py-[1.1rem] text-center shadow-[0_10px_30px_rgba(0,0,0,0.25)] backdrop-blur-sm transition-transform duration-300 max-w-[500px] hover:-translate-y-1 lg:block">
             <h3 className="m-0 mb-3 text-lg font-bold tracking-wide text-white">
-              Pengelolaan aset dalam satu sistem
+              Sistem Manajemen Idle Equipment
             </h3>
             <p className="m-0 text-[0.95rem] leading-relaxed text-gray-200">
               Platform terpusat untuk mengelola aset idle secara efisien,
