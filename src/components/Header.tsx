@@ -47,7 +47,7 @@ export function Header({ user }: { user?: HeaderUser }) {
           <Menu className="w-6 h-6" />
         </button>
         <h2 className="text-[#0556B3] text-lg md:text-xl font-bold hidden sm:block">
-          Idle Equipment
+          SIDE
         </h2>
       </div>
 

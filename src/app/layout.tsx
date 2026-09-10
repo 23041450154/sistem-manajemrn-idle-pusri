@@ -18,12 +18,12 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-	title: "Manajemen Idle Equipment - PT Pusri ",
+	title: "SIDE — Sistem Informasi Manajemen Idle Equipment | PUSRI",
 	description:
 		"Platform terpusat untuk memonitor, mengelola, dan mengoptimalkan penggunaan peralatan yang sedang tidak beroperasi di PT PUSRI.",
 	icons: {
 		// href absolut tidak di-prefix basePath oleh Next -> prefix manual.
-		icon: withBasePath("/pusri-2.png"),
+		icon: withBasePath("/branding/svg-v2/pusri-idle-icon-v2.svg"),
 	},
 };
 
