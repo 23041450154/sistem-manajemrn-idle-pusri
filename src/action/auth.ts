@@ -5,6 +5,7 @@ import type { LoginRequest, LoginResponse, User } from "../types/Auth";
 import { redirect } from "next/navigation";
 import { homePathForRole, normalizeRole } from "../lib/roles";
 import { API_URL } from "@/config/api";
+import { clearAuthCookies } from "@/lib/auth-cookies";
 
 function cookieConfig(maxAge: number) {
   return {
@@ -118,6 +119,19 @@ export async function getCurrentUserAction() {
     try {
       const user: User = JSON.parse(userStorage);
       if (user && user.name) {
+        // Validasi token masih hidup via /auth/me; kalau 401, hapus cookie biar tidak stuck loop.
+        try {
+          const res = await fetch(`${API_URL}/api/auth/me`, {
+            headers: { Authorization: `Bearer ${token}` },
+            cache: "no-store",
+          });
+          if (res.status === 401) {
+            await clearAuthCookies();
+            return { status: false, message: "token expired", token: null, user: null };
+          }
+        } catch {
+          // network error: tetap pakai cache cookie, jangan hapus
+        }
         return {
           status: true,
           message: "user ditemukan",
@@ -126,6 +140,7 @@ export async function getCurrentUserAction() {
         };
       }
     } catch {
+      await clearAuthCookies();
       return {
         status: false,
         message: "terjadi kesalahan",
@@ -142,6 +157,10 @@ export async function getCurrentUserAction() {
       headers: { Authorization: `Bearer ${token}` },
       cache: "no-store",
     });
+    if (res.status === 401) {
+      await clearAuthCookies();
+      return { status: false, message: "token expired", token: null, user: null };
+    }
     const result = await res.json().catch(() => null);
     const user: User | undefined = result?.data;
 
@@ -157,6 +176,7 @@ export async function getCurrentUserAction() {
     console.error("Gagal mengambil user SSO:", error);
   }
 
+  await clearAuthCookies();
   return {
     status: false,
     message: "user tidak ditemukan",
@@ -165,10 +185,47 @@ export async function getCurrentUserAction() {
   };
 }
 
+/**
+ * Middleware helper: cek apakah masih ada auth token yang valid.
+ * Hapus cookie kalau token sudah tidak valid. Dipakai di layout/proxy selain /api/logout.
+ */
+export async function ensureAuthOrClear(): Promise<{ valid: boolean; token: string | null }> {
+  const jar = await cookies();
+  const token = jar.get("token")?.value || null;
+  if (!token) return { valid: false, token: null };
+  try {
+    const res = await fetch(`${API_URL}/api/auth/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    });
+    if (res.status === 401) {
+      await clearAuthCookies();
+      return { valid: false, token: null };
+    }
+    return { valid: res.ok, token };
+  } catch {
+    // network down: anggap masih valid, jangan hapus cookie
+    return { valid: true, token };
+  }
+}
+
 export async function logoutAction() {
-  const cookieStorage = await cookies();
-  cookieStorage.delete("token");
-  cookieStorage.delete("user");
+  // Simpan token dulu sebelum cookie dihapus, untuk panggil backend
+  let token: string | undefined;
+  try {
+    token = (await cookies()).get("token")?.value;
+  } catch {}
+  await clearAuthCookies();
+  // Best-effort: minta backend juga hapus cookie HttpOnly gateway
+  try {
+    const headers: Record<string, string> = {};
+    if (token) headers.Authorization = `Bearer ${token}`;
+    await fetch(`${API_URL}/api/auth/logout`, {
+      method: "POST",
+      headers,
+      cache: "no-store",
+    }).catch(() => {});
+  } catch {}
 
   const ssoBaseUrl = process.env.NEXT_PUBLIC_API_SSO?.replace(/\/$/, "");
   return ssoBaseUrl ? `${ssoBaseUrl}/api/logout` : null;

@@ -3,6 +3,7 @@
 import { LogOut, Menu } from "lucide-react";
 import { useState } from "react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { withBasePath } from "@/lib/utils";
 import { useSidebar } from "./SidebarProvider";
 import { NotificationDropdown } from "@/components/NotificationDropdown";
 
@@ -103,7 +104,7 @@ export function Header({ user }: { user?: HeaderUser }) {
       <ConfirmDialog
         open={isLogoutOpen}
         onClose={() => setIsLogoutOpen(false)}
-        onConfirm={() => window.location.assign("/logout")}
+        onConfirm={() => window.location.assign(withBasePath("/logout"))}
         title="Keluar dari Aplikasi?"
         description="Sesi Anda akan diakhiri dan Anda kembali ke halaman login."
         confirmLabel="Ya, Keluar"

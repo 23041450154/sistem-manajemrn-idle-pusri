@@ -22,12 +22,13 @@ export const metadata: Metadata = {
 	description:
 		"Platform terpusat untuk memonitor, mengelola, dan mengoptimalkan penggunaan peralatan yang sedang tidak beroperasi di PT PUSRI.",
 	icons: {
-		icon: "/pusri-2.png",
+		// href absolut tidak di-prefix basePath oleh Next -> prefix manual.
+		icon: withBasePath("/pusri-2.png"),
 	},
 };
 
 import NextTopLoader from "nextjs-toploader";
-import { cn } from "@/lib/utils";
+import { cn, withBasePath } from "@/lib/utils";
 
 // DESIGN.md typography row 31 "Financial Trust" — IBM Plex Sans.
 // Chosen for true tabular figures (rupiah columns, equipment codes).

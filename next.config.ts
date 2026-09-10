@@ -16,7 +16,31 @@ function apiUrlFromEnv(): URL {
 
 const apiUrl = apiUrlFromEnv();
 
+// Deploy di belakang reverse proxy: origin (scheme://host) disediakan platform,
+// aplikasi hanya perlu tahu prefix path-nya. Wajib di-set saat BUILD (di-inline
+// ke bundle client), bukan saat runtime. Kosong = served dari root.
+const basePath = (process.env.NEXT_PUBLIC_BASE_URL || "")
+  .trim()
+  .replace(/\/+$/, "")
+  .replace(/^([^/])/, "/$1");
+
 const nextConfig: NextConfig = {
+  basePath,
+  async redirects() {
+    // Root domain (tanpa prefix) tidak di-serve Next saat basePath aktif.
+    // Arahkan "/" -> basePath agar dev/QA langsung masuk aplikasi.
+    // basePath:false = source & destination TIDAK di-prefix otomatis.
+    return basePath
+      ? [
+          {
+            source: "/",
+            destination: basePath,
+            permanent: false,
+            basePath: false,
+          },
+        ]
+      : [];
+  },
   images: {
     remotePatterns: [
       {

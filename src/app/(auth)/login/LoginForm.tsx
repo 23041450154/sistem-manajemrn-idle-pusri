@@ -3,6 +3,7 @@
 import { loginAction } from "@/action/auth";
 import { useState, useActionState, useRef, useEffect } from "react";
 import type { LoginResponse } from "@/types/Auth";
+import { withBasePath } from "@/lib/utils";
 
 const initialState: LoginResponse = {
   status: false,
@@ -94,12 +95,17 @@ export default function LoginForm() {
   return (
     <div className="flex min-h-dvh flex-col bg-white font-sans animate-in fade-in slide-in-from-bottom-1 duration-500 lg:min-h-screen lg:flex-row">
       {/* Left Panel */}
-      <div className="relative flex flex-none flex-col items-center justify-center bg-cover bg-center bg-[#0b1a30] bg-[linear-gradient(rgba(11,26,48,0.48),rgba(15,34,64,0.52)),url('/backgroundLeftPanel.webp')] px-4 pt-6 pb-10 text-center text-white sm:px-6 lg:flex-[1.2] lg:p-12">
+      <div
+        className="relative flex flex-none flex-col items-center justify-center bg-cover bg-center bg-[#0b1a30] px-4 pt-6 pb-10 text-center text-white sm:px-6 lg:flex-[1.2] lg:p-12"
+        style={{
+          backgroundImage: `linear-gradient(rgba(11,26,48,0.48),rgba(15,34,64,0.52)), url('${withBasePath("/backgroundLeftPanel.webp")}')`,
+        }}
+      >
         <div className="flex w-full flex-col items-center -translate-y-6 lg:-translate-y-10">
           <div className="mb-2 flex items-center justify-center lg:mb-4">
             {/* eslint-disable-next-line @next/next/no-img-element -- konsisten dgn halaman lain, hindari image optimizer */}
             <img
-              src="/logo-white-hd.png"
+              src={withBasePath("/logo-white-hd.png")}
               alt="Logo PUSRI"
               width={160}
               height={160}

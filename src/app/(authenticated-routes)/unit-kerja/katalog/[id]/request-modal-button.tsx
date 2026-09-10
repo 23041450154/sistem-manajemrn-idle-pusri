@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Send, X, Loader2, AlertCircle } from "lucide-react";
 import { createReuseRequest } from "@/action/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -18,6 +19,7 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const router = useRouter();
 
 	const today = new Date().toISOString().split("T")[0];
 
@@ -83,7 +85,9 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 
 			if (result && result.success) {
 				setIsOpen(false);
-				window.location.href = "/unit-kerja/riwayat-permintaan?submitted=true";
+				// Server action sudah revalidateApp() — router.push (basePath-aware)
+				// cukup; reload penuh tidak diperlukan.
+				router.push("/unit-kerja/riwayat-permintaan?submitted=true");
 			} else {
 				setError(result?.message || "Gagal mengirim pengajuan pemakaian.");
 			}

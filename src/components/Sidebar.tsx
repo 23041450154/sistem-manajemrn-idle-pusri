@@ -8,6 +8,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { normalizeRole } from "@/lib/roles";
 import { MASTER_ENTITIES } from "@/lib/master-entities";
+import { withBasePath } from "@/lib/utils";
 import {
 	LayoutDashboard,
 	Wrench,
@@ -293,7 +294,7 @@ export function Sidebar({ role }: { role?: string }) {
 					<div className="flex items-center gap-3">
 						{/* eslint-disable-next-line @next/next/no-img-element -- konsisten dgn halaman lain, hindari image optimizer */}
 						<img
-							src="/images (2) 1.png"
+							src={withBasePath("/images (2) 1.png")}
 							alt="Logo PUSRI"
 							width={52}
 							height={52}

@@ -4,6 +4,19 @@ import { normalizeRole, homePathForRole } from "./lib/roles";
 
 const PUBLIC_PATHS = ["/login", "/forgot-password", "/auth"];
 
+// NextResponse.redirect TIDAK basePath-aware (beda dgn redirect() dari
+// next/navigation). pathname di middleware sudah di-strip basePath, jadi
+// tujuan redirect harus di-prefix manual.
+const BASE_PATH = (process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/+$/, "");
+
+function clearAuthCookiesOnResponse(res: NextResponse): NextResponse {
+  for (const name of ["token", "user", "access_token", "refresh_token"]) {
+    // delete harus pakai path "/" agar match cookie asli
+    res.cookies.set(name, "", { path: "/", maxAge: 0 });
+  }
+  return res;
+}
+
 export function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
   const token = request.cookies.get("token")?.value;
@@ -15,7 +28,7 @@ export function proxy(request: NextRequest) {
 
   // Redirect ke login jika tidak ada token dan bukan public path
   if (!token && !isPublicPath) {
-    const loginUrl = new URL("/login", request.url);
+    const loginUrl = new URL(`${BASE_PATH}/login`, request.url);
     return NextResponse.redirect(loginUrl);
   }
 
@@ -23,19 +36,18 @@ export function proxy(request: NextRequest) {
   if (token && isPublicPath) {
     if (!userCookie) {
       // Callback SSO hanya membuat token; halaman root mengambil user lewat /auth/me.
-      return NextResponse.redirect(new URL("/", request.url));
+      return NextResponse.redirect(new URL(BASE_PATH || "/", request.url));
     }
 
     try {
       const user = JSON.parse(userCookie);
       const role = normalizeRole(user?.role);
       const homeUrl = homePathForRole(role);
-      return NextResponse.redirect(new URL(homeUrl, request.url));
+      return NextResponse.redirect(
+        new URL(`${BASE_PATH}${homeUrl}`, request.url),
+      );
     } catch {
-      const response = NextResponse.next();
-      response.cookies.delete("token");
-      response.cookies.delete("user");
-      return response;
+      return clearAuthCookiesOnResponse(NextResponse.next());
     }
   }
 
@@ -48,7 +60,7 @@ export function proxy(request: NextRequest) {
       // Redirect dari halaman root / ke dashboard role masing-masing
       if (pathname === "/") {
         return NextResponse.redirect(
-          new URL(homePathForRole(role), request.url),
+          new URL(`${BASE_PATH}${homePathForRole(role)}`, request.url),
         );
       }
 
@@ -83,16 +95,13 @@ export function proxy(request: NextRequest) {
 
       if (!isAllowed) {
         return NextResponse.redirect(
-          new URL(homePathForRole(role), request.url),
+          new URL(`${BASE_PATH}${homePathForRole(role)}`, request.url),
         );
       }
     } catch {
-      // JSON cookie user rusak, paksa login
-      const loginUrl = new URL("/login", request.url);
-      const response = NextResponse.redirect(loginUrl);
-      response.cookies.delete("token");
-      response.cookies.delete("user");
-      return response;
+      // JSON cookie user rusak → hapus semua cookie auth, paksa login
+      const loginUrl = new URL(`${BASE_PATH}/login`, request.url);
+      return clearAuthCookiesOnResponse(NextResponse.redirect(loginUrl));
     }
   }
 
@@ -103,6 +112,9 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    // "/" eksplisit: tanpa ini, akar basePath (pathname ter-strip = "/")
+    // tidak kena regex di bawah dan middleware dilewati.
+    "/",
     "/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.svg$|.*\\.webp$|.*\\.jpg$|.*\\.jpeg$).*)",
   ],
 };
