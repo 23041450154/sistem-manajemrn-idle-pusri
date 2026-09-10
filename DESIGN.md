@@ -10,7 +10,7 @@ contract for those tokens, not a second source of truth.
 
 ## Brand
 
-- Name: Sistem Manajemen Idle Equipment
+- Name: SIDE — Sistem Informasi Manajemen Idle Equipment
 - Voice: Precise / Technical / Calm
 - Anti-patterns: gradient overlay cards, multi-hue KPI rows, uppercase micro-label above every value, `rounded-xl` on data surfaces, shadow on every container
 
