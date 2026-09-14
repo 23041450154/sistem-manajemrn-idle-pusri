@@ -7,7 +7,7 @@ const [auth, proxy] = await Promise.all([
 ]);
 
 assert.match(auth, /fetch\(`\$\{API_URL\}\/api\/auth\/me`/);
-assert.match(proxy, /if \(!userCookie\)[\s\S]*?redirect\(new URL\(BASE_PATH \|\| "\/", request\.url\)\)/);
+assert.match(proxy, /if \(!userCookie\)[\s\S]*?redirect\(new URL\("\/", request\.url\)\)/);
 assert.doesNotMatch(proxy, /if \(token && !userCookie && !isPublicPath\)[\s\S]*?redirect\(loginUrl\)/);
 
 console.log("SSO token-only cookie fallback: OK");

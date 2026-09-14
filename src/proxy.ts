@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { normalizeRole, homePathForRole } from "./lib/roles";
-import { LOGIN_URL, isTargetLoginHost } from "./config/api";
 
 const PUBLIC_PATHS = ["/login", "/forgot-password", "/auth"];
 
@@ -27,24 +26,10 @@ export function proxy(request: NextRequest) {
     (path) => pathname === path || pathname.startsWith(path + "/"),
   );
 
-  const hostHeader =
-    request.headers.get("x-forwarded-host") ||
-    request.headers.get("host") ||
-    request.nextUrl.host;
-  const isTargetHost = isTargetLoginHost(hostHeader);
-
-  // Jika belum ada token:
-  if (!token) {
-    // 1. Jika di protected path -> langsung redirect ke SSO login
-    if (!isPublicPath) {
-      return NextResponse.redirect(new URL(LOGIN_URL, request.url));
-    }
-
-    // 2. Jika di halaman /login lokal (misal di localhost atau vercel)
-    // -> alihkan ke SSO login perusahaan agar tidak menampilkan form login lokal
-    if (pathname === "/login" && !isTargetHost) {
-      return NextResponse.redirect(new URL(LOGIN_URL, request.url));
-    }
+  // Redirect ke login jika tidak ada token dan bukan public path
+  if (!token && !isPublicPath) {
+    const loginUrl = new URL(`${BASE_PATH}/login`, request.url);
+    return NextResponse.redirect(loginUrl);
   }
 
   // Jika ada token tapi di public path (seperti /login)
@@ -114,8 +99,8 @@ export function proxy(request: NextRequest) {
         );
       }
     } catch {
-      // JSON cookie user rusak → hapus semua cookie auth, paksa login ke SSO
-      const loginUrl = new URL(LOGIN_URL, request.url);
+      // JSON cookie user rusak → hapus semua cookie auth, paksa login
+      const loginUrl = new URL(`${BASE_PATH}/login`, request.url);
       return clearAuthCookiesOnResponse(NextResponse.redirect(loginUrl));
     }
   }

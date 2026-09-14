@@ -1,6 +1,7 @@
 "use client";
 
 import { logoutAction } from "@/action/auth";
+import { withBasePath } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 
 // Ziti tunnel bisa mati; jangan biarkan user stuck di DNS error page Keycloak.
@@ -33,11 +34,8 @@ export default function LogoutPage() {
       );
       const realm = process.env.NEXT_PUBLIC_SSO_REALM;
       const clientId = process.env.NEXT_PUBLIC_CLIENT_ID;
-      const targetLoginUrl =
-        process.env.NEXT_PUBLIC_LOGIN_URL || "https://har.pusri.dev/idle/login";
-
       if (!oidcBaseUrl || !realm || !clientId) {
-        window.location.replace(targetLoginUrl);
+        window.location.replace(withBasePath("/login"));
         return;
       }
 
@@ -52,7 +50,7 @@ export default function LogoutPage() {
           signal: AbortSignal.timeout(SSO_PROBE_TIMEOUT_MS),
         });
       } catch {
-        window.location.replace(targetLoginUrl);
+        window.location.replace(withBasePath("/login"));
         return;
       }
 
@@ -64,7 +62,7 @@ export default function LogoutPage() {
       keycloakLogoutUrl.searchParams.set("client_id", clientId);
       keycloakLogoutUrl.searchParams.set(
         "post_logout_redirect_uri",
-        targetLoginUrl,
+        `${window.location.origin}${withBasePath("/login")}`,
       );
       window.location.replace(keycloakLogoutUrl.toString());
     })();
