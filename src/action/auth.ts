@@ -3,7 +3,7 @@
 import { cookies } from "next/headers";
 import type { LoginRequest, LoginResponse, User } from "../types/Auth";
 import { redirect } from "next/navigation";
-import { homePathForRole, normalizeRole } from "../lib/roles";
+import { homePathForRole } from "../lib/roles";
 import { API_URL } from "@/config/api";
 import { clearAuthCookies } from "@/lib/auth-cookies";
 
@@ -101,101 +101,66 @@ export async function loginAction(
   return result;
 }
 
+// Header auth ke backend. Cookie sesi app bernama "token": isinya access_token
+// SSO (setelah login SSO) atau JWT internal (setelah login NPP). Backend
+// meng-auto-deteksi jenisnya. Konsisten dgn seluruh server action di api.ts.
+async function authHeadersFromCookies(): Promise<{
+  token: string | null;
+  headers: Record<string, string>;
+}> {
+  const token = (await cookies()).get("token")?.value;
+  if (token) {
+    return { token, headers: { Authorization: `Bearer ${token}` } };
+  }
+  return { token: null, headers: {} };
+}
+
 export async function getCurrentUserAction() {
-  const cookieStorage = await cookies();
-  const token = cookieStorage.get("token")?.value;
-  const userStorage = cookieStorage.get("user")?.value;
+  const { token, headers } = await authHeadersFromCookies();
 
   if (!token) {
-    return {
-      status: false,
-      message: "token tidak ditemukan",
-      token: null,
-      user: null,
-    };
+    return { status: false, message: "sesi tidak ditemukan", token: null, user: null };
   }
 
-  if (userStorage) {
-    try {
-      const user: User = JSON.parse(userStorage);
-      if (user && user.name) {
-        // Validasi token masih hidup via /auth/me; kalau 401, hapus cookie biar tidak stuck loop.
-        try {
-          const res = await fetch(`${API_URL}/api/auth/me`, {
-            headers: { Authorization: `Bearer ${token}` },
-            cache: "no-store",
-          });
-          if (res.status === 401) {
-            await clearAuthCookies();
-            return { status: false, message: "token expired", token: null, user: null };
-          }
-        } catch {
-          // network error: tetap pakai cache cookie, jangan hapus
-        }
-        return {
-          status: true,
-          message: "user ditemukan",
-          token: token,
-          user: user,
-        };
-      }
-    } catch {
-      await clearAuthCookies();
-      return {
-        status: false,
-        message: "terjadi kesalahan",
-        token: null,
-        user: null,
-      };
-    }
-  }
-
-  // ponytail: callback SSO backend hanya memberi cookie token. Ambil user saat
-  // dibutuhkan; tambah cache session jika trafik /auth/me nanti jadi masalah.
+  // Model "ikut dokumen": backend memvalidasi ulang access_token ke
+  // {SSO}/protect/authme setiap request, lalu mengembalikan user lokal.
   try {
     const res = await fetch(`${API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers,
       cache: "no-store",
     });
     if (res.status === 401) {
+      // Best-effort clear; saat dipanggil dari render, delete mungkin no-op —
+      // tapi tidak boleh melempar. Redirect ke /login ditangani pemanggil.
       await clearAuthCookies();
-      return { status: false, message: "token expired", token: null, user: null };
+      return { status: false, message: "sesi berakhir", token: null, user: null };
     }
     const result = await res.json().catch(() => null);
     const user: User | undefined = result?.data;
-
     if (res.ok && user?.name) {
-      return {
-        status: true,
-        message: "user ditemukan",
-        token,
-        user,
-      };
+      return { status: true, message: "user ditemukan", token, user };
     }
   } catch (error) {
-    console.error("Gagal mengambil user SSO:", error);
+    // Network error: jangan hapus cookie, biar tidak menendang user saat backend
+    // sesaat tidak reachable.
+    console.error("Gagal mengambil user:", error);
+    return { status: false, message: "backend tidak merespons", token, user: null };
   }
 
   await clearAuthCookies();
-  return {
-    status: false,
-    message: "user tidak ditemukan",
-    token: null,
-    user: null,
-  };
+  return { status: false, message: "user tidak ditemukan", token: null, user: null };
 }
 
 /**
- * Middleware helper: cek apakah masih ada auth token yang valid.
- * Hapus cookie kalau token sudah tidak valid. Dipakai di layout/proxy selain /api/logout.
+ * Cek apakah sesi masih valid (dipakai layout/route). Model SSO: backend
+ * memvalidasi ulang access_token ke {SSO}/protect/authme.
  */
 export async function ensureAuthOrClear(): Promise<{ valid: boolean; token: string | null }> {
-  const jar = await cookies();
-  const token = jar.get("token")?.value || null;
+  const { token, headers } = await authHeadersFromCookies();
   if (!token) return { valid: false, token: null };
   try {
     const res = await fetch(`${API_URL}/api/auth/me`, {
-      headers: { Authorization: `Bearer ${token}` },
+      headers,
       cache: "no-store",
     });
     if (res.status === 401) {
@@ -209,76 +174,26 @@ export async function ensureAuthOrClear(): Promise<{ valid: boolean; token: stri
   }
 }
 
-export async function logoutAction() {
-  // Simpan token dulu sebelum cookie dihapus, untuk panggil backend
-  let token: string | undefined;
-  try {
-    token = (await cookies()).get("token")?.value;
-  } catch {}
+/**
+ * Logout mengikuti dokumen service SSO:
+ *  1) Bersihkan cookie lokal (jalur NPP: token/user) di server action.
+ *  2) Kembalikan URL backend {API}/api/logout?redirect={SSO}/api/login...
+ *     Halaman logout melakukan navigasi top-level ke URL ini supaya cookie
+ *     SSO (access_token/refresh_token, HttpOnly=false, parent domain) ikut
+ *     terkirim; backend backchannel revoke ke SSO lalu expire cookie & redirect.
+ */
+export async function logoutAction(): Promise<string> {
   await clearAuthCookies();
-  // Best-effort: minta backend juga hapus cookie HttpOnly gateway
-  try {
-    const headers: Record<string, string> = {};
-    if (token) headers.Authorization = `Bearer ${token}`;
-    await fetch(`${API_URL}/api/auth/logout`, {
-      method: "POST",
-      headers,
-      cache: "no-store",
-    }).catch(() => {});
-  } catch {}
 
   const ssoBaseUrl = process.env.NEXT_PUBLIC_API_SSO?.replace(/\/$/, "");
-  return ssoBaseUrl ? `${ssoBaseUrl}/api/logout` : null;
-}
+  const clientId = process.env.NEXT_PUBLIC_CLIENT_ID;
 
-export async function ssoCallbackAction(
-  code: string,
-  clientId: string,
-  uid?: string | null,
-) {
-  try {
-    const callbackUrl = new URL(`${API_URL}/api/auth/callback`);
-    callbackUrl.searchParams.set("code", code);
-    callbackUrl.searchParams.set("clientId", clientId);
-    if (uid) callbackUrl.searchParams.set("uid", uid);
-
-    const res = await fetch(callbackUrl.toString(), {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-      cache: "no-store",
-    });
-
-    const result = await res.json().catch(() => null);
-    const token = result?.data?.token || result?.token;
-    const user = result?.data?.user || result?.user;
-
-    if (!res.ok || !token) {
-      return {
-        status: false,
-        message:
-          result?.error || result?.message || `SSO gagal (HTTP ${res.status})`,
-      };
-    }
-
-    const cookieStorage = await cookies();
-    cookieStorage.set("token", token, cookieConfig(60 * 30));
-    if (user) {
-      cookieStorage.set("user", JSON.stringify(user), cookieConfig(60 * 30));
-    }
-
-    const role = user?.role ? normalizeRole(user.role) : undefined;
-    return {
-      status: true,
-      redirectUrl: role ? homePathForRole(role) : "/",
-    };
-  } catch (error: unknown) {
-    console.error("SSO callback error:", error);
-    return {
-      status: false,
-      message:
-        error instanceof Error
-          ? error.message
-          : "Terjadi kesalahan saat memproses SSO.",
-    };
+  const logoutUrl = new URL(`${API_URL}/api/logout`);
+  if (ssoBaseUrl && clientId) {
+    logoutUrl.searchParams.set(
+      "redirect",
+      `${ssoBaseUrl}/api/login?client_id=${clientId}`,
+    );
   }
+  return logoutUrl.toString();
 }
