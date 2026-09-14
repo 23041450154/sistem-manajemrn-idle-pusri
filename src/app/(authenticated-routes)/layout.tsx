@@ -2,6 +2,7 @@ import { getCurrentUserAction } from "@/action/auth";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { SidebarProvider } from "@/components/SidebarProvider";
+import { LOGIN_URL } from "@/config/api";
 import { redirect } from "next/navigation";
 import React from "react";
 
@@ -13,7 +14,7 @@ export default async function AuthenticatedLayout({
   const { user, token } = await getCurrentUserAction();
 
   if (!token || !user) {
-    redirect("/login");
+    redirect(LOGIN_URL);
   }
 
   // Pass the raw user role directly so Sidebar can check it correctly
