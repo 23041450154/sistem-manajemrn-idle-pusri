@@ -8,14 +8,19 @@ import { cookies } from "next/headers";
  * ponytail: tambah nama cookie di sini + backend clearAuthCookies bila nambah cookie baru.
  */
 export async function clearAuthCookies() {
-  const jar = await cookies();
-  jar.delete("token");
-  jar.delete("user");
-  // HttpOnly SSO cookies yang mungkin diset backend gateway
-  jar.delete("access_token");
-  jar.delete("refresh_token");
+  // Dibungkus try/catch: saat dipanggil dari render Server Component, mutasi
+  // cookie bisa no-op / melempar. Tidak boleh menggagalkan render (memicu loop).
+  try {
+    const jar = await cookies();
+    for (const name of ["access_token", "refresh_token", "token", "user"]) {
+      try {
+        jar.delete(name);
+      } catch {}
+    }
+  } catch {}
 }
 
 export async function hasAuthToken(): Promise<boolean> {
-  return Boolean((await cookies()).get("token")?.value);
+  const jar = await cookies();
+  return Boolean(jar.get("access_token")?.value || jar.get("token")?.value);
 }
