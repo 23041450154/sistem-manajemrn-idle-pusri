@@ -10,12 +10,23 @@ const AUTH_COOKIES = ["access_token", "token"];
 const PUBLIC_PATHS = ["/login", "/forgot-password"];
 
 // NextResponse.redirect TIDAK basePath-aware (beda dgn redirect() dari
-// next/navigation). pathname di proxy sudah di-strip basePath, jadi tujuan
-// redirect harus di-prefix manual.
+// next/navigation), jadi tujuan redirect harus di-prefix BASE_PATH manual.
 const BASE_PATH = (process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/+$/, "");
 
+// PENTING (Next 16): request.nextUrl.pathname di proxy BISA masih mengandung
+// basePath (mis. "/idle/login"), tergantung konfigurasi reverse proxy. Kalau
+// tidak di-strip, cek PUBLIC_PATHS meleset -> "/idle/login" tidak match
+// "/login" -> redirect ke "/idle/login" lagi -> ERR_TOO_MANY_REDIRECTS.
+// Normalisasi: buang prefix basePath bila ada (aman bila sudah ter-strip).
+function stripBasePath(pathname: string): string {
+  if (BASE_PATH && (pathname === BASE_PATH || pathname.startsWith(BASE_PATH + "/"))) {
+    return pathname.slice(BASE_PATH.length) || "/";
+  }
+  return pathname;
+}
+
 export function proxy(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const pathname = stripBasePath(request.nextUrl.pathname);
 
   const hasSession = AUTH_COOKIES.some((name) =>
     Boolean(request.cookies.get(name)?.value),

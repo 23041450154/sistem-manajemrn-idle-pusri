@@ -26,21 +26,11 @@ const basePath = (process.env.NEXT_PUBLIC_BASE_URL || "")
 
 const nextConfig: NextConfig = {
   basePath,
-  async redirects() {
-    // Root domain (tanpa prefix) tidak di-serve Next saat basePath aktif.
-    // Arahkan "/" -> basePath agar dev/QA langsung masuk aplikasi.
-    // basePath:false = source & destination TIDAK di-prefix otomatis.
-    return basePath
-      ? [
-          {
-            source: "/",
-            destination: basePath,
-            permanent: false,
-            basePath: false,
-          },
-        ]
-      : [];
-  },
+  // CATATAN: redirect "/" -> basePath DIHAPUS. Di produksi, reverse proxy
+  // men-strip prefix "/idle" sebelum meneruskan ke Next, sehingga Next selalu
+  // menerima "/". Redirect "/" -> "/idle" akan di-strip proxy jadi "/" lagi ->
+  // ERR_TOO_MANY_REDIRECTS. Root "/" cukup dilayani page.tsx (arahkan ke
+  // /login atau dashboard sesuai sesi).
   images: {
     remotePatterns: [
       {
