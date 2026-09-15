@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import { BASE_PATH } from "./lib/base-path";
 
 // Next.js 16: file middleware bernama proxy.ts, fungsinya `proxy`.
 
@@ -11,7 +12,8 @@ const PUBLIC_PATHS = ["/login", "/forgot-password"];
 
 // NextResponse.redirect TIDAK basePath-aware (beda dgn redirect() dari
 // next/navigation), jadi tujuan redirect harus di-prefix BASE_PATH manual.
-const BASE_PATH = (process.env.NEXT_PUBLIC_BASE_URL || "").replace(/\/+$/, "");
+// BASE_PATH dari satu sumber kebenaran (lib/base-path) agar tidak pernah beda
+// dengan basePath di next.config maupun withBasePath().
 
 // PENTING (Next 16): request.nextUrl.pathname di proxy BISA masih mengandung
 // basePath (mis. "/idle/login"), tergantung konfigurasi reverse proxy. Kalau
