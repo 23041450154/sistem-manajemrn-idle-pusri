@@ -24,6 +24,8 @@ const apiUrl = apiUrlFromEnv();
 // Karena itu default-nya "/idle" bila NEXT_PUBLIC_BASE_URL tidak diset sama
 // sekali (kasus runtime yang env-nya hilang). String kosong yang DI-SET secara
 // eksplisit tetap dihormati (deploy di root). Override lewat env kapan pun perlu.
+// HARUS SAMA PERSIS dengan src/lib/base-path.ts (next.config tidak bisa
+// meng-import modul dari src). Kalau rumus di sini diubah, ubah juga di sana.
 const RAW_BASE_PATH =
   process.env.NEXT_PUBLIC_BASE_URL ?? "/idle"; // undefined -> default /idle; "" -> root
 const basePath = RAW_BASE_PATH.trim()
