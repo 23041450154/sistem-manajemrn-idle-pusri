@@ -16,11 +16,17 @@ function apiUrlFromEnv(): URL {
 
 const apiUrl = apiUrlFromEnv();
 
-// Deploy di belakang reverse proxy: origin (scheme://host) disediakan platform,
-// aplikasi hanya perlu tahu prefix path-nya. Wajib di-set saat BUILD (di-inline
-// ke bundle client), bukan saat runtime. Kosong = served dari root.
-const basePath = (process.env.NEXT_PUBLIC_BASE_URL || "")
-  .trim()
+// Prefix path deploy di belakang reverse proxy (pass-through, TIDAK strip /idle).
+//
+// PENTING: next.config dibaca saat BUILD *dan* saat `next start`. basePath harus
+// SAMA di kedua fase. Kalau hanya di-set saat build (aset ter-bake /idle) tapi
+// hilang saat runtime, server melayani di root -> /idle/* jadi 404.
+// Karena itu default-nya "/idle" bila NEXT_PUBLIC_BASE_URL tidak diset sama
+// sekali (kasus runtime yang env-nya hilang). String kosong yang DI-SET secara
+// eksplisit tetap dihormati (deploy di root). Override lewat env kapan pun perlu.
+const RAW_BASE_PATH =
+  process.env.NEXT_PUBLIC_BASE_URL ?? "/idle"; // undefined -> default /idle; "" -> root
+const basePath = RAW_BASE_PATH.trim()
   .replace(/\/+$/, "")
   .replace(/^([^/])/, "/$1");
 
