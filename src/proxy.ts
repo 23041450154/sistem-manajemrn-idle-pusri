@@ -34,9 +34,12 @@ export function proxy(request: NextRequest) {
     Boolean(request.cookies.get(name)?.value),
   );
 
-  const isPublicPath = PUBLIC_PATHS.some(
-    (path) => pathname === path || pathname.startsWith(path + "/"),
-  );
+  // "/" = landing publik (bukti deploy), boleh diakses tanpa sesi.
+  const isPublicPath =
+    pathname === "/" ||
+    PUBLIC_PATHS.some(
+      (path) => pathname === path || pathname.startsWith(path + "/"),
+    );
 
   // Tanpa sesi & bukan path publik -> ke login.
   if (!hasSession && !isPublicPath) {
