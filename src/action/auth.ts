@@ -115,7 +115,13 @@ async function authHeadersFromCookies(): Promise<{
   return { token: null, headers: {} };
 }
 
-export async function getCurrentUserAction() {
+export async function getCurrentUserAction(): Promise<{
+  status: boolean;
+  message?: string;
+  token: string | null;
+  user?: User | null;
+  forbidden?: boolean;
+}> {
   const { token, headers } = await authHeadersFromCookies();
 
   if (!token) {
@@ -130,10 +136,22 @@ export async function getCurrentUserAction() {
       cache: "no-store",
     });
     if (res.status === 401) {
-      // Best-effort clear; saat dipanggil dari render, delete mungkin no-op —
-      // tapi tidak boleh melempar. Redirect ke /login ditangani pemanggil.
+      // Token invalid/expired. Best-effort clear; saat dipanggil dari render,
+      // delete mungkin no-op tapi tidak boleh melempar. Pemanggil -> /login.
       await clearAuthCookies();
       return { status: false, message: "sesi berakhir", token: null, user: null };
+    }
+    if (res.status === 403) {
+      // Sesi SSO valid TAPI user tak terdaftar / tak punya akses. JANGAN hapus
+      // cookie & jangan ke /login (memicu loop login<->SSO). Pemanggil ->
+      // /forbidden (ada tombol logout).
+      return {
+        status: false,
+        forbidden: true,
+        message: "tidak memiliki akses",
+        token,
+        user: null,
+      };
     }
     const result = await res.json().catch(() => null);
     const user: User | undefined = result?.data;
