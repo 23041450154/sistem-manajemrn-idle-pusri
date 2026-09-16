@@ -204,8 +204,9 @@ export async function ensureAuthOrClear(): Promise<{ valid: boolean; token: stri
  *     terkirim; backend backchannel revoke ke SSO lalu expire cookie & redirect.
  */
 export async function logoutAction(): Promise<string> {
-  await clearAuthCookies();
-
+  // PENTING: JANGAN hapus cookie di frontend. Backend butuh access_token pada
+  // request /api/logout untuk backchannel revoke sesi Keycloak; cookie di-expire
+  // oleh backend SETELAH revoke (sesuai dokumen service SSO).
   const ssoBaseUrl = process.env.NEXT_PUBLIC_API_SSO?.replace(/\/$/, "");
   const clientId = process.env.NEXT_PUBLIC_CLIENT_ID;
 

@@ -9,6 +9,10 @@ const MESSAGES: Record<string, { title: string; desc: string }> = {
     title: "Sesi Berakhir",
     desc: "Sesi Anda telah berakhir. Mengarahkan kembali ke login SSO...",
   },
+  sso: {
+    title: "Login SSO Gagal",
+    desc: "Anda berhasil login di SSO, tetapi sesi aplikasi tidak dapat dibuat. Silakan coba lagi atau hubungi Admin IT.",
+  },
   server: {
     title: "Server Bermasalah",
     desc: "Terjadi kendala pada server. Silakan coba beberapa saat lagi.",
@@ -30,14 +34,29 @@ function ErrorContent() {
   const url = ssoLoginUrl();
   const counting = type === "expired" && !!url;
 
+  // Auto-redirect ke SSO HANYA SEKALI per tab. Tanpa penjaga ini, sesi yang
+  // gagal dibuat membuat siklus: /auth/me 401 -> error?expired -> SSO ->
+  // callback -> 401 ... tak berujung. Penanda disimpan di sessionStorage.
   useEffect(() => {
     if (!counting || !url) return;
+    let alreadyTried = false;
+    try {
+      alreadyTried = sessionStorage.getItem("ssoAutoRetry") === "1";
+      sessionStorage.setItem("ssoAutoRetry", "1");
+    } catch {
+      // storage diblokir -> jangan auto-redirect (lebih aman daripada loop)
+      alreadyTried = true;
+    }
+    if (alreadyTried) return;
     const t = setTimeout(() => window.location.replace(url), 2500);
     return () => clearTimeout(t);
   }, [counting, url]);
 
   const goLogin = () => {
-    const url = ssoLoginUrl();
+    // Percobaan manual: reset penanda supaya auto-retry bisa dipakai lagi nanti.
+    try {
+      sessionStorage.removeItem("ssoAutoRetry");
+    } catch {}
     if (url) window.location.replace(url);
   };
 
