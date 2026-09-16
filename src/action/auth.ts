@@ -121,6 +121,8 @@ export async function getCurrentUserAction(): Promise<{
   token: string | null;
   user?: User | null;
   forbidden?: boolean;
+  expired?: boolean;
+  error?: boolean;
 }> {
   const { token, headers } = await authHeadersFromCookies();
 
@@ -137,9 +139,10 @@ export async function getCurrentUserAction(): Promise<{
     });
     if (res.status === 401) {
       // Token invalid/expired. Best-effort clear; saat dipanggil dari render,
-      // delete mungkin no-op tapi tidak boleh melempar. Pemanggil -> /login.
+      // delete mungkin no-op tapi tidak boleh melempar. expired=true -> pemanggil
+      // tampilkan pesan lalu arahkan ke SSO lagi.
       await clearAuthCookies();
-      return { status: false, message: "sesi berakhir", token: null, user: null };
+      return { status: false, expired: true, message: "sesi berakhir", token: null, user: null };
     }
     if (res.status === 403) {
       // Sesi SSO valid TAPI user tak terdaftar / tak punya akses. JANGAN hapus
@@ -162,7 +165,7 @@ export async function getCurrentUserAction(): Promise<{
     // Network error: jangan hapus cookie, biar tidak menendang user saat backend
     // sesaat tidak reachable.
     console.error("Gagal mengambil user:", error);
-    return { status: false, message: "backend tidak merespons", token, user: null };
+    return { status: false, error: true, message: "backend tidak merespons", token, user: null };
   }
 
   await clearAuthCookies();
