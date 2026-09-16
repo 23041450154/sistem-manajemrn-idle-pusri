@@ -1,20 +1,32 @@
 import { redirect } from "next/navigation";
 import { getCurrentUserAction } from "@/action/auth";
 import { homePathForRole } from "@/lib/roles";
+import { ssoLoginUrl } from "@/lib/sso";
 
-// Halaman pertama "/" = resolver sesi (loading.tsx tampil saat pengecekan):
-// - user tak terdaftar / tak punya akses (403) -> /forbidden
-// - sudah login valid -> redirect ke home sesuai role
-// - belum login -> /login
-// Ini juga tujuan redirect setelah callback SSO (backend arahkan ke FRONTEND_URL="/").
+// Halaman "/" = TRANSIT (loading.tsx tampil saat cek sesi). Alur:
+// - valid              -> redirect ke home sesuai role
+// - 403 (tak terdaftar)-> /forbidden
+// - error (backend)    -> /error?type=server (pesan)
+// - 401 (kadaluarsa)   -> /error?type=expired (pesan, lalu auto ke SSO)
+// - belum login        -> langsung ke SSO login (form NPP dihapus, SSO-only)
 export default async function Home() {
-  const { token, user, forbidden } = await getCurrentUserAction();
+  const { status, user, forbidden, expired, error } =
+    await getCurrentUserAction();
 
   if (forbidden) {
     redirect("/forbidden");
   }
-  if (token && user) {
+  if (error) {
+    redirect("/error?type=server");
+  }
+  if (expired) {
+    redirect("/error?type=expired");
+  }
+  if (status && user) {
     redirect(homePathForRole(user.role));
   }
-  redirect("/login");
+
+  // Belum login -> mulai SSO.
+  const url = ssoLoginUrl();
+  redirect(url ?? "/error?type=config");
 }

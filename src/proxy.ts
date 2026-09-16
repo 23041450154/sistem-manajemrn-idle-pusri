@@ -10,7 +10,13 @@ const AUTH_COOKIES = ["access_token", "token"];
 // Path publik yang boleh diakses tanpa sesi.
 // /forbidden & /logout wajib publik: user "tak terdaftar" punya cookie SSO tapi
 // ditolak (403) — harus bisa lihat /forbidden & keluar tanpa dilempar balik.
-const PUBLIC_PATHS = ["/login", "/forgot-password", "/forbidden", "/logout"];
+const PUBLIC_PATHS = [
+  "/login",
+  "/forgot-password",
+  "/forbidden",
+  "/logout",
+  "/error",
+];
 
 // NextResponse.redirect TIDAK basePath-aware (beda dgn redirect() dari
 // next/navigation), jadi tujuan redirect harus di-prefix BASE_PATH manual.

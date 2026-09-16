@@ -10,12 +10,20 @@ export default async function AuthenticatedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, token, forbidden } = await getCurrentUserAction();
+  const { user, token, forbidden, expired, error } =
+    await getCurrentUserAction();
 
   // Tak terdaftar / tak punya akses -> /forbidden (bukan /login, cegah loop).
   if (forbidden) {
     redirect("/forbidden");
   }
+  if (error) {
+    redirect("/error?type=server");
+  }
+  if (expired) {
+    redirect("/error?type=expired");
+  }
+  // Belum login -> "/" (transit) yang akan mengarahkan ke SSO.
   if (!token || !user) {
     redirect("/login");
   }
