@@ -10,8 +10,12 @@ export default async function AuthenticatedLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, token } = await getCurrentUserAction();
+  const { user, token, forbidden } = await getCurrentUserAction();
 
+  // Tak terdaftar / tak punya akses -> /forbidden (bukan /login, cegah loop).
+  if (forbidden) {
+    redirect("/forbidden");
+  }
   if (!token || !user) {
     redirect("/login");
   }
