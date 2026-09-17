@@ -6,11 +6,11 @@ function apiUrlFromEnv(): URL {
     return new URL(
       process.env.NEXT_PUBLIC_API_URL ||
         process.env.API_URL ||
-        "https://api.testing.naufal.me",
+        "https://har.pusri.dev/idle/air",
     );
   } catch {
     // Env ada tapi bukan URL valid -> pakai default.
-    return new URL("https://api.testing.naufal.me");
+    return new URL("https://har.pusri.dev/idle/air");
   }
 }
 
@@ -53,6 +53,11 @@ const nextConfig: NextConfig = {
   // ERR_TOO_MANY_REDIRECTS. Root "/" cukup dilayani page.tsx (arahkan ke
   // /login atau dashboard sesuai sesi).
   images: {
+    // SPA: optimisasi next/image berjalan di server Next dan akan mem-fetch
+    // gambar dari BE — di dalam cluster host publik tak ter-resolve (ENOTFOUND).
+    // unoptimized=true membuat browser memuat <Image> langsung (same-origin),
+    // menghindari fetch server-side.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: apiUrl.protocol.replace(":", "") as "http" | "https",
@@ -72,7 +77,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/uploads/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "https://api.testing.naufal.me"}/uploads/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "https://har.pusri.dev/idle/air"}/uploads/:path*`,
       },
     ];
   },

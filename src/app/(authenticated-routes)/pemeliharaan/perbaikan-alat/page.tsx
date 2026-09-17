@@ -1,3 +1,5 @@
+"use client";
+import { useEffect, useState } from "react";
 import { getEquipments } from "@/action/api";
 import { repairFlowStatus } from "@/lib/equipment-status";
 import PerbaikanAlatClient, {
@@ -10,12 +12,18 @@ import PerbaikanAlatClient, {
 /** Lampiran equipment bisa berupa dokumen; galeri hanya menampilkan berkas gambar. */
 const IMAGE_FILE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?.*)?$/i;
 
-/** Server Component — fetch sekali di server, mapping murni, lalu pass ke client. */
-export default async function PerbaikanAlatPage() {
-	// Action sudah balik [] saat HTTP gagal; .catch hanya jaring pengaman error tak terduga.
-	const data = await getEquipments().catch(() => []);
+/** Client Component — fetch sekali di browser, mapping murni, lalu pass ke client. */
+export default function PerbaikanAlatPage() {
+	const [equipments, setEquipments] = useState<MaintenanceEquipment[]>([]);
+	const [loading, setLoading] = useState(true);
 
-	const equipments: MaintenanceEquipment[] = (
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			// Action sudah balik [] saat HTTP gagal; .catch hanya jaring pengaman error tak terduga.
+			const data = await getEquipments().catch(() => []);
+
+			const equipments: MaintenanceEquipment[] = (
 		Array.isArray(data) ? data : []
 	).flatMap((item: any): MaintenanceEquipment[] => {
 		const status = repairFlowStatus(item);
@@ -68,8 +76,27 @@ export default async function PerbaikanAlatPage() {
 				? new Date(b.terakhirDiperbarui).getTime()
 				: 0;
 		if (timeB !== timeA) return timeB - timeA;
-		return (Number(b.id) || 0) - (Number(a.id) || 0);
-	});
+				return (Number(b.id) || 0) - (Number(a.id) || 0);
+			});
+
+			if (!alive) return;
+			setEquipments(equipments);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, []);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
 
 	return <PerbaikanAlatClient equipments={equipments} />;
 }

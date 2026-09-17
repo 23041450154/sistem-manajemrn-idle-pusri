@@ -1,6 +1,9 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { getEquipments, getObjectTypes, getReuseRequests } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
-// Data di-fetch server-side; interaksi ada di ./dashboard-client.
+// Data di-fetch di browser; interaksi ada di ./dashboard-client.
 import UnitKerjaDashboardContent from "./dashboard-client";
 
 /** ponytail: API rows are untyped JSON; every field is narrowed at the mapping boundary below.
@@ -37,15 +40,22 @@ export interface ReuseRequestItem {
 	status: string;
 }
 
-/** Server Component — satu fetch di server, hasil dipetakan lalu diteruskan ke client. */
-export default async function UnitKerjaDashboardPage() {
-	const [rawEqList, rawRequests, rawObjTypes] = await Promise.all([
-		getEquipments().catch(() => []),
-		getReuseRequests().catch(() => []),
-		getObjectTypes().catch(() => []),
-	]);
+/** Client Component — fetch di browser, hasil dipetakan lalu diteruskan ke child. */
+export default function UnitKerjaDashboardPage() {
+	const [equipments, setEquipments] = useState<EquipmentItem[]>([]);
+	const [reuseRequests, setReuseRequests] = useState<ReuseRequestItem[]>([]);
+	const [loading, setLoading] = useState(true);
 
-	const objTypes = Array.isArray(rawObjTypes) ? rawObjTypes : [];
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			const [rawEqList, rawRequests, rawObjTypes] = await Promise.all([
+				getEquipments().catch(() => []),
+				getReuseRequests().catch(() => []),
+				getObjectTypes().catch(() => []),
+			]);
+
+			const objTypes = Array.isArray(rawObjTypes) ? rawObjTypes : [];
 	const equipmentById = new Map<string, ApiRow>(
 		(rawEqList || []).map((item: ApiRow) => [String(item.id), item]),
 	);
@@ -108,10 +118,32 @@ export default async function UnitKerjaDashboardPage() {
 		};
 	});
 
+			if (!alive) return;
+			setEquipments(
+				mappedEquipments.filter((e) => e.status_name === "READY_TO_USE"),
+			);
+			setReuseRequests(reqList);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, []);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
+
 	return (
 		<UnitKerjaDashboardContent
-			equipments={mappedEquipments.filter((e) => e.status_name === "READY_TO_USE")}
-			reuseRequests={reqList}
+			equipments={equipments}
+			reuseRequests={reuseRequests}
 		/>
 	);
 }

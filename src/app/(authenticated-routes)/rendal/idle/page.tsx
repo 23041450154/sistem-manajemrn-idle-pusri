@@ -1,3 +1,5 @@
+"use client";
+import { useEffect, useState } from "react";
 import { getEquipments, getObjectTypes, getPlants } from "@/action/api";
 import {
 	EQUIPMENT_STATUS,
@@ -19,19 +21,24 @@ const assetState = (raw: string): AssetState =>
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export const dynamic = "force-dynamic";
+/** Client Component — fetch + mapping di browser, interaksi/filter di client. */
+export default function RendalIdlePage() {
+	const [equipments, setEquipments] = useState<Equipment[]>([]);
+	const [plants, setPlants] = useState<any[]>([]);
+	const [loading, setLoading] = useState(true);
 
-/** Server Component — fetch + mapping di server, interaksi/filter di client. */
-export default async function RendalIdlePage() {
-	const [data, objTypes, plantsData] = await Promise.all([
-		getEquipments().catch(() => []),
-		getObjectTypes().catch(() => []),
-		getPlants().catch(() => []),
-	]);
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			const [data, objTypes, plantsData] = await Promise.all([
+				getEquipments().catch(() => []),
+				getObjectTypes().catch(() => []),
+				getPlants().catch(() => []),
+			]);
 
-	const plants = Array.isArray(plantsData) ? plantsData : [];
+			const plants = Array.isArray(plantsData) ? plantsData : [];
 
-	(Array.isArray(data) ? data : []).sort((a: any, b: any) => {
+			(Array.isArray(data) ? data : []).sort((a: any, b: any) => {
 		const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
 		const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
 		if (timeB !== timeA) return timeB - timeA;
@@ -41,7 +48,7 @@ export default async function RendalIdlePage() {
 	});
 
 	const equipments: Equipment[] = (Array.isArray(data) ? data : [])
-		.map((item: any): Equipment => {
+			.map((item: any): Equipment => {
 			let objectTypeName = "Belum Ditentukan";
 			if (item.object_type?.name) {
 				objectTypeName = item.object_type.name;
@@ -111,7 +118,27 @@ export default async function RendalIdlePage() {
 							})
 					: [],
 			};
-		});
+			});
+
+			if (!alive) return;
+			setEquipments(equipments);
+			setPlants(plants);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, []);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
 
 	return <RendalIdleClient equipments={equipments} plants={plants} />;
 }

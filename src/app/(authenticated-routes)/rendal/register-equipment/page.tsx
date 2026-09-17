@@ -1,3 +1,6 @@
+"use client";
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import {
 	getEquipmentCodes,
 	getEquipments,
@@ -13,35 +16,43 @@ import RegisterEquipmentClient, {
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-/** Server Component — master dropdown & nilai awal mode revisi di-fetch di server. */
-export default async function RegisterEquipmentPage({
-	searchParams,
-}: {
-	searchParams: Promise<{ editId?: string }>;
-}) {
-	const { editId } = await searchParams;
+/** Client Component — master dropdown & nilai awal mode revisi di-fetch di browser. */
+export default function RegisterEquipmentPage() {
+	const searchParams = useSearchParams();
+	const editId = searchParams.get("editId") ?? undefined;
 
-	const [
-		objs,
-		plantsList,
-		storageLocList,
-		funcLocList,
-		equipments,
-		initialEquipmentCodes,
-	] = await Promise.all([
-		getObjectTypes().catch(() => []),
-		getPlants().catch(() => []),
-		getStorageLocations().catch(() => []),
-		getFunctionalLocations().catch(() => []),
-		getEquipments().catch(() => [] as any[]),
-		getEquipmentCodes().catch(() => []),
-	]);
+	const [objs, setObjs] = useState<any[]>([]);
+	const [plantsList, setPlantsList] = useState<any[]>([]);
+	const [storageLocList, setStorageLocList] = useState<any[]>([]);
+	const [funcLocList, setFuncLocList] = useState<any[]>([]);
+	const [initialEquipmentCodes, setInitialEquipmentCodes] = useState<any[]>([]);
+	const [initialData, setInitialData] = useState<RegisterInitialData | null>(null);
+	const [loading, setLoading] = useState(true);
 
-	let initialData: RegisterInitialData | null = null;
-	if (editId) {
-		const found = equipments.find((item: any) => String(item.id) === editId);
-		if (found) {
-			initialData = {
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			const [
+				objs,
+				plantsList,
+				storageLocList,
+				funcLocList,
+				equipments,
+				initialEquipmentCodes,
+			] = await Promise.all([
+				getObjectTypes().catch(() => []),
+				getPlants().catch(() => []),
+				getStorageLocations().catch(() => []),
+				getFunctionalLocations().catch(() => []),
+				getEquipments().catch(() => [] as any[]),
+				getEquipmentCodes().catch(() => []),
+			]);
+
+			let initialData: RegisterInitialData | null = null;
+			if (editId) {
+				const found = equipments.find((item: any) => String(item.id) === editId);
+				if (found) {
+					initialData = {
 				equipmentCode: found.equipment_code || "",
 				name: found.name || "",
 				funcLocId: String(
@@ -72,10 +83,34 @@ export default async function RegisterEquipmentPage({
 						found.storage_location?.id ||
 						"",
 				),
-				notes: found.notes || "",
-			};
-		}
-	}
+						notes: found.notes || "",
+					};
+				}
+			}
+
+			if (!alive) return;
+			setObjs(objs);
+			setPlantsList(plantsList);
+			setStorageLocList(storageLocList);
+			setFuncLocList(funcLocList);
+			setInitialEquipmentCodes(initialEquipmentCodes);
+			setInitialData(initialData);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, [editId]);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
 
 	return (
 		<RegisterEquipmentClient

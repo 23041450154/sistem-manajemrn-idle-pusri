@@ -1,221 +1,59 @@
-"use server";
+// AUTH sisi-BROWSER (SPA). Dulu server action; kini fetch langsung dari browser
+// ke BE same-origin ({origin}/idle/air) dengan cookie `token` (HttpOnly) yang
+// otomatis terkirim. Alasan pindah ke client: pod Next tak bisa resolve host
+// publik ingress di dalam cluster (ENOTFOUND) — lihat lib/api-client.ts.
+import type { User } from "../types/Auth";
+import { apiJson, apiBase } from "@/lib/api-client";
 
-import { cookies } from "next/headers";
-import type { LoginRequest, LoginResponse, User } from "../types/Auth";
-import { redirect } from "next/navigation";
-import { homePathForRole } from "../lib/roles";
-import { API_URL } from "@/config/api";
-import { clearAuthCookies } from "@/lib/auth-cookies";
-
-function cookieConfig(maxAge: number) {
-  return {
-    httpOnly: true,
-    sameSite: "lax" as const,
-    path: "/",
-    secure: true,
-    ...(maxAge ? { maxAge } : {}),
-  };
-}
-
-// Dipakai internal oleh loginAction; tidak diekspor (knip: dead export).
-async function login(data: LoginRequest): Promise<LoginResponse> {
-  try {
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
-
-    const res = await fetch(`${API_URL}/api/auth/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-      cache: "no-store",
-      signal: controller.signal,
-    });
-
-    clearTimeout(timeoutId);
-
-    const result = await res.json().catch(() => null);
-    const token = result?.data?.token;
-    const user = result?.data?.user;
-
-    if (!res.ok || !token) {
-      return {
-        status: false,
-        message: result?.error || result?.message || "login gagal",
-        token: null,
-        user: undefined,
-      };
-    }
-
-    const cookieStorage = await cookies();
-
-    cookieStorage.set("token", token, cookieConfig(60 * 30));
-    if (user) {
-      cookieStorage.set("user", JSON.stringify(user), cookieConfig(60 * 30));
-    }
-
-    return {
-      status: true,
-      message: result?.message || "login berhasil",
-      token: token,
-      user: user,
-    };
-  } catch (error: unknown) {
-    console.error(error);
-    return {
-      status: false,
-      message:
-        error instanceof Error && error.name === "AbortError"
-          ? "Koneksi lambat atau tidak merespons. Silakan coba kembali beberapa saat lagi."
-          : "Terjadi kendala saat masuk ke sistem. Silakan coba kembali.",
-      token: null,
-    };
-  }
-}
-
-export async function loginAction(
-  // Nama _prevState: parameter pertama wajib ada untuk kontrak useActionState,
-  // tapi memang tidak dipakai di badan aksi ini.
-  _prevState: LoginResponse,
-  formData: FormData,
-): Promise<LoginResponse> {
-  const npp = String(formData.get("npp") || "");
-  const password = String(formData.get("password") || "");
-
-  if (!npp || !password) {
-    return {
-      status: false,
-      message: "Login Gagal",
-      token: null,
-    };
-  }
-
-  const result = await login({
-    npp,
-    password,
-  });
-
-  if (result.status && result.user) {
-    redirect(homePathForRole(result.user.role));
-  }
-
-  return result;
-}
-
-// Header auth ke backend. Cookie sesi app bernama "token": isinya access_token
-// SSO (setelah login SSO) atau JWT internal (setelah login NPP). Backend
-// meng-auto-deteksi jenisnya. Konsisten dgn seluruh server action di api.ts.
-async function authHeadersFromCookies(): Promise<{
-  token: string | null;
-  headers: Record<string, string>;
-}> {
-  const token = (await cookies()).get("token")?.value;
-  if (token) {
-    return { token, headers: { Authorization: `Bearer ${token}` } };
-  }
-  return { token: null, headers: {} };
-}
-
-export async function getCurrentUserAction(): Promise<{
+export type CurrentUserResult = {
   status: boolean;
   message?: string;
-  token: string | null;
   user?: User | null;
   forbidden?: boolean;
   expired?: boolean;
   error?: boolean;
-}> {
-  const { token, headers } = await authHeadersFromCookies();
+  // token: tak lagi tersedia di client (HttpOnly). Dipertahankan (null) demi
+  // kompatibilitas pemanggil lama; jangan dijadikan sumber kebenaran sesi.
+  token?: string | null;
+};
 
-  if (!token) {
-    return { status: false, message: "sesi tidak ditemukan", token: null, user: null };
+// Ambil user aktif via {BE}/api/auth/me. Pemetaan status:
+//  200 + user -> valid; 401 -> expired; 403 -> forbidden (tak terdaftar);
+//  jaringan mati -> error. Tidak pernah melempar.
+export async function getCurrentUserAction(): Promise<CurrentUserResult> {
+  const res = await apiJson<User>("/api/auth/me");
+
+  if (res.status === 401) {
+    return { status: false, expired: true, message: "sesi berakhir", user: null, token: null };
   }
-
-  // Model "ikut dokumen": backend memvalidasi ulang access_token ke
-  // {SSO}/protect/authme setiap request, lalu mengembalikan user lokal.
-  try {
-    const res = await fetch(`${API_URL}/api/auth/me`, {
-      headers,
-      cache: "no-store",
-    });
-    if (res.status === 401) {
-      // Token invalid/expired. Best-effort clear; saat dipanggil dari render,
-      // delete mungkin no-op tapi tidak boleh melempar. expired=true -> pemanggil
-      // tampilkan pesan lalu arahkan ke SSO lagi.
-      await clearAuthCookies();
-      return { status: false, expired: true, message: "sesi berakhir", token: null, user: null };
-    }
-    if (res.status === 403) {
-      // Sesi SSO valid TAPI user tak terdaftar / tak punya akses. JANGAN hapus
-      // cookie & jangan ke /login (memicu loop login<->SSO). Pemanggil ->
-      // /forbidden (ada tombol logout).
-      return {
-        status: false,
-        forbidden: true,
-        message: "tidak memiliki akses",
-        token,
-        user: null,
-      };
-    }
-    const result = await res.json().catch(() => null);
-    const user: User | undefined = result?.data;
-    if (res.ok && user?.name) {
-      return { status: true, message: "user ditemukan", token, user };
-    }
-  } catch (error) {
-    // Network error: jangan hapus cookie, biar tidak menendang user saat backend
-    // sesaat tidak reachable.
-    console.error("Gagal mengambil user:", error);
-    return { status: false, error: true, message: "backend tidak merespons", token, user: null };
+  if (res.status === 403) {
+    return { status: false, forbidden: true, message: "tidak memiliki akses", user: null, token: null };
   }
-
-  await clearAuthCookies();
-  return { status: false, message: "user tidak ditemukan", token: null, user: null };
+  if (res.status === 0) {
+    // Gangguan jaringan / backend tak merespons.
+    return { status: false, error: true, message: res.error ?? "backend tidak merespons", user: null, token: null };
+  }
+  const user = res.data as User | undefined;
+  if (res.ok && user?.name) {
+    return { status: true, message: "user ditemukan", user, token: null };
+  }
+  return { status: false, message: res.error ?? "user tidak ditemukan", user: null, token: null };
 }
 
 /**
- * Cek apakah sesi masih valid (dipakai layout/route). Model SSO: backend
- * memvalidasi ulang access_token ke {SSO}/protect/authme.
- */
-export async function ensureAuthOrClear(): Promise<{ valid: boolean; token: string | null }> {
-  const { token, headers } = await authHeadersFromCookies();
-  if (!token) return { valid: false, token: null };
-  try {
-    const res = await fetch(`${API_URL}/api/auth/me`, {
-      headers,
-      cache: "no-store",
-    });
-    if (res.status === 401) {
-      await clearAuthCookies();
-      return { valid: false, token: null };
-    }
-    return { valid: res.ok, token };
-  } catch {
-    // network down: anggap masih valid, jangan hapus cookie
-    return { valid: true, token };
-  }
-}
-
-/**
- * Logout mengikuti dokumen service SSO:
- *  1) Bersihkan cookie lokal (jalur NPP: token/user) di server action.
- *  2) Kembalikan URL backend {API}/api/logout?redirect={SSO}/api/login...
- *     Halaman logout melakukan navigasi top-level ke URL ini supaya cookie
- *     SSO (access_token/refresh_token, HttpOnly=false, parent domain) ikut
- *     terkirim; backend backchannel revoke ke SSO lalu expire cookie & redirect.
+ * URL logout: navigasi top-level ke {BE}/api/logout supaya cookie SSO
+ * (access_token/refresh_token, HttpOnly) ikut terkirim -> backend backchannel
+ * revoke ke Keycloak lalu expire cookie & redirect. JANGAN hapus cookie di sini
+ * (backend butuh token untuk revoke).
  */
 export async function logoutAction(): Promise<string> {
-  // PENTING: JANGAN hapus cookie di frontend. Backend butuh access_token pada
-  // request /api/logout untuk backchannel revoke sesi Keycloak; cookie di-expire
-  // oleh backend SETELAH revoke (sesuai dokumen service SSO).
-  const ssoBaseUrl = process.env.NEXT_PUBLIC_API_SSO?.replace(/\/$/, "");
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const ssoBaseUrl = process.env.NEXT_PUBLIC_API_SSO?.replace(/\/+$/, "");
   const clientId = process.env.NEXT_PUBLIC_CLIENT_ID;
 
-  const logoutUrl = new URL(`${API_URL}/api/logout`);
+  const url = new URL(`${apiBase()}/api/logout`, origin || undefined);
   if (ssoBaseUrl && clientId) {
-    logoutUrl.searchParams.set(
-      "redirect",
-      `${ssoBaseUrl}/api/login?client_id=${clientId}`,
-    );
+    url.searchParams.set("redirect", `${ssoBaseUrl}/api/login?client_id=${clientId}`);
   }
-  return logoutUrl.toString();
+  return url.toString();
 }

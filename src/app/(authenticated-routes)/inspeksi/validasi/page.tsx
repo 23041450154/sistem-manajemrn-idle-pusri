@@ -1,3 +1,5 @@
+"use client";
+import { useEffect, useState } from "react";
 import {
 	getApprovals,
 	getConditions,
@@ -6,7 +8,7 @@ import {
 	getPlants,
 	getRequireActions,
 } from "@/action/api";
-import { getCurrentUserAction } from "@/action/auth";
+import { useAuth } from "@/components/AuthProvider";
 import {
 	EQUIPMENT_STATUS,
 	statusName,
@@ -48,38 +50,48 @@ const normalizeLegacyStatus = (raw: string) =>
 const assetState = (raw: string): Asset["statusAset"] =>
 	ASSET_STATES.includes(raw) ? (raw as Asset["statusAset"]) : "REGISTERED";
 
-/** Server Component — resolusi status persetujuan & filter cakupan halaman di server.
+/** Client Component — resolusi status persetujuan & filter cakupan halaman di browser.
  * Detail per-aset (validasi/lampiran/approval steps) tetap dimuat client saat modal dibuka. */
-export default async function ValidasiPage() {
-	const [
-		data,
-		objTypes,
-		approvalsRes,
-		user,
-		conditionsData,
-		requireActionsData,
-		plantsData,
-	] = await Promise.all([
-		getEquipments().catch(() => []),
-		getObjectTypes().catch(() => []),
-		getApprovals().catch(() => []),
-		getCurrentUserAction().catch(() => null),
-		getConditions().catch(() => []),
-		getRequireActions().catch(() => []),
-		getPlants().catch(() => []),
-	]);
+export default function ValidasiPage() {
+	const { user } = useAuth();
+	const [assets, setAssets] = useState<Asset[]>([]);
+	const [conditions, setConditions] = useState<any[]>([]);
+	const [requireActions, setRequireActions] = useState<any[]>([]);
+	const [plants, setPlants] = useState<any[]>([]);
+	const [loading, setLoading] = useState(true);
 
-	const conditions = Array.isArray(conditionsData) ? conditionsData : [];
-	const requireActions = Array.isArray(requireActionsData)
-		? requireActionsData
-		: [];
-	const approvalsData = Array.isArray(approvalsRes)
-		? approvalsRes
-		: approvalsRes?.data || [];
-	const plants = Array.isArray(plantsData) ? plantsData : [];
-	const currentUserNPP = user?.user?.npp || "NPP2304145";
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			const [
+				data,
+				objTypes,
+				approvalsRes,
+				conditionsData,
+				requireActionsData,
+				plantsData,
+			] = await Promise.all([
+				getEquipments().catch(() => []),
+				getObjectTypes().catch(() => []),
+				getApprovals().catch(() => []),
+				getConditions().catch(() => []),
+				getRequireActions().catch(() => []),
+				getPlants().catch(() => []),
+			]);
 
-	const mappedData = (Array.isArray(data) ? data : []).map((item: any) => {
+			const computedConditions = Array.isArray(conditionsData)
+				? conditionsData
+				: [];
+			const computedRequireActions = Array.isArray(requireActionsData)
+				? requireActionsData
+				: [];
+			const approvalsData = Array.isArray(approvalsRes)
+				? approvalsRes
+				: approvalsRes?.data || [];
+			const computedPlants = Array.isArray(plantsData) ? plantsData : [];
+			const currentUserNPP = user?.npp || "NPP2304145";
+
+			const mappedData = (Array.isArray(data) ? data : []).map((item: any) => {
 		let objectTypeName = "Belum Ditentukan";
 		if (item.object_type?.name) {
 			objectTypeName = item.object_type.name;
@@ -193,12 +205,34 @@ export default async function ValidasiPage() {
 		return { ...item, statusAset, statusPersetujuan, approvalId };
 	});
 
-	// Sort data by ID descending (newest first)
-	mappedWithApproval.sort((a, b) => Number(b.id) - Number(a.id));
+			// Sort data by ID descending (newest first)
+			mappedWithApproval.sort((a, b) => Number(b.id) - Number(a.id));
+
+			if (!alive) return;
+			setAssets(mappedWithApproval);
+			setConditions(computedConditions);
+			setRequireActions(computedRequireActions);
+			setPlants(computedPlants);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, [user?.npp]);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
 
 	return (
 		<ManajemenInspeksiClient
-			assets={mappedWithApproval}
+			assets={assets}
 			conditions={conditions}
 			requireActions={requireActions}
 			plants={plants}

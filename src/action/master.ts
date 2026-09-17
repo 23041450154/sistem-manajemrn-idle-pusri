@@ -1,8 +1,7 @@
-"use server";
-
-import { cookies } from "next/headers";
+// Master data (client SPA). Fetch dari browser ke BE same-origin; cookie `token`
+// (HttpOnly) otomatis terkirim via apiFetch(credentials:include).
 import { findMasterEntity, type MasterEntity } from "@/lib/master-entities";
-import { API_URL } from "@/config/api";
+import { apiFetch } from "@/lib/api-client";
 import { revalidateApp } from "@/lib/revalidate";
 
 /** Safely extract a string from a value that may be a nested object. */
@@ -28,11 +27,6 @@ export type MasterItem = {
 
 type Result = { success: boolean; message?: string };
 
-async function authHeaders() {
-	const token = (await cookies()).get("token")?.value;
-	return { Authorization: `Bearer ${token}` };
-}
-
 function resolve(slug: string): MasterEntity {
 	const entity = findMasterEntity(slug);
 	if (!entity) throw new Error(`Master entity tidak dikenal: ${slug}`);
@@ -50,10 +44,7 @@ async function fail(res: Response): Promise<Result> {
 export async function getMasterItems(slug: string): Promise<MasterItem[]> {
 	const entity = resolve(slug);
 	try {
-		const res = await fetch(`${API_URL}${entity.listPath}`, {
-			headers: await authHeaders(),
-			cache: "no-store",
-		});
+		const res = await apiFetch(entity.listPath, { cache: "no-store" });
 		if (!res.ok) return [];
 		const json = await res.json();
 		// idle_reason memakai reason_name; normalisasi ke `name` untuk UI.
@@ -94,9 +85,9 @@ export async function createMasterItem(
 	if (entity.needsPlant) body.plant_id = input.plantId;
 
 	try {
-		const res = await fetch(`${API_URL}${entity.adminPath}`, {
+		const res = await apiFetch(entity.adminPath, {
 			method: "POST",
-			headers: { ...(await authHeaders()), "Content-Type": "application/json" },
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(body),
 		});
 		if (!res.ok) return await fail(res);
@@ -123,9 +114,9 @@ export async function updateMasterItem(
 	if (entity.needsPlant && input.plantId) body.plant_id = input.plantId;
 
 	try {
-		const res = await fetch(`${API_URL}${entity.adminPath}/${id}`, {
+		const res = await apiFetch(`${entity.adminPath}/${id}`, {
 			method: "PATCH",
-			headers: { ...(await authHeaders()), "Content-Type": "application/json" },
+			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(body),
 		});
 		if (!res.ok) return await fail(res);
@@ -145,10 +136,7 @@ export async function deleteMasterItem(
 		return { success: false, message: `${entity.label} bersifat read-only.` };
 
 	try {
-		const res = await fetch(`${API_URL}${entity.adminPath}/${id}`, {
-			method: "DELETE",
-			headers: await authHeaders(),
-		});
+		const res = await apiFetch(`${entity.adminPath}/${id}`, { method: "DELETE" });
 		if (!res.ok) return await fail(res);
 		revalidateApp();
 		return { success: true };
