@@ -1,7 +1,39 @@
 import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { API_URL } from "@/config/api";
+import { API_URL, API_URL_PUBLIC, API_URL_INTERNAL } from "@/config/api";
 import { BASE_PATH } from "@/lib/base-path";
+
+// Uji satu base URL: fetch {base}/api/auth/me, laporkan status / error koneksi.
+async function probeBase(
+  base: string,
+  token: string | null,
+): Promise<Record<string, unknown>> {
+  const url = `${base.replace(/\/$/, "")}/api/auth/me`;
+  const started = Date.now();
+  try {
+    const res = await fetch(url, {
+      headers: token
+        ? { Authorization: `Bearer ${token}`, Accept: "application/json" }
+        : { Accept: "application/json" },
+      cache: "no-store",
+    });
+    const body = await res.text();
+    return {
+      base,
+      ok: res.ok,
+      status: res.status,
+      ms: Date.now() - started,
+      bodySnippet: body.slice(0, 200),
+    };
+  } catch (e) {
+    return {
+      base,
+      error: String(e),
+      cause: e instanceof Error && e.cause ? String(e.cause) : undefined,
+      ms: Date.now() - started,
+    };
+  }
+}
 
 // ENDPOINT DIAGNOSTIK SEMENTARA (hapus setelah root cause SSO dev ketemu).
 // Tujuan: dari DALAM container FE (server-side), laporkan:
@@ -31,6 +63,7 @@ export async function GET(req: NextRequest) {
     "NODE_ENV",
     "NEXT_PUBLIC_API_URL",
     "API_URL",
+    "API_URL_INTERNAL",
     "NEXT_PUBLIC_API_SSO",
     "NEXT_PUBLIC_CLIENT_ID",
     "NEXT_PUBLIC_BASE_URL",
@@ -48,9 +81,10 @@ export async function GET(req: NextRequest) {
     env[k] = v ? { present: true, length: v.length } : { present: false };
   }
 
-  const meUrl = `${API_URL}/api/auth/me`;
   const result: Record<string, unknown> = {
     apiUrl: API_URL,
+    apiUrlPublic: API_URL_PUBLIC,
+    apiUrlInternal: API_URL_INTERNAL,
     basePath: BASE_PATH,
     node: process.version,
     env,
@@ -58,30 +92,22 @@ export async function GET(req: NextRequest) {
     tokenCookie: cookieToken
       ? { present: true, length: cookieToken.length }
       : { present: false },
-    meUrl,
+    meUrl: `${API_URL}/api/auth/me`,
   };
 
-  const started = Date.now();
-  try {
-    const res = await fetch(meUrl, {
-      headers: token
-        ? { Authorization: `Bearer ${token}`, Accept: "application/json" }
-        : { Accept: "application/json" },
-      cache: "no-store",
-    });
-    const body = await res.text();
-    result.meFetch = {
-      ok: res.ok,
-      status: res.status,
-      ms: Date.now() - started,
-      bodySnippet: body.slice(0, 300),
-    };
-  } catch (e) {
-    result.meFetch = {
-      error: String(e),
-      cause: e instanceof Error && e.cause ? String(e.cause) : undefined,
-      ms: Date.now() - started,
-    };
+  // Uji default (API_URL yang dipakai server action).
+  result.meFetch = await probeBase(API_URL, token);
+
+  // Uji kandidat internal via ?probe=urlA,urlB (buat nemu Service BE k8s).
+  // Contoh: ?probe=http://idle-backend:8080,http://idle-backend:3000
+  const probeParam = req.nextUrl.searchParams.get("probe");
+  if (probeParam) {
+    const bases = probeParam
+      .split(",")
+      .map((s) => s.trim())
+      .filter(Boolean)
+      .slice(0, 8);
+    result.probes = await Promise.all(bases.map((b) => probeBase(b, token)));
   }
 
   return NextResponse.json(result);
