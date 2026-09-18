@@ -16,7 +16,6 @@ const PUBLIC_PATHS = [
   "/forbidden",
   "/logout",
   "/error",
-  "/diag", // endpoint diagnostik sementara (di-gate key di route handler)
 ];
 
 // NextResponse.redirect TIDAK basePath-aware (beda dgn redirect() dari

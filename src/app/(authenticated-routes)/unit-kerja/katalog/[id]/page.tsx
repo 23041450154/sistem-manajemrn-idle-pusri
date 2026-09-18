@@ -1,21 +1,56 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { notFound } from "next/navigation";
+import { notFound, useParams } from "next/navigation";
 import { ArrowLeft, MapPin, Factory, Wrench } from "lucide-react";
 import { getEquipmentById } from "@/action/api";
 import { normalizeEquipment, STATE_STYLE, formatRupiah } from "../shared";
 import Gallery from "./gallery";
 import RequestModalButton from "./request-modal-button";
 
-export default async function KatalogDetailPage({
-  params,
-}: {
-  params: Promise<{ id: string }>;
-}) {
-  const { id } = await params;
-  const raw = (await getEquipmentById(id)) as Record<string, unknown> | null;
-  if (!raw || !raw.id) notFound();
+type Equipment = ReturnType<typeof normalizeEquipment>;
 
-  const eq = normalizeEquipment(raw);
+export default function KatalogDetailPage() {
+  const params = useParams();
+  const id = String(params.id);
+  const [eq, setEq] = useState<Equipment | null>(null);
+  const [missing, setMissing] = useState(false);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const raw = (await getEquipmentById(id).catch(() => null)) as Record<
+        string,
+        unknown
+      > | null;
+      if (!alive) return;
+      if (!raw || !raw.id) {
+        setMissing(true);
+        setLoading(false);
+        return;
+      }
+      setEq(normalizeEquipment(raw));
+      setLoading(false);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [id]);
+
+  if (loading)
+    return (
+      <main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+          Memuat data...
+        </div>
+      </main>
+    );
+
+  if (missing || !eq) notFound();
+
   const state = STATE_STYLE[eq.state];
 
   return (

@@ -1,42 +1,36 @@
-import { getCurrentUserAction } from "@/action/auth";
+"use client";
+
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { SidebarProvider } from "@/components/SidebarProvider";
-import { redirect } from "next/navigation";
+import { AuthProvider, useAuth } from "@/components/AuthProvider";
 import React from "react";
 
-export default async function AuthenticatedLayout({
+// Guard + shell aplikasi. AuthProvider (client) memvalidasi sesi ke BE dari
+// browser; Shell hanya dirender saat user sudah valid (non-null).
+export default function AuthenticatedLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { user, token, forbidden, expired, error } =
-    await getCurrentUserAction();
+  return (
+    <AuthProvider>
+      <Shell>{children}</Shell>
+    </AuthProvider>
+  );
+}
 
-  // Tak terdaftar / tak punya akses -> /forbidden (bukan /login, cegah loop).
-  if (forbidden) {
-    redirect("/forbidden");
-  }
-  if (error) {
-    redirect("/error?type=server");
-  }
-  if (expired) {
-    redirect("/error?type=expired");
-  }
-  // Belum login -> "/" (transit) yang akan mengarahkan ke SSO.
-  if (!token || !user) {
-    redirect("/login");
-  }
-
-  // Pass the raw user role directly so Sidebar can check it correctly
-  const role = user.role;
+function Shell({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  // AuthProvider menjamin user non-null di sini.
+  const role = user!.role;
 
   return (
     <SidebarProvider>
       <div className="app-shell" data-app-shell>
         <Sidebar role={role} />
         <div className="app-main-column" data-app-main-column>
-          <Header user={user} />
+          <Header user={user!} />
           <main className="app-main-area" data-app-main-area>
             {children}
           </main>

@@ -1,3 +1,7 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { getEquipments, getReuseRequests } from "@/action/api";
 import RiwayatPermintaanClient, {
 	type ReuseRequestItem,
@@ -6,19 +10,22 @@ import RiwayatPermintaanClient, {
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-/** Server Component — fetch + mapping murni di server; flag ?submitted jadi prop. */
-export default async function RiwayatPermintaanPage({
-	searchParams,
-}: {
-	searchParams: Promise<{ submitted?: string }>;
-}) {
-	const { submitted } = await searchParams;
-	const [rawData, rawEquipments] = await Promise.all([
-		getReuseRequests().catch(() => []),
-		getEquipments().catch(() => []),
-	]);
+/** Client Component — fetch + mapping di browser; flag ?submitted jadi prop. */
+export default function RiwayatPermintaanPage() {
+	const searchParams = useSearchParams();
+	const submitted = searchParams.get("submitted") ?? undefined;
+	const [items, setItems] = useState<ReuseRequestItem[]>([]);
+	const [loading, setLoading] = useState(true);
 
-	const equipmentMap = new Map<string, any>();
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			const [rawData, rawEquipments] = await Promise.all([
+				getReuseRequests().catch(() => []),
+				getEquipments().catch(() => []),
+			]);
+
+			const equipmentMap = new Map<string, any>();
 	if (Array.isArray(rawEquipments)) {
 		rawEquipments.forEach((eq: any) => {
 			if (eq.id != null) equipmentMap.set(String(eq.id), eq);
@@ -26,7 +33,7 @@ export default async function RiwayatPermintaanPage({
 		});
 	}
 
-	const items: ReuseRequestItem[] = (rawData || []).map((r: any) => {
+			const mappedItems: ReuseRequestItem[] = (rawData || []).map((r: any) => {
 		const eqId = String(r.equipment_id || r.equipmentId || r.equipment?.id || "");
 		const eqFromMap = (eqId && equipmentMap.get(eqId)) || {};
 		const eq = r.equipment || eqFromMap || {};
@@ -150,6 +157,25 @@ export default async function RiwayatPermintaanPage({
 			created_at: cleanDate,
 		};
 	});
+
+			if (!alive) return;
+			setItems(mappedItems);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, []);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
 
 	return (
 		<RiwayatPermintaanClient

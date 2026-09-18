@@ -1,13 +1,20 @@
-import { getCurrentUserAction } from "@/action/auth";
+"use client";
+
+import { useAuth } from "@/components/AuthProvider";
 import { homePathForRole, normalizeRole } from "@/lib/roles";
-import { redirect } from "next/navigation";
+import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 import React from "react";
 
-export default async function UnitKerjaLayout({ children }: { children: React.ReactNode }) {
-  const { user } = await getCurrentUserAction();
-  const role = normalizeRole(user?.role);
-  if (role !== "UNIT_KERJA_OPERASI") {
-    redirect(homePathForRole(user?.role));
-  }
+export default function UnitKerjaLayout({ children }: { children: React.ReactNode }) {
+  const { user } = useAuth();
+  const router = useRouter();
+  const allowed = normalizeRole(user?.role) === "UNIT_KERJA_OPERASI";
+
+  useEffect(() => {
+    if (!allowed) router.replace(homePathForRole(user?.role));
+  }, [allowed, router, user?.role]);
+
+  if (!allowed) return null;
   return <>{children}</>;
 }
