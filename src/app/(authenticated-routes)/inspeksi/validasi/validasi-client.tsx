@@ -290,13 +290,11 @@ export default function ManajemenInspeksiClient({
 				if (myInsps.length > 0) {
 					myInsps.sort((a: any, b: any) => b.id - a.id);
 					const latest = myInsps[0];
-					if (!isRevision) {
-						if (latest.require_action_id) {
-							setRequiredActionId(latest.require_action_id.toString());
-						}
-						if (latest.notes && !catatan) {
-							setCatatan(latest.notes);
-						}
+					if (latest.require_action_id) {
+						setRequiredActionId(latest.require_action_id.toString());
+					}
+					if (!isRevision && latest.notes && !catatan) {
+						setCatatan(latest.notes);
 					}
 				}
 			} catch (err) {
@@ -391,8 +389,23 @@ export default function ManajemenInspeksiClient({
 				const formData = new FormData();
 				formData.append("is_utilizable", isUtilizable ? "true" : "false");
 				formData.append("notes", notes);
-				if (isUtilizable && requiredActionId) {
-					formData.append("required_action", requiredActionId);
+				if (isUtilizable) {
+					// Backend mewajibkan field 'required_action' saat aset dinyatakan layak.
+					// Resolusi dinamis dari master requireActions sesuai kondisi aset (effectiveConditionId),
+					// dengan fallback ke require_action_id sebelumnya atau ID 1 (Siap Pakai).
+					const matchedAction = Array.isArray(requireActions)
+						? requireActions.find(
+								(ra: any) =>
+									Number(ra.target_condition_id || ra.target_condition?.id) ===
+									Number(effectiveConditionId),
+							)
+						: null;
+					const finalActionId =
+						matchedAction?.id?.toString() ||
+						requiredActionId ||
+						effectiveConditionId?.toString() ||
+						"1";
+					formData.append("required_action", finalActionId);
 				}
 				if (uploadedFiles.length > 0) {
 					uploadedFiles.forEach((file) => {
