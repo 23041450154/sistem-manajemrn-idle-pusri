@@ -107,16 +107,19 @@ export default function ValidasiUlangPage() {
 				serialNumber: item.serial_number || item.no_seri || "-",
 				tahun: item.year || item.tahun || "-",
 				alasanIdle: item.idle_reason || item.alasan_idle || "-",
+				updated_at: item.updated_at || item.created_at || undefined,
 			};
 		});
 
 			computedItems.sort((a, b) => {
-				const timeA =
-					a.tanggalSelesai && a.tanggalSelesai !== "-"
+				const timeA = a.updated_at
+					? new Date(a.updated_at).getTime()
+					: a.tanggalSelesai && a.tanggalSelesai !== "-"
 						? new Date(a.tanggalSelesai).getTime()
 						: 0;
-				const timeB =
-					b.tanggalSelesai && b.tanggalSelesai !== "-"
+				const timeB = b.updated_at
+					? new Date(b.updated_at).getTime()
+					: b.tanggalSelesai && b.tanggalSelesai !== "-"
 						? new Date(b.tanggalSelesai).getTime()
 						: 0;
 				if (timeB !== timeA) return timeB - timeA;

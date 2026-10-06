@@ -65,6 +65,7 @@ export interface ReuseRequestItem {
   contact_phone?: string;
   status: "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED";
   created_at: string;
+  updated_at?: string;
 }
 
 /** Client Component: interaksi katalog/riwayat reuse — data di-fetch Server Component. */
@@ -227,6 +228,15 @@ export default function UnitKerjaIdleClient({
   }, [filteredEquipments, currentPage]);
 
   const totalPages = Math.ceil(filteredEquipments.length / ITEMS_PER_PAGE);
+
+  const sortedRequests = useMemo(() => {
+    return [...reuseRequests].sort((a, b) => {
+      const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+      const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
+      if (timeB !== timeA) return timeB - timeA;
+      return (Number(b.id) || 0) - (Number(a.id) || 0);
+    });
+  }, [reuseRequests]);
 
   // Reset Filter
   const resetFilter = () => {
@@ -833,7 +843,7 @@ export default function UnitKerjaIdleClient({
                     </td>
                   </tr>
                 ) : (
-                  reuseRequests.map((req, index) => (
+                  sortedRequests.map((req, index) => (
                     <tr
                       key={req.id}
                       className="border-b border-gray-200 last:border-b-0 hover:bg-gray-50/80 transition-colors align-middle font-bold"

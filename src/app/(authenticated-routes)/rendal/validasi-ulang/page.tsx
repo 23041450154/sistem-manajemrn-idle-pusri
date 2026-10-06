@@ -219,16 +219,13 @@ export default function RendalValidasiUlangPage() {
 				approvalStatus: approvalStatus,
 				catatanInspeksi:
 					item.notes || "Hasil validasi ulang menunjukkan kondisi alat siap pakai.",
+				updated_at: matchingApproval?.updated_at || item.updated_at || item.created_at || undefined,
 			};
 		});
 
 	items.sort((a, b) => {
-		const timeA = a.tanggalRevalidasi
-			? new Date(a.tanggalRevalidasi).getTime()
-			: 0;
-		const timeB = b.tanggalRevalidasi
-			? new Date(b.tanggalRevalidasi).getTime()
-			: 0;
+		const timeA = new Date(a.updated_at || a.tanggalRevalidasi || 0).getTime();
+		const timeB = new Date(b.updated_at || b.tanggalRevalidasi || 0).getTime();
 		if (timeB !== timeA) return timeB - timeA;
 		return (Number(b.id) || 0) - (Number(a.id) || 0);
 	});

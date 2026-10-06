@@ -146,6 +146,7 @@ export default function ValidasiPage() {
 				const p = item.created_by_npp || currentUserNPP;
 				return /^\d/.test(p) ? `NPP${p}` : p;
 			})(),
+			updated_at: item.updated_at || item.created_at || undefined,
 		};
 	});
 
@@ -203,8 +204,21 @@ export default function ValidasiPage() {
 		return { ...item, statusAset, statusPersetujuan, approvalId };
 	});
 
-		// Sort data by ID descending (newest first)
-		mappedWithApproval.sort((a, b) => Number(b.id) - Number(a.id));
+		// Sort data by action timestamp (updated_at) descending (newest first)
+		mappedWithApproval.sort((a, b) => {
+			const timeA = a.updated_at
+				? new Date(a.updated_at).getTime()
+				: a.tanggalRegistrasi && a.tanggalRegistrasi !== "-"
+					? new Date(a.tanggalRegistrasi).getTime()
+					: 0;
+			const timeB = b.updated_at
+				? new Date(b.updated_at).getTime()
+				: b.tanggalRegistrasi && b.tanggalRegistrasi !== "-"
+					? new Date(b.tanggalRegistrasi).getTime()
+					: 0;
+			if (timeB !== timeA) return timeB - timeA;
+			return Number(b.id) - Number(a.id);
+		});
 
 		setAssets(mappedWithApproval);
 		setConditions(computedConditions);

@@ -57,6 +57,7 @@ export default function PerbaikanAlatPage() {
 					idleSejak: dateOnly(item.idle_since),
 					alasanIdle: pick(item.idle_reason),
 					catatan: pick(item.notes, ""),
+					updated_at: stamp || undefined,
 					foto: (Array.isArray(item.attachments) ? item.attachments : [])
 						.map((a: any) => a?.file_url || a?.fileUrl || a?.url || "")
 						.filter((url: string) => IMAGE_FILE.test(url)),
@@ -65,14 +66,8 @@ export default function PerbaikanAlatPage() {
 		});
 
 		equipments.sort((a, b) => {
-			const timeA =
-				a.terakhirDiperbarui && a.terakhirDiperbarui !== "—"
-					? new Date(a.terakhirDiperbarui).getTime()
-					: 0;
-			const timeB =
-				b.terakhirDiperbarui && b.terakhirDiperbarui !== "—"
-					? new Date(b.terakhirDiperbarui).getTime()
-					: 0;
+			const timeA = new Date(a.updated_at || a.terakhirDiperbarui || 0).getTime();
+			const timeB = new Date(b.updated_at || b.terakhirDiperbarui || 0).getTime();
 			if (timeB !== timeA) return timeB - timeA;
 			return (Number(b.id) || 0) - (Number(a.id) || 0);
 		});

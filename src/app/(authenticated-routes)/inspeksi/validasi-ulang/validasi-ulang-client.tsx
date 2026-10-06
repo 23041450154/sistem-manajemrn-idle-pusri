@@ -38,6 +38,7 @@ export interface RevalidasiItem {
 	serialNumber?: string;
 	tahun?: number | string;
 	alasanIdle?: string;
+	updated_at?: string;
 }
 
 interface InspeksiValidasiUlangClientProps {
@@ -198,7 +199,21 @@ export default function InspeksiValidasiUlangClient({
 			);
 		if (filterTipeObjek)
 			result = result.filter((item) => item.tipeObjek === filterTipeObjek);
-		return result;
+
+		return [...result].sort((a, b) => {
+			const timeA = a.updated_at
+				? new Date(a.updated_at).getTime()
+				: a.tanggalSelesai && a.tanggalSelesai !== "-"
+					? new Date(a.tanggalSelesai).getTime()
+					: 0;
+			const timeB = b.updated_at
+				? new Date(b.updated_at).getTime()
+				: b.tanggalSelesai && b.tanggalSelesai !== "-"
+					? new Date(b.tanggalSelesai).getTime()
+					: 0;
+			if (timeB !== timeA) return timeB - timeA;
+			return (Number(b.id) || 0) - (Number(a.id) || 0);
+		});
 	}, [
 		items,
 		activeTab,

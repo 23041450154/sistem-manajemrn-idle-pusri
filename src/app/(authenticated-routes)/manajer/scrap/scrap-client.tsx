@@ -92,10 +92,15 @@ export default function ManajerScrapClient({
   const pendingDisposals = disposals.filter(
     (item) => item.status === "PENDING",
   );
-  // Processed history items
-  const historyDisposals = disposals.filter(
-    (item) => item.status !== "PENDING",
-  );
+  // Processed history items — diurutkan berdasarkan timestamp aksi/update terbaru (updated_at)
+  const historyDisposals = disposals
+    .filter((item) => item.status !== "PENDING")
+    .sort((a, b) => {
+      const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+      const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
+      if (timeB !== timeA) return timeB - timeA;
+      return (Number(b.id) || 0) - (Number(a.id) || 0);
+    });
 
   const currentList =
     activeTab === "inbox" ? pendingDisposals : historyDisposals;

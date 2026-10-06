@@ -40,6 +40,7 @@ export interface ReuseRequestItem {
 	contact_phone?: string;
 	status: "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED";
 	created_at: string;
+	updated_at?: string;
 }
 
 const STATUS_META: Record<
@@ -203,6 +204,12 @@ function RiwayatPermintaanContent({
 
 		if (sortConfig !== null) {
 			result.sort((a, b) => {
+				if (sortConfig.key === "created_at") {
+					const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+					const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
+					if (timeB !== timeA) return sortConfig.direction === "asc" ? timeA - timeB : timeB - timeA;
+					return (Number(b.id) || 0) - (Number(a.id) || 0);
+				}
 				const valA = String(a[sortConfig.key] || "").toLowerCase();
 				const valB = String(b[sortConfig.key] || "").toLowerCase();
 				if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
@@ -211,8 +218,8 @@ function RiwayatPermintaanContent({
 			});
 		} else {
 			result.sort((a, b) => {
-				const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
-				const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+				const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+				const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
 				if (timeB !== timeA) return timeB - timeA;
 				return (Number(b.id) || 0) - (Number(a.id) || 0);
 			});

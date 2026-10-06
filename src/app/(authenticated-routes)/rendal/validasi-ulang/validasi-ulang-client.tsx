@@ -31,6 +31,7 @@ export interface ValidasiUlangItem {
 	approvalId?: string;
 	approvalStatus?: string;
 	catatanInspeksi?: string;
+	updated_at?: string;
 }
 
 interface RendalValidasiUlangClientProps {
@@ -220,6 +221,13 @@ export default function RendalValidasiUlangClient({
 				if (valA < valB) return sortConfig.direction === "asc" ? -1 : 1;
 				if (valA > valB) return sortConfig.direction === "asc" ? 1 : -1;
 				return 0;
+			});
+		} else {
+			result = [...result].sort((a, b) => {
+				const timeA = new Date(a.updated_at || a.tanggalRevalidasi || 0).getTime();
+				const timeB = new Date(b.updated_at || b.tanggalRevalidasi || 0).getTime();
+				if (timeB !== timeA) return timeB - timeA;
+				return (Number(b.id) || 0) - (Number(a.id) || 0);
 			});
 		}
 

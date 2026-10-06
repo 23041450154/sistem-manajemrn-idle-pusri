@@ -60,6 +60,7 @@ export interface MaintenanceEquipment {
 	kondisi: string;
 	terakhirDiperbarui: string;
 	status: RepairFlowStatus;
+	updated_at?: string;
 	// Detail aset — sudah ikut di payload GET /api/equipment (Preload lengkap di backend).
 	funcLoc: string;
 	vendor: string;
@@ -231,7 +232,12 @@ export default function PerbaikanAlatClient({
 			result = result.filter((item) => item.kondisi === filterKondisi);
 		}
 
-		return result;
+		return [...result].sort((a, b) => {
+			const timeA = new Date(a.updated_at || a.terakhirDiperbarui || 0).getTime();
+			const timeB = new Date(b.updated_at || b.terakhirDiperbarui || 0).getTime();
+			if (timeB !== timeA) return timeB - timeA;
+			return (Number(b.id) || 0) - (Number(a.id) || 0);
+		});
 	}, [
 		equipments,
 		activeTab,

@@ -157,6 +157,7 @@ export type DisposalItemDTO = {
 	justification: string;
 	status: DisposalDisplayStatus;
 	created_at: string;
+	updated_at?: string;
 	created_by_name?: string;
 	notes?: string;
 	attachments?: { id: string; file_url: string; caption?: string }[];
@@ -252,6 +253,7 @@ export async function getDisposals(): Promise<DisposalItemDTO[]> {
 					approval?.approval_status || item.approval_status,
 				),
 				created_at: item.created_at || new Date().toISOString(),
+				updated_at: approval?.updated_at || item.updated_at || item.created_at || undefined,
 				created_by_name: item.created_by_user?.name,
 				notes: item.notes || approval?.notes,
 				attachments: atts.map((a: any) => ({

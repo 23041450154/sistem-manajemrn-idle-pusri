@@ -87,18 +87,14 @@ export default function ManajerApprovePage() {
 						if (!p) return "-";
 						return /^\d/.test(p) ? `NPP${p}` : p;
 					})(),
+					updated_at: item.updated_at || item.created_at || eq?.updated_at || eq?.created_at || undefined,
+					created_at: item.created_at || eq?.created_at || undefined,
 				};
 			});
 
 			mapped.sort((a, b) => {
-				const timeA =
-					a.tanggalPengajuan && a.tanggalPengajuan !== "-"
-						? new Date(a.tanggalPengajuan).getTime()
-						: 0;
-				const timeB =
-					b.tanggalPengajuan && b.tanggalPengajuan !== "-"
-						? new Date(b.tanggalPengajuan).getTime()
-						: 0;
+				const timeA = new Date(a.updated_at || a.created_at || a.tanggalPengajuan || 0).getTime();
+				const timeB = new Date(b.updated_at || b.created_at || b.tanggalPengajuan || 0).getTime();
 				if (timeB !== timeA) return timeB - timeA;
 				return (Number(b.id) || 0) - (Number(a.id) || 0);
 			});

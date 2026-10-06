@@ -153,8 +153,16 @@ export default function RiwayatPermintaanPage() {
 			contact_phone: contactPhone,
 			status: finalStatus,
 			created_at: cleanDate,
+			updated_at: r.updated_at || r.updatedAt || r.created_at || r.createdAt || undefined,
 		};
 	});
+
+		mappedItems.sort((a, b) => {
+			const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+			const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
+			if (timeB !== timeA) return timeB - timeA;
+			return (Number(b.id) || 0) - (Number(a.id) || 0);
+		});
 
 		setItems(mappedItems);
 	}, []);

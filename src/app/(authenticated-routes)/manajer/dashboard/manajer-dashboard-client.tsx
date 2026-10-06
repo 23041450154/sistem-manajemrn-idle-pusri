@@ -412,9 +412,9 @@ export default function ManajerDashboardClient({
 
 	// Log Keputusan Terkini
 	const recentDecisions = useMemo(() => {
-		const list: { text: string; time: string; status: "APPROVED" | "REJECTED" | "PENDING" }[] = [];
+		const list: { text: string; time: string; timestamp: number; status: "APPROVED" | "REJECTED" | "PENDING" }[] = [];
 
-		validationApprovals.slice(0, 3).forEach((a: any) => {
+		validationApprovals.forEach((a: any) => {
 			const name = a.equipment_name || a.equipment?.name || "Aset";
 			const code = a.equipment_code || a.equipment?.equipment_code || "";
 			const st = (a.approval_status || "PENDING").toUpperCase();
@@ -422,20 +422,32 @@ export default function ManajerDashboardClient({
 			if (st === "APPROVED") text = `Persetujuan validasi kelayakan: ${name} (${code}) disetujui`;
 			else if (st === "REJECTED") text = `Persetujuan validasi: ${name} (${code}) ditolak/revisi`;
 			else text = `Pengajuan validasi masuk: ${name} (${code}) menunggu review`;
-			list.push({ text, time: a.request_date ? new Date(a.request_date).toLocaleDateString("id-ID") : "Baru saja", status: st as any });
+			const t = a.updated_at || a.request_date || a.created_at;
+			list.push({
+				text,
+				time: t ? new Date(t).toLocaleDateString("id-ID") : "Baru saja",
+				timestamp: t ? new Date(t).getTime() : 0,
+				status: st as any,
+			});
 		});
 
-		reuseRequests.slice(0, 2).forEach((r: any) => {
+		reuseRequests.forEach((r: any) => {
 			const eq = r.equipment || {};
 			const name = eq.name || r.equipment_name || "Peralatan";
 			const st = (r.approval_status || "PENDING").toUpperCase();
 			let text = "";
 			if (st === "APPROVED") text = `Permintaan reuse ${name} disetujui untuk ${r.requesting_plant || "Unit Operasi"}`;
 			else text = `Permohonan pinjam pakai ${name} diajukan oleh ${r.requested_by_user?.name || "Unit Kerja"}`;
-			list.push({ text, time: r.created_at ? new Date(r.created_at).toLocaleDateString("id-ID") : "Baru saja", status: st as any });
+			const t = r.updated_at || r.created_at;
+			list.push({
+				text,
+				time: t ? new Date(t).toLocaleDateString("id-ID") : "Baru saja",
+				timestamp: t ? new Date(t).getTime() : 0,
+				status: st as any,
+			});
 		});
 
-		return list.slice(0, 4);
+		return list.sort((a, b) => b.timestamp - a.timestamp).slice(0, 4);
 	}, [validationApprovals, reuseRequests]);
 
 	const totalPendingApprovals =

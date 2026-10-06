@@ -183,13 +183,20 @@ export default function InspeksiBerkalaClient({
 	}, [antrean, search, filterPlant, filterTipeObjek, sortConfig]);
 
 	const filteredRiwayat = useMemo(() => {
-		return riwayat.filter((row) => {
-			if (!search.trim()) return true;
-			const query = search.toLowerCase().trim();
-			const code = row.equipment_code?.toLowerCase() || "";
-			const name = row.equipment_name?.toLowerCase() || "";
-			return code.includes(query) || name.includes(query);
-		});
+		return riwayat
+			.filter((row) => {
+				if (!search.trim()) return true;
+				const query = search.toLowerCase().trim();
+				const code = row.equipment_code?.toLowerCase() || "";
+				const name = row.equipment_name?.toLowerCase() || "";
+				return code.includes(query) || name.includes(query);
+			})
+			.sort((a, b) => {
+				const timeA = a.inspection_date ? new Date(a.inspection_date).getTime() : 0;
+				const timeB = b.inspection_date ? new Date(b.inspection_date).getTime() : 0;
+				if (timeB !== timeA) return timeB - timeA;
+				return (Number(b.id) || 0) - (Number(a.id) || 0);
+			});
 	}, [riwayat, search]);
 
 	const displayList =

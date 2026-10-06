@@ -38,6 +38,7 @@ export interface ReuseRequest {
 		| "REJECTED"
 		| "REVISION_REQUESTED";
 	created_at?: string;
+	updated_at?: string;
 	review_notes?: string;
 	history?: Array<{
 		id: string;
@@ -147,9 +148,10 @@ export default function ManajerPeminjamanClient({
 				return matchTab && matchSearch && matchPlant && matchStatus && matchDate;
 			})
 			.sort((a, b) => {
-				const aTime = Date.parse(a.created_at || "") || 0;
-				const bTime = Date.parse(b.created_at || "") || 0;
-				return bTime - aTime;
+				const aTime = Date.parse(a.updated_at || a.created_at || "") || 0;
+				const bTime = Date.parse(b.updated_at || b.created_at || "") || 0;
+				if (bTime !== aTime) return bTime - aTime;
+				return (Number(b.id) || 0) - (Number(a.id) || 0);
 			});
 	}, [
 		requests,

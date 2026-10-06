@@ -124,6 +124,11 @@ export default function ManajerPeminjamanPage() {
 						item.created_at ||
 						item.requested_at ||
 						(typeof rawDate === "string" ? rawDate : undefined),
+					updated_at:
+						item.updated_at ||
+						item.approval?.updated_at ||
+						item.created_at ||
+						undefined,
 					review_notes:
 						typeof item.review_notes === "string"
 							? item.review_notes.trim()

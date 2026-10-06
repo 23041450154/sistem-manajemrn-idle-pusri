@@ -228,8 +228,8 @@ export default function RendalScrapPage() {
 			setInspections(insData || []);
 			setDisposals(
 				(dispData || []).sort((a: any, b: any) => {
-					const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
-					const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+					const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+					const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
 					if (timeB !== timeA) return timeB - timeA;
 					return (Number(b.id) || 0) - (Number(a.id) || 0);
 				}),
@@ -284,16 +284,23 @@ export default function RendalScrapPage() {
 	// 2. Filter submitted scrap requests (Tab 2: Riwayat Permintaan)
 	const historyRequests = useMemo(() => {
 		const query = search.toLowerCase().trim();
-		return disposals.filter((item) => {
-			const matchSearch =
-				!query ||
-				(item.disposal_number &&
-					item.disposal_number.toLowerCase().includes(query)) ||
-				(item.equipment_code &&
-					item.equipment_code.toLowerCase().includes(query)) ||
-				(item.equipment_name && item.equipment_name.toLowerCase().includes(query));
-			return matchSearch;
-		});
+		return disposals
+			.filter((item) => {
+				const matchSearch =
+					!query ||
+					(item.disposal_number &&
+						item.disposal_number.toLowerCase().includes(query)) ||
+					(item.equipment_code &&
+						item.equipment_code.toLowerCase().includes(query)) ||
+					(item.equipment_name && item.equipment_name.toLowerCase().includes(query));
+				return matchSearch;
+			})
+			.sort((a: any, b: any) => {
+				const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+				const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
+				if (timeB !== timeA) return timeB - timeA;
+				return (Number(b.id) || 0) - (Number(a.id) || 0);
+			});
 	}, [disposals, search]);
 
 	const equipmentMap = useMemo(() => {

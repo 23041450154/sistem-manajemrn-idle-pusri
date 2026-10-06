@@ -68,6 +68,7 @@ export interface Asset {
 	kondisi: string;
 	pemohon: string;
 	approvalId?: string;
+	updated_at?: string;
 }
 
 /** Client Component: interaksi tabel/modal inspeksi — data di-fetch Server Component. */
@@ -617,24 +618,25 @@ export default function ManajemenInspeksiClient({
 	};
 
 	// Helper untuk mengecek apakah aset masuk ke Riwayat Validasi vs Antrean Validasi.
-	// Antrean Validasi HANYA untuk aset yang memerlukan tindakan aktif: yaitu REGISTERED dan VALIDATED yang belum final.
-	// Aset dengan status READY_TO_USE, REPAIR, SCRAP, REVALIDATION, REUSED, REJECTED, atau yang persetujuannya APPROVED masuk ke Riwayat Validasi.
+	// Antrean Validasi HANYA untuk aset yang memerlukan tindakan aktif inspektur: yaitu REGISTERED dan NEED_REVISION.
+	// Aset yang sudah divalidasi (VALIDATED, READY_TO_USE, REPAIR, SCRAP, REVALIDATION, REUSED, REJECTED) masuk ke Riwayat Validasi.
 	const isFinalStatus = (asset: Asset) => {
 		const normStatus = statusName(asset.statusAset);
 		const normApproval = (asset.statusPersetujuan || "").toUpperCase();
+
+		// Jika status persetujuannya perlu revisi, tetap di Antrean (memerlukan tindakan revisi inspektur)
+		if (normApproval === "NEED_REVISION") {
+			return false;
+		}
 
 		// Jika persetujuan sudah disetujui (APPROVED) atau ditolak (REJECTED), masuk ke Riwayat
 		if (normApproval === "APPROVED" || normApproval === "REJECTED") {
 			return true;
 		}
 
-		// Jika status persetujuannya perlu revisi, tetap di Antrean (memerlukan tindakan revisi)
-		if (normApproval === "NEED_REVISION") {
-			return false;
-		}
-
-		// Antrean HANYA untuk aset yang berstatus REGISTERED atau VALIDATED
-		const isActionNeeded = normStatus === "REGISTERED" || normStatus === "VALIDATED";
+		// Antrean HANYA untuk aset yang belum divalidasi (REGISTERED).
+		// Setelah aset divalidasi, inspeksi awal telah selesai dilakukan dan aset masuk ke Riwayat Validasi.
+		const isActionNeeded = normStatus === "REGISTERED";
 		return !isActionNeeded;
 	};
 
@@ -689,8 +691,8 @@ export default function ManajemenInspeksiClient({
 
 		if (sortConfig !== null) {
 			filtered.sort((a, b) => {
-				const valA = String(a[sortConfig!.key]).toLowerCase();
-				const valB = String(b[sortConfig!.key]).toLowerCase();
+				const valA = String(a[sortConfig!.key] || "").toLowerCase();
+				const valB = String(b[sortConfig!.key] || "").toLowerCase();
 				if (valA < valB) {
 					return sortConfig!.direction === "asc" ? -1 : 1;
 				}
@@ -701,12 +703,15 @@ export default function ManajemenInspeksiClient({
 			});
 		} else {
 			filtered.sort((a, b) => {
-				const timeA =
-					a.tanggalRegistrasi && a.tanggalRegistrasi !== "-"
+				// Prioritaskan timestamp aksi/update terbaru (updated_at)
+				const timeA = a.updated_at
+					? new Date(a.updated_at).getTime()
+					: a.tanggalRegistrasi && a.tanggalRegistrasi !== "-"
 						? new Date(a.tanggalRegistrasi).getTime()
 						: 0;
-				const timeB =
-					b.tanggalRegistrasi && b.tanggalRegistrasi !== "-"
+				const timeB = b.updated_at
+					? new Date(b.updated_at).getTime()
+					: b.tanggalRegistrasi && b.tanggalRegistrasi !== "-"
 						? new Date(b.tanggalRegistrasi).getTime()
 						: 0;
 				if (timeB !== timeA) return timeB - timeA;
