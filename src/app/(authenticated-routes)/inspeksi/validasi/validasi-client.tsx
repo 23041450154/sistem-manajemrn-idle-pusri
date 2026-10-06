@@ -110,7 +110,7 @@ export default function ManajemenInspeksiClient({
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [notification, setNotification] = useState<{
-		type: "success" | "error";
+		type: "success" | "error" | "warning";
 		message: string;
 	} | null>(null);
 	const [attachments, setAttachments] = useState<any[]>([]);
@@ -343,6 +343,8 @@ export default function ManajemenInspeksiClient({
 			setCatatan("");
 			setRekomendasi("");
 			setRequiredActionId("");
+			setValidationId("");
+			setApprovalId("");
 			setUploadedFiles([]);
 			setManagerNotes("");
 			setShowValidationErrors(false);
@@ -386,6 +388,34 @@ export default function ManajemenInspeksiClient({
 					return;
 				}
 
+				// Cari targetValidationId untuk menyimpan pembaruan formulir validasi
+				let targetValidationId = validationId;
+				if (!targetValidationId) {
+					const valids = await getValidations(selectedAsset.id);
+					if (valids && valids.length > 0) {
+						targetValidationId = String(valids[0].id);
+					}
+				}
+
+				// 1. Simpan perubahan ke endpoint validasi terlebih dahulu agar data hasil revisi
+				// (kondisi, jadwal, catatan, rekomendasi, dan foto) tersimpan di database.
+				let updateValSuccess = false;
+				if (targetValidationId) {
+					const updateRes = await updateValidation(
+						targetValidationId,
+						Number(effectiveConditionId),
+						notes,
+						{
+							startAt: tglMulai,
+							endAt: tglSelesai,
+							followupRecommendation: rekomendasi,
+							photos: uploadedFiles,
+						},
+					);
+					updateValSuccess = !!updateRes?.success;
+				}
+
+				// 2. Siapkan payload dan ajukan ulang ke endpoint resubmit approval
 				const formData = new FormData();
 				formData.append("is_utilizable", isUtilizable ? "true" : "false");
 				formData.append("notes", notes);
@@ -407,12 +437,30 @@ export default function ManajemenInspeksiClient({
 						"1";
 					formData.append("required_action", finalActionId);
 				}
-				if (uploadedFiles.length > 0) {
+				// Backend approval resubmit mewajibkan foto bukti minimal 2 file bila dikirim.
+				if (uploadedFiles.length >= 2) {
 					uploadedFiles.forEach((file) => {
 						formData.append("photos", file);
 					});
 				}
 				res = await resubmitApproval(targetApprovalId, formData);
+
+				// 3. Fallback bila endpoint resubmit approval backend gagal
+				if (!res.success) {
+					const isMissingInspectionError =
+						res.message?.toLowerCase().includes("data inspeksi") ||
+						res.message?.toLowerCase().includes("tidak ditemukan");
+
+					if (isMissingInspectionError && updateValSuccess) {
+						setNotification({
+							type: "warning",
+							message:
+								"Data revisi validasi berhasil disimpan ke sistem. Pengajuan approval belum terkirim ke Manajer karena backend mencari data inspeksi (hubungi tim backend).",
+						});
+						router.refresh();
+						return;
+					}
+				}
 			} else if (
 				validationId ||
 				selectedAsset.statusAset === "VALIDATED" ||
@@ -857,6 +905,8 @@ export default function ManajemenInspeksiClient({
 				<div className="fixed top-6 right-6 z-[70] bg-white text-[#0F172A] px-5 py-3 rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
 					{notification.type === "success" ? (
 						<CheckCircle2 className="w-4 h-4 text-[#059669]" />
+					) : notification.type === "warning" ? (
+						<AlertCircle className="w-4 h-4 text-[#D97706]" />
 					) : (
 						<XCircle className="w-4 h-4 text-[#DC2626]" />
 					)}
