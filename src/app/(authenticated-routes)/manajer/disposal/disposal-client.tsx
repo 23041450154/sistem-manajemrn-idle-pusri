@@ -24,8 +24,10 @@ type DisposalItem = DisposalItemDTO;
 /** Client Component: interaksi (tab/search/paginasi/review approve-reject) — data di-fetch Server Component. */
 export default function ManajerDisposalClient({
   disposals,
+  onRefresh,
 }: {
   disposals: DisposalItem[];
+  onRefresh?: () => Promise<void> | void;
 }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"inbox" | "history">("inbox");
@@ -128,8 +130,11 @@ export default function ManajerDisposalClient({
         );
         setIsApproveConfirmOpen(false);
         handleCloseDetail();
-        // Server action sudah revalidateApp(); tarik payload RSC terbaru.
-        router.refresh();
+        if (onRefresh) {
+          await onRefresh();
+        } else {
+          router.refresh();
+        }
       } else {
         showToast(
           "error",
@@ -166,8 +171,11 @@ export default function ManajerDisposalClient({
         setIsRejectModalOpen(false);
         setRejectionReason("");
         handleCloseDetail();
-        // Server action sudah revalidateApp(); tarik payload RSC terbaru.
-        router.refresh();
+        if (onRefresh) {
+          await onRefresh();
+        } else {
+          router.refresh();
+        }
       } else {
         showToast("error", res.message || "Gagal menolak pengajuan disposal.");
       }
@@ -263,7 +271,13 @@ export default function ManajerDisposalClient({
             </div>
             <button
               type="button"
-              onClick={() => router.refresh()}
+              onClick={async () => {
+                if (onRefresh) {
+                  await onRefresh();
+                } else {
+                  router.refresh();
+                }
+              }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-gray-600 hover:text-[#0A356A] bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />

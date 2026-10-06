@@ -47,9 +47,11 @@ interface ReuseRequestItem {
 export default function UnitKerjaDashboardContent({
 	equipments,
 	reuseRequests,
+	onRefresh,
 }: {
 	equipments: EquipmentItem[];
 	reuseRequests: ReuseRequestItem[];
+	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
 
@@ -173,7 +175,13 @@ export default function UnitKerjaDashboardContent({
 				<div className="header-actions">
 					<button
 						type="button"
-						onClick={() => router.refresh()}
+						onClick={async () => {
+							if (onRefresh) {
+								await onRefresh();
+							} else {
+								router.refresh();
+							}
+						}}
 						className={buttonVariants({ variant: "brandOutline", size: "lg" })}
 					>
 						<RefreshCw className="w-4 h-4" />

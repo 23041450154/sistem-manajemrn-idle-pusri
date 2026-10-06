@@ -39,6 +39,7 @@ interface RendalValidasiUlangClientProps {
 	objectTypes?: any[];
 	conditions?: any[];
 	storageLocations?: any[];
+	onRefresh?: () => Promise<void> | void;
 }
 
 /** Client Component: interaksi (tab/search/filter/sort/paginasi/approval) — data di-fetch Server Component. */
@@ -48,6 +49,7 @@ export default function RendalValidasiUlangClient({
 	objectTypes = [],
 	conditions = [],
 	storageLocations = [],
+	onRefresh,
 }: RendalValidasiUlangClientProps) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
@@ -282,8 +284,11 @@ export default function RendalValidasiUlangClient({
 			);
 
 			if (result.success) {
-				// Server action sudah revalidateApp(); tarik payload RSC terbaru.
-				router.refresh();
+				if (onRefresh) {
+					await onRefresh();
+				} else {
+					router.refresh();
+				}
 
 				setNotification({
 					type: "success",
@@ -398,7 +403,14 @@ export default function RendalValidasiUlangClient({
 						</p>
 					</div>
 					<button
-						onClick={() => router.refresh()}
+						type="button"
+						onClick={async () => {
+							if (onRefresh) {
+								await onRefresh();
+							} else {
+								router.refresh();
+							}
+						}}
 						className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm"
 					>
 						<RefreshCw className="w-3.5 h-3.5" />

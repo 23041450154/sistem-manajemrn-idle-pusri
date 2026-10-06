@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getEquipments, getObjectTypes, getPlants } from "@/action/api";
 import {
 	EQUIPMENT_STATUS,
@@ -27,10 +27,8 @@ export default function RendalIdlePage() {
 	const [plants, setPlants] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		let alive = true;
-		void (async () => {
-			const [data, objTypes, plantsData] = await Promise.all([
+	const loadData = useCallback(async () => {
+		const [data, objTypes, plantsData] = await Promise.all([
 				getEquipments().catch(() => []),
 				getObjectTypes().catch(() => []),
 				getPlants().catch(() => []),
@@ -120,15 +118,21 @@ export default function RendalIdlePage() {
 			};
 			});
 
-			if (!alive) return;
 			setEquipments(equipments);
 			setPlants(plants);
+	}, []);
+
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			await loadData();
+			if (!alive) return;
 			setLoading(false);
 		})();
 		return () => {
 			alive = false;
 		};
-	}, []);
+	}, [loadData]);
 
 	if (loading)
 		return (
@@ -140,5 +144,11 @@ export default function RendalIdlePage() {
 			</main>
 		);
 
-	return <RendalIdleClient equipments={equipments} plants={plants} />;
+	return (
+		<RendalIdleClient
+			equipments={equipments}
+			plants={plants}
+			onRefresh={loadData}
+		/>
+	);
 }

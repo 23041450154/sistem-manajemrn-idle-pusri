@@ -387,7 +387,14 @@ export default function InspeksiValidasiUlangClient({
 						Validasi Perbaikan Alat
 					</h1>
 					<button
-						onClick={() => router.refresh()}
+						type="button"
+						onClick={async () => {
+							if (onRefresh) {
+								await onRefresh();
+							} else {
+								router.refresh();
+							}
+						}}
 						className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded hover:bg-gray-50 hover:text-[#0A356A] transition-colors"
 					>
 						<RefreshCw className="w-3.5 h-3.5" />

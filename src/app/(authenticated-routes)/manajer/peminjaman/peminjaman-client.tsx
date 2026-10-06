@@ -79,8 +79,10 @@ export interface ReuseRequestApi {
 /** Client Component: interaksi (tab/filter/paginasi/review approve-revisi) — data di-fetch Server Component. */
 export default function ManajerPeminjamanClient({
 	requests,
+	onRefresh,
 }: {
 	requests: ReuseRequest[];
+	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
 	const [search, setSearch] = useState("");
@@ -210,10 +212,11 @@ export default function ManajerPeminjamanClient({
 				selectedRequest.id,
 			);
 			if (result.success) {
-				// Sumber kebenaran status adalah ApprovalRequest di backend; server
-				// action sudah revalidateApp() -> tarik payload RSC terbaru agar tabel
-				// langsung menampilkan approval_status terbaru (mis. APPROVED).
-				router.refresh();
+				if (onRefresh) {
+					await onRefresh();
+				} else {
+					router.refresh();
+				}
 
 				setNotification({
 					type: "success",

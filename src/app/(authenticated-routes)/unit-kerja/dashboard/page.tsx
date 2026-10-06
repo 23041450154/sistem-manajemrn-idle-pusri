@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getEquipments, getObjectTypes, getReuseRequests } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
 // Data di-fetch di browser; interaksi ada di ./dashboard-client.
@@ -46,10 +46,8 @@ export default function UnitKerjaDashboardPage() {
 	const [reuseRequests, setReuseRequests] = useState<ReuseRequestItem[]>([]);
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		let alive = true;
-		void (async () => {
-			const [rawEqList, rawRequests, rawObjTypes] = await Promise.all([
+	const loadData = useCallback(async () => {
+		const [rawEqList, rawRequests, rawObjTypes] = await Promise.all([
 				getEquipments().catch(() => []),
 				getReuseRequests().catch(() => []),
 				getObjectTypes().catch(() => []),
@@ -118,17 +116,23 @@ export default function UnitKerjaDashboardPage() {
 		};
 	});
 
+		setEquipments(
+			mappedEquipments.filter((e) => e.status_name === "READY_TO_USE"),
+		);
+		setReuseRequests(reqList);
+	}, []);
+
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			await loadData();
 			if (!alive) return;
-			setEquipments(
-				mappedEquipments.filter((e) => e.status_name === "READY_TO_USE"),
-			);
-			setReuseRequests(reqList);
 			setLoading(false);
 		})();
 		return () => {
 			alive = false;
 		};
-	}, []);
+	}, [loadData]);
 
 	if (loading)
 		return (
@@ -144,6 +148,7 @@ export default function UnitKerjaDashboardPage() {
 		<UnitKerjaDashboardContent
 			equipments={equipments}
 			reuseRequests={reuseRequests}
+			onRefresh={loadData}
 		/>
 	);
 }

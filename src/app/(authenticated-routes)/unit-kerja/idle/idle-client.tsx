@@ -72,10 +72,12 @@ export default function UnitKerjaIdleClient({
   equipments,
   reuseRequests,
   currentUser,
+  onRefresh,
 }: {
   equipments: EquipmentItem[];
   reuseRequests: ReuseRequestItem[];
   currentUser: { name?: string; npp?: string } | null;
+  onRefresh?: () => Promise<void> | void;
 }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"katalog" | "permintaan">(
@@ -339,9 +341,11 @@ export default function UnitKerjaIdleClient({
           res.message || "Permintaan reuse berhasil dikirim!",
         );
 
-        // Server action sudah revalidateApp(); tarik payload RSC terbaru
-        // (katalog otomatis menyaring aset yang sudah diajukan, riwayat bertambah).
-        router.refresh();
+        if (onRefresh) {
+          await onRefresh();
+        } else {
+          router.refresh();
+        }
         setReuseModalItem(null);
       } else {
         showNotification(

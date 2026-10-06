@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
 	getEquipments,
 	getApprovals,
@@ -28,9 +28,7 @@ export default function RendalValidasiUlangPage() {
 	const [storageLocations, setStorageLocations] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		let alive = true;
-		void (async () => {
+	const loadData = useCallback(async () => {
 			const [
 				data,
 				approvalsData,
@@ -235,18 +233,24 @@ export default function RendalValidasiUlangPage() {
 		return (Number(b.id) || 0) - (Number(a.id) || 0);
 	});
 
+		setItems(items);
+		setPlants(plants);
+		setObjTypes(objTypes);
+		setConditions(conditions);
+		setStorageLocations(storageLocations);
+	}, []);
+
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			await loadData();
 			if (!alive) return;
-			setItems(items);
-			setPlants(plants);
-			setObjTypes(objTypes);
-			setConditions(conditions);
-			setStorageLocations(storageLocations);
 			setLoading(false);
 		})();
 		return () => {
 			alive = false;
 		};
-	}, []);
+	}, [loadData]);
 
 	if (loading)
 		return (
@@ -265,6 +269,7 @@ export default function RendalValidasiUlangPage() {
 			objectTypes={objTypes}
 			conditions={conditions}
 			storageLocations={storageLocations}
+			onRefresh={loadData}
 		/>
 	);
 }

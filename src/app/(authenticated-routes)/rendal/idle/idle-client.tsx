@@ -49,6 +49,7 @@ export interface Equipment {
 interface RendalIdleClientProps {
 	equipments: Equipment[];
 	plants?: any[];
+	onRefresh?: () => Promise<void> | void;
 }
 
 /** Client Component: interaksi (search/filter/sort/paginasi/modal) — data di-fetch Server Component. */
@@ -59,6 +60,7 @@ const toPhotoUrl = (photo: string) =>
 export default function RendalIdleClient({
 	equipments,
 	plants = [],
+	onRefresh,
 }: RendalIdleClientProps) {
 	const router = useRouter();
 
@@ -258,7 +260,14 @@ export default function RendalIdleClient({
 					</div>
 					<div className="flex items-center gap-2">
 						<button
-							onClick={() => router.refresh()}
+							type="button"
+							onClick={async () => {
+								if (onRefresh) {
+									await onRefresh();
+								} else {
+									router.refresh();
+								}
+							}}
 							className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm"
 						>
 							<RefreshCw className="w-3.5 h-3.5" />

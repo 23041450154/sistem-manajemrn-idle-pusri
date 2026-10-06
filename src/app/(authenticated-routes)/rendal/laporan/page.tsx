@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
 	getDisposals,
 	getApprovals,
@@ -133,38 +133,41 @@ export default function RendalLaporanPage() {
 	const [logs, setLogs] = useState<AuditLogEntry[]>([]);
 	const [loading, setLoading] = useState(true);
 
+	const loadData = useCallback(async () => {
+		const [eq, validationApps, revalApps, disposalApps, reuseApps, ins, disps] =
+			await Promise.all([
+				getEquipments().catch(() => []),
+				// Audit trail mencakup semua jenis approval, jadi keempat grup diambil.
+				getApprovals("validation").catch(() => []),
+				getApprovals("revalidation").catch(() => []),
+				getApprovals("disposal").catch(() => []),
+				getApprovals("reuse").catch(() => []),
+				getInspections().catch(() => []),
+				getDisposals().catch(() => []),
+			]);
+
+		const apps = [
+			...(validationApps as any[]),
+			...(revalApps as any[]),
+			...(disposalApps as any[]),
+			...(reuseApps as any[]),
+		];
+
+		const logs = buildAuditLogs(eq as any[], apps, ins as any[], disps as any[]);
+		setLogs(logs);
+	}, []);
+
 	useEffect(() => {
 		let alive = true;
 		void (async () => {
-			const [eq, validationApps, revalApps, disposalApps, reuseApps, ins, disps] =
-				await Promise.all([
-					getEquipments().catch(() => []),
-					// Audit trail mencakup semua jenis approval, jadi keempat grup diambil.
-					getApprovals("validation").catch(() => []),
-					getApprovals("revalidation").catch(() => []),
-					getApprovals("disposal").catch(() => []),
-					getApprovals("reuse").catch(() => []),
-					getInspections().catch(() => []),
-					getDisposals().catch(() => []),
-				]);
-
-			const apps = [
-				...(validationApps as any[]),
-				...(revalApps as any[]),
-				...(disposalApps as any[]),
-				...(reuseApps as any[]),
-			];
-
-			const logs = buildAuditLogs(eq as any[], apps, ins as any[], disps as any[]);
-
+			await loadData();
 			if (!alive) return;
-			setLogs(logs);
 			setLoading(false);
 		})();
 		return () => {
 			alive = false;
 		};
-	}, []);
+	}, [loadData]);
 
 	if (loading)
 		return (
@@ -176,5 +179,5 @@ export default function RendalLaporanPage() {
 			</main>
 		);
 
-	return <RendalLaporanClient logs={logs} />;
+	return <RendalLaporanClient logs={logs} onRefresh={loadData} />;
 }

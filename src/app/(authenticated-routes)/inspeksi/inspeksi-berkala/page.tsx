@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
 	getEquipments,
 	getInspections,
@@ -24,11 +24,9 @@ export default function InspeksiAntreanPage() {
 	const [objectTypes, setObjectTypes] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		let alive = true;
-		void (async () => {
-			const [resultEq, resultInsp, plantsData, objTypesData] =
-				await Promise.all([
+	const loadData = useCallback(async () => {
+		const [resultEq, resultInsp, plantsData, objTypesData] =
+			await Promise.all([
 					getEquipments().catch(() => []),
 					getInspections().catch(() => []),
 					getPlants().catch(() => []),
@@ -116,17 +114,23 @@ export default function InspeksiAntreanPage() {
 				});
 			}
 
+		setAntrean(computedAntrean);
+		setRiwayat(computedRiwayat);
+		setPlants(computedPlants);
+		setObjectTypes(computedObjectTypes);
+	}, []);
+
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			await loadData();
 			if (!alive) return;
-			setAntrean(computedAntrean);
-			setRiwayat(computedRiwayat);
-			setPlants(computedPlants);
-			setObjectTypes(computedObjectTypes);
 			setLoading(false);
 		})();
 		return () => {
 			alive = false;
 		};
-	}, []);
+	}, [loadData]);
 
 	if (loading)
 		return (
@@ -144,6 +148,7 @@ export default function InspeksiAntreanPage() {
 			riwayat={riwayat}
 			plants={plants}
 			objectTypes={objectTypes}
+			onRefresh={loadData}
 		/>
 	);
 }

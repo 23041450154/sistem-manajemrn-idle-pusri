@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSearchParams } from "next/navigation";
 import { getEquipments, getReuseRequests } from "@/action/api";
 import RiwayatPermintaanClient, {
@@ -17,13 +17,11 @@ export default function RiwayatPermintaanPage() {
 	const [items, setItems] = useState<ReuseRequestItem[]>([]);
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		let alive = true;
-		void (async () => {
-			const [rawData, rawEquipments] = await Promise.all([
-				getReuseRequests().catch(() => []),
-				getEquipments().catch(() => []),
-			]);
+	const loadData = useCallback(async () => {
+		const [rawData, rawEquipments] = await Promise.all([
+			getReuseRequests().catch(() => []),
+			getEquipments().catch(() => []),
+		]);
 
 			const equipmentMap = new Map<string, any>();
 	if (Array.isArray(rawEquipments)) {
@@ -158,14 +156,20 @@ export default function RiwayatPermintaanPage() {
 		};
 	});
 
+		setItems(mappedItems);
+	}, []);
+
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			await loadData();
 			if (!alive) return;
-			setItems(mappedItems);
 			setLoading(false);
 		})();
 		return () => {
 			alive = false;
 		};
-	}, []);
+	}, [loadData]);
 
 	if (loading)
 		return (
@@ -181,6 +185,7 @@ export default function RiwayatPermintaanPage() {
 		<RiwayatPermintaanClient
 			items={items}
 			isJustSubmitted={submitted === "true"}
+			onRefresh={loadData}
 		/>
 	);
 }

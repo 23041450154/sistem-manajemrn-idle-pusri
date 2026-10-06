@@ -32,8 +32,10 @@ type DisposalItem = DisposalItemDTO;
 /** Client Component: interaksi (tab/search/paginasi/review approve-reject) — data di-fetch Server Component. */
 export default function ManajerScrapClient({
   disposals,
+  onRefresh,
 }: {
   disposals: DisposalItem[];
+  onRefresh?: () => Promise<void> | void;
 }) {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<"inbox" | "history">("inbox");
@@ -165,8 +167,11 @@ export default function ManajerScrapClient({
         setIsApproveConfirmOpen(false);
         setModalError(null);
         handleCloseDetail();
-        // Server action sudah revalidateApp(); tarik payload RSC terbaru.
-        router.refresh();
+        if (onRefresh) {
+          await onRefresh();
+        } else {
+          router.refresh();
+        }
       } else {
         setModalError(
           res.message ||
@@ -206,8 +211,11 @@ export default function ManajerScrapClient({
         setRejectionReason("");
         setModalError(null);
         handleCloseDetail();
-        // Server action sudah revalidateApp(); tarik payload RSC terbaru.
-        router.refresh();
+        if (onRefresh) {
+          await onRefresh();
+        } else {
+          router.refresh();
+        }
       } else {
         setModalError(
           res.message ||
@@ -327,7 +335,13 @@ export default function ManajerScrapClient({
             </div>
             <button
               type="button"
-              onClick={() => router.refresh()}
+              onClick={async () => {
+                if (onRefresh) {
+                  await onRefresh();
+                } else {
+                  router.refresh();
+                }
+              }}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-semibold text-gray-600 hover:text-[#0A356A] bg-white border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors whitespace-nowrap cursor-pointer"
             >
               <RefreshCw className="w-3.5 h-3.5" />

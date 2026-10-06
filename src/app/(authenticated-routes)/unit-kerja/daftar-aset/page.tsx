@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getEquipments, getObjectTypes, getReuseRequests } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
 import DaftarAsetClient, { type EquipmentItem } from "./daftar-aset-client";
@@ -16,14 +16,12 @@ export default function DaftarAsetPage() {
 	const [equipments, setEquipments] = useState<EquipmentItem[]>([]);
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		let alive = true;
-		void (async () => {
-			const [rawEqList, objTypes, rawReuseRequests] = await Promise.all([
-				getEquipments().catch(() => []),
-				getObjectTypes().catch(() => []),
-				getReuseRequests().catch(() => []),
-			]);
+	const loadData = useCallback(async () => {
+		const [rawEqList, objTypes, rawReuseRequests] = await Promise.all([
+			getEquipments().catch(() => []),
+			getObjectTypes().catch(() => []),
+			getReuseRequests().catch(() => []),
+		]);
 
 			const requestedEqIdSet = new Set<string>();
 	if (Array.isArray(rawReuseRequests)) {
@@ -160,14 +158,20 @@ export default function DaftarAsetPage() {
 		});
 			}
 
+		setEquipments(mappedList);
+	}, []);
+
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			await loadData();
 			if (!alive) return;
-			setEquipments(mappedList);
 			setLoading(false);
 		})();
 		return () => {
 			alive = false;
 		};
-	}, []);
+	}, [loadData]);
 
 	if (loading)
 		return (
@@ -179,5 +183,5 @@ export default function DaftarAsetPage() {
 			</main>
 		);
 
-	return <DaftarAsetClient equipments={equipments} />;
+	return <DaftarAsetClient equipments={equipments} onRefresh={loadData} />;
 }

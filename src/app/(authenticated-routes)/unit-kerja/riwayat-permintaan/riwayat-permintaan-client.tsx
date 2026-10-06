@@ -95,9 +95,11 @@ function getPageWindow(current: number, total: number): (number | "gap")[] {
 function RiwayatPermintaanContent({
 	items,
 	isJustSubmitted,
+	onRefresh,
 }: {
 	items: ReuseRequestItem[];
 	isJustSubmitted: boolean;
+	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
 
@@ -329,7 +331,13 @@ function RiwayatPermintaanContent({
 				<div className="header-actions">
 					<button
 						type="button"
-						onClick={() => router.refresh()}
+						onClick={async () => {
+							if (onRefresh) {
+								await onRefresh();
+							} else {
+								router.refresh();
+							}
+						}}
 						className={buttonVariants({ variant: "brandOutline" })}
 					>
 						<RefreshCw data-icon="inline-start" className="h-4 w-4" />

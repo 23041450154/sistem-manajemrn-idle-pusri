@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getEquipments, getObjectTypes, getReuseRequests } from "@/action/api";
 import { useAuth } from "@/components/AuthProvider";
 import { statusName } from "@/lib/equipment-status";
@@ -20,11 +20,9 @@ export default function UnitKerjaIdlePage() {
 	const [reuseRequests, setReuseRequests] = useState<ReuseRequestItem[]>([]);
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		let alive = true;
-		void (async () => {
-			// Action sudah balik [] saat HTTP gagal; .catch jaring pengaman error tak terduga.
-			const [rawEqList, objTypes, rawRequests] = await Promise.all([
+	const loadData = useCallback(async () => {
+		// Action sudah balik [] saat HTTP gagal; .catch jaring pengaman error tak terduga.
+		const [rawEqList, objTypes, rawRequests] = await Promise.all([
 				getEquipments().catch(() => []),
 				getObjectTypes().catch(() => []),
 				getReuseRequests().catch(() => []),
@@ -218,15 +216,21 @@ export default function UnitKerjaIdlePage() {
 		};
 	});
 
+		setEquipments(filteredEquipments);
+		setReuseRequests(mappedReuseRequests);
+	}, []);
+
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			await loadData();
 			if (!alive) return;
-			setEquipments(filteredEquipments);
-			setReuseRequests(mappedReuseRequests);
 			setLoading(false);
 		})();
 		return () => {
 			alive = false;
 		};
-	}, []);
+	}, [loadData]);
 
 	if (loading)
 		return (
@@ -245,6 +249,7 @@ export default function UnitKerjaIdlePage() {
 			equipments={equipments}
 			reuseRequests={reuseRequests}
 			currentUser={currentUser}
+			onRefresh={loadData}
 		/>
 	);
 }

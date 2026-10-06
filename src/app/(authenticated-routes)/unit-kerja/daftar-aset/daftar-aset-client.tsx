@@ -59,8 +59,10 @@ const IMAGE_URL_PATTERN = /\.(jpe?g|png|webp|gif|avif)(\?|$)/i;
 /** Client Component: interaksi tabel/katalog/modal ajukan reuse — data di-fetch Server Component. */
 export default function DaftarAsetClient({
 	equipments,
+	onRefresh,
 }: {
 	equipments: EquipmentItem[];
+	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
 	const [viewMode, setViewMode] = useState<"table" | "catalog">("table");
@@ -299,8 +301,11 @@ export default function DaftarAsetClient({
 			});
 
 			if (res && res.success) {
-				// Server action sudah revalidateApp(); tarik payload RSC terbaru
-				// (aset terajukan otomatis keluar dari daftar di server).
+				if (onRefresh) {
+					await onRefresh();
+				} else {
+					router.refresh();
+				}
 				setRequestModalAsset(null);
 				if (isDetailOpen) setIsDetailOpen(false);
 				// Toaster sukses, lalu arahkan ke riwayat permintaan.
@@ -411,7 +416,14 @@ export default function DaftarAsetClient({
 					</div>
 					<div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
 						<button
-							onClick={() => router.refresh()}
+							type="button"
+							onClick={async () => {
+								if (onRefresh) {
+									await onRefresh();
+								} else {
+									router.refresh();
+								}
+							}}
 							className="flex items-center justify-center gap-1 px-2.5 py-1.5 text-[12px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm"
 						>
 							<RefreshCw className="w-3.5 h-3.5" />

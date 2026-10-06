@@ -53,8 +53,10 @@ const actionTypeConfig: Record<string, { badge: string }> = {
 /** Client Component: interaksi (search/filter/paginasi/export) — data di-fetch Server Component. */
 export default function RendalLaporanClient({
 	logs,
+	onRefresh,
 }: {
 	logs: AuditLogEntry[];
+	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
 	const [search, setSearch] = useState("");
@@ -177,7 +179,14 @@ export default function RendalLaporanClient({
 					</div>
 					<div className="flex items-center gap-2">
 						<button
-							onClick={() => router.refresh()}
+							type="button"
+							onClick={async () => {
+								if (onRefresh) {
+									await onRefresh();
+								} else {
+									router.refresh();
+								}
+							}}
 							className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm"
 						>
 							<RefreshCw className="w-3.5 h-3.5" />
