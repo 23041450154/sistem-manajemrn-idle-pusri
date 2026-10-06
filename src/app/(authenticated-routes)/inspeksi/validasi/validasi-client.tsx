@@ -212,16 +212,21 @@ export default function ManajemenInspeksiClient({
 		setInspectionNumber("");
 		setValidationId("");
 
-		// Reset Form jika status belum divalidasi (baru pertama kali)
-		if (asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE") {
+		// Reset Form jika status belum divalidasi (baru pertama kali) atau dalam mode revisi
+		const isRevision = asset.statusPersetujuan === "NEED_REVISION";
+		if (
+			(asset.statusAset === "REGISTERED" && asset.statusPersetujuan === "NONE") ||
+			isRevision
+		) {
 			setHasilPemeriksaan("");
 			setConditionId("");
 			setCatatan("");
 			setRekomendasi("");
+			setRequiredActionId("");
 			setTglMulai(new Date().toISOString().split("T")[0]);
 			setTglSelesai(new Date().toISOString().split("T")[0]);
 		} else {
-			// Jika statusnya Ubah Validasi atau Perlu Revisi, muat data yang sudah pernah diisi
+			// Jika statusnya Ubah Validasi (PENDING_REVIEW), muat data yang sudah pernah diisi
 			setHasilPemeriksaan(
 				asset.statusAset === "REJECTED" ||
 					asset.statusAset === "SCRAP" ||
@@ -251,7 +256,7 @@ export default function ManajemenInspeksiClient({
 					setValidationId(String(latest.id));
 				}
 				setInspectionNumber(latest.inspection_number || "");
-				if (asset.statusPersetujuan === "NEED_REVISION" || asset.statusPersetujuan === "PENDING_REVIEW") {
+				if (!isRevision && asset.statusPersetujuan === "PENDING_REVIEW") {
 					if (latest.notes) setCatatan(latest.notes);
 					if (latest.followup_recommendation) setRekomendasi(latest.followup_recommendation);
 					if (latest.start_at) {
@@ -285,11 +290,13 @@ export default function ManajemenInspeksiClient({
 				if (myInsps.length > 0) {
 					myInsps.sort((a: any, b: any) => b.id - a.id);
 					const latest = myInsps[0];
-					if (latest.require_action_id) {
-						setRequiredActionId(latest.require_action_id.toString());
-					}
-					if (latest.notes && !catatan) {
-						setCatatan(latest.notes);
+					if (!isRevision) {
+						if (latest.require_action_id) {
+							setRequiredActionId(latest.require_action_id.toString());
+						}
+						if (latest.notes && !catatan) {
+							setCatatan(latest.notes);
+						}
 					}
 				}
 			} catch (err) {
@@ -331,7 +338,17 @@ export default function ManajemenInspeksiClient({
 	const closeModal = () => {
 		setIsModalOpen(false);
 		setPreviewImage(null);
-		setTimeout(() => setSelectedAsset(null), 300);
+		setTimeout(() => {
+			setSelectedAsset(null);
+			setHasilPemeriksaan("");
+			setConditionId("");
+			setCatatan("");
+			setRekomendasi("");
+			setRequiredActionId("");
+			setUploadedFiles([]);
+			setManagerNotes("");
+			setShowValidationErrors(false);
+		}, 300);
 	};
 
 	// Simpan Validasi
