@@ -105,8 +105,10 @@ function StatusBadge({ status }: { status: RepairFlowStatus }) {
 /** Client Component: interaksi (tab/search/filter/paginasi/modal) — data di-fetch Server Component. */
 export default function PerbaikanAlatClient({
 	equipments,
+	onRefresh,
 }: {
 	equipments: MaintenanceEquipment[];
+	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState<RepairFlowStatus>("REPAIR");
@@ -359,8 +361,11 @@ export default function PerbaikanAlatClient({
 			});
 
 			if (result.success) {
-				// Server action sudah revalidateApp(); tarik payload RSC terbaru.
-				router.refresh();
+				if (onRefresh) {
+					await onRefresh();
+				} else {
+					router.refresh();
+				}
 
 				setNotification({
 					type: "success",
@@ -437,7 +442,13 @@ export default function PerbaikanAlatClient({
 				<div className="header-actions">
 					<button
 						type="button"
-						onClick={() => router.refresh()}
+						onClick={async () => {
+							if (onRefresh) {
+								await onRefresh();
+							} else {
+								router.refresh();
+							}
+						}}
 						className={buttonVariants({ variant: "brandOutline", size: "lg" })}
 					>
 						<RefreshCw className="w-4 h-4" aria-hidden="true" />

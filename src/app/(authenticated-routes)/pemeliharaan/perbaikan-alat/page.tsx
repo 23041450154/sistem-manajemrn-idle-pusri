@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getEquipments } from "@/action/api";
 import { repairFlowStatus } from "@/lib/equipment-status";
 import PerbaikanAlatClient, {
@@ -17,76 +17,80 @@ export default function PerbaikanAlatPage() {
 	const [equipments, setEquipments] = useState<MaintenanceEquipment[]>([]);
 	const [loading, setLoading] = useState(true);
 
+	const loadData = useCallback(async () => {
+		// Action sudah balik [] saat HTTP gagal; .catch hanya jaring pengaman error tak terduga.
+		const data = await getEquipments().catch(() => []);
+
+		const equipments: MaintenanceEquipment[] = (
+			Array.isArray(data) ? data : []
+		).flatMap((item: any): MaintenanceEquipment[] => {
+			const status = repairFlowStatus(item);
+			if (!status) return [];
+
+			const pick = (val: any, fallback = "-") =>
+				typeof val === "string" ? val : val?.name || val?.description || fallback;
+
+			const stamp = item.updated_at || item.created_at;
+			const money = (val: any) => Number(val) || 0;
+			const dateOnly = (val: any) =>
+				val ? new Date(val).toISOString().split("T")[0] : "—";
+
+			return [
+				{
+					id: String(item.id),
+					kodeAlat: item.equipment_code || "-",
+					namaAlat: pick(item.name),
+					tipeObjek: pick(item.object_type),
+					plant: pick(item.plant),
+					lokasiPenyimpanan: pick(item.storage_location),
+					kondisi: pick(item.condition).replace(/_/g, " "),
+					terakhirDiperbarui: (stamp ? new Date(stamp) : new Date())
+						.toISOString()
+						.split("T")[0],
+					status,
+					funcLoc: pick(item.func_loc),
+					vendor: pick(item.vendor),
+					tahun: Number(item.year) || 0,
+					nilaiPerolehan: money(item.original_value),
+					nilaiBuku: money(item.book_value),
+					estimasiNilaiGunaUlang: money(item.estimated_reuse_value),
+					idleSejak: dateOnly(item.idle_since),
+					alasanIdle: pick(item.idle_reason),
+					catatan: pick(item.notes, ""),
+					foto: (Array.isArray(item.attachments) ? item.attachments : [])
+						.map((a: any) => a?.file_url || a?.fileUrl || a?.url || "")
+						.filter((url: string) => IMAGE_FILE.test(url)),
+				},
+			];
+		});
+
+		equipments.sort((a, b) => {
+			const timeA =
+				a.terakhirDiperbarui && a.terakhirDiperbarui !== "—"
+					? new Date(a.terakhirDiperbarui).getTime()
+					: 0;
+			const timeB =
+				b.terakhirDiperbarui && b.terakhirDiperbarui !== "—"
+					? new Date(b.terakhirDiperbarui).getTime()
+					: 0;
+			if (timeB !== timeA) return timeB - timeA;
+			return (Number(b.id) || 0) - (Number(a.id) || 0);
+		});
+
+		setEquipments(equipments);
+	}, []);
+
 	useEffect(() => {
 		let alive = true;
 		void (async () => {
-			// Action sudah balik [] saat HTTP gagal; .catch hanya jaring pengaman error tak terduga.
-			const data = await getEquipments().catch(() => []);
-
-			const equipments: MaintenanceEquipment[] = (
-		Array.isArray(data) ? data : []
-	).flatMap((item: any): MaintenanceEquipment[] => {
-		const status = repairFlowStatus(item);
-		if (!status) return [];
-
-		const pick = (val: any, fallback = "-") =>
-			typeof val === "string" ? val : val?.name || val?.description || fallback;
-
-		const stamp = item.updated_at || item.created_at;
-		const money = (val: any) => Number(val) || 0;
-		const dateOnly = (val: any) =>
-			val ? new Date(val).toISOString().split("T")[0] : "—";
-
-		return [
-			{
-				id: String(item.id),
-				kodeAlat: item.equipment_code || "-",
-				namaAlat: pick(item.name),
-				tipeObjek: pick(item.object_type),
-				plant: pick(item.plant),
-				lokasiPenyimpanan: pick(item.storage_location),
-				kondisi: pick(item.condition).replace(/_/g, " "),
-				terakhirDiperbarui: (stamp ? new Date(stamp) : new Date())
-					.toISOString()
-					.split("T")[0],
-				status,
-				funcLoc: pick(item.func_loc),
-				vendor: pick(item.vendor),
-				tahun: Number(item.year) || 0,
-				nilaiPerolehan: money(item.original_value),
-				nilaiBuku: money(item.book_value),
-				estimasiNilaiGunaUlang: money(item.estimated_reuse_value),
-				idleSejak: dateOnly(item.idle_since),
-				alasanIdle: pick(item.idle_reason),
-				catatan: pick(item.notes, ""),
-				foto: (Array.isArray(item.attachments) ? item.attachments : [])
-					.map((a: any) => a?.file_url || a?.fileUrl || a?.url || "")
-					.filter((url: string) => IMAGE_FILE.test(url)),
-			},
-		];
-	});
-
-	equipments.sort((a, b) => {
-		const timeA =
-			a.terakhirDiperbarui && a.terakhirDiperbarui !== "—"
-				? new Date(a.terakhirDiperbarui).getTime()
-				: 0;
-		const timeB =
-			b.terakhirDiperbarui && b.terakhirDiperbarui !== "—"
-				? new Date(b.terakhirDiperbarui).getTime()
-				: 0;
-		if (timeB !== timeA) return timeB - timeA;
-				return (Number(b.id) || 0) - (Number(a.id) || 0);
-			});
-
+			await loadData();
 			if (!alive) return;
-			setEquipments(equipments);
 			setLoading(false);
 		})();
 		return () => {
 			alive = false;
 		};
-	}, []);
+	}, [loadData]);
 
 	if (loading)
 		return (
@@ -98,5 +102,5 @@ export default function PerbaikanAlatPage() {
 			</main>
 		);
 
-	return <PerbaikanAlatClient equipments={equipments} />;
+	return <PerbaikanAlatClient equipments={equipments} onRefresh={loadData} />;
 }
