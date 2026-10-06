@@ -1,3 +1,5 @@
+"use client";
+import { useEffect, useState } from "react";
 import {
 	getEquipments,
 	getApprovals,
@@ -17,26 +19,34 @@ import RendalValidasiUlangClient, {
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export const dynamic = "force-dynamic";
+/** Client Component — fetch + mapping di browser, interaksi di client. */
+export default function RendalValidasiUlangPage() {
+	const [items, setItems] = useState<ValidasiUlangItem[]>([]);
+	const [plants, setPlants] = useState<any[]>([]);
+	const [objTypes, setObjTypes] = useState<any[]>([]);
+	const [conditions, setConditions] = useState<any[]>([]);
+	const [storageLocations, setStorageLocations] = useState<any[]>([]);
+	const [loading, setLoading] = useState(true);
 
-/** Server Component — fetch + mapping murni di server, interaksi di client. */
-export default async function RendalValidasiUlangPage() {
-	const [
-		data,
-		approvalsData,
-		plantsData,
-		objTypesData,
-		conditionsData,
-		storageLocationsData,
-	] = await Promise.all([
-		getEquipments().catch(() => []),
-		// Halaman ini menangani validasi ulang -> approval jenis REVALIDATION.
-		getApprovals("revalidation").catch(() => []),
-		getPlants().catch(() => []),
-		getObjectTypes().catch(() => []),
-		getConditions().catch(() => []),
-		getStorageLocations().catch(() => []),
-	]);
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			const [
+				data,
+				approvalsData,
+				plantsData,
+				objTypesData,
+				conditionsData,
+				storageLocationsData,
+			] = await Promise.all([
+				getEquipments().catch(() => []),
+				// Halaman ini menangani validasi ulang -> approval jenis REVALIDATION.
+				getApprovals("revalidation").catch(() => []),
+				getPlants().catch(() => []),
+				getObjectTypes().catch(() => []),
+				getConditions().catch(() => []),
+				getStorageLocations().catch(() => []),
+			]);
 
 	const plants = Array.isArray(plantsData) ? plantsData : [];
 	const objTypes = Array.isArray(objTypesData) ? objTypesData : [];
@@ -104,10 +114,12 @@ export default async function RendalValidasiUlangPage() {
 	const items: ValidasiUlangItem[] = (Array.isArray(data) ? data : [])
 		.filter((item: any) => {
 			const s = canonStatus(item.status?.name || item.statusAset || item.status);
+			// REPAIR_COMPLETED masih antrean Inspeksi Teknik (/inspeksi/validasi-ulang),
+			// belum sampai meja Rendal. Jangan lolos lewat jalur approval juga.
+			if (s === "REPAIR_COMPLETED") return false;
 			const isRevalStatus =
 				s === "REVALIDATION" ||
 				s === "REVALIDASI" ||
-				s === "REPAIR_COMPLETED" ||
 				s === "READY_TO_USE";
 			const hasApproval = approvalsEquipmentIdSet.has(String(item.id));
 			return isRevalStatus || hasApproval;
@@ -222,6 +234,29 @@ export default async function RendalValidasiUlangPage() {
 		if (timeB !== timeA) return timeB - timeA;
 		return (Number(b.id) || 0) - (Number(a.id) || 0);
 	});
+
+			if (!alive) return;
+			setItems(items);
+			setPlants(plants);
+			setObjTypes(objTypes);
+			setConditions(conditions);
+			setStorageLocations(storageLocations);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, []);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
 
 	return (
 		<RendalValidasiUlangClient

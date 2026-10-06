@@ -699,10 +699,12 @@ export default function RendalValidasiUlangClient({
 										</td>
 										<td className="px-3 py-3 text-center whitespace-nowrap">
 											<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
+												{/* Tanpa approval di backend, tombol Setujui hanya memicu error → tampilkan Detail. */}
 												{activeTab === "riwayat" ||
 												asset.approvalStatus === "APPROVED" ||
 												asset.statusAset === "READY_TO_USE" ||
-												asset.statusAset === "READY TO USE" ? (
+												asset.statusAset === "READY TO USE" ||
+												!asset.approvalId ? (
 													<button
 														onClick={() => handleOpenModal(asset, "DETAIL")}
 														className="inline-flex items-center gap-1 text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] px-2.5 py-1 rounded text-[11px] font-medium transition-colors"

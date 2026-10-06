@@ -1,13 +1,7 @@
-import { revalidatePath } from "next/cache";
-
 /**
- * Invalidasi router cache seluruh aplikasi setelah mutasi status aset/approval.
- *
- * Dipakai luas (bukan per-path) karena status satu aset tampil di dashboard
- * semua role; untuk aplikasi internal ini kebenaran data > efisiensi cache.
- * Fetch data memakai no-store, jadi yang direfresh terutama Router Cache
- * client-side saat navigasi back/antarpindah halaman.
+ * SPA: tidak ada Router Cache di server yang bisa di-revalidate dari browser
+ * (revalidatePath server-only). Data di-fetch no-store dan komponen memuat
+ * ulang sendiri setelah mutasi. Dipertahankan sebagai no-op agar seluruh
+ * pemanggil lama tetap kompilasi tanpa diubah.
  */
-export function revalidateApp() {
- revalidatePath("/", "layout");
-}
+export function revalidateApp() {}

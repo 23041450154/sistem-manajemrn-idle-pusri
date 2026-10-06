@@ -1,15 +1,41 @@
+"use client";
+import { useEffect, useState } from "react";
 import { getEquipments } from "@/action/api";
 import InspeksiDashboardClient from "./dashboard-client";
 
-/** Server Component — fetch + sort di server, interaksi di client. */
-export default async function InspeksiDashboardPage() {
-	const eqData = await getEquipments();
-	const equipments = (Array.isArray(eqData) ? eqData : []).sort((a, b) => {
-		const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
-		const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
-		if (timeB !== timeA) return timeB - timeA;
-		return (Number(b.id) || 0) - (Number(a.id) || 0);
-	});
+/** Client Component — fetch + sort di browser, interaksi di client. */
+export default function InspeksiDashboardPage() {
+	const [equipments, setEquipments] = useState<any[]>([]);
+	const [loading, setLoading] = useState(true);
+
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			const eqData = await getEquipments();
+			const sorted = (Array.isArray(eqData) ? eqData : []).sort((a, b) => {
+				const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+				const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+				if (timeB !== timeA) return timeB - timeA;
+				return (Number(b.id) || 0) - (Number(a.id) || 0);
+			});
+			if (!alive) return;
+			setEquipments(sorted);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, []);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
 
 	return <InspeksiDashboardClient equipments={equipments} />;
 }

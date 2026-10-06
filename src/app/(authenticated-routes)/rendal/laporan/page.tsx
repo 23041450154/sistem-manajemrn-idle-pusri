@@ -1,3 +1,5 @@
+"use client";
+import { useEffect, useState } from "react";
 import {
 	getDisposals,
 	getApprovals,
@@ -126,28 +128,53 @@ function buildAuditLogs(
 	return logs;
 }
 
-/** Server Component — read-only: semua fetch + derivasi log di server. */
-export default async function RendalLaporanPage() {
-	const [eq, validationApps, revalApps, disposalApps, reuseApps, ins, disps] =
-		await Promise.all([
-			getEquipments().catch(() => []),
-			// Audit trail mencakup semua jenis approval, jadi keempat grup diambil.
-			getApprovals("validation").catch(() => []),
-			getApprovals("revalidation").catch(() => []),
-			getApprovals("disposal").catch(() => []),
-			getApprovals("reuse").catch(() => []),
-			getInspections().catch(() => []),
-			getDisposals().catch(() => []),
-		]);
+/** Client Component — read-only: semua fetch + derivasi log di browser. */
+export default function RendalLaporanPage() {
+	const [logs, setLogs] = useState<AuditLogEntry[]>([]);
+	const [loading, setLoading] = useState(true);
 
-	const apps = [
-		...(validationApps as any[]),
-		...(revalApps as any[]),
-		...(disposalApps as any[]),
-		...(reuseApps as any[]),
-	];
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			const [eq, validationApps, revalApps, disposalApps, reuseApps, ins, disps] =
+				await Promise.all([
+					getEquipments().catch(() => []),
+					// Audit trail mencakup semua jenis approval, jadi keempat grup diambil.
+					getApprovals("validation").catch(() => []),
+					getApprovals("revalidation").catch(() => []),
+					getApprovals("disposal").catch(() => []),
+					getApprovals("reuse").catch(() => []),
+					getInspections().catch(() => []),
+					getDisposals().catch(() => []),
+				]);
 
-	const logs = buildAuditLogs(eq as any[], apps, ins as any[], disps as any[]);
+			const apps = [
+				...(validationApps as any[]),
+				...(revalApps as any[]),
+				...(disposalApps as any[]),
+				...(reuseApps as any[]),
+			];
+
+			const logs = buildAuditLogs(eq as any[], apps, ins as any[], disps as any[]);
+
+			if (!alive) return;
+			setLogs(logs);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, []);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
 
 	return <RendalLaporanClient logs={logs} />;
 }

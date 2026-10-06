@@ -1,6 +1,6 @@
 "use client";
 
-import { logoutAction } from "@/action/auth";
+import { logoutAction } from "@/action/logout";
 import { withBasePath } from "@/lib/utils";
 import { useEffect, useRef } from "react";
 

@@ -1,3 +1,5 @@
+"use client";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import {
   Wrench,
@@ -43,30 +45,55 @@ const MODULES = [
   },
 ];
 
-/** Server Component penuh — tidak ada interaktivitas, data di-fetch di server. */
-export default async function AdminDashboardPage() {
-  const [eqList, objTypes, storageLocs, disposals] = await Promise.all([
-    getEquipments(),
-    getObjectTypes(),
-    getStorageLocations(),
-    getDisposals(),
-  ]);
+type RecentEquipment = {
+  id?: number | string;
+  name?: string | { name?: string };
+  plant?: string | { name?: string; description?: string };
+  status?: string | { name?: string };
+  equipment_code?: string;
+};
 
-  const stats = {
-    totalEquipment: eqList.length,
-    totalCategories: objTypes.length,
-    totalStorage: storageLocs.length,
-    totalDisposals: disposals.length,
-  };
+/** Client Component — data di-fetch di browser, tidak ada interaktivitas server. */
+export default function AdminDashboardPage() {
+  const [stats, setStats] = useState({
+    totalEquipment: 0,
+    totalCategories: 0,
+    totalStorage: 0,
+    totalDisposals: 0,
+  });
+  const [recentEquipments, setRecentEquipments] = useState<RecentEquipment[]>(
+    [],
+  );
+  const [loading, setLoading] = useState(true);
 
-  type RecentEquipment = {
-    id?: number | string;
-    name?: string | { name?: string };
-    plant?: string | { name?: string; description?: string };
-    status?: string | { name?: string };
-    equipment_code?: string;
-  };
-  const recentEquipments = (eqList || []).slice(0, 5) as RecentEquipment[];
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      const [eqList, objTypes, storageLocs, disposals] = await Promise.all([
+        getEquipments(),
+        getObjectTypes(),
+        getStorageLocations(),
+        getDisposals(),
+      ]);
+
+      const computedStats = {
+        totalEquipment: eqList.length,
+        totalCategories: objTypes.length,
+        totalStorage: storageLocs.length,
+        totalDisposals: disposals.length,
+      };
+
+      const computedRecent = (eqList || []).slice(0, 5) as RecentEquipment[];
+
+      if (!alive) return;
+      setStats(computedStats);
+      setRecentEquipments(computedRecent);
+      setLoading(false);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   const today = new Date().toLocaleDateString("id-ID", {
     weekday: "long",
@@ -74,6 +101,16 @@ export default async function AdminDashboardPage() {
     month: "long",
     year: "numeric",
   });
+
+  if (loading)
+    return (
+      <main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+          Memuat data...
+        </div>
+      </main>
+    );
 
   const kpis = [
     {

@@ -1,3 +1,5 @@
+"use client";
+import { useEffect, useState } from "react";
 import {
 	getEquipments,
 	getInspections,
@@ -14,35 +16,45 @@ import InspeksiBerkalaClient, {
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-/** Server Component — antrean (via inspectionQueue) & riwayat inspeksi dipetakan di server. */
-export default async function InspeksiAntreanPage() {
-	const [resultEq, resultInsp, plantsData, objTypesData] = await Promise.all([
-		getEquipments().catch(() => []),
-		getInspections().catch(() => []),
-		getPlants().catch(() => []),
-		getObjectTypes().catch(() => []),
-	]);
+/** Client Component — antrean (via inspectionQueue) & riwayat inspeksi dipetakan di browser. */
+export default function InspeksiAntreanPage() {
+	const [antrean, setAntrean] = useState<Equipment[]>([]);
+	const [riwayat, setRiwayat] = useState<InspectionItem[]>([]);
+	const [plants, setPlants] = useState<any[]>([]);
+	const [objectTypes, setObjectTypes] = useState<any[]>([]);
+	const [loading, setLoading] = useState(true);
 
-	const allInspections = Array.isArray(resultInsp) ? resultInsp : [];
-	const plants = Array.isArray(plantsData) ? plantsData : [];
-	const objectTypes = Array.isArray(objTypesData) ? objTypesData : [];
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			const [resultEq, resultInsp, plantsData, objTypesData] =
+				await Promise.all([
+					getEquipments().catch(() => []),
+					getInspections().catch(() => []),
+					getPlants().catch(() => []),
+					getObjectTypes().catch(() => []),
+				]);
 
-	let antrean: Equipment[] = [];
-	if (Array.isArray(resultEq) && resultEq.length > 0) {
-		// Aset yang sudah pernah diinspeksi otomatis keluar dari antrean dan masuk ke tab Riwayat.
-		const queue = inspectionQueue(resultEq as Equipment[], allInspections);
-		queue.sort((a: any, b: any) => {
-			const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
-			const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
-			if (timeB !== timeA) return timeB - timeA;
-			return (Number(b.id) || 0) - (Number(a.id) || 0);
-		});
-		antrean = queue;
-	}
+			const allInspections = Array.isArray(resultInsp) ? resultInsp : [];
+			const computedPlants = Array.isArray(plantsData) ? plantsData : [];
+			const computedObjectTypes = Array.isArray(objTypesData) ? objTypesData : [];
 
-	let riwayat: InspectionItem[] = [];
-	if (allInspections.length > 0) {
-		riwayat = allInspections.map((ins: any): InspectionItem => {
+			let computedAntrean: Equipment[] = [];
+			if (Array.isArray(resultEq) && resultEq.length > 0) {
+				// Aset yang sudah pernah diinspeksi otomatis keluar dari antrean dan masuk ke tab Riwayat.
+				const queue = inspectionQueue(resultEq as Equipment[], allInspections);
+				queue.sort((a: any, b: any) => {
+					const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+					const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+					if (timeB !== timeA) return timeB - timeA;
+					return (Number(b.id) || 0) - (Number(a.id) || 0);
+				});
+				computedAntrean = queue;
+			}
+
+			let computedRiwayat: InspectionItem[] = [];
+			if (allInspections.length > 0) {
+				computedRiwayat = allInspections.map((ins: any): InspectionItem => {
 			const eq = ins.equipment || {};
 			const plantStr = formatPlantDisplay(
 				eq.plant,
@@ -95,14 +107,36 @@ export default async function InspeksiAntreanPage() {
 							.filter(Boolean)
 					: [],
 			};
-		});
-		riwayat.sort((a, b) => {
-			const timeA = a.inspection_date ? new Date(a.inspection_date).getTime() : 0;
-			const timeB = b.inspection_date ? new Date(b.inspection_date).getTime() : 0;
-			if (timeB !== timeA) return timeB - timeA;
-			return (Number(b.id) || 0) - (Number(a.id) || 0);
-		});
-	}
+				});
+				computedRiwayat.sort((a, b) => {
+					const timeA = a.inspection_date ? new Date(a.inspection_date).getTime() : 0;
+					const timeB = b.inspection_date ? new Date(b.inspection_date).getTime() : 0;
+					if (timeB !== timeA) return timeB - timeA;
+					return (Number(b.id) || 0) - (Number(a.id) || 0);
+				});
+			}
+
+			if (!alive) return;
+			setAntrean(computedAntrean);
+			setRiwayat(computedRiwayat);
+			setPlants(computedPlants);
+			setObjectTypes(computedObjectTypes);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, []);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
 
 	return (
 		<InspeksiBerkalaClient
