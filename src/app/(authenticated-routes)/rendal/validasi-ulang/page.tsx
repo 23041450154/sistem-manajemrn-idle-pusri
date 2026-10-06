@@ -114,10 +114,12 @@ export default function RendalValidasiUlangPage() {
 	const items: ValidasiUlangItem[] = (Array.isArray(data) ? data : [])
 		.filter((item: any) => {
 			const s = canonStatus(item.status?.name || item.statusAset || item.status);
+			// REPAIR_COMPLETED masih antrean Inspeksi Teknik (/inspeksi/validasi-ulang),
+			// belum sampai meja Rendal. Jangan lolos lewat jalur approval juga.
+			if (s === "REPAIR_COMPLETED") return false;
 			const isRevalStatus =
 				s === "REVALIDATION" ||
 				s === "REVALIDASI" ||
-				s === "REPAIR_COMPLETED" ||
 				s === "READY_TO_USE";
 			const hasApproval = approvalsEquipmentIdSet.has(String(item.id));
 			return isRevalStatus || hasApproval;
