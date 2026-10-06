@@ -24,6 +24,7 @@ const EMPTY_FORM = {
 	email: "",
 	npp: "",
 	password: "",
+	preferred_username: "",
 	role: "UNIT_KERJA_OPERASI" as Role,
 };
 const date = new Intl.DateTimeFormat("id-ID", { dateStyle: "medium" });
@@ -82,6 +83,7 @@ export default function UserManagementPage() {
 			email: user.email,
 			npp: user.npp,
 			password: "",
+			preferred_username: user.preferred_username ?? "",
 			role: user.role as Role,
 		});
 		setFormOpen(true);
@@ -343,11 +345,25 @@ export default function UserManagementPage() {
 									))}
 								</select>
 							</label>
-							{!editing && (
+							<label className="text-xs font-medium text-slate-700 sm:col-span-2">
+									Username SSO (NEXA)
+									<input
+										value={form.preferred_username}
+										onChange={(event) =>
+											setForm({ ...form, preferred_username: event.target.value })
+										}
+										placeholder="mis. 6dev_000006"
+										className="mt-1 min-h-11 w-full rounded border border-[#E6E8EA] px-3 text-sm outline-none focus:ring-2 focus:ring-slate-600/20"
+									/>
+									<span className="mt-1 block text-xs font-normal text-slate-500">
+										Wajib agar bisa login SSO (harus sama persis dgn username
+										NEXA). Kosongkan bila hanya login NPP/password.
+									</span>
+								</label>
+								{!editing && (
 								<label className="text-xs font-medium text-slate-700 sm:col-span-2">
 									Password
 									<input
-										required
 										type="password"
 										minLength={6}
 										autoComplete="new-password"
@@ -358,7 +374,8 @@ export default function UserManagementPage() {
 										className="mt-1 min-h-11 w-full rounded border border-[#E6E8EA] px-3 text-sm outline-none focus:ring-2 focus:ring-slate-600/20"
 									/>
 									<span className="mt-1 block text-xs font-normal text-slate-500">
-										Minimal 6 karakter.
+										Untuk login NPP/password (min 6). Kosongkan bila user hanya
+										login lewat SSO.
 									</span>
 								</label>
 							)}

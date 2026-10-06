@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { getEquipments, getObjectTypes, getReuseRequests } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
 import DaftarAsetClient, { type EquipmentItem } from "./daftar-aset-client";
@@ -8,15 +11,21 @@ import DaftarAsetClient, { type EquipmentItem } from "./daftar-aset-client";
 /** Unit Kerja hanya melihat aset siap pakai + yang sedang diperbaiki. */
 const VISIBLE_STATUSES = ["READY_TO_USE", "REPAIR"];
 
-/** Server Component — fetch + filter visibilitas + mapping murni di server. */
-export default async function DaftarAsetPage() {
-	const [rawEqList, objTypes, rawReuseRequests] = await Promise.all([
-		getEquipments().catch(() => []),
-		getObjectTypes().catch(() => []),
-		getReuseRequests().catch(() => []),
-	]);
+/** Client Component — fetch + filter visibilitas + mapping di browser. */
+export default function DaftarAsetPage() {
+	const [equipments, setEquipments] = useState<EquipmentItem[]>([]);
+	const [loading, setLoading] = useState(true);
 
-	const requestedEqIdSet = new Set<string>();
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			const [rawEqList, objTypes, rawReuseRequests] = await Promise.all([
+				getEquipments().catch(() => []),
+				getObjectTypes().catch(() => []),
+				getReuseRequests().catch(() => []),
+			]);
+
+			const requestedEqIdSet = new Set<string>();
 	if (Array.isArray(rawReuseRequests)) {
 		rawReuseRequests.forEach((req: any) => {
 			if (req.equipment_id) requestedEqIdSet.add(String(req.equipment_id));
@@ -33,9 +42,9 @@ export default async function DaftarAsetPage() {
 		});
 	}
 
-	let equipments: EquipmentItem[] = [];
-	if (Array.isArray(rawEqList)) {
-		equipments = rawEqList
+			let mappedList: EquipmentItem[] = [];
+			if (Array.isArray(rawEqList)) {
+				mappedList = rawEqList
 			.filter((item: any) => {
 				const isVisible = VISIBLE_STATUSES.includes(
 					statusName(
@@ -137,7 +146,7 @@ export default async function DaftarAsetPage() {
 				};
 			});
 
-		equipments.sort((a, b) => {
+				mappedList.sort((a, b) => {
 			const priorityA = a.status_name === "READY_TO_USE" ? 0 : 1;
 			const priorityB = b.status_name === "READY_TO_USE" ? 0 : 1;
 			if (priorityA !== priorityB) return priorityA - priorityB;
@@ -149,7 +158,26 @@ export default async function DaftarAsetPage() {
 			if (timeB !== timeA) return timeB - timeA;
 			return (Number(b.id) || 0) - (Number(a.id) || 0);
 		});
-	}
+			}
+
+			if (!alive) return;
+			setEquipments(mappedList);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, []);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
 
 	return <DaftarAsetClient equipments={equipments} />;
 }

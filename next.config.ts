@@ -6,42 +6,58 @@ function apiUrlFromEnv(): URL {
     return new URL(
       process.env.NEXT_PUBLIC_API_URL ||
         process.env.API_URL ||
-        "https://api.testing.naufal.me",
+        "https://har.pusri.dev/idle/air",
     );
   } catch {
     // Env ada tapi bukan URL valid -> pakai default.
-    return new URL("https://api.testing.naufal.me");
+    return new URL("https://har.pusri.dev/idle/air");
   }
 }
 
 const apiUrl = apiUrlFromEnv();
 
-// Deploy di belakang reverse proxy: origin (scheme://host) disediakan platform,
-// aplikasi hanya perlu tahu prefix path-nya. Wajib di-set saat BUILD (di-inline
-// ke bundle client), bukan saat runtime. Kosong = served dari root.
-const basePath = (process.env.NEXT_PUBLIC_BASE_URL || "")
-  .trim()
+// Prefix path deploy di belakang reverse proxy (pass-through, TIDAK strip /idle).
+//
+// PENTING: next.config dibaca saat BUILD *dan* saat `next start`. basePath harus
+// SAMA di kedua fase. Kalau hanya di-set saat build (aset ter-bake /idle) tapi
+// hilang saat runtime, server melayani di root -> /idle/* jadi 404.
+// Karena itu default-nya "/idle" bila NEXT_PUBLIC_BASE_URL tidak diset sama
+// sekali (kasus runtime yang env-nya hilang). String kosong yang DI-SET secara
+// eksplisit tetap dihormati (deploy di root). Override lewat env kapan pun perlu.
+// HARUS SAMA PERSIS dengan src/lib/base-path.ts (next.config tidak bisa
+// meng-import modul dari src). Kalau rumus di sini diubah, ubah juga di sana.
+const RAW_BASE_PATH =
+  process.env.NEXT_PUBLIC_BASE_URL ?? "/idle"; // undefined -> default /idle; "" -> root
+const basePath = RAW_BASE_PATH.trim()
   .replace(/\/+$/, "")
   .replace(/^([^/])/, "/$1");
 
+// Server Actions (loginAction/logoutAction dll) diproteksi CSRF: Next menolak
+// bila Origin request != host. Di belakang reverse proxy, host yang dilihat Next
+// bisa BEDA dari domain browser -> "Invalid Server Actions request" -> login
+// gagal total. Daftarkan domain yang dipakai browser di sini (tak perlu ubah
+// proxy). Override via env SERVER_ACTIONS_ALLOWED_ORIGINS (dipisah koma).
+const allowedOrigins = (
+  process.env.SERVER_ACTIONS_ALLOWED_ORIGINS ??
+  "har.pusri.dev,*.pusri.dev,*.pusri.co.id,*.pusri.id"
+)
+  .split(",")
+  .map((s) => s.trim())
+  .filter(Boolean);
+
 const nextConfig: NextConfig = {
   basePath,
-  async redirects() {
-    // Root domain (tanpa prefix) tidak di-serve Next saat basePath aktif.
-    // Arahkan "/" -> basePath agar dev/QA langsung masuk aplikasi.
-    // basePath:false = source & destination TIDAK di-prefix otomatis.
-    return basePath
-      ? [
-          {
-            source: "/",
-            destination: basePath,
-            permanent: false,
-            basePath: false,
-          },
-        ]
-      : [];
-  },
+  // CATATAN: redirect "/" -> basePath DIHAPUS. Di produksi, reverse proxy
+  // men-strip prefix "/idle" sebelum meneruskan ke Next, sehingga Next selalu
+  // menerima "/". Redirect "/" -> "/idle" akan di-strip proxy jadi "/" lagi ->
+  // ERR_TOO_MANY_REDIRECTS. Root "/" cukup dilayani page.tsx (arahkan ke
+  // /login atau dashboard sesuai sesi).
   images: {
+    // SPA: optimisasi next/image berjalan di server Next dan akan mem-fetch
+    // gambar dari BE — di dalam cluster host publik tak ter-resolve (ENOTFOUND).
+    // unoptimized=true membuat browser memuat <Image> langsung (same-origin),
+    // menghindari fetch server-side.
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: apiUrl.protocol.replace(":", "") as "http" | "https",
@@ -54,13 +70,14 @@ const nextConfig: NextConfig = {
     authInterrupts: true,
     serverActions: {
       bodySizeLimit: "20mb",
+      allowedOrigins,
     },
   },
   async rewrites() {
     return [
       {
         source: "/uploads/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "https://api.testing.naufal.me"}/uploads/:path*`,
+        destination: `${process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "https://har.pusri.dev/idle/air"}/uploads/:path*`,
       },
     ];
   },

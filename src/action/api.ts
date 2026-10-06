@@ -1,15 +1,17 @@
-"use server";
 
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { cookies } from "next/headers";
 import {
 	type ApprovalKind,
 	type DisposalDisplayStatus,
 	disposalDisplayStatus,
 } from "@/lib/approvals";
-import { API_URL } from "@/config/api";
+import { apiBase } from "@/lib/api-client";
+const API_URL = apiBase();
+// SPA: shadow fetch -> selalu kirim cookie httpOnly (credentials:include).
+const fetch = (input: RequestInfo | URL, init?: RequestInit) =>
+	globalThis.fetch(input, { credentials: "include", ...init });
 import { revalidateApp } from "@/lib/revalidate";
 
 /**
@@ -22,8 +24,6 @@ export async function uploadAttachment(
 	file: File,
 	category: string,
 ): Promise<{ success: boolean; message?: string }> {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const fd = new FormData();
@@ -33,7 +33,7 @@ export async function uploadAttachment(
 
 		const res = await fetch(`${API_URL}/api/attachments/upload`, {
 			method: "POST",
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			body: fd,
 		});
 
@@ -72,14 +72,12 @@ export type EquipmentCodeRow = {
 export async function getEquipmentCodes(
 	search?: string,
 ): Promise<EquipmentCodeRow[]> {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const trimmed = search?.trim();
 		const qs = trimmed ? `?search=${encodeURIComponent(trimmed)}` : "";
 		const res = await fetch(`${API_URL}/api/equipment-codes${qs}`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (res.ok) {
@@ -89,7 +87,7 @@ export async function getEquipmentCodes(
 			if (trimmed && trimmed !== trimmed.toUpperCase()) {
 				const upperQs = `?search=${encodeURIComponent(trimmed.toUpperCase())}`;
 				const upperRes = await fetch(`${API_URL}/api/equipment-codes${upperQs}`, {
-					headers: { Authorization: `Bearer ${token}` },
+					headers: {},
 					cache: "no-store",
 				});
 				if (upperRes.ok) {
@@ -107,12 +105,10 @@ export async function getEquipmentCodes(
 }
 
 export async function getEquipments() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const res = await fetch(`${API_URL}/api/equipment`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return [];
@@ -202,9 +198,7 @@ function flattenEquipmentCode<T>(data: T): T {
 }
 
 export async function getDisposals(): Promise<DisposalItemDTO[]> {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-	const headers = { Authorization: `Bearer ${token}` };
+	const headers = {};
 
 	try {
 		const [dispRes, appRes] = await Promise.all([
@@ -309,8 +303,6 @@ export async function approveDisposal(
 		return { success: false, message: "Catatan/alasan wajib diisi." };
 	}
 
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const res = await fetch(
@@ -319,7 +311,6 @@ export async function approveDisposal(
 				method: "PATCH",
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({ action, notes }),
 			},
@@ -351,11 +342,8 @@ export async function createDisposalRequest(payload: {
 	disposal_date: string;
 	justification: string;
 }) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 	const headers = {
 		"Content-Type": "application/json",
-		Authorization: `Bearer ${token}`,
 	};
 
 	const cleanPayload = {
@@ -438,11 +426,8 @@ export async function reviseDisposalRequest(
 		justification?: string;
 	},
 ) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 	const headers = {
 		"Content-Type": "application/json",
-		Authorization: `Bearer ${token}`,
 	};
 
 	const cleanPayload: Record<string, any> = {};
@@ -505,12 +490,10 @@ export async function reviseDisposalRequest(
  * Endpoint datar /api/approvals sudah tidak ada lagi.
  */
 export async function getApprovals(kind: ApprovalKind = "validation") {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const res = await fetch(`${API_URL}/api/approvals/${kind}`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return [];
@@ -526,12 +509,10 @@ export async function getApprovalById(
 	id: string,
 	kind: ApprovalKind = "validation",
 ) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const res = await fetch(`${API_URL}/api/approvals/${kind}/${id}`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return null;
@@ -546,8 +527,6 @@ export async function getApprovalById(
 // getValidations mengambil daftar validasi (GET /api/validation), opsional per equipment.
 // Dipakai untuk menampilkan Nomor Pemeriksaan yang digenerate backend.
 export async function getValidations(equipmentId?: string | number) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	const url = equipmentId
 		? `${API_URL}/api/validation?equipment_id=${equipmentId}`
@@ -555,7 +534,7 @@ export async function getValidations(equipmentId?: string | number) {
 
 	try {
 		const res = await fetch(url, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return [];
@@ -579,8 +558,6 @@ export async function validateEquipment(
 		photos?: File[];
 	},
 ) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	// Backend POST /api/validation menerima multipart (request.ValidationRequest),
 	// termasuk photos yang disimpan sebagai attachment reference_type "validations".
@@ -603,7 +580,6 @@ export async function validateEquipment(
 		const res = await fetch(`${API_URL}/api/validation`, {
 			method: "POST",
 			headers: {
-				Authorization: `Bearer ${token}`,
 			},
 			body: formData,
 		});
@@ -639,8 +615,6 @@ export async function updateValidation(
 		photos?: File[];
 	},
 ) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	const today = new Date().toISOString().split("T")[0];
 	const formData = new FormData();
@@ -659,7 +633,6 @@ export async function updateValidation(
 		const res = await fetch(`${API_URL}/api/validation/${validationId}`, {
 			method: "PATCH",
 			headers: {
-				Authorization: `Bearer ${token}`,
 			},
 			body: formData,
 		});
@@ -696,8 +669,6 @@ export async function createRevalidation(
 		photos?: File[];
 	},
 ) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	const today = new Date().toISOString().split("T")[0];
 	const formData = new FormData();
@@ -717,7 +688,6 @@ export async function createRevalidation(
 		const res = await fetch(`${API_URL}/api/revalidation`, {
 			method: "POST",
 			headers: {
-				Authorization: `Bearer ${token}`,
 			},
 			body: formData,
 		});
@@ -755,15 +725,12 @@ export async function reviewApproval(
 	notes: string,
 	kind: ApprovalKind = "validation",
 ) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const res = await fetch(`${API_URL}/api/approvals/${kind}/${id}/review`, {
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
-				Authorization: `Bearer ${token}`,
 			},
 			body: JSON.stringify({ action, notes }),
 		});
@@ -788,8 +755,6 @@ export async function reviewApproval(
 }
 
 export async function startReviewApproval(id: string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const res = await fetch(
@@ -798,7 +763,6 @@ export async function startReviewApproval(id: string) {
 				method: "PATCH",
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({}),
 			},
@@ -824,12 +788,10 @@ export async function startReviewApproval(id: string) {
 }
 
 export async function getInspections() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const res = await fetch(`${API_URL}/api/inspections`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return [];
@@ -842,26 +804,12 @@ export async function getInspections() {
 }
 
 export async function submitInspectionData(formData: FormData) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
-	const userStr = cookieStore.get("user")?.value;
-
-	if (userStr && !formData.has("inspector")) {
-		try {
-			const user = JSON.parse(userStr);
-			if (user.id) {
-				formData.append("inspector", String(user.id));
-			}
-		} catch (e) {
-			console.error("Failed to parse user cookie", e);
-		}
-	}
-
+	// SPA: cookie `user` tak tersedia lagi. `inspector` di-set backend dari
+	// token yang tervalidasi, atau dikirim pemanggil (useAuth().user.id).
 	try {
 		const res = await fetch(`${API_URL}/api/inspections`, {
 			method: "POST",
 			headers: {
-				Authorization: `Bearer ${token}`,
 			},
 			body: formData,
 		});
@@ -894,12 +842,10 @@ export async function submitInspectionData(formData: FormData) {
 }
 
 export async function getConditions() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const res = await fetch(`${API_URL}/api/condition`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return [];
@@ -912,8 +858,6 @@ export async function getConditions() {
 }
 
 export async function getObjectTypes() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	// ponytail: fallback dipertahankan supaya form tetap terbuka saat backend down.
 	// Hapus begitu /api/object-types dijamin punya seed data.
@@ -928,7 +872,7 @@ export async function getObjectTypes() {
 
 	try {
 		const res = await fetch(`${API_URL}/api/object-types`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return fallback;
@@ -942,12 +886,10 @@ export async function getObjectTypes() {
 
 /** Master daftar plant dari database. Backend: GET /api/plants -> { data: [{ id, name, description }] } */
 export async function getPlants() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const res = await fetch(`${API_URL}/api/plants`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return [];
@@ -960,13 +902,11 @@ export async function getPlants() {
 }
 
 export async function getStorageLocations(plantId?: number | string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	const query = plantId ? `?plant_id=${encodeURIComponent(plantId)}` : "";
 	try {
 		const res = await fetch(`${API_URL}/api/storage-locations${query}`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return [];
@@ -979,8 +919,6 @@ export async function getStorageLocations(plantId?: number | string) {
 }
 
 export async function getRequireActions() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	const fallbackActions = [
 		{
@@ -1002,7 +940,7 @@ export async function getRequireActions() {
 
 	try {
 		const res = await fetch(`${API_URL}/api/require-action`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return fallbackActions;
@@ -1020,8 +958,6 @@ export async function getRequireActions() {
  * idle declaration, dan attachment dalam satu transaksi.
  */
 export async function createEquipment(formData: FormData) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	// Ensure storage_location_id is a valid integer > 0 (default to 1 if missing/invalid)
 	const rawLocId = formData.get("storage_location_id")?.toString();
@@ -1034,7 +970,7 @@ export async function createEquipment(formData: FormData) {
 		const res = await fetch(`${API_URL}/api/equipment`, {
 			method: "POST",
 			// Jangan set Content-Type manual: boundary multipart harus dibuat oleh fetch.
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			body: formData,
 		});
 
@@ -1059,12 +995,10 @@ export async function createEquipment(formData: FormData) {
 }
 
 export async function getEquipmentById(id: string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const res = await fetch(`${API_URL}/api/equipment/${id}`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return null;
@@ -1093,15 +1027,12 @@ export async function getEquipmentById(id: string) {
 }
 
 export async function updateEquipment(id: string, payload: any) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const res = await fetch(`${API_URL}/api/equipment/${id}`, {
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
-				Authorization: `Bearer ${token}`,
 			},
 			body: JSON.stringify(payload),
 		});
@@ -1126,8 +1057,6 @@ export async function updateEquipment(id: string, payload: any) {
 }
 
 export async function getAttachmentsByEquipmentId(equipmentId: string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	const normalizeResponse = (json: any): any[] => {
 		const raw = json.data || json;
@@ -1191,7 +1120,7 @@ export async function getAttachmentsByEquipmentId(equipmentId: string) {
 		const res2 = await fetch(
 			`${API_URL}/api/attachments?equipment_id=${equipmentId}`,
 			{
-				headers: { Authorization: `Bearer ${token}` },
+				headers: {},
 				cache: "no-store",
 			},
 		);
@@ -1213,7 +1142,7 @@ export async function getAttachmentsByEquipmentId(equipmentId: string) {
 	try {
 		// 3) Fallback: fetch semua attachments, filter manual
 		const res3 = await fetch(`${API_URL}/api/attachments`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (res3.ok) {
@@ -1236,8 +1165,6 @@ export async function getAttachmentsByEquipmentId(equipmentId: string) {
 }
 
 export async function deleteEquipment(id: string) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	// Host di-pin ke env var; path dibangun via new URL() agar tidak bisa
 	// dinavigasi ke origin/path lain.
@@ -1250,7 +1177,7 @@ export async function deleteEquipment(id: string) {
 	try {
 		const res = await fetch(targetUrl, {
 			method: "DELETE",
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 		});
 
 		if (!res.ok) {
@@ -1271,11 +1198,9 @@ export async function deleteEquipment(id: string) {
 	}
 }
 export async function getEquipmentRepairs() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 	try {
 		const res = await fetch(`${API_URL.replace(/\/$/, "")}/api/repair`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return [];
@@ -1298,19 +1223,16 @@ export async function completeEquipmentRepair(
 		notes?: string;
 	},
 ) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 	const baseUrl = API_URL.replace(/\/$/, "");
 
 	// equipment_inspection_id opsional di backend: aset yang masuk REPAIR lewat validasi
 	// awal tidak punya inspeksi berkala, jadi field-nya dikirim hanya kalau ada.
-	const inspectionId = await findLatestInspectionId(baseUrl, token, equipmentId);
+	const inspectionId = await findLatestInspectionId(baseUrl, equipmentId);
 
 	try {
 		const res = await fetch(`${baseUrl}/api/repair`, {
 			method: "POST",
 			headers: {
-				Authorization: `Bearer ${token}`,
 				"Content-Type": "application/json",
 			},
 			body: JSON.stringify({
@@ -1350,12 +1272,11 @@ export async function completeEquipmentRepair(
    pilih inspeksi terbaru di sisi klien. Ganti ke query param begitu backend punya. */
 async function findLatestInspectionId(
 	baseUrl: string,
-	token: string | undefined,
 	equipmentId: string,
 ): Promise<number | null> {
 	try {
 		const res = await fetch(`${baseUrl}/api/inspections`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return null;
@@ -1376,8 +1297,6 @@ async function findLatestInspectionId(
 }
 
 export async function resubmitApproval(id: string, formData: FormData) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	try {
 		const res = await fetch(
@@ -1385,7 +1304,6 @@ export async function resubmitApproval(id: string, formData: FormData) {
 			{
 				method: "PATCH",
 				headers: {
-					Authorization: `Bearer ${token}`,
 				},
 				body: formData,
 			},
@@ -1421,8 +1339,6 @@ export async function createReuseRequest(payload: {
 	notes?: string;
 	[key: string]: any;
 }) {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
 
@@ -1473,7 +1389,6 @@ export async function createReuseRequest(payload: {
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
-				...(token ? { Authorization: `Bearer ${token}` } : {}),
 			},
 			body: JSON.stringify(bodyData),
 		});
@@ -1483,7 +1398,6 @@ export async function createReuseRequest(payload: {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
-					...(token ? { Authorization: `Bearer ${token}` } : {}),
 				},
 				body: JSON.stringify(bodyData),
 			});
@@ -1494,7 +1408,6 @@ export async function createReuseRequest(payload: {
 				method: "POST",
 				headers: {
 					"Content-Type": "application/json",
-					...(token ? { Authorization: `Bearer ${token}` } : {}),
 				},
 				body: JSON.stringify(bodyData),
 			});
@@ -1543,10 +1456,8 @@ export async function createReuseRequest(payload: {
  * request) karena keputusan dilakukan via /api/approvals/reuse/:approvalId/review.
  */
 export async function getReuseRequests(scope: "mine" | "all" = "mine") {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
-	const headers = { Authorization: `Bearer ${token}` };
+	const headers = {};
 
 	try {
 		const [res, appRes] = await Promise.all([
@@ -1653,13 +1564,11 @@ export async function getReuseRequests(scope: "mine" | "all" = "mine") {
 }
 
 export async function getFunctionalLocations() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
 
 	try {
 		const res = await fetch(`${baseUrl}/api/functional-locations`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return [];
@@ -1673,13 +1582,11 @@ export async function getFunctionalLocations() {
 }
 
 export async function getDisposalMethods() {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
 
 	try {
 		const res = await fetch(`${baseUrl}/api/disposal-method`, {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			cache: "no-store",
 		});
 		if (!res.ok) return [];
@@ -1716,12 +1623,9 @@ export async function updateReuseRequestStatus(
 	if (action === "REVISION" && !trimmedNotes) {
 		return { success: false, message: "Catatan/alasan wajib diisi." };
 	}
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
 	const headers = {
 		"Content-Type": "application/json",
-		...(token ? { Authorization: `Bearer ${token}` } : {}),
 	};
 
 	const approvalBody = JSON.stringify({
@@ -1854,8 +1758,6 @@ export async function approveRevalidationEquipment(
 		};
 	}
 
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
 
 	try {
@@ -1865,7 +1767,6 @@ export async function approveRevalidationEquipment(
 				method: "PATCH",
 				headers: {
 					"Content-Type": "application/json",
-					Authorization: `Bearer ${token}`,
 				},
 				body: JSON.stringify({
 					action: "APPROVE",
@@ -1895,8 +1796,6 @@ export async function approveRevalidationEquipment(
 
 /** Fetch ringkasan cost avoidance & saving dari GET /api/financial/summary */
 export async function getFinancialSummary(year?: number): Promise<any> {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 	const baseUrl = API_URL;
 
 	try {
@@ -1904,7 +1803,7 @@ export async function getFinancialSummary(year?: number): Promise<any> {
 		if (year) url.searchParams.set("year", String(year));
 
 		const res = await fetch(url.toString(), {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			next: { revalidate: 30 },
 		});
 		if (!res.ok) return null;
@@ -1918,8 +1817,6 @@ export async function getFinancialSummary(year?: number): Promise<any> {
 
 /** Fetch tren saving bulanan dari GET /api/financial/monthly-trend */
 export async function getFinancialMonthlyTrend(year?: number): Promise<any[]> {
-	const cookieStore = await cookies();
-	const token = cookieStore.get("token")?.value;
 	const baseUrl = API_URL;
 
 	try {
@@ -1927,7 +1824,7 @@ export async function getFinancialMonthlyTrend(year?: number): Promise<any[]> {
 		if (year) url.searchParams.set("year", String(year));
 
 		const res = await fetch(url.toString(), {
-			headers: { Authorization: `Bearer ${token}` },
+			headers: {},
 			next: { revalidate: 30 },
 		});
 		if (!res.ok) return [];

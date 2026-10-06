@@ -1,5 +1,6 @@
 import { clsx, type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { BASE_PATH } from "./base-path";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -12,8 +13,7 @@ export function cn(...inputs: ClassValue[]) {
  * untuk navigasi manual (window.location) dan aset <img>/CSS.
  */
 export function withBasePath(path: string) {
-  const base = process.env.NEXT_PUBLIC_BASE_URL || "";
-  return `${base}${path}`;
+  return `${BASE_PATH}${path}`;
 }
 
 /** Tanggal singkat id-ID ("5 Agu 2026"). Kosong/gagal parse → "-". */

@@ -1,3 +1,5 @@
+"use client";
+import { useEffect, useState } from "react";
 import {
 	getEquipments,
 	getPlants,
@@ -28,31 +30,43 @@ const INCLUDED_STATUSES = [
 	"DISPOSAL_RECOMMENDED",
 ];
 
-/** Server Component — fetch + filter visibilitas + mapping murni di server.
+/** Client Component — fetch + filter visibilitas + mapping murni di browser.
  * Pengganti salinan filter magic-number status_id === 4/5/6/8. */
-export default async function ValidasiUlangPage() {
-	const [
-		data,
-		plantsData,
-		storageLocationsData,
-		conditionsData,
-		objTypesData,
-	] = await Promise.all([
-		getEquipments().catch(() => []),
-		getPlants().catch(() => []),
-		getStorageLocations().catch(() => []),
-		getConditions().catch(() => []),
-		getObjectTypes().catch(() => []),
-	]);
+export default function ValidasiUlangPage() {
+	const [items, setItems] = useState<RevalidasiItem[]>([]);
+	const [plants, setPlants] = useState<any[]>([]);
+	const [storageLocations, setStorageLocations] = useState<any[]>([]);
+	const [conditions, setConditions] = useState<any[]>([]);
+	const [objectTypes, setObjectTypes] = useState<any[]>([]);
+	const [loading, setLoading] = useState(true);
 
-	const plants = Array.isArray(plantsData) ? plantsData : [];
-	const storageLocations = Array.isArray(storageLocationsData)
-		? storageLocationsData
-		: [];
-	const conditions = Array.isArray(conditionsData) ? conditionsData : [];
-	const objectTypes = Array.isArray(objTypesData) ? objTypesData : [];
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			const [
+				data,
+				plantsData,
+				storageLocationsData,
+				conditionsData,
+				objTypesData,
+			] = await Promise.all([
+				getEquipments().catch(() => []),
+				getPlants().catch(() => []),
+				getStorageLocations().catch(() => []),
+				getConditions().catch(() => []),
+				getObjectTypes().catch(() => []),
+			]);
 
-	const items: RevalidasiItem[] = (Array.isArray(data) ? data : [])
+			const computedPlants = Array.isArray(plantsData) ? plantsData : [];
+			const computedStorageLocations = Array.isArray(storageLocationsData)
+				? storageLocationsData
+				: [];
+			const computedConditions = Array.isArray(conditionsData)
+				? conditionsData
+				: [];
+			const computedObjectTypes = Array.isArray(objTypesData) ? objTypesData : [];
+
+			const computedItems: RevalidasiItem[] = (Array.isArray(data) ? data : [])
 		.filter((item: any) => {
 			const s = statusName(String(item.status?.name || item.statusAset || ""));
 			return INCLUDED_STATUSES.includes(s);
@@ -98,18 +112,41 @@ export default async function ValidasiUlangPage() {
 			};
 		});
 
-	items.sort((a, b) => {
-		const timeA =
-			a.tanggalSelesai && a.tanggalSelesai !== "-"
-				? new Date(a.tanggalSelesai).getTime()
-				: 0;
-		const timeB =
-			b.tanggalSelesai && b.tanggalSelesai !== "-"
-				? new Date(b.tanggalSelesai).getTime()
-				: 0;
-		if (timeB !== timeA) return timeB - timeA;
-		return (Number(b.id) || 0) - (Number(a.id) || 0);
-	});
+			computedItems.sort((a, b) => {
+				const timeA =
+					a.tanggalSelesai && a.tanggalSelesai !== "-"
+						? new Date(a.tanggalSelesai).getTime()
+						: 0;
+				const timeB =
+					b.tanggalSelesai && b.tanggalSelesai !== "-"
+						? new Date(b.tanggalSelesai).getTime()
+						: 0;
+				if (timeB !== timeA) return timeB - timeA;
+				return (Number(b.id) || 0) - (Number(a.id) || 0);
+			});
+
+			if (!alive) return;
+			setItems(computedItems);
+			setPlants(computedPlants);
+			setStorageLocations(computedStorageLocations);
+			setConditions(computedConditions);
+			setObjectTypes(computedObjectTypes);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, []);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
 
 	return (
 		<InspeksiValidasiUlangClient

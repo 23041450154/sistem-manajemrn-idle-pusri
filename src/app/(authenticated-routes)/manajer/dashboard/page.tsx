@@ -1,3 +1,6 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CheckSquare, Trash2, ArrowUpRight } from "lucide-react";
 import {
@@ -15,47 +18,75 @@ import ManajerDashboardClient from "./manajer-dashboard-client";
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-export const dynamic = "force-dynamic";
+export default function ManajerDashboardPage() {
+	const [equipmentList, setEquipmentList] = useState<any[]>([]);
+	const [normalizedValidations, setNormalizedValidations] = useState<any[]>([]);
+	const [reuseRequests, setReuseRequests] = useState<any[]>([]);
+	const [disposals, setDisposals] = useState<any[]>([]);
+	const [financialSummary, setFinancialSummary] = useState<any>(null);
+	const [financialTrend, setFinancialTrend] = useState<any[]>([]);
+	const [loading, setLoading] = useState(true);
 
-export default async function ManajerDashboardPage() {
-	const [equipments, validationApprovals, reuseRequests, disposals, financialSummary, financialTrend] = await Promise.all([
-		getEquipments().catch(() => []),
-		getApprovals("validation").catch(() => []),
-		getReuseRequests("all").catch(() => []),
-		getDisposals().catch(() => []),
-		getFinancialSummary().catch(() => null),
-		getFinancialMonthlyTrend().catch(() => []),
-	]);
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			const [equipments, validationApprovals, reuseRequestsData, disposalsData, financialSummaryData, financialTrendData] = await Promise.all([
+				getEquipments().catch(() => []),
+				getApprovals("validation").catch(() => []),
+				getReuseRequests("all").catch(() => []),
+				getDisposals().catch(() => []),
+				getFinancialSummary().catch(() => null),
+				getFinancialMonthlyTrend().catch(() => []),
+			]);
 
-	const equipmentList = Array.isArray(equipments) ? equipments : [];
-	const equipmentMap = new Map<string, any>();
-	equipmentList.forEach((eq: any) => {
-		if (eq.id != null) equipmentMap.set(String(eq.id), eq);
-	});
+			const list = Array.isArray(equipments) ? equipments : [];
+			const equipmentMap = new Map<string, any>();
+			list.forEach((eq: any) => {
+				if (eq.id != null) equipmentMap.set(String(eq.id), eq);
+			});
 
-	const normalizedValidations = (Array.isArray(validationApprovals) ? validationApprovals : []).map((item: any) => {
-		const equipmentId = item.equipment_id || item.equipment?.id;
-		const eq = (equipmentId != null && equipmentMap.get(String(equipmentId))) || item.equipment;
-		let approvalStatus = item.approval_status;
-		let statusAset = statusName(item.equipment_status || eq?.status?.name || eq?.status || "VALIDATED");
+			const normalized = (Array.isArray(validationApprovals) ? validationApprovals : []).map((item: any) => {
+				const equipmentId = item.equipment_id || item.equipment?.id;
+				const eq = (equipmentId != null && equipmentMap.get(String(equipmentId))) || item.equipment;
+				let approvalStatus = item.approval_status;
+				let statusAset = statusName(item.equipment_status || eq?.status?.name || eq?.status || "VALIDATED");
 
-		// Jika aset sudah READY_TO_USE di database, otomatis approval sudah APPROVED (riwayat persetujuan)
-		if (statusAset === "READY_TO_USE" && (!approvalStatus || approvalStatus === "PENDING")) {
-			approvalStatus = "APPROVED";
-		}
-		if (approvalStatus === "APPROVED") {
-			statusAset = "READY_TO_USE";
-		}
+				// Jika aset sudah READY_TO_USE di database, otomatis approval sudah APPROVED (riwayat persetujuan)
+				if (statusAset === "READY_TO_USE" && (!approvalStatus || approvalStatus === "PENDING")) {
+					approvalStatus = "APPROVED";
+				}
+				if (approvalStatus === "APPROVED") {
+					statusAset = "READY_TO_USE";
+				}
 
-		return {
-			...item,
-			equipment: eq || item.equipment,
-			approval_status: approvalStatus || "PENDING",
-			equipment_status: statusAset,
-			equipment_name: item.equipment_name || eq?.name || "Equipment",
-			equipment_code: item.equipment_code || eq?.equipment_code || "-",
+				return {
+					...item,
+					equipment: eq || item.equipment,
+					approval_status: approvalStatus || "PENDING",
+					equipment_status: statusAset,
+					equipment_name: item.equipment_name || eq?.name || "Equipment",
+					equipment_code: item.equipment_code || eq?.equipment_code || "-",
+				};
+			});
+
+			if (!alive) return;
+			setEquipmentList(list);
+			setNormalizedValidations(normalized);
+			setReuseRequests(Array.isArray(reuseRequestsData) ? reuseRequestsData : []);
+			setDisposals(Array.isArray(disposalsData) ? disposalsData : []);
+			setFinancialSummary(financialSummaryData);
+			setFinancialTrend(Array.isArray(financialTrendData) ? financialTrendData : []);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
 		};
-	});
+	}, []);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500"><div className="flex flex-col items-center gap-3"><div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />Memuat data...</div></main>
+		);
 
 	return (
 		<div className="page-container">
@@ -96,10 +127,10 @@ export default async function ManajerDashboardPage() {
 			<ManajerDashboardClient
 				equipments={equipmentList}
 				validationApprovals={normalizedValidations}
-				reuseRequests={Array.isArray(reuseRequests) ? reuseRequests : []}
-				disposals={Array.isArray(disposals) ? disposals : []}
+				reuseRequests={reuseRequests}
+				disposals={disposals}
 				financialSummary={financialSummary}
-				financialTrend={Array.isArray(financialTrend) ? financialTrend : []}
+				financialTrend={financialTrend}
 			/>
 		</div>
 	);

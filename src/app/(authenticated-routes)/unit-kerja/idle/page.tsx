@@ -1,5 +1,8 @@
+"use client";
+
+import { useEffect, useState } from "react";
 import { getEquipments, getObjectTypes, getReuseRequests } from "@/action/api";
-import { getCurrentUserAction } from "@/action/auth";
+import { useAuth } from "@/components/AuthProvider";
 import { statusName } from "@/lib/equipment-status";
 import UnitKerjaIdleClient, {
 	type EquipmentItem,
@@ -10,18 +13,24 @@ import UnitKerjaIdleClient, {
    Upgrade path: generate types dari swagger_dump.json backend. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-/** Server Component — fetch katalog+riwayat+user, filter & mapping murni di server. */
-export default async function UnitKerjaIdlePage() {
-	// Action sudah balik [] saat HTTP gagal; .catch jaring pengaman error tak terduga.
-	const [rawEqList, objTypes, rawRequests, user] = await Promise.all([
-		getEquipments().catch(() => []),
-		getObjectTypes().catch(() => []),
-		getReuseRequests().catch(() => []),
-		getCurrentUserAction().catch(() => null),
-	]);
-	const currentUser = user?.user ?? null;
+/** Client Component — fetch katalog+riwayat di browser, filter & mapping di client. */
+export default function UnitKerjaIdlePage() {
+	const { user } = useAuth();
+	const [equipments, setEquipments] = useState<EquipmentItem[]>([]);
+	const [reuseRequests, setReuseRequests] = useState<ReuseRequestItem[]>([]);
+	const [loading, setLoading] = useState(true);
 
-	const mappedEquipments: EquipmentItem[] = (rawEqList || []).map(
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			// Action sudah balik [] saat HTTP gagal; .catch jaring pengaman error tak terduga.
+			const [rawEqList, objTypes, rawRequests] = await Promise.all([
+				getEquipments().catch(() => []),
+				getObjectTypes().catch(() => []),
+				getReuseRequests().catch(() => []),
+			]);
+
+			const mappedEquipments: EquipmentItem[] = (rawEqList || []).map(
 		(item: any): EquipmentItem => {
 			let catName = "Peralatan Umum";
 			if (typeof item.object_type?.name === "string")
@@ -130,7 +139,7 @@ export default async function UnitKerjaIdlePage() {
 	}
 
 	// Katalog unit kerja hanya menampilkan aset yang siap dipakai ulang dan belum diajukan
-	const equipments = mappedEquipments.filter(
+	const filteredEquipments = mappedEquipments.filter(
 		(e) =>
 			e.status_name === "READY_TO_USE" &&
 			!requestedEqIdSet.has(String(e.id)) &&
@@ -138,7 +147,7 @@ export default async function UnitKerjaIdlePage() {
 	);
 
 	// Mapped Reuse Requests
-	const reuseRequests: ReuseRequestItem[] = (rawRequests || []).map((r: any) => {
+	const mappedReuseRequests: ReuseRequestItem[] = (rawRequests || []).map((r: any) => {
 		let targetPlantStr = "Plant PUSRI IB";
 		if (typeof r.target_plant === "string") targetPlantStr = r.target_plant;
 		else if (r.target_plant && typeof r.target_plant === "object")
@@ -208,6 +217,28 @@ export default async function UnitKerjaIdlePage() {
 			),
 		};
 	});
+
+			if (!alive) return;
+			setEquipments(filteredEquipments);
+			setReuseRequests(mappedReuseRequests);
+			setLoading(false);
+		})();
+		return () => {
+			alive = false;
+		};
+	}, []);
+
+	if (loading)
+		return (
+			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500">
+				<div className="flex flex-col items-center gap-3">
+					<div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />
+					Memuat data...
+				</div>
+			</main>
+		);
+
+	const currentUser = user ?? null;
 
 	return (
 		<UnitKerjaIdleClient
