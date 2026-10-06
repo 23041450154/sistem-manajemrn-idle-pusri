@@ -291,20 +291,24 @@ export function Sidebar({ role }: { role?: string }) {
 				}`}
 			>
 				<div className="p-6 flex items-center justify-between gap-3">
-					<div className="flex items-center gap-3">
-						{/* eslint-disable-next-line @next/next/no-img-element -- konsisten dgn halaman lain, hindari image optimizer */}
-						<img
-							src={withBasePath("/images (2) 1.png")}
-							alt="Logo PUSRI"
-							width={52}
-							height={52}
-							style={{ objectFit: "contain" }}
-						/>
-						<div>
-							<p className="text-base text-white-300 mt-1 font-semibold">
-								Asset Management
-							</p>
+					<div className="min-w-0 flex-1">
+						<div className="flex items-center gap-3">
+							{/* eslint-disable-next-line @next/next/no-img-element -- SVG lokal disajikan langsung */}
+							<img
+								src={withBasePath("/branding/svg-v2/pusri-idle-icon-light-v2.svg")}
+								alt="Logo SIDE"
+								width={64}
+								height={64}
+								className="h-16 w-16 shrink-0 p-1.5 object-contain"
+							/>
+							<div>
+								<p className="text-2xl font-semibold tracking-wide">SIDE</p>
+								<p className="text-xs text-blue-100">PUSRI</p>
+							</div>
 						</div>
+						<p className="mt-3 text-xs leading-relaxed text-blue-100">
+							Sistem Informasi Manajemen Idle Equipment
+						</p>
 					</div>
 					<button
 						className="md:hidden text-blue-200 hover:text-white focus:outline-none"

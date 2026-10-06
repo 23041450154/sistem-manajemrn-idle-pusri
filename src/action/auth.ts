@@ -3,7 +3,7 @@
 // otomatis terkirim. Alasan pindah ke client: pod Next tak bisa resolve host
 // publik ingress di dalam cluster (ENOTFOUND) — lihat lib/api-client.ts.
 import type { User } from "../types/Auth";
-import { apiJson, apiBase } from "@/lib/api-client";
+import { apiJson } from "@/lib/api-client";
 
 export type CurrentUserResult = {
   status: boolean;
@@ -40,20 +40,5 @@ export async function getCurrentUserAction(): Promise<CurrentUserResult> {
   return { status: false, message: res.error ?? "user tidak ditemukan", user: null, token: null };
 }
 
-/**
- * URL logout: navigasi top-level ke {BE}/api/logout supaya cookie SSO
- * (access_token/refresh_token, HttpOnly) ikut terkirim -> backend backchannel
- * revoke ke Keycloak lalu expire cookie & redirect. JANGAN hapus cookie di sini
- * (backend butuh token untuk revoke).
- */
-export async function logoutAction(): Promise<string> {
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
-  const ssoBaseUrl = process.env.NEXT_PUBLIC_API_SSO?.replace(/\/+$/, "");
-  const clientId = process.env.NEXT_PUBLIC_CLIENT_ID;
-
-  const url = new URL(`${apiBase()}/api/logout`, origin || undefined);
-  if (ssoBaseUrl && clientId) {
-    url.searchParams.set("redirect", `${ssoBaseUrl}/api/login?client_id=${clientId}`);
-  }
-  return url.toString();
-}
+// logoutAction pindah ke src/action/logout.ts — butuh cookie jar server
+// (next/headers), yang tidak boleh di-import dari modul sisi-browser ini.
