@@ -76,11 +76,13 @@ export default function ManajemenInspeksiClient({
 	conditions,
 	requireActions,
 	plants = [],
+	onRefresh,
 }: {
 	assets: Asset[];
 	conditions: Array<{ id: number; name: string }>;
 	requireActions: any[];
 	plants?: any[];
+	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
@@ -457,7 +459,11 @@ export default function ManajemenInspeksiClient({
 							message:
 								"Data revisi validasi berhasil disimpan ke sistem. Pengajuan approval belum terkirim ke Manajer karena backend mencari data inspeksi (hubungi tim backend).",
 						});
-						router.refresh();
+						if (onRefresh) {
+							await onRefresh();
+						} else {
+							router.refresh();
+						}
 						return;
 					}
 				}
@@ -531,9 +537,12 @@ export default function ManajemenInspeksiClient({
 					setCurrentPage(1);
 				}
 
-				// Server action sudah revalidateApp(); tarik payload RSC terbaru
-				// (status persetujuan aset dihitung ulang dari approval backend).
-				router.refresh();
+				// Refresh data via onRefresh agar antrean & riwayat langsung terupdate tanpa reload manual
+				if (onRefresh) {
+					await onRefresh();
+				} else {
+					router.refresh();
+				}
 			} else {
 				setNotification({
 					type: "error",

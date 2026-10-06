@@ -1,5 +1,5 @@
 "use client";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import {
 	getApprovals,
 	getConditions,
@@ -60,38 +60,36 @@ export default function ValidasiPage() {
 	const [plants, setPlants] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
 
-	useEffect(() => {
-		let alive = true;
-		void (async () => {
-			const [
-				data,
-				objTypes,
-				approvalsRes,
-				conditionsData,
-				requireActionsData,
-				plantsData,
-			] = await Promise.all([
-				getEquipments().catch(() => []),
-				getObjectTypes().catch(() => []),
-				getApprovals().catch(() => []),
-				getConditions().catch(() => []),
-				getRequireActions().catch(() => []),
-				getPlants().catch(() => []),
-			]);
+	const loadData = useCallback(async () => {
+		const [
+			data,
+			objTypes,
+			approvalsRes,
+			conditionsData,
+			requireActionsData,
+			plantsData,
+		] = await Promise.all([
+			getEquipments().catch(() => []),
+			getObjectTypes().catch(() => []),
+			getApprovals().catch(() => []),
+			getConditions().catch(() => []),
+			getRequireActions().catch(() => []),
+			getPlants().catch(() => []),
+		]);
 
-			const computedConditions = Array.isArray(conditionsData)
-				? conditionsData
-				: [];
-			const computedRequireActions = Array.isArray(requireActionsData)
-				? requireActionsData
-				: [];
-			const approvalsData = Array.isArray(approvalsRes)
-				? approvalsRes
-				: approvalsRes?.data || [];
-			const computedPlants = Array.isArray(plantsData) ? plantsData : [];
-			const currentUserNPP = user?.npp || "NPP2304145";
+		const computedConditions = Array.isArray(conditionsData)
+			? conditionsData
+			: [];
+		const computedRequireActions = Array.isArray(requireActionsData)
+			? requireActionsData
+			: [];
+		const approvalsData = Array.isArray(approvalsRes)
+			? approvalsRes
+			: approvalsRes?.data || [];
+		const computedPlants = Array.isArray(plantsData) ? plantsData : [];
+		const currentUserNPP = user?.npp || "NPP2304145";
 
-			const mappedData = (Array.isArray(data) ? data : []).map((item: any) => {
+		const mappedData = (Array.isArray(data) ? data : []).map((item: any) => {
 		let objectTypeName = "Belum Ditentukan";
 		if (item.object_type?.name) {
 			objectTypeName = item.object_type.name;
@@ -205,20 +203,26 @@ export default function ValidasiPage() {
 		return { ...item, statusAset, statusPersetujuan, approvalId };
 	});
 
-			// Sort data by ID descending (newest first)
-			mappedWithApproval.sort((a, b) => Number(b.id) - Number(a.id));
+		// Sort data by ID descending (newest first)
+		mappedWithApproval.sort((a, b) => Number(b.id) - Number(a.id));
 
+		setAssets(mappedWithApproval);
+		setConditions(computedConditions);
+		setRequireActions(computedRequireActions);
+		setPlants(computedPlants);
+	}, [user?.npp]);
+
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			await loadData();
 			if (!alive) return;
-			setAssets(mappedWithApproval);
-			setConditions(computedConditions);
-			setRequireActions(computedRequireActions);
-			setPlants(computedPlants);
 			setLoading(false);
 		})();
 		return () => {
 			alive = false;
 		};
-	}, [user?.npp]);
+	}, [loadData]);
 
 	if (loading)
 		return (
@@ -236,6 +240,7 @@ export default function ValidasiPage() {
 			conditions={conditions}
 			requireActions={requireActions}
 			plants={plants}
+			onRefresh={loadData}
 		/>
 	);
 }

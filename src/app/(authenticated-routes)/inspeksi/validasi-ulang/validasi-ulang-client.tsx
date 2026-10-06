@@ -46,6 +46,7 @@ interface InspeksiValidasiUlangClientProps {
 	storageLocations?: any[];
 	conditions?: any[];
 	objectTypes?: any[];
+	onRefresh?: () => Promise<void> | void;
 }
 
 /** Client Component: interaksi tab/filter/modal validasi — data di-fetch Server Component. */
@@ -55,6 +56,7 @@ export default function InspeksiValidasiUlangClient({
 	storageLocations = [],
 	conditions = [],
 	objectTypes = [],
+	onRefresh,
 }: InspeksiValidasiUlangClientProps) {
 	const router = useRouter();
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
@@ -323,8 +325,11 @@ export default function InspeksiValidasiUlangClient({
 				handleCloseModal();
 				setActiveTab("riwayat");
 				setCurrentPage(1);
-				// Server action sudah revalidateApp(); tarik payload RSC terbaru.
-				router.refresh();
+				if (onRefresh) {
+					await onRefresh();
+				} else {
+					router.refresh();
+				}
 			} else {
 				setModalError(result.message || "Gagal menyimpan re-validasi ke database.");
 			}

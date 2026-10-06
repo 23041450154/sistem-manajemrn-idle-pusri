@@ -83,9 +83,11 @@ const CONDITION_RESULT: Record<string, string> = {
 export default function ManajerApproveClient({
 	requests,
 	plants,
+	onRefresh,
 }: {
 	requests: RequestAsset[];
 	plants: any[];
+	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
 	const [search, setSearch] = useState("");
@@ -178,8 +180,11 @@ export default function ManajerApproveClient({
 				return;
 			}
 
-			// List di belakang mengikuti state server; server action sudah revalidateApp().
-			router.refresh();
+			if (onRefresh) {
+				await onRefresh();
+			} else {
+				router.refresh();
+			}
 
 			// Update selected asset state so UI re-renders immediately
 			setSelectedAsset({
@@ -210,8 +215,11 @@ export default function ManajerApproveClient({
 					type: "success",
 					message: "Berhasil menyetujui aset!",
 				});
-				// Server action sudah revalidateApp(); tarik payload RSC terbaru.
-				router.refresh();
+				if (onRefresh) {
+					await onRefresh();
+				} else {
+					router.refresh();
+				}
 				setIsConfirmOpen(false);
 				closeModal();
 				setTimeout(() => setNotification(null), 3000);
@@ -243,8 +251,11 @@ export default function ManajerApproveClient({
 					type: "success",
 					message: "Berhasil mengirim permintaan revisi!",
 				});
-				// Server action sudah revalidateApp(); tarik payload RSC terbaru.
-				router.refresh();
+				if (onRefresh) {
+					await onRefresh();
+				} else {
+					router.refresh();
+				}
 				setIsRevisiOpen(false);
 				closeModal();
 				setTimeout(() => setNotification(null), 3000);

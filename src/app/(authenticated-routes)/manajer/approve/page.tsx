@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getApprovals, getEquipments, getPlants } from "@/action/api";
 import { useAuth } from "@/components/AuthProvider";
 import { statusName } from "@/lib/equipment-status";
@@ -27,10 +27,8 @@ export default function ManajerApprovePage() {
 
 	const currentUserNPP = user?.npp || "";
 
-	useEffect(() => {
-		let alive = true;
-		void (async () => {
-			const [approvalsData, equipmentsData, plantsData] = await Promise.all([
+	const loadData = useCallback(async () => {
+		const [approvalsData, equipmentsData, plantsData] = await Promise.all([
 				getApprovals().catch(() => []),
 				getEquipments().catch(() => []),
 				getPlants().catch(() => []),
@@ -105,20 +103,26 @@ export default function ManajerApprovePage() {
 				return (Number(b.id) || 0) - (Number(a.id) || 0);
 			});
 
-			if (!alive) return;
 			setPlants(plantList);
 			setRequests(mapped);
+	}, []);
+
+	useEffect(() => {
+		let alive = true;
+		void (async () => {
+			await loadData();
+			if (!alive) return;
 			setLoading(false);
 		})();
 		return () => {
 			alive = false;
 		};
-	}, [currentUserNPP]);
+	}, [loadData]);
 
 	if (loading)
 		return (
 			<main className="grid min-h-[60vh] place-items-center text-sm text-gray-500"><div className="flex flex-col items-center gap-3"><div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-gray-600" />Memuat data...</div></main>
 		);
 
-	return <ManajerApproveClient requests={requests} plants={plants} />;
+	return <ManajerApproveClient requests={requests} plants={plants} onRefresh={loadData} />;
 }

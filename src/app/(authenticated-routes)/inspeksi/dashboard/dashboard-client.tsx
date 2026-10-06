@@ -23,11 +23,33 @@ import {
 import { buttonVariants } from "@/components/ui/button";
 import { statusGroup, statusName } from "@/lib/equipment-status";
 
+/** Helper untuk mengecek apakah aset masuk ke Riwayat vs Antrean Validasi. */
+const isFinalStatus = (eq: any) => {
+	const normStatus = statusName(eq.statusAset || eq.status?.name || eq.status);
+	const normApproval = (eq.statusPersetujuan || "").toUpperCase();
+
+	// Jika persetujuan sudah disetujui (APPROVED) atau ditolak (REJECTED), masuk ke Riwayat
+	if (normApproval === "APPROVED" || normApproval === "REJECTED") {
+		return true;
+	}
+
+	// Jika status persetujuannya perlu revisi, tetap di Antrean
+	if (normApproval === "NEED_REVISION") {
+		return false;
+	}
+
+	// Antrean untuk aset yang berstatus REGISTERED atau VALIDATED
+	const isActionNeeded = normStatus === "REGISTERED" || normStatus === "VALIDATED";
+	return !isActionNeeded;
+};
+
 /** Client Component: interaktif (search/filter) — data di-fetch Server Component. */
 export default function InspeksiDashboardClient({
 	equipments,
+	onRefresh,
 }: {
 	equipments: any[];
+	onRefresh?: () => Promise<void> | void;
 }) {
 	const [search, setSearch] = useState("");
 
@@ -35,16 +57,13 @@ export default function InspeksiDashboardClient({
 	const totalAssets = equipments.length;
 
 	const pendingAssets = useMemo(() => {
-		return equipments.filter((eq) => {
-			const group = statusGroup(eq);
-			return group === "pending" || !group;
-		});
+		return equipments.filter((eq) => !isFinalStatus(eq));
 	}, [equipments]);
 
 	const validatedAssetsCount = useMemo(() => {
 		return equipments.filter((eq) => {
-			const group = statusGroup(eq);
-			return group === "ready";
+			const status = statusName(eq.statusAset || eq.status?.name || eq.status);
+			return isFinalStatus(eq) && (status === "READY_TO_USE" || status === "REUSED");
 		}).length;
 	}, [equipments]);
 
@@ -382,17 +401,29 @@ export default function InspeksiDashboardClient({
 												: "-"}
 										</td>
 										<td className="px-4 py-2.5 text-center">
-											<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#E0F2FE] text-[#0284C7]">
-												REGISTERED
+											<span
+												className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${
+													eq.statusPersetujuan === "NEED_REVISION"
+														? "bg-[#F3E8FF] text-[#8A2BE2]"
+														: eq.statusPersetujuan === "PENDING_REVIEW"
+														? "bg-[#FEF3C7] text-[#B45309]"
+														: "bg-[#E0F2FE] text-[#0284C7]"
+												}`}
+											>
+												{eq.statusPersetujuan === "NEED_REVISION"
+													? "PERLU REVISI"
+													: eq.statusPersetujuan === "PENDING_REVIEW"
+													? "MENUNGGU REVIEW"
+													: "REGISTERED"}
 											</span>
 										</td>
 										<td className="px-4 py-2.5 text-center whitespace-nowrap">
 											<Link
 												href="/inspeksi/validasi"
-												className="inline-flex h-11 items-center justify-center gap-1.5 rounded bg-[#0A356A] px-3 text-[13px] font-medium text-white transition-colors duration-150 hover:bg-[#0556B3]"
+												className="inline-flex h-9 items-center justify-center gap-1.5 rounded bg-[#0A356A] px-3 text-[12px] font-medium text-white transition-colors duration-150 hover:bg-[#0556B3]"
 											>
 												<Wrench className="h-3.5 w-3.5" aria-hidden="true" />
-												Validasi
+												{eq.statusPersetujuan === "NEED_REVISION" ? "Revisi" : "Validasi"}
 											</Link>
 										</td>
 									</tr>
