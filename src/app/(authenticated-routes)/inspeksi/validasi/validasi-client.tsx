@@ -38,6 +38,7 @@ import {
 	resubmitApproval,
 } from "@/action/api";
 import { type EquipmentStatus, statusName } from "@/lib/equipment-status";
+import { fileUrl } from "@/lib/file-url";
 
 // Tipe Data
 type AssetState = EquipmentStatus | "REJECTED";
@@ -440,8 +441,8 @@ export default function ManajemenInspeksiClient({
 						"1";
 					formData.append("required_action", finalActionId);
 				}
-				// Backend approval resubmit mewajibkan foto bukti minimal 2 file bila dikirim.
-				if (uploadedFiles.length >= 2) {
+				// Foto bukti opsional: backend resubmit tidak lagi mewajibkan jumlah minimal.
+				if (uploadedFiles.length > 0) {
 					uploadedFiles.forEach((file) => {
 						formData.append("photos", file);
 					});
@@ -450,15 +451,19 @@ export default function ManajemenInspeksiClient({
 
 				// 3. Fallback bila endpoint resubmit approval backend gagal
 				if (!res.success) {
-					const isMissingInspectionError =
-						res.message?.toLowerCase().includes("data inspeksi") ||
-						res.message?.toLowerCase().includes("tidak ditemukan");
+					// Sempitkan ke 404 yang benar-benar berarti "asal temuan tidak ada".
+					// Klausa generik "tidak ditemukan" dulu ikut menelan 404 lain (approval /
+					// validasi tidak ketemu) sehingga menutupi penyebab aslinya.
+					const isMissingInspectionError = res.message
+						?.toLowerCase()
+						.includes("data inspeksi");
 
 					if (isMissingInspectionError && updateValSuccess) {
 						setNotification({
 							type: "warning",
-							message:
-								"Data revisi validasi berhasil disimpan ke sistem. Pengajuan approval belum terkirim ke Manajer karena backend mencari data inspeksi (hubungi tim backend).",
+							// Tampilkan pesan backend apa adanya: pesan tetap diganti bikin bug
+							// berikutnya di jalur ini ketelan lagi.
+							message: `Data revisi validasi berhasil disimpan ke sistem, tetapi pengajuan approval belum terkirim ke Manajer. Pesan backend: ${res.message}`,
 						});
 						if (onRefresh) {
 							await onRefresh();
@@ -871,7 +876,6 @@ export default function ManajemenInspeksiClient({
 
 		if (isRevision) {
 			if (!catatan.trim()) return false;
-			if (uploadedFiles.length === 1) return false;
 		} else {
 			if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
 		}
@@ -1791,9 +1795,6 @@ export default function ManajemenInspeksiClient({
 											</div>
 											<span className="text-[11px] text-gray-500 font-medium text-center">
 												Format: JPG, PNG, PDF (Max 5MB)
-												{selectedAsset.statusPersetujuan === "NEED_REVISION"
-													? " — Minimal 2 file jika mengunggah foto baru"
-													: ""}
 											</span>
 
 											{uploadedFiles.length === 0 && (
@@ -1862,14 +1863,6 @@ export default function ManajemenInspeksiClient({
 												* {fileError}
 											</p>
 										)}
-
-										{showValidationErrors &&
-											selectedAsset.statusPersetujuan === "NEED_REVISION" &&
-											uploadedFiles.length === 1 && (
-												<p className="text-[10px] text-[#DC2626] mt-1.5 font-medium">
-													* Minimal 2 file foto jika mengunggah foto baru.
-												</p>
-											)}
 
 										{/* Tampilkan Foto Validasi Lama (Milik User) agar Tidak Hilang / Tak Terlihat */}
 										{selectedAsset.statusPersetujuan === "NEED_REVISION" &&
@@ -2142,7 +2135,16 @@ export default function ManajemenInspeksiClient({
 									.map((att: any, idx: number) => (
 										<div
 											key={`doc-${idx}`}
-											onClick={() => window.open(att.file_url || att.url, "_blank")}
+											onClick={() =>
+												window.open(
+													// Lewat fileUrl() supaya targetnya selalu path same-origin (/api/proxy-image),
+													// bukan URL mentah dari payload. Backend juga mengunci GET /uploads/*
+													// dengan token, jadi path mentah memang tidak bisa dibuka langsung.
+													fileUrl(att.file_url || att.url),
+													"_blank",
+													"noopener,noreferrer",
+												)
+											}
 											className="border border-gray-200 rounded p-2.5 flex flex-col justify-between bg-white cursor-pointer hover:border-[#0A356A] transition-colors group"
 										>
 											<div className="flex items-start gap-2 mb-2">
