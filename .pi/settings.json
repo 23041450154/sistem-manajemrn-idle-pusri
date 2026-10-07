@@ -1,0 +1,4 @@
+{
+  "defaultProvider": "agentrouter",
+  "defaultModel": "deepseek-v4-flash"
+}
