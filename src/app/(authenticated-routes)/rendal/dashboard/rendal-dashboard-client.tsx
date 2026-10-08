@@ -173,12 +173,19 @@ export default function RendalDashboardClient({
 			rule: "#B45309",
 			icon: Wrench,
 		},
+		{
+			label: "Sudah Digunakan",
+			value: reusedCount,
+			caption: "Telah dialokasikan ke unit",
+			rule: "#4F46E5",
+			icon: RefreshCw,
+		},
 	];
 
 	return (
 		<div className="flex flex-col gap-6">
 			{/* 1. Operational KPI Strip */}
-			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
 				{kpis.map((kpi) => (
 					<div
 						key={kpi.label}
