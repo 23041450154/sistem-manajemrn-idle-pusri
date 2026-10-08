@@ -361,7 +361,9 @@ export default function ManajemenInspeksiClient({
 
 		try {
 			const isUtilizable = hasilPemeriksaan === "Layak";
-			const notes = (catatan || rekomendasi || "Hasil validasi").trim();
+			const notes = isUtilizable
+				? catatan.trim()
+				: (catatan || rekomendasi || "Hasil validasi").trim();
 
 			const isRevision = selectedAsset.statusPersetujuan === "NEED_REVISION";
 			let res;
@@ -1700,19 +1702,14 @@ export default function ManajemenInspeksiClient({
 									<div className="col-span-12 md:col-span-6">
 										<label className="block text-[11px] font-semibold text-gray-700 mb-1">
 											Catatan Pemeriksaan{" "}
-											<span
-												className={
-													hasilPemeriksaan === "Tidak Layak" ||
-													selectedAsset.statusPersetujuan === "NEED_REVISION"
-														? "text-[#DC2626]"
-														: ""
-												}
-											>
-												{hasilPemeriksaan === "Tidak Layak" ||
-												selectedAsset.statusPersetujuan === "NEED_REVISION"
-													? "*"
-													: ""}
-											</span>
+											{hasilPemeriksaan === "Tidak Layak" ||
+											selectedAsset.statusPersetujuan === "NEED_REVISION" ? (
+												<span className="text-[#DC2626]">*</span>
+											) : (
+												<span className="text-gray-400 font-normal ml-1">
+													(opsional)
+												</span>
+											)}
 										</label>
 										<textarea
 											rows={2}
@@ -1723,7 +1720,7 @@ export default function ManajemenInspeksiClient({
 												hasilPemeriksaan === "Tidak Layak" ||
 												selectedAsset.statusPersetujuan === "NEED_REVISION"
 													? "Tuliskan catatan pemeriksaan (wajib)..."
-													: "Tuliskan hasil pemeriksaan..."
+													: "Tambahkan catatan jika diperlukan (opsional)..."
 											}
 											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 resize-none transition-all ${
 												(hasilPemeriksaan === "Tidak Layak" ||

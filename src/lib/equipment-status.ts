@@ -109,17 +109,17 @@ export const statusText = (raw?: string | null) =>
  * Satu definisi untuk semua role-view — menggantikan tiga salinan filter
  * magic-number (id === 1..8) yang dulu saling beda hasil.
  */
-export type StatusGroup = "pending" | "repair" | "ready" | "scrap";
+export type StatusGroup = "pending" | "repair" | "ready" | "scrap" | "reused";
 
 const STATUS_GROUP: Record<string, StatusGroup> = {
 	REGISTERED: "pending",
+	VALIDATED: "pending",
 	REPAIR: "repair",
 	REPAIR_COMPLETED: "repair",
 	REVALIDATION: "repair",
 	REJECTED: "repair",
-	VALIDATED: "ready",
 	READY_TO_USE: "ready",
-	REUSED: "ready",
+	REUSED: "reused",
 	DISPOSAL_RECOMMENDED: "scrap",
 	SCRAP_REQUESTED: "scrap",
 	SCRAP_REQUEST: "scrap",

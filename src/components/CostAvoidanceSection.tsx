@@ -50,6 +50,7 @@ export function CostAvoidanceSection() {
 	let dalamPerbaikanCount = 0;
 	let readyCount = 0;
 	let scrapCount = 0;
+	let reusedCount = 0;
 
 	equipments.forEach((e: Equipment) => {
 		const eqId = String(e.id || "");
@@ -64,11 +65,15 @@ export function CostAvoidanceSection() {
 		else if (group === "repair") {
 			dalamPerbaikanCount++;
 		}
-		// 3. Ready to Use / Validated / Reused
+		// 3. Ready to Use
 		else if (group === "ready") {
 			readyCount++;
 		}
-		// 4. Menunggu Validasi (Registered / status tidak dikenal)
+		// 4. Sudah Digunakan
+		else if (group === "reused") {
+			reusedCount++;
+		}
+		// 5. Menunggu Validasi (Registered / Validated / status tidak dikenal)
 		else {
 			menungguValidasiCount++;
 		}
@@ -136,6 +141,7 @@ export function CostAvoidanceSection() {
 		{ name: "Dalam Perbaikan", value: dalamPerbaikanCount, color: "#ef4444" },
 		{ name: "Siap Re-use / Idle", value: readyCount, color: "#10b981" },
 		{ name: "Scrap", value: scrapCount, color: "#8b5cf6" },
+		{ name: "Sudah Digunakan", value: reusedCount, color: "#6366f1" },
 	].filter((item) => item.value > 0);
 
 	if (pieData.length === 0) {

@@ -14,7 +14,7 @@ import { UpcomingInspections } from "@/components/UpcomingInspections";
 import { RecentActivities } from "@/components/RecentActivities";
 import { buttonVariants } from "@/components/ui/button";
 import { getEquipments, getInspections, getObjectTypes } from "@/action/api";
-import { statusGroup } from "@/lib/equipment-status";
+import { statusGroup, type StatusGroup } from "@/lib/equipment-status";
 
 export default async function RendalDashboard() {
   // Satu fetch per sumber data untuk seluruh dashboard (kartu + chart + tabel).
@@ -26,7 +26,7 @@ export default async function RendalDashboard() {
   const equipmentList = (equipments as { status?: { name?: string } }[]) || [];
 
   const totalPeralatan = equipmentList.length;
-  const countBy = (group: "pending" | "repair" | "ready" | "scrap") =>
+  const countBy = (group: StatusGroup) =>
     equipmentList.filter((e) => statusGroup(e) === group).length;
   // Kartu mengikuti kelompok status yang sama dengan chart & dashboard lain.
   const idleCount = countBy("pending");

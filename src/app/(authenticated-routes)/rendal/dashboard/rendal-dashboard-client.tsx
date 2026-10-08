@@ -53,12 +53,14 @@ export default function RendalDashboardClient({
 		dalamPerbaikanCount,
 		readyCount,
 		scrapCount,
+		reusedCount,
 		menungguRevalidasiCount,
 	} = useMemo(() => {
 		let menungguValidasi = 0;
 		let dalamPerbaikan = 0;
 		let ready = 0;
 		let scrap = 0;
+		let reused = 0;
 
 		equipments.forEach((e: any) => {
 			const eqId = String(e.id || "");
@@ -70,6 +72,8 @@ export default function RendalDashboardClient({
 				dalamPerbaikan++;
 			} else if (group === "ready") {
 				ready++;
+			} else if (group === "reused") {
+				reused++;
 			} else {
 				menungguValidasi++;
 			}
@@ -85,6 +89,7 @@ export default function RendalDashboardClient({
 			dalamPerbaikanCount: dalamPerbaikan,
 			readyCount: ready,
 			scrapCount: scrap,
+			reusedCount: reused,
 			menungguRevalidasiCount: revalPending,
 		};
 	}, [equipments, disposalEquipmentIds, revalidations]);
@@ -98,13 +103,14 @@ export default function RendalDashboardClient({
 			{ name: "Siap Digunakan", value: readyCount, color: "#059669" },
 			{ name: "Dalam Perbaikan", value: dalamPerbaikanCount, color: "#B45309" },
 			{ name: "Scrap / Disposal", value: scrapCount, color: "#DC2626" },
+			{ name: "Sudah Digunakan", value: reusedCount, color: "#4F46E5" },
 		].filter((item) => item.value > 0);
 
 		if (data.length === 0) {
 			data.push({ name: "Belum Ada Data", value: 1, color: "#E6E8EA" });
 		}
 		return data;
-	}, [menungguValidasiCount, readyCount, dalamPerbaikanCount, scrapCount]);
+	}, [menungguValidasiCount, readyCount, dalamPerbaikanCount, scrapCount, reusedCount]);
 
 	// 3. Sebaran Aset per Plant
 	const plantDistribution = useMemo(() => {
@@ -220,10 +226,10 @@ export default function RendalDashboardClient({
 										<span className="w-1 h-8 rounded-full bg-[#0556B3] shrink-0" />
 										<div>
 											<p className="font-semibold text-[#0F172A]">
-												{menungguValidasiCount} aset baru menunggu jadwal inspeksi
+												{menungguValidasiCount} aset dalam antrean / proses validasi
 											</p>
 											<p className="text-[12px] text-[#64748B] mt-0.5">
-												Aset baru diregistrasi dan memerlukan validasi teknis oleh tim inspeksi.
+												Aset baru diregistrasi atau dalam tahapan validasi teknis.
 											</p>
 										</div>
 									</div>
