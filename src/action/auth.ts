@@ -19,7 +19,9 @@ export type CurrentUserResult = {
 
 // Ambil user aktif via {BE}/api/auth/me. Pemetaan status:
 //  200 + user -> valid; 401 -> expired; 403 -> forbidden (tak terdaftar);
-//  jaringan mati -> error. Tidak pernah melempar.
+//  503 (SSO gateway sibuk) / jaringan mati -> error (JANGAN start SSO).
+//  Tanpa pemetaan 503, halaman "/" memulai redirect ke SSO saat gateway sibuk,
+//  pulang dengan ?sso=1, masih 503 -> /error?type=sso lagi.
 export async function getCurrentUserAction(): Promise<CurrentUserResult> {
   const res = await apiJson<User>("/api/auth/me");
 
@@ -29,8 +31,8 @@ export async function getCurrentUserAction(): Promise<CurrentUserResult> {
   if (res.status === 403) {
     return { status: false, forbidden: true, message: "tidak memiliki akses", user: null, token: null };
   }
-  if (res.status === 0) {
-    // Gangguan jaringan / backend tak merespons.
+  if (res.status === 0 || res.status === 503) {
+    // Gangguan jaringan / backend tak merespons / SSO gateway sibuk.
     return { status: false, error: true, message: res.error ?? "backend tidak merespons", user: null, token: null };
   }
   const user = res.data as User | undefined;
