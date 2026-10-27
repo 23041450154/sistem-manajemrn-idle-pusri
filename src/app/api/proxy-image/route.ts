@@ -28,7 +28,9 @@ export async function GET(request: NextRequest) {
 		return new Response("url tidak valid", { status: 400 });
 	}
 
-	const token = (await cookies()).get("token")?.value;
+	const token =
+		(await cookies()).get("access_token")?.value ??
+		(await cookies()).get("token")?.value;
 	if (!token) {
 		return new Response("Unauthorized", { status: 401 });
 	}
