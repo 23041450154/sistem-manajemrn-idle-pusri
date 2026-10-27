@@ -17,5 +17,5 @@ export async function clearAuthCookies() {
 }
 
 export async function hasAuthToken(): Promise<boolean> {
-  return Boolean((await cookies()).get("token")?.value);
+  return Boolean((await cookies()).get("access_token")?.value);
 }
