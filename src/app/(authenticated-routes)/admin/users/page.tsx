@@ -217,6 +217,7 @@ export default function UserManagementPage() {
 								<tr>
 									<th className="px-4 py-2.5">Pengguna</th>
 									<th className="px-4 py-2.5">NPP</th>
+									<th className="px-4 py-2.5">Username</th>
 									<th className="px-4 py-2.5">Role</th>
 									<th className="px-4 py-2.5">Dibuat</th>
 									<th className="px-4 py-2.5 text-right">Aksi</th>
@@ -233,6 +234,9 @@ export default function UserManagementPage() {
 										</td>
 										<td className="px-4 py-2.5 font-mono text-xs text-[#0A356A]">
 											{user.npp}
+										</td>
+										<td className="px-4 py-2.5 font-mono text-xs text-slate-700">
+											{user.preferred_username || "-"}
 										</td>
 										<td className="px-4 py-2.5 text-slate-700">
 											{ROLE_LABEL[user.role as Role] || user.role}
