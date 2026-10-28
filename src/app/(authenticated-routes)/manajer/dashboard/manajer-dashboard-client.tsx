@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
-import Link from "next/link";
 import {
 	CheckSquare,
 	Server,
@@ -21,9 +20,6 @@ import {
 	FileSpreadsheet,
 	ChevronDown,
 	ChevronUp,
-	Clock,
-	CheckCircle2,
-	XCircle,
 } from "lucide-react";
 import {
 	ResponsiveContainer,
@@ -414,318 +410,115 @@ export default function ManajerDashboardClient({
 		};
 	}, [validationApprovals, reuseRequests, disposals]);
 
-	// 4. Hitung Riwayat Keputusan Terpisah (Approved / Rejected)
-	const historyValidations = useMemo(() => {
-		return validationApprovals.filter((a: any) => {
-			const st = (a.approval_status || "").toUpperCase();
-			return st === "APPROVED" || st === "DISETUJUI" || st === "REJECTED" || st === "REVISION_REQUIRED" || st === "REVISION";
-		});
-	}, [validationApprovals]);
-
-	const historyReuses = useMemo(() => {
-		return reuseRequests.filter((r: any) => {
-			const st = (r.approval_status || r.status || "").toUpperCase();
-			return st === "APPROVED" || st === "DISETUJUI" || st === "REJECTED" || st === "DITOLAK";
-		});
-	}, [reuseRequests]);
-
-	const historyScraps = useMemo(() => {
-		return disposals.filter((d: any) => {
-			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
-			return st === "APPROVED" || st === "DISETUJUI" || st === "REJECTED" || st === "DITOLAK";
-		});
-	}, [disposals]);
-
-	const totalDecidedCount =
-		historyValidations.length + historyReuses.length + historyScraps.length;
-
-	const totalApprovedCount = useMemo(() => {
-		let count = 0;
-		validationApprovals.forEach((a: any) => {
-			const st = (a.approval_status || "").toUpperCase();
-			if (st === "APPROVED" || st === "DISETUJUI") count++;
-		});
-		reuseRequests.forEach((r: any) => {
-			const st = (r.approval_status || r.status || "").toUpperCase();
-			if (st === "APPROVED" || st === "DISETUJUI") count++;
-		});
-		disposals.forEach((d: any) => {
-			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
-			if (st === "APPROVED" || st === "DISETUJUI") count++;
-		});
-		return count;
-	}, [validationApprovals, reuseRequests, disposals]);
-
-	const totalRejectedCount = useMemo(() => {
-		let count = 0;
-		validationApprovals.forEach((a: any) => {
-			const st = (a.approval_status || "").toUpperCase();
-			if (st === "REJECTED" || st === "REVISION_REQUIRED" || st === "REVISION") count++;
-		});
-		reuseRequests.forEach((r: any) => {
-			const st = (r.approval_status || r.status || "").toUpperCase();
-			if (st === "REJECTED" || st === "DITOLAK") count++;
-		});
-		disposals.forEach((d: any) => {
-			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
-			if (st === "REJECTED" || st === "DITOLAK") count++;
-		});
-		return count;
-	}, [validationApprovals, reuseRequests, disposals]);
-
-	// Log Riwayat Keputusan Terkini (Murni hanya yang sudah diputuskan: Disetujui / Ditolak)
+	// Log Keputusan Terkini
 	const recentDecisions = useMemo(() => {
-		const list: { text: string; time: string; timestamp: number; status: "APPROVED" | "REJECTED"; type: string }[] = [];
+		const list: { text: string; time: string; timestamp: number; status: "APPROVED" | "REJECTED" | "PENDING" }[] = [];
 
 		validationApprovals.forEach((a: any) => {
 			const name = a.equipment_name || a.equipment?.name || "Aset";
 			const code = a.equipment_code || a.equipment?.equipment_code || "";
-			const st = (a.approval_status || "").toUpperCase();
-			const t = a.updated_at || a.created_at;
-			if (st === "APPROVED" || st === "DISETUJUI") {
-				list.push({
-					text: `Persetujuan validasi kelayakan: ${name} (${code}) disetujui`,
-					time: t ? new Date(t).toLocaleDateString("id-ID") : "Baru saja",
-					timestamp: t ? new Date(t).getTime() : 0,
-					status: "APPROVED",
-					type: "Validasi",
-				});
-			} else if (st === "REJECTED" || st === "REVISION_REQUIRED" || st === "REVISION") {
-				list.push({
-					text: `Persetujuan validasi: ${name} (${code}) ditolak / revisi`,
-					time: t ? new Date(t).toLocaleDateString("id-ID") : "Baru saja",
-					timestamp: t ? new Date(t).getTime() : 0,
-					status: "REJECTED",
-					type: "Validasi",
-				});
-			}
+			const st = (a.approval_status || "PENDING").toUpperCase();
+			let text = "";
+			if (st === "APPROVED") text = `Persetujuan validasi kelayakan: ${name} (${code}) disetujui`;
+			else if (st === "REJECTED") text = `Persetujuan validasi: ${name} (${code}) ditolak/revisi`;
+			else text = `Pengajuan validasi masuk: ${name} (${code}) menunggu review`;
+			const t = a.updated_at || a.request_date || a.created_at;
+			list.push({
+				text,
+				time: t ? new Date(t).toLocaleDateString("id-ID") : "Baru saja",
+				timestamp: t ? new Date(t).getTime() : 0,
+				status: st as any,
+			});
 		});
 
 		reuseRequests.forEach((r: any) => {
 			const eq = r.equipment || {};
 			const name = eq.name || r.equipment_name || "Peralatan";
-			const st = (r.approval_status || r.status || "").toUpperCase();
+			const st = (r.approval_status || "PENDING").toUpperCase();
+			let text = "";
+			if (st === "APPROVED") text = `Permintaan reuse ${name} disetujui untuk ${r.requesting_plant || "Unit Operasi"}`;
+			else text = `Permohonan pinjam pakai ${name} diajukan oleh ${r.requested_by_user?.name || "Unit Kerja"}`;
 			const t = r.updated_at || r.created_at;
-			if (st === "APPROVED" || st === "DISETUJUI") {
-				list.push({
-					text: `Permohonan pinjam pakai ${name} disetujui untuk ${r.requesting_plant || "Unit Operasi"}`,
-					time: t ? new Date(t).toLocaleDateString("id-ID") : "Baru saja",
-					timestamp: t ? new Date(t).getTime() : 0,
-					status: "APPROVED",
-					type: "Peminjaman",
-				});
-			} else if (st === "REJECTED" || st === "DITOLAK") {
-				list.push({
-					text: `Permohonan pinjam pakai ${name} ditolak`,
-					time: t ? new Date(t).toLocaleDateString("id-ID") : "Baru saja",
-					timestamp: t ? new Date(t).getTime() : 0,
-					status: "REJECTED",
-					type: "Peminjaman",
-				});
-			}
+			list.push({
+				text,
+				time: t ? new Date(t).toLocaleDateString("id-ID") : "Baru saja",
+				timestamp: t ? new Date(t).getTime() : 0,
+				status: st as any,
+			});
 		});
 
-		disposals.forEach((d: any) => {
-			const eq = d.equipment || {};
-			const name = eq.name || d.equipment_name || "Aset Idle";
-			const code = eq.equipment_code || d.equipment_code || d.disposal_number || "";
-			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
-			const t = d.updated_at || d.created_at;
-			if (st === "APPROVED" || st === "DISETUJUI") {
-				list.push({
-					text: `Usulan scrap / disposal ${name} (${code}) disetujui`,
-					time: t ? new Date(t).toLocaleDateString("id-ID") : "Baru saja",
-					timestamp: t ? new Date(t).getTime() : 0,
-					status: "APPROVED",
-					type: "Scrap",
-				});
-			} else if (st === "REJECTED" || st === "DITOLAK") {
-				list.push({
-					text: `Usulan scrap / disposal ${name} (${code}) ditolak`,
-					time: t ? new Date(t).toLocaleDateString("id-ID") : "Baru saja",
-					timestamp: t ? new Date(t).getTime() : 0,
-					status: "REJECTED",
-					type: "Scrap",
-				});
-			}
-		});
-
-		return list.sort((a, b) => b.timestamp - a.timestamp).slice(0, 5);
-	}, [validationApprovals, reuseRequests, disposals]);
+		return list.sort((a, b) => b.timestamp - a.timestamp).slice(0, 4);
+	}, [validationApprovals, reuseRequests]);
 
 	const totalPendingApprovals =
 		pendingValidations.length + pendingReuses.length + pendingScraps.length;
 
+	const kpis = [
+		{
+			label: "Total Antrean Persetujuan",
+			value: totalPendingApprovals.toString(),
+			caption: "Menunggu review & keputusan",
+			rule: "#0A356A",
+			icon: CheckSquare,
+		},
+		{
+			label: "Persetujuan Validasi",
+			value: validationApprovals.length.toString(),
+			caption:
+				pendingValidations.length > 0
+					? `${pendingValidations.length} menunggu review`
+					: "0 antrean baru",
+			rule: "#0556B3",
+			icon: Server,
+		},
+		{
+			label: "Persetujuan Peminjaman",
+			value: reuseRequests.length.toString(),
+			caption:
+				pendingReuses.length > 0
+					? `${pendingReuses.length} permohonan baru`
+					: "0 permohonan baru",
+			rule: "#B45309",
+			icon: ArrowUpRight,
+		},
+		{
+			label: "Persetujuan Scrap & Disposal",
+			value: disposals.length.toString(),
+			caption:
+				pendingScraps.length > 0
+					? `${pendingScraps.length} usulan penghapusan`
+					: "0 usulan penghapusan",
+			rule: "#DC2626",
+			icon: Trash2,
+		},
+	];
+
 	return (
 		<div className="flex flex-col gap-6">
-			{/* 1. Pemisahan Tegas: Card Menunggu Review & Card Riwayat Keputusan */}
-			<div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-				{/* CARD 1: MENUNGGU REVIEW */}
-				<div className="bg-white rounded-lg border border-[#E6E8EA] border-t-4 border-t-[#0556B3] p-5 shadow-sm flex flex-col justify-between">
-					<div>
-						<div className="flex items-center justify-between border-b border-[#F1F5F9] pb-3 mb-4">
-							<div className="flex items-center gap-2.5">
-								<span className="p-2 bg-[#EFF6FF] text-[#0556B3] rounded-lg">
-									<Clock className="w-5 h-5" />
-								</span>
-								<div>
-									<h2 className="text-[15px] font-bold text-[#0F172A]">Menunggu Review</h2>
-									<p className="text-[11px] text-[#64748B]">Antrean pengajuan aktif yang membutuhkan keputusan persetujuan</p>
-								</div>
-							</div>
-							<span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#EFF6FF] text-[#0556B3] border border-[#BFDBFE]">
-								{totalPendingApprovals} Antrean Aktif
-							</span>
+			{/* 1. Executive KPI Strip */}
+			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+				{kpis.map((kpi) => (
+					<div
+						key={kpi.label}
+						className="bg-white rounded border border-[#E6E8EA] border-l-2 p-4 flex items-start justify-between gap-3 shadow-none"
+						style={{ borderLeftColor: kpi.rule }}
+					>
+						<div className="min-w-0">
+							<p className="text-[12px] font-medium text-[#64748B] truncate">
+								{kpi.label}
+							</p>
+							<p className="text-[28px] leading-none font-semibold text-[#0F172A] tabular-nums mt-2 tracking-[-0.02em]">
+								{kpi.value}
+							</p>
+							<p className="text-[12px] text-[#64748B] mt-1.5">{kpi.caption}</p>
 						</div>
-
-						{/* Grid Sub-items Menunggu Review */}
-						<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-							{/* Item 1: Validasi */}
-							<Link
-								href="/manajer/approve"
-								className="group p-3 rounded-lg border border-[#E2E8F0] hover:border-[#0556B3] hover:bg-[#F8FAFC] transition-all flex flex-col justify-between"
-							>
-								<div className="flex items-center justify-between">
-									<span className="text-[11px] font-semibold text-[#475569]">Validasi</span>
-									<Server className="w-4 h-4 text-[#0556B3] group-hover:scale-110 transition-transform" />
-								</div>
-								<div className="mt-3">
-									<p className="text-[24px] font-bold text-[#0F172A] tabular-nums leading-none">
-										{pendingValidations.length}
-									</p>
-									<p className="text-[11px] text-[#64748B] mt-1.5 group-hover:text-[#0556B3] transition-colors">
-										{pendingValidations.length > 0 ? `${pendingValidations.length} antrean baru` : "0 antrean baru"}
-									</p>
-								</div>
-							</Link>
-
-							{/* Item 2: Peminjaman */}
-							<Link
-								href="/manajer/peminjaman"
-								className="group p-3 rounded-lg border border-[#E2E8F0] hover:border-[#B45309] hover:bg-[#F8FAFC] transition-all flex flex-col justify-between"
-							>
-								<div className="flex items-center justify-between">
-									<span className="text-[11px] font-semibold text-[#475569]">Peminjaman</span>
-									<ArrowUpRight className="w-4 h-4 text-[#B45309] group-hover:scale-110 transition-transform" />
-								</div>
-								<div className="mt-3">
-									<p className="text-[24px] font-bold text-[#0F172A] tabular-nums leading-none">
-										{pendingReuses.length}
-									</p>
-									<p className="text-[11px] text-[#64748B] mt-1.5 group-hover:text-[#B45309] transition-colors">
-										{pendingReuses.length > 0 ? `${pendingReuses.length} permohonan baru` : "0 permohonan baru"}
-									</p>
-								</div>
-							</Link>
-
-							{/* Item 3: Scrap & Disposal */}
-							<Link
-								href="/manajer/scrap"
-								className="group p-3 rounded-lg border border-[#E2E8F0] hover:border-[#DC2626] hover:bg-[#F8FAFC] transition-all flex flex-col justify-between"
-							>
-								<div className="flex items-center justify-between">
-									<span className="text-[11px] font-semibold text-[#475569]">Scrap & Disposal</span>
-									<Trash2 className="w-4 h-4 text-[#DC2626] group-hover:scale-110 transition-transform" />
-								</div>
-								<div className="mt-3">
-									<p className="text-[24px] font-bold text-[#0F172A] tabular-nums leading-none">
-										{pendingScraps.length}
-									</p>
-									<p className="text-[11px] text-[#64748B] mt-1.5 group-hover:text-[#DC2626] transition-colors">
-										{pendingScraps.length > 0 ? `${pendingScraps.length} usulan penghapusan` : "0 usulan penghapusan"}
-									</p>
-								</div>
-							</Link>
-						</div>
+						<kpi.icon
+							className="w-4 h-4 shrink-0 mt-0.5"
+							style={{ color: kpi.rule }}
+							aria-hidden="true"
+						/>
 					</div>
-
-					<div className="mt-4 pt-3 border-t border-[#F1F5F9] flex items-center justify-between text-[11px] text-[#64748B]">
-						<span>Klik kartu untuk langsung menuju antrean persetujuan</span>
-						<span className="font-semibold text-[#0556B3]">Inbox Persetujuan &rarr;</span>
-					</div>
-				</div>
-
-				{/* CARD 2: RIWAYAT KEPUTUSAN */}
-				<div className="bg-white rounded-lg border border-[#E6E8EA] border-t-4 border-t-[#059669] p-5 shadow-sm flex flex-col justify-between">
-					<div>
-						<div className="flex items-center justify-between border-b border-[#F1F5F9] pb-3 mb-4">
-							<div className="flex items-center gap-2.5">
-								<span className="p-2 bg-[#ECFDF5] text-[#059669] rounded-lg">
-									<ShieldCheck className="w-5 h-5" />
-								</span>
-								<div>
-									<h2 className="text-[15px] font-bold text-[#0F172A]">Riwayat Keputusan</h2>
-									<p className="text-[11px] text-[#64748B]">Rekapitulasi seluruh pengajuan yang telah selesai diputuskan</p>
-								</div>
-							</div>
-							<span className="px-2.5 py-1 rounded-full text-[11px] font-bold bg-[#ECFDF5] text-[#059669] border border-[#A7F3D0]">
-								{totalDecidedCount} Telah Diputuskan
-							</span>
-						</div>
-
-						{/* Grid Sub-items Riwayat Keputusan */}
-						<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-							{/* Item 1: Disetujui */}
-							<div className="p-3 rounded-lg border border-[#A7F3D0] bg-[#ECFDF5]/50 flex flex-col justify-between">
-								<div className="flex items-center justify-between">
-									<span className="text-[11px] font-semibold text-[#065F46]">Disetujui</span>
-									<CheckCircle2 className="w-4 h-4 text-[#059669]" />
-								</div>
-								<div className="mt-3">
-									<p className="text-[24px] font-bold text-[#064E3B] tabular-nums leading-none">
-										{totalApprovedCount}
-									</p>
-									<p className="text-[11px] text-[#047857] mt-1.5 font-medium">
-										Keputusan disetujui
-									</p>
-								</div>
-							</div>
-
-							{/* Item 2: Ditolak / Revisi */}
-							<div className="p-3 rounded-lg border border-[#FECDD3] bg-[#FEF2F2]/50 flex flex-col justify-between">
-								<div className="flex items-center justify-between">
-									<span className="text-[11px] font-semibold text-[#991B1B]">Ditolak / Revisi</span>
-									<XCircle className="w-4 h-4 text-[#DC2626]" />
-								</div>
-								<div className="mt-3">
-									<p className="text-[24px] font-bold text-[#7F1D1D] tabular-nums leading-none">
-										{totalRejectedCount}
-									</p>
-									<p className="text-[11px] text-[#B91C1C] mt-1.5 font-medium">
-										Perlu perbaikan / ditolak
-									</p>
-								</div>
-							</div>
-
-							{/* Item 3: Rincian per Modul */}
-							<div className="p-3 rounded-lg border border-[#E2E8F0] bg-[#F8FAFC] flex flex-col justify-between">
-								<div className="flex items-center justify-between">
-									<span className="text-[11px] font-semibold text-[#475569]">Rincian Modul</span>
-									<FileSpreadsheet className="w-4 h-4 text-[#64748B]" />
-								</div>
-								<div className="mt-2 space-y-1 text-[11px] text-[#475569]">
-									<div className="flex justify-between items-center">
-										<span>Validasi:</span>
-										<span className="font-bold text-[#0F172A] tabular-nums bg-white px-1.5 py-0.5 rounded border border-[#E2E8F0]">{historyValidations.length}</span>
-									</div>
-									<div className="flex justify-between items-center">
-										<span>Peminjaman:</span>
-										<span className="font-bold text-[#0F172A] tabular-nums bg-white px-1.5 py-0.5 rounded border border-[#E2E8F0]">{historyReuses.length}</span>
-									</div>
-									<div className="flex justify-between items-center">
-										<span>Scrap:</span>
-										<span className="font-bold text-[#0F172A] tabular-nums bg-white px-1.5 py-0.5 rounded border border-[#E2E8F0]">{historyScraps.length}</span>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-
-					<div className="mt-4 pt-3 border-t border-[#F1F5F9] flex items-center justify-between text-[11px] text-[#64748B]">
-						<span>Data audit keputusan tersimpan di riwayat sistem</span>
-						<span className="font-semibold text-[#059669]">Riwayat Lengkap &rarr;</span>
-					</div>
-				</div>
+				))}
 			</div>
 
 			{/* 2. Main Section: Stock Market Style Financial Trend Chart */}
@@ -1182,38 +975,24 @@ export default function ManajerDashboardClient({
 								</p>
 							) : (
 								recentDecisions.map((dec, idx) => (
-									<div key={idx} className="py-3 flex items-start justify-between gap-3">
-										<div className="flex items-start gap-2.5 min-w-0">
-											<span
-												className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
-													dec.status === "APPROVED"
-														? "bg-[#059669]"
-														: "bg-[#DC2626]"
-												}`}
-											/>
-											<div className="min-w-0">
-												<div className="flex items-center gap-2">
-													<span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-gray-100 text-[#475569] border border-[#E2E8F0]">
-														{dec.type}
-													</span>
-													<span className="text-[10px] text-[#64748B] font-mono">
-														{dec.time}
-													</span>
-												</div>
-												<p className="text-[12px] text-[#0F172A] font-medium leading-snug mt-1">
-													{dec.text}
-												</p>
-											</div>
-										</div>
+									<div key={idx} className="py-3 flex items-start gap-2.5">
 										<span
-											className={`shrink-0 text-[10.5px] font-semibold px-2 py-0.5 rounded border ${
+											className={`w-2 h-2 rounded-full mt-1.5 shrink-0 ${
 												dec.status === "APPROVED"
-													? "bg-[#ECFDF5] text-[#059669] border-[#A7F3D0]"
-													: "bg-[#FEF2F2] text-[#DC2626] border-[#FECDD3]"
+													? "bg-[#059669]"
+													: dec.status === "REJECTED"
+														? "bg-[#DC2626]"
+														: "bg-[#0556B3]"
 											}`}
-										>
-											{dec.status === "APPROVED" ? "Disetujui" : "Ditolak / Revisi"}
-										</span>
+										/>
+										<div className="flex-1 min-w-0">
+											<p className="text-[12px] text-[#0F172A] font-medium leading-snug">
+												{dec.text}
+											</p>
+											<span className="text-[10px] text-[#64748B] block mt-0.5 font-mono">
+												{dec.time}
+											</span>
+										</div>
 									</div>
 								))
 							)}
