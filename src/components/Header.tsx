@@ -30,11 +30,10 @@ export function Header({ user }: { user?: HeaderUser }) {
     currentUser?.contact_npp ||
     currentUser?.contactNpp ||
     "";
-  const npp = rawNpp
-    ? String(rawNpp).toUpperCase().startsWith("NPP")
-      ? String(rawNpp)
-      : `NPP: ${rawNpp}`
+  const cleanNpp = rawNpp
+    ? String(rawNpp).replace(/^(NPP|No\.?\s*Badge|No\.?\s*Bagde):?\s*/i, "").trim()
     : "";
+  const npp = cleanNpp ? `No. Bagde: ${cleanNpp}` : "";
   const initial = name.charAt(0).toUpperCase();
 
   return (
