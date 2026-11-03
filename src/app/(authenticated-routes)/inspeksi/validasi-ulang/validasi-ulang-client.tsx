@@ -1187,7 +1187,7 @@ export default function InspeksiValidasiUlangClient({
 												<>
 													<UploadCloud className="w-5 h-5 text-gray-400 mb-1" />
 													<p className="text-[12px] font-bold text-[#0A356A] text-center">
-														Klik untuk Unggah Foto Bukti
+														Klik untuk Unggah File Bukti
 													</p>
 													<p className="text-[10px] text-gray-500 text-center font-medium">
 														JPG, PNG, PDF maks 5 MB

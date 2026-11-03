@@ -17,6 +17,7 @@ export interface KatalogItem {
   condition: string;
   statusLabel: string;
   state: EquipmentState;
+  funcLoc?: string;
   storageLocation?: string;
   imageUrl?: string;
   estimatedReuseValue?: number;
@@ -24,7 +25,6 @@ export interface KatalogItem {
 
 export interface KatalogDetail extends KatalogItem {
   plantDescription?: string;
-  funcLoc?: string;
   idleReason?: string;
   idleSince?: string;
   vendor?: string;

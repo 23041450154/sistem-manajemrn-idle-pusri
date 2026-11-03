@@ -16,9 +16,10 @@ import {
 import Link from "next/link";
 import {
 	createEquipment,
-	getEquipmentCodes,
+	searchSapEquipment,
 	updateEquipment,
 	uploadAttachment,
+	type SapEquipmentRow,
 } from "@/action/api";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
@@ -28,13 +29,14 @@ import AutocompleteInput, {
 } from "@/components/AutocompleteInput";
 
 export interface MasterEquipmentCode {
-	id: number;
-	code: string;
+	// Baris SAP live; FK lokal tidak dikirim backend lagi — plant/funcloc/object type
+	// dikembalikan sebagai STRING SAP dan di-resolve ke ID master lokal di FE.
+	equipment: string;
 	description: string;
-	// FK opsional dari backend — dipakai auto-fill kategori/plant/funcloc saat kode aset dipilih.
-	object_type_id?: number;
-	plant_id?: number;
-	func_loc_id?: number;
+	maintenance_plant: string;
+	functional_location: string;
+	object_type: string;
+	master_resolved: boolean;
 }
 
 export interface MasterOption {
@@ -73,6 +75,24 @@ const EMPTY_FORM: RegisterInitialData = {
 	storageLocationId: "",
 	notes: "",
 };
+
+/** Autocomplete dari baris SAP: satu sumber data, dua tampilan (kode-dulu / nama-dulu). */
+function toCodeOptions(rows: SapEquipmentRow[]): AutocompleteOption[] {
+	return rows.map((r) => ({
+		value: r.equipment,
+		label: r.equipment,
+		sublabel: r.description,
+		raw: r,
+	}));
+}
+function toNameOptions(rows: SapEquipmentRow[]): AutocompleteOption[] {
+	return rows.map((r) => ({
+		value: r.description,
+		label: r.description,
+		sublabel: r.equipment,
+		raw: r,
+	}));
+}
 
 /** Input rupiah dengan prefix Rp + pemisah ribuan id-ID (opsional, tanpa validasi wajib). */
 function RupiahField({
@@ -123,7 +143,7 @@ export default function RegisterEquipmentClient({
 	plants: MasterOption[];
 	storageLocations: MasterOption[];
 	funcLocs: MasterOption[];
-	initialEquipmentCodes?: MasterEquipmentCode[];
+	initialEquipmentCodes?: SapEquipmentRow[];
 	initialData: RegisterInitialData | null;
 }) {
 	const router = useRouter();
@@ -148,46 +168,36 @@ export default function RegisterEquipmentClient({
 		initialData ?? EMPTY_FORM,
 	);
 
-	// Kode Aset/Tag: dropdown dari master backend (/equipment-codes).
-	// Inisialisasi awal langsung dari server component agar instan dan tidak kedip/kosong.
+	// Kode Aset/Tag & Nama Peralatan: autocomplete DUA ARAH dari SAP live
+	// (/api/sap/equipment — sumber tunggal, keyword dicocokkan kode+deskripsi
+	// sekaligus di backend, jadi satu state hasil untuk kedua input).
 	const [codeOptions, setCodeOptions] = useState<AutocompleteOption[]>(() =>
-		initialEquipmentCodes.map((r) => ({
-			id: r.id,
-			value: r.code,
-			label: r.code,
-			sublabel: r.description,
-			raw: r,
-		})),
+		toCodeOptions(initialEquipmentCodes),
 	);
+	const [nameOptions, setNameOptions] = useState<AutocompleteOption[]>(() =>
+		toNameOptions(initialEquipmentCodes),
+	);
+	// Fetch ulang tiap keyword berubah; kedua daftar opsi diisi dari hasil yang sama.
+	const [sapQuery, setSapQuery] = useState("");
 
 	useEffect(() => {
-		const q = formData.equipmentCode.trim();
 		const t = setTimeout(
 			async () => {
-				const rows = await getEquipmentCodes(q || undefined);
-				if (Array.isArray(rows) && rows.length > 0) {
-					setCodeOptions((prev) => {
-						const map = new Map<string, AutocompleteOption>();
-						// Simpan daftar opsi sebelumnya agar pencarian lokal tetap kaya
-						prev.forEach((opt) => map.set(String(opt.value || opt.label), opt));
-						// Masukkan opsi baru dari respon backend
-						rows.forEach((r) =>
-							map.set(r.code, {
-								id: r.id,
-								value: r.code,
-								label: r.code,
-								sublabel: r.description,
-								raw: r,
-							}),
-						);
-						return Array.from(map.values());
-					});
+				const rows = await searchSapEquipment(sapQuery || undefined, 20);
+				if (rows.length > 0) {
+					setCodeOptions(toCodeOptions(rows));
+					setNameOptions(toNameOptions(rows));
 				}
 			},
-			q ? 200 : 0,
+			sapQuery ? 300 : 0,
 		);
 		return () => clearTimeout(t);
-	}, [formData.equipmentCode]);
+	}, [sapQuery]);
+
+	const handleSapQueryChange = (value: string) => {
+		// Debounce keyword SAP di sini — dipicu dari input kode maupun input nama.
+		setSapQuery(value);
+	};
 
 	// Kode aset yang sedang auto-fill field turunannya (nama/kategori/plant/funcloc);
 	// null = belum ada auto-fill. Dipakai untuk membersihkan field saat kode dilepas.
@@ -199,6 +209,39 @@ export default function RegisterEquipmentClient({
 		funcLocId: string;
 	} | null>(null);
 
+	// Plant/funcloc/object type dari SAP berupa string — resolve ke ID master lokal
+	// by name (master lokal adalah hasil sync SAP, jadi namanya identik).
+	// masterResolved=false berarti FK lokal belum ada: field dibiarkan kosong agar
+	// user tahu (dan backend menolak registrasinya sampai admin sync master).
+	const applySapRow = (raw: SapEquipmentRow) => {
+		const objectTypeId = String(
+			objectTypes.find((o) => o.name === raw.object_type)?.id ?? "",
+		);
+		const plantId = String(
+			plants.find((p) => p.name === raw.maintenance_plant)?.id ?? "",
+		);
+		const funcLocId = String(
+			funcLocs.find((f) => f.name === raw.functional_location)?.id ?? "",
+		);
+		const name = raw.description || "";
+		autoFilledRef.current = {
+			code: raw.equipment,
+			name,
+			objectTypeId,
+			plantId,
+			funcLocId,
+		};
+		setFormData((prev) => ({
+			...prev,
+			equipmentCode: raw.equipment,
+			name,
+			objectTypeId,
+			plantId,
+			funcLocId,
+		}));
+	};
+
+	// Dipilih dari input KODE atau input NAMA — sama-sama memakai baris SAP yang sama.
 	const handleEquipmentCodeChange = (
 		value: string,
 		option?: AutocompleteOption,
@@ -208,28 +251,9 @@ export default function RegisterEquipmentClient({
 			equipmentCode: true,
 		}));
 
-		const raw = option?.raw as MasterEquipmentCode | undefined;
+		const raw = option?.raw as SapEquipmentRow | undefined;
 		if (raw && value) {
-			// Kode aset dipilih → auto-fill nama (description), kategori, plant, dan funcloc.
-			const objectTypeId = raw.object_type_id ? String(raw.object_type_id) : "";
-			const plantId = raw.plant_id ? String(raw.plant_id) : "";
-			const funcLocId = raw.func_loc_id ? String(raw.func_loc_id) : "";
-			const name = raw.description || "";
-			autoFilledRef.current = {
-				code: value,
-				name,
-				objectTypeId,
-				plantId,
-				funcLocId,
-			};
-			setFormData((prev) => ({
-				...prev,
-				equipmentCode: value,
-				name,
-				objectTypeId,
-				plantId,
-				funcLocId,
-			}));
+			applySapRow(raw);
 			return;
 		}
 
@@ -245,6 +269,32 @@ export default function RegisterEquipmentClient({
 			}));
 		}
 		setFormData((prev) => ({ ...prev, equipmentCode: value }));
+	};
+
+	// Arah kedua: pilih dari NAMA → isi kode aset + field turunannya.
+	const handleNameChange = (
+		value: string,
+		option?: AutocompleteOption,
+	) => {
+		setTouched((prev) => ({ ...prev, name: true }));
+
+		const raw = option?.raw as SapEquipmentRow | undefined;
+		if (raw && value) {
+			applySapRow(raw);
+			return;
+		}
+
+		if (autoFilledRef.current && value !== autoFilledRef.current.name) {
+			autoFilledRef.current = null;
+			setFormData((prev) => ({
+				...prev,
+				equipmentCode: "",
+				objectTypeId: "",
+				plantId: "",
+				funcLocId: "",
+			}));
+		}
+		setFormData((prev) => ({ ...prev, name: value }));
 	};
 
 	const handleSelectChange = (name: string, value: string) => {
@@ -542,6 +592,7 @@ export default function RegisterEquipmentClient({
 									showOnFocus
 									value={formData.equipmentCode}
 									onChange={handleEquipmentCodeChange}
+									onQueryChange={handleSapQueryChange}
 									onBlur={() => handleSelectBlur("equipmentCode")}
 									options={codeOptions}
 									placeholder="Ketik kode aset..."
@@ -569,16 +620,22 @@ export default function RegisterEquipmentClient({
 										Maks 150 karakter
 									</span>
 								</div>
-								<input
-									onBlur={handleBlur}
-									maxLength={150}
-									type="text"
-									name="name"
-									value={formData.name}
-									onChange={handleChange}
-									placeholder="Masukkan nama peralatan..."
-									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all ${(showValidationErrors || touched.name) && !formData.name ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : formData.name.length >= 150 ? "border-orange-400 focus:border-orange-500 focus:ring-1 focus:ring-orange-500 bg-orange-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
-								/>
+									<AutocompleteInput
+										mode="text"
+										name="name"
+										maxLength={150}
+										showOnFocus
+										value={formData.name}
+										onChange={handleNameChange}
+										onQueryChange={handleSapQueryChange}
+										onBlur={handleBlur as unknown as () => void}
+										options={nameOptions}
+										placeholder="Ketik nama peralatan (mis. FLOW TRANSMITTER)..."
+										hasError={
+											(showValidationErrors || touched.name) && !formData.name
+										}
+										emptyMessage="Tidak ada nama peralatan yang cocok."
+									/>
 								{(showValidationErrors || touched.name) && !formData.name && (
 									<p className="text-[10px] text-red-500 mt-1 font-medium">
 										* Nama Peralatan wajib diisi.

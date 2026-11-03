@@ -74,10 +74,24 @@ const nextConfig: NextConfig = {
     },
   },
   async rewrites() {
+    // [DEV] Tiru topologi prod di lokal: browser fetch same-origin
+    // {origin}{basePath}/air/* -> Next mem-proxy ke BE lokal (API_URL).
+    // Di prod route /idle/air ditangkap reverse proxy SEBELUM sampai ke Next,
+    // jadi rewrite ini tidak pernah aktif di sana — env tidak perlu dibedakan.
+    // Catatan: rewrites di Next dijalankan server-side (header/cookie ikut
+    // diteruskan), bukan redirect browser.
+    const be =
+      process.env.NEXT_PUBLIC_API_URL ||
+      process.env.API_URL ||
+      "https://har.pusri.dev/idle/air";
     return [
       {
+        source: "/air/:path*",
+        destination: `${be.replace(/\/+$/, "")}/:path*`,
+      },
+      {
         source: "/uploads/:path*",
-        destination: `${process.env.NEXT_PUBLIC_API_URL || process.env.API_URL || "https://har.pusri.dev/idle/air"}/uploads/:path*`,
+        destination: `${be.replace(/\/+$/, "")}/uploads/:path*`,
       },
     ];
   },

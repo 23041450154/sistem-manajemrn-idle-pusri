@@ -629,17 +629,20 @@ export default function DaftarAsetClient({
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
 									No
 								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap w-[130px]">
-									Kode Alat
-								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left w-[240px] max-w-[280px]">
 									Nama Peralatan
+								</th>
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap w-[130px]">
+									Kode Alat
 								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Tipe Objek
 								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Plant
+								</th>
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+									Func. Location
 								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left">
 									Lokasi
@@ -658,7 +661,7 @@ export default function DaftarAsetClient({
 						<tbody className="bg-white">
 							{paginatedItems.length === 0 ? (
 								<tr>
-									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={10} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -683,15 +686,6 @@ export default function DaftarAsetClient({
 										<td className="px-2.5 py-2.5 text-[13px] text-gray-500 font-medium text-center">
 											{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
-										<td className="px-2.5 py-2.5 text-[13px] font-semibold text-[#0A356A] whitespace-nowrap">
-											<button
-												type="button"
-												onClick={() => openDetailModal(asset)}
-												className="hover:underline text-left font-semibold text-[#0A356A] cursor-pointer"
-											>
-												{asset.equipment_code}
-											</button>
-										</td>
 										<td className="px-2.5 py-2.5 text-[13px] font-medium text-gray-900 w-[240px] max-w-[280px]">
 											<button
 												type="button"
@@ -706,11 +700,23 @@ export default function DaftarAsetClient({
 												</span>
 											</button>
 										</td>
+										<td className="px-2.5 py-2.5 text-[13px] font-semibold text-[#0A356A] whitespace-nowrap">
+											<button
+												type="button"
+												onClick={() => openDetailModal(asset)}
+												className="hover:underline text-left font-semibold text-[#0A356A] cursor-pointer"
+											>
+												{asset.equipment_code}
+											</button>
+										</td>
 										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap">
 											{asset.object_type_name}
 										</td>
 										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap">
 											{asset.plant}
+										</td>
+										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap" title={asset.func_loc || "-"}>
+											{asset.func_loc || "-"}
 										</td>
 										<td className="px-2.5 py-2.5 text-[13px] text-gray-600">
 											{asset.storage_location}

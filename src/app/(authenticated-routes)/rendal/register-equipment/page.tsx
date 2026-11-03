@@ -2,12 +2,12 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import {
-	getEquipmentCodes,
 	getEquipments,
 	getFunctionalLocations,
 	getObjectTypes,
 	getPlants,
 	getStorageLocations,
+	searchSapEquipment,
 } from "@/action/api";
 import RegisterEquipmentClient, {
 	type RegisterInitialData,
@@ -45,7 +45,7 @@ export default function RegisterEquipmentPage() {
 				getStorageLocations().catch(() => []),
 				getFunctionalLocations().catch(() => []),
 				getEquipments().catch(() => [] as any[]),
-				getEquipmentCodes().catch(() => []),
+				searchSapEquipment(undefined, 20).catch(() => []),
 			]);
 
 			let initialData: RegisterInitialData | null = null;

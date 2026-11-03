@@ -380,27 +380,19 @@ export default function RendalIdleClient({
 					<table className="w-full table-fixed text-left border-collapse">
 						<colgroup>
 							<col className="w-[4%]" />
-							<col className="w-[14%]" />
-							<col className="w-[24%]" />
+							<col className="w-[22%]" />
+							<col className="w-[12%]" />
+							<col className="w-[8%]" />
+							<col className="w-[15%]" />
 							<col className="w-[11%]" />
-							<col className="w-[14%]" />
-							<col className="w-[12%]" />
-							<col className="w-[12%]" />
-							<col className="w-[9%]" />
+							<col className="w-[11%]" />
+							<col className="w-[11%]" />
+							<col className="w-[6%]" />
 						</colgroup>
 						<thead className="bg-gray-50/95 backdrop-blur-sm">
 							<tr className="border-b border-gray-300">
 								<th className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-center">
 									No
-								</th>
-								<th
-									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
-									title="Klik untuk mengurutkan"
-									onClick={() => handleSort("kodeAlat")}
-								>
-									<div className="flex items-center justify-start gap-0.5 truncate">
-										Kode Alat {getSortIcon("kodeAlat")}
-									</div>
 								</th>
 								<th
 									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
@@ -414,10 +406,27 @@ export default function RendalIdleClient({
 								<th
 									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
 									title="Klik untuk mengurutkan"
+									onClick={() => handleSort("kodeAlat")}
+								>
+									<div className="flex items-center justify-start gap-0.5 truncate">
+										Kode Alat {getSortIcon("kodeAlat")}
+									</div>
+								</th>
+								<th
+									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("plant")}
 								>
 									<div className="flex items-center justify-start gap-0.5 truncate">
 										Plant {getSortIcon("plant")}
+									</div>
+								</th>
+								<th
+									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-left"
+									title="Functional location aset"
+								>
+									<div className="flex items-center justify-start gap-0.5 truncate">
+										Func. Location
 									</div>
 								</th>
 								<th
@@ -455,7 +464,7 @@ export default function RendalIdleClient({
 						<tbody className="bg-white text-[12px]">
 							{paginatedData.length === 0 ? (
 								<tr>
-									<td colSpan={8} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -477,12 +486,6 @@ export default function RendalIdleClient({
 											{(safeCurrentPage - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
 										<td
-											className="px-2 py-2 font-semibold text-[#0A356A] text-left truncate"
-											title={item.kodeAlat}
-										>
-											{item.kodeAlat}
-										</td>
-										<td
 											className="px-2 py-2 font-semibold text-gray-800 text-left"
 											title={item.namaAlat}
 										>
@@ -491,10 +494,22 @@ export default function RendalIdleClient({
 											</span>
 										</td>
 										<td
+											className="px-2 py-2 font-semibold text-[#0A356A] text-left truncate"
+											title={item.kodeAlat}
+										>
+											{item.kodeAlat}
+										</td>
+										<td
 											className="px-2 py-2 text-gray-600 font-medium text-left truncate"
 											title={item.plant}
 										>
 											{item.plant}
+										</td>
+										<td
+											className="px-2 py-2 text-gray-600 font-medium text-left truncate"
+											title={item.funcLoc || "-"}
+										>
+											{item.funcLoc || "-"}
 										</td>
 										<td
 											className="px-2 py-2 text-gray-600 font-medium text-left truncate"

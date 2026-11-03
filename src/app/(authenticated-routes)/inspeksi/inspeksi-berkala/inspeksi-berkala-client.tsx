@@ -27,6 +27,7 @@ export interface Equipment extends Partial<LastInspection> {
 	status: string | { name: string };
 	location?: string | { name: string };
 	plant?: string | { name: string };
+	func_loc?: string | { name: string };
 	storage_location?: { name: string };
 	area?: { name: string };
 	object_type?: string | { name: string };
@@ -40,6 +41,7 @@ export interface InspectionItem {
 	equipment_code?: string;
 	equipment_name?: string;
 	plant?: string;
+	func_loc?: string;
 	object_type?: string;
 	inspection_date?: string;
 	created_at?: string;
@@ -409,19 +411,19 @@ export default function InspeksiBerkalaClient({
 									No
 								</th>
 								<th
-									className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
-									onClick={() => handleSort("equipment_code")}
-								>
-									<div className="flex items-center justify-start">
-										Kode Alat {getSortIcon("equipment_code")}
-									</div>
-								</th>
-								<th
 									className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left"
 									onClick={() => handleSort("name")}
 								>
 									<div className="flex items-center justify-start">
 										Nama Peralatan {getSortIcon("name")}
+									</div>
+								</th>
+								<th
+									className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
+									onClick={() => handleSort("equipment_code")}
+								>
+									<div className="flex items-center justify-start">
+										Kode Alat {getSortIcon("equipment_code")}
 									</div>
 								</th>
 								<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
@@ -434,6 +436,9 @@ export default function InspeksiBerkalaClient({
 									<div className="flex items-center justify-start">
 										Plant {getSortIcon("plant")}
 									</div>
+								</th>
+								<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
+									Func. Location
 								</th>
 								{activeTab === "antrean" ? (
 									<>
@@ -524,17 +529,20 @@ export default function InspeksiBerkalaClient({
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-500 font-medium text-center">
 												{rowNum}
 											</td>
-											<td className="px-2.5 py-2.5 text-[13px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
-												{row.equipment_code}
-											</td>
 											<td className="px-2.5 py-2.5 text-[13px] font-medium text-gray-900 text-left">
 												{row.name}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
+												{row.equipment_code}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{typeStr}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{plantStr}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
+												{typeof row.func_loc === "object" ? (row.func_loc?.name ?? "-") : row.func_loc || "-"}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left">
 												{lokasiStr}
@@ -580,17 +588,20 @@ export default function InspeksiBerkalaClient({
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-500 font-medium text-center">
 												{rowNum}
 											</td>
-											<td className="px-2.5 py-2.5 text-[13px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
-												{row.equipment_code}
-											</td>
 											<td className="px-2.5 py-2.5 text-[13px] font-medium text-gray-900 text-left">
 												{row.equipment_name}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
+												{row.equipment_code}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{row.object_type}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{row.plant}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
+												{row.func_loc || "-"}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{dateStr}

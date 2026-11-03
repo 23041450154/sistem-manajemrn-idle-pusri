@@ -87,6 +87,8 @@ export default function InspeksiAntreanPage() {
 					ins.equipment_code || eq.equipment_code || `EQ-${ins.equipment_id}`,
 				equipment_name: ins.equipment_name || eq.name || "Equipment Tanpa Nama",
 				plant: plantStr,
+				func_loc:
+					eq.func_loc?.name || (typeof eq.func_loc === "string" ? eq.func_loc : "") || "",
 				object_type: typeStr,
 				inspection_date:
 					ins.inspection_date || ins.created_at || new Date().toISOString(),

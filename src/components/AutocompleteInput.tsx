@@ -38,6 +38,9 @@ interface AutocompleteInputProps {
 	className?: string;
 	emptyMessage?: string;
 	autoComplete?: string;
+	/** Callback tiap teks berubah (mode "text") — dipakai form registrasi untuk
+	 *  memicu fetch SAP live; onChange tetap dipanggil seperti biasa. */
+	onQueryChange?: (text: string) => void;
 	/** Buka dropdown saat fokus meski belum mengetik (tampilkan semua opsi). */
 	showOnFocus?: boolean;
 }
@@ -60,6 +63,7 @@ export default function AutocompleteInput({
 	emptyMessage = "Tidak ada saran yang cocok.",
 	autoComplete = "off",
 	showOnFocus = false,
+	onQueryChange,
 }: AutocompleteInputProps) {
 	const [isOpen, setIsOpen] = useState(false);
 	const [inputValue, setInputValue] = useState("");
@@ -211,6 +215,7 @@ export default function AutocompleteInput({
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const text = e.target.value;
 		setInputValue(text);
+		onQueryChange?.(text);
 
 		// Only open suggestions popup if user has typed something specific
 		if (text.trim().length >= minChars) {

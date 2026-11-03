@@ -55,51 +55,36 @@ export async function uploadAttachment(
 	}
 }
 
-/** Baris master kode aset — FK opsional (auto-fill kategori/plant/funcloc di form registrasi). */
-export type EquipmentCodeRow = {
-	id: number;
-	code: string;
+/** Baris aset dari SAP live (GET /api/sap/equipment) — sumber autocomplete Kode Aset/Nama.
+ *  Nilai plant/funcloc/object_type berupa STRING SAP; master_resolved=false berarti
+ *  FK lokal belum ada dan registrasi akan ditolak sampai admin sync master. */
+export type SapEquipmentRow = {
+	equipment: string;
 	description: string;
-	object_type_id?: number;
-	plant_id?: number;
-	func_loc_id?: number;
+	maintenance_plant: string;
+	functional_location: string;
+	object_type: string;
+	master_resolved: boolean;
 };
 
-/**
- * Daftar kode aset master (GET /api/equipment-codes).
- * search opsional: prefix match "code LIKE x%" untuk autocomplete Kode Aset/Tag.
- */
-export async function getEquipmentCodes(
+/** Cari aset di SAP live: `search` dicocokkan ke kode DAN deskripsi sekaligus. */
+export async function searchSapEquipment(
 	search?: string,
-): Promise<EquipmentCodeRow[]> {
-
+	limit = 20,
+): Promise<SapEquipmentRow[]> {
 	try {
+		const qs = new URLSearchParams({ limit: String(limit) });
 		const trimmed = search?.trim();
-		const qs = trimmed ? `?search=${encodeURIComponent(trimmed)}` : "";
-		const res = await fetch(`${API_URL}/api/equipment-codes${qs}`, {
-			headers: {},
-			cache: "no-store",
-		});
-		if (res.ok) {
-			const data = await res.json();
-			if (Array.isArray(data) && data.length > 0) return data;
-			// Jika search huruf kecil tidak menemukan hasil (karena DB case-sensitive), coba huruf kapital
-			if (trimmed && trimmed !== trimmed.toUpperCase()) {
-				const upperQs = `?search=${encodeURIComponent(trimmed.toUpperCase())}`;
-				const upperRes = await fetch(`${API_URL}/api/equipment-codes${upperQs}`, {
-					headers: {},
-					cache: "no-store",
-				});
-				if (upperRes.ok) {
-					const upperData = await upperRes.json();
-					if (Array.isArray(upperData) && upperData.length > 0) return upperData;
-				}
-			}
-			return Array.isArray(data) ? data : [];
-		}
-		return [];
+		if (trimmed) qs.set("search", trimmed);
+		const res = await fetch(
+			`${API_URL}/api/sap/equipment?${qs.toString()}`,
+			{ cache: "no-store" },
+		);
+		if (!res.ok) return [];
+		const data = await res.json();
+		return Array.isArray(data?.data) ? data.data : [];
 	} catch (error) {
-		console.error("Fetch equipment codes error:", error);
+		console.error("Search SAP equipment error:", error);
 		return [];
 	}
 }

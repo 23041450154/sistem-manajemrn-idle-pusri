@@ -586,17 +586,20 @@ export default function PerbaikanAlatClient({
 								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
 									No
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
-									Kode Alat
-								</th>
 								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left">
 									Nama Peralatan
+								</th>
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+									Kode Alat
 								</th>
 								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Tipe Objek
 								</th>
 								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Plant
+								</th>
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+									Func. Location
 								</th>
 								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left">
 									Lokasi
@@ -615,7 +618,7 @@ export default function PerbaikanAlatClient({
 						<tbody className="bg-white">
 							{paginatedEquipments.length === 0 ? (
 								<tr>
-									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={10} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -640,9 +643,6 @@ export default function PerbaikanAlatClient({
 										<td className="px-3 py-3 text-[15px] text-gray-500 font-medium text-center">
 											{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
-										<td className="px-3 py-3 text-[15px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
-											{asset.kodeAlat}
-										</td>
 										<td
 											className="px-3 py-3 text-[15px] font-semibold text-gray-800 text-left"
 											title={asset.namaAlat}
@@ -651,11 +651,17 @@ export default function PerbaikanAlatClient({
 												{asset.namaAlat}
 											</span>
 										</td>
+										<td className="px-3 py-3 text-[15px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
+											{asset.kodeAlat}
+										</td>
 										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
 											{asset.tipeObjek}
 										</td>
 										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
 											{asset.plant}
+										</td>
+										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left" title={asset.funcLoc || "-"}>
+											{asset.funcLoc || "-"}
 										</td>
 										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
 											{asset.lokasiPenyimpanan}

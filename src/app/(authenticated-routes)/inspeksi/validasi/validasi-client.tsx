@@ -1787,7 +1787,7 @@ export default function ManajemenInspeksiClient({
 											/>
 											<div className="text-[13px] text-center">
 												<span className="font-bold text-[#0A356A]">
-													📎 Upload Foto Pemeriksaan
+													📎 Upload File/Attachment Pemeriksaan
 												</span>
 											</div>
 											<span className="text-[11px] text-gray-500 font-medium text-center">

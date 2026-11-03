@@ -67,7 +67,10 @@ export const config = {
   matcher: [
     // "/" eksplisit: tanpa ini, akar basePath (pathname ter-strip = "/")
     // tidak kena regex di bawah dan proxy dilewati.
+    // "air" dikecualikan: rewrite /idle/air/* di next.config me-proxy langsung
+    // ke BE — proteksi sesi dilakukan AuthMiddleware di BE (401 per-request),
+    // dan POST /api/auth/login memang harus bisa dipanggil TANPA sesi.
     "/",
-    "/((?!api|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.svg$|.*\\.webp$|.*\\.jpg$|.*\\.jpeg$).*)",
+    "/((?!api|air|_next/static|_next/image|favicon.ico|.*\\.png$|.*\\.svg$|.*\\.webp$|.*\\.jpg$|.*\\.jpeg$).*)",
   ],
 };

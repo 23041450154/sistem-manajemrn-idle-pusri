@@ -54,8 +54,16 @@ export async function logoutAction(): Promise<string> {
   const clientId = process.env.NEXT_PUBLIC_CLIENT_ID;
 
   const url = new URL(`${apiBase()}/api/logout`, origin || undefined);
-  if (ssoBaseUrl && clientId) {
-    url.searchParams.set("redirect", `${ssoBaseUrl}/api/login?client_id=${clientId}`);
+  // DEV (NEXT_PUBLIC_LOGIN_FORM=true): tanpa ?redirect=SSO. Backend tetap
+  // dipanggil (expire cookie token HttpOnly server-side) lalu redirect ke
+  // FRONTEND_URL lokal. Melempar ke SSO di dev percuma — SSO tidak bisa
+  // kembali ke localhost. Build prod tanpa env ini = perilaku lama (SSO).
+  const isDevLogin = process.env.NEXT_PUBLIC_LOGIN_FORM === "true";
+  if (!isDevLogin && ssoBaseUrl && clientId) {
+    url.searchParams.set(
+      "redirect",
+      `${ssoBaseUrl}/api/login?client_id=${clientId}`,
+    );
   }
   return url.toString();
 }

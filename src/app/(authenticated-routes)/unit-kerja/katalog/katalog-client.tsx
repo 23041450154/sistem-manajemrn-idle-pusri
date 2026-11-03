@@ -166,6 +166,15 @@ function EquipmentCard({ item }: { item: KatalogItem }) {
             <dd className="truncate text-right text-[#0F172A]">{item.plant}</dd>
           </div>
           <div className="flex justify-between gap-2">
+            <dt>Func. Location</dt>
+            <dd
+              className="truncate text-right text-[#0F172A]"
+              title={item.funcLoc || "-"}
+            >
+              {item.funcLoc || "-"}
+            </dd>
+          </div>
+          <div className="flex justify-between gap-2">
             <dt>Kategori</dt>
             <dd className="truncate text-right text-[#0F172A]">{item.objectType}</dd>
           </div>
