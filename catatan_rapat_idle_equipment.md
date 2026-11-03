@@ -72,7 +72,8 @@ Untuk mempermudah penggunaan di lapangan dan menghindari kesalahan input data, d
 * **Nilai Perolehan:** Diubah menjadi **Opsional** (*Optional*).
 * **Lokasi Penyimpanan:** Dibuat dinamis (*Customized Location*) di mana data lokasi dikelola secara sentral oleh Administrator melalui menu Master Data agar seragam dan terstandar.
 
-### B. Form Inspeksi & Penomoran Pemeriksaan
+### B. Form Inspeksi & Penomoran 
+
 * **Penghapusan Log Durasi:** Field **"Jam Mulai"**, **"Jam Selesai"**, dan **"Durasi"** dihapus dari formulir.
 * **Log Tanggal:** Diganti dengan **Tanggal Mulai Pengecekan** dan **Tanggal Selesai Pengecekan**.
 * **Kode Aset:** Tidak boleh diketik secara manual (*Read-Only*) untuk menghindari kesalahan ketik kode alat. Input harus berupa pilihan daftar aset (*dropdown select*).
