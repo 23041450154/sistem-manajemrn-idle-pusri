@@ -4,6 +4,7 @@
 // publik ingress di dalam cluster (ENOTFOUND) — lihat lib/api-client.ts.
 import type { User } from "../types/Auth";
 import { apiJson, apiBase } from "@/lib/api-client";
+import { BASE_PATH } from "@/lib/base-path";
 
 export type CurrentUserResult = {
   status: boolean;
@@ -63,6 +64,11 @@ export async function logoutAction(): Promise<string> {
     url.searchParams.set(
       "redirect",
       `${ssoBaseUrl}/api/login?client_id=${clientId}`,
+    );
+  } else if (isDevLogin && origin) {
+    url.searchParams.set(
+      "redirect",
+      `${origin}${BASE_PATH}/login`,
     );
   }
   return url.toString();
