@@ -4,6 +4,7 @@
 // publik ingress di dalam cluster (ENOTFOUND) — lihat lib/api-client.ts.
 import type { User } from "../types/Auth";
 import { apiJson, apiBase } from "@/lib/api-client";
+import { BASE_PATH } from "@/lib/base-path";
 
 export type CurrentUserResult = {
   status: boolean;
@@ -63,6 +64,14 @@ export async function logoutAction(): Promise<string> {
     url.searchParams.set(
       "redirect",
       `${ssoBaseUrl}/api/login?client_id=${clientId}`,
+    );
+  } else if (isDevLogin) {
+    // Pakai path relatif (tanpa host). Backend mem-whitelist URL relatif (u.Host == ""),
+    // sedangkan URL absolut di luar *.pusri.dev (seperti *.vercel.app atau *.naufal.me)
+    // ditolak oleh whitelist backend dan di-fallback paksa ke http://localhost:3000.
+    url.searchParams.set(
+      "redirect",
+      `${BASE_PATH}/login`,
     );
   }
   return url.toString();
