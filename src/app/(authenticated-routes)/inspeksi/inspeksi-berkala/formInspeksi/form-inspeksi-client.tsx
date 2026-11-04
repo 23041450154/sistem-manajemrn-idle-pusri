@@ -22,6 +22,8 @@ import {
 } from "lucide-react";
 import { submitInspectionData } from "@/action/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useAuth } from "@/components/AuthProvider";
+import { getInspectionClusterName } from "@/lib/inspection-cluster";
 
 /** Client Component: form inspeksi — data awal & master di-fetch Server Component. */
 export default function FormInspeksiClient({
@@ -34,12 +36,13 @@ export default function FormInspeksiClient({
 	requireActions: any[];
 }) {
 	const router = useRouter();
+	const { user } = useAuth();
+	const inspectionRoleName = getInspectionClusterName(user);
 
 	// Form State
 	const [hasilInspeksi, setHasilInspeksi] = useState<string>("");
 	const [jenisPerbaikan, setJenisPerbaikan] = useState<string>("");
-	const [mechanicalCondition, setMechanicalCondition] = useState<string>("");
-	const [electricalCondition, setElectricalCondition] = useState<string>("");
+	const [inspectionCondition, setInspectionCondition] = useState<string>("");
 	const [notes, setNotes] = useState<string>("");
 	const [files, setFiles] = useState<File[]>([]);
 	const [fileError, setFileError] = useState<string>("");
@@ -117,8 +120,7 @@ export default function FormInspeksiClient({
 	const isKelayakanNotSelected = hasilInspeksi === "";
 	const isPerbaikanKhususNotSelected =
 		hasilInspeksi === "REPAIR" && jenisPerbaikan === "";
-	const isKondisiEmpty =
-		!mechanicalCondition.trim() || !electricalCondition.trim();
+	const isKondisiEmpty = !inspectionCondition || inspectionCondition.trim() === "";
 	const isSubmitDisabled =
 		isKelayakanNotSelected ||
 		isPerbaikanKhususNotSelected ||
@@ -193,8 +195,9 @@ export default function FormInspeksiClient({
 			}
 			formData.append("require_action_id", resolvedId.toString());
 
-			formData.append("mechanical_condition", mechanicalCondition.trim());
-			formData.append("electrical_condition", electricalCondition.trim());
+			formData.append("mechanical_condition", inspectionCondition.trim());
+			formData.append("electrical_condition", inspectionCondition.trim());
+			formData.append("inspection_condition", inspectionCondition.trim());
 			formData.append("notes", notes.trim());
 
 			files.forEach((file) => {
@@ -562,40 +565,22 @@ export default function FormInspeksiClient({
 						</div>
 					)}
 
-					{/* Section: Kondisi Mekanik & Elektrik */}
-					<div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-						<div>
-							<label className="block text-[13px] font-bold text-gray-700 mb-2">
-								Kondisi Mekanik <span className="text-[#DC2626]">*</span>
-							</label>
-							<textarea
-								value={mechanicalCondition}
-								onChange={(e) => {
-									setMechanicalCondition(e.target.value);
-									e.target.style.height = "auto";
-									e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
-								}}
-								placeholder="Cek kondisi mekanik: bearing, gear, seal, dll."
-								rows={3}
-								className="w-full px-3 py-2.5 text-[13px] border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
-							/>
-						</div>
-						<div>
-							<label className="block text-[13px] font-bold text-gray-700 mb-2">
-								Kondisi Elektrik <span className="text-[#DC2626]">*</span>
-							</label>
-							<textarea
-								value={electricalCondition}
-								onChange={(e) => {
-									setElectricalCondition(e.target.value);
-									e.target.style.height = "auto";
-									e.target.style.height = `${Math.max(80, e.target.scrollHeight)}px`;
-								}}
-								placeholder="Cek kondisi elektrik: motor, kabel, sensor, dll."
-								rows={3}
-								className="w-full px-3 py-2.5 text-[13px] border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
-							/>
-						</div>
+					{/* Section: Kondisi Sesuai Rumpun Akun Login */}
+					<div>
+						<label className="block text-[13px] font-bold text-gray-700 mb-2 uppercase">
+							Kondisi {inspectionRoleName} <span className="text-[#DC2626]">*</span>
+						</label>
+						<textarea
+							value={inspectionCondition}
+							onChange={(e) => {
+								setInspectionCondition(e.target.value);
+								e.target.style.height = "auto";
+								e.target.style.height = `${Math.max(90, e.target.scrollHeight)}px`;
+							}}
+							placeholder="Tuliskan hasil evaluasi pemeriksaan kondisi alat di sini..."
+							rows={4}
+							className="w-full px-3 py-2.5 text-[13px] border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
+						/>
 					</div>
 
 					{/* Section: Catatan */}

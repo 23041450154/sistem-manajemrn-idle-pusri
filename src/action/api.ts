@@ -125,6 +125,110 @@ export async function getEquipments() {
 	}
 }
 
+/**
+ * Mengambil daftar riwayat usulan aset idle milik Unit Kerja Operasi.
+ * GET /api/equipment/my-proposals
+ * Fallback otomatis bila diakses role Rendal/Admin atau endpoint alternatif:
+ * - /api/equipment/proposals
+ * - /api/equipment/propose
+ */
+export async function getMyEquipmentProposals() {
+	try {
+		let res = await fetch(`${API_URL}/api/equipment/my-proposals`, {
+			headers: {},
+			cache: "no-store",
+		});
+
+		if (!res.ok && (res.status === 404 || res.status === 403)) {
+			const fallbackProposals = await fetch(`${API_URL}/api/equipment/proposals`, {
+				headers: {},
+				cache: "no-store",
+			});
+			if (fallbackProposals.ok) {
+				res = fallbackProposals;
+			} else {
+				const fallbackPropose = await fetch(`${API_URL}/api/equipment/propose`, {
+					headers: {},
+					cache: "no-store",
+				});
+				if (fallbackPropose.ok) {
+					res = fallbackPropose;
+				}
+			}
+		}
+
+		if (!res.ok) {
+			console.warn(`[getMyEquipmentProposals] HTTP ${res.status}`);
+			return [];
+		}
+
+		const json = await res.json();
+		const data = Array.isArray(json) ? json : json.data || [];
+		if (Array.isArray(data)) {
+			data.forEach((eq: any) => {
+				if (eq.attachments && Array.isArray(eq.attachments)) {
+					eq.attachments.forEach((att: any) => {
+						let url = att.file_url || att.fileUrl || att.url || "";
+						if (url) {
+							url = url.replace(/\\/g, "/");
+							if (!url.startsWith("http")) {
+								if (!url.startsWith("/")) url = "/" + url;
+								url = API_URL + url;
+							}
+							att.file_url = url;
+							att.fileUrl = url;
+							att.url = url;
+						}
+					});
+				}
+			});
+		}
+		return flattenEquipmentCode(data);
+	} catch (error) {
+		console.error("Fetch my equipment proposals error:", error);
+		return [];
+	}
+}
+
+/**
+ * Mengambil seluruh usulan peralatan idle yang menunggu verifikasi Rendal (status PROPOSED).
+ * GET /api/equipment/proposals
+ */
+export async function getEquipmentProposals() {
+	try {
+		const res = await fetch(`${API_URL}/api/equipment/proposals`, {
+			headers: {},
+			cache: "no-store",
+		});
+		if (!res.ok) return [];
+		const json = await res.json();
+		const data = Array.isArray(json) ? json : json.data || [];
+		if (Array.isArray(data)) {
+			data.forEach((eq: any) => {
+				if (eq.attachments && Array.isArray(eq.attachments)) {
+					eq.attachments.forEach((att: any) => {
+						let url = att.file_url || att.fileUrl || att.url || "";
+						if (url) {
+							url = url.replace(/\\/g, "/");
+							if (!url.startsWith("http")) {
+								if (!url.startsWith("/")) url = "/" + url;
+								url = API_URL + url;
+							}
+							att.file_url = url;
+							att.fileUrl = url;
+							att.url = url;
+						}
+					});
+				}
+			});
+		}
+		return flattenEquipmentCode(data);
+	} catch (error) {
+		console.error("Fetch equipment proposals error:", error);
+		return [];
+	}
+}
+
 export type DisposalItemDTO = {
 	id: string;
 	approval_id: string | null;
@@ -974,6 +1078,47 @@ export async function createEquipment(formData: FormData) {
 		return { success: true, data: responseData?.data || responseData };
 	} catch (error) {
 		console.error("Create equipment error:", error);
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
+	}
+}
+
+/**
+ * Pengusulan peralatan idle oleh Unit Kerja.
+ * Melakukan POST multipart/form-data ke /api/equipment/propose
+ */
+export async function proposeEquipment(formData: FormData) {
+	// Pastikan storage_location_id valid
+	const rawLocId =
+		formData.get("storage_location_id")?.toString() ||
+		formData.get("id_storage_location")?.toString();
+	const locNum = parseInt(rawLocId || "0", 10);
+	if (!rawLocId || isNaN(locNum) || locNum <= 0) {
+		formData.set("storage_location_id", "1");
+	}
+
+	try {
+		const res = await fetch(`${API_URL}/api/equipment/propose`, {
+			method: "POST",
+			headers: {},
+			body: formData,
+		});
+
+		if (!res.ok) {
+			const errorData = await res.json().catch(() => null);
+			throw new Error(
+				errorData?.error ||
+					errorData?.message ||
+					`Gagal mengusulkan equipment (HTTP ${res.status})`,
+			);
+		}
+		const responseData = await res.json().catch(() => null);
+		revalidateApp();
+		return { success: true, data: responseData?.data || responseData };
+	} catch (error) {
+		console.error("Propose equipment error:", error);
 		return {
 			success: false,
 			message: error instanceof Error ? error.message : String(error),

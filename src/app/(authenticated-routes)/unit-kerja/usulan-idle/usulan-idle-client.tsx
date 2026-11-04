@@ -33,7 +33,7 @@ import {
 	XCircle,
 } from "lucide-react";
 import {
-	createEquipment,
+	proposeEquipment,
 	searchSapEquipment,
 	type SapEquipmentRow,
 } from "@/action/api";
@@ -43,7 +43,11 @@ import AutocompleteInput, {
 	type AutocompleteOption,
 } from "@/components/AutocompleteInput";
 
-export type AssetState = EquipmentStatus | "REJECTED";
+export type AssetState =
+	| EquipmentStatus
+	| "REJECTED"
+	| "PROPOSED"
+	| "PROPOSAL_REJECTED";
 
 export interface Equipment {
 	id: string;
@@ -62,6 +66,8 @@ export interface Equipment {
 	estimatedReuseValue?: number;
 	notes?: string;
 	idleReason?: string;
+	rejectionNotes?: string;
+	inspectionPurpose?: string;
 	photos?: string[];
 	attachments?: any[];
 	createdAt?: string;
@@ -545,12 +551,12 @@ export default function UsulanIdleClient({
 				fd.append("photos", file);
 			}
 
-			const res = await createEquipment(fd);
+			const res = await proposeEquipment(fd);
 
 			if (res && res.success) {
 				setNotification({
 					type: "success",
-					message: "Berhasil! Peralatan idle telah didaftarkan ke sistem.",
+					message: "Berhasil! Usulan peralatan idle telah dikirimkan ke sistem.",
 				});
 				handleResetForm();
 				handleCloseForm();
@@ -683,6 +689,10 @@ export default function UsulanIdleClient({
 
 	const getStatusBadge = (status: AssetState | string) => {
 		const styles: Record<string, string> = {
+			PROPOSED: "bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]",
+			"MENUNGGU VERIFIKASI": "bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]",
+			PROPOSAL_REJECTED: "bg-[#FEE2E2] text-[#DC2626] border border-[#FECACA]",
+			"PROPOSAL REJECTED": "bg-[#FEE2E2] text-[#DC2626] border border-[#FECACA]",
 			REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
 			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
 			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
@@ -1440,8 +1450,8 @@ export default function UsulanIdleClient({
 						</span>
 						<span className="text-[13px] text-blue-800 font-medium">
 							Terdapat{" "}
-							<strong className="font-bold">{filteredData.length} aset</strong>{" "}
-							terdaftar di sistem.
+							<strong className="font-bold">{filteredData.length} usulan aset</strong>{" "}
+							di sistem.
 						</span>
 					</div>
 				</div>
@@ -1902,6 +1912,26 @@ export default function UsulanIdleClient({
 											{detailModal.notes || "Tidak ada catatan tambahan."}
 										</p>
 									</div>
+									{detailModal.rejectionNotes && (
+										<div className="col-span-2 p-3 bg-red-50 border border-red-200 rounded-lg">
+											<span className="text-[11px] font-bold text-red-700 block uppercase tracking-wider mb-0.5">
+												Alasan Penolakan oleh Rendal
+											</span>
+											<p className="text-xs text-red-800 leading-relaxed">
+												{detailModal.rejectionNotes}
+											</p>
+										</div>
+									)}
+									{detailModal.inspectionPurpose && (
+										<div className="col-span-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
+											<span className="text-[11px] font-bold text-emerald-700 block uppercase tracking-wider mb-0.5">
+												Tujuan Tim Inspeksi Ditugaskan
+											</span>
+											<p className="text-xs text-emerald-800 leading-relaxed">
+												{detailModal.inspectionPurpose}
+											</p>
+										</div>
+									)}
 								</div>
 							</div>
 

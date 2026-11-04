@@ -60,6 +60,8 @@ export const REPAIR_STATUS_LABEL: Record<RepairFlowStatus, string> = {
  * IDLE->READY TO USE, dsb. yang dulu bikin halaman saling beda sebutan.
  */
 export const EQUIPMENT_STATUS = [
+	"PROPOSED",
+	"PROPOSAL_REJECTED",
 	"REGISTERED",
 	"VALIDATED",
 	"REPAIR",
@@ -85,6 +87,10 @@ const STATUS_ALIASES: Record<string, EquipmentStatus> = {
 	SCRAP_RECOMENDED: "DISPOSAL_RECOMMENDED",
 	SCRAP_REQUEST: "SCRAP_REQUESTED",
 	"SCRAP REQUEST": "SCRAP_REQUESTED",
+	"PROPOSAL REJECTED": "PROPOSAL_REJECTED",
+	"USULAN DITOLAK": "PROPOSAL_REJECTED",
+	MENUNGGU_VERIFIKASI: "PROPOSED",
+	DIAJUKAN: "PROPOSED",
 	RUSAK_BERAT: "SCRAP",
 	CONDEMNED: "SCRAP",
 	DISPOSED: "SCRAP",
@@ -112,6 +118,8 @@ export const statusText = (raw?: string | null) =>
 export type StatusGroup = "pending" | "repair" | "ready" | "scrap" | "reused";
 
 const STATUS_GROUP: Record<string, StatusGroup> = {
+	PROPOSED: "pending",
+	PROPOSAL_REJECTED: "scrap",
 	REGISTERED: "pending",
 	VALIDATED: "pending",
 	REPAIR: "repair",

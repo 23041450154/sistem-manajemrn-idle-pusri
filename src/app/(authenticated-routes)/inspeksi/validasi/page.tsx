@@ -147,6 +147,12 @@ export default function ValidasiPage() {
 				return /^\d/.test(p) ? `NPP${p}` : p;
 			})(),
 			updated_at: item.updated_at || item.created_at || undefined,
+			inspectionCluster:
+				item.inspection_cluster ||
+				item.inspection_purpose ||
+				item.tujuan_inspeksi ||
+				item.inspectionCluster ||
+				undefined,
 		};
 	});
 

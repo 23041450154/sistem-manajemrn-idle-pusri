@@ -19,6 +19,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { type LastInspection } from "@/lib/inspection-schedule";
+import { useAuth } from "@/components/AuthProvider";
+import {
+	getUserInspectionCluster,
+	getEquipmentInspectionCluster,
+	getInspectionClusterName,
+} from "@/lib/inspection-cluster";
 
 export interface Equipment extends Partial<LastInspection> {
 	id: string | number;
@@ -33,6 +39,9 @@ export interface Equipment extends Partial<LastInspection> {
 	object_type?: string | { name: string };
 	updated_at?: string;
 	created_at?: string;
+	inspection_cluster?: string;
+	inspection_purpose?: string;
+	tujuan_inspeksi?: string;
 }
 
 export interface InspectionItem {
@@ -69,6 +78,9 @@ export default function InspeksiBerkalaClient({
 	onRefresh,
 }: InspeksiBerkalaClientProps) {
 	const router = useRouter();
+	const { user } = useAuth();
+	const userCluster = getUserInspectionCluster(user);
+
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
 	const [searchInput, setSearchInput] = useState("");
 	const [search, setSearch] = useState("");
@@ -84,17 +96,23 @@ export default function InspeksiBerkalaClient({
 		direction: "asc" | "desc";
 	} | null>(null);
 
+	// Filter antrean berdasarkan rumpun akun yang login (AC-02)
+	const clusterAntrean = useMemo(() => {
+		if (!userCluster) return antrean;
+		return antrean.filter((row) => getEquipmentInspectionCluster(row) === userCluster);
+	}, [antrean, userCluster]);
+
 	// Opsi Plant diambil langsung dari database master plants, digabung dengan data antrean & riwayat
 	const plantOptions = useMemo(() => {
 		const dbPlants = (plants || [])
 			.map((p: any) => (typeof p === "string" ? p : p?.name || p?.code || ""))
 			.filter((v: string) => v && v !== "-");
 		const itemPlants = [
-			...antrean.map((e) => (typeof e.plant === "string" ? e.plant : e.plant?.name)),
+			...clusterAntrean.map((e) => (typeof e.plant === "string" ? e.plant : e.plant?.name)),
 			...riwayat.map((r) => r.plant),
 		].filter((v): v is string => Boolean(v && v !== "-"));
 		return [...new Set([...dbPlants, ...itemPlants])].sort();
-	}, [plants, antrean, riwayat]);
+	}, [plants, clusterAntrean, riwayat]);
 
 	// Opsi Tipe Objek diambil langsung dari database master object types
 	const tipeObjekOptions = useMemo(() => {
@@ -102,13 +120,13 @@ export default function InspeksiBerkalaClient({
 			.map((t: any) => (typeof t === "string" ? t : t?.name || ""))
 			.filter((v: string) => v && v !== "-");
 		const itemTypes = [
-			...antrean.map((e) =>
+			...clusterAntrean.map((e) =>
 				typeof e.object_type === "string" ? e.object_type : e.object_type?.name,
 			),
 			...riwayat.map((r) => r.object_type),
 		].filter((v): v is string => Boolean(v && v !== "-"));
 		return [...new Set([...dbTypes, ...itemTypes])].sort();
-	}, [objectTypes, antrean, riwayat]);
+	}, [objectTypes, clusterAntrean, riwayat]);
 
 	const handleReset = () => {
 		setSearchInput("");
@@ -120,7 +138,7 @@ export default function InspeksiBerkalaClient({
 	};
 
 	const filteredAntrean = useMemo(() => {
-		let filtered = antrean.filter((row) => {
+		let filtered = clusterAntrean.filter((row) => {
 			if (!search.trim()) return true;
 			const query = search.toLowerCase().trim();
 			const code = row.equipment_code?.toLowerCase() || "";
@@ -184,7 +202,7 @@ export default function InspeksiBerkalaClient({
 		}
 
 		return filtered;
-	}, [antrean, search, filterPlant, filterTipeObjek, sortConfig]);
+	}, [clusterAntrean, search, filterPlant, filterTipeObjek, sortConfig]);
 
 	const filteredRiwayat = useMemo(() => {
 		return riwayat
@@ -247,12 +265,18 @@ export default function InspeksiBerkalaClient({
 				</div>
 				<div className="flex items-center justify-between">
 					<div>
-						<h1 className="text-xl font-bold text-gray-900 tracking-tight">
-							Inspeksi Berkala
+						<h1 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+							<span>Inspeksi Berkala</span>
+							{userCluster && (
+								<span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-[#0A356A]">
+									{getInspectionClusterName(userCluster)}
+								</span>
+							)}
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar peralatan berstatus READY_TO_USE beserta tanggal inspeksi fisik
-							terakhirnya.
+							{userCluster
+								? `Daftar peralatan berstatus READY_TO_USE yang ditugaskan ke ${getInspectionClusterName(userCluster)}.`
+								: "Daftar peralatan berstatus READY_TO_USE beserta tanggal inspeksi fisik terakhirnya."}
 						</p>
 					</div>
 					<button
@@ -298,7 +322,7 @@ export default function InspeksiBerkalaClient({
 									: "bg-gray-100 text-gray-600"
 							}`}
 						>
-							{antrean.length}
+							{clusterAntrean.length}
 						</span>
 					</button>
 

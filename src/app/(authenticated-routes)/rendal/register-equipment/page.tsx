@@ -84,6 +84,11 @@ export default function RegisterEquipmentPage() {
 						"",
 				),
 						notes: found.notes || "",
+						inspectionCluster:
+							found.inspection_cluster ||
+							found.inspection_purpose ||
+							found.tujuan_inspeksi ||
+							"",
 					};
 				}
 			}

@@ -26,6 +26,12 @@ import {
 } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useAuth } from "@/components/AuthProvider";
+import {
+	getUserInspectionCluster,
+	getEquipmentInspectionCluster,
+	getInspectionClusterName,
+} from "@/lib/inspection-cluster";
 
 import {
 	validateEquipment,
@@ -70,6 +76,10 @@ export interface Asset {
 	pemohon: string;
 	approvalId?: string;
 	updated_at?: string;
+	inspectionCluster?: string;
+	inspection_cluster?: string;
+	inspection_purpose?: string;
+	tujuan_inspeksi?: string;
 }
 
 /** Client Component: interaksi tabel/modal inspeksi — data di-fetch Server Component. */
@@ -87,7 +97,16 @@ export default function ManajemenInspeksiClient({
 	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
+	const { user } = useAuth();
+	const userCluster = getUserInspectionCluster(user);
+
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
+
+	// Filter antrean validasi sesuai rumpun akun login
+	const clusterAssets = useMemo(() => {
+		if (!userCluster) return assets;
+		return assets.filter((a) => getEquipmentInspectionCluster(a) === userCluster);
+	}, [assets, userCluster]);
 
 	// Filter States
 	const [searchInput, setSearchInput] = useState("");
@@ -101,11 +120,11 @@ export default function ManajemenInspeksiClient({
 		const dbPlants = (plants || [])
 			.map((p: any) => (typeof p === "string" ? p : p?.name || p?.code || ""))
 			.filter((v: string) => v && v !== "-");
-		const itemPlants = assets
+		const itemPlants = clusterAssets
 			.map((a) => a.plant)
 			.filter((v) => v && v !== "-");
 		return [...new Set([...dbPlants, ...itemPlants])].sort();
-	}, [plants, assets]);
+	}, [plants, clusterAssets]);
 
 	// Modal & Form States
 	const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
@@ -669,16 +688,16 @@ export default function ManajemenInspeksiClient({
 
 	// Counts untuk tab navigation
 	const antreanCount = useMemo(() => {
-		return assets.filter((a) => !isFinalStatus(a)).length;
-	}, [assets]);
+		return clusterAssets.filter((a) => !isFinalStatus(a)).length;
+	}, [clusterAssets]);
 
 	const riwayatCount = useMemo(() => {
-		return assets.filter((a) => isFinalStatus(a)).length;
-	}, [assets]);
+		return clusterAssets.filter((a) => isFinalStatus(a)).length;
+	}, [clusterAssets]);
 
 	// Filter & Sort Data
 	const filteredAssets = useMemo(() => {
-		const filtered = assets.filter((a) => {
+		const filtered = clusterAssets.filter((a) => {
 			const finalState = isFinalStatus(a);
 
 			if (activeTab === "antrean" && finalState) return false;
@@ -972,6 +991,18 @@ export default function ManajemenInspeksiClient({
 				id="validasi-table-container"
 				className="bg-white border border-gray-200 rounded overflow-hidden scroll-mt-4"
 			>
+				{userCluster && (
+					<div className="bg-blue-50/80 border-b border-blue-100 px-5 py-2.5 flex items-center justify-between text-xs text-[#0A356A]">
+						<span className="font-semibold flex items-center gap-1.5">
+							<Info className="w-4 h-4 text-[#0A356A]" />
+							Menampilkan antrean khusus untuk {getInspectionClusterName(userCluster)}
+						</span>
+						<span className="bg-white px-2 py-0.5 rounded border border-blue-200 font-bold text-[11px]">
+							{getInspectionClusterName(userCluster)}
+						</span>
+					</div>
+				)}
+
 				{/* Tab Navigation */}
 				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
 					<button

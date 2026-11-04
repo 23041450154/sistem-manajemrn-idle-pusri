@@ -2,8 +2,8 @@
 
 import { useEffect, useState, useCallback, Suspense } from "react";
 import {
-	getEquipments,
 	getFunctionalLocations,
+	getMyEquipmentProposals,
 	getObjectTypes,
 	getPlants,
 	getStorageLocations,
@@ -19,11 +19,11 @@ import UsulanIdleClient, {
 	type Equipment,
 } from "./usulan-idle-client";
 
-/** String status apa pun -> union AssetState; di luar daftar kanonik jatuh ke REGISTERED. */
+/** String status apa pun -> union AssetState; di luar daftar kanonik jatuh ke PROPOSED. */
 const assetState = (raw: string): AssetState =>
 	(EQUIPMENT_STATUS as readonly string[]).includes(raw)
 		? (raw as AssetState)
-		: "REGISTERED";
+		: "PROPOSED";
 
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -48,7 +48,7 @@ export default function UsulanIdlePage() {
 				funcLocData,
 				sapInitial,
 			] = await Promise.all([
-				getEquipments().catch(() => []),
+				getMyEquipmentProposals().catch(() => []),
 				getObjectTypes().catch(() => []),
 				getPlants().catch(() => []),
 				getStorageLocations().catch(() => []),
@@ -124,6 +124,9 @@ export default function UsulanIdlePage() {
 					estimatedReuseValue: item.estimated_reuse_value || 0,
 					notes: item.notes || "-",
 					idleReason: item.idle_reason || "-",
+					rejectionNotes: item.rejection_notes || item.rejectionNotes || "",
+					inspectionPurpose:
+						item.inspection_purpose || item.inspectionPurpose || "",
 					attachments: item.attachments || [],
 					photos: item.attachments
 						? item.attachments
@@ -131,8 +134,10 @@ export default function UsulanIdlePage() {
 									(att: any) =>
 										att.attachment_category === "equipment_photo" ||
 										att.attachment_category === "photo" ||
+										att.attachment_category === "proposal_document" ||
 										att.category === "equipment_photo" ||
-										att.category === "photo",
+										att.category === "photo" ||
+										att.category === "proposal_document",
 								)
 								.map((att: any) => {
 									const url = att.file_url || att.fileUrl || "";

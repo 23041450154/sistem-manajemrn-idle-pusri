@@ -60,6 +60,7 @@ export interface RegisterInitialData {
 	idleReason: string;
 	storageLocationId: string;
 	notes: string;
+	inspectionCluster: string;
 }
 
 const EMPTY_FORM: RegisterInitialData = {
@@ -76,6 +77,7 @@ const EMPTY_FORM: RegisterInitialData = {
 	idleReason: "",
 	storageLocationId: "",
 	notes: "",
+	inspectionCluster: "",
 };
 
 /** Autocomplete dari baris SAP: satu sumber data, dua tampilan (kode-dulu / nama-dulu). */
@@ -426,7 +428,8 @@ export default function RegisterEquipmentClient({
 			!formData.storageLocationId ||
 			!formData.funcLocId ||
 			!formData.vendor ||
-			!formData.idleReason
+			!formData.idleReason ||
+			!formData.inspectionCluster
 		) {
 			setShowValidationErrors(true);
 			return;
@@ -453,6 +456,9 @@ export default function RegisterEquipmentClient({
 					Number(formData.estimatedReuseValue.replace(/\./g, "")) || 0,
 				idle_reason: formData.idleReason,
 				notes: formData.notes,
+				inspection_cluster: formData.inspectionCluster,
+				inspection_purpose: formData.inspectionCluster,
+				tujuan_inspeksi: formData.inspectionCluster,
 			});
 
 			if (res.success && uploadedFiles.length) {
@@ -498,6 +504,9 @@ export default function RegisterEquipmentClient({
 		);
 		fd.append("idle_reason", formData.idleReason);
 		fd.append("notes", formData.notes);
+		fd.append("tujuan_inspeksi", formData.inspectionCluster);
+		fd.append("inspection_purpose", formData.inspectionCluster);
+		fd.append("inspection_cluster", formData.inspectionCluster);
 		for (const file of uploadedFiles) fd.append("photo", file);
 
 		const res = await createEquipment(fd);
@@ -751,6 +760,37 @@ export default function RegisterEquipmentClient({
 									!formData.storageLocationId && (
 										<p className="text-[10px] text-red-500 mt-1 font-medium">
 											* Lokasi penyimpanan wajib dipilih.
+										</p>
+									)}
+							</div>
+
+							{/* Baris Rumpun Inspeksi Tujuan */}
+							<div className="space-y-1.5 lg:col-span-3">
+								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
+									RUMPUN INSPEKSI TUJUAN <span className="text-red-500">*</span>
+								</label>
+								<select
+									name="inspectionCluster"
+									value={formData.inspectionCluster}
+									onChange={handleChange}
+									onBlur={handleBlur}
+									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all cursor-pointer ${
+										(showValidationErrors || touched.inspectionCluster) &&
+										!formData.inspectionCluster
+											? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10 text-gray-900"
+											: "border-gray-300 bg-white text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
+									}`}
+								>
+									<option value="">Pilih Rumpun Inspeksi Tujuan...</option>
+									<option value="INSPEKSI_1">Inspeksi 1</option>
+									<option value="INSPEKSI_2">Inspeksi 2</option>
+									<option value="INSPEKSI_LISTRIK">Inspeksi Listrik</option>
+									<option value="INSPEKSI_INSTRUMEN">Inspeksi Instrumen</option>
+								</select>
+								{(showValidationErrors || touched.inspectionCluster) &&
+									!formData.inspectionCluster && (
+										<p className="text-[10px] text-red-500 mt-1 font-medium">
+											* Rumpun Inspeksi Tujuan wajib dipilih.
 										</p>
 									)}
 							</div>
@@ -1058,7 +1098,8 @@ export default function RegisterEquipmentClient({
 									!formData.storageLocationId ||
 									!formData.funcLocId ||
 									!formData.vendor ||
-									!formData.idleReason
+									!formData.idleReason ||
+									!formData.inspectionCluster
 								) {
 									setShowValidationErrors(true);
 									return;
