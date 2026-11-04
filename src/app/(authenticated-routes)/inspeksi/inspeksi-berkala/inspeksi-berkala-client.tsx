@@ -125,7 +125,9 @@ export default function InspeksiBerkalaClient({
 			const query = search.toLowerCase().trim();
 			const code = row.equipment_code?.toLowerCase() || "";
 			const name = row.name?.toLowerCase() || "";
-			return code.includes(query) || name.includes(query);
+			const plant = (typeof row.plant === "string" ? row.plant : row.plant?.name || "").toLowerCase();
+			const funcLoc = (typeof row.func_loc === "object" ? (row.func_loc?.name ?? "") : row.func_loc || "").toLowerCase();
+			return code.includes(query) || name.includes(query) || plant.includes(query) || funcLoc.includes(query);
 		});
 
 		if (filterPlant) {
@@ -191,7 +193,9 @@ export default function InspeksiBerkalaClient({
 				const query = search.toLowerCase().trim();
 				const code = row.equipment_code?.toLowerCase() || "";
 				const name = row.equipment_name?.toLowerCase() || "";
-				return code.includes(query) || name.includes(query);
+				const plant = (row.plant || "").toLowerCase();
+				const funcLoc = (row.func_loc || "").toLowerCase();
+				return code.includes(query) || name.includes(query) || plant.includes(query) || funcLoc.includes(query);
 			})
 			.sort((a, b) => {
 				const timeA = a.inspection_date ? new Date(a.inspection_date).getTime() : 0;
@@ -426,9 +430,6 @@ export default function InspeksiBerkalaClient({
 										Kode Alat {getSortIcon("equipment_code")}
 									</div>
 								</th>
-								<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
-									Tipe Objek
-								</th>
 								<th
 									className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
 									onClick={() => handleSort("plant")}
@@ -439,6 +440,9 @@ export default function InspeksiBerkalaClient({
 								</th>
 								<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
 									Func. Location
+								</th>
+								<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
+									Tipe Objek
 								</th>
 								{activeTab === "antrean" ? (
 									<>
@@ -536,13 +540,13 @@ export default function InspeksiBerkalaClient({
 												{row.equipment_code}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
-												{typeStr}
-											</td>
-											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{plantStr}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{typeof row.func_loc === "object" ? (row.func_loc?.name ?? "-") : row.func_loc || "-"}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
+												{typeStr}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left">
 												{lokasiStr}
@@ -595,13 +599,13 @@ export default function InspeksiBerkalaClient({
 												{row.equipment_code}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
-												{row.object_type}
-											</td>
-											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{row.plant}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{row.func_loc || "-"}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
+												{row.object_type}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{dateStr}

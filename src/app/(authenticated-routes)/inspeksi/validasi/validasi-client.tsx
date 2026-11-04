@@ -144,6 +144,7 @@ export default function ManajemenInspeksiClient({
 		return () => clearTimeout(timer);
 	}, []);
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
+	const [previewModal, setPreviewModal] = useState<{ url: string; title?: string; isPdf?: boolean } | null>(null);
 	// Nomor Pemeriksaan digenerate backend saat validasi dibuat, jadi kosong sebelum submit.
 	const [inspectionNumber, setInspectionNumber] = useState("");
 
@@ -340,6 +341,7 @@ export default function ManajemenInspeksiClient({
 	const closeModal = () => {
 		setIsModalOpen(false);
 		setPreviewImage(null);
+		setPreviewModal(null);
 		setTimeout(() => {
 			setSelectedAsset(null);
 			setHasilPemeriksaan("");
@@ -574,17 +576,26 @@ export default function ManajemenInspeksiClient({
 			setFileError(null);
 			const files = Array.from(e.target.files);
 			let hasError = false;
+			const allowedExtensions = [
+				".pdf", ".doc", ".docx", ".xls", ".xlsx", ".dwg", ".dxf", ".jpg", ".jpeg", ".png", ".webp"
+			];
 			const validFiles = files.filter((f) => {
-				if (f.size > 5 * 1024 * 1024) {
+				const ext = "." + (f.name.split(".").pop()?.toLowerCase() || "");
+				if (!allowedExtensions.includes(ext) && !f.type.startsWith("image/")) {
+					setFileError(`Format file ${f.name} tidak didukung. Harap gunakan PDF, DOCX, XLSX, DWG, atau Foto.`);
 					hasError = true;
+					return false;
+				}
+				if (f.size > 10 * 1024 * 1024) {
+					hasError = true;
+					setFileError(`Ukuran file ${f.name} melebihi batas 10MB.`);
 					return false;
 				}
 				return true;
 			});
-			if (hasError) {
-				setFileError("file anda lebih dari 5mb");
+			if (!hasError) {
+				setUploadedFiles((prev) => [...prev, ...validFiles]);
 			}
-			setUploadedFiles((prev) => [...prev, ...validFiles]);
 			e.target.value = ""; // Reset input to allow selecting the same file again
 		}
 	};
@@ -606,17 +617,26 @@ export default function ManajemenInspeksiClient({
 			setFileError(null);
 			const files = Array.from(e.dataTransfer.files);
 			let hasError = false;
+			const allowedExtensions = [
+				".pdf", ".doc", ".docx", ".xls", ".xlsx", ".dwg", ".dxf", ".jpg", ".jpeg", ".png", ".webp"
+			];
 			const validFiles = files.filter((f) => {
-				if (f.size > 5 * 1024 * 1024) {
+				const ext = "." + (f.name.split(".").pop()?.toLowerCase() || "");
+				if (!allowedExtensions.includes(ext) && !f.type.startsWith("image/")) {
+					setFileError(`Format file ${f.name} tidak didukung. Harap gunakan PDF, DOCX, XLSX, DWG, atau Foto.`);
 					hasError = true;
+					return false;
+				}
+				if (f.size > 10 * 1024 * 1024) {
+					hasError = true;
+					setFileError(`Ukuran file ${f.name} melebihi batas 10MB.`);
 					return false;
 				}
 				return true;
 			});
-			if (hasError) {
-				setFileError("file anda lebih dari 5mb");
+			if (!hasError) {
+				setUploadedFiles((prev) => [...prev, ...validFiles]);
 			}
-			setUploadedFiles((prev) => [...prev, ...validFiles]);
 		}
 	};
 
@@ -1762,101 +1782,143 @@ export default function ManajemenInspeksiClient({
 
 								{/* Row 4: Upload */}
 								{!isReadOnly && (
-									<div className="mt-1">
+									<div className="mt-2 space-y-2">
 										<input
 											type="file"
 											multiple
 											className="hidden"
 											ref={fileInputRef}
 											onChange={handleFileChange}
-											accept=".jpg,.jpeg,.png,.pdf"
+											accept=".pdf,.doc,.docx,.xls,.xlsx,.dwg,.dxf,.jpg,.jpeg,.png,.webp"
 										/>
 										<div
-											onClick={() => fileInputRef.current?.click()}
 											onDragOver={handleDragOver}
 											onDragLeave={handleDragLeave}
 											onDrop={handleDrop}
-											className={`border-2 border-dashed rounded-md p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
+											className={`border-2 border-dashed rounded-lg p-4 sm:p-5 transition-all ${
 												isDragging
-													? "border-[#0A356A] bg-[#F2F3F4]"
-													: "border-gray-300 bg-gray-50 hover:bg-[#F2F3F4] hover:border-[#0A356A]"
+													? "border-[#0A356A] bg-blue-50/70"
+													: "border-gray-300 bg-gray-50/60 hover:border-[#0A356A]"
 											}`}
 										>
-											<UploadCloud
-												className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A]" : "text-gray-400"}`}
-											/>
-											<div className="text-[13px] text-center">
-												<span className="font-bold text-[#0A356A]">
-													📎 Upload File/Attachment Pemeriksaan
+											{/* Area Dropzone Klik */}
+											<div
+												onClick={() => fileInputRef.current?.click()}
+												className="flex flex-col items-center justify-center text-center cursor-pointer py-1.5 hover:opacity-80 transition-opacity"
+											>
+												<UploadCloud
+													className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A] animate-bounce" : "text-gray-400"}`}
+												/>
+												<div className="text-[13px] text-center">
+													<span className="font-bold text-[#0A356A]">
+														Upload File / Attachment Pemeriksaan
+													</span>
+												</div>
+												<span className="text-[11px] text-gray-500 font-medium text-center mt-0.5">
+													Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 10MB)
+												</span>
+												<span className="text-[10px] text-gray-400 mt-1">
+													Klik atau seret file ke sini untuk mengunggah (Opsional)
 												</span>
 											</div>
-											<span className="text-[11px] text-gray-500 font-medium text-center">
-												Format: JPG, PNG, PDF (Max 5MB)
-											</span>
 
-											{uploadedFiles.length === 0 && (
-												<span className="text-[9px] font-bold text-gray-500 border border-[#E6E8EA] bg-white px-1.5 py-0.5 rounded-sm mt-1">
-													Opsional
-												</span>
-											)}
-
-											{/* Preview Selected Files (Inside Dropzone) */}
+											{/* Daftar Berkas Terlampir (Tetap di dalam kotak, selebar kontainer) */}
 											{uploadedFiles.length > 0 && (
-												<div
-													className="mt-4 w-full flex flex-wrap justify-center gap-4"
-													onClick={(e) => e.stopPropagation()}
-												>
-													{uploadedFiles.map((file, i) => {
-														const isImage = file.type.startsWith("image/");
-														const previewUrl = isImage ? URL.createObjectURL(file) : null;
-														return (
-															<div
-																key={i}
-																className="relative group border border-gray-200 rounded overflow-hidden bg-white w-[150px] transition-all hover:border-[#0A356A]"
-															>
-																{isImage ? (
-																	<div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
-																		{/* <img> wajib: URL blob lokal (createObjectURL) tak bisa lewat next/image remotePatterns */}
-																		{/* eslint-disable-next-line @next/next/no-img-element -- URL blob lokal tidak dapat melewati next/image remotePatterns */}
-																		<img
-																			src={previewUrl!}
-																			alt={file.name}
-																			className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-																		/>
-																	</div>
-																) : (
-																	<div className="h-28 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
-																		<Paperclip className="w-8 h-8 mb-2" />
-																		<span className="text-[10px] font-bold">PDF / DOC</span>
-																	</div>
-																)}
-																<div className="px-2 py-1.5 border-t border-gray-100 bg-white">
-																	<span
-																		className="block text-[10px] font-medium text-gray-700 truncate text-center"
-																		title={file.name}
-																	>
-																		{file.name}
-																	</span>
-																</div>
-																<button
+												<div className="mt-4 pt-3.5 border-t border-gray-200">
+													<div className="flex items-center justify-between mb-2 px-0.5">
+														<span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+															Berkas Terlampir ({uploadedFiles.length})
+														</span>
+														<span className="text-[10px] text-gray-400">
+															Klik baris untuk melihat preview
+														</span>
+													</div>
+													<div className="space-y-2">
+														{uploadedFiles.map((file, i) => {
+															const isImage = file.type.startsWith("image/");
+															const isPdf =
+																file.type === "application/pdf" ||
+																file.name.toLowerCase().endsWith(".pdf");
+															const previewUrl = URL.createObjectURL(file);
+															const ext =
+																file.name.split(".").pop()?.toUpperCase() || "FILE";
+
+															return (
+																<div
+																	key={`${file.name}-${i}`}
 																	onClick={(e) => {
 																		e.stopPropagation();
-																		removeFile(i);
+																		if (isPdf) {
+																			setPreviewModal({
+																				url: previewUrl,
+																				title: file.name,
+																				isPdf: true,
+																			});
+																		} else if (isImage) {
+																			setPreviewImage(previewUrl);
+																		} else {
+																			const a = document.createElement("a");
+																			a.href = previewUrl;
+																			a.download = file.name;
+																			a.click();
+																		}
 																	}}
-																	className="absolute top-1.5 right-1.5 bg-[#DC2626] rounded p-1 text-white hover:bg-[#DC2626] transition-colors opacity-0 group-hover:opacity-100"
-																	title="Hapus"
+																	className="group flex items-center justify-between p-2.5 bg-white border border-gray-200 rounded-lg hover:border-[#0A356A] hover:shadow-sm transition-all cursor-pointer"
+																	title={`Klik untuk melihat preview: ${file.name}`}
 																>
-																	<X className="w-3.5 h-3.5" />
-																</button>
-															</div>
-														);
-													})}
+																	{/* Left: Icon/Thumbnail + Info */}
+																	<div className="flex items-center gap-3 min-w-0 flex-1">
+																		<div className="w-10 h-10 rounded border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 relative">
+																			{isImage ? (
+																				/* eslint-disable-next-line @next/next/no-img-element */
+																				<img
+																					src={previewUrl}
+																					alt={file.name}
+																					className="w-full h-full object-cover"
+																				/>
+																			) : (
+																				<span className="text-[9px] font-bold px-1.5 py-0.5 bg-gray-200 text-gray-700 rounded">
+																					{ext}
+																				</span>
+																			)}
+																		</div>
+																		<div className="min-w-0 flex-1">
+																			<p className="text-[12px] font-semibold text-gray-800 truncate group-hover:text-[#0A356A] transition-colors">
+																				{file.name}
+																			</p>
+																			<p className="text-[10px] text-gray-400">
+																				{(file.size / (1024 * 1024)).toFixed(2)} MB
+																			</p>
+																		</div>
+																	</div>
+
+																	{/* Right: Preview badge & Delete Button */}
+																	<div className="flex items-center gap-2 shrink-0 ml-3">
+																		<span className="text-[11px] font-medium text-[#0A356A] bg-blue-50 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+																			<Eye className="w-3.5 h-3.5" /> Preview
+																		</span>
+																		<button
+																			type="button"
+																			onClick={(e) => {
+																				e.stopPropagation();
+																				removeFile(i);
+																			}}
+																			className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+																			title="Hapus berkas"
+																		>
+																			<X className="w-4 h-4" />
+																		</button>
+																	</div>
+																</div>
+															);
+														})}
+													</div>
 												</div>
 											)}
 										</div>
 
 										{fileError && (
-											<p className="text-[10px] text-[#DC2626] mt-1.5 font-medium">
+											<p className="text-[11px] text-[#DC2626] font-medium">
 												* {fileError}
 											</p>
 										)}
@@ -2189,28 +2251,53 @@ export default function ManajemenInspeksiClient({
 					</div>
 				</div>
 			)}
-			{previewImage && (
+			{(previewImage || previewModal) && (
 				<div
-					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90"
-					onClick={() => setPreviewImage(null)}
+					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm"
+					onClick={() => {
+						setPreviewImage(null);
+						setPreviewModal(null);
+					}}
 				>
-					<button
-						className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded transition-colors"
-						onClick={(e) => {
-							e.stopPropagation();
-							setPreviewImage(null);
-						}}
-					>
-						<X className="w-6 h-6" />
-					</button>
-					<div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center">
-						{/* eslint-disable-next-line @next/next/no-img-element -- lihat catatan ponytail di atas */}
-						<img
-							src={previewImage}
-							alt="Preview Foto"
-							className="max-w-full max-h-full object-contain rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
+					<div className="absolute top-4 right-4 flex items-center gap-3 z-20">
+						<a
+							href={previewModal?.url || previewImage!}
+							download={previewModal?.title || "lampiran"}
+							target="_blank"
+							rel="noreferrer"
+							className="bg-white/10 hover:bg-white/25 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
 							onClick={(e) => e.stopPropagation()}
-						/>
+						>
+							<Download className="w-4 h-4" /> Buka Tab Baru / Unduh
+						</a>
+						<button
+							className="text-white hover:bg-white/20 p-2 rounded transition-colors"
+							onClick={(e) => {
+								e.stopPropagation();
+								setPreviewImage(null);
+								setPreviewModal(null);
+							}}
+							title="Tutup preview"
+						>
+							<X className="w-6 h-6" />
+						</button>
+					</div>
+					<div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center p-2">
+						{previewModal?.isPdf ? (
+							<iframe
+								src={previewModal.url}
+								title={previewModal.title || "Preview PDF"}
+								className="w-full h-full rounded-lg bg-white shadow-2xl border-0"
+							/>
+						) : (
+							/* eslint-disable-next-line @next/next/no-img-element -- URL blob lokal / remote */
+							<img
+								src={previewModal?.url || previewImage!}
+								alt={previewModal?.title || "Preview Foto"}
+								className="max-w-full max-h-full object-contain rounded shadow-2xl"
+								onClick={(e) => e.stopPropagation()}
+							/>
+						)}
 					</div>
 				</div>
 			)}

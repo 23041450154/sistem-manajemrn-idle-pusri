@@ -27,6 +27,9 @@ import {
 	X,
 	ChevronRight,
 	Loader2,
+	Eye,
+	Download,
+	Paperclip,
 } from "lucide-react";
 
 interface Equipment {
@@ -91,6 +94,7 @@ export default function VerifikasiDisposalPage() {
 	const [disposalMethodId, setDisposalMethodId] = useState("");
 	const [justification, setJustification] = useState("");
 	const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+	const [previewModal, setPreviewModal] = useState<{ url: string; title?: string; isPdf?: boolean } | null>(null);
 	// Hasil validasi teknik (GET /api/validation) — sumber alasan & rekomendasi disposal.
 	const [assetValidation, setAssetValidation] = useState<any>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -808,26 +812,131 @@ export default function VerifikasiDisposalPage() {
 									</div>
 
 									<div>
-										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-											Dokumen Pendukung
-										</label>
+										<div className="flex items-center justify-between mb-1.5">
+											<label className="block text-xs font-bold text-gray-700 uppercase">
+												Upload File / Attachment
+											</label>
+											<span className="text-[11px] text-gray-400 font-medium">
+												Opsional
+											</span>
+										</div>
 										<div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center bg-gray-50/50 hover:bg-blue-50/40 hover:border-[#0A356A] transition-colors relative">
 											<input
 												type="file"
-												accept=".pdf,.png,.jpg,.jpeg"
-												onChange={(e) => setUploadedFile(e.target.files?.[0] || null)}
+												accept=".pdf,.doc,.docx,.xls,.xlsx,.dwg,.dxf,.jpg,.jpeg,.png,.webp"
+												onChange={(e) => {
+													const f = e.target.files?.[0];
+													if (f) {
+														const allowed = [".pdf", ".doc", ".docx", ".xls", ".xlsx", ".dwg", ".dxf", ".jpg", ".jpeg", ".png", ".webp"];
+														const ext = "." + (f.name.split(".").pop()?.toLowerCase() || "");
+														if (!allowed.includes(ext) && !f.type.startsWith("image/")) {
+															showToast("error", `Format file ${f.name} tidak didukung. Harap gunakan PDF, DOCX, XLSX, DWG, atau Foto.`);
+															e.target.value = "";
+															return;
+														}
+														if (f.size > 10 * 1024 * 1024) {
+															showToast("error", `Ukuran file ${f.name} melebihi batas 10MB.`);
+															e.target.value = "";
+															return;
+														}
+														setUploadedFile(f);
+													}
+												}}
 												className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
 											/>
 											<Upload className="w-6 h-6 text-gray-400 mb-1.5" />
-											<span className="text-xs font-semibold text-gray-600">
-												{uploadedFile
-													? uploadedFile.name
-													: "Klik atau seret file PDF / Gambar pendukung"}
+											<span className="text-xs font-semibold text-gray-600 text-center px-4">
+												Klik atau tarik & lepas file dokumen/foto di sini
 											</span>
 											<span className="text-[10px] text-gray-400 mt-0.5">
-												Maks. 5MB (Optional)
+												Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 10MB per file)
 											</span>
 										</div>
+
+										{/* Preview File Terlampir (Dipisah di bawah dropzone) */}
+										{uploadedFile && (() => {
+											const isImage = uploadedFile.type.startsWith("image/");
+											const isPdf =
+												uploadedFile.type === "application/pdf" ||
+												uploadedFile.name.toLowerCase().endsWith(".pdf");
+											const previewUrl = URL.createObjectURL(uploadedFile);
+											const ext =
+												uploadedFile.name.split(".").pop()?.toUpperCase() || "FILE";
+
+											return (
+												<div className="mt-3 rounded-lg border border-gray-200 bg-gray-50/50 p-2.5">
+													<div className="flex items-center justify-between mb-1.5">
+														<span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+															Berkas Terlampir
+														</span>
+														<span className="text-[10px] text-gray-400">
+															Klik kartu untuk melihat preview
+														</span>
+													</div>
+													<div
+														onClick={() => {
+															if (isPdf) {
+																setPreviewModal({
+																	url: previewUrl,
+																	title: uploadedFile.name,
+																	isPdf: true,
+																});
+															} else if (isImage) {
+																setPreviewModal({
+																	url: previewUrl,
+																	title: uploadedFile.name,
+																	isPdf: false,
+																});
+															} else {
+																const a = document.createElement("a");
+																a.href = previewUrl;
+																a.download = uploadedFile.name;
+																a.click();
+															}
+														}}
+														className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white hover:border-[#0A356A] transition-all cursor-pointer shadow-sm hover:shadow-md flex items-center p-2.5 gap-3"
+														title={`Klik untuk melihat preview: ${uploadedFile.name}`}
+													>
+														<div className="h-12 w-12 rounded bg-gray-100 flex items-center justify-center overflow-hidden shrink-0 relative">
+															{isImage ? (
+																/* eslint-disable-next-line @next/next/no-img-element */
+																<img
+																	src={previewUrl}
+																	alt={uploadedFile.name}
+																	className="w-full h-full object-cover"
+																/>
+															) : (
+																<span className="text-[10px] font-bold px-1.5 py-0.5 bg-gray-200 text-gray-700 rounded">
+																	{ext}
+																</span>
+															)}
+															<div className="absolute inset-0 bg-black/30 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+																<Eye className="w-4 h-4" />
+															</div>
+														</div>
+														<div className="flex-1 min-w-0">
+															<p className="text-xs font-semibold text-gray-800 truncate">
+																{uploadedFile.name}
+															</p>
+															<p className="text-[10px] text-gray-400 mt-0.5">
+																{(uploadedFile.size / (1024 * 1024)).toFixed(2)} MB · Klik untuk preview
+															</p>
+														</div>
+														<button
+															type="button"
+															onClick={(e) => {
+																e.stopPropagation();
+																setUploadedFile(null);
+															}}
+															className="p-1 rounded-full text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+															title="Hapus berkas"
+														>
+															<X className="w-4 h-4" />
+														</button>
+													</div>
+												</div>
+											);
+										})()}
 									</div>
 								</div>
 							</div>
@@ -869,6 +978,53 @@ export default function VerifikasiDisposalPage() {
 				pendingLabel="Memproses..."
 				isPending={isSubmitting}
 			/>
+
+			{previewModal && (
+				<div
+					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm"
+					onClick={() => setPreviewModal(null)}
+				>
+					<div className="absolute top-4 right-4 flex items-center gap-3 z-20">
+						<a
+							href={previewModal.url}
+							download={previewModal.title || "lampiran"}
+							target="_blank"
+							rel="noreferrer"
+							className="bg-white/10 hover:bg-white/25 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
+							onClick={(e) => e.stopPropagation()}
+						>
+							<Download className="w-4 h-4" /> Buka Tab Baru / Unduh
+						</a>
+						<button
+							className="text-white hover:bg-white/20 p-2 rounded transition-colors"
+							onClick={(e) => {
+								e.stopPropagation();
+								setPreviewModal(null);
+							}}
+							title="Tutup preview"
+						>
+							<X className="w-6 h-6" />
+						</button>
+					</div>
+					<div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center p-2">
+						{previewModal.isPdf ? (
+							<iframe
+								src={previewModal.url}
+								title={previewModal.title || "Preview PDF"}
+								className="w-full h-full rounded-lg bg-white shadow-2xl border-0"
+							/>
+						) : (
+							/* eslint-disable-next-line @next/next/no-img-element */
+							<img
+								src={previewModal.url}
+								alt={previewModal.title || "Preview Foto"}
+								className="max-w-full max-h-full object-contain rounded shadow-2xl"
+								onClick={(e) => e.stopPropagation()}
+							/>
+						)}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

@@ -22,6 +22,8 @@ import {
 	History,
 	RefreshCw,
 	Users,
+	PlusCircle,
+	ShoppingBag,
 } from "lucide-react";
 import { useSidebar } from "./SidebarProvider";
 import { useState, useEffect } from "react";
@@ -264,6 +266,16 @@ export function Sidebar({ role }: { role?: string }) {
 					name: "Daftar Aset",
 					href: "/unit-kerja/daftar-aset",
 					icon: Wrench,
+				},
+				{
+					name: "Katalog Peralatan",
+					href: "/unit-kerja/katalog",
+					icon: ShoppingBag,
+				},
+				{
+					name: "Usulkan Alat Idle",
+					href: "/unit-kerja/usulan-idle",
+					icon: PlusCircle,
 				},
 				{
 					name: "Riwayat Permintaan",

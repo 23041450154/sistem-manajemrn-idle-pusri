@@ -285,8 +285,11 @@ export default function ManajerApproveClient({
 				activeTab === "inbox" ? isAwaitingDecision : !isAwaitingDecision;
 			const matchSearch = query
 				? req.nomorRequest.toLowerCase().includes(query.toLowerCase()) ||
+					req.namaAset.toLowerCase().includes(query.toLowerCase()) ||
 					req.kodeAset.toLowerCase().includes(query.toLowerCase()) ||
-					req.namaAset.toLowerCase().includes(query.toLowerCase())
+					(req.plant?.name || "").toLowerCase().includes(query.toLowerCase()) ||
+					(req.funcLoc?.name || "").toLowerCase().includes(query.toLowerCase()) ||
+					(req.objectType?.name || "").toLowerCase().includes(query.toLowerCase())
 				: true;
 			const matchPlant =
 				plant !== "Semua Plant" ? req.plant?.name === plant : true;
@@ -507,14 +510,20 @@ export default function ManajerApproveClient({
 								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
 									No. Registrasi
 								</th>
-								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
-									Kode
+								<th className="px-2.5 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-left">
+									Nama Peralatan
 								</th>
-								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider min-w-[120px] whitespace-nowrap text-center">
-									Nama
+								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">
+									Kode Aset / Tag
 								</th>
-								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
+								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">
 									Plant
+								</th>
+								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">
+									Functional Location
+								</th>
+								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">
+									Tipe Objek
 								</th>
 								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
 									Tanggal
@@ -534,7 +543,7 @@ export default function ManajerApproveClient({
 							{paginatedRequests.length === 0 ? (
 								<tr>
 									<td
-										colSpan={9}
+										colSpan={11}
 										className="px-4 py-8 text-center text-[13px] text-gray-500"
 									>
 										Tidak ada pengajuan validasi.
@@ -549,14 +558,22 @@ export default function ManajerApproveClient({
 										<td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug text-center">
 											{req.nomorRequest}
 										</td>
-										<td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900 text-center">
+										<td className="px-2.5 py-2 text-[12px] font-semibold text-gray-800 text-left">
+											<span className="line-clamp-2 block leading-snug" title={req.namaAset}>
+												{req.namaAset}
+											</span>
+										</td>
+										<td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-[#0A356A] text-left">
 											{req.kodeAset}
 										</td>
-										<td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug text-center">
-											{req.namaAset}
-										</td>
-										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-center">
+										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-left">
 											{req.plant?.name ?? "-"}
+										</td>
+										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-left" title={req.funcLoc?.name ?? "-"}>
+											{req.funcLoc?.name ?? "-"}
+										</td>
+										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-left">
+											{req.objectType?.name ?? "-"}
 										</td>
 										<td className="px-2 py-2 text-[11px] text-gray-600 font-medium leading-snug text-center whitespace-nowrap">
 											{req.tanggalPengajuan}

@@ -215,8 +215,9 @@ export default function PerbaikanAlatClient({
 				(item) =>
 					item.kodeAlat.toLowerCase().includes(q) ||
 					item.namaAlat.toLowerCase().includes(q) ||
-					item.tipeObjek.toLowerCase().includes(q) ||
 					item.plant.toLowerCase().includes(q) ||
+					(item.funcLoc || "").toLowerCase().includes(q) ||
+					item.tipeObjek.toLowerCase().includes(q) ||
 					item.lokasiPenyimpanan.toLowerCase().includes(q) ||
 					item.kondisi.toLowerCase().includes(q),
 			);
@@ -593,13 +594,13 @@ export default function PerbaikanAlatClient({
 									Kode Alat
 								</th>
 								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
-									Tipe Objek
-								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Plant
 								</th>
 								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Func. Location
+								</th>
+								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+									Tipe Objek
 								</th>
 								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left">
 									Lokasi
@@ -655,13 +656,13 @@ export default function PerbaikanAlatClient({
 											{asset.kodeAlat}
 										</td>
 										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
-											{asset.tipeObjek}
-										</td>
-										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
 											{asset.plant}
 										</td>
 										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left" title={asset.funcLoc || "-"}>
 											{asset.funcLoc || "-"}
+										</td>
+										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
+											{asset.tipeObjek}
 										</td>
 										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
 											{asset.lokasiPenyimpanan}
@@ -811,7 +812,7 @@ export default function PerbaikanAlatClient({
 								{isLoadingSelectedPhotos && selectedPhotos.length === 0 ? (
 									<div className="aspect-[4/3] rounded-[4px] border border-[#E6E8EA] bg-white flex flex-col items-center justify-center gap-2 text-[#64748B]">
 										<Loader2 className="w-5 h-5 animate-spin text-[#0A356A]" />
-										<p className="text-[12px]">Memuat foto peralatan...</p>
+										<p className="text-[12px]">Memuat lampiran / foto peralatan...</p>
 									</div>
 								) : selectedPhotos.length > 0 ? (
 									<div className="space-y-2">
@@ -858,7 +859,7 @@ export default function PerbaikanAlatClient({
 								) : (
 									<div className="aspect-[4/3] rounded-[4px] border border-[#E6E8EA] bg-white flex flex-col items-center justify-center gap-1.5 text-[#64748B]">
 										<ImageOff className="w-5 h-5" aria-hidden="true" />
-										<p className="text-[12px]">Foto peralatan belum diunggah.</p>
+										<p className="text-[12px]">Berkas lampiran / foto belum diunggah.</p>
 									</div>
 								)}
 
@@ -1147,17 +1148,17 @@ export default function PerbaikanAlatClient({
 								</div>
 							</div>
 
-							{/* Foto */}
+							{/* Berkas / Foto */}
 							{isLoadingDetailPhotos && detailPhotos.length === 0 ? (
 								<div className="border border-gray-100 rounded-lg p-6 bg-gray-50 flex flex-col items-center justify-center gap-2 text-gray-400">
 									<Loader2 className="w-5 h-5 animate-spin text-[#0A356A]" />
-									<p className="text-xs text-gray-500">Memuat foto peralatan...</p>
+									<p className="text-xs text-gray-500">Memuat berkas lampiran / foto...</p>
 								</div>
 							) : detailPhotos.length > 0 ? (
 								<div>
 									<div className="flex items-center justify-between mb-2">
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-											Foto Peralatan ({detailPhotos.length})
+											Berkas Lampiran / Foto ({detailPhotos.length})
 										</p>
 										{isLoadingDetailPhotos && (
 											<span className="flex items-center gap-1 text-[11px] text-gray-400">
@@ -1191,7 +1192,7 @@ export default function PerbaikanAlatClient({
 							) : (
 								<div className="border border-gray-100 rounded-lg p-4 bg-gray-50 flex flex-col items-center justify-center gap-1.5 text-gray-400">
 									<ImageOff className="w-5 h-5" aria-hidden="true" />
-									<p className="text-xs text-gray-500">Foto peralatan belum diunggah.</p>
+									<p className="text-xs text-gray-500">Berkas lampiran / foto belum diunggah.</p>
 								</div>
 							)}
 

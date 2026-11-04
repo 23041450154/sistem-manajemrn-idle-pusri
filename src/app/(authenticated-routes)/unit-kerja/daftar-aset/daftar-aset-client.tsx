@@ -174,8 +174,9 @@ export default function DaftarAsetClient({
 				(item) =>
 					item.equipment_code.toLowerCase().includes(q) ||
 					item.name.toLowerCase().includes(q) ||
-					item.object_type_name.toLowerCase().includes(q) ||
 					item.plant.toLowerCase().includes(q) ||
+					(item.func_loc || "").toLowerCase().includes(q) ||
+					item.object_type_name.toLowerCase().includes(q) ||
 					item.storage_location.toLowerCase().includes(q),
 			);
 		}
@@ -636,13 +637,13 @@ export default function DaftarAsetClient({
 									Kode Alat
 								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
-									Tipe Objek
-								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Plant
 								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Func. Location
+								</th>
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+									Tipe Objek
 								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left">
 									Lokasi
@@ -710,13 +711,13 @@ export default function DaftarAsetClient({
 											</button>
 										</td>
 										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap">
-											{asset.object_type_name}
-										</td>
-										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap">
 											{asset.plant}
 										</td>
 										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap" title={asset.func_loc || "-"}>
 											{asset.func_loc || "-"}
+										</td>
+										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap">
+											{asset.object_type_name}
 										</td>
 										<td className="px-2.5 py-2.5 text-[13px] text-gray-600">
 											{asset.storage_location}

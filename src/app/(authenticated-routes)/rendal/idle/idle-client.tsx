@@ -119,7 +119,9 @@ export default function RendalIdleClient({
 			const matchSearch =
 				!query ||
 				item.kodeAlat?.toLowerCase().includes(query) ||
-				item.namaAlat?.toLowerCase().includes(query);
+				item.namaAlat?.toLowerCase().includes(query) ||
+				item.plant?.toLowerCase().includes(query) ||
+				item.funcLoc?.toLowerCase().includes(query);
 			const matchPlant = plantFilter === "Semua" || item.plant === plantFilter;
 			const matchStatus =
 				statusFilter === "Semua" ||
@@ -311,7 +313,7 @@ export default function RendalIdleClient({
 							<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
 							<input
 								type="text"
-								placeholder="Cari kode atau nama alat..."
+								placeholder="Cari nama, kode aset, atau plant..."
 								value={searchInput}
 								onChange={(e) => {
 									setSearchInput(e.target.value);
