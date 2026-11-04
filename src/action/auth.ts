@@ -65,10 +65,13 @@ export async function logoutAction(): Promise<string> {
       "redirect",
       `${ssoBaseUrl}/api/login?client_id=${clientId}`,
     );
-  } else if (isDevLogin && origin) {
+  } else if (isDevLogin) {
+    // Pakai path relatif (tanpa host). Backend mem-whitelist URL relatif (u.Host == ""),
+    // sedangkan URL absolut di luar *.pusri.dev (seperti *.vercel.app atau *.naufal.me)
+    // ditolak oleh whitelist backend dan di-fallback paksa ke http://localhost:3000.
     url.searchParams.set(
       "redirect",
-      `${origin}${BASE_PATH}/login`,
+      `${BASE_PATH}/login`,
     );
   }
   return url.toString();
