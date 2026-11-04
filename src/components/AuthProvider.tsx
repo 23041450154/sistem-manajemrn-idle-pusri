@@ -55,12 +55,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
       // 401 / sesi habis / tak ada sesi -> mulai SSO (top-level, cross-origin).
-      // DEV (NEXT_PUBLIC_LOGIN_FORM=true): ke form login lokal, bukan SSO —
-      // SSO dev tidak bisa redirect balik ke localhost.
-      if (process.env.NEXT_PUBLIC_LOGIN_FORM === "true") {
-        router.replace("/login");
-        return;
-      }
       const sso = ssoLoginUrl();
       if (sso) window.location.replace(sso);
       else router.replace("/error?type=config");
