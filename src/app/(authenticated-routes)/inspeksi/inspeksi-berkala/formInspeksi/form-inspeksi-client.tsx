@@ -93,8 +93,8 @@ export default function FormInspeksiClient({
 				break;
 			}
 
-			if (file.size > 10 * 1024 * 1024) {
-				setFileError(`File ${file.name} melebihi batas 10MB.`);
+			if (file.size > 25 * 1024 * 1024) {
+				setFileError(`File ${file.name} melebihi batas 25MB.`);
 				hasError = true;
 				break;
 			}
@@ -121,15 +121,21 @@ export default function FormInspeksiClient({
 	const isPerbaikanKhususNotSelected =
 		hasilInspeksi === "REPAIR" && jenisPerbaikan === "";
 	const isKondisiEmpty = !inspectionCondition || inspectionCondition.trim() === "";
+	const isFilesEmpty = files.length === 0;
 	const isSubmitDisabled =
 		isKelayakanNotSelected ||
 		isPerbaikanKhususNotSelected ||
 		isKondisiEmpty ||
 		isNotesEmpty ||
+		isFilesEmpty ||
 		loading;
 
 	const handleSubmit = async (e?: React.FormEvent) => {
 		e?.preventDefault();
+		if (files.length === 0) {
+			setFileError("Berkas lampiran/foto inspeksi wajib diunggah minimal 1 file.");
+			return;
+		}
 		if (isSubmitDisabled) return;
 
 		setLoading(true);
@@ -604,7 +610,7 @@ export default function FormInspeksiClient({
 					<div>
 						<div className="flex items-center justify-between mb-2">
 							<label className="block text-[13px] font-bold text-gray-700">
-								Upload File / Attachment <span className="text-gray-400 font-normal text-xs">(Opsional)</span>
+								Upload File / Attachment <span className="text-red-500 font-bold text-xs">* (Wajib)</span>
 							</label>
 							{files.length > 0 && (
 								<span className="text-[11px] font-bold text-gray-500">
@@ -637,10 +643,10 @@ export default function FormInspeksiClient({
 									Klik atau tarik & lepas file dokumen/foto di sini
 								</p>
 								<p className="text-[11px] text-gray-500 font-medium mt-0.5">
-									Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 10MB)
+									Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 25MB)
 								</p>
 								<span className="text-[10px] text-gray-400 mt-0.5">
-									Klik untuk memilih file lampiran (Opsional)
+									Klik untuk memilih file lampiran (Wajib minimal 1 file)
 								</span>
 							</div>
 

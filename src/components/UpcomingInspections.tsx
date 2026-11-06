@@ -9,6 +9,7 @@ type InspectionRow = {
   type: string;
   id: string;
   dept: string;
+  storageLocation: string;
   date: string;
   status: string;
   statusColor: string;
@@ -43,6 +44,10 @@ export function UpcomingInspections({
       type: typeName,
       id: eq?.equipment_code || "-",
       dept: eq?.plant || "-",
+      storageLocation:
+        (typeof eq?.storage_location === "object"
+          ? eq?.storage_location?.name
+          : eq?.storage_location) || "-",
       date: d.inspection_date
         ? new Date(d.inspection_date).toLocaleDateString()
         : "-",
@@ -75,6 +80,9 @@ export function UpcomingInspections({
                 Departemen
               </th>
               <th className="py-3 px-6 text-xs font-semibold text-gray-500 border-b border-gray-100">
+                Lokasi Penyimpanan
+              </th>
+              <th className="py-3 px-6 text-xs font-semibold text-gray-500 border-b border-gray-100">
                 Tanggal Inspeksi
               </th>
               <th className="py-3 px-6 text-xs font-semibold text-gray-500 border-b border-gray-100">
@@ -95,6 +103,9 @@ export function UpcomingInspections({
                   <td className="py-4 px-6 text-sm text-gray-600">{item.id}</td>
                   <td className="py-4 px-6 text-sm text-gray-600">
                     {item.dept}
+                  </td>
+                  <td className="py-4 px-6 text-sm text-gray-600">
+                    {item.storageLocation}
                   </td>
                   <td className="py-4 px-6 text-sm text-gray-600">
                     {item.date}

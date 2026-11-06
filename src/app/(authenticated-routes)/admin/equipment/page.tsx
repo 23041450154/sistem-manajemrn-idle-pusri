@@ -24,6 +24,7 @@ type EquipmentRow = {
   equipment_code?: string;
   name?: string | { name?: string };
   plant?: string | { name?: string; description?: string };
+  storage_location?: string | { name?: string };
   status?: { name?: string } | null;
   status_id?: number;
 };
@@ -35,6 +36,11 @@ const plantOf = (eq: EquipmentRow) =>
   typeof eq.plant === "string"
     ? eq.plant
     : eq.plant?.name || eq.plant?.description || "-";
+
+const locationOf = (eq: EquipmentRow) =>
+  typeof eq.storage_location === "string"
+    ? eq.storage_location
+    : eq.storage_location?.name || "-";
 
 export default function EquipmentManagementPage() {
   const [equipments, setEquipments] = useState<EquipmentRow[]>([]);
@@ -83,7 +89,8 @@ export default function EquipmentManagementPage() {
         !query ||
         eq.equipment_code?.toLowerCase().includes(query) ||
         nameOf(eq).toLowerCase().includes(query) ||
-        plantOf(eq).toLowerCase().includes(query);
+        plantOf(eq).toLowerCase().includes(query) ||
+        locationOf(eq).toLowerCase().includes(query);
       const matchPlant =
         plantFilter === "Semua Plant" || plantOf(eq) === plantFilter;
       return matchSearch && matchPlant;
@@ -230,6 +237,9 @@ export default function EquipmentManagementPage() {
                     Plant
                   </th>
                   <th className="px-6 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
+                    Lokasi Penyimpanan
+                  </th>
+                  <th className="px-6 py-3 text-[11px] font-semibold text-slate-400 uppercase tracking-wider">
                     Status Aset
                   </th>
                 </tr>
@@ -248,6 +258,9 @@ export default function EquipmentManagementPage() {
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-slate-500">
                       {plantOf(item)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-xs font-medium text-slate-500">
+                      {locationOf(item)}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       {getStatusBadge(item.status ?? null, item.status_id ?? 0)}

@@ -315,6 +315,11 @@ export default function VerifikasiDisposalPage() {
 		e?.preventDefault();
 		if (!selectedAsset) return;
 
+		if (!uploadedFile) {
+			showToast("error", "Lampiran dokumen/foto verifikasi disposal wajib diunggah.");
+			return;
+		}
+
 		setIsSubmitting(true);
 		try {
 			const payload = {
@@ -482,8 +487,8 @@ export default function VerifikasiDisposalPage() {
 								<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[65px]">
 									Plant
 								</th>
-								<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[110px]">
-									Lokasi
+								<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[130px]">
+									Lokasi Penyimpanan
 								</th>
 								<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[95px]">
 									Tipe Objek
@@ -814,10 +819,10 @@ export default function VerifikasiDisposalPage() {
 									<div>
 										<div className="flex items-center justify-between mb-1.5">
 											<label className="block text-xs font-bold text-gray-700 uppercase">
-												Upload File / Attachment
+												Upload File / Attachment <span className="text-red-500 font-bold normal-case">* (Wajib)</span>
 											</label>
-											<span className="text-[11px] text-gray-400 font-medium">
-												Opsional
+											<span className="text-[11px] text-red-500 font-medium">
+												Wajib
 											</span>
 										</div>
 										<div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center bg-gray-50/50 hover:bg-blue-50/40 hover:border-[#0A356A] transition-colors relative">
@@ -834,8 +839,8 @@ export default function VerifikasiDisposalPage() {
 															e.target.value = "";
 															return;
 														}
-														if (f.size > 10 * 1024 * 1024) {
-															showToast("error", `Ukuran file ${f.name} melebihi batas 10MB.`);
+														if (f.size > 25 * 1024 * 1024) {
+															showToast("error", `Ukuran file ${f.name} melebihi batas 25MB.`);
 															e.target.value = "";
 															return;
 														}
@@ -849,7 +854,7 @@ export default function VerifikasiDisposalPage() {
 												Klik atau tarik & lepas file dokumen/foto di sini
 											</span>
 											<span className="text-[10px] text-gray-400 mt-0.5">
-												Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 10MB per file)
+												Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 25MB per file)
 											</span>
 										</div>
 
@@ -953,7 +958,13 @@ export default function VerifikasiDisposalPage() {
 								</button>
 								<button
 									type="button"
-									onClick={() => setIsConfirmOpen(true)}
+									onClick={() => {
+										if (!uploadedFile) {
+											showToast("error", "Lampiran dokumen/foto verifikasi disposal wajib diunggah.");
+											return;
+										}
+										setIsConfirmOpen(true);
+									}}
 									disabled={isSubmitting}
 									className="px-5 py-2 bg-[#0A356A] hover:bg-[#062854] text-white rounded-lg text-sm font-bold shadow-md transition-colors flex items-center gap-2"
 								>

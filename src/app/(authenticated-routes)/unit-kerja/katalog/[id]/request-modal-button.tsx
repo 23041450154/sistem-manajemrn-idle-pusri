@@ -59,8 +59,11 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 			return;
 		}
 
-		if (!(Number(formData.estimatedNewPurchaseCost) > 0)) {
-			setError("Estimasi biaya pembelian baru wajib diisi (> 0).");
+		const parsedCost = formData.estimatedNewPurchaseCost
+			? Number(formData.estimatedNewPurchaseCost)
+			: 0;
+		if (isNaN(parsedCost) || parsedCost < 0) {
+			setError("Estimasi harga unit baru tidak valid.");
 			return;
 		}
 
@@ -79,7 +82,7 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 				requestingPlant: formData.requestingPlant,
 				installationLocation: formData.installationLocation,
 				reuseDate: formData.reuseDate,
-				estimatedNewPurchaseCost: Number(formData.estimatedNewPurchaseCost) || 0,
+				estimatedNewPurchaseCost: parsedCost,
 				justification: formData.justification,
 			});
 
@@ -216,7 +219,8 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 								</div>
 								<div>
 									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Estimasi Biaya Beli Baru (Rp) <span className="text-red-500">*</span>
+										Estimasi Harga Unit Baru (Rp){" "}
+										<span className="font-normal normal-case text-gray-400">(opsional)</span>
 									</label>
 									<input
 										type="number"
@@ -227,8 +231,7 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 												estimatedNewPurchaseCost: e.target.value,
 											})
 										}
-										required
-										min={1}
+										min={0}
 										placeholder="0"
 										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
 									/>

@@ -37,6 +37,7 @@ export interface ReuseRequestItem {
 	equipment_code: string;
 	equipment_name: string;
 	installation_location: string;
+	storage_location?: string;
 	status: string;
 }
 
@@ -112,6 +113,10 @@ export default function UnitKerjaDashboardPage() {
 				equipment.name,
 			),
 			installation_location: str(r.installation_location, r.installationLocation),
+			storage_location: str(
+				masterEquipment.storage_location,
+				equipment.storage_location,
+			),
 			status: str(r.status, r.approval_status, r.approvalStatus, "PENDING"),
 		};
 	});

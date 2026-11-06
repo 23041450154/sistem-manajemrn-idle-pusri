@@ -605,9 +605,9 @@ export default function ManajemenInspeksiClient({
 					hasError = true;
 					return false;
 				}
-				if (f.size > 10 * 1024 * 1024) {
+				if (f.size > 25 * 1024 * 1024) {
 					hasError = true;
-					setFileError(`Ukuran file ${f.name} melebihi batas 10MB.`);
+					setFileError(`Ukuran file ${f.name} melebihi batas 25MB.`);
 					return false;
 				}
 				return true;
@@ -646,9 +646,9 @@ export default function ManajemenInspeksiClient({
 					hasError = true;
 					return false;
 				}
-				if (f.size > 10 * 1024 * 1024) {
+				if (f.size > 25 * 1024 * 1024) {
 					hasError = true;
-					setFileError(`Ukuran file ${f.name} melebihi batas 10MB.`);
+					setFileError(`Ukuran file ${f.name} melebihi batas 25MB.`);
 					return false;
 				}
 				return true;
@@ -705,7 +705,8 @@ export default function ManajemenInspeksiClient({
 
 			const matchSearch =
 				a.kodeAlat.toLowerCase().includes(search.toLowerCase()) ||
-				a.namaAlat.toLowerCase().includes(search.toLowerCase());
+				a.namaAlat.toLowerCase().includes(search.toLowerCase()) ||
+				a.lokasiPenyimpanan?.toLowerCase().includes(search.toLowerCase());
 			const matchPlant = plantFilter === "Semua" || a.plant === plantFilter;
 
 			let matchStatus = false;
@@ -920,6 +921,10 @@ export default function ManajemenInspeksiClient({
 		} else {
 			if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
 		}
+
+		const hasAttachment =
+			uploadedFiles.length > 0 || (isRevision && attachments.length > 0);
+		if (!hasAttachment) return false;
 
 		return true;
 	};
@@ -1157,6 +1162,15 @@ export default function ManajemenInspeksiClient({
 								<th
 									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center whitespace-nowrap"
 									title="Klik untuk mengurutkan"
+									onClick={() => handleSort("lokasiPenyimpanan")}
+								>
+									<div className="flex items-center justify-center">
+										Lokasi Penyimpanan {getSortIcon("lokasiPenyimpanan")}
+									</div>
+								</th>
+								<th
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center whitespace-nowrap"
+									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("jenisAlat")}
 								>
 									<div className="flex items-center justify-center">
@@ -1198,7 +1212,7 @@ export default function ManajemenInspeksiClient({
 						<tbody className="bg-white">
 							{paginatedAssets.length === 0 ? (
 								<tr>
-									<td colSpan={8} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-7 h-7 text-gray-300 mb-2" />
 											{search ||
@@ -1258,6 +1272,9 @@ export default function ManajemenInspeksiClient({
 											</td>
 											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center">
 												{asset.plant}
+											</td>
+											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center">
+												{asset.lokasiPenyimpanan || "-"}
 											</td>
 											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center">
 												{asset.jenisAlat}
@@ -1827,9 +1844,13 @@ export default function ManajemenInspeksiClient({
 											onDragLeave={handleDragLeave}
 											onDrop={handleDrop}
 											className={`border-2 border-dashed rounded-lg p-4 sm:p-5 transition-all ${
-												isDragging
-													? "border-[#0A356A] bg-blue-50/70"
-													: "border-gray-300 bg-gray-50/60 hover:border-[#0A356A]"
+												showValidationErrors &&
+												uploadedFiles.length === 0 &&
+												!(selectedAsset?.statusPersetujuan === "NEED_REVISION" && attachments.length > 0)
+													? "border-red-400 bg-red-50/20"
+													: isDragging
+														? "border-[#0A356A] bg-blue-50/70"
+														: "border-gray-300 bg-gray-50/60 hover:border-[#0A356A]"
 											}`}
 										>
 											{/* Area Dropzone Klik */}
@@ -1842,16 +1863,24 @@ export default function ManajemenInspeksiClient({
 												/>
 												<div className="text-[13px] text-center">
 													<span className="font-bold text-[#0A356A]">
-														Upload File / Attachment Pemeriksaan
+														Upload File / Attachment Pemeriksaan <span className="text-red-500">* (Wajib)</span>
 													</span>
 												</div>
 												<span className="text-[11px] text-gray-500 font-medium text-center mt-0.5">
-													Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 10MB)
+													Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 25MB)
 												</span>
 												<span className="text-[10px] text-gray-400 mt-1">
-													Klik atau seret file ke sini untuk mengunggah (Opsional)
+													Klik atau seret file ke sini untuk mengunggah (Wajib minimal 1 file)
 												</span>
 											</div>
+
+											{showValidationErrors &&
+												uploadedFiles.length === 0 &&
+												!(selectedAsset?.statusPersetujuan === "NEED_REVISION" && attachments.length > 0) && (
+													<p className="text-[11px] text-[#DC2626] font-medium text-center mt-2">
+														* Berkas lampiran/foto hasil pemeriksaan wajib diunggah minimal 1 file.
+													</p>
+												)}
 
 											{/* Daftar Berkas Terlampir (Tetap di dalam kotak, selebar kontainer) */}
 											{uploadedFiles.length > 0 && (

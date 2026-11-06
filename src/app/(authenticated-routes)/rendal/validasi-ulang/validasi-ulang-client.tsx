@@ -633,6 +633,12 @@ export default function RendalValidasiUlangClient({
 								>
 									Plant
 								</th>
+								<th
+									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									onClick={() => handleSort("lokasiPenyimpanan")}
+								>
+									Lokasi Penyimpanan
+								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 									Kondisi
 								</th>
@@ -650,7 +656,7 @@ export default function RendalValidasiUlangClient({
 						<tbody className="bg-white">
 							{paginatedItems.length === 0 ? (
 								<tr>
-									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={10} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -705,6 +711,9 @@ export default function RendalValidasiUlangClient({
 										</td>
 										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left whitespace-nowrap">
 											{asset.plant}
+										</td>
+										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
+											{asset.lokasiPenyimpanan || "-"}
 										</td>
 										<td className="px-3 py-3 text-center whitespace-nowrap">
 											<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#DCFCE7] text-[#16A34A]">

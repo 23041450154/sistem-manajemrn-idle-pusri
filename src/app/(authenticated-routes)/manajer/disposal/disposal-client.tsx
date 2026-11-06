@@ -304,6 +304,9 @@ export default function ManajerDisposalClient({
                   Kode & Nama Alat
                 </th>
                 <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
+                  Lokasi Penyimpanan
+                </th>
+                <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
                   Taksiran Nilai Scrap
                 </th>
                 <th className="px-4 py-3 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
@@ -323,7 +326,7 @@ export default function ManajerDisposalClient({
               {filteredDisposals.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={activeTab === "history" ? 7 : 6}
+                    colSpan={activeTab === "history" ? 8 : 7}
                     className="px-6 py-12 text-center text-gray-400"
                   >
                     <CheckCircle2 className="w-8 h-8 mx-auto mb-2 text-emerald-400 opacity-60" />
@@ -356,6 +359,9 @@ export default function ManajerDisposalClient({
                       <p className="text-[12px] text-gray-500 font-medium line-clamp-1">
                         {item.equipment_name}
                       </p>
+                    </td>
+                    <td className="px-4 py-3.5 whitespace-nowrap text-[12px] text-gray-600 font-medium text-center">
+                      {item.storage_location || "-"}
                     </td>
                     <td className="px-4 py-3.5 whitespace-nowrap text-[13px] font-bold text-emerald-700 text-center">
                       {formatCurrency(item.scrap_value)}

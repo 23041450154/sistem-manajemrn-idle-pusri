@@ -9,9 +9,7 @@ import { formatDate } from "@/lib/utils";
 import {
 	CheckCircle2,
 	ChevronRight,
-	Clock,
 	Eye,
-	FileText,
 	Inbox,
 	RefreshCw,
 	Search,
@@ -30,6 +28,7 @@ export interface ReuseRequestItem {
 	equipment_name: string;
 	requesting_unit: string;
 	installation_location: string;
+	storage_location?: string;
 	target_plant: string;
 	start_date: string;
 	end_date?: string;
@@ -57,7 +56,7 @@ const STATUS_META: Record<
 		bg: "bg-[#FEF3C7]",
 		text: "text-[#B45309]",
 	},
-	APPROVED: { label: "Disetujui", bg: "bg-[#DCFCE7]", text: "text-[#16A34A]" },
+	APPROVED: { label: "Approved for Reuse", bg: "bg-[#DCFCE7]", text: "text-[#16A34A]" },
 	REJECTED: { label: "Ditolak", bg: "bg-[#FEE2E2]", text: "text-[#DC2626]" },
 };
 
@@ -392,7 +391,7 @@ function RiwayatPermintaanContent({
 						>
 							<option value="SEMUA">Semua Status</option>
 							<option value="PENDING">Menunggu Persetujuan</option>
-							<option value="APPROVED">Disetujui</option>
+							<option value="APPROVED">Approved for Reuse</option>
 							<option value="REJECTED">Ditolak</option>
 						</select>
 
@@ -427,6 +426,7 @@ function RiwayatPermintaanContent({
 									"w-[240px] max-w-[260px]",
 								)}
 								{sortableTh("target_plant", "Plant", "left", "w-[160px]")}
+								{sortableTh("storage_location", "Lokasi Penyimpanan", "left", "w-[160px]")}
 								{sortableTh("start_date", "Tgl Permintaan", "center", "w-[140px]")}
 								<th
 									scope="col"
@@ -445,7 +445,7 @@ function RiwayatPermintaanContent({
 						<tbody className="divide-y divide-[#E6E8EA]">
 							{paginatedItems.length === 0 ? (
 								<tr>
-									<td colSpan={7} className="px-4 py-14 text-center">
+									<td colSpan={8} className="px-4 py-14 text-center">
 										<Inbox
 											className="mx-auto h-8 w-8 text-[#64748B]"
 											aria-hidden="true"
@@ -505,6 +505,14 @@ function RiwayatPermintaanContent({
 											>
 												<span className="block truncate leading-tight">
 													{item.target_plant}
+												</span>
+											</td>
+											<td
+												className="px-4 py-2.5 text-[13px] text-[#475569]"
+												title={item.storage_location || "-"}
+											>
+												<span className="block truncate leading-tight">
+													{item.storage_location || "-"}
 												</span>
 											</td>
 											<td className="px-4 py-2.5 text-center text-[13px] whitespace-nowrap text-[#475569] tabular-nums">

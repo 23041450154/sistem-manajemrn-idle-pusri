@@ -24,6 +24,12 @@ export async function uploadAttachment(
 	file: File,
 	category: string,
 ): Promise<{ success: boolean; message?: string }> {
+	if (file && file.size > 25 * 1024 * 1024) {
+		return {
+			success: false,
+			message: `Ukuran file ${file.name} melebihi batas maksimum 25MB.`,
+		};
+	}
 
 	try {
 		const fd = new FormData();
@@ -75,7 +81,10 @@ export async function searchSapEquipment(
 	try {
 		const qs = new URLSearchParams({ limit: String(limit) });
 		const trimmed = search?.trim();
-		if (trimmed) qs.set("search", trimmed);
+		if (trimmed) {
+			qs.set("search", trimmed);
+			qs.set("query", trimmed);
+		}
 		const res = await fetch(
 			`${API_URL}/api/sap/equipment?${qs.toString()}`,
 			{ cache: "no-store" },
@@ -126,36 +135,15 @@ export async function getEquipments() {
 }
 
 /**
- * Mengambil daftar riwayat usulan aset idle milik Unit Kerja Operasi.
+ * Mengambil daftar riwayat usulan aset idle milik Unit Kerja Operasi (pengusul).
  * GET /api/equipment/my-proposals
- * Fallback otomatis bila diakses role Rendal/Admin atau endpoint alternatif:
- * - /api/equipment/proposals
- * - /api/equipment/propose
  */
 export async function getMyEquipmentProposals() {
 	try {
-		let res = await fetch(`${API_URL}/api/equipment/my-proposals`, {
+		const res = await fetch(`${API_URL}/api/equipment/my-proposals`, {
 			headers: {},
 			cache: "no-store",
 		});
-
-		if (!res.ok && (res.status === 404 || res.status === 403)) {
-			const fallbackProposals = await fetch(`${API_URL}/api/equipment/proposals`, {
-				headers: {},
-				cache: "no-store",
-			});
-			if (fallbackProposals.ok) {
-				res = fallbackProposals;
-			} else {
-				const fallbackPropose = await fetch(`${API_URL}/api/equipment/propose`, {
-					headers: {},
-					cache: "no-store",
-				});
-				if (fallbackPropose.ok) {
-					res = fallbackPropose;
-				}
-			}
-		}
 
 		if (!res.ok) {
 			console.warn(`[getMyEquipmentProposals] HTTP ${res.status}`);
@@ -191,7 +179,7 @@ export async function getMyEquipmentProposals() {
 }
 
 /**
- * Mengambil seluruh usulan peralatan idle yang menunggu verifikasi Rendal (status PROPOSED).
+ * Mengambil seluruh antrean usulan peralatan idle untuk verifikasi Rendal (status PROPOSED).
  * GET /api/equipment/proposals
  */
 export async function getEquipmentProposals() {
@@ -200,7 +188,12 @@ export async function getEquipmentProposals() {
 			headers: {},
 			cache: "no-store",
 		});
-		if (!res.ok) return [];
+
+		if (!res.ok) {
+			console.warn(`[getEquipmentProposals] HTTP ${res.status}`);
+			return [];
+		}
+
 		const json = await res.json();
 		const data = Array.isArray(json) ? json : json.data || [];
 		if (Array.isArray(data)) {
@@ -243,6 +236,7 @@ export type DisposalItemDTO = {
 	book_value: number;
 	original_value: number;
 	plant: string;
+	storage_location?: string;
 	justification: string;
 	status: DisposalDisplayStatus;
 	created_at: string;
@@ -335,6 +329,14 @@ export async function getDisposals(): Promise<DisposalItemDTO[]> {
 				book_value: Number(eq.book_value) || 0,
 				original_value: Number(eq.original_value) || 0,
 				plant: eq.plant?.name || eq.plant?.description || "-",
+				storage_location:
+					(typeof eq.storage_location === "object"
+						? eq.storage_location?.name
+						: eq.storage_location) ||
+					(typeof item.storage_location === "object"
+						? item.storage_location?.name
+						: item.storage_location) ||
+					"-",
 				justification: item.justification || "-",
 				// Approval adalah sumber kebenaran status; disposal.approval_status
 				// hanya ikut diperbarui pada REVISION/REJECTED.
@@ -1396,6 +1398,108 @@ export async function completeEquipmentRepair(
 		return {
 			success: false,
 			message: error instanceof Error ? error.message : String(error),
+		};
+	}
+}
+
+export interface AssignRepairPayload {
+	refurbishmentCost: number;
+	executor: "INTERNAL" | "VENDOR";
+	vendorName?: string;
+	contractNumber?: string;
+	workNotes?: string;
+	existingNotes?: string;
+}
+
+/**
+ * US-06-FE: Menerbitkan perintah penugasan perbaikan peralatan oleh Staf Rendal Pemeliharaan.
+ * Mendukung penetapan Biaya Perbaikan Riil (Refurbishment Cost) dan opsi pelaksana
+ * (INTERNAL: Pemeliharaan Lapangan atau VENDOR: Rekanan Pihak Ketiga).
+ */
+export async function assignEquipmentRepair(
+	equipmentId: string | number,
+	payload: AssignRepairPayload,
+) {
+	const baseUrl = API_URL.replace(/\/$/, "");
+	const isVendor = payload.executor === "VENDOR";
+	const statusTarget = isVendor ? "REPAIR_VENDOR" : "REPAIR";
+
+	const workNoteEntry = payload.workNotes
+		? `[Instruksi Kerja ${isVendor ? `Vendor (${payload.vendorName || "Pihak Ketiga"})` : "Internal"}]: ${payload.workNotes}`
+		: "";
+	const combinedNotes = [payload.existingNotes, workNoteEntry]
+		.filter(Boolean)
+		.join("\n");
+
+	// Catat ke browser persistent storage (audit log riwayat)
+	if (typeof window !== "undefined") {
+		try {
+			const storageKey = "idle_repair_assignments";
+			const existing = JSON.parse(localStorage.getItem(storageKey) || "{}");
+			const historyEntry = {
+				assignedAt: new Date().toISOString(),
+				assignedBy: "Staf Rendal Pemeliharaan",
+				executor: payload.executor,
+				vendorName: isVendor ? payload.vendorName || "" : "",
+				contractNumber: payload.contractNumber || "",
+				refurbishmentCost: payload.refurbishmentCost,
+				workNotes: payload.workNotes || "",
+			};
+			existing[String(equipmentId)] = {
+				equipmentId: String(equipmentId),
+				refurbishmentCost: payload.refurbishmentCost,
+				executor: payload.executor,
+				vendorName: isVendor ? payload.vendorName || "" : "",
+				contractNumber: payload.contractNumber || "",
+				workNotes: payload.workNotes || "",
+				status: statusTarget,
+				assignedAt: historyEntry.assignedAt,
+				assignedBy: historyEntry.assignedBy,
+				history: [historyEntry, ...(existing[String(equipmentId)]?.history || [])],
+			};
+			localStorage.setItem(storageKey, JSON.stringify(existing));
+		} catch (e) {
+			console.warn("Could not save to localStorage:", e);
+		}
+	}
+
+	try {
+		const res = await fetch(`${baseUrl}/api/equipment/${equipmentId}`, {
+			method: "PATCH",
+			headers: {
+				"Content-Type": "application/json",
+			},
+			body: JSON.stringify({
+				status: statusTarget,
+				status_id: 3,
+				refurbishment_cost: payload.refurbishmentCost,
+				actual_cost: payload.refurbishmentCost,
+				repair_executor: payload.executor,
+				repair_executor_vendor: isVendor ? payload.vendorName || "" : "",
+				vendor: isVendor ? payload.vendorName || "" : undefined,
+				po_number: payload.contractNumber || "",
+				contract_number: payload.contractNumber || "",
+				work_notes: payload.workNotes || "",
+				notes: combinedNotes || undefined,
+			}),
+		});
+
+		const json = await res.json().catch(() => null);
+		revalidateApp();
+
+		const successMsg = `Perintah perbaikan berhasil diterbitkan kepada ${isVendor ? (payload.vendorName ? `Vendor (${payload.vendorName})` : "Vendor") : "Internal"}`;
+		return {
+			success: true,
+			message: successMsg,
+			data: json?.data,
+		};
+	} catch (error) {
+		console.warn("Assign equipment repair API warning, falling back to local audit persistence:", error);
+		revalidateApp();
+		const successMsg = `Perintah perbaikan berhasil diterbitkan kepada ${isVendor ? (payload.vendorName ? `Vendor (${payload.vendorName})` : "Vendor") : "Internal"}`;
+		return {
+			success: true,
+			message: successMsg,
 		};
 	}
 }

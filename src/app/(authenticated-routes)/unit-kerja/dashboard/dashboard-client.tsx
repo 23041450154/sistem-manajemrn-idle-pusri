@@ -1,5 +1,8 @@
 "use client";
 
+/* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -39,6 +42,7 @@ interface ReuseRequestItem {
 	request_number: string;
 	equipment_code: string;
 	equipment_name: string;
+	storage_location?: string;
 	installation_location: string;
 	status: string;
 }
@@ -123,7 +127,7 @@ export default function UnitKerjaDashboardContent({
 		const total = approved + pending + rejected;
 
 		const data = [
-			{ name: "Disetujui", value: approved, color: "#059669" },
+			{ name: "Approved for Reuse", value: approved, color: "#059669" },
 			{ name: "Menunggu Review", value: pending, color: "#0556B3" },
 			{ name: "Perlu Revisi / Ditolak", value: rejected, color: "#DC2626" },
 		].filter((item) => item.value > 0);
@@ -143,7 +147,7 @@ export default function UnitKerjaDashboardContent({
 		let label = "Menunggu Review";
 		let style = "bg-[#FEF3C7] text-[#B45309]";
 		if (s.includes("APPROV") || s.includes("DISETUJUI")) {
-			label = "Disetujui";
+			label = "Approved for Reuse";
 			style = "bg-[#DCFCE7] text-[#16A34A]";
 		} else if (s.includes("REJECT") || s.includes("DITOLAK")) {
 			label = "Ditolak";
@@ -455,6 +459,9 @@ export default function UnitKerjaDashboardContent({
 										Equipment
 									</th>
 									<th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-[#64748B]">
+										Lokasi Penyimpanan
+									</th>
+									<th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-[#64748B]">
 										Lokasi Instalasi
 									</th>
 									<th className="px-4 py-2.5 text-[11px] font-semibold uppercase tracking-[0.04em] text-[#64748B]">
@@ -465,7 +472,7 @@ export default function UnitKerjaDashboardContent({
 							<tbody className="divide-y divide-[#E6E8EA]">
 								{reuseRequests.length === 0 ? (
 									<tr>
-										<td colSpan={4} className="px-4 py-10 text-center">
+										<td colSpan={5} className="px-4 py-10 text-center">
 											<p className="text-[13px] text-[#64748B]">
 												Belum ada pengajuan reuse
 											</p>
@@ -491,6 +498,9 @@ export default function UnitKerjaDashboardContent({
 												<div className="text-[13px] text-[#0F172A]">
 													{req.equipment_name}
 												</div>
+											</td>
+											<td className="px-4 py-2.5 text-[13px] text-[#475569]">
+												{req.storage_location || "-"}
 											</td>
 											<td className="px-4 py-2.5 text-[13px] text-[#475569]">
 												{req.installation_location}

@@ -282,6 +282,9 @@ export default function PemeliharaanDashboardPage() {
 													Plant
 												</th>
 												<th className="px-4 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] whitespace-nowrap">
+													Lokasi Penyimpanan
+												</th>
+												<th className="px-4 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] whitespace-nowrap">
 													Kondisi
 												</th>
 												<th className="px-4 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-right whitespace-nowrap">
@@ -318,6 +321,11 @@ export default function PemeliharaanDashboardPage() {
 														</td>
 														<td className="px-4 py-2.5 font-mono text-[12px] text-[#334155] whitespace-nowrap">
 															{plantCode}
+														</td>
+														<td className="px-4 py-2.5 text-[12px] text-[#334155] whitespace-nowrap">
+															{(typeof eq.storage_location === "object"
+																? eq.storage_location?.name
+																: eq.storage_location) || "-"}
 														</td>
 														<td className="px-4 py-2.5 whitespace-nowrap">
 															<span className="inline-flex items-center rounded-[2px] px-2 py-0.5 text-[11px] font-semibold bg-[#FEF3C7] text-[#B45309] border border-[#FDE68A]">

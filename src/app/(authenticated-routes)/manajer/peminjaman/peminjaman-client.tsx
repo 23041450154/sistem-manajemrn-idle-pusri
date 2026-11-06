@@ -11,6 +11,7 @@ import {
 	XCircle,
 	Boxes,
 	Search,
+	ShieldCheck,
 } from "lucide-react";
 import { updateReuseRequestStatus } from "@/action/api";
 
@@ -22,6 +23,7 @@ export interface ReuseRequest {
 	equipment_id: string;
 	equipment_code: string;
 	equipment_name: string;
+	storage_location?: string;
 	requesting_unit: string;
 	target_plant: string;
 	start_date: string;
@@ -99,6 +101,7 @@ export default function ManajerPeminjamanClient({
 		null,
 	);
 	const [isDrawerOpen, setIsDrawerOpen] = useState(false);
+	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [activeTab, setActiveTab] = useState<"detail" | "history">("detail");
 	const [actionNotes, setActionNotes] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -131,7 +134,8 @@ export default function ManajerPeminjamanClient({
 					plant !== "Semua Plant" ? req.target_plant === plant : true;
 				const matchStatus =
 					status !== "Semua Status"
-						? (status === "Disetujui" && req.status === "APPROVED") ||
+						? ((status === "Approved for Reuse" || status === "Disetujui") &&
+								req.status === "APPROVED") ||
 							(status === "Ditolak" && req.status === "REJECTED") ||
 							(status === "Perlu Revisi" && req.status === "REVISION_REQUESTED") ||
 							(status === "Menunggu Review" &&
@@ -188,6 +192,7 @@ export default function ManajerPeminjamanClient({
 
 	const closeDrawer = () => {
 		setIsDrawerOpen(false);
+		setIsConfirmOpen(false);
 		setSelectedRequest(null);
 		setActionNotes("");
 	};
@@ -224,11 +229,12 @@ export default function ManajerPeminjamanClient({
 					type: "success",
 					message:
 						newStatus === "APPROVED"
-							? `Pengajuan peminjaman ${selectedRequest.request_number} telah disetujui!`
+							? `Pengajuan peminjaman ${selectedRequest.request_number} telah disetujui! Status beralih menjadi Approved for Reuse.`
 							: `Pengajuan peminjaman ${selectedRequest.request_number} dikembalikan untuk revisi.`,
 				});
 
 				setTimeout(() => setNotification(null), 3000);
+				setIsConfirmOpen(false);
 				closeDrawer();
 			} else {
 				alert(result.message || "Gagal memperbarui status.");
@@ -254,27 +260,27 @@ export default function ManajerPeminjamanClient({
 		const s = (statusName || "PENDING").toUpperCase();
 		if (s.includes("APPROV") || s.includes("VALIDAT")) {
 			return (
-				<span className="bg-[#DCFCE7] text-[#16A34A] px-3 py-1 rounded-full text-[11px] font-semibold">
-					Disetujui
+				<span className="bg-[#DCFCE7] text-[#16A34A] border border-[#BBF7D0] px-3 py-1 rounded-full text-[11px] font-semibold">
+					Approved for Reuse
 				</span>
 			);
 		}
 		if (s.includes("REJECT") || s.includes("DISPOS")) {
 			return (
-				<span className="bg-[#FEE2E2] text-[#DC2626] px-3 py-1 rounded-full text-[11px] font-semibold">
+				<span className="bg-[#FEE2E2] text-[#DC2626] border border-[#FECDD3] px-3 py-1 rounded-full text-[11px] font-semibold">
 					Ditolak
 				</span>
 			);
 		}
 		if (s.includes("REVISI")) {
 			return (
-				<span className="bg-[#FEF3C7] text-[#D97706] px-3 py-1 rounded-full text-[11px] font-semibold">
+				<span className="bg-[#FEF3C7] text-[#D97706] border border-[#FDE68A] px-3 py-1 rounded-full text-[11px] font-semibold">
 					Perlu Revisi
 				</span>
 			);
 		}
 		return (
-			<span className="bg-[#F3E8FF] text-[#9333EA] px-3 py-1 rounded-full text-[11px] font-semibold">
+			<span className="bg-[#F3E8FF] text-[#9333EA] border border-[#E9D5FF] px-3 py-1 rounded-full text-[11px] font-semibold">
 				Menunggu Review
 			</span>
 		);
@@ -292,9 +298,14 @@ export default function ManajerPeminjamanClient({
 
 			{/* Header */}
 			<div className="flex items-center justify-between mb-6">
-				<h1 className="text-xl font-bold text-gray-900 tracking-tight">
-					Persetujuan Peminjaman Aset
-				</h1>
+				<div>
+					<h1 className="text-xl font-bold text-gray-900 tracking-tight">
+						Persetujuan Peminjaman Aset (Reuse)
+					</h1>
+					<p className="text-xs text-gray-500 mt-1">
+						Wewenang manajerial menyetujui permohonan peminjaman dengan transisi status Approved for Reuse untuk penetapan ketersediaan dan alokasi aset pabrik.
+					</p>
+				</div>
 			</div>
 
 			{/* Table Section */}
@@ -380,7 +391,7 @@ export default function ManajerPeminjamanClient({
 							<option value="Semua Status">Semua Status</option>
 							<option value="Menunggu Review">Menunggu Review</option>
 							<option value="Perlu Revisi">Perlu Revisi</option>
-							<option value="Disetujui">Disetujui</option>
+							<option value="Approved for Reuse">Approved for Reuse</option>
 							<option value="Ditolak">Ditolak</option>
 						</select>
 
@@ -420,7 +431,10 @@ export default function ManajerPeminjamanClient({
 							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left">
 								Nama Aset
 							</th>
-							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[150px]">
+							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[140px]">
+								Lokasi Penyimpanan
+							</th>
+							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[140px]">
 								Lokasi Instalasi
 							</th>
 							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[80px]">
@@ -440,7 +454,7 @@ export default function ManajerPeminjamanClient({
 					<tbody className="bg-white divide-y divide-gray-100">
 						{paginatedRequests.length === 0 ? (
 							<tr>
-								<td colSpan={9} className="px-4 py-8 text-center text-sm text-gray-500">
+								<td colSpan={10} className="px-4 py-8 text-center text-sm text-gray-500">
 									Tidak ada data pengajuan peminjaman.
 								</td>
 							</tr>
@@ -470,6 +484,12 @@ export default function ManajerPeminjamanClient({
 										title={req.equipment_name}
 									>
 										{req.equipment_name}
+									</td>
+									<td
+										className="px-2 py-2 text-sm text-gray-600 font-medium truncate"
+										title={req.storage_location || "-"}
+									>
+										{req.storage_location || "-"}
 									</td>
 									<td
 										className="px-2 py-2 text-sm text-gray-600 font-medium truncate"
@@ -626,6 +646,17 @@ export default function ManajerPeminjamanClient({
 						<div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/50">
 							{activeTab === "detail" && (
 								<>
+									{/* Managerial Authority Notice */}
+									<div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-xl p-3.5 flex items-start gap-3">
+										<ShieldCheck className="w-5 h-5 text-[#0A356A] shrink-0 mt-0.5" />
+										<div className="text-xs text-[#1E3A8A] leading-relaxed">
+											<p className="font-bold">Wewenang Manajerial Rendal</p>
+											<p className="text-slate-600 mt-0.5">
+												Persetujuan ini akan menetapkan transisi status pengajuan menjadi <span className="font-bold text-emerald-700">Approved for Reuse</span> dan mengesahkan alokasi peralatan untuk kebutuhan operasional unit pemohon di bawah kendali manajerial.
+											</p>
+										</div>
+									</div>
+
 									{/* Card 1: Informasi Peralatan */}
 									<div className="bg-white rounded-xl p-4 border border-slate-200 shadow-xs space-y-3">
 										<div className="flex items-center justify-between border-b border-slate-100 pb-2">
@@ -833,7 +864,7 @@ export default function ManajerPeminjamanClient({
 										disabled={isSubmitting}
 										onClick={(e) => {
 											e.preventDefault();
-											handleAction("APPROVED");
+											setIsConfirmOpen(true);
 										}}
 										className="px-5 py-2 rounded-xl text-xs font-bold bg-[#0A356A] text-white hover:bg-[#0556B3] transition-colors disabled:opacity-50 flex items-center gap-2 shadow-sm cursor-pointer"
 									>
@@ -842,10 +873,65 @@ export default function ManajerPeminjamanClient({
 										) : (
 											<CheckCircle2 className="w-4 h-4" />
 										)}
-										Setujui Peminjaman
+										Setujui (Approved for Reuse)
 									</button>
 								</>
 							) : null}
+						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Modal Konfirmasi Persetujuan (Approved for Reuse) */}
+			{isConfirmOpen && selectedRequest && (
+				<div className="fixed inset-0 z-[70] flex items-center justify-center p-4">
+					<div
+						className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
+						onClick={() => !isSubmitting && setIsConfirmOpen(false)}
+					/>
+					<div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
+						<div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+							<CheckCircle2 className="w-7 h-7 text-emerald-600" />
+						</div>
+
+						<h3 className="text-lg font-bold text-gray-900 mb-2">
+							Konfirmasi Persetujuan Peminjaman Aset
+						</h3>
+
+						<p className="text-[13px] text-gray-600 mb-6 leading-relaxed">
+							Apakah Anda yakin ingin menyetujui permohonan peminjaman{" "}
+							<span className="font-semibold text-gray-900">{selectedRequest.request_number}</span>?
+							Sebagai <span className="font-semibold text-gray-900">Manajer Rendal</span>, persetujuan ini akan menetapkan transisi status menjadi{" "}
+							<span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+								Approved for Reuse
+							</span>{" "}
+							dan mengesahkan alokasi peralatan{" "}
+							<span className="font-bold text-gray-900">{selectedRequest.equipment_code}</span> ({selectedRequest.equipment_name}) untuk unit kerja{" "}
+							<span className="font-semibold text-gray-900">{selectedRequest.requesting_unit}</span> di bawah kendali manajerial.
+						</p>
+
+						<div className="flex items-center gap-3 w-full justify-center">
+							<button
+								type="button"
+								disabled={isSubmitting}
+								onClick={() => setIsConfirmOpen(false)}
+								className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md text-[13px] font-semibold hover:bg-gray-50 transition-colors w-[120px]"
+							>
+								Batal
+							</button>
+							<button
+								type="button"
+								disabled={isSubmitting}
+								onClick={() => handleAction("APPROVED")}
+								className="px-5 py-2.5 bg-[#0556B3] text-white rounded-md text-[13px] font-semibold hover:bg-[#0A356A] transition-colors min-w-[170px] flex items-center justify-center gap-2"
+							>
+								{isSubmitting ? (
+									<RefreshCw className="w-4 h-4 animate-spin" />
+								) : (
+									<CheckCircle2 className="w-4 h-4" />
+								)}
+								Ya, Setujui Reuse
+							</button>
 						</div>
 					</div>
 				</div>

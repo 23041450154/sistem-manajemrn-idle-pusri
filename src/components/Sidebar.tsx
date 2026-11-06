@@ -122,6 +122,20 @@ export function Sidebar({ role }: { role?: string }) {
 					);
 				}).length;
 
+				// Perbaikan Rendal (/rendal/perbaikan):
+				const rendalPerbaikanAntrean = data.filter((item: any) => {
+					const statusName = String(
+						item.status?.name || item.statusAset || "",
+					).toUpperCase();
+					const statusId = item.status_id || item.status?.id;
+					return (
+						statusId === 3 ||
+						statusName === "REPAIR" ||
+						statusName === "MAINTENANCE" ||
+						statusName.includes("PERBAIKAN")
+					);
+				}).length;
+
 				// Perbaikan Alat (/pemeliharaan/perbaikan-alat):
 				const perbaikanAntrean = data.filter((item: any) => {
 					const statusName = String(
@@ -139,6 +153,7 @@ export function Sidebar({ role }: { role?: string }) {
 				setPendingCounts({
 					"/inspeksi/validasi": validasiAntrean,
 					"/inspeksi/validasi-ulang": validasiUlangAntrean,
+					"/rendal/perbaikan": rendalPerbaikanAntrean,
 					"/rendal/validasi-ulang": rendalValidasiUlangAntrean,
 					"/pemeliharaan/perbaikan-alat": perbaikanAntrean,
 					"/manajer/approve": validationApprovalAntrean,
@@ -175,7 +190,12 @@ export function Sidebar({ role }: { role?: string }) {
 			// Rendal Pemeliharaan
 			mainNavItems = [
 				{ name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
-				{ name: "Peralatan", href: "/rendal/idle", icon: Wrench },
+				{ name: "Peralatan", href: "/rendal/idle", icon: Database },
+				{
+					name: "Perbaikan",
+					href: "/rendal/perbaikan",
+					icon: Wrench,
+				},
 				{
 					name: "Persetujuan Perbaikan",
 					href: "/rendal/validasi-ulang",

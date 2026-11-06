@@ -29,8 +29,9 @@ import {
 	Loader2,
 	Info,
 	Download,
-	Save,
 	XCircle,
+	Send,
+	FileText,
 } from "lucide-react";
 import {
 	proposeEquipment,
@@ -38,7 +39,6 @@ import {
 	type SapEquipmentRow,
 } from "@/action/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
-import YearPicker from "@/components/YearPicker";
 import AutocompleteInput, {
 	type AutocompleteOption,
 } from "@/components/AutocompleteInput";
@@ -66,6 +66,7 @@ export interface Equipment {
 	estimatedReuseValue?: number;
 	notes?: string;
 	idleReason?: string;
+	createdByNPP?: string;
 	rejectionNotes?: string;
 	inspectionPurpose?: string;
 	photos?: string[];
@@ -80,7 +81,29 @@ export interface MasterOption {
 	description?: string;
 }
 
-export interface RegisterFormData {
+/** Form data ramping untuk Pengusulan Peralatan Idle Unit Kerja Operasi */
+export interface ProposalFormData {
+	equipmentCode: string;
+	name: string;
+	plantId: string;
+	funcLocId: string;
+	idleReason: string;
+	notes: string;
+}
+
+const EMPTY_PROPOSAL_FORM: ProposalFormData = {
+	equipmentCode: "",
+	name: "",
+	plantId: "",
+	funcLocId: "",
+	idleReason: "",
+	notes: "",
+};
+
+/**
+ * Legacy form data (dipertahankan untuk kompatibilitas form lama / rendal full registration)
+ */
+export interface LegacyRegisterFormData {
 	equipmentCode: string;
 	name: string;
 	funcLocId: string;
@@ -95,22 +118,6 @@ export interface RegisterFormData {
 	storageLocationId: string;
 	notes: string;
 }
-
-const EMPTY_FORM: RegisterFormData = {
-	equipmentCode: "",
-	name: "",
-	funcLocId: "",
-	plantId: "",
-	objectTypeId: "",
-	vendor: "",
-	year: "",
-	originalValue: "",
-	bookValue: "",
-	estimatedReuseValue: "",
-	idleReason: "",
-	storageLocationId: "",
-	notes: "",
-};
 
 interface UsulanIdleClientProps {
 	equipments: Equipment[];
@@ -144,46 +151,21 @@ function toNameOptions(rows: SapEquipmentRow[]): AutocompleteOption[] {
 	}));
 }
 
-/** Input rupiah dengan prefix Rp + pemisah ribuan id-ID (opsional, persis rendal) */
-function RupiahField({
-	label,
-	name,
-	value,
-	onChange,
-}: {
-	label: string;
-	name: string;
-	value: string;
-	onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-}) {
-	return (
-		<div className="space-y-1.5">
-			<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">
-				{label}
-			</label>
-			<div className="relative">
-				<span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-500 font-medium">
-					Rp
-				</span>
-				<input
-					type="text"
-					name={name}
-					value={value}
-					onChange={onChange}
-					placeholder="0"
-					className="w-full pl-9 pr-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0556B3] outline-none transition-all"
-				/>
-			</div>
-		</div>
-	);
+/**
+ * Komponen Form Registrasi Lama (Full Rendal) - Di-hide / diganti nama sesuai instruksi user
+ * @deprecated Digantikan oleh FormUsulanIdle untuk Unit Kerja Operasi
+ */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function LegacyFullRegistrationForm(_props: any) {
+	return null;
 }
 
 export default function UsulanIdleClient({
 	equipments,
 	plants = [],
-	storageLocations = [],
+	storageLocations: _storageLocations = [],
 	funcLocs = [],
-	objectTypes = [],
+	objectTypes: _objectTypes = [],
 	initialEquipmentCodes = [],
 	onRefresh,
 }: UsulanIdleClientProps) {
@@ -191,31 +173,28 @@ export default function UsulanIdleClient({
 	const searchParams = useSearchParams();
 	const actionParam = searchParams.get("action");
 
-	// Tampilan halaman: "table" (tabel aset seperti rendal/idle) atau "form" (full page form seperti rendal/register-equipment)
-	const [viewMode, setViewMode] = useState<"table" | "form">(
-		actionParam === "tambah" ? "form" : "table",
-	);
-
-	useEffect(() => {
-		if (actionParam === "tambah") {
-			setViewMode("form");
-		} else {
-			setViewMode("table");
-		}
-	}, [actionParam]);
+	// Tampilan halaman: "table" (tabel daftar usulan) atau "form" (formulir usulan idle)
+	const isFormRoute = actionParam === "tambah";
+	const [viewModeOverride, setViewModeOverride] = useState<"table" | "form" | null>(null);
+	const viewMode: "table" | "form" =
+		viewModeOverride !== null
+			? viewModeOverride
+			: isFormRoute
+				? "form"
+				: "table";
 
 	const handleOpenForm = () => {
-		setViewMode("form");
+		setViewModeOverride("form");
 		router.push("/unit-kerja/usulan-idle?action=tambah");
 	};
 
 	const handleCloseForm = () => {
-		setViewMode("table");
+		setViewModeOverride("table");
 		router.push("/unit-kerja/usulan-idle");
 	};
 
 	// ==========================================
-	// STATES: TABEL & FILTER (Persis Rendal Idle)
+	// STATES: TABEL & FILTER
 	// ==========================================
 	const [search, setSearch] = useState("");
 	const [searchInput, setSearchInput] = useState("");
@@ -237,9 +216,9 @@ export default function UsulanIdleClient({
 	);
 
 	// ==========================================
-	// STATES: FORM REGISTRASI (Persis Rendal Register Equipment)
+	// STATES: FORM USULAN IDLE UNIT KERJA
 	// ==========================================
-	const [formData, setFormData] = useState<RegisterFormData>(EMPTY_FORM);
+	const [formData, setFormData] = useState<ProposalFormData>(EMPTY_PROPOSAL_FORM);
 	const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 	const [isDragging, setIsDragging] = useState(false);
 	const [fileError, setFileError] = useState<string | null>(null);
@@ -259,7 +238,7 @@ export default function UsulanIdleClient({
 		message: string;
 	} | null>(null);
 
-	// Autocomplete DUA ARAH dari SAP live (Persis Rendal)
+	// Autocomplete DUA ARAH dari SAP live
 	const [codeOptions, setCodeOptions] = useState<AutocompleteOption[]>(() =>
 		toCodeOptions(initialEquipmentCodes),
 	);
@@ -270,16 +249,11 @@ export default function UsulanIdleClient({
 	const autoFilledRef = useRef<{
 		code: string;
 		name: string;
-		objectTypeId: string;
 		plantId: string;
 		funcLocId: string;
 	} | null>(null);
 
 	const ITEMS_PER_PAGE = 10;
-
-	useEffect(() => {
-		setCurrentPage(1);
-	}, [search, plantFilter, statusFilter]);
 
 	useEffect(() => {
 		const t = setTimeout(
@@ -300,28 +274,35 @@ export default function UsulanIdleClient({
 	};
 
 	const applySapRow = (raw: SapEquipmentRow) => {
-		const objectTypeId = String(
-			objectTypes.find((o) => o.name === raw.object_type || o.code === raw.object_type)?.id ?? "",
+		const matchedPlant = plants.find(
+			(p) =>
+				p.name === raw.maintenance_plant ||
+				p.code === raw.maintenance_plant ||
+				String(p.id) === String(raw.maintenance_plant),
 		);
-		const plantId = String(
-			plants.find((p) => p.name === raw.maintenance_plant || p.code === raw.maintenance_plant)?.id ?? "",
+		const plantId = matchedPlant ? String(matchedPlant.id) : "";
+
+		const matchedFuncLoc = funcLocs.find(
+			(f) =>
+				f.name === raw.functional_location ||
+				f.code === raw.functional_location ||
+				f.description === raw.functional_location ||
+				String(f.id) === String(raw.functional_location),
 		);
-		const funcLocId = String(
-			funcLocs.find((f) => f.name === raw.functional_location || f.description === raw.functional_location)?.id ?? "",
-		);
+		const funcLocId = matchedFuncLoc ? String(matchedFuncLoc.id) : "";
 		const name = raw.description || "";
+
 		autoFilledRef.current = {
 			code: raw.equipment,
 			name,
-			objectTypeId,
 			plantId,
 			funcLocId,
 		};
+
 		setFormData((prev) => ({
 			...prev,
 			equipmentCode: raw.equipment,
 			name,
-			objectTypeId,
 			plantId,
 			funcLocId,
 		}));
@@ -342,17 +323,57 @@ export default function UsulanIdleClient({
 			return;
 		}
 
+		// Fallback: jika value cocok persis dengan salah satu saran di codeOptions
+		const matchedOption = codeOptions.find(
+			(opt) => String(opt.value ?? "").trim().toLowerCase() === value.trim().toLowerCase(),
+		);
+		if (matchedOption?.raw && value.trim()) {
+			applySapRow(matchedOption.raw as SapEquipmentRow);
+			return;
+		}
+
+		// Kode aset dikosongkan / diubah dari kode yang terpilih → bersihkan hasil auto-fill (sama seperti di Rendal).
 		if (autoFilledRef.current && value !== autoFilledRef.current.code) {
 			autoFilledRef.current = null;
 			setFormData((prev) => ({
 				...prev,
 				name: "",
-				objectTypeId: "",
 				plantId: "",
 				funcLocId: "",
 			}));
 		}
 		setFormData((prev) => ({ ...prev, equipmentCode: value }));
+	};
+
+	const handleEquipmentCodeBlur = async () => {
+		handleSelectBlur("equipmentCode");
+		const trimmed = formData.equipmentCode.trim();
+		if (!trimmed) return;
+
+		// Jika belum auto-fill atau berbeda dari autoFilledRef, coba cari exact match di codeOptions atau live SAP
+		if (
+			!autoFilledRef.current ||
+			autoFilledRef.current.code.toLowerCase() !== trimmed.toLowerCase()
+		) {
+			const matched = codeOptions.find(
+				(opt) => String(opt.value ?? "").trim().toLowerCase() === trimmed.toLowerCase(),
+			);
+			if (matched?.raw) {
+				applySapRow(matched.raw as SapEquipmentRow);
+			} else {
+				try {
+					const results = await searchSapEquipment(trimmed, 5);
+					const exact = results.find(
+						(r) => r.equipment.toLowerCase() === trimmed.toLowerCase(),
+					);
+					if (exact) {
+						applySapRow(exact);
+					}
+				} catch {
+					// Abaikan network error
+				}
+			}
+		}
 	};
 
 	const handleNameChange = (
@@ -367,12 +388,20 @@ export default function UsulanIdleClient({
 			return;
 		}
 
+		const matchedOption = nameOptions.find(
+			(opt) => (opt.label || "").trim().toLowerCase() === value.trim().toLowerCase(),
+		);
+		if (matchedOption?.raw && value.trim()) {
+			applySapRow(matchedOption.raw as SapEquipmentRow);
+			return;
+		}
+
+		// Nama peralatan dikosongkan / diubah dari nama yang terpilih → bersihkan hasil auto-fill (sama seperti di Rendal).
 		if (autoFilledRef.current && value !== autoFilledRef.current.name) {
 			autoFilledRef.current = null;
 			setFormData((prev) => ({
 				...prev,
 				equipmentCode: "",
-				objectTypeId: "",
 				plantId: "",
 				funcLocId: "",
 			}));
@@ -380,11 +409,28 @@ export default function UsulanIdleClient({
 		setFormData((prev) => ({ ...prev, name: value }));
 	};
 
+	const handleNameBlur = async () => {
+		handleSelectBlur("name");
+		const trimmed = formData.name.trim();
+		if (!trimmed) return;
+
+		if (
+			!autoFilledRef.current ||
+			autoFilledRef.current.name.toLowerCase() !== trimmed.toLowerCase()
+		) {
+			const matched = nameOptions.find(
+				(opt) => (opt.label || "").trim().toLowerCase() === trimmed.toLowerCase(),
+			);
+			if (matched?.raw) {
+				applySapRow(matched.raw as SapEquipmentRow);
+			}
+		}
+	};
+
 	const handleSelectChange = (name: string, value: string) => {
 		setTouched((prev) => ({
 			...prev,
 			[name]: true,
-			...(!formData.equipmentCode ? { equipmentCode: true } : {}),
 		}));
 		setFormData((prev) => ({ ...prev, [name]: value }));
 	};
@@ -398,30 +444,11 @@ export default function UsulanIdleClient({
 			HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement
 		>,
 	) => {
-		const { name } = e.target;
-		let { value } = e.target;
-
-		if (name === "equipmentCode" && value.length > 50) {
-			value = value.slice(0, 50);
-		}
-
-		if (
-			name === "originalValue" ||
-			name === "bookValue" ||
-			name === "estimatedReuseValue"
-		) {
-			const rawValue = value.replace(/\D/g, "");
-			value = rawValue ? parseInt(rawValue, 10).toLocaleString("id-ID") : "";
-		}
-
+		const { name, value } = e.target;
 		setTouched((prev) => ({
 			...prev,
 			[name]: true,
-			...(name !== "equipmentCode" && !formData.equipmentCode
-				? { equipmentCode: true }
-				: {}),
 		}));
-
 		setFormData((prev) => ({ ...prev, [name]: value }));
 	};
 
@@ -435,14 +462,14 @@ export default function UsulanIdleClient({
 		}
 	};
 
-	// File Upload Handlers (Persis Rendal)
+	// File Upload Handlers
 	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files) {
 			const files = Array.from(e.target.files);
 			let errorMsg: string | null = null;
 			const validFiles = files.filter((f) => {
-				if (f.size > 10 * 1024 * 1024) {
-					errorMsg = `Ukuran file ${f.name} melebihi batas 10MB.`;
+				if (f.size > 25 * 1024 * 1024) {
+					errorMsg = `Ukuran file ${f.name} melebihi batas 25MB.`;
 					return false;
 				}
 				return true;
@@ -470,8 +497,8 @@ export default function UsulanIdleClient({
 			const files = Array.from(e.dataTransfer.files);
 			let errorMsg: string | null = null;
 			const validFiles = files.filter((f) => {
-				if (f.size > 10 * 1024 * 1024) {
-					errorMsg = `Ukuran file ${f.name} melebihi batas 10MB.`;
+				if (f.size > 25 * 1024 * 1024) {
+					errorMsg = `Ukuran file ${f.name} melebihi batas 25MB.`;
 					return false;
 				}
 				return true;
@@ -486,7 +513,7 @@ export default function UsulanIdleClient({
 	};
 
 	const handleResetForm = () => {
-		setFormData(EMPTY_FORM);
+		setFormData(EMPTY_PROPOSAL_FORM);
 		setUploadedFiles([]);
 		setFileError(null);
 		setShowValidationErrors(false);
@@ -494,19 +521,16 @@ export default function UsulanIdleClient({
 		autoFilledRef.current = null;
 	};
 
-	// Submit ke Backend API
+	// Submit ke Backend API: POST /api/equipment/propose
 	const handleSubmit = async (e?: React.FormEvent) => {
 		e?.preventDefault();
 
 		if (
-			!formData.equipmentCode ||
-			!formData.name ||
-			!formData.objectTypeId ||
+			!formData.equipmentCode.trim() ||
+			!formData.name.trim() ||
 			!formData.plantId ||
-			!formData.storageLocationId ||
 			!formData.funcLocId ||
-			!formData.vendor ||
-			!formData.idleReason
+			!formData.idleReason.trim()
 		) {
 			setShowValidationErrors(true);
 			setNotification({
@@ -516,36 +540,31 @@ export default function UsulanIdleClient({
 			return;
 		}
 
+		if (uploadedFiles.length === 0) {
+			setShowValidationErrors(true);
+			setNotification({
+				type: "error",
+				message:
+					"Berkas pendukung wajib diunggah minimal 1 file (foto alat atau Berita Acara).",
+			});
+			return;
+		}
+
 		setIsSubmitting(true);
 		setShowValidationErrors(false);
 
 		try {
 			const fd = new FormData();
-			fd.append("equipment_code", formData.equipmentCode);
-			fd.append("name", formData.name);
-			fd.append("id_object_type", formData.objectTypeId);
+			fd.append("equipment_code", formData.equipmentCode.trim());
+			fd.append("name", formData.name.trim());
 			fd.append("id_plant", formData.plantId);
-			fd.append("id_storage_location", formData.storageLocationId);
+			fd.append("plant_id", formData.plantId);
 			fd.append("id_func_loc", formData.funcLocId);
-			fd.append("vendor", formData.vendor);
-			fd.append(
-				"year",
-				String(Number(formData.year) || new Date().getFullYear()),
-			);
-			fd.append(
-				"original_value",
-				String(Number(formData.originalValue.replace(/\./g, "")) || 0),
-			);
-			fd.append(
-				"book_value",
-				String(Number(formData.bookValue.replace(/\./g, "")) || 0),
-			);
-			fd.append(
-				"estimated_reuse_value",
-				String(Number(formData.estimatedReuseValue.replace(/\./g, "")) || 0),
-			);
-			fd.append("idle_reason", formData.idleReason);
-			fd.append("notes", formData.notes);
+			fd.append("func_loc_id", formData.funcLocId);
+			fd.append("idle_reason", formData.idleReason.trim());
+			if (formData.notes.trim()) {
+				fd.append("notes", formData.notes.trim());
+			}
 			for (const file of uploadedFiles) {
 				fd.append("photo", file);
 				fd.append("photos", file);
@@ -556,7 +575,8 @@ export default function UsulanIdleClient({
 			if (res && res.success) {
 				setNotification({
 					type: "success",
-					message: "Berhasil! Usulan peralatan idle telah dikirimkan ke sistem.",
+					message:
+						"Berhasil! Usulan peralatan idle telah dikirimkan ke Rendal Pemeliharaan.",
 				});
 				handleResetForm();
 				handleCloseForm();
@@ -567,7 +587,7 @@ export default function UsulanIdleClient({
 				setNotification({
 					type: "error",
 					message:
-						res?.message || "Gagal menyimpan data: Pastikan field sudah sesuai.",
+						res?.message || "Gagal menyimpan data usulan: Pastikan field sudah sesuai.",
 				});
 			}
 		} catch (err: any) {
@@ -601,7 +621,7 @@ export default function UsulanIdleClient({
 		setSortConfig(null);
 	};
 
-	// Filter & Sort Logic (Persis rendal/idle)
+	// Filter & Sort Logic
 	const filteredData = useMemo(() => {
 		const result = equipments.filter((item) => {
 			const query = search.toLowerCase().trim();
@@ -610,7 +630,9 @@ export default function UsulanIdleClient({
 				item.kodeAlat?.toLowerCase().includes(query) ||
 				item.namaAlat?.toLowerCase().includes(query) ||
 				item.plant?.toLowerCase().includes(query) ||
-				item.funcLoc?.toLowerCase().includes(query);
+				item.funcLoc?.toLowerCase().includes(query) ||
+				item.storageLocation?.toLowerCase().includes(query) ||
+				item.idleReason?.toLowerCase().includes(query);
 			const matchPlant = plantFilter === "Semua" || item.plant === plantFilter;
 			const matchStatus =
 				statusFilter === "Semua" ||
@@ -634,11 +656,6 @@ export default function UsulanIdleClient({
 							: 0;
 					if (timeA !== timeB)
 						return sortConfig.direction === "asc" ? timeA - timeB : timeB - timeA;
-				}
-				if (sortConfig.key === "originalValue") {
-					const valA = Number(a.originalValue) || 0;
-					const valB = Number(b.originalValue) || 0;
-					return sortConfig.direction === "asc" ? valA - valB : valB - valA;
 				}
 				const valA = String(a[sortConfig.key] || "").toLowerCase();
 				const valB = String(b[sortConfig.key] || "").toLowerCase();
@@ -688,67 +705,63 @@ export default function UsulanIdleClient({
 	};
 
 	const getStatusBadge = (status: AssetState | string) => {
-		const styles: Record<string, string> = {
-			PROPOSED: "bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]",
-			"MENUNGGU VERIFIKASI": "bg-[#EFF6FF] text-[#1D4ED8] border border-[#BFDBFE]",
-			PROPOSAL_REJECTED: "bg-[#FEE2E2] text-[#DC2626] border border-[#FECACA]",
-			"PROPOSAL REJECTED": "bg-[#FEE2E2] text-[#DC2626] border border-[#FECACA]",
-			REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
-			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
-			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
-			DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
-			"DISPOSAL RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
-			"DISPOSAL RECOMENDED": "bg-[#FEF3C7] text-[#B45309]",
-			"SCRAP RECOMENDED": "bg-[#FEF3C7] text-[#B45309]",
-			"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
-			SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
-			SCRAP_RECOMENDED: "bg-[#FEF3C7] text-[#B45309]",
-			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
-			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
-			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
-			REVALIDATION: "bg-[#FEF3C7] text-[#B45309]",
-			REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
-			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
-			READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
-		};
+		const norm = (status || "").toUpperCase().trim().replace(/\s+/g, "_");
 
-		let displayStatus = (status || "").replace(/_/g, " ");
+		if (norm === "PROPOSED" || norm === "MENUNGGU_VERIFIKASI") {
+			return (
+				<span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap bg-amber-50 text-amber-700 border border-amber-200">
+					Menunggu Verifikasi
+				</span>
+			);
+		}
+		if (norm === "REGISTERED" || norm === "DISETUJUI") {
+			return (
+				<span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap bg-emerald-50 text-emerald-700 border border-emerald-200">
+					Disetujui Rendal
+				</span>
+			);
+		}
 		if (
-			status === "DISPOSAL_RECOMMENDED" ||
-			displayStatus === "DISPOSAL RECOMMENDED" ||
-			displayStatus === "DISPOSAL RECOMENDED" ||
-			displayStatus === "SCRAP RECOMMENDED"
+			norm === "PROPOSAL_REJECTED" ||
+			norm === "REJECTED" ||
+			norm === "DITOLAK"
 		) {
-			displayStatus = "SCRAP RECOMENDED";
+			return (
+				<span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap bg-red-50 text-red-700 border border-red-200">
+					Usulan Ditolak
+				</span>
+			);
 		}
 
-		const style = styles[displayStatus] || styles[status] || styles.SCRAP;
 		return (
-			<span
-				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${style}`}
-			>
-				{displayStatus}
+			<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-blue-50 text-blue-700 border border-blue-200">
+				{norm.replace(/_/g, " ")}
 			</span>
 		);
 	};
 
 	// =========================================================================
-	// TAMPILAN 1: FORMULIR REGISTRASI ASET FULL PAGE (Persis Rendal Register)
-	// (TIDAK ADA POP UP, halaman penuh dengan 2 panel persis Rendal)
+	// TAMPILAN 1: FORMULIR USULAN PERALATAN IDLE (UNIT KERJA OPERASI)
 	// =========================================================================
 	if (viewMode === "form") {
 		return (
-			<div className="max-w-[1400px] mx-auto pb-8 pt-2 relative">
+			<div className="max-w-[1300px] mx-auto pb-10 pt-2 relative">
 				{/* Toast Notification */}
 				{notification && (
-					<div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+					<div className="fixed top-6 right-6 z-[70] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
 						{notification.type === "success" ? (
-							<CheckCircle2 className="w-4 h-4 text-emerald-400" />
+							<CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
 						) : (
-							<XCircle className="w-4 h-4 text-red-400" />
+							<XCircle className="w-4 h-4 text-red-400 shrink-0" />
 						)}
 						<span className="text-[13px] font-medium">{notification.message}</span>
+						<button
+							type="button"
+							onClick={() => setNotification(null)}
+							className="text-gray-400 hover:text-white ml-2"
+						>
+							<X className="w-3.5 h-3.5" />
+						</button>
 					</div>
 				)}
 
@@ -761,59 +774,69 @@ export default function UsulanIdleClient({
 							className="inline-flex items-center gap-1.5 text-sm font-semibold text-gray-500 hover:text-[#0A356A] transition-colors mb-2.5"
 						>
 							<ChevronLeft className="w-4 h-4" />
-							Kembali
+							Kembali ke Daftar Usulan
 						</button>
 						<h1 className="text-2xl font-bold text-[#0A356A] tracking-tight">
-							Registrasi Peralatan Idle
+							Formulir Usulan Peralatan Idle
 						</h1>
 						<p className="text-gray-500 text-sm mt-0.5">
-							Daftarkan aset atau peralatan yang saat ini tidak digunakan.
+							Ajukan usulan peralatan idle dari Unit Kerja Operasi untuk ditinjau dan diverifikasi oleh Rendal Pemeliharaan.
 						</p>
 					</div>
 				</div>
 
-				{/* Grid Formulir Dua Panel (Persis Rendal Register Equipment) */}
+				{/* Form Grid Dua Panel */}
 				<form
 					onSubmit={(e) => {
 						e.preventDefault();
 						if (
-							!formData.equipmentCode ||
-							!formData.name ||
-							!formData.objectTypeId ||
+							!formData.equipmentCode.trim() ||
+							!formData.name.trim() ||
 							!formData.plantId ||
-							!formData.storageLocationId ||
 							!formData.funcLocId ||
-							!formData.vendor ||
-							!formData.idleReason
+							!formData.idleReason.trim()
 						) {
 							setShowValidationErrors(true);
+							setNotification({
+								type: "error",
+								message: "Harap lengkapi semua field wajib bertanda bintang (*).",
+							});
+							return;
+						}
+						if (uploadedFiles.length === 0) {
+							setShowValidationErrors(true);
+							setNotification({
+								type: "error",
+								message:
+									"Berkas pendukung wajib diunggah minimal 1 file (foto alat atau Berita Acara).",
+							});
 							return;
 						}
 						setIsConfirmOpen(true);
 					}}
 					className="grid grid-cols-1 lg:grid-cols-12 gap-5"
 				>
-					{/* PANEL KIRI: Data Utama & Spesifikasi (Lebar 8 Kolom) */}
-					<div className="lg:col-span-8 flex flex-col gap-5">
-						<div className="bg-white rounded shadow-sm border border-gray-200">
+					{/* PANEL KIRI: Informasi & Lokasi Peralatan (Lebar 7 Kolom) */}
+					<div className="lg:col-span-7 flex flex-col gap-5">
+						<div className="bg-white rounded-xl shadow-sm border border-gray-200">
 							{/* Judul Panel */}
-							<div className="p-4 sm:p-5 border-b border-gray-100 flex items-center gap-2.5 bg-gray-50/50 rounded-t">
+							<div className="p-4 sm:p-5 border-b border-gray-100 flex items-center gap-2.5 bg-gray-50/70 rounded-t-xl">
 								<Info className="w-5 h-5 text-[#0A356A]" strokeWidth={2.5} />
-								<h2 className="text-lg font-bold text-gray-900">
-									Informasi & Lokasi Aset
+								<h2 className="text-base sm:text-lg font-bold text-gray-900">
+									Informasi Peralatan & Lokasi
 								</h2>
 							</div>
 
 							{/* Grid Isian Kiri */}
-							<div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-4">
+							<div className="p-4 sm:p-5 space-y-4">
 								{/* Baris 1: Nama Peralatan */}
-								<div className="space-y-1.5 lg:col-span-2">
+								<div className="space-y-1.5">
 									<div className="flex justify-between items-end">
-										<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+										<label className="text-[11px] font-bold text-gray-600 uppercase tracking-wider">
 											NAMA PERALATAN <span className="text-red-500">*</span>
 										</label>
 										<span
-											className={`text-[9px] font-medium ${formData.name.length >= 150 ? "text-orange-500" : "text-gray-400"}`}
+											className={`text-[10px] font-medium ${formData.name.length >= 150 ? "text-orange-500" : "text-gray-400"}`}
 										>
 											Maks 150 karakter
 										</span>
@@ -826,33 +849,28 @@ export default function UsulanIdleClient({
 										value={formData.name}
 										onChange={handleNameChange}
 										onQueryChange={handleSapQueryChange}
-										onBlur={handleBlur as unknown as () => void}
+										onBlur={handleNameBlur}
 										options={nameOptions}
-										placeholder="Ketik nama peralatan (mis. FLOW TRANSMITTER)..."
+										placeholder="Ketik nama peralatan (mis. FLOW TRANSMITTER DIESEL OIL)..."
 										hasError={
-											(showValidationErrors || touched.name) && !formData.name
+											(showValidationErrors || touched.name) && !formData.name.trim()
 										}
-										emptyMessage="Tidak ada nama peralatan yang cocok."
+										emptyMessage="Tidak ada nama peralatan yang cocok di master SAP."
 									/>
-									{(showValidationErrors || touched.name) && !formData.name && (
-										<p className="text-[10px] text-red-500 mt-1 font-medium">
+									{(showValidationErrors || touched.name) && !formData.name.trim() && (
+										<p className="text-[11px] text-red-500 font-medium">
 											* Nama Peralatan wajib diisi.
-										</p>
-									)}
-									{formData.name.length >= 150 && (
-										<p className="text-[10px] text-orange-500 mt-1 font-medium">
-											* Batas maksimal karakter (150) telah tercapai.
 										</p>
 									)}
 								</div>
 
-								{/* Baris 1: Kode Aset / Tag */}
-								<div className="space-y-1.5 lg:col-span-1">
+								{/* Baris 2: Kode Aset / Tag SAP */}
+								<div className="space-y-1.5">
 									<div className="flex justify-between items-end">
-										<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-											KODE ASET / TAG <span className="text-red-500">*</span>
+										<label className="text-[11px] font-bold text-gray-600 uppercase tracking-wider">
+											KODE ASET / TAG SAP <span className="text-red-500">*</span>
 										</label>
-										<span className="text-[9px] text-gray-400 font-medium">
+										<span className="text-[10px] text-gray-400 font-medium">
 											Maks 50 karakter
 										</span>
 									</div>
@@ -864,271 +882,158 @@ export default function UsulanIdleClient({
 										value={formData.equipmentCode}
 										onChange={handleEquipmentCodeChange}
 										onQueryChange={handleSapQueryChange}
-										onBlur={() => handleSelectBlur("equipmentCode")}
+										onBlur={handleEquipmentCodeBlur}
 										options={codeOptions}
 										placeholder="Ketik kode aset (mis. F1N-FT201)..."
 										hasError={
 											(showValidationErrors || touched.equipmentCode) &&
-											!formData.equipmentCode
+											!formData.equipmentCode.trim()
 										}
-										emptyMessage="Tidak ada kode aset yang cocok."
+										emptyMessage="Tidak ada kode aset yang cocok di master SAP."
 									/>
 									{(showValidationErrors || touched.equipmentCode) &&
-										!formData.equipmentCode && (
-											<p className="text-[10px] text-red-500 mt-1 font-medium">
-												* Kode Aset wajib diisi.
+										!formData.equipmentCode.trim() && (
+											<p className="text-[11px] text-red-500 font-medium">
+												* Kode Aset / Tag SAP wajib diisi.
 											</p>
 										)}
 								</div>
 
-								{/* Baris 2: Pabrik / Plant */}
-								<div className="space-y-1.5 lg:col-span-1">
-									<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-										PABRIK / PLANT <span className="text-red-500">*</span>
-									</label>
-									<AutocompleteInput
-										mode="select"
-										name="plantId"
-										showOnFocus
-										value={formData.plantId}
-										onChange={(val) => handleSelectChange("plantId", val)}
-										onBlur={() => handleSelectBlur("plantId")}
-										options={plants}
-										placeholder="Ketik pabrik / plant..."
-										hasError={
-											(showValidationErrors || touched.plantId) && !formData.plantId
-										}
-										emptyMessage="Pabrik tidak ditemukan."
-									/>
-									{(showValidationErrors || touched.plantId) && !formData.plantId && (
-										<p className="text-[10px] text-red-500 mt-1 font-medium">
-											* Pabrik / Plant wajib dipilih.
-										</p>
-									)}
-								</div>
-
-								{/* Baris 2: Area (Funcloc) */}
-								<div className="space-y-1.5 lg:col-span-2">
-									<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-										AREA (FUNCLOC) <span className="text-red-500">*</span>
-									</label>
-									<AutocompleteInput
-										mode="select"
-										name="funcLocId"
-										showOnFocus
-										value={formData.funcLocId}
-										onChange={(val) => handleSelectChange("funcLocId", val)}
-										onBlur={() => handleSelectBlur("funcLocId")}
-										options={funcLocs}
-										placeholder="Ketik functional location..."
-										hasError={
-											(showValidationErrors || touched.funcLocId) && !formData.funcLocId
-										}
-										emptyMessage="Functional location tidak ditemukan."
-									/>
-									{(showValidationErrors || touched.funcLocId) && !formData.funcLocId && (
-										<p className="text-[10px] text-red-500 mt-1 font-medium">
-											* Area (Funcloc) wajib dipilih.
-										</p>
-									)}
-								</div>
-
-								{/* Baris 3: Kategori (Tipe) */}
-								<div className="space-y-1.5 lg:col-span-1">
-									<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-										KATEGORI (TIPE) <span className="text-red-500">*</span>
-									</label>
-									<AutocompleteInput
-										mode="select"
-										name="objectTypeId"
-										showOnFocus
-										value={formData.objectTypeId}
-										onChange={(val) => handleSelectChange("objectTypeId", val)}
-										onBlur={() => handleSelectBlur("objectTypeId")}
-										options={objectTypes}
-										placeholder="Ketik kategori..."
-										hasError={
-											(showValidationErrors || touched.objectTypeId) &&
-											!formData.objectTypeId
-										}
-										emptyMessage="Kategori tidak ditemukan."
-									/>
-									{(showValidationErrors || touched.objectTypeId) &&
-										!formData.objectTypeId && (
-											<p className="text-[10px] text-red-500 mt-1 font-medium">
-												* Kategori wajib dipilih.
+								{/* Baris 3: Pabrik / Plant & Area FuncLoc */}
+								<div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+									<div className="space-y-1.5">
+										<label className="text-[11px] font-bold text-gray-600 uppercase tracking-wider block">
+											PABRIK / PLANT <span className="text-red-500">*</span>
+										</label>
+										<AutocompleteInput
+											mode="select"
+											name="plantId"
+											showOnFocus
+											value={formData.plantId}
+											onChange={(val) => handleSelectChange("plantId", val)}
+											onBlur={() => handleSelectBlur("plantId")}
+											options={plants}
+											placeholder="Pilih pabrik / plant..."
+											hasError={
+												(showValidationErrors || touched.plantId) && !formData.plantId
+											}
+											emptyMessage="Pabrik tidak ditemukan."
+										/>
+										{(showValidationErrors || touched.plantId) && !formData.plantId && (
+											<p className="text-[11px] text-red-500 font-medium">
+												* Pabrik / Plant wajib dipilih.
 											</p>
 										)}
-								</div>
+									</div>
 
-								{/* Baris 3: Lokasi Penyimpanan */}
-								<div className="space-y-1.5 lg:col-span-2">
-									<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-										LOKASI PENYIMPANAN <span className="text-red-500">*</span>
-									</label>
-									<AutocompleteInput
-										mode="select"
-										name="storageLocationId"
-										showOnFocus
-										value={formData.storageLocationId}
-										onChange={(val) => handleSelectChange("storageLocationId", val)}
-										onBlur={() => handleSelectBlur("storageLocationId")}
-										options={storageLocations}
-										placeholder="Ketik lokasi simpan..."
-										hasError={
-											(showValidationErrors || touched.storageLocationId) &&
-											!formData.storageLocationId
-										}
-										emptyMessage="Lokasi penyimpanan tidak ditemukan."
-									/>
-									{(showValidationErrors || touched.storageLocationId) &&
-										!formData.storageLocationId && (
-											<p className="text-[10px] text-red-500 mt-1 font-medium">
-												* Lokasi penyimpanan wajib dipilih.
+									<div className="space-y-1.5">
+										<label className="text-[11px] font-bold text-gray-600 uppercase tracking-wider block">
+											AREA (FUNC. LOCATION) <span className="text-red-500">*</span>
+										</label>
+										<AutocompleteInput
+											mode="select"
+											name="funcLocId"
+											showOnFocus
+											value={formData.funcLocId}
+											onChange={(val) => handleSelectChange("funcLocId", val)}
+											onBlur={() => handleSelectBlur("funcLocId")}
+											options={funcLocs}
+											placeholder="Pilih functional location..."
+											hasError={
+												(showValidationErrors || touched.funcLocId) && !formData.funcLocId
+											}
+											emptyMessage="Functional location tidak ditemukan."
+										/>
+										{(showValidationErrors || touched.funcLocId) && !formData.funcLocId && (
+											<p className="text-[11px] text-red-500 font-medium">
+												* Functional Location wajib dipilih.
 											</p>
 										)}
+									</div>
 								</div>
 
-								{/* Garis Pemisah Visual */}
-								<div className="col-span-full border-t border-gray-100 my-1"></div>
-
-								{/* Baris 4: Vendor / Merk */}
-								<div className="space-y-1.5 lg:col-span-2">
-									<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-										VENDOR / MERK <span className="text-red-500">*</span>
+								{/* Baris 4: Alasan Usulan Idle */}
+								<div className="space-y-1.5 pt-1">
+									<label className="text-[11px] font-bold text-gray-600 uppercase tracking-wider block">
+										ALASAN USULAN IDLE <span className="text-red-500">*</span>
 									</label>
-									<input
-										type="text"
-										name="vendor"
-										value={formData.vendor}
+									<textarea
+										name="idleReason"
+										rows={3}
+										value={formData.idleReason}
 										onChange={handleChange}
 										onBlur={handleBlur}
-										placeholder="Masukkan vendor / merk..."
-										className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all ${(showValidationErrors || touched.vendor) && !formData.vendor ? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10" : "border-gray-300 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"}`}
+										placeholder="Tuliskan alasan peralatan ini berpotensi / diusulkan idle (contoh: Unit cadangan tidak terpakai pasca overhaul)..."
+										className={`w-full px-3.5 py-2.5 text-sm border rounded-lg outline-none transition-all resize-none ${
+											(showValidationErrors || touched.idleReason) &&
+											!formData.idleReason.trim()
+												? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/15"
+												: "border-gray-300 focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"
+										}`}
 									/>
-									{(showValidationErrors || touched.vendor) && !formData.vendor && (
-										<p className="text-[10px] text-red-500 mt-1 font-medium">
-											* Vendor / merk wajib diisi.
-										</p>
-									)}
+									{(showValidationErrors || touched.idleReason) &&
+										!formData.idleReason.trim() && (
+											<p className="text-[11px] text-red-500 font-medium">
+												* Alasan usulan idle wajib diisi.
+											</p>
+										)}
 								</div>
 
-								{/* Baris 4: Tahun Perolehan */}
+								{/* Baris 5: Catatan Tambahan (Opsional) */}
 								<div className="space-y-1.5">
-									<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-										TAHUN PEROLEHAN{" "}
+									<label className="text-[11px] font-bold text-gray-500 uppercase tracking-wider block">
+										CATATAN TAMBAHAN{" "}
 										<span className="text-gray-400 lowercase font-normal">(opsional)</span>
 									</label>
-									<YearPicker
-										value={formData.year}
-										onChange={(year) => setFormData((prev) => ({ ...prev, year }))}
-										placeholder="Pilih tahun perolehan"
+									<textarea
+										name="notes"
+										rows={2}
+										value={formData.notes}
+										onChange={handleChange}
+										placeholder="Keterangan kondisi fisik, kontak penanggung jawab / pengusul..."
+										className="w-full px-3.5 py-2 text-sm border border-gray-300 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all resize-none"
 									/>
-								</div>
-
-								{/* Baris 5: Nilai Aset */}
-								<div className="sm:col-span-2 lg:col-span-3">
-									<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
-										NILAI ASET{" "}
-										<span className="text-gray-400 lowercase font-normal">
-											(Rp, opsional)
-										</span>
-									</p>
-									<div className="grid grid-cols-1 sm:grid-cols-3 gap-x-5 gap-y-4">
-										<RupiahField
-											label="Nilai Perolehan"
-											name="originalValue"
-											value={formData.originalValue}
-											onChange={handleChange}
-										/>
-										<RupiahField
-											label="Nilai Buku"
-											name="bookValue"
-											value={formData.bookValue}
-											onChange={handleChange}
-										/>
-										<RupiahField
-											label="Estimasi Pakai Ulang"
-											name="estimatedReuseValue"
-											value={formData.estimatedReuseValue}
-											onChange={handleChange}
-										/>
-									</div>
 								</div>
 							</div>
 						</div>
 
-						{/* Banner Bawah */}
-						<div className="bg-blue-50/70 border border-blue-100 rounded p-4 flex items-center gap-3">
-							<CheckCircle2 className="w-7 h-7 text-[#0556B3] shrink-0" />
+						{/* Banner Informasi Verifikasi */}
+						<div className="bg-blue-50/80 border border-blue-100 rounded-xl p-4 flex items-start gap-3">
+							<CheckCircle2 className="w-5 h-5 text-[#0556B3] shrink-0 mt-0.5" />
 							<div>
-								<h4 className="text-sm font-bold text-[#0A356A]">
-									Proses Verifikasi Aset
+								<h4 className="text-[13px] font-bold text-[#0A356A]">
+									Alur Pengusulan Unit Kerja
 								</h4>
-								<p className="text-xs text-gray-600 mt-0.5">
-									Pastikan plat nama peralatan terlihat jelas di foto. Data akan
-									diverifikasi selambatnya 24 jam kerja.
+								<p className="text-xs text-gray-600 mt-0.5 leading-relaxed">
+									Usulan peralatan idle yang Anda kirimkan akan masuk ke antrean verifikasi Rendal Pemeliharaan dengan status <strong>MENUNGGU VERIFIKASI (PROPOSED)</strong>. Rendal akan menentukan rute inspeksi dan kategori inventaris resmi.
 								</p>
 							</div>
 						</div>
 					</div>
 
-					{/* PANEL KANAN: Kondisi, File, & Submit (Lebar 4 Kolom) */}
-					<div className="lg:col-span-4 flex flex-col gap-5">
-						<div className="bg-white rounded shadow-sm border border-gray-200 flex flex-col h-full">
+					{/* PANEL KANAN: Berkas Lampiran Pendukung & Aksi (Lebar 5 Kolom) */}
+					<div className="lg:col-span-5 flex flex-col gap-5">
+						<div className="bg-white rounded-xl shadow-sm border border-gray-200 flex flex-col h-full">
 							{/* Judul Panel */}
-							<div className="p-4 sm:p-5 border-b border-gray-100 flex items-center gap-2.5 bg-gray-50/50 rounded-t">
-								<AlertCircle className="w-5 h-5 text-[#0A356A]" strokeWidth={2.5} />
-								<h2 className="text-lg font-bold text-gray-900">Kondisi & Berkas</h2>
+							<div className="p-4 sm:p-5 border-b border-gray-100 flex items-center justify-between bg-gray-50/70 rounded-t-xl">
+								<div className="flex items-center gap-2.5">
+									<AlertCircle className="w-5 h-5 text-[#0A356A]" strokeWidth={2.5} />
+									<h2 className="text-base sm:text-lg font-bold text-gray-900">
+										Berkas Pendukung
+									</h2>
+								</div>
+								<span className="text-[11px] font-semibold text-red-600 bg-red-50 border border-red-200 px-2 py-0.5 rounded-full">
+									* Wajib min. 1 file
+								</span>
 							</div>
 
 							<div className="p-4 sm:p-5 flex-1 flex flex-col gap-4">
-								{/* Alasan Idle */}
-								<div>
-									<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">
-										ALASAN IDLE <span className="text-red-500">*</span>
-									</label>
-									<input
-										type="text"
-										onBlur={handleBlur}
-										name="idleReason"
-										value={formData.idleReason}
-										onChange={handleChange}
-										placeholder="Masukkan Alasan Idle..."
-										className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all ${
-											(showValidationErrors || touched.idleReason) && !formData.idleReason
-												? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10 text-gray-900"
-												: "border-gray-300 text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
-										}`}
-									/>
-									{(showValidationErrors || touched.idleReason) &&
-										!formData.idleReason && (
-											<p className="text-[10px] text-red-500 mt-1.5 font-medium">
-												* Alasan idle wajib diisi.
-											</p>
-										)}
-								</div>
-
-								{/* Catatan Tambahan */}
-								<div>
-									<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">
-										CATATAN TAMBAHAN
-									</label>
-									<textarea
-										name="notes"
-										value={formData.notes}
-										onChange={handleChange}
-										rows={2}
-										placeholder="Keterangan kondisi, kontak penanggung jawab..."
-										className="w-full px-3 py-2 text-sm border border-gray-300 rounded focus:ring-1 focus:ring-[#0556B3] outline-none transition-all resize-none"
-									></textarea>
-								</div>
+								<p className="text-xs text-gray-500 leading-relaxed">
+									Unggah foto fisik peralatan (plat nama/kondisi alat) atau dokumen Berita Acara usulan idle sebagai bukti pendukung.
+								</p>
 
 								{/* Upload Dropzone */}
 								<div className="flex-1 flex flex-col">
-									<label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider block mb-2">
-										Upload File / Attachment <span className="text-gray-400 font-normal normal-case">(Opsional)</span>
-									</label>
 									<input
 										type="file"
 										multiple
@@ -1141,27 +1046,29 @@ export default function UsulanIdleClient({
 										onDragOver={handleDragOver}
 										onDragLeave={handleDragLeave}
 										onDrop={handleDrop}
-										className={`border-2 border-dashed rounded-lg p-4 sm:p-5 transition-all ${
+										className={`border-2 border-dashed rounded-xl p-5 transition-all ${
 											isDragging
 												? "border-[#0556B3] bg-blue-50/80"
-												: "border-gray-300 hover:border-[#0556B3] bg-gray-50/60"
+												: (showValidationErrors && uploadedFiles.length === 0)
+													? "border-red-300 bg-red-50/20"
+													: "border-gray-300 hover:border-[#0A356A] bg-gray-50/50"
 										}`}
 									>
 										<div
 											onClick={() => fileInputRef.current?.click()}
-											className="flex flex-col items-center justify-center text-center cursor-pointer py-1.5 hover:opacity-80 transition-opacity"
+											className="flex flex-col items-center justify-center text-center cursor-pointer py-3 hover:opacity-85 transition-opacity"
 										>
 											<UploadCloud
-												className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0556B3] animate-bounce" : "text-gray-400"}`}
+												className={`w-9 h-9 mb-2 ${isDragging ? "text-[#0556B3] animate-bounce" : (showValidationErrors && uploadedFiles.length === 0) ? "text-red-400" : "text-gray-400"}`}
 											/>
-											<span className="text-xs font-bold text-gray-900">
-												Klik atau tarik & lepas file dokumen/foto di sini
+											<span className="text-xs font-bold text-gray-800">
+												Klik atau seret file dokumen / foto ke sini
 											</span>
-											<span className="text-[10px] text-gray-500 mt-0.5">
-												Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks. 10MB per file)
+											<span className="text-[10px] text-gray-500 mt-1">
+												Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks. 25MB per file)
 											</span>
-											<span className="text-[10px] text-gray-400 mt-0.5">
-												Klik untuk memilih file lampiran (Opsional)
+											<span className="text-[10px] font-semibold text-[#0A356A] mt-2 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">
+												Pilih Berkas Dari Komputer
 											</span>
 										</div>
 
@@ -1173,10 +1080,10 @@ export default function UsulanIdleClient({
 														Berkas Terlampir ({uploadedFiles.length})
 													</span>
 													<span className="text-[10px] text-gray-400">
-														Klik baris untuk melihat preview
+														Klik baris untuk preview
 													</span>
 												</div>
-												<div className="space-y-2">
+												<div className="space-y-2 max-h-56 overflow-y-auto pr-1">
 													{uploadedFiles.map((file, i) => {
 														const isImage = file.type.startsWith("image/");
 														const isPdf =
@@ -1213,8 +1120,8 @@ export default function UsulanIdleClient({
 																className="group flex items-center justify-between p-2.5 bg-white border border-gray-200 rounded-lg hover:border-[#0A356A] hover:shadow-sm transition-all cursor-pointer"
 																title={`Klik untuk melihat preview: ${file.name}`}
 															>
-																<div className="flex items-center gap-3 min-w-0 flex-1">
-																	<div className="w-10 h-10 rounded border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 relative">
+																<div className="flex items-center gap-2.5 min-w-0 flex-1">
+																	<div className="w-9 h-9 rounded border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
 																		{isImage ? (
 																			/* eslint-disable-next-line @next/next/no-img-element */
 																			<img
@@ -1238,9 +1145,9 @@ export default function UsulanIdleClient({
 																	</div>
 																</div>
 
-																<div className="flex items-center gap-2 shrink-0 ml-3">
-																	<span className="text-[11px] font-medium text-[#0A356A] bg-blue-50 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
-																		<Eye className="w-3.5 h-3.5" /> Preview
+																<div className="flex items-center gap-1.5 shrink-0 ml-2">
+																	<span className="text-[10px] font-medium text-[#0A356A] bg-blue-50 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+																		<Eye className="w-3 h-3" /> Preview
 																	</span>
 																	<button
 																		type="button"
@@ -1261,36 +1168,43 @@ export default function UsulanIdleClient({
 											</div>
 										)}
 									</div>
+
 									{fileError && (
-										<p className="text-[10px] text-red-500 mt-1.5 font-medium">
+										<p className="text-[11px] text-red-500 mt-2 font-medium">
 											* {fileError}
 										</p>
 									)}
+
+									{showValidationErrors && uploadedFiles.length === 0 && (
+										<p className="text-[11px] text-red-500 mt-2 font-medium">
+											* Berkas pendukung wajib diunggah minimal 1 file (foto alat atau Berita Acara).
+										</p>
+									)}
+								</div>
+
+								{/* Action Buttons */}
+								<div className="flex items-center justify-end gap-3 mt-4 pt-4 border-t border-gray-100">
+									<button
+										type="button"
+										onClick={handleCloseForm}
+										className="px-5 py-2.5 rounded-lg border border-gray-300 bg-white text-gray-700 text-sm font-semibold hover:bg-gray-50 transition-all shadow-sm"
+									>
+										Batal
+									</button>
+									<button
+										type="submit"
+										disabled={isSubmitting}
+										className="flex-1 px-5 py-2.5 rounded-lg bg-[#0A356A] hover:bg-[#0556B3] text-white text-sm font-bold transition-all shadow-md flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+									>
+										{isSubmitting ? (
+											<Loader2 className="w-4 h-4 animate-spin" />
+										) : (
+											<Send className="w-4 h-4" />
+										)}
+										{isSubmitting ? "Mengirim Usulan..." : "Kirim Usulan Peralatan"}
+									</button>
 								</div>
 							</div>
-						</div>
-
-						{/* Action Buttons */}
-						<div className="flex items-center justify-end gap-3 mt-1">
-							<button
-								type="button"
-								onClick={handleCloseForm}
-								className="px-5 py-2.5 rounded border border-gray-300 bg-white text-gray-700 text-sm font-bold hover:bg-gray-50 transition-all shadow-sm"
-							>
-								Batal
-							</button>
-							<button
-								type="submit"
-								disabled={isSubmitting}
-								className="w-full px-5 py-2.5 rounded bg-[#0A356A] hover:bg-[#0556B3] text-white text-sm font-bold transition-all shadow-md flex justify-center items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
-							>
-								{isSubmitting ? (
-									<Loader2 className="w-4 h-4 animate-spin" />
-								) : (
-									<Save className="w-4 h-4" />
-								)}
-								{isSubmitting ? "Menyimpan Data..." : "Simpan Data Peralatan"}
-							</button>
 						</div>
 					</div>
 				</form>
@@ -1298,15 +1212,15 @@ export default function UsulanIdleClient({
 				{/* Fullscreen Spinner Saat Submit */}
 				{isSubmitting && (
 					<div className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-white/80 backdrop-blur-sm animate-in fade-in duration-200">
-						<div className="bg-white p-8 rounded shadow-xl flex flex-col items-center border border-gray-100">
+						<div className="bg-white p-8 rounded-xl shadow-xl flex flex-col items-center border border-gray-100">
 							<Loader2 className="w-12 h-12 text-[#0556B3] animate-spin mb-4" />
-							<h2 className="text-lg font-bold text-gray-900">Menyimpan Data...</h2>
+							<h2 className="text-lg font-bold text-gray-900">Mengirim Data Usulan...</h2>
 							<p className="text-sm text-gray-500 mt-1">Mohon tunggu sebentar</p>
 						</div>
 					</div>
 				)}
 
-				{/* Confirm Submit Dialog (Persis Rendal) */}
+				{/* Confirm Submit Dialog */}
 				<ConfirmDialog
 					open={isConfirmOpen}
 					onClose={() => setIsConfirmOpen(false)}
@@ -1314,14 +1228,14 @@ export default function UsulanIdleClient({
 						setIsConfirmOpen(false);
 						handleSubmit();
 					}}
-					title="Simpan Data Peralatan?"
-					description="Data peralatan akan didaftarkan ke sistem dan masuk alur validasi Rendal Pemeliharaan."
-					confirmLabel="Ya, Simpan"
-					pendingLabel="Menyimpan..."
+					title="Kirim Usulan Peralatan Idle?"
+					description="Data peralatan akan diajukan ke sistem dan masuk ke antrean verifikasi Rendal Pemeliharaan."
+					confirmLabel="Ya, Kirim Usulan"
+					pendingLabel="Mengirim..."
 					isPending={isSubmitting}
 				/>
 
-				{/* Lightbox Preview Modal (Persis Rendal) */}
+				{/* Lightbox Preview Modal */}
 				{previewModal && (
 					<div
 						className="fixed inset-0 z-[110] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm"
@@ -1333,13 +1247,13 @@ export default function UsulanIdleClient({
 								download={previewModal.title || "lampiran"}
 								target="_blank"
 								rel="noreferrer"
-								className="bg-white/10 hover:bg-white/25 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
+								className="bg-white/10 hover:bg-white/25 text-white px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-colors"
 								onClick={(e) => e.stopPropagation()}
 							>
 								<Download className="w-4 h-4" /> Buka Tab Baru / Unduh
 							</a>
 							<button
-								className="text-white hover:bg-white/20 p-2 rounded transition-colors"
+								className="text-white hover:bg-white/20 p-2 rounded-lg transition-colors"
 								onClick={(e) => {
 									e.stopPropagation();
 									setPreviewModal(null);
@@ -1373,11 +1287,11 @@ export default function UsulanIdleClient({
 	}
 
 	// =========================================================================
-	// TAMPILAN 2: TABEL DATA ASET IDLE (Persis Rendal Idle)
+	// TAMPILAN 2: TABEL DATA USULAN PERALATAN IDLE
 	// =========================================================================
 	return (
 		<div className="max-w-7xl mx-auto pt-2 pb-8">
-			{/* Header (Persis rendal/idle) */}
+			{/* Header */}
 			<div className="mb-4">
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
 					<span>Unit Kerja Operasi</span>
@@ -1390,8 +1304,7 @@ export default function UsulanIdleClient({
 							Pengusulan Peralatan Idle
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar seluruh aset idle yang telah diregistrasi beserta status proses
-							validasinya.
+							Daftar seluruh usulan peralatan idle yang diajukan beserta status verifikasinya.
 						</p>
 					</div>
 					<div className="flex items-center gap-2">
@@ -1415,7 +1328,7 @@ export default function UsulanIdleClient({
 							className="flex items-center gap-1.5 px-3.5 py-1.5 bg-[#0A356A] hover:bg-[#062854] text-white text-[13px] font-semibold rounded-lg transition-colors shadow-sm whitespace-nowrap"
 						>
 							<Plus className="w-4 h-4" />
-							Daftarkan Peralatan
+							Usulkan Peralatan
 						</button>
 					</div>
 				</div>
@@ -1423,7 +1336,7 @@ export default function UsulanIdleClient({
 
 			{/* Alert Toast Notification */}
 			{notification && (
-				<div className="fixed top-6 right-6 z-[120] bg-gray-900 text-white px-5 py-3 rounded shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
+				<div className="fixed top-6 right-6 z-[120] bg-gray-900 text-white px-5 py-3 rounded-lg shadow-xl flex items-center gap-3 animate-in fade-in slide-in-from-top-4 duration-300">
 					{notification.type === "success" ? (
 						<CheckCircle2 className="w-4 h-4 text-emerald-400 shrink-0" />
 					) : (
@@ -1440,7 +1353,7 @@ export default function UsulanIdleClient({
 				</div>
 			)}
 
-			{/* Notification Banner (Persis rendal/idle) */}
+			{/* Notification Banner */}
 			{filteredData.length > 0 && (
 				<div className="mb-4 flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
 					<div className="flex items-center gap-3">
@@ -1450,37 +1363,44 @@ export default function UsulanIdleClient({
 						</span>
 						<span className="text-[13px] text-blue-800 font-medium">
 							Terdapat{" "}
-							<strong className="font-bold">{filteredData.length} usulan aset</strong>{" "}
-							di sistem.
+							<strong className="font-bold">{filteredData.length} usulan peralatan</strong>{" "}
+							dalam daftar riwayat Anda.
 						</span>
 					</div>
 				</div>
 			)}
 
-			{/* Card Tabel Terpadu (Persis rendal/idle) */}
+			{/* Card Tabel Terpadu */}
 			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4">
 				{/* Toolbar / Filters */}
 				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
 					{/* Search */}
 					<div className="flex w-full lg:w-auto gap-2">
-						<div className="relative flex-1 lg:w-72">
+						<div className="relative flex-1 lg:w-80">
 							<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
 							<input
 								type="text"
-								placeholder="Cari nama, kode aset, atau plant..."
+								placeholder="Cari nama, kode alat, plant, atau alasan..."
 								value={searchInput}
 								onChange={(e) => {
 									setSearchInput(e.target.value);
 									setSearch(e.target.value);
+									setCurrentPage(1);
 								}}
 								onKeyDown={(e) => {
-									if (e.key === "Enter") setSearch(searchInput);
+									if (e.key === "Enter") {
+										setSearch(searchInput);
+										setCurrentPage(1);
+									}
 								}}
 								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
 							/>
 						</div>
 						<button
-							onClick={() => setSearch(searchInput)}
+							onClick={() => {
+								setSearch(searchInput);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
 						>
 							Cari
@@ -1491,7 +1411,10 @@ export default function UsulanIdleClient({
 					<div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
 						<select
 							value={plantFilter}
-							onChange={(e) => setPlantFilter(e.target.value)}
+							onChange={(e) => {
+								setPlantFilter(e.target.value);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="Semua">Semua Plant</option>
@@ -1504,18 +1427,16 @@ export default function UsulanIdleClient({
 
 						<select
 							value={statusFilter}
-							onChange={(e) => setStatusFilter(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
+							onChange={(e) => {
+								setStatusFilter(e.target.value);
+								setCurrentPage(1);
+							}}
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[150px] cursor-pointer"
 						>
 							<option value="Semua">Semua Status</option>
-							{EQUIPMENT_STATUS.map((s) => (
-								<option key={s} value={s}>
-									{s === "DISPOSAL_RECOMMENDED"
-										? "SCRAP RECOMENDED"
-										: statusText(s)}
-								</option>
-							))}
-							<option value="REJECTED">REJECTED</option>
+							<option value="PROPOSED">Menunggu Verifikasi</option>
+							<option value="REGISTERED">Disetujui Rendal</option>
+							<option value="PROPOSAL_REJECTED">Usulan Ditolak</option>
 						</select>
 
 						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
@@ -1535,15 +1456,16 @@ export default function UsulanIdleClient({
 				<div className="w-full overflow-x-auto">
 					<table className="w-full table-fixed text-left border-collapse">
 						<colgroup>
-							<col className="w-[4%]" />
-							<col className="w-[22%]" />
-							<col className="w-[12%]" />
+							<col className="w-[3%]" />
+							<col className="w-[18%]" />
+							<col className="w-[10%]" />
 							<col className="w-[8%]" />
-							<col className="w-[15%]" />
+							<col className="w-[10%]" />
 							<col className="w-[11%]" />
-							<col className="w-[11%]" />
-							<col className="w-[11%]" />
-							<col className="w-[6%]" />
+							<col className="w-[14%]" />
+							<col className="w-[9%]" />
+							<col className="w-[9%]" />
+							<col className="w-[8%]" />
 						</colgroup>
 						<thead className="bg-gray-50/95 backdrop-blur-sm">
 							<tr className="border-b border-gray-300">
@@ -1588,10 +1510,18 @@ export default function UsulanIdleClient({
 								<th
 									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
 									title="Klik untuk mengurutkan"
-									onClick={() => handleSort("jenisAlat")}
+									onClick={() => handleSort("storageLocation")}
 								>
 									<div className="flex items-center justify-start gap-0.5 truncate">
-										Tipe Objek {getSortIcon("jenisAlat")}
+										Lokasi Penyimpanan {getSortIcon("storageLocation")}
+									</div>
+								</th>
+								<th
+									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-left"
+									title="Alasan usulan peralatan idle"
+								>
+									<div className="flex items-center justify-start gap-0.5 truncate">
+										Alasan Idle
 									</div>
 								</th>
 								<th
@@ -1600,7 +1530,7 @@ export default function UsulanIdleClient({
 									onClick={() => handleSort("tanggalRegistrasi")}
 								>
 									<div className="flex items-center justify-start gap-0.5 truncate">
-										Tgl Registrasi {getSortIcon("tanggalRegistrasi")}
+										Tgl Usulan {getSortIcon("tanggalRegistrasi")}
 									</div>
 								</th>
 								<th
@@ -1620,14 +1550,16 @@ export default function UsulanIdleClient({
 						<tbody className="bg-white text-[12px]">
 							{paginatedData.length === 0 ? (
 								<tr>
-									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={10} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
-												Data Tidak Ditemukan
+												Belum Ada Usulan Peralatan
 											</p>
-											<p className="text-[11px] text-gray-500 mt-1">
-												Tidak ada peralatan yang sesuai dengan filter pencarian.
+											<p className="text-[11px] text-gray-500 mt-1 max-w-sm">
+												{equipments.length === 0
+													? "Anda belum mengajukan usulan peralatan idle. Klik tombol 'Usulkan Peralatan' di atas untuk mengajukan unit baru."
+													: "Tidak ada usulan peralatan yang sesuai dengan filter pencarian."}
 											</p>
 										</div>
 									</td>
@@ -1669,9 +1601,17 @@ export default function UsulanIdleClient({
 										</td>
 										<td
 											className="px-2 py-2 text-gray-600 font-medium text-left truncate"
-											title={item.jenisAlat}
+											title={item.storageLocation || "-"}
 										>
-											{item.jenisAlat}
+											{item.storageLocation || "-"}
+										</td>
+										<td
+											className="px-2 py-2 text-gray-600 text-left"
+											title={item.idleReason || "-"}
+										>
+											<span className="leading-tight line-clamp-2 block text-left text-[11px]">
+												{item.idleReason || "-"}
+											</span>
 										</td>
 										<td className="px-2 py-2 text-gray-600 font-medium text-left truncate">
 											{item.tanggalRegistrasi}
@@ -1687,7 +1627,7 @@ export default function UsulanIdleClient({
 														setActivePhotoIdx(0);
 													}}
 													className="inline-flex items-center justify-center gap-1 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2 py-1 rounded text-[11px] font-bold transition-all shadow-sm"
-													title="Lihat Detail"
+													title="Lihat Detail Usulan"
 												>
 													<Eye className="w-3 h-3" />
 													<span>Detail</span>
@@ -1701,7 +1641,7 @@ export default function UsulanIdleClient({
 					</table>
 				</div>
 
-				{/* Pagination Footer (Persis rendal/idle) */}
+				{/* Pagination Footer */}
 				{filteredData.length > 0 && (
 					<div className="px-5 py-3 border-t border-gray-200 bg-white flex flex-col sm:flex-row items-center justify-between gap-3">
 						<span className="text-[11px] font-medium text-gray-500">
@@ -1750,7 +1690,7 @@ export default function UsulanIdleClient({
 			</div>
 
 			{/* ========================================================= */}
-			{/* MODAL DETAIL INFORMASI ASET (Persis rendal/idle)          */}
+			{/* MODAL DETAIL INFORMASI USULAN IDLE                        */}
 			{/* ========================================================= */}
 			{detailModal && (
 				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
@@ -1758,11 +1698,11 @@ export default function UsulanIdleClient({
 						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
 							<div className="flex items-center gap-3">
 								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
-									<Eye className="w-5 h-5 text-white" />
+									<FileText className="w-5 h-5 text-white" />
 								</div>
 								<div>
 									<h2 className="text-base font-bold text-white leading-tight">
-										Detail Aset Idle
+										Detail Usulan Peralatan Idle
 									</h2>
 									<p className="text-xs text-blue-100 font-medium mt-0.5">
 										{detailModal.kodeAlat}
@@ -1778,15 +1718,15 @@ export default function UsulanIdleClient({
 						</div>
 
 						<div className="p-6 overflow-y-auto flex-1 flex flex-col gap-5">
-							{/* Section 1: Informasi Dasar */}
+							{/* Section 1: Informasi Usulan & Lokasi */}
 							<div className="border-b border-gray-100 pb-4">
 								<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">
-									Informasi & Spesifikasi Aset
+									Informasi Usulan & Lokasi
 								</h3>
 								<div className="grid grid-cols-2 gap-y-3.5 gap-x-4">
-									<div>
+									<div className="col-span-2">
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Nama Alat
+											Nama Peralatan
 										</p>
 										<p className="text-sm font-bold text-gray-900">
 											{detailModal.namaAlat}
@@ -1794,124 +1734,79 @@ export default function UsulanIdleClient({
 									</div>
 									<div>
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Kode Alat
+											Kode Aset / Tag
 										</p>
-										<p className="text-sm font-bold text-gray-900">
+										<p className="text-sm font-bold text-[#0A356A]">
 											{detailModal.kodeAlat}
 										</p>
 									</div>
 									<div>
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Plant
+											Pabrik / Plant
 										</p>
 										<p className="text-sm font-medium text-gray-800">
 											{detailModal.plant}
 										</p>
 									</div>
-									<div>
+									<div className="col-span-2">
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Jenis Alat
-										</p>
-										<p className="text-sm font-medium text-gray-800">
-											{detailModal.jenisAlat}
-										</p>
-									</div>
-									<div>
-										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Vendor / Merk
-										</p>
-										<p className="text-sm font-medium text-gray-800">
-											{detailModal.vendor || "-"}
-										</p>
-									</div>
-									<div>
-										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Tahun Perolehan
-										</p>
-										<p className="text-sm font-medium text-gray-800">
-											{detailModal.year || "-"}
-										</p>
-									</div>
-								</div>
-							</div>
-
-							{/* Section 2: Lokasi & Nilai Aset */}
-							<div className="border-b border-gray-100 pb-4">
-								<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">
-									Lokasi & Nilai Aset
-								</h3>
-								<div className="grid grid-cols-2 gap-y-3.5 gap-x-4">
-									<div>
-										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Lokasi Penyimpanan
-										</p>
-										<p className="text-sm font-semibold text-gray-800">
-											{detailModal.storageLocation || "-"}
-										</p>
-									</div>
-									<div>
-										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Area (FuncLoc)
+											Area (Functional Location)
 										</p>
 										<p className="text-sm font-semibold text-gray-800">
 											{detailModal.funcLoc || "-"}
 										</p>
 									</div>
-									<div className="col-span-2 grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3.5">
-										{[
-											["Nilai Perolehan", detailModal.originalValue],
-											["Nilai Buku", detailModal.bookValue],
-											["Estimasi Pakai Ulang", detailModal.estimatedReuseValue],
-										].map(([label, value]) => (
-											<div key={label as string}>
-												<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-													{label}
-												</p>
-												<p className="text-sm font-bold text-emerald-700">
-													{value ? `Rp ${Number(value).toLocaleString("id-ID")}` : "Rp 0"}
-												</p>
-											</div>
-										))}
-									</div>
-								</div>
-							</div>
-
-							{/* Section 3: Kondisi & Status */}
-							<div className="border-b border-gray-100 pb-4">
-								<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">
-									Kondisi & Status
-								</h3>
-								<div className="grid grid-cols-2 gap-y-3.5 gap-x-4">
+									{detailModal.createdByNPP && (
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+												NPP Pengusul
+											</p>
+											<p className="text-sm font-medium text-gray-800">
+												{detailModal.createdByNPP}
+											</p>
+										</div>
+									)}
 									<div>
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Status Aset
-										</p>
-										<div className="mt-0.5">{getStatusBadge(detailModal.statusAset)}</div>
-									</div>
-									<div>
-										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Tanggal Registrasi
+											Tanggal Pengajuan
 										</p>
 										<p className="text-sm font-medium text-gray-800">
 											{detailModal.tanggalRegistrasi}
 										</p>
 									</div>
+								</div>
+							</div>
+
+							{/* Section 2: Kondisi & Status */}
+							<div className="border-b border-gray-100 pb-4">
+								<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">
+									Status & Alasan Usulan
+								</h3>
+								<div className="grid grid-cols-2 gap-y-3.5 gap-x-4">
 									<div className="col-span-2">
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Alasan Idle
+											Status Usulan
 										</p>
-										<p className="text-sm font-medium text-gray-800 leading-relaxed">
+										<div className="mt-1">{getStatusBadge(detailModal.statusAset)}</div>
+									</div>
+									<div className="col-span-2">
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+											Alasan Usulan Idle
+										</p>
+										<p className="text-sm font-medium text-gray-800 leading-relaxed bg-gray-50 p-2.5 rounded-lg border border-gray-100">
 											{detailModal.idleReason || "Tidak ada alasan idle."}
 										</p>
 									</div>
-									<div className="col-span-2">
-										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											Catatan Tambahan
-										</p>
-										<p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 leading-relaxed whitespace-pre-line">
-											{detailModal.notes || "Tidak ada catatan tambahan."}
-										</p>
-									</div>
+									{detailModal.notes && detailModal.notes !== "-" && (
+										<div className="col-span-2">
+											<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+												Catatan Tambahan
+											</p>
+											<p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 leading-relaxed whitespace-pre-line">
+												{detailModal.notes}
+											</p>
+										</div>
+									)}
 									{detailModal.rejectionNotes && (
 										<div className="col-span-2 p-3 bg-red-50 border border-red-200 rounded-lg">
 											<span className="text-[11px] font-bold text-red-700 block uppercase tracking-wider mb-0.5">
@@ -1925,7 +1820,7 @@ export default function UsulanIdleClient({
 									{detailModal.inspectionPurpose && (
 										<div className="col-span-2 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
 											<span className="text-[11px] font-bold text-emerald-700 block uppercase tracking-wider mb-0.5">
-												Tujuan Tim Inspeksi Ditugaskan
+												Rute Rumpun Inspeksi Ditugaskan
 											</span>
 											<p className="text-xs text-emerald-800 leading-relaxed">
 												{detailModal.inspectionPurpose}
@@ -1935,7 +1830,7 @@ export default function UsulanIdleClient({
 								</div>
 							</div>
 
-							{/* Section 4: Foto Peralatan */}
+							{/* Section 3: Foto Peralatan */}
 							{detailPhotos.length > 0 && (
 								<div className="border-b border-gray-100 pb-4">
 									<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">
@@ -1985,7 +1880,7 @@ export default function UsulanIdleClient({
 								</div>
 							)}
 
-							{/* Section 5: Dokumen Lampiran Pendukung */}
+							{/* Section 4: Dokumen Lampiran Pendukung */}
 							{Array.isArray(detailModal.attachments) &&
 								detailModal.attachments.length > 0 && (
 									<div>

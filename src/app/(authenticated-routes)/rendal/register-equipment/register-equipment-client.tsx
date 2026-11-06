@@ -372,8 +372,8 @@ export default function RegisterEquipmentClient({
 			const files = Array.from(e.target.files);
 			let errorMsg: string | null = null;
 			const validFiles = files.filter((f) => {
-				if (f.size > 10 * 1024 * 1024) {
-					errorMsg = `Ukuran file ${f.name} melebihi batas 10MB.`;
+				if (f.size > 25 * 1024 * 1024) {
+					errorMsg = `Ukuran file ${f.name} melebihi batas 25MB.`;
 					return false;
 				}
 				return true;
@@ -401,8 +401,8 @@ export default function RegisterEquipmentClient({
 			const files = Array.from(e.dataTransfer.files);
 			let errorMsg: string | null = null;
 			const validFiles = files.filter((f) => {
-				if (f.size > 10 * 1024 * 1024) {
-					errorMsg = `Ukuran file ${f.name} melebihi batas 10MB.`;
+				if (f.size > 25 * 1024 * 1024) {
+					errorMsg = `Ukuran file ${f.name} melebihi batas 25MB.`;
 					return false;
 				}
 				return true;
@@ -429,9 +429,13 @@ export default function RegisterEquipmentClient({
 			!formData.funcLocId ||
 			!formData.vendor ||
 			!formData.idleReason ||
-			!formData.inspectionCluster
+			!formData.inspectionCluster ||
+			(!editId && uploadedFiles.length === 0)
 		) {
 			setShowValidationErrors(true);
+			if (!editId && uploadedFiles.length === 0) {
+				setFileError("Berkas wajib diunggah minimal 1 file (foto/dokumen).");
+			}
 			return;
 		}
 
@@ -935,7 +939,7 @@ export default function RegisterEquipmentClient({
 							{/* Upload Dropzone */}
 							<div className="flex-1 flex flex-col">
 								<label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider block mb-2">
-									Upload File / Attachment <span className="text-gray-400 font-normal normal-case">(Opsional)</span>
+									Upload File / Attachment {!editId ? <span className="text-red-500">* (Wajib min. 1 berkas)</span> : <span className="text-gray-400 font-normal normal-case">(Opsional)</span>}
 								</label>
 								<input
 									type="file"
@@ -950,9 +954,11 @@ export default function RegisterEquipmentClient({
 									onDragLeave={handleDragLeave}
 									onDrop={handleDrop}
 									className={`border-2 border-dashed rounded-lg p-4 sm:p-5 transition-all ${
-										isDragging
-											? "border-[#0556B3] bg-blue-50/80"
-											: "border-gray-300 hover:border-[#0556B3] bg-gray-50/60"
+										(showValidationErrors && !editId && uploadedFiles.length === 0) || fileError
+											? "border-red-400 bg-red-50/20"
+											: isDragging
+												? "border-[#0556B3] bg-blue-50/80"
+												: "border-gray-300 hover:border-[#0556B3] bg-gray-50/60"
 									}`}
 								>
 									{/* Area Dropzone Klik */}
@@ -961,16 +967,16 @@ export default function RegisterEquipmentClient({
 										className="flex flex-col items-center justify-center text-center cursor-pointer py-1.5 hover:opacity-80 transition-opacity"
 									>
 										<UploadCloud
-											className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0556B3] animate-bounce" : "text-gray-400"}`}
+											className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0556B3] animate-bounce" : (showValidationErrors && !editId && uploadedFiles.length === 0) || fileError ? "text-red-400" : "text-gray-400"}`}
 										/>
 										<span className="text-xs font-bold text-gray-900">
 											Klik atau tarik & lepas file dokumen/foto di sini
 										</span>
 										<span className="text-[10px] text-gray-500 mt-0.5">
-											Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks. 10MB per file)
+											Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks. 25MB per file)
 										</span>
 										<span className="text-[10px] text-gray-400 mt-0.5">
-											Klik untuk memilih file lampiran (Opsional)
+											{!editId ? "Wajib melampirkan minimal 1 file dokumen/foto aset" : "Klik untuk memilih file lampiran (Opsional)"}
 										</span>
 									</div>
 
@@ -1070,9 +1076,9 @@ export default function RegisterEquipmentClient({
 										</div>
 									)}
 								</div>
-								{fileError && (
+								{(fileError || (showValidationErrors && !editId && uploadedFiles.length === 0)) && (
 									<p className="text-[10px] text-red-500 mt-1.5 font-medium">
-										* {fileError}
+										* {fileError || "Berkas wajib diunggah minimal 1 file (foto/dokumen)."}
 									</p>
 								)}
 							</div>
@@ -1099,9 +1105,13 @@ export default function RegisterEquipmentClient({
 									!formData.funcLocId ||
 									!formData.vendor ||
 									!formData.idleReason ||
-									!formData.inspectionCluster
+									!formData.inspectionCluster ||
+									(!editId && uploadedFiles.length === 0)
 								) {
 									setShowValidationErrors(true);
+									if (!editId && uploadedFiles.length === 0) {
+										setFileError("Berkas wajib diunggah minimal 1 file (foto/dokumen).");
+									}
 									return;
 								}
 								setIsConfirmOpen(true);

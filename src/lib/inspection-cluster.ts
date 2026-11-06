@@ -1,3 +1,6 @@
+/* ponytail: user profile and equipment DTOs have flexible keys across endpoints */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 /**
  * Rumpun Inspeksi Pusri:
  * 1. INSPEKSI_1 (Inspeksi 1 / Instek 1)

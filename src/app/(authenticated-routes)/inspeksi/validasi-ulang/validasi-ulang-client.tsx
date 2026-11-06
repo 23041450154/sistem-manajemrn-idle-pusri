@@ -115,8 +115,8 @@ export default function InspeksiValidasiUlangClient({
 				hasError = true;
 				return false;
 			}
-			if (f.size > 10 * 1024 * 1024) {
-				alert(`File ${f.name} melebihi batas 10MB.`);
+			if (f.size > 25 * 1024 * 1024) {
+				alert(`File ${f.name} melebihi batas 25MB.`);
 				hasError = true;
 				return false;
 			}
@@ -322,6 +322,10 @@ export default function InspeksiValidasiUlangClient({
 			setModalError("Catatan pemeriksaan wajib diisi.");
 			return;
 		}
+		if (uploadedFiles.length === 0) {
+			setModalError("File lampiran/foto hasil validasi ulang wajib diunggah minimal 1 file.");
+			return;
+		}
 		setModalError(null);
 		setIsConfirmOpen(true);
 	};
@@ -331,9 +335,9 @@ export default function InspeksiValidasiUlangClient({
 		if (!selectedAsset || !hasilStatus || isSubmitting) return;
 
 		const isRangeValid = !!tglMulai && !!tglSelesai && tglSelesai >= tglMulai;
-		if (!isRangeValid || !notes.trim()) {
+		if (!isRangeValid || !notes.trim() || uploadedFiles.length === 0) {
 			setShowValidationErrors(true);
-			setModalError("Mohon lengkapi semua field wajib bertanda (*).");
+			setModalError("Mohon lengkapi semua field wajib bertanda (*), termasuk berkas lampiran.");
 			return;
 		}
 		setIsSubmitting(true);
@@ -620,7 +624,7 @@ export default function InspeksiValidasiUlangClient({
 									Plant
 								</th>
 								<th className="px-2 py-3 text-[10px] font-bold text-gray-600 uppercase tracking-wide text-left w-[15%]">
-									Lokasi
+									Lokasi Penyimpanan
 								</th>
 								<th className="px-2 py-3 text-[10px] font-bold text-gray-600 uppercase tracking-wide text-center w-[13%]">
 									Kondisi
@@ -1186,7 +1190,7 @@ export default function InspeksiValidasiUlangClient({
 										<div className="flex items-center justify-between mb-1.5">
 											<label className="text-[11px] font-semibold text-gray-700">
 												Upload File / Attachment{" "}
-												<span className="text-gray-400 font-normal text-[11px]">(Opsional)</span>
+												<span className="text-red-500 font-bold text-[11px]">* (Wajib)</span>
 											</label>
 											{uploadedFiles.length > 0 && (
 												<span className="text-[11px] font-medium text-gray-500">
@@ -1214,7 +1218,11 @@ export default function InspeksiValidasiUlangClient({
 													handleFileChange(fakeEvent);
 												}
 											}}
-											className="border-2 border-dashed border-gray-300 rounded-lg p-4 sm:p-5 transition-all bg-gray-50/70 hover:border-[#0A356A]"
+											className={`border-2 border-dashed rounded-lg p-4 sm:p-5 transition-all ${
+												showValidationErrors && uploadedFiles.length === 0
+													? "border-red-400 bg-red-50/20"
+													: "border-gray-300 bg-gray-50/70 hover:border-[#0A356A]"
+											}`}
 										>
 											{/* Area Dropzone Klik */}
 											<div
@@ -1226,10 +1234,10 @@ export default function InspeksiValidasiUlangClient({
 													Klik atau tarik & lepas file dokumen/foto di sini
 												</p>
 												<p className="text-[10px] text-gray-500 font-medium mt-0.5">
-													Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 10MB)
+													Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 25MB)
 												</p>
 												<span className="text-[10px] text-gray-400 mt-0.5">
-													Klik untuk memilih file lampiran (Opsional)
+													Klik untuk memilih file lampiran (Wajib minimal 1 file)
 												</span>
 											</div>
 

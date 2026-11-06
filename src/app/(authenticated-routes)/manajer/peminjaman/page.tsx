@@ -94,6 +94,14 @@ export default function ManajerPeminjamanPage() {
 					equipment_id: eqId,
 					equipment_code: String(eqCode),
 					equipment_name: String(eqName),
+					storage_location:
+						(typeof eq.storage_location === "object"
+							? eq.storage_location?.name
+							: eq.storage_location) ||
+						(typeof eqFromMap.storage_location === "object"
+							? eqFromMap.storage_location?.name
+							: eqFromMap.storage_location) ||
+						"-",
 					requesting_unit:
 						item.installation_location ||
 						item.installationLocation ||

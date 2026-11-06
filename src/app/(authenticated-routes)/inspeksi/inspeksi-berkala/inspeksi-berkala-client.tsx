@@ -52,6 +52,7 @@ export interface InspectionItem {
 	plant?: string;
 	func_loc?: string;
 	object_type?: string;
+	storage_location?: string;
 	inspection_date?: string;
 	created_at?: string;
 	notes?: string;
@@ -471,7 +472,7 @@ export default function InspeksiBerkalaClient({
 								{activeTab === "antrean" ? (
 									<>
 										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
-											Lokasi
+											Lokasi Penyimpanan
 										</th>
 										<th
 											className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
@@ -496,6 +497,9 @@ export default function InspeksiBerkalaClient({
 								) : (
 									<>
 										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
+											Lokasi Penyimpanan
+										</th>
+										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
 											Tgl Inspeksi
 										</th>
 										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left">
@@ -514,7 +518,10 @@ export default function InspeksiBerkalaClient({
 						<tbody className="bg-white">
 							{paginatedAssets.length === 0 ? (
 								<tr>
-									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
+									<td
+										colSpan={activeTab === "antrean" ? 10 : 11}
+										className="px-5 py-12 text-center text-gray-500"
+									>
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -630,6 +637,9 @@ export default function InspeksiBerkalaClient({
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{row.object_type}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
+												{row.storage_location || "-"}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{dateStr}

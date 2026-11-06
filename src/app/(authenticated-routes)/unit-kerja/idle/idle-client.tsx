@@ -621,7 +621,7 @@ export default function UnitKerjaIdleClient({
                     </div>
                   </th>
                   <th className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider">
-                    Lokasi
+                    Lokasi Penyimpanan
                   </th>
                   <th
                     className="px-1.5 py-1.5 text-[9px] font-bold text-gray-500 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors"

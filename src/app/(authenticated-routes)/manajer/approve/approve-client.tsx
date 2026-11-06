@@ -42,6 +42,7 @@ export interface RequestAsset {
 	id: string;
 	nomorRequest: string;
 	kodeAset: string;
+	kind?: "validation" | "revalidation";
 	objectType: Lookup | null;
 	namaAset: string;
 	plant: Lookup | null;
@@ -129,7 +130,7 @@ export default function ManajerApproveClient({
 		setAttachments([]);
 		try {
 			const [data, attsData, validations, eqDetail] = await Promise.all([
-				getApprovalById(asset.id),
+				getApprovalById(asset.id, asset.kind || "validation"),
 				getAttachmentsByEquipmentId(asset.equipmentId),
 				getValidations(asset.equipmentId),
 				getEquipmentById(asset.equipmentId),
@@ -209,13 +210,14 @@ export default function ManajerApproveClient({
 			const res = await reviewApproval(
 				selectedAsset.id,
 				"APPROVE",
-				"Disetujui oleh manajer",
+				"Disetujui menjadi READY_TO_USE oleh Manajer Rendal",
+				selectedAsset.kind || "validation",
 			);
 
 			if (res.success) {
 				setNotification({
 					type: "success",
-					message: "Berhasil menyetujui aset!",
+					message: `Peralatan ${selectedAsset.kodeAset} berhasil disetujui! Status aset resmi ditetapkan menjadi READY_TO_USE.`,
 				});
 				if (onRefresh) {
 					await onRefresh();
@@ -246,6 +248,7 @@ export default function ManajerApproveClient({
 				selectedAsset.id,
 				"REVISION",
 				revisiCatatan,
+				selectedAsset.kind || "validation",
 			);
 
 			if (res.success) {
@@ -387,9 +390,14 @@ export default function ManajerApproveClient({
 
 			{/* Header */}
 			<div className="flex items-center justify-between mb-6">
-				<h1 className="text-xl font-bold text-gray-900 tracking-tight">
-					Pusat Data Aset
-				</h1>
+				<div>
+					<h1 className="text-xl font-bold text-gray-900 tracking-tight">
+						Persetujuan Validasi Peralatan (Wewenang READY_TO_USE)
+					</h1>
+					<p className="text-xs text-gray-500 mt-1">
+						Wewenang manajerial final untuk menyetujui kelayakan peralatan menjadi status READY_TO_USE sehingga ketersediaan aset resmi berada di bawah kendali manajerial.
+					</p>
+				</div>
 			</div>
 
 			{/* Table Section */}
@@ -520,6 +528,9 @@ export default function ManajerApproveClient({
 									Plant
 								</th>
 								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">
+									Lokasi Penyimpanan
+								</th>
+								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">
 									Functional Location
 								</th>
 								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">
@@ -543,7 +554,7 @@ export default function ManajerApproveClient({
 							{paginatedRequests.length === 0 ? (
 								<tr>
 									<td
-										colSpan={11}
+										colSpan={12}
 										className="px-4 py-8 text-center text-[13px] text-gray-500"
 									>
 										Tidak ada pengajuan validasi.
@@ -568,6 +579,9 @@ export default function ManajerApproveClient({
 										</td>
 										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-left">
 											{req.plant?.name ?? "-"}
+										</td>
+										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-left">
+											{req.storage?.name ?? "-"}
 										</td>
 										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-left" title={req.funcLoc?.name ?? "-"}>
 											{req.funcLoc?.name ?? "-"}
@@ -685,6 +699,16 @@ export default function ManajerApproveClient({
 
 						{/* Modal Body */}
 						<div className="flex-1 overflow-y-auto px-6 py-5 bg-gray-50">
+							{/* Managerial Authority Notice */}
+							<div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3.5 mb-4 flex items-start gap-3">
+								<Shield className="w-5 h-5 text-[#0A356A] shrink-0 mt-0.5" />
+								<div className="text-xs text-[#1E3A8A] leading-relaxed">
+									<span className="font-bold block">Wewenang Final Manajer Rendal</span>
+									Keputusan persetujuan pada tahap ini memegang wewenang final untuk menetapkan status peralatan menjadi{" "}
+									<span className="font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200">READY_TO_USE</span> (Siap Digunakan) agar ketersediaan aset resmi berada di bawah kendali manajerial dan siap dialokasikan.
+								</div>
+							</div>
+
 							{/* Alert Banner Dinamis */}
 							<div
 								className={`border rounded-lg p-3.5 flex items-start gap-3 mb-6 ${
@@ -1157,20 +1181,22 @@ export default function ManajerApproveClient({
 					/>
 
 					<div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-						<div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-							<CheckCircle2 className="w-7 h-7 text-green-600" />
+						<div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+							<CheckCircle2 className="w-7 h-7 text-emerald-600" />
 						</div>
 
 						<h3 className="text-lg font-bold text-gray-900 mb-2">
-							Konfirmasi Persetujuan Aset
+							Konfirmasi Wewenang Final READY_TO_USE
 						</h3>
 
 						<p className="text-[13px] text-gray-600 mb-6 leading-relaxed">
-							Apakah Anda yakin ingin menyetujui hasil validasi ini? Setelah disetujui,{" "}
-							<span className="font-bold">{selectedAsset.kodeAset}</span> aset akan
-							berubah menjadi{" "}
-							<span className="font-bold text-green-700">READY_TO_USE</span>, proses
-							persetujuan selesai, dan pengajuan tidak lagi muncul pada Inbox Approval.
+							Apakah Anda yakin ingin menyetujui hasil validasi ini? Sebagai{" "}
+							<span className="font-semibold text-gray-900">Manajer Rendal</span>, persetujuan final ini akan menetapkan status peralatan{" "}
+							<span className="font-bold text-gray-900">{selectedAsset.kodeAset}</span> menjadi{" "}
+							<span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+								READY_TO_USE
+							</span>{" "}
+							(Siap Digunakan), sehingga penetapan ketersediaan dan alokasi aset pabrik resmi berada di bawah kendali manajerial.
 						</p>
 
 						<div className="flex items-center gap-3 w-full justify-center">
@@ -1182,9 +1208,9 @@ export default function ManajerApproveClient({
 							</button>
 							<button
 								onClick={handleApprove}
-								className="px-5 py-2.5 bg-[#166534] text-white rounded-md text-[13px] font-semibold hover:bg-[#14532d] transition-colors w-[120px]"
+								className="px-5 py-2.5 bg-[#0556B3] text-white rounded-md text-[13px] font-semibold hover:bg-[#0A356A] transition-colors min-w-[170px]"
 							>
-								Ya, Setujui
+								Ya, Setujui READY_TO_USE
 							</button>
 						</div>
 					</div>

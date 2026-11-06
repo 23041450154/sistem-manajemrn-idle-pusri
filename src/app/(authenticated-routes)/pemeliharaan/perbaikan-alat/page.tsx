@@ -24,7 +24,32 @@ export default function PerbaikanAlatPage() {
 		const equipments: MaintenanceEquipment[] = (
 			Array.isArray(data) ? data : []
 		).flatMap((item: any): MaintenanceEquipment[] => {
-			const status = repairFlowStatus(item);
+			// Periksa apakah aset ditugaskan ke pihak ketiga (vendor) atau internal
+			let assignment: any = null;
+			if (typeof window !== "undefined") {
+				try {
+					const raw = localStorage.getItem("idle_repair_assignments");
+					if (raw) {
+						const map = JSON.parse(raw);
+						assignment = map[String(item.id)];
+					}
+				} catch {}
+			}
+
+			const rawStatus = (typeof item.status === "string" ? item.status : item.status?.name) || "";
+			const effectiveExecutor =
+				assignment?.executor ||
+				item.repair_executor ||
+				(rawStatus === "REPAIR_VENDOR" ? "VENDOR" : "INTERNAL");
+
+			// Jika perbaikan ditugaskan ke Vendor, pekerjaan tidak masuk ke antrean bengkel internal Pemeliharaan Lapangan
+			if (effectiveExecutor === "VENDOR" || rawStatus === "REPAIR_VENDOR") {
+				return [];
+			}
+
+			const effectiveItem =
+				assignment?.status === "REPAIR" ? { ...item, status: "REPAIR" } : item;
+			const status = repairFlowStatus(effectiveItem);
 			if (!status) return [];
 
 			const pick = (val: any, fallback = "-") =>

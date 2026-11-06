@@ -333,6 +333,12 @@ export default function InspeksiDashboardClient({
 								</th>
 								<th
 									scope="col"
+									className="w-[140px] px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
+								>
+									Lokasi Penyimpanan
+								</th>
+								<th
+									scope="col"
 									className="w-[130px] px-4 py-2.5 text-left text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
 								>
 									Tgl Registrasi
@@ -354,7 +360,7 @@ export default function InspeksiDashboardClient({
 						<tbody className="divide-y divide-[#E6E8EA]">
 							{filteredPending.length === 0 ? (
 								<tr>
-									<td colSpan={7} className="px-4 py-14 text-center">
+									<td colSpan={8} className="px-4 py-14 text-center">
 										<p className="text-[14px] font-semibold text-[#0F172A]">
 											Tidak Ada Antrean
 										</p>
@@ -393,6 +399,14 @@ export default function InspeksiDashboardClient({
 										<td className="px-4 py-2.5 text-[13px] text-[#475569]">
 											<span className="block truncate">
 												{eq.plant?.name || eq.plant || "-"}
+											</span>
+										</td>
+										<td className="px-4 py-2.5 text-[13px] text-[#475569]">
+											<span className="block truncate">
+												{eq.storage_location?.name ||
+													(typeof eq.storage_location === "string"
+														? eq.storage_location
+														: eq.location?.name || eq.location || "-")}
 											</span>
 										</td>
 										<td className="px-4 py-2.5 text-[13px] text-[#475569] tabular-nums">

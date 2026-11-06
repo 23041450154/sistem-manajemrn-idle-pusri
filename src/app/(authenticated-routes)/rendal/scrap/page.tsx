@@ -504,7 +504,7 @@ export default function RendalScrapPage() {
 		[assetValidation, assetInspection],
 	);
 
-	/** Tambah file pendukung (maks 10MB/file) untuk preview & upload. */
+	/** Tambah file pendukung (maks 25MB/file) untuk preview & upload. */
 	const addSupportingFiles = (files: FileList | null) => {
 		if (!files?.length) return;
 		const valid: File[] = [];
@@ -518,8 +518,8 @@ export default function RendalScrapPage() {
 				err = `Format file ${f.name} tidak didukung. Harap gunakan PDF, DOCX, XLSX, DWG, atau Foto.`;
 				continue;
 			}
-			if (f.size > 10 * 1024 * 1024) {
-				err = `Ukuran file ${f.name} melebihi batas 10MB.`;
+			if (f.size > 25 * 1024 * 1024) {
+				err = `Ukuran file ${f.name} melebihi batas 25MB.`;
 				continue;
 			}
 			valid.push(f);
@@ -534,6 +534,11 @@ export default function RendalScrapPage() {
 
 		if (!disposalMethodId) {
 			showToast("error", "Silakan pilih metode penghapusan terlebih dahulu.");
+			return;
+		}
+
+		if (uploadedFiles.length === 0) {
+			showToast("error", "Lampiran dokumen/foto pendukung usulan scrap wajib diunggah.");
 			return;
 		}
 
@@ -805,8 +810,8 @@ export default function RendalScrapPage() {
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[65px]">
 										Plant
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[110px]">
-										Lokasi
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[130px]">
+										Lokasi Penyimpanan
 									</th>
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[95px]">
 										Tipe Objek
@@ -923,6 +928,9 @@ export default function RendalScrapPage() {
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[65px]">
 										Plant
 									</th>
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[120px]">
+										Lokasi Penyimpanan
+									</th>
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[110px]">
 										Metode Scrap
 									</th>
@@ -941,7 +949,7 @@ export default function RendalScrapPage() {
 								{isLoading ? (
 									<tr>
 										<td
-											colSpan={9}
+											colSpan={10}
 											className="px-4 py-8 text-center text-xs text-gray-500"
 										>
 											<div className="flex flex-col items-center">
@@ -953,7 +961,7 @@ export default function RendalScrapPage() {
 								) : paginatedHistory.length === 0 ? (
 									<tr>
 										<td
-											colSpan={9}
+											colSpan={10}
 											className="px-4 py-8 text-center text-xs text-gray-500"
 										>
 											<div className="flex flex-col items-center">
@@ -1008,6 +1016,12 @@ export default function RendalScrapPage() {
 												</td>
 												<td className="px-2 py-2 text-xs text-gray-600 font-medium text-center truncate">
 													{plantName}
+												</td>
+												<td
+													className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate"
+													title={(item as any).storage_location || eq?.storageLocation || "-"}
+												>
+													{(item as any).storage_location || eq?.storageLocation || "-"}
 												</td>
 												<td
 													className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate"
@@ -1356,10 +1370,10 @@ export default function RendalScrapPage() {
 									<div>
 										<div className="flex items-center justify-between mb-1.5">
 											<label className="block text-xs font-bold text-gray-700 uppercase">
-												Upload File / Attachment
+												Upload File / Attachment <span className="text-red-500 font-bold normal-case">* (Wajib)</span>
 											</label>
-											<span className="text-[11px] text-gray-400 font-medium">
-												Opsional
+											<span className="text-[11px] text-red-500 font-medium">
+												Wajib
 											</span>
 										</div>
 										<div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center bg-gray-50/50 hover:bg-blue-50/40 hover:border-[#0A356A] transition-colors relative">
@@ -1380,7 +1394,7 @@ export default function RendalScrapPage() {
 													: "Klik atau tarik & lepas file dokumen/foto di sini"}
 											</span>
 											<span className="text-[10px] text-gray-400 mt-0.5">
-												Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 10MB per file)
+												Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 25MB per file)
 											</span>
 										</div>
 
@@ -1493,6 +1507,13 @@ export default function RendalScrapPage() {
 											showToast(
 												"error",
 												"Silakan pilih metode penghapusan terlebih dahulu.",
+											);
+											return;
+										}
+										if (uploadedFiles.length === 0) {
+											showToast(
+												"error",
+												"Lampiran dokumen/foto pendukung usulan scrap wajib diunggah.",
 											);
 											return;
 										}

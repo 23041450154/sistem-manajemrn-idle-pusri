@@ -1,6 +1,6 @@
 // Self-check: payload frontend cocok request.CreateEquipmentRepairRequest (Go).
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { readFileSync, existsSync } from "node:fs";
 
 const api = readFileSync("src/action/api.ts", "utf8");
 const body = api.slice(
@@ -30,8 +30,9 @@ assert.ok(
 	"maintenance_date bukan field kontrak",
 );
 
+const clientFile = "src/app/(authenticated-routes)/pemeliharaan/perbaikan-alat/perbaikan-alat-client.tsx";
 const page = readFileSync(
-	"src/app/(authenticated-routes)/pemeliharaan/perbaikan-alat/page.tsx",
+	existsSync(clientFile) ? clientFile : "src/app/(authenticated-routes)/pemeliharaan/perbaikan-alat/page.tsx",
 	"utf8",
 );
 assert.match(
@@ -76,7 +77,12 @@ console.log(
 );
 
 // --- Detail equipment di modal perbaikan (redesign) ---
-const modal = readFileSync(pages[1], "utf8");
+const pageFile = "src/app/(authenticated-routes)/pemeliharaan/perbaikan-alat/page.tsx";
+const pageSrc = readFileSync(pageFile, "utf8");
+const modal = readFileSync(
+	existsSync(clientFile) ? clientFile : pageFile,
+	"utf8",
+);
 assert.ok(
 	!modal.includes("Lengkapi detail realisasi perbaikan"),
 	"info box realisasi harus dihapus",
@@ -93,10 +99,12 @@ for (const field of [
 	"idle_reason",
 	"item.notes",
 	"item.attachments",
-])
-	assert.match(modal, new RegExp(field.replace(".", "\\.")), `detail hilang: ${field}`);
+]) {
+	const combined = pageSrc + modal;
+	assert.match(combined, new RegExp(field.replace(".", "\\.")), `detail hilang: ${field}`);
+}
 // Galeri hanya berkas gambar — lampiran equipment bisa berupa PDF.
-assert.match(modal, /IMAGE_FILE\.test\(url\)/, "foto harus difilter ekstensi gambar");
+assert.match(pageSrc + modal, /IMAGE_FILE\.test\(url\)/, "foto harus difilter ekstensi gambar");
 assert.match(modal, /setPreviewImage/, "foto harus bisa diperbesar");
 assert.ok(!/rounded-(lg|xl)/.test(modal), "radius off-spec (DESIGN.md: 4px)");
 assert.ok(!modal.includes("bg-gradient-to-r"), "gradient dilarang DESIGN.md");

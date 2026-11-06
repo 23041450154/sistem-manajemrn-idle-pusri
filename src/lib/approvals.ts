@@ -61,3 +61,21 @@ export function reuseDisplayStatus(
 	if (raw.includes("REVIEW")) return "IN_REVIEW";
 	return "PENDING";
 }
+
+/** Label tampilan status peminjaman/reuse — US-10-FE transisi 'Approved for Reuse'. */
+export function reuseStatusLabel(approvalStatus?: string | null): string {
+	const status = reuseDisplayStatus(approvalStatus);
+	switch (status) {
+		case "APPROVED":
+			return "Approved for Reuse";
+		case "REJECTED":
+			return "Ditolak";
+		case "REVISION_REQUESTED":
+			return "Perlu Revisi";
+		case "IN_REVIEW":
+			return "Sedang Direview";
+		case "PENDING":
+		default:
+			return "Menunggu Review";
+	}
+}

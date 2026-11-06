@@ -337,7 +337,7 @@ export default function RendalDashboardClient({
 											<th className="py-2.5 px-3">Kode Alat</th>
 											<th className="py-2.5 px-3">Nama Peralatan</th>
 											<th className="py-2.5 px-3">Plant</th>
-											<th className="py-2.5 px-3">Lokasi Simpan</th>
+											<th className="py-2.5 px-3">Lokasi Penyimpanan</th>
 											<th className="py-2.5 px-3 text-center">Status</th>
 											<th className="py-2.5 px-3 text-right">Tgl Registrasi</th>
 										</tr>

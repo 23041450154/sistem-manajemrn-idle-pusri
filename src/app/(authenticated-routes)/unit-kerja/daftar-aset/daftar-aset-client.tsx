@@ -278,13 +278,10 @@ export default function DaftarAsetClient({
 			return;
 		}
 
-		const estimatedNewPurchaseCost = Number(
-			String(requestFormData.estimated_new_purchase_cost).replace(/\D/g, ""),
-		);
-		if (estimatedNewPurchaseCost <= 0) {
-			setRequestErrorMessage("Estimasi biaya pembelian baru harus lebih dari 0.");
-			return;
-		}
+		const rawCost = String(
+			requestFormData.estimated_new_purchase_cost || "",
+		).replace(/\D/g, "");
+		const estimatedNewPurchaseCost = rawCost ? Number(rawCost) : 0;
 
 		setIsSubmittingRequest(true);
 		setRequestErrorMessage(null);
@@ -646,7 +643,7 @@ export default function DaftarAsetClient({
 									Tipe Objek
 								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left">
-									Lokasi
+									Lokasi Penyimpanan
 								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 									Kondisi
@@ -1428,7 +1425,8 @@ export default function DaftarAsetClient({
 													htmlFor="req-cost"
 													className="text-[12px] font-medium leading-snug text-[#0F172A]"
 												>
-													Estimasi harga unit baru <span className="text-[#DC2626]">*</span>
+													Estimasi Harga Unit Baru{" "}
+													<span className="font-normal text-[#64748B]">(opsional)</span>
 												</label>
 												<div className="flex items-stretch">
 													<span className="inline-flex items-center px-2.5 bg-[#F2F3F4] border border-r-0 border-[#E6E8EA] rounded-l-lg text-[12px] font-medium text-[#475569]">
@@ -1451,13 +1449,12 @@ export default function DaftarAsetClient({
 																estimated_new_purchase_cost: e.target.value.replace(/\D/g, ""),
 															})
 														}
-														required
 														placeholder="0"
 														className="w-full min-h-10 px-3 py-2 bg-white border border-[#E6E8EA] rounded-r-lg text-[13px] leading-normal text-[#0F172A] tabular-nums placeholder:text-[#64748B] transition-colors duration-150 ease-out hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
 													/>
 												</div>
 												<p className="text-[11px] leading-snug text-[#64748B]">
-													Dipakai untuk menghitung cost avoidance.
+													Dipakai untuk menghitung cost avoidance (kosongkan jika belum diketahui).
 												</p>
 											</div>
 										</div>

@@ -1,14 +1,20 @@
 "use client";
 
+/* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import {
+	type RepairAuditLogEntry,
+} from "@/lib/repair-assignment";
 import {
 	type EquipmentStatus,
 	EQUIPMENT_STATUS,
 	statusText,
 	statusName,
-	formatPlantDisplay,
+	rupiah as formatRupiah,
 } from "@/lib/equipment-status";
 import {
 	Search,
@@ -21,9 +27,12 @@ import {
 	ArrowDown,
 	Eye,
 	X,
+	Wrench,
+	CheckCircle2,
+	Clock,
 } from "lucide-react";
 
-export type AssetState = EquipmentStatus | "REJECTED";
+export type AssetState = EquipmentStatus | "REJECTED" | "REPAIR_VENDOR";
 
 export interface Equipment {
 	id: string;
@@ -32,7 +41,7 @@ export interface Equipment {
 	plant: string;
 	jenisAlat: string;
 	tanggalRegistrasi: string;
-	statusAset: AssetState;
+	statusAset: AssetState | string;
 	storageLocation?: string;
 	funcLoc?: string;
 	vendor?: string;
@@ -42,8 +51,20 @@ export interface Equipment {
 	estimatedReuseValue?: number;
 	notes?: string;
 	idleReason?: string;
+	kondisi?: string;
 	photos?: string[];
 	createdAt?: string;
+	// Properti US-06-FE
+	rekomendasiInspeksi?: string;
+	estimasiBiayaInspeksi?: number;
+	refurbishmentCost?: number;
+	repairExecutor?: "INTERNAL" | "VENDOR" | string;
+	repairExecutorVendor?: string;
+	contractNumber?: string;
+	workNotes?: string;
+	repairAssignedAt?: string;
+	repairAssignedBy?: string;
+	repairHistory?: RepairAuditLogEntry[];
 }
 
 interface RendalIdleClientProps {
@@ -87,6 +108,11 @@ export default function RendalIdleClient({
 
 	const ITEMS_PER_PAGE = 10;
 
+	const [notification, setNotification] = useState<{
+		type: "success" | "error";
+		message: string;
+	} | null>(null);
+
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect -- reset paginasi saat filter berubah
 		setCurrentPage(1);
@@ -121,7 +147,8 @@ export default function RendalIdleClient({
 				item.kodeAlat?.toLowerCase().includes(query) ||
 				item.namaAlat?.toLowerCase().includes(query) ||
 				item.plant?.toLowerCase().includes(query) ||
-				item.funcLoc?.toLowerCase().includes(query);
+				item.funcLoc?.toLowerCase().includes(query) ||
+				item.storageLocation?.toLowerCase().includes(query);
 			const matchPlant = plantFilter === "Semua" || item.plant === plantFilter;
 			const matchStatus =
 				statusFilter === "Semua" ||
@@ -199,7 +226,28 @@ export default function RendalIdleClient({
 		);
 	};
 
-	const getStatusBadge = (status: AssetState | string) => {
+	const getStatusBadge = (
+		status: AssetState | string,
+		executorVendor?: string,
+		executor?: string,
+	) => {
+		// Badge penanda khusus untuk aset dengan pelaksana Vendor (US-06-FE)
+		if (
+			executor === "VENDOR" ||
+			status === "REPAIR_VENDOR" ||
+			(typeof executorVendor === "string" && executorVendor.trim().length > 0)
+		) {
+			const label = executorVendor?.trim() || "Pihak Ketiga";
+			return (
+				<span
+					className="inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEF3C7] text-[#B45309] border border-[#B45309]/30 shadow-xs"
+					title={`Perbaikan Vendor: ${label}`}
+				>
+					Perbaikan Vendor: {label}
+				</span>
+			);
+		}
+
 		const styles: Record<string, string> = {
 			REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
 			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
@@ -213,6 +261,7 @@ export default function RendalIdleClient({
 			SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
 			SCRAP_RECOMENDED: "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
+			REPAIR_VENDOR: "bg-[#FEF3C7] text-[#B45309]",
 			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
 			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
 			REVALIDATION: "bg-[#FEF3C7] text-[#B45309]",
@@ -243,6 +292,33 @@ export default function RendalIdleClient({
 
 	return (
 		<div className="max-w-7xl mx-auto pt-2 pb-8">
+			{/* Toast Notification (US-06-FE) */}
+			{notification && (
+				<div
+					className={`mb-4 flex items-center justify-between p-3.5 rounded-[4px] border ${
+						notification.type === "success"
+							? "bg-emerald-50 border-emerald-200 text-emerald-900"
+							: "bg-red-50 border-red-200 text-red-900"
+					} shadow-xs transition-all duration-200`}
+				>
+					<div className="flex items-center gap-2.5 text-xs font-semibold">
+						{notification.type === "success" ? (
+							<CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+						) : (
+							<AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+						)}
+						<span>{notification.message}</span>
+					</div>
+					<button
+						type="button"
+						onClick={() => setNotification(null)}
+						className="text-gray-400 hover:text-gray-700 p-1"
+					>
+						<X className="w-4 h-4" />
+					</button>
+				</div>
+			)}
+
 			{/* Header */}
 			<div className="mb-4">
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
@@ -381,15 +457,16 @@ export default function RendalIdleClient({
 				<div className="w-full overflow-x-auto">
 					<table className="w-full table-fixed text-left border-collapse">
 						<colgroup>
-							<col className="w-[4%]" />
-							<col className="w-[22%]" />
-							<col className="w-[12%]" />
+							<col className="w-[3%]" />
+							<col className="w-[18%]" />
+							<col className="w-[10%]" />
 							<col className="w-[8%]" />
-							<col className="w-[15%]" />
-							<col className="w-[11%]" />
-							<col className="w-[11%]" />
-							<col className="w-[11%]" />
-							<col className="w-[6%]" />
+							<col className="w-[10%]" />
+							<col className="w-[10%]" />
+							<col className="w-[9%]" />
+							<col className="w-[8%]" />
+							<col className="w-[12%]" />
+							<col className="w-[12%]" />
 						</colgroup>
 						<thead className="bg-gray-50/95 backdrop-blur-sm">
 							<tr className="border-b border-gray-300">
@@ -434,6 +511,15 @@ export default function RendalIdleClient({
 								<th
 									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
 									title="Klik untuk mengurutkan"
+									onClick={() => handleSort("storageLocation")}
+								>
+									<div className="flex items-center justify-start gap-0.5 truncate">
+										Lokasi Penyimpanan {getSortIcon("storageLocation")}
+									</div>
+								</th>
+								<th
+									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("jenisAlat")}
 								>
 									<div className="flex items-center justify-start gap-0.5 truncate">
@@ -466,7 +552,7 @@ export default function RendalIdleClient({
 						<tbody className="bg-white text-[12px]">
 							{paginatedData.length === 0 ? (
 								<tr>
-									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={10} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -515,6 +601,12 @@ export default function RendalIdleClient({
 										</td>
 										<td
 											className="px-2 py-2 text-gray-600 font-medium text-left truncate"
+											title={item.storageLocation || "-"}
+										>
+											{item.storageLocation || "-"}
+										</td>
+										<td
+											className="px-2 py-2 text-gray-600 font-medium text-left truncate"
 											title={item.jenisAlat}
 										>
 											{item.jenisAlat}
@@ -523,16 +615,20 @@ export default function RendalIdleClient({
 											{item.tanggalRegistrasi}
 										</td>
 										<td className="px-2 py-2 text-center truncate">
-											{getStatusBadge(item.statusAset)}
+											{getStatusBadge(
+												item.statusAset,
+												item.repairExecutorVendor || (item.repairExecutor === "VENDOR" ? item.vendor : undefined),
+												item.repairExecutor,
+											)}
 										</td>
 										<td className="px-2 py-2 text-center">
-											<div className="flex justify-center items-center opacity-90 group-hover:opacity-100 transition-opacity">
+											<div className="flex justify-center items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
 												<button
 													onClick={() => {
 														setDetailModal(item);
 														setActivePhotoIdx(0);
 													}}
-													className="inline-flex items-center justify-center gap-1 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2 py-1 rounded text-[11px] font-bold transition-all shadow-sm"
+													className="inline-flex items-center justify-center gap-1 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2 py-1 rounded-[4px] text-[11px] font-bold transition-all shadow-sm"
 													title="Lihat Detail"
 												>
 													<Eye className="w-3 h-3" />
@@ -730,7 +826,13 @@ export default function RendalIdleClient({
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
 											Status Aset
 										</p>
-										<div className="mt-0.5">{getStatusBadge(detailModal.statusAset)}</div>
+										<div className="mt-0.5">
+											{getStatusBadge(
+												detailModal.statusAset,
+												detailModal.repairExecutorVendor || (detailModal.repairExecutor === "VENDOR" ? detailModal.vendor : undefined),
+												detailModal.repairExecutor,
+											)}
+										</div>
 									</div>
 									<div>
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
@@ -756,6 +858,112 @@ export default function RendalIdleClient({
 											{detailModal.notes || "Tidak ada catatan tambahan."}
 										</p>
 									</div>
+								</div>
+							</div>
+
+							{/* Section 3B: Penugasan & Biaya Perbaikan (Refurbishment) — US-06-FE / AC-07 */}
+							<div className="border-b border-gray-100 pb-4">
+								<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+									<Wrench className="w-3.5 h-3.5 text-[#0A356A]" />
+									<span>Penugasan &amp; Biaya Perbaikan (Refurbishment)</span>
+								</h3>
+								<div className="grid grid-cols-2 gap-y-3.5 gap-x-4">
+									<div>
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+											Biaya Perbaikan Riil (Refurbishment Cost)
+										</p>
+										<p className="text-sm font-bold text-[#059669] tabular-nums">
+											{detailModal.refurbishmentCost && detailModal.refurbishmentCost > 0
+												? formatRupiah(detailModal.refurbishmentCost)
+												: "Belum Ditugaskan"}
+										</p>
+									</div>
+									<div>
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+											Estimasi Biaya Inspeksi (Referensi)
+										</p>
+										<p className="text-sm font-semibold text-gray-700 tabular-nums">
+											{detailModal.estimasiBiayaInspeksi
+												? formatRupiah(detailModal.estimasiBiayaInspeksi)
+												: "—"}
+										</p>
+									</div>
+									<div>
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+											Pelaksana Perbaikan
+										</p>
+										<p className="text-sm font-semibold text-gray-900">
+											{detailModal.repairExecutor === "VENDOR" || detailModal.statusAset === "REPAIR_VENDOR"
+												? `Pihak Ketiga (Vendor: ${detailModal.repairExecutorVendor || detailModal.vendor || "Eksternal"})`
+												: detailModal.repairExecutor === "INTERNAL" || detailModal.statusAset === "REPAIR"
+													? "Internal Pusri (Pemeliharaan Lapangan)"
+													: "Belum Ditugaskan"}
+										</p>
+									</div>
+									{detailModal.contractNumber && (
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+												Nomor PO / Kontrak Servis
+											</p>
+											<p className="text-sm font-medium text-gray-800">
+												{detailModal.contractNumber}
+											</p>
+										</div>
+									)}
+									<div className="col-span-2">
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+											Rekomendasi Tindak Lanjut dari Inspeksi
+										</p>
+										<p className="text-xs font-semibold text-amber-800 bg-amber-50 p-2 rounded border border-amber-200">
+											{detailModal.rekomendasiInspeksi || "Perbaikan Ringan / Overhaul"}
+										</p>
+									</div>
+									{detailModal.workNotes && (
+										<div className="col-span-2">
+											<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+												Catatan / Instruksi Kerja (Scope of Work)
+											</p>
+											<p className="text-xs text-gray-700 bg-gray-50 p-2.5 rounded border border-gray-200 whitespace-pre-line leading-relaxed">
+												{detailModal.workNotes}
+											</p>
+										</div>
+									)}
+
+									{/* Riwayat Log Penugasan Perbaikan (Audit Trail / AC-07) */}
+									{Array.isArray(detailModal.repairHistory) && detailModal.repairHistory.length > 0 && (
+										<div className="col-span-2 mt-1">
+											<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+												<Clock className="w-3 h-3 text-gray-400" />
+												<span>Riwayat Log Penugasan Perbaikan (Audit Trail)</span>
+											</p>
+											<div className="border border-gray-200 rounded divide-y divide-gray-100 bg-gray-50/50">
+												{detailModal.repairHistory.map((h, i) => (
+													<div key={i} className="p-2.5 text-xs">
+														<div className="flex items-center justify-between text-gray-500 text-[11px] mb-1">
+															<span>{new Date(h.assignedAt).toLocaleString("id-ID")}</span>
+															<span className="font-semibold text-gray-700">{h.assignedBy}</span>
+														</div>
+														<p className="font-medium text-gray-800">
+															Pelaksana:{" "}
+															<span className="font-bold">
+																{h.executor === "VENDOR" ? `Vendor (${h.vendorName || "Pihak Ketiga"})` : "Internal Pusri"}
+															</span>
+															{" — "}
+															Biaya:{" "}
+															<span className="font-bold text-[#059669]">
+																{formatRupiah(h.refurbishmentCost)}
+															</span>
+														</p>
+														{h.workNotes && (
+															<p className="text-gray-600 mt-1 italic">
+																&ldquo;{h.workNotes}&rdquo;
+															</p>
+														)}
+													</div>
+												))}
+											</div>
+										</div>
+									)}
 								</div>
 							</div>
 

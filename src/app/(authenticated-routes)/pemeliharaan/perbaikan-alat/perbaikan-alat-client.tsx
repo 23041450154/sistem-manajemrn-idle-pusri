@@ -1,8 +1,12 @@
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import React, { useEffect, useState, useMemo, useRef } from "react";
 import { useRouter } from "next/navigation";
-import { completeEquipmentRepair, getAttachmentsByEquipmentId } from "@/action/api";
+import {
+	completeEquipmentRepair,
+	getAttachmentsByEquipmentId,
+	uploadAttachment,
+} from "@/action/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
 	REPAIR_STATUS_LABEL,
@@ -22,8 +26,54 @@ import {
 	AlertCircle,
 	ImageOff,
 	Eye,
+	FileText,
+	UploadCloud,
+	Paperclip,
+	Trash2,
+	Download,
+	Image as ImageIcon,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
+
+export interface EquipmentAttachmentItem {
+	id?: number | string;
+	reference_id?: number | string;
+	reference_type?: string;
+	attachment_category?: string;
+	file_name?: string;
+	file_url?: string;
+	fileUrl?: string;
+	url?: string;
+	file_type?: string;
+	uploaded_by?: number | string;
+	uploaded_at?: string;
+}
+
+const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png"];
+const DOC_EXTENSIONS = [".pdf", ".docx", ".doc", ".xlsx", ".xls", ".dwg"];
+const ALLOWED_EXTENSIONS = [...DOC_EXTENSIONS, ...IMAGE_EXTENSIONS];
+const MAX_DOC_SIZE = 25 * 1024 * 1024; // 25 MB
+const MAX_IMAGE_SIZE = 5 * 1024 * 1024; // 5 MB
+
+function validateSowFile(file: globalThis.File): string | null {
+	const ext = "." + file.name.split(".").pop()?.toLowerCase();
+	if (!ALLOWED_EXTENSIONS.includes(ext)) {
+		return `Format berkas "${file.name}" tidak didukung. Gunakan format PDF, DOCX, XLSX, DWG, atau JPG/PNG.`;
+	}
+
+	const isImage = IMAGE_EXTENSIONS.includes(ext);
+	const isDoc = DOC_EXTENSIONS.includes(ext);
+
+	if (isImage && file.size > MAX_IMAGE_SIZE) {
+		return `Ukuran foto "${file.name}" melebihi batas maksimum 5 MB.`;
+	}
+
+	if (isDoc && file.size > MAX_DOC_SIZE) {
+		return `Ukuran dokumen "${file.name}" melebihi batas maksimum 25 MB.`;
+	}
+
+	return null;
+}
 
 const IMAGE_FILE = /\.(png|jpe?g|webp|gif|avif|bmp|svg)(\?.*)?$/i;
 
@@ -96,7 +146,7 @@ function StatusBadge({ status }: { status: RepairFlowStatus }) {
 	const style = statusBadgeStyle(status);
 	return (
 		<span
-			className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${style}`}
+			className={`inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap border border-current/20 ${style}`}
 		>
 			{REPAIR_STATUS_LABEL[status]}
 		</span>
@@ -150,6 +200,19 @@ export default function PerbaikanAlatClient({
 	const [preservationStatus, setPreservationStatus] = useState("");
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
+
+	// Lampiran SOW & Dokumen Pendukung (US-07-FE)
+	const [selectedAttachments, setSelectedAttachments] = useState<EquipmentAttachmentItem[]>([]);
+	const [detailAttachments, setDetailAttachments] = useState<EquipmentAttachmentItem[]>([]);
+	const [sowFiles, setSowFiles] = useState<File[]>([]);
+	const [fileError, setFileError] = useState<string | null>(null);
+	const [isDragging, setIsDragging] = useState(false);
+	const sowInputRef = useRef<HTMLInputElement>(null);
+	const [previewModal, setPreviewModal] = useState<{
+		url: string;
+		title?: string;
+		isPdf?: boolean;
+	} | null>(null);
 
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect -- reset paginasi saat filter berubah
@@ -275,6 +338,7 @@ export default function PerbaikanAlatClient({
 	const handleOpenModal = async (asset: MaintenanceEquipment) => {
 		setSelectedAsset(asset);
 		setSelectedPhotos(asset.foto || []);
+		setSelectedAttachments([]);
 		setActualCost("0");
 		setDisplayCost("Rp 0");
 		setStartAt(today());
@@ -282,11 +346,16 @@ export default function PerbaikanAlatClient({
 		setWorkDescription("");
 		setNotes("");
 		setPreservationStatus("");
+		setSowFiles([]);
+		setFileError(null);
 		setIsModalOpen(true);
 		setIsLoadingSelectedPhotos(true);
 
 		try {
 			const atts = await getAttachmentsByEquipmentId(asset.id);
+			if (Array.isArray(atts)) {
+				setSelectedAttachments(atts as EquipmentAttachmentItem[]);
+			}
 			const urls = extractPhotoUrls(atts);
 			if (urls.length > 0) {
 				const merged = Array.from(new Set([...(asset.foto || []), ...urls]));
@@ -304,16 +373,23 @@ export default function PerbaikanAlatClient({
 		setIsModalOpen(false);
 		setSelectedAsset(null);
 		setSelectedPhotos([]);
+		setSelectedAttachments([]);
+		setSowFiles([]);
+		setFileError(null);
 		setIsLoadingSelectedPhotos(false);
 	};
 
 	const handleOpenDetail = async (asset: MaintenanceEquipment) => {
 		setDetailAsset(asset);
 		setDetailPhotos(asset.foto || []);
+		setDetailAttachments([]);
 		setIsLoadingDetailPhotos(true);
 
 		try {
 			const atts = await getAttachmentsByEquipmentId(asset.id);
+			if (Array.isArray(atts)) {
+				setDetailAttachments(atts as EquipmentAttachmentItem[]);
+			}
 			const urls = extractPhotoUrls(atts);
 			if (urls.length > 0) {
 				const merged = Array.from(new Set([...(asset.foto || []), ...urls]));
@@ -329,7 +405,55 @@ export default function PerbaikanAlatClient({
 	const handleCloseDetail = () => {
 		setDetailAsset(null);
 		setDetailPhotos([]);
+		setDetailAttachments([]);
 		setIsLoadingDetailPhotos(false);
+	};
+
+	const handleAddFiles = (files: FileList | File[]) => {
+		setFileError(null);
+		const newFiles: File[] = [];
+		for (let i = 0; i < files.length; i++) {
+			const f = files[i];
+			const err = validateSowFile(f);
+			if (err) {
+				setFileError(err);
+				return;
+			}
+			const exists = sowFiles.some(
+				(existing) => existing.name === f.name && existing.size === f.size,
+			);
+			if (!exists) {
+				newFiles.push(f);
+			}
+		}
+		if (newFiles.length > 0) {
+			setSowFiles((prev) => [...prev, ...newFiles]);
+		}
+	};
+
+	const handleRemoveFile = (index: number) => {
+		setSowFiles((prev) => prev.filter((_, i) => i !== index));
+	};
+
+	const handleDragOver = (e: React.DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragging(true);
+	};
+
+	const handleDragLeave = (e: React.DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragging(false);
+	};
+
+	const handleDrop = (e: React.DragEvent) => {
+		e.preventDefault();
+		e.stopPropagation();
+		setIsDragging(false);
+		if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+			handleAddFiles(e.dataTransfer.files);
+		}
 	};
 
 	// Backend: actual_cost validate:"required,gt=0" — nol ditolak.
@@ -368,26 +492,63 @@ export default function PerbaikanAlatClient({
 			});
 
 			if (result.success) {
+				let uploadFailures = 0;
+				if (sowFiles.length > 0) {
+					for (const file of sowFiles) {
+						try {
+							const up = await uploadAttachment(
+								selectedAsset.id,
+								file,
+								"document",
+							);
+							if (!up.success) {
+								console.error("Gagal unggah dokumen SOW:", file.name, up.message);
+								uploadFailures++;
+							}
+						} catch (uploadErr) {
+							console.error("Error uploadAttachment:", uploadErr);
+							uploadFailures++;
+						}
+					}
+				}
+
 				if (onRefresh) {
 					await onRefresh();
 				} else {
 					router.refresh();
 				}
 
-				setNotification({
-					type: "success",
-					message:
-						"Perbaikan peralatan berhasil disimpan! Status aset kini REPAIR COMPLETED dan diteruskan ke Inspeksi Teknik di menu Validasi Ulang (/inspeksi/validasi-ulang).",
-				});
+				if (sowFiles.length > 0) {
+					if (uploadFailures === 0) {
+						setNotification({
+							type: "success",
+							message:
+								"Perbaikan berhasil diselesaikan dan dokumen pendukung berhasil diunggah.",
+						});
+					} else {
+						setNotification({
+							type: "error",
+							message: `Perbaikan berhasil diselesaikan, namun ${uploadFailures} dokumen pendukung gagal diunggah.`,
+						});
+					}
+				} else {
+					setNotification({
+						type: "success",
+						message: "Perbaikan berhasil diselesaikan.",
+					});
+				}
 
 				setIsModalOpen(false);
 				setSelectedAsset(null);
 				setSelectedPhotos([]);
+				setSelectedAttachments([]);
+				setSowFiles([]);
+				setFileError(null);
 				setIsLoadingSelectedPhotos(false);
 
 				setTimeout(() => {
 					setNotification(null);
-				}, 3000);
+				}, 4000);
 			} else {
 				setNotification({
 					type: "error",
@@ -580,54 +741,66 @@ export default function PerbaikanAlatClient({
 				</div>
 
 				{/* Table */}
-				<div className="overflow-x-auto lg:overflow-x-hidden">
-					<table className="w-full text-left border-collapse">
-						<thead className="bg-gray-50/95 backdrop-blur-sm">
-							<tr className="border-b border-gray-300">
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
+				<div className="w-full overflow-hidden">
+					<table className="w-full table-fixed text-left border-collapse">
+						<colgroup>
+							<col className="w-[3.5%]" />
+							<col className="w-[18%]" />
+							<col className="w-[10%]" />
+							<col className="w-[6%]" />
+							<col className="w-[10.5%]" />
+							<col className="w-[7.5%]" />
+							<col className="w-[10.5%]" />
+							<col className="w-[10%]" />
+							<col className="w-[8.5%]" />
+							<col className="w-[16%]" />
+						</colgroup>
+						<thead>
+							<tr className="bg-[#F2F3F4] border-b border-[#E6E8EA]">
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-center">
 									No
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left">
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-left truncate">
 									Nama Peralatan
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-left truncate">
 									Kode Alat
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-left truncate">
 									Plant
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-left truncate">
 									Func. Location
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-left truncate">
 									Tipe Objek
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-left">
-									Lokasi
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-left truncate">
+									Lokasi Penyimpanan
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-center truncate">
 									Kondisi
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-center truncate">
 									Tgl Diperbarui
 								</th>
-								<th className="px-3 py-3 text-[14px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-center truncate">
 									Aksi
 								</th>
 							</tr>
 						</thead>
-						<tbody className="bg-white">
+						<tbody className="bg-white divide-y divide-[#E6E8EA]">
 							{paginatedEquipments.length === 0 ? (
 								<tr>
-									<td colSpan={10} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={10} className="px-5 py-12 text-center text-[#64748B]">
 										<div className="flex flex-col items-center">
-											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
-											<p className="text-[13px] font-medium text-gray-900">
+											<AlertCircle className="w-6 h-6 text-[#64748B]/60 mb-2" />
+											<p className="text-[13px] font-medium text-[#0F172A]">
 												{hasActiveFilter
 													? "Hasil Pencarian Tidak Ditemukan"
 													: `Tidak Ada Data — ${REPAIR_STATUS_LABEL[activeTab]}`}
 											</p>
-											<p className="text-[11px] text-gray-500 mt-1">
+											<p className="text-[11px] text-[#64748B] mt-1">
 												{hasActiveFilter
 													? "Coba sesuaikan kata kunci atau filter pencarian Anda."
 													: EMPTY_HINT[activeTab]}
@@ -639,73 +812,90 @@ export default function PerbaikanAlatClient({
 								paginatedEquipments.map((asset, index) => (
 									<tr
 										key={asset.id}
-										className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
+										className="hover:bg-[#F2F3F4]/50 transition-colors"
 									>
-										<td className="px-3 py-3 text-[15px] text-gray-500 font-medium text-center">
+										<td className="px-2 py-2.5 text-[13px] text-[#64748B] text-center tabular-nums">
 											{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
 										<td
-											className="px-3 py-3 text-[15px] font-semibold text-gray-800 text-left"
+											className="px-2 py-2.5 text-[13px] font-medium text-[#0F172A] text-left"
 											title={asset.namaAlat}
 										>
-											<span className="leading-tight line-clamp-2 block text-left">
+											<span className="leading-snug line-clamp-2 block text-left">
 												{asset.namaAlat}
 											</span>
 										</td>
-										<td className="px-3 py-3 text-[15px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
-											{asset.kodeAlat}
+										<td className="px-2 py-2.5 text-left" title={asset.kodeAlat}>
+											<span className="block truncate font-mono text-[12px] font-semibold text-[#0A356A]">
+												{asset.kodeAlat}
+											</span>
 										</td>
-										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
-											{asset.plant}
+										<td className="px-2 py-2.5 text-left" title={asset.plant}>
+											<span className="block truncate font-mono text-[12px] text-[#334155]">
+												{asset.plant}
+											</span>
 										</td>
-										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left" title={asset.funcLoc || "-"}>
-											{asset.funcLoc || "-"}
+										<td
+											className="px-2 py-2.5 text-left"
+											title={asset.funcLoc || "-"}
+										>
+											<span className="block truncate font-mono text-[12px] text-[#475569]">
+												{asset.funcLoc || "-"}
+											</span>
 										</td>
-										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
-											{asset.tipeObjek}
+										<td className="px-2 py-2.5 text-left" title={asset.tipeObjek}>
+											<span className="block truncate text-[12px] text-[#334155]">
+												{asset.tipeObjek}
+											</span>
 										</td>
-										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
-											{asset.lokasiPenyimpanan}
+										<td className="px-2 py-2.5 text-left" title={asset.lokasiPenyimpanan}>
+											<span className="block truncate text-[12px] text-[#334155]">
+												{asset.lokasiPenyimpanan}
+											</span>
 										</td>
-										<td className="px-3 py-3 text-center whitespace-nowrap">
+										<td className="px-2 py-2.5 text-center">
 											<span
-												className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${
+												className={`inline-flex items-center justify-center rounded-[2px] px-1.5 py-0.5 text-[10.5px] font-semibold whitespace-nowrap border ${
 													asset.kondisi === "Baik" ||
 													asset.kondisi === "BAIK" ||
 													asset.kondisi === "BAGUS"
-														? "bg-[#DCFCE7] text-[#16A34A]"
+														? "bg-[#DCFCE7] text-[#16A34A] border-[#BBF7D0]"
 														: asset.kondisi === "-" || !asset.kondisi
-															? "bg-gray-100 text-gray-500"
+															? "bg-[#F2F3F4] text-[#64748B] border-[#E6E8EA]"
 															: asset.kondisi?.includes("RUSAK BERAT") ||
 																	asset.kondisi?.includes("SCRAP")
-																? "bg-[#FEE2E2] text-[#DC2626]"
-																: "bg-[#FEF3C7] text-[#B45309]"
+																? "bg-[#FEE2E2] text-[#DC2626] border-[#FECACA]"
+																: "bg-[#FEF3C7] text-[#B45309] border-[#FDE68A]"
 												}`}
 											>
 												{asset.kondisi}
 											</span>
 										</td>
-										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center whitespace-nowrap">
-											{asset.terakhirDiperbarui}
+										<td className="px-2 py-2.5 text-center tabular-nums" title={asset.terakhirDiperbarui}>
+											<span className="block truncate text-[11.5px] text-[#64748B]">
+												{asset.terakhirDiperbarui}
+											</span>
 										</td>
-										<td className="px-3 py-3 text-center">
-											<div className="flex justify-center items-center gap-2 opacity-90 group-hover:opacity-100 transition-opacity">
+										<td className="px-2 py-2.5 text-center">
+											<div className="flex justify-center items-center gap-1.5">
 												<button
+													type="button"
 													onClick={() => handleOpenDetail(asset)}
-													className="inline-flex items-center justify-center gap-1.5 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2.5 py-1.5 rounded-[4px] text-[13px] font-bold transition-all"
+													className="inline-flex items-center justify-center gap-1 px-2 py-1 rounded-[4px] text-[11px] font-medium text-[#334155] bg-white border border-[#E6E8EA] hover:bg-[#F2F3F4] transition-colors whitespace-nowrap"
 													title="Lihat detail equipment & perbaikan"
 												>
-													<Eye className="w-3.5 h-3.5" />
-													Detail
+													<Eye className="w-3.5 h-3.5 text-[#64748B]" />
+													<span>Detail</span>
 												</button>
 												{asset.status === "REPAIR" ? (
 													<button
+														type="button"
 														onClick={() => handleOpenModal(asset)}
-														className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] hover:bg-[#062854] text-white px-3 py-1.5 rounded-[4px] text-[13px] font-bold transition-all shadow-sm"
+														className="inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-[4px] text-[11px] font-semibold text-white bg-[#0A356A] hover:bg-[#0556B3] transition-colors shadow-none whitespace-nowrap"
 														title="Catat hasil perbaikan"
 													>
 														<Wrench className="w-3.5 h-3.5" />
-														Selesaikan
+														<span>Perbaiki</span>
 													</button>
 												) : (
 													<StatusBadge status={asset.status} />
@@ -720,8 +910,8 @@ export default function PerbaikanAlatClient({
 				</div>
 
 				{/* Pagination */}
-				<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
-					<span className="text-[11px] font-medium text-gray-500">
+				<div className="px-5 py-3 border-t border-[#E6E8EA] bg-white flex justify-between items-center">
+					<span className="text-[11px] font-medium text-[#64748B] tabular-nums">
 						Menampilkan{" "}
 						{filteredEquipments.length === 0
 							? 0
@@ -731,9 +921,10 @@ export default function PerbaikanAlatClient({
 					</span>
 					<div className="flex items-center gap-1.5">
 						<button
+							type="button"
 							onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
 							disabled={currentPage === 1}
-							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-[4px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+							className="px-2.5 py-1 text-[11px] font-semibold text-[#334155] bg-white border border-[#E6E8EA] rounded-[4px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F2F3F4] transition-colors"
 						>
 							Prev
 						</button>
@@ -741,12 +932,13 @@ export default function PerbaikanAlatClient({
 							{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map(
 								(page) => (
 									<button
+										type="button"
 										key={page}
 										onClick={() => setCurrentPage(page)}
-										className={`w-6 h-6 rounded-[4px] text-[11px] font-bold flex items-center justify-center transition-colors ${
+										className={`w-6 h-6 rounded-[4px] text-[11px] font-semibold flex items-center justify-center transition-colors ${
 											currentPage === page
 												? "bg-[#0A356A] text-white"
-												: "text-gray-600 hover:bg-gray-100"
+												: "text-[#334155] hover:bg-[#F2F3F4]"
 										}`}
 									>
 										{page}
@@ -755,11 +947,12 @@ export default function PerbaikanAlatClient({
 							)}
 						</div>
 						<button
+							type="button"
 							onClick={() =>
 								setCurrentPage((p) => Math.min(Math.max(1, totalPages), p + 1))
 							}
 							disabled={currentPage === Math.max(1, totalPages)}
-							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-[4px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+							className="px-2.5 py-1 text-[11px] font-semibold text-[#334155] bg-white border border-[#E6E8EA] rounded-[4px] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[#F2F3F4] transition-colors"
 						>
 							Next
 						</button>
@@ -907,6 +1100,75 @@ export default function PerbaikanAlatClient({
 										</p>
 									</div>
 								)}
+
+								{/* Berkas / Dokumen Terlampir */}
+								{selectedAttachments.length > 0 && (
+									<div className="border-t border-[#E6E8EA] pt-3">
+										<p className="text-[12px] font-medium text-[#64748B] mb-2">
+											Berkas Terlampir ({selectedAttachments.length})
+										</p>
+										<div className="space-y-1.5 max-h-36 overflow-y-auto pr-1">
+											{selectedAttachments.map((att, i) => {
+												const url = att.file_url || att.fileUrl || att.url || "";
+												const isPdf =
+													att.file_type === "application/pdf" ||
+													/\.pdf$/i.test(url);
+												const isImg =
+													att.file_type?.startsWith("image/") ||
+													IMAGE_FILE.test(url);
+												const isSow =
+													att.attachment_category === "repair_sow" ||
+													att.attachment_category === "sow" ||
+													/sow/i.test(att.file_name || "");
+
+												return (
+													<div
+														key={i}
+														className="flex items-center justify-between gap-2 p-1.5 bg-white border border-[#E6E8EA] rounded-[4px] text-[11px]"
+													>
+														<div className="flex items-center gap-1.5 min-w-0 flex-1">
+															<Paperclip className="w-3 h-3 text-[#64748B] shrink-0" />
+															<span
+																className="truncate text-[#0F172A] font-medium"
+																title={att.file_name}
+															>
+																{att.file_name || `Lampiran ${i + 1}`}
+															</span>
+															{isSow && (
+																<span className="text-[9px] font-semibold text-[#0A356A] bg-blue-50 px-1 py-0.2 rounded-[2px] shrink-0">
+																	SOW
+																</span>
+															)}
+														</div>
+														<button
+															type="button"
+															onClick={() => {
+																if (isPdf) {
+																	setPreviewModal({
+																		url,
+																		title: att.file_name || "Dokumen PDF",
+																		isPdf: true,
+																	});
+																} else if (isImg) {
+																	setPreviewModal({
+																		url,
+																		title: att.file_name || "Foto",
+																		isPdf: false,
+																	});
+																} else {
+																	window.open(url, "_blank");
+																}
+															}}
+															className="text-[11px] font-semibold text-[#0A356A] hover:underline shrink-0"
+														>
+															Lihat
+														</button>
+													</div>
+												);
+											})}
+										</div>
+									</div>
+								)}
 							</aside>
 
 							{/* Form */}
@@ -1038,6 +1300,183 @@ export default function PerbaikanAlatClient({
 											className="w-full px-3 py-2 text-[13px] text-[#0F172A] bg-white border border-[#E6E8EA] rounded-[4px] focus:border-[#334155] focus:ring-2 focus:ring-[#334155] focus:ring-offset-1 outline-none transition-colors duration-[140ms] ease-out resize-none"
 										/>
 									</div>
+
+									{/* Dokumen SOW & Foto Bukti Perbaikan — US-07-FE */}
+									<div>
+										<div className="flex items-center justify-between mb-1.5">
+											<label className="text-[12px] font-medium text-[#64748B]">
+												Dokumen SOW & Foto Bukti Perbaikan{" "}
+												<span className="text-[11px] text-[#64748B] font-normal">
+													(Opsional)
+												</span>
+											</label>
+											<span className="text-[11px] text-[#64748B]">
+												Dokumen (Maks 25 MB) / Foto (Maks 5 MB)
+											</span>
+										</div>
+
+										<input
+											ref={sowInputRef}
+											type="file"
+											multiple
+											accept=".pdf,.docx,.doc,.xlsx,.xls,.dwg,.jpg,.jpeg,.png"
+											className="hidden"
+											onChange={(e) => {
+												if (e.target.files && e.target.files.length > 0) {
+													handleAddFiles(e.target.files);
+													e.target.value = "";
+												}
+											}}
+										/>
+
+										<div
+											onDragOver={handleDragOver}
+											onDragLeave={handleDragLeave}
+											onDrop={handleDrop}
+											onClick={() => sowInputRef.current?.click()}
+											className={`border-2 border-dashed rounded-[4px] p-4 text-center cursor-pointer transition-colors duration-[140ms] ease-out ${
+												isDragging
+													? "border-[#0556B3] bg-blue-50/60"
+													: "border-[#E6E8EA] bg-[#F8FAFC] hover:border-[#0A356A] hover:bg-white"
+											}`}
+										>
+											<div className="flex flex-col items-center justify-center gap-1.5">
+												<UploadCloud
+													className={`w-6 h-6 ${isDragging ? "text-[#0556B3]" : "text-[#64748B]"}`}
+												/>
+												<p className="text-[12px] font-medium text-[#0F172A]">
+													<span className="text-[#0A356A] font-semibold underline underline-offset-2">
+														Klik untuk unggah berkas
+													</span>{" "}
+													atau seret & lepas file ke sini
+												</p>
+												<p className="text-[11px] text-[#64748B]">
+													Format didukung: PDF, DOCX, XLSX, DWG (Maks 25 MB) atau JPG/PNG (Maks 5 MB)
+												</p>
+											</div>
+										</div>
+
+										{fileError && (
+											<div className="flex items-center gap-1.5 mt-2 text-[12px] text-[#DC2626]">
+												<AlertCircle className="w-3.5 h-3.5 shrink-0" />
+												<span>{fileError}</span>
+											</div>
+										)}
+
+										{/* Daftar Berkas SOW & Bukti yang Siap Diunggah */}
+										{sowFiles.length > 0 && (
+											<div className="mt-3 space-y-2">
+												<div className="flex items-center justify-between text-[11px] font-semibold text-[#0F172A]">
+													<span>Berkas Lampiran ({sowFiles.length})</span>
+													<span className="text-[#64748B] font-normal text-[11px]">
+														Total:{" "}
+														{(
+															sowFiles.reduce((acc, f) => acc + f.size, 0) /
+															(1024 * 1024)
+														).toFixed(2)}{" "}
+														MB
+													</span>
+												</div>
+												<div className="space-y-1.5 max-h-40 overflow-y-auto pr-1">
+													{sowFiles.map((file, idx) => {
+														const ext = file.name.split(".").pop()?.toLowerCase() || "";
+														const isPdf =
+															file.type === "application/pdf" || ext === "pdf";
+														const isImg =
+															file.type.startsWith("image/") ||
+															["jpg", "jpeg", "png"].includes(ext);
+														const isExcel = ["xlsx", "xls", "csv"].includes(ext);
+														const isWord = ["docx", "doc"].includes(ext);
+														const isCad = ext === "dwg";
+														const badgeLabel = isImg
+															? "FOTO"
+															: isPdf
+																? "PDF"
+																: isExcel
+																	? "EXCEL"
+																	: isWord
+																		? "WORD"
+																		: isCad
+																			? "CAD"
+																			: "BERKAS";
+
+														const sizeKb = (file.size / 1024).toFixed(0);
+														const sizeMb = (file.size / (1024 * 1024)).toFixed(2);
+														const displaySize =
+															file.size > 1024 * 1024
+																? `${sizeMb} MB`
+																: `${sizeKb} KB`;
+
+														return (
+															<div
+																key={`${file.name}-${idx}`}
+																className="flex items-center justify-between gap-2 p-2 bg-white border border-[#E6E8EA] rounded-[4px] hover:border-[#334155] transition-colors"
+															>
+																<div className="flex items-center gap-2 min-w-0 flex-1">
+																	<div className="w-7 h-7 rounded-[4px] bg-[#F2F3F4] flex items-center justify-center shrink-0">
+																		{isImg ? (
+																			<ImageIcon className="w-3.5 h-3.5 text-[#0A356A]" />
+																		) : isPdf ? (
+																			<FileText className="w-3.5 h-3.5 text-red-600" />
+																		) : isExcel ? (
+																			<FileText className="w-3.5 h-3.5 text-emerald-600" />
+																		) : isWord ? (
+																			<FileText className="w-3.5 h-3.5 text-blue-600" />
+																		) : isCad ? (
+																			<FileText className="w-3.5 h-3.5 text-purple-600" />
+																		) : (
+																			<FileText className="w-3.5 h-3.5 text-[#0A356A]" />
+																		)}
+																	</div>
+																	<div className="min-w-0 flex-1">
+																		<p className="text-[12px] font-medium text-[#0F172A] truncate">
+																			{file.name}
+																		</p>
+																		<div className="flex items-center gap-2">
+																			<span className="text-[10px] text-[#64748B]">
+																				{displaySize}
+																			</span>
+																			<span className="text-[9px] font-semibold text-[#0A356A] bg-blue-50 px-1.5 py-0.2 rounded-[2px]">
+																				{badgeLabel}
+																			</span>
+																		</div>
+																	</div>
+																</div>
+																<div className="flex items-center gap-1 shrink-0">
+																	{(isPdf || isImg) && (
+																		<button
+																			type="button"
+																			onClick={() => {
+																				const previewUrl =
+																					URL.createObjectURL(file);
+																				setPreviewModal({
+																					url: previewUrl,
+																					title: file.name,
+																					isPdf,
+																				});
+																			}}
+																			className="p-1 text-[#64748B] hover:text-[#0A356A] hover:bg-[#F2F3F4] rounded-[4px] transition-colors"
+																			title="Pratinjau berkas"
+																		>
+																			<Eye className="w-3.5 h-3.5" />
+																		</button>
+																	)}
+																	<button
+																		type="button"
+																		onClick={() => handleRemoveFile(idx)}
+																		className="p-1 text-[#64748B] hover:text-[#DC2626] hover:bg-red-50 rounded-[4px] transition-colors"
+																		title="Hapus berkas"
+																	>
+																		<Trash2 className="w-3.5 h-3.5" />
+																	</button>
+																</div>
+															</div>
+														);
+													})}
+												</div>
+											</div>
+										)}
+									</div>
 								</div>
 
 								{/* Footer */}
@@ -1095,73 +1534,74 @@ export default function PerbaikanAlatClient({
 			{/* Modal Detail Equipment & Perbaikan */}
 			{detailAsset && (
 				<div
-					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200"
+					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0F172A]/50 animate-in fade-in duration-200"
 					onClick={handleCloseDetail}
 				>
 					<div
 						role="dialog"
 						aria-modal="true"
 						aria-label={`Detail equipment ${detailAsset.kodeAlat}`}
-						className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200"
+						className="bg-white rounded-[4px] shadow-[0_8px_24px_-4px_rgb(15_23_42_/_0.12)] w-full max-w-xl overflow-hidden border border-[#E6E8EA] max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200"
 						onClick={(e) => e.stopPropagation()}
 					>
-						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
+						<div className="flex items-center justify-between px-5 py-4 border-b border-[#E6E8EA] bg-[#0A356A]">
 							<div className="flex items-center gap-3">
-								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
+								<div className="w-9 h-9 rounded-[4px] bg-white/10 flex items-center justify-center">
 									<Eye className="w-5 h-5 text-white" />
 								</div>
 								<div>
-									<h2 className="text-base font-bold text-white leading-tight">
-										Detail Equipment
+									<h2 className="text-[14px] font-semibold text-white leading-tight">
+										Detail Equipment & Perbaikan
 									</h2>
-									<p className="text-xs text-blue-100 font-medium mt-0.5">
+									<p className="text-[12px] text-white/70 mt-0.5">
 										{detailAsset.kodeAlat} · {detailAsset.namaAlat}
 									</p>
 								</div>
 							</div>
 							<button
 								onClick={handleCloseDetail}
-								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
+								aria-label="Tutup dialog"
+								className="text-white/70 hover:text-white p-1.5 rounded-[4px] hover:bg-white/10 transition-colors"
 							>
-								<X className="w-5 h-5" />
+								<X className="w-4 h-4" />
 							</button>
 						</div>
 
-						<div className="p-6 overflow-y-auto flex flex-col gap-5">
+						<div className="p-5 overflow-y-auto flex flex-col gap-4 text-xs">
 							{/* Status Perbaikan */}
-							<div className="border border-gray-100 rounded-lg p-3.5 bg-gray-50 flex items-center justify-between">
+							<div className="border border-[#E6E8EA] rounded-[4px] p-3 bg-[#F8FAFC] flex items-center justify-between">
 								<div>
-									<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-										Status Perbaikan
+									<p className="text-[11px] font-medium text-[#64748B]">
+										Status Alur Perbaikan
 									</p>
 									<div className="mt-1">
 										<StatusBadge status={detailAsset.status} />
 									</div>
 								</div>
 								<div className="text-right">
-									<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+									<p className="text-[11px] font-medium text-[#64748B]">
 										Terakhir Diperbarui
 									</p>
-									<p className="text-sm font-medium text-gray-800 mt-1">
+									<p className="text-[13px] font-semibold text-[#0F172A] mt-0.5 tabular-nums">
 										{detailAsset.terakhirDiperbarui}
 									</p>
 								</div>
 							</div>
 
-							{/* Berkas / Foto */}
+							{/* Berkas Foto */}
 							{isLoadingDetailPhotos && detailPhotos.length === 0 ? (
-								<div className="border border-gray-100 rounded-lg p-6 bg-gray-50 flex flex-col items-center justify-center gap-2 text-gray-400">
+								<div className="border border-[#E6E8EA] rounded-[4px] p-6 bg-[#F8FAFC] flex flex-col items-center justify-center gap-2 text-[#64748B]">
 									<Loader2 className="w-5 h-5 animate-spin text-[#0A356A]" />
-									<p className="text-xs text-gray-500">Memuat berkas lampiran / foto...</p>
+									<p className="text-[12px]">Memuat berkas lampiran / foto...</p>
 								</div>
 							) : detailPhotos.length > 0 ? (
 								<div>
 									<div className="flex items-center justify-between mb-2">
-										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
-											Berkas Lampiran / Foto ({detailPhotos.length})
+										<p className="text-[12px] font-semibold text-[#0F172A]">
+											Foto Peralatan ({detailPhotos.length})
 										</p>
 										{isLoadingDetailPhotos && (
-											<span className="flex items-center gap-1 text-[11px] text-gray-400">
+											<span className="flex items-center gap-1 text-[11px] text-[#64748B]">
 												<Loader2 className="w-3 h-3 animate-spin text-[#0A356A]" />
 												Memperbarui...
 											</span>
@@ -1174,7 +1614,7 @@ export default function PerbaikanAlatClient({
 												type="button"
 												onClick={() => setPreviewImage(url)}
 												title={`Perbesar foto ${idx + 1}`}
-												className="relative aspect-video border border-gray-200 rounded-lg overflow-hidden bg-gray-100 hover:border-[#0A356A] transition-all group"
+												className="relative aspect-video border border-[#E6E8EA] rounded-[4px] overflow-hidden bg-[#F2F3F4] hover:border-[#0A356A] transition-all group"
 											>
 												{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
 												<img
@@ -1190,49 +1630,142 @@ export default function PerbaikanAlatClient({
 									</div>
 								</div>
 							) : (
-								<div className="border border-gray-100 rounded-lg p-4 bg-gray-50 flex flex-col items-center justify-center gap-1.5 text-gray-400">
+								<div className="border border-[#E6E8EA] rounded-[4px] p-4 bg-[#F8FAFC] flex flex-col items-center justify-center gap-1.5 text-[#64748B]">
 									<ImageOff className="w-5 h-5" aria-hidden="true" />
-									<p className="text-xs text-gray-500">Berkas lampiran / foto belum diunggah.</p>
+									<p className="text-[12px]">Foto peralatan belum diunggah.</p>
+								</div>
+							)}
+
+							{/* Dokumen SOW & Berkas Pendukung (US-07-FE) */}
+							{detailAttachments.length > 0 && (
+								<div className="border-t border-[#E6E8EA] pt-3">
+									<p className="text-[12px] font-semibold text-[#0F172A] mb-2">
+										Dokumen Lingkup Kerja (SOW) & Berkas Pendukung ({detailAttachments.length})
+									</p>
+									<div className="space-y-1.5 max-h-48 overflow-y-auto pr-1">
+										{detailAttachments.map((att, idx) => {
+											const url = att.file_url || att.fileUrl || att.url || "";
+											const isPdf =
+												att.file_type === "application/pdf" ||
+												/\.pdf$/i.test(url);
+											const isImg =
+												att.file_type?.startsWith("image/") ||
+												IMAGE_FILE.test(url);
+											const isSow =
+												att.attachment_category === "repair_sow" ||
+												att.attachment_category === "sow" ||
+												/sow/i.test(att.file_name || "");
+
+											return (
+												<div
+													key={idx}
+													className="p-2.5 border border-[#E6E8EA] rounded-[4px] bg-[#F8FAFC] flex items-center justify-between hover:border-[#0A356A] transition-colors"
+												>
+													<div className="flex items-center gap-2 min-w-0 flex-1">
+														<div className="w-7 h-7 rounded-[4px] bg-white border border-[#E6E8EA] flex items-center justify-center shrink-0 text-[#0A356A]">
+															<FileText className="w-3.5 h-3.5" />
+														</div>
+														<div className="min-w-0 flex-1">
+															<p
+																className="text-[12px] font-medium text-[#0F172A] truncate"
+																title={att.file_name}
+															>
+																{att.file_name || `Lampiran ${idx + 1}`}
+															</p>
+															<div className="flex items-center gap-2 mt-0.5">
+																{isSow ? (
+																	<span className="text-[9px] font-semibold text-[#0A356A] bg-blue-50 px-1.5 py-0.2 rounded-[2px]">
+																		Lingkup Kerja (SOW)
+																	</span>
+																) : (
+																	<span className="text-[9px] font-medium text-[#64748B] bg-gray-100 px-1.5 py-0.2 rounded-[2px]">
+																		Lampiran Aset
+																	</span>
+																)}
+																{att.uploaded_at && (
+																	<span className="text-[10px] text-[#64748B]">
+																		{new Date(att.uploaded_at).toLocaleDateString("id-ID")}
+																	</span>
+																)}
+															</div>
+														</div>
+													</div>
+													<div className="flex items-center gap-1.5 shrink-0 ml-2">
+														{isPdf || isImg ? (
+															<button
+																type="button"
+																onClick={() =>
+																	setPreviewModal({
+																		url,
+																		title: att.file_name || "Dokumen",
+																		isPdf,
+																	})
+																}
+																className="px-2.5 py-1 text-[11px] font-semibold text-[#0A356A] bg-white border border-[#E6E8EA] hover:bg-[#F2F3F4] rounded-[4px] transition-colors flex items-center gap-1"
+															>
+																<Eye className="w-3 h-3" /> Pratinjau
+															</button>
+														) : (
+															<a
+																href={url}
+																target="_blank"
+																rel="noreferrer"
+																download={att.file_name || "dokumen"}
+																className="px-2.5 py-1 text-[11px] font-semibold text-[#0A356A] bg-white border border-[#E6E8EA] hover:bg-[#F2F3F4] rounded-[4px] transition-colors flex items-center gap-1"
+															>
+																<Download className="w-3 h-3" /> Unduh
+															</a>
+														)}
+													</div>
+												</div>
+											);
+										})}
+									</div>
 								</div>
 							)}
 
 							{/* Spesifikasi */}
-							<div className="grid grid-cols-2 gap-x-4 gap-y-3.5">
-								{[
-									["Tipe Objek", detailAsset.tipeObjek],
-									["Plant", detailAsset.plant],
-									["Lokasi Penyimpanan", detailAsset.lokasiPenyimpanan],
-									["Area (FuncLoc)", detailAsset.funcLoc],
-									["Vendor / Merk", detailAsset.vendor],
-									["Tahun", detailAsset.tahun ? String(detailAsset.tahun) : "-"],
-									["Kondisi", detailAsset.kondisi],
-									["Idle Sejak", detailAsset.idleSejak],
-								].map(([label, value]) => (
-									<div key={label}>
-										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-											{label}
-										</p>
-										<p className="text-sm font-semibold text-gray-800">{value}</p>
-									</div>
-								))}
+							<div className="border-t border-[#E6E8EA] pt-3">
+								<p className="text-[12px] font-semibold text-[#0F172A] mb-2">
+									Informasi Spesifikasi
+								</p>
+								<div className="grid grid-cols-2 gap-x-4 gap-y-2.5">
+									{[
+										["Tipe Objek", detailAsset.tipeObjek],
+										["Plant", detailAsset.plant],
+										["Lokasi Penyimpanan", detailAsset.lokasiPenyimpanan],
+										["Area (FuncLoc)", detailAsset.funcLoc],
+										["Vendor / Merk", detailAsset.vendor],
+										["Tahun", detailAsset.tahun ? String(detailAsset.tahun) : "-"],
+										["Kondisi", detailAsset.kondisi],
+										["Idle Sejak", detailAsset.idleSejak],
+									].map(([label, value]) => (
+										<div key={label}>
+											<p className="text-[11px] font-medium text-[#64748B] mb-0.5">
+												{label}
+											</p>
+											<p className="text-[12px] font-semibold text-[#0F172A]">{value}</p>
+										</div>
+									))}
+								</div>
 							</div>
 
 							{/* Nilai Aset */}
-							<div className="border-t border-gray-100 pt-4">
-								<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-2">
+							<div className="border-t border-[#E6E8EA] pt-3">
+								<p className="text-[12px] font-semibold text-[#0F172A] mb-2">
 									Nilai Aset
 								</p>
-								<div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-3">
+								<div className="grid grid-cols-1 sm:grid-cols-3 gap-x-4 gap-y-2.5">
 									{[
 										["Nilai Perolehan", detailAsset.nilaiPerolehan],
 										["Nilai Buku", detailAsset.nilaiBuku],
 										["Estimasi Pakai Ulang", detailAsset.estimasiNilaiGunaUlang],
 									].map(([label, value]) => (
 										<div key={label as string}>
-											<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+											<p className="text-[11px] font-medium text-[#64748B] mb-0.5">
 												{label}
 											</p>
-											<p className="text-sm font-bold text-emerald-700">
+											<p className="text-[13px] font-semibold text-[#059669] tabular-nums">
 												{rupiah(value as number)}
 											</p>
 										</div>
@@ -1241,34 +1774,84 @@ export default function PerbaikanAlatClient({
 							</div>
 
 							{/* Alasan Idle & Catatan */}
-							<div>
-								<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-									Alasan Idle
-								</p>
-								<p className="text-sm text-gray-700 leading-relaxed">
-									{detailAsset.alasanIdle || "-"}
-								</p>
-							</div>
-							{detailAsset.catatan && (
+							<div className="border-t border-[#E6E8EA] pt-3 space-y-2.5">
 								<div>
-									<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
-										Catatan Tambahan
+									<p className="text-[11px] font-medium text-[#64748B] mb-0.5">
+										Alasan Idle
 									</p>
-									<p className="text-xs text-gray-600 bg-gray-50 p-2.5 rounded-lg border border-gray-100 leading-relaxed whitespace-pre-line">
-										{detailAsset.catatan}
+									<p className="text-[12px] text-[#0F172A] leading-relaxed">
+										{detailAsset.alasanIdle || "-"}
 									</p>
 								</div>
-							)}
+								{detailAsset.catatan && (
+									<div>
+										<p className="text-[11px] font-medium text-[#64748B] mb-0.5">
+											Catatan Tambahan
+										</p>
+										<p className="text-[12px] text-[#0F172A] bg-[#F8FAFC] p-2.5 rounded-[4px] border border-[#E6E8EA] leading-relaxed whitespace-pre-line">
+											{detailAsset.catatan}
+										</p>
+									</div>
+								)}
+							</div>
 						</div>
 
-						<div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end bg-gray-50">
+						<div className="px-5 py-3.5 border-t border-[#E6E8EA] flex items-center justify-end bg-[#F8FAFC]">
 							<button
 								onClick={handleCloseDetail}
-								className="px-5 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors shadow-sm"
+								className="px-4 py-2 rounded-[4px] bg-white border border-[#E6E8EA] text-[#334155] text-[13px] font-medium hover:bg-[#F2F3F4] transition-colors"
 							>
 								Tutup
 							</button>
 						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Modal Pratinjau Dokumen / Foto SOW (US-07-FE) */}
+			{previewModal && (
+				<div
+					className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-[#0F172A]/80 animate-in fade-in duration-200"
+					onClick={() => setPreviewModal(null)}
+				>
+					<div className="absolute top-4 right-4 flex items-center gap-3 z-20">
+						<a
+							href={previewModal.url}
+							download={previewModal.title || "lampiran"}
+							target="_blank"
+							rel="noreferrer"
+							className="bg-white/10 hover:bg-white/25 text-white px-3 py-1.5 rounded-[4px] text-xs font-semibold flex items-center gap-1.5 transition-colors"
+							onClick={(e) => e.stopPropagation()}
+						>
+							<Download className="w-4 h-4" /> Buka Tab Baru / Unduh
+						</a>
+						<button
+							className="text-white hover:bg-white/20 p-2 rounded-[4px] transition-colors"
+							onClick={(e) => {
+								e.stopPropagation();
+								setPreviewModal(null);
+							}}
+							title="Tutup preview"
+						>
+							<X className="w-5 h-5" />
+						</button>
+					</div>
+					<div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center p-2">
+						{previewModal.isPdf ? (
+							<iframe
+								src={previewModal.url}
+								title={previewModal.title || "Preview PDF"}
+								className="w-full h-full rounded-[4px] bg-white shadow-2xl border-0"
+							/>
+						) : (
+							/* eslint-disable-next-line @next/next/no-img-element */
+							<img
+								src={previewModal.url}
+								alt={previewModal.title || "Preview Foto"}
+								className="max-w-full max-h-full object-contain rounded-[4px] shadow-2xl"
+								onClick={(e) => e.stopPropagation()}
+							/>
+						)}
 					</div>
 				</div>
 			)}

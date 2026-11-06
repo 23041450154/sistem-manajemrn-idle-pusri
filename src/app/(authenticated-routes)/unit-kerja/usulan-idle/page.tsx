@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useCallback, Suspense } from "react";
 import {
+	getEquipmentProposals,
 	getFunctionalLocations,
 	getMyEquipmentProposals,
 	getObjectTypes,
@@ -89,7 +90,7 @@ export default function UsulanIdlePage() {
 				const rawStatus =
 					(typeof item.status === "string"
 						? item.status
-						: item.status?.name) || "";
+						: item.status?.name) || "PROPOSED";
 				const statusStr = assetState(statusName(rawStatus));
 
 				const plantFormatted = formatPlantDisplay(
@@ -98,9 +99,23 @@ export default function UsulanIdlePage() {
 					item.plant_description,
 				);
 
+				const codeStr =
+					(typeof item.equipment_code === "object" && item.equipment_code !== null
+						? item.equipment_code.code || item.equipment_code.name
+						: typeof item.equipment_code === "string"
+							? item.equipment_code
+							: "") ||
+					item.kodeAlat ||
+					`EQ-${item.id}`;
+
+				const funcLocStr =
+					typeof item.func_loc === "string"
+						? item.func_loc
+						: item.func_loc?.name || item.funcloc?.name || "-";
+
 				return {
 					id: item.id?.toString() || "-",
-					kodeAlat: item.equipment_code || item.kodeAlat || `EQ-${item.id}`,
+					kodeAlat: codeStr,
 					namaAlat: item.name || item.namaAlat || "Equipment Tanpa Nama",
 					plant: plantFormatted,
 					jenisAlat: objectTypeName,
@@ -113,10 +128,7 @@ export default function UsulanIdlePage() {
 						(typeof item.storage_location === "object"
 							? item.storage_location?.name
 							: item.storage_location) || "Belum Ditentukan",
-					funcLoc:
-						typeof item.func_loc === "string"
-							? item.func_loc
-							: item.func_loc?.name || "-",
+					funcLoc: funcLocStr,
 					vendor: item.vendor || "-",
 					year: item.year || item.year_of_purchase || "-",
 					originalValue: item.original_value || 0,
@@ -124,6 +136,7 @@ export default function UsulanIdlePage() {
 					estimatedReuseValue: item.estimated_reuse_value || 0,
 					notes: item.notes || "-",
 					idleReason: item.idle_reason || "-",
+					createdByNPP: item.created_by_npp || item.createdByUser?.npp || "",
 					rejectionNotes: item.rejection_notes || item.rejectionNotes || "",
 					inspectionPurpose:
 						item.inspection_purpose || item.inspectionPurpose || "",
