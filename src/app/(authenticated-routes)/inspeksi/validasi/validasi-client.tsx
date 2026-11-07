@@ -768,7 +768,7 @@ export default function ManajemenInspeksiClient({
 
 		return filtered;
 	}, [
-		assets,
+		clusterAssets,
 		activeTab,
 		search,
 		plantFilter,
@@ -807,20 +807,35 @@ export default function ManajemenInspeksiClient({
 			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
 			DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+			"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
+			SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
 			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
 			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
 			REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
-			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
-			READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
+			"READY TO USE": "bg-[#DCFCE7] text-[#16A34A]",
+			READY_TO_USE: "bg-[#DCFCE7] text-[#16A34A]",
+			PROPOSED: "bg-[#FEF3C7] text-[#B45309]",
 		};
 
 		let displayStatus = (status || "").replace(/_/g, " ");
 		if (displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
 			displayStatus = "READY TO USE";
 		}
+		if (
+			status === "DISPOSAL_RECOMMENDED" ||
+			displayStatus === "DISPOSAL RECOMMENDED" ||
+			displayStatus === "DISPOSAL RECOMENDED" ||
+			displayStatus === "SCRAP RECOMENDED" ||
+			displayStatus === "SCRAP RECOMMENDED"
+		) {
+			displayStatus = "SCRAP RECOMMENDED";
+		}
 
-		const style = styles[displayStatus] || styles[status] || styles.SCRAP;
+		const style =
+			styles[displayStatus] ||
+			styles[status] ||
+			"bg-gray-100 text-gray-600";
 		return (
 			<span
 				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${style}`}
@@ -831,7 +846,11 @@ export default function ManajemenInspeksiClient({
 	};
 
 	const getApprovalBadge = (status: ApprovalState) => {
-		const styles = {
+		if (status === "NONE" || !status) {
+			return <span className="text-gray-400 font-mono text-[13px]">-</span>;
+		}
+
+		const styles: Record<string, string> = {
 			NONE: "bg-gray-100 text-gray-500",
 			PENDING_REVIEW: "bg-[#FEF9C3] text-[#CA8A04]",
 			IN_REVIEW: "bg-[#E0F2FE] text-[#0284C7]",
@@ -839,7 +858,7 @@ export default function ManajemenInspeksiClient({
 			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 			NEED_REVISION: "bg-[#F3E8FF] text-[#9333EA]",
 		};
-		const labels = {
+		const labels: Record<string, string> = {
 			NONE: "-",
 			PENDING_REVIEW: "Menunggu Review",
 			IN_REVIEW: "Sedang Direview",
@@ -851,7 +870,7 @@ export default function ManajemenInspeksiClient({
 			<span
 				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${styles[status] || "bg-gray-100 text-gray-500"}`}
 			>
-				{labels[status]}
+				{labels[status] || status}
 			</span>
 		);
 	};
@@ -868,9 +887,10 @@ export default function ManajemenInspeksiClient({
 			<div className="flex items-center gap-1.5 justify-center">
 				{showInspeksi && (
 					<button
+						type="button"
 						title="Inspeksi"
 						onClick={() => openModal(asset, "VALIDASI")}
-						className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+						className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
 					>
 						<Check className="w-3.5 h-3.5" />
 						<span className="text-[11px] font-bold">Inspeksi</span>
@@ -878,9 +898,10 @@ export default function ManajemenInspeksiClient({
 				)}
 				{showUbah && (
 					<button
+						type="button"
 						title="Ubah Inspeksi"
 						onClick={() => openModal(asset, "VALIDASI")}
-						className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+						className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
 					>
 						<Edit className="w-3.5 h-3.5" />
 						<span className="text-[11px] font-bold">Ubah Inspeksi</span>
@@ -888,9 +909,10 @@ export default function ManajemenInspeksiClient({
 				)}
 				{showRevisi && (
 					<button
+						type="button"
 						title="Revisi Inspeksi"
 						onClick={() => openModal(asset, "VALIDASI")}
-						className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+						className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
 					>
 						<Edit className="w-3.5 h-3.5" />
 						<span className="text-[11px] font-bold">Revisi Inspeksi</span>
@@ -898,9 +920,10 @@ export default function ManajemenInspeksiClient({
 				)}
 				{!showInspeksi && !showUbah && !showRevisi && (
 					<button
+						type="button"
 						title="Detail Info"
 						onClick={() => openModal(asset, "DETAIL")}
-						className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+						className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1 px-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
 					>
 						<Eye className="w-3.5 h-3.5" />
 						<span className="text-[11px] font-bold">Detail Info</span>
@@ -997,12 +1020,12 @@ export default function ManajemenInspeksiClient({
 				className="bg-white border border-gray-200 rounded overflow-hidden scroll-mt-4"
 			>
 				{userCluster && (
-					<div className="bg-blue-50/80 border-b border-blue-100 px-5 py-2.5 flex items-center justify-between text-xs text-[#0A356A]">
+					<div className="bg-[#E0F2FE]/60 border-b border-[#BAE6FD] px-5 py-2.5 flex items-center justify-between text-xs text-[#0A356A]">
 						<span className="font-semibold flex items-center gap-1.5">
 							<Info className="w-4 h-4 text-[#0A356A]" />
 							Menampilkan antrean khusus untuk {getInspectionClusterName(userCluster)}
 						</span>
-						<span className="bg-white px-2 py-0.5 rounded border border-blue-200 font-bold text-[11px]">
+						<span className="bg-white px-2 py-0.5 rounded-[2px] border border-[#BAE6FD] font-semibold text-[11px]">
 							{getInspectionClusterName(userCluster)}
 						</span>
 					</div>
@@ -1011,6 +1034,7 @@ export default function ManajemenInspeksiClient({
 				{/* Tab Navigation */}
 				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
 					<button
+						type="button"
 						onClick={() => {
 							setActiveTab("antrean");
 							setCurrentPage(1);
@@ -1034,6 +1058,7 @@ export default function ManajemenInspeksiClient({
 					</button>
 
 					<button
+						type="button"
 						onClick={() => {
 							setActiveTab("riwayat");
 							setCurrentPage(1);
@@ -1071,12 +1096,13 @@ export default function ManajemenInspeksiClient({
 									setSearchInput(e.target.value);
 									setSearch(e.target.value); // Realtime search!
 								}}
-								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
+								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400 text-gray-800"
 							/>
 						</div>
 						<button
+							type="button"
 							onClick={() => setSearch(searchInput)}
-							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded hover:bg-[#0556B3] transition-colors whitespace-nowrap"
+							className="px-4 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded hover:bg-[#072448] transition-colors whitespace-nowrap cursor-pointer"
 						>
 							Cari
 						</button>
@@ -1086,7 +1112,10 @@ export default function ManajemenInspeksiClient({
 					<div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
 						<select
 							value={plantFilter}
-							onChange={(e) => setPlantFilter(e.target.value)}
+							onChange={(e) => {
+								setPlantFilter(e.target.value);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="Semua">Semua Plant</option>
@@ -1099,8 +1128,11 @@ export default function ManajemenInspeksiClient({
 
 						<select
 							value={statusFilter}
-							onChange={(e) => setStatusFilter(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[140px] cursor-pointer"
+							onChange={(e) => {
+								setStatusFilter(e.target.value);
+								setCurrentPage(1);
+							}}
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
 						>
 							<option value="Semua">Semua Status</option>
 							<option value="REGISTERED">REGISTERED</option>
@@ -1108,14 +1140,17 @@ export default function ManajemenInspeksiClient({
 							<option value="NEED_REVISION">Perlu Revisi</option>
 							<option value="READY_TO_USE">READY TO USE</option>
 							<option value="REPAIR">REPAIR (Dalam / Selesai Perbaikan)</option>
-							<option value="SCRAP">SCRAP / DISPOSAL RECOMMENDED</option>
+							<option value="SCRAP">SCRAP (REKOMENDASI SCRAP)</option>
 							<option value="REJECTED">Ditolak</option>
 						</select>
 
 						<input
 							type="date"
 							value={dateFilter}
-							onChange={(e) => setDateFilter(e.target.value)}
+							onChange={(e) => {
+								setDateFilter(e.target.value);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						/>
 
@@ -1123,8 +1158,9 @@ export default function ManajemenInspeksiClient({
 
 						{/* Reset Button */}
 						<button
+							type="button"
 							onClick={resetFilter}
-							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors whitespace-nowrap"
+							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors whitespace-nowrap cursor-pointer"
 							title="Reset semua filter"
 						>
 							<RefreshCw className="w-3.5 h-3.5" />
@@ -1215,39 +1251,26 @@ export default function ManajemenInspeksiClient({
 									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-7 h-7 text-gray-300 mb-2" />
-											{search ||
-											plantFilter !== "Semua" ||
-											statusFilter !== "Semua" ||
-											dateFilter ? (
-												<>
-													<p className="text-[14px] font-semibold text-gray-800">
-														Hasil Pencarian Tidak Ditemukan
-													</p>
-													<p className="text-[12px] text-gray-500 mt-1">
-														Tidak ada data yang cocok dengan kriteria filter pencarian Anda.
-													</p>
-												</>
-											) : activeTab === "antrean" ? (
-												<>
-													<p className="text-[14px] font-semibold text-gray-800">
-														Tidak Ada Antrean Validasi
-													</p>
-													<p className="text-[12px] text-gray-500 mt-1">
-														Saat ini belum ada peralatan yang membutuhkan tindakan inspeksi
-														atau revisi dari Anda.
-													</p>
-												</>
-											) : (
-												<>
-													<p className="text-[14px] font-semibold text-gray-800">
-														Belum Ada Riwayat Validasi
-													</p>
-													<p className="text-[12px] text-gray-500 mt-1">
-														Peralatan yang telah selesai diinspeksi dan diproses akan muncul
-														di sini.
-													</p>
-												</>
-											)}
+											<p className="text-[14px] font-semibold text-gray-800">
+												{search ||
+												plantFilter !== "Semua" ||
+												statusFilter !== "Semua" ||
+												dateFilter
+													? "Hasil Pencarian Tidak Ditemukan"
+													: activeTab === "antrean"
+														? "Tidak Ada Antrean Validasi"
+														: "Belum Ada Riwayat Validasi"}
+											</p>
+											<p className="text-[12px] text-gray-500 mt-1">
+												{search ||
+												plantFilter !== "Semua" ||
+												statusFilter !== "Semua" ||
+												dateFilter
+													? "Tidak ada data yang cocok dengan kriteria filter pencarian Anda."
+													: activeTab === "antrean"
+														? "Saat ini belum ada peralatan yang membutuhkan tindakan inspeksi atau revisi dari Anda."
+														: "Peralatan yang telah selesai diinspeksi dan diproses akan muncul di sini."}
+											</p>
 										</div>
 									</td>
 								</tr>
@@ -1305,6 +1328,7 @@ export default function ManajemenInspeksiClient({
 					</table>
 				</div>
 
+				{/* Pagination */}
 				<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
 					<span className="text-[11px] font-medium text-gray-500">
 						Menampilkan{" "}
@@ -1314,9 +1338,10 @@ export default function ManajemenInspeksiClient({
 					</span>
 					<div className="flex items-center gap-1.5">
 						<button
+							type="button"
 							onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
 							disabled={currentPage === 1}
-							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
 						>
 							Prev
 						</button>
@@ -1325,9 +1350,10 @@ export default function ManajemenInspeksiClient({
 							{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map(
 								(page) => (
 									<button
+										type="button"
 										key={page}
 										onClick={() => setCurrentPage(page)}
-										className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
+										className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors cursor-pointer ${
 											currentPage === page
 												? "bg-[#0A356A] text-white"
 												: "text-gray-600 hover:bg-gray-100"
@@ -1340,11 +1366,12 @@ export default function ManajemenInspeksiClient({
 						</div>
 
 						<button
+							type="button"
 							onClick={() =>
 								setCurrentPage((p) => Math.min(Math.max(1, totalPages), p + 1))
 							}
 							disabled={currentPage === Math.max(1, totalPages)}
-							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
 						>
 							Next
 						</button>

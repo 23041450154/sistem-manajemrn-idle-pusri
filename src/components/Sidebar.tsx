@@ -129,7 +129,7 @@ export function Sidebar({ role }: { role?: string }) {
 					).toUpperCase();
 					const statusId = item.status_id || item.status?.id;
 					return (
-						statusId === 3 ||
+						statusId === 5 ||
 						statusName === "REPAIR" ||
 						statusName === "MAINTENANCE" ||
 						statusName.includes("PERBAIKAN")
@@ -143,7 +143,7 @@ export function Sidebar({ role }: { role?: string }) {
 					).toUpperCase();
 					const statusId = item.status_id || item.status?.id;
 					return (
-						statusId === 3 ||
+						statusId === 5 ||
 						statusName === "REPAIR" ||
 						statusName === "MAINTENANCE" ||
 						statusName === "DALAM_PERBAIKAN"
@@ -157,6 +157,7 @@ export function Sidebar({ role }: { role?: string }) {
 					"/rendal/validasi-ulang": rendalValidasiUlangAntrean,
 					"/pemeliharaan/perbaikan-alat": perbaikanAntrean,
 					"/manajer/approve": validationApprovalAntrean,
+					"/manajer/pemakaian": reuseApprovalAntrean,
 					"/manajer/peminjaman": reuseApprovalAntrean,
 					"/manajer/scrap": disposalApprovalAntrean,
 				});
@@ -197,11 +198,16 @@ export function Sidebar({ role }: { role?: string }) {
 					icon: Wrench,
 				},
 				{
-					name: "Persetujuan Perbaikan",
+					name: "Monitoring Validasi Ulang",
 					href: "/rendal/validasi-ulang",
-					icon: CheckSquare,
+					icon: ClipboardCheck,
 				},
 				{ name: "Permintaan Scrap", href: "/rendal/scrap", icon: Trash2 },
+				{
+					name: "Katalog Peralatan",
+					href: "/unit-kerja/katalog",
+					icon: ShoppingBag,
+				},
 			];
 			break;
 
@@ -261,8 +267,8 @@ export function Sidebar({ role }: { role?: string }) {
 					icon: CheckSquare,
 				},
 				{
-					name: "Persetujuan Peminjaman",
-					href: "/manajer/peminjaman",
+					name: "Persetujuan Pemakaian",
+					href: "/manajer/pemakaian",
 					icon: Wrench,
 				},
 				{
@@ -286,11 +292,6 @@ export function Sidebar({ role }: { role?: string }) {
 					name: "Daftar Aset",
 					href: "/unit-kerja/daftar-aset",
 					icon: Wrench,
-				},
-				{
-					name: "Katalog Peralatan",
-					href: "/unit-kerja/katalog",
-					icon: ShoppingBag,
 				},
 				{
 					name: "Usulkan Alat Idle",

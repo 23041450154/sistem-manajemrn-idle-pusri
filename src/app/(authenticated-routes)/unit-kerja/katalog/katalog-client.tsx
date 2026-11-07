@@ -63,8 +63,7 @@ export default function KatalogClient({
             Katalog Equipment Idle
           </h1>
           <p className="mt-1 text-[14px] text-[#64748B]">
-            Aset idle yang tersedia untuk dipinjam unit kerja. Pilih satu untuk melihat spesifikasi
-            lengkap dan mengajukan permintaan.
+            Peralatan idle yang siap digunakan dan yang sedang dalam perbaikan. Permintaan pemakaian hanya bisa diajukan untuk aset siap pakai.
           </p>
         </header>
       )}
@@ -176,6 +175,12 @@ function EquipmentCard({ item }: { item: KatalogItem }) {
         </div>
 
         <dl className="mt-auto space-y-1 text-[12px] text-[#64748B] pt-2 border-t border-[#F1F5F9]">
+          <div className="flex justify-between gap-2">
+            <dt>Lokasi Simpan</dt>
+            <dd className="truncate text-right text-[#0F172A]" title={item.storageLocation}>
+              {item.storageLocation || "-"}
+            </dd>
+          </div>
           <div className="flex justify-between gap-2">
             <dt>Kategori</dt>
             <dd className="truncate text-right text-[#0F172A]">{item.objectType}</dd>

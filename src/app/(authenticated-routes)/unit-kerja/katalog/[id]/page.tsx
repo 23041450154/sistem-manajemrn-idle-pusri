@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
-import { ArrowLeft, MapPin, Factory, Wrench } from "lucide-react";
+import { ArrowLeft, MapPin, Factory, Wrench, AlertCircle } from "lucide-react";
 import { getEquipmentById } from "@/action/api";
 import { normalizeEquipment, STATE_STYLE, formatRupiah } from "../shared";
 import Gallery from "./gallery";
@@ -135,7 +135,14 @@ export default function KatalogDetailPage() {
             </section>
           )}
 
-          <RequestModalButton eq={eq} />
+          {eq.state === "ready" ? (
+            <RequestModalButton eq={eq} />
+          ) : (
+            <div className="flex h-11 w-full items-center justify-center gap-2 rounded-[4px] bg-gray-100 px-4 text-[13px] font-semibold text-gray-500 border border-gray-200">
+              <AlertCircle className="w-4 h-4 text-amber-600" />
+              Belum Bisa Diajukan (Dalam Perbaikan)
+            </div>
+          )}
         </div>
       </div>
     </div>

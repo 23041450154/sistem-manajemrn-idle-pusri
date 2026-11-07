@@ -481,7 +481,7 @@ export default function ManajerDashboardClient({
 			icon: Server,
 		},
 		{
-			label: "Persetujuan Peminjaman",
+			label: "Persetujuan Pemakaian",
 			value: reuseRequests.length.toString(),
 			caption:
 				pendingReuses.length > 0
@@ -491,12 +491,12 @@ export default function ManajerDashboardClient({
 			icon: ArrowUpRight,
 		},
 		{
-			label: "Persetujuan Scrap & Disposal",
+			label: "Persetujuan Scrap",
 			value: disposals.length.toString(),
 			caption:
 				pendingScraps.length > 0
-					? `${pendingScraps.length} usulan penghapusan`
-					: "0 usulan penghapusan",
+					? `${pendingScraps.length} usulan scrap`
+					: "0 usulan scrap",
 			rule: "#DC2626",
 			icon: Trash2,
 		},
@@ -657,7 +657,7 @@ export default function ManajerDashboardClient({
 					{/* Card 3: Scrap Recovery */}
 					<div className="bg-gradient-to-br from-[#FFFBEB] to-[#FEF3C7] rounded-lg border border-[#FDE68A] p-4 flex flex-col justify-between">
 						<div className="flex items-center justify-between">
-							<span className="text-[12px] font-semibold text-[#92400E]">Scrap Recovery (Disposal)</span>
+							<span className="text-[12px] font-semibold text-[#92400E]">Scrap Recovery</span>
 							<span className="p-2 bg-[#FEF3C7] text-[#D97706] rounded-full">
 								<Coins className="w-4 h-4" />
 							</span>
@@ -781,7 +781,7 @@ export default function ManajerDashboardClient({
 								<Area
 									type="monotone"
 									dataKey="scrapValue"
-									name="Hasil Scrap (Disposal)"
+									name="Hasil Scrap"
 									stroke="#D97706"
 									strokeWidth={2}
 									fillOpacity={0}
@@ -847,7 +847,7 @@ export default function ManajerDashboardClient({
 											<th className="py-2.5 px-3">No</th>
 											<th className="py-2.5 px-3">{filterMode === "daily" ? "Tanggal Transaksi" : "Bulan Transaksi"}</th>
 											<th className="py-2.5 px-3">Cost Avoidance (Reuse)</th>
-											<th className="py-2.5 px-3">Scrap Recovery (Disposal)</th>
+											<th className="py-2.5 px-3">Scrap Recovery</th>
 											<th className="py-2.5 px-3">Total Net Benefit</th>
 											<th className="py-2.5 px-3">Pergerakan Stock</th>
 										</tr>

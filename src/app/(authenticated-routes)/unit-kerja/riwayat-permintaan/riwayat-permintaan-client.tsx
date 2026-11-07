@@ -2,11 +2,16 @@
 
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { useAuth } from "@/components/AuthProvider";
+import { normalizeRole } from "@/lib/roles";
+import { confirmEquipmentInstallation } from "@/action/api";
 import { buttonVariants } from "@/components/ui/button";
 import { formatDate } from "@/lib/utils";
 import {
+	Check,
+	CheckCircle,
 	CheckCircle2,
 	ChevronRight,
 	Eye,
@@ -18,7 +23,17 @@ import {
 	ArrowUp,
 	ArrowDown,
 	ArrowUpDown,
+	Upload,
+	Download,
+	FileText,
+	Loader2,
 } from "lucide-react";
+import {
+	getSavedSupportingDocument,
+	formatFileSize,
+	type SupportingDocumentMeta,
+} from "@/lib/reuse-documents";
+import { getFileCategoryIcon } from "@/components/SupportingDocumentUpload";
 
 export interface ReuseRequestItem {
 	id: string;
@@ -37,9 +52,15 @@ export interface ReuseRequestItem {
 	contact_person: string;
 	contact_npp?: string;
 	contact_phone?: string;
-	status: "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED";
+	status: "PENDING" | "IN_REVIEW" | "APPROVED" | "REJECTED" | "INSTALLED";
 	created_at: string;
 	updated_at?: string;
+	installed_at?: string;
+	physical_notes?: string;
+	installation_photo?: string;
+	installation_confirmed_by?: string;
+	installation_confirmed_at?: string;
+	supporting_document?: SupportingDocumentMeta | null;
 }
 
 const STATUS_META: Record<
@@ -58,6 +79,7 @@ const STATUS_META: Record<
 	},
 	APPROVED: { label: "Approved for Reuse", bg: "bg-[#DCFCE7]", text: "text-[#16A34A]" },
 	REJECTED: { label: "Ditolak", bg: "bg-[#FEE2E2]", text: "text-[#DC2626]" },
+	INSTALLED: { label: "Terpasang (Selesai)", bg: "bg-[#DCFCE7]", text: "text-[#16A34A]" },
 };
 
 function StatusBadge({ status }: { status: ReuseRequestItem["status"] }) {
@@ -118,6 +140,137 @@ function RiwayatPermintaanContent({
 	const [selectedRequest, setSelectedRequest] =
 		useState<ReuseRequestItem | null>(null);
 	const [isDetailOpen, setIsDetailOpen] = useState(false);
+
+	const { user } = useAuth();
+	const isUnitKerja = normalizeRole(user?.role) === "UNIT_KERJA_OPERASI";
+
+	// Installation Confirmation Modal (US-10-FE)
+	const [selectedForInstall, setSelectedForInstall] =
+		useState<ReuseRequestItem | null>(null);
+	const [isInstallModalOpen, setIsInstallModalOpen] = useState(false);
+	const [installationDate, setInstallationDate] = useState("");
+	const [physicalNotes, setPhysicalNotes] = useState("");
+	const [photoFile, setPhotoFile] = useState<File | null>(null);
+	const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+	const [isSubmittingInstall, setIsSubmittingInstall] = useState(false);
+	const [installError, setInstallError] = useState("");
+	const fileInputRef = useRef<HTMLInputElement>(null);
+
+	const handleOpenInstallModal = (item: ReuseRequestItem) => {
+		setSelectedForInstall(item);
+		setInstallationDate(new Date().toISOString().split("T")[0]);
+		setPhysicalNotes("");
+		setPhotoFile(null);
+		setPhotoPreview(null);
+		setInstallError("");
+		setIsInstallModalOpen(true);
+	};
+
+	const handlePhotoSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const file = e.target.files?.[0];
+		if (!file) return;
+
+		if (file.size > 25 * 1024 * 1024) {
+			setInstallError("Ukuran file foto melebihi batas 25MB.");
+			return;
+		}
+
+		setPhotoFile(file);
+		setInstallError("");
+
+		const reader = new FileReader();
+		reader.onload = () => {
+			setPhotoPreview(reader.result as string);
+		};
+		reader.readAsDataURL(file);
+	};
+
+	const handleRemovePhoto = () => {
+		setPhotoFile(null);
+		setPhotoPreview(null);
+		if (fileInputRef.current) {
+			fileInputRef.current.value = "";
+		}
+	};
+
+	const handleSubmitInstall = async (e: React.FormEvent) => {
+		e.preventDefault();
+		if (!isUnitKerja) {
+			setNotification({
+				type: "error",
+				message:
+					"Aksi konfirmasi hanya dapat dieksekusi oleh akun ber-role Unit Kerja Operasi.",
+			});
+			return;
+		}
+
+		if (!selectedForInstall) return;
+
+		if (!installationDate) {
+			setInstallError("Tanggal mulai dioperasikan / terpasang wajib diisi.");
+			return;
+		}
+
+		setIsSubmittingInstall(true);
+		setInstallError("");
+
+		try {
+			const res = await confirmEquipmentInstallation({
+				requestId: selectedForInstall.id,
+				equipmentId: selectedForInstall.equipment_id,
+				requestNumber: selectedForInstall.request_number,
+				equipmentCode: selectedForInstall.equipment_code,
+				equipmentName: selectedForInstall.equipment_name,
+				installationLocation: selectedForInstall.installation_location,
+				targetPlant: selectedForInstall.target_plant,
+				installedAt: installationDate,
+				physicalNotes: physicalNotes.trim(),
+				photoFile: photoFile,
+				photoUrl: photoPreview || undefined,
+				confirmedBy: user?.name || user?.npp || "Unit Kerja Operasi",
+			});
+
+			if (res.success) {
+				setNotification({
+					type: "success",
+					message:
+						res.message ||
+						"Konfirmasi berhasil. Peralatan kini resmi tercatat REUSED di sistem.",
+				});
+				setIsInstallModalOpen(false);
+				setSelectedForInstall(null);
+				if (onRefresh) {
+					await onRefresh();
+				} else {
+					router.refresh();
+				}
+			} else {
+				setInstallError(res.message || "Gagal mengonfirmasi pemasangan.");
+			}
+		} catch (err) {
+			console.error("Submit installation error:", err);
+			setInstallError(
+				err instanceof Error ? err.message : "Terjadi kesalahan koneksi.",
+			);
+		} finally {
+			setIsSubmittingInstall(false);
+		}
+	};
+
+	// Modal: close on Escape, lock background scroll while open.
+	useEffect(() => {
+		if (!isInstallModalOpen) return;
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === "Escape" && !isSubmittingInstall) setIsInstallModalOpen(false);
+		};
+		document.addEventListener("keydown", onKey);
+		const prevOverflow = document.body.style.overflow;
+		document.body.style.overflow = "hidden";
+		return () => {
+			document.removeEventListener("keydown", onKey);
+			document.body.style.overflow = prevOverflow;
+		};
+	}, [isInstallModalOpen, isSubmittingInstall]);
 
 	// Notification Toast
 	const [notification, setNotification] = useState<{
@@ -189,7 +342,8 @@ function RiwayatPermintaanContent({
 				item.equipment_code.toLowerCase().includes(q) ||
 				item.equipment_name.toLowerCase().includes(q) ||
 				item.target_plant.toLowerCase().includes(q) ||
-				item.installation_location.toLowerCase().includes(q);
+				item.installation_location.toLowerCase().includes(q) ||
+				(item.storage_location || "").toLowerCase().includes(q);
 
 			let matchStatus = true;
 			if (statusFilter === "PENDING") {
@@ -392,6 +546,7 @@ function RiwayatPermintaanContent({
 							<option value="SEMUA">Semua Status</option>
 							<option value="PENDING">Menunggu Persetujuan</option>
 							<option value="APPROVED">Approved for Reuse</option>
+							<option value="INSTALLED">Terpasang (Selesai)</option>
 							<option value="REJECTED">Ditolak</option>
 						</select>
 
@@ -409,7 +564,7 @@ function RiwayatPermintaanContent({
 
 				{/* Table */}
 				<div className="overflow-x-auto">
-					<table className="w-full min-w-[900px] table-fixed border-collapse text-left">
+					<table className="w-full table-fixed border-collapse text-left">
 						<thead>
 							<tr className="border-b border-[#E6E8EA] bg-[#F2F3F4]">
 								<th
@@ -418,15 +573,14 @@ function RiwayatPermintaanContent({
 								>
 									No
 								</th>
-								{sortableTh("request_number", "No. Pengajuan", "left", "w-[180px]")}
+								{sortableTh("request_number", "No. Pengajuan", "left", "w-[160px]")}
 								{sortableTh(
 									"equipment_name",
 									"Nama Alat",
 									"left",
 									"w-[240px] max-w-[260px]",
 								)}
-								{sortableTh("target_plant", "Plant", "left", "w-[160px]")}
-								{sortableTh("storage_location", "Lokasi Penyimpanan", "left", "w-[160px]")}
+								{sortableTh("target_plant", "Plant", "left", "w-[120px]")}
 								{sortableTh("start_date", "Tgl Permintaan", "center", "w-[140px]")}
 								<th
 									scope="col"
@@ -436,7 +590,7 @@ function RiwayatPermintaanContent({
 								</th>
 								<th
 									scope="col"
-									className="w-[100px] px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
+									className="w-[180px] px-4 py-2.5 text-center text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase"
 								>
 									Aksi
 								</th>
@@ -445,7 +599,7 @@ function RiwayatPermintaanContent({
 						<tbody className="divide-y divide-[#E6E8EA]">
 							{paginatedItems.length === 0 ? (
 								<tr>
-									<td colSpan={8} className="px-4 py-14 text-center">
+									<td colSpan={7} className="px-4 py-14 text-center">
 										<Inbox
 											className="mx-auto h-8 w-8 text-[#64748B]"
 											aria-hidden="true"
@@ -507,14 +661,6 @@ function RiwayatPermintaanContent({
 													{item.target_plant}
 												</span>
 											</td>
-											<td
-												className="px-4 py-2.5 text-[13px] text-[#475569]"
-												title={item.storage_location || "-"}
-											>
-												<span className="block truncate leading-tight">
-													{item.storage_location || "-"}
-												</span>
-											</td>
 											<td className="px-4 py-2.5 text-center text-[13px] whitespace-nowrap text-[#475569] tabular-nums">
 												{formatDate(item.start_date)}
 											</td>
@@ -522,19 +668,35 @@ function RiwayatPermintaanContent({
 												<StatusBadge status={item.status} />
 											</td>
 											<td className="px-4 py-2.5 text-center whitespace-nowrap">
-												<button
-													type="button"
-													title="Lihat detail"
-													aria-label={`Lihat detail ${item.request_number}`}
-													onClick={() => {
-														setSelectedRequest(item);
-														setIsDetailOpen(true);
-													}}
-													className="inline-flex h-11 items-center gap-1.5 rounded px-2 text-[13px] font-medium text-[#334155] transition-colors duration-150 hover:bg-[#F2F3F4] hover:text-[#0A356A]"
-												>
-													<Eye className="h-4 w-4" aria-hidden="true" />
-													Detail
-												</button>
+												<div className="flex items-center justify-center gap-1.5">
+													{/* AC-01 & AC-02 & AC-06: Tombol Konfirmasi Pasang bergaya validasi inspeksi, detail tidak ditampilkan bila ada aksi */}
+													{isUnitKerja && item.status === "APPROVED" ? (
+														<button
+															type="button"
+															title="Konfirmasi Pasang"
+															aria-label={`Konfirmasi pemasangan ${item.request_number}`}
+															onClick={() => handleOpenInstallModal(item)}
+															className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
+														>
+															<Check className="w-3.5 h-3.5" aria-hidden="true" />
+															<span className="text-[11px] font-bold">Konfirmasi Pasang</span>
+														</button>
+													) : (
+														<button
+															type="button"
+															title="Lihat detail"
+															aria-label={`Lihat detail ${item.request_number}`}
+															onClick={() => {
+																setSelectedRequest(item);
+																setIsDetailOpen(true);
+															}}
+															className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1 px-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
+														>
+															<Eye className="w-3.5 h-3.5" aria-hidden="true" />
+															<span className="text-[11px] font-bold">Detail</span>
+														</button>
+													)}
+												</div>
 											</td>
 										</tr>
 									);
@@ -669,6 +831,14 @@ function RiwayatPermintaanContent({
 											{selectedRequest.equipment_name}
 										</dd>
 									</div>
+									{selectedRequest.storage_location && (
+										<div>
+											<dt className="text-[12px] text-[#64748B]">Lokasi Penyimpanan</dt>
+											<dd className="mt-0.5 text-[13px] font-medium text-[#0F172A]">
+												{selectedRequest.storage_location}
+											</dd>
+										</div>
+									)}
 								</dl>
 							</section>
 
@@ -716,6 +886,107 @@ function RiwayatPermintaanContent({
 									{selectedRequest.justification}
 								</p>
 							</section>
+
+							{/* Dokumen Pendukung / Justifikasi Kebutuhan (US-13-FE) */}
+							{(() => {
+								const supportingDoc =
+									selectedRequest.supporting_document ||
+									getSavedSupportingDocument(
+										selectedRequest.id,
+										selectedRequest.request_number,
+										selectedRequest.equipment_id,
+									);
+								if (!supportingDoc) return null;
+								const category = getFileCategoryIcon(supportingDoc.fileName);
+
+								return (
+									<section>
+										<h3 className="text-[13px] font-semibold text-[#0F172A] flex items-center gap-1.5">
+											<FileText className="h-4 w-4 text-[#0A356A]" aria-hidden="true" />
+											Dokumen Pendukung / Justifikasi Kebutuhan
+										</h3>
+										<div className="mt-2 flex items-center justify-between rounded-lg border border-[#E6E8EA] bg-[#F8FAFC] p-3 shadow-2xs">
+											<div className="flex items-center gap-3 min-w-0 pr-3">
+												<div
+													className={`w-9 h-9 rounded-lg border flex items-center justify-center shrink-0 ${
+														category?.bg || "bg-white border-[#E6E8EA]"
+													}`}
+												>
+													{category?.icon}
+												</div>
+												<div className="min-w-0">
+													<p
+														className="text-[13px] font-semibold text-[#0F172A] truncate"
+														title={`${supportingDoc.fileName} (${formatFileSize(supportingDoc.fileSize)})`}
+													>
+														{supportingDoc.fileName}
+													</p>
+													<p className="text-[11px] text-[#64748B]">
+														{formatFileSize(supportingDoc.fileSize)} • Dokumen Justifikasi Kebutuhan
+													</p>
+												</div>
+											</div>
+											<div className="flex items-center gap-2 shrink-0">
+												<a
+													href={supportingDoc.fileUrl}
+													download={supportingDoc.fileName}
+													target="_blank"
+													rel="noopener noreferrer"
+													className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-[#0A356A] bg-white border border-[#0A356A]/30 rounded-md hover:bg-[#0A356A]/5 transition-colors shadow-2xs focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
+												>
+													<Download className="w-3.5 h-3.5" />
+													Unduh Berkas
+												</a>
+											</div>
+										</div>
+									</section>
+								);
+							})()}
+
+							{/* Informasi Pemasangan di Plant jika sudah INSTALLED atau ada data pemasangan */}
+							{(selectedRequest.status === "INSTALLED" || selectedRequest.installed_at) && (
+								<section className="rounded border border-[#BAE6FD] bg-[#F0F9FF] p-3.5">
+									<h3 className="flex items-center gap-1.5 text-[13px] font-semibold text-[#0369A1]">
+										<CheckCircle className="h-4 w-4 text-[#0284C7]" aria-hidden="true" />
+										Informasi Pemasangan & Operasional
+									</h3>
+									<dl className="mt-2 grid grid-cols-1 gap-x-4 gap-y-3 sm:grid-cols-2">
+										<div>
+											<dt className="text-[12px] text-[#64748B]">Tanggal Mulai Operasi</dt>
+											<dd className="mt-0.5 text-[13px] font-semibold text-[#0F172A] tabular-nums">
+												{formatDate(selectedRequest.installed_at || selectedRequest.start_date)}
+											</dd>
+										</div>
+										<div>
+											<dt className="text-[12px] text-[#64748B]">Status Inventaris Alat</dt>
+											<dd className="mt-0.5 font-mono text-[12px] font-bold text-[#0284C7]">
+												REUSED
+											</dd>
+										</div>
+										{selectedRequest.physical_notes && (
+											<div className="sm:col-span-2">
+												<dt className="text-[12px] text-[#64748B]">Catatan Kondisi Fisik</dt>
+												<dd className="mt-0.5 text-[13px] leading-relaxed text-[#334155]">
+													{selectedRequest.physical_notes}
+												</dd>
+											</div>
+										)}
+										{selectedRequest.installation_photo && (
+											<div className="sm:col-span-2">
+												<dt className="text-[12px] text-[#64748B]">Foto Fisik Alat Terpasang</dt>
+												<dd className="mt-1.5">
+													{/* eslint-disable-next-line @next/next/no-img-element */}
+													<img
+														src={selectedRequest.installation_photo}
+														alt="Foto fisik alat terpasang"
+														className="h-36 w-auto max-w-full rounded border border-[#E6E8EA] object-cover shadow-sm"
+													/>
+												</dd>
+											</div>
+										)}
+									</dl>
+								</section>
+							)}
 
 							{/* Contact Person */}
 							{(Boolean(
@@ -768,7 +1039,21 @@ function RiwayatPermintaanContent({
 						</div>
 
 						{/* Footer */}
-						<div className="flex justify-end border-t border-[#E6E8EA] px-5 py-3">
+						<div className="flex items-center justify-end gap-2 border-t border-[#E6E8EA] px-5 py-3">
+							{isUnitKerja && selectedRequest.status === "APPROVED" && (
+								<button
+									type="button"
+									onClick={() => {
+										const target = selectedRequest;
+										setIsDetailOpen(false);
+										handleOpenInstallModal(target);
+									}}
+									className="inline-flex h-8 items-center gap-1.5 rounded bg-[#059669] px-3 text-[12px] font-semibold text-white transition-colors duration-150 hover:bg-[#047857] shadow-sm"
+								>
+									<CheckCircle className="h-3.5 w-3.5" aria-hidden="true" />
+									Konfirmasi Pasang
+								</button>
+							)}
 							<button
 								type="button"
 								onClick={() => setIsDetailOpen(false)}
@@ -777,6 +1062,227 @@ function RiwayatPermintaanContent({
 								Tutup
 							</button>
 						</div>
+					</div>
+				</div>
+			)}
+
+			{/* Modal Konfirmasi Pemasangan Alat (US-10-FE) */}
+			{isInstallModalOpen && selectedForInstall && (
+				<div
+					className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0F172A]/50 p-4 animate-in fade-in duration-200"
+					onClick={(e) => {
+						if (e.target === e.currentTarget && !isSubmittingInstall) {
+							setIsInstallModalOpen(false);
+						}
+					}}
+				>
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="install-modal-title"
+						className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded border border-[#E6E8EA] bg-white shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] animate-in zoom-in-95 fade-in duration-200"
+					>
+						{/* Header */}
+						<div className="flex items-start justify-between gap-3 border-b border-[#E6E8EA] px-5 py-4">
+							<div className="min-w-0">
+								<h2
+									id="install-modal-title"
+									className="text-[14px] font-semibold leading-tight text-[#0F172A]"
+								>
+									Konfirmasi Pemasangan Alat
+								</h2>
+								<p className="mt-0.5 truncate text-[12px] text-[#64748B]">
+									Konfirmasi fisik alat telah diterima dan dioperasikan di plant
+								</p>
+							</div>
+							<button
+								type="button"
+								aria-label="Tutup dialog"
+								disabled={isSubmittingInstall}
+								onClick={() => setIsInstallModalOpen(false)}
+								className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-[#64748B] transition-colors duration-150 hover:bg-[#F2F3F4] hover:text-[#0F172A] disabled:opacity-50"
+							>
+								<X className="h-4 w-4" aria-hidden="true" />
+							</button>
+						</div>
+
+						{/* Form Content */}
+						<form
+							onSubmit={handleSubmitInstall}
+							className="flex flex-1 flex-col overflow-hidden"
+						>
+							<div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+								{/* Error Notification */}
+								{installError && (
+									<div
+										role="alert"
+										className="rounded border border-[#FECACA] bg-[#FEF2F2] p-3 text-[13px] text-[#DC2626]"
+									>
+										{installError}
+									</div>
+								)}
+
+								{/* Ringkasan Aset */}
+								<div className="rounded border border-[#E6E8EA] bg-[#F8FAFC] p-3.5">
+									<h3 className="text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+										Ringkasan Aset
+									</h3>
+									<dl className="mt-2 space-y-2 text-[13px]">
+										<div className="flex justify-between">
+											<dt className="text-[#64748B]">Nomor Permohonan:</dt>
+											<dd className="font-mono font-medium text-[#0F172A]">
+												{selectedForInstall.request_number}
+											</dd>
+										</div>
+										<div className="flex justify-between">
+											<dt className="text-[#64748B]">Kode & Nama Alat:</dt>
+											<dd className="text-right font-semibold text-[#0A356A]">
+												{selectedForInstall.equipment_code} -{" "}
+												{selectedForInstall.equipment_name}
+											</dd>
+										</div>
+										<div className="flex justify-between">
+											<dt className="text-[#64748B]">Lokasi Pemasangan:</dt>
+											<dd className="text-right font-medium text-[#0F172A]">
+												{selectedForInstall.installation_location} (
+												{selectedForInstall.target_plant})
+											</dd>
+										</div>
+									</dl>
+								</div>
+
+								{/* Tanggal Mulai Dioperasikan / Terpasang */}
+								<div>
+									<label
+										htmlFor="input-installed-date"
+										className="block text-[13px] font-semibold text-[#0F172A]"
+									>
+										Tanggal Mulai Dioperasikan / Terpasang{" "}
+										<span className="text-[#DC2626]">*</span>
+									</label>
+									<p className="mt-0.5 text-[12px] text-[#64748B]">
+										Tanggal fisik peralatan mulai dioperasikan di lokasi plant.
+									</p>
+									<input
+										id="input-installed-date"
+										type="date"
+										required
+										value={installationDate}
+										onChange={(e) => setInstallationDate(e.target.value)}
+										className="mt-1.5 h-9 w-full rounded border border-[#E6E8EA] bg-white px-3 text-[13px] text-[#0F172A] focus:border-[#0A356A] focus:outline-none focus:ring-1 focus:ring-[#0A356A]"
+									/>
+								</div>
+
+								{/* Catatan Kondisi Fisik Saat Diterima (Opsional) */}
+								<div>
+									<label
+										htmlFor="input-physical-notes"
+										className="block text-[13px] font-semibold text-[#0F172A]"
+									>
+										Catatan Kondisi Fisik Saat Diterima{" "}
+										<span className="text-[12px] font-normal text-[#64748B]">
+											(Opsional)
+										</span>
+									</label>
+									<p className="mt-0.5 text-[12px] text-[#64748B]">
+										Keterangan kondisi saat serah terima barang dari gudang / Rendal.
+									</p>
+									<textarea
+										id="input-physical-notes"
+										rows={3}
+										value={physicalNotes}
+										onChange={(e) => setPhysicalNotes(e.target.value)}
+										placeholder="misal: Alat diterima lengkap dari gudang utama dan sudah running test normal"
+										className="mt-1.5 w-full rounded border border-[#E6E8EA] bg-white p-2.5 text-[13px] text-[#0F172A] placeholder:text-[#94A3B8] focus:border-[#0A356A] focus:outline-none focus:ring-1 focus:ring-[#0A356A]"
+									/>
+								</div>
+
+								{/* Unggah Foto Alat Terpasang (Opsional) */}
+								<div>
+									<label className="block text-[13px] font-semibold text-[#0F172A]">
+										Unggah Foto Alat Terpasang{" "}
+										<span className="text-[12px] font-normal text-[#64748B]">
+											(Opsional)
+										</span>
+									</label>
+									<p className="mt-0.5 text-[12px] text-[#64748B]">
+										Dokumentasi foto fisik alat yang sudah terpasang di lokasi plant.
+									</p>
+									<input
+										ref={fileInputRef}
+										type="file"
+										accept="image/png,image/jpeg,image/jpg,image/webp"
+										onChange={handlePhotoSelect}
+										className="hidden"
+									/>
+									{photoPreview ? (
+										<div className="mt-2 flex items-center gap-3 rounded border border-[#E6E8EA] p-2.5">
+											{/* eslint-disable-next-line @next/next/no-img-element */}
+											<img
+												src={photoPreview}
+												alt="Pratinjau foto alat terpasang"
+												className="h-16 w-16 rounded border border-[#E6E8EA] object-cover"
+											/>
+											<div className="min-w-0 flex-1">
+												<p className="truncate text-[12px] font-medium text-[#0F172A]">
+													{photoFile?.name || "Foto Alat Terpasang"}
+												</p>
+												<p className="text-[11px] text-[#64748B]">
+													{photoFile
+														? `${(photoFile.size / 1024).toFixed(0)} KB`
+														: "Tersedia"}
+												</p>
+											</div>
+											<button
+												type="button"
+												onClick={handleRemovePhoto}
+												className="text-[12px] font-medium text-[#DC2626] hover:underline"
+											>
+												Hapus
+											</button>
+										</div>
+									) : (
+										<button
+											type="button"
+											onClick={() => fileInputRef.current?.click()}
+											className="mt-1.5 flex w-full items-center justify-center gap-2 rounded border border-dashed border-[#CBD5E1] bg-[#F8FAFC] py-4 text-[13px] font-medium text-[#475569] transition-colors duration-150 hover:bg-[#F1F5F9] hover:text-[#0A356A]"
+										>
+											<Upload className="h-4 w-4" aria-hidden="true" />
+											Pilih Foto Fisik Alat (PNG / JPG, maks. 25MB)
+										</button>
+									)}
+								</div>
+							</div>
+
+							{/* Footer */}
+							<div className="flex items-center justify-end gap-2.5 border-t border-[#E6E8EA] bg-[#F8FAFC] px-5 py-3">
+								<button
+									type="button"
+									disabled={isSubmittingInstall}
+									onClick={() => setIsInstallModalOpen(false)}
+									className={buttonVariants({ variant: "brandOutline" })}
+								>
+									Batal
+								</button>
+								<button
+									type="submit"
+									disabled={isSubmittingInstall}
+									className="inline-flex h-9 items-center gap-2 rounded bg-[#0A356A] px-4 text-[13px] font-semibold text-white transition-colors duration-150 hover:bg-[#0556B3] disabled:cursor-not-allowed disabled:opacity-50"
+								>
+									{isSubmittingInstall ? (
+										<>
+											<Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
+											Menyimpan...
+										</>
+									) : (
+										<>
+											<CheckCircle className="h-4 w-4" aria-hidden="true" />
+											Konfirmasi & Aktifkan Aset (REUSED)
+										</>
+									)}
+								</button>
+							</div>
+						</form>
 					</div>
 				</div>
 			)}

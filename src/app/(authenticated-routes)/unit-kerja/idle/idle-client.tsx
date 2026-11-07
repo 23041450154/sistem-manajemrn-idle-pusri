@@ -8,6 +8,12 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { createReuseRequest, getAttachmentsByEquipmentId } from "@/action/api";
 import { statusBadgeStyle, statusText } from "@/lib/equipment-status";
+import SupportingDocumentUpload from "@/components/SupportingDocumentUpload";
+import {
+  saveSupportingDocument,
+  readFileAsDataUrl,
+  type SupportingDocumentMeta,
+} from "@/lib/reuse-documents";
 import {
   Search,
   Eye,
@@ -113,6 +119,7 @@ export default function UnitKerjaIdleClient({
     type: "success" | "error";
     message: string;
   } | null>(null);
+  const [supportingDocumentFile, setSupportingDocumentFile] = useState<File | null>(null);
 
   // Attachment States
   const [attachments, setAttachments] = useState<any[]>([]);
@@ -173,7 +180,8 @@ export default function UnitKerjaIdleClient({
         search === "" ||
         eq.name.toLowerCase().includes(search.toLowerCase()) ||
         eq.equipment_code.toLowerCase().includes(search.toLowerCase()) ||
-        eq.plant.toLowerCase().includes(search.toLowerCase());
+        eq.plant.toLowerCase().includes(search.toLowerCase()) ||
+        eq.storage_location?.toLowerCase().includes(search.toLowerCase());
 
       const matchPlant =
         selectedPlant === "Semua" || eq.plant === selectedPlant;
@@ -290,6 +298,7 @@ export default function UnitKerjaIdleClient({
   // Handle Form Open
   const handleOpenReuseModal = (item: EquipmentItem) => {
     setReuseModalItem(item);
+    setSupportingDocumentFile(null);
     loadAttachments(item.id);
     const generatedReqNum = `REQ-REUSE/PUSRI/${new Date().getFullYear()}/${Math.floor(1000 + Math.random() * 9000)}`;
     setFormData({
@@ -322,6 +331,26 @@ export default function UnitKerjaIdleClient({
 
     setIsSubmitting(true);
     try {
+      let docMeta: SupportingDocumentMeta | null = null;
+      if (supportingDocumentFile) {
+        try {
+          const dataUrl = await readFileAsDataUrl(supportingDocumentFile);
+          docMeta = {
+            fileName: supportingDocumentFile.name,
+            fileSize: supportingDocumentFile.size,
+            fileType: supportingDocumentFile.type,
+            fileUrl: dataUrl,
+            equipmentId: String(reuseModalItem.id),
+            requestNumber: formData.request_number,
+            uploadedAt: new Date().toISOString(),
+            uploadedBy: currentUser?.name || "Unit Kerja Operasi",
+          };
+          saveSupportingDocument(docMeta);
+        } catch (readErr) {
+          console.warn("Gagal membaca file pendukung:", readErr);
+        }
+      }
+
       const payload = {
         equipment_id: reuseModalItem.id,
         equipmentId: Number(reuseModalItem.id),
@@ -342,10 +371,20 @@ export default function UnitKerjaIdleClient({
         contact_person: formData.contact_person,
         contact_npp: formData.contact_npp,
         contact_phone: formData.contact_phone,
+        documentFile: supportingDocumentFile,
+        documentMeta: docMeta,
       };
 
       const res = await createReuseRequest(payload);
       if (res.success) {
+        if (docMeta) {
+          const newId = res.data?.id || res.data?.ID;
+          const newNum = res.data?.request_number || res.data?.requestNumber || formData.request_number;
+          if (newId) docMeta.requestId = String(newId);
+          if (newNum) docMeta.requestNumber = String(newNum);
+          saveSupportingDocument(docMeta);
+        }
+
         showNotification(
           "success",
           res.message || "Permintaan reuse berhasil dikirim!",
@@ -357,6 +396,7 @@ export default function UnitKerjaIdleClient({
           router.refresh();
         }
         setReuseModalItem(null);
+        setSupportingDocumentFile(null);
       } else {
         showNotification(
           "error",
@@ -685,7 +725,7 @@ export default function UnitKerjaIdleClient({
                         {item.object_type_name}
                       </td>
                       <td className="px-1.5 py-1 text-[10px] text-gray-600 font-medium">
-                        {item.storage_location}
+                        {item.storage_location || "-"}
                       </td>
                       <td className="px-1.5 py-1">
                         {getStatusBadge(item.status_name)}
@@ -836,7 +876,7 @@ export default function UnitKerjaIdleClient({
                           Belum Ada Permintaan Reuse
                         </p>
                         <p className="text-[11px] text-gray-500 mt-1">
-                          Anda belum pernah mengajukan permohonan peminjaman
+                          Anda belum pernah mengajukan permohonan pemakaian
                           peralatan idle.
                         </p>
                       </div>
@@ -1218,7 +1258,7 @@ export default function UnitKerjaIdleClient({
                   </h4>
                   <p className="text-[12px] text-blue-800 mt-1 font-medium">
                     Lengkapi spesifikasi target penggunaan dan justifikasi
-                    peminjaman peralatan berikut.
+                    pemakaian peralatan berikut.
                   </p>
                 </div>
               </div>
@@ -1368,6 +1408,15 @@ export default function UnitKerjaIdleClient({
                         className="w-full bg-white border border-gray-300 rounded-md px-3 py-1.5 text-[13px] outline-none overflow-hidden min-h-[50px] transition-all focus:border-[#0A356A]"
                       />
                     </div>
+                  </div>
+
+                  {/* Row 4: Dokumen Pendukung / Justifikasi Kebutuhan (US-13-FE) */}
+                  <div className="mt-4 pt-3 border-t border-gray-100">
+                    <SupportingDocumentUpload
+                      file={supportingDocumentFile}
+                      onFileChange={setSupportingDocumentFile}
+                      disabled={isSubmitting}
+                    />
                   </div>
                 </form>
               </div>

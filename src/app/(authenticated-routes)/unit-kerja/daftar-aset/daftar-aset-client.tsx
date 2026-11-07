@@ -6,6 +6,12 @@
 import { useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import { getAttachmentsByEquipmentId, createReuseRequest } from "@/action/api";
+import SupportingDocumentUpload from "@/components/SupportingDocumentUpload";
+import {
+	saveSupportingDocument,
+	readFileAsDataUrl,
+	type SupportingDocumentMeta,
+} from "@/lib/reuse-documents";
 import { statusBadgeStyle, statusText } from "@/lib/equipment-status";
 import KatalogClient from "../katalog/katalog-client";
 import { normalizeEquipment } from "../katalog/shared";
@@ -97,6 +103,7 @@ export default function DaftarAsetClient({
 	);
 	// Toaster sukses pengajuan — lalu redirect ke riwayat permintaan.
 	const [successToast, setSuccessToast] = useState<string | null>(null);
+	const [requestDocumentFile, setRequestDocumentFile] = useState<File | null>(null);
 
 	const [requestFormData, setRequestFormData] = useState({
 		requesting_project: "",
@@ -228,6 +235,7 @@ export default function DaftarAsetClient({
 
 	const openRequestModal = async (item: EquipmentItem) => {
 		setRequestModalAsset(item);
+		setRequestDocumentFile(null);
 		setRequestFormData({
 			requesting_project: "",
 			requesting_plant: "",
@@ -281,30 +289,63 @@ export default function DaftarAsetClient({
 		const rawCost = String(
 			requestFormData.estimated_new_purchase_cost || "",
 		).replace(/\D/g, "");
-		const estimatedNewPurchaseCost = rawCost ? Number(rawCost) : 0;
+		const costNumber = rawCost ? Number(rawCost) : undefined;
 
 		setIsSubmittingRequest(true);
 		setRequestErrorMessage(null);
 
 		try {
+			let docMeta: SupportingDocumentMeta | null = null;
+			if (requestDocumentFile) {
+				try {
+					const dataUrl = await readFileAsDataUrl(requestDocumentFile);
+					docMeta = {
+						fileName: requestDocumentFile.name,
+						fileSize: requestDocumentFile.size,
+						fileType: requestDocumentFile.type,
+						fileUrl: dataUrl,
+						equipmentId: String(requestModalAsset.id),
+						uploadedAt: new Date().toISOString(),
+						uploadedBy: "Unit Kerja Operasi",
+					};
+					saveSupportingDocument(docMeta);
+				} catch (fileErr) {
+					console.warn("Gagal membaca berkas dokumen pendukung:", fileErr);
+				}
+			}
+
 			const res = await createReuseRequest({
 				equipment_id: requestModalAsset.id,
 				requestingProject: requestFormData.requesting_project.trim(),
 				requestingPlant: requestFormData.requesting_plant.trim(),
 				installationLocation: requestFormData.installation_location.trim(),
 				reuseDate: requestFormData.reuse_date,
-				estimatedNewPurchaseCost: estimatedNewPurchaseCost,
 				justification: requestFormData.justification.trim(),
 				notes: requestFormData.notes.trim(),
+				documentFile: requestDocumentFile,
+				documentMeta: docMeta,
+				...(costNumber && costNumber > 0
+					? { estimatedNewPurchaseCost: costNumber, estimated_new_purchase_cost: costNumber }
+					: {}),
+				book_value: requestModalAsset.book_value,
 			});
 
 			if (res && res.success) {
+				if (docMeta) {
+					const newId = res.data?.id || res.data?.ID;
+					const newNum = res.data?.request_number || res.data?.requestNumber;
+					if (newId) docMeta.requestId = String(newId);
+					if (newNum) docMeta.requestNumber = String(newNum);
+					saveSupportingDocument(docMeta);
+				}
+
 				if (onRefresh) {
 					await onRefresh();
 				} else {
 					router.refresh();
 				}
 				setRequestModalAsset(null);
+				setRequestDocumentFile(null);
 				if (isDetailOpen) setIsDetailOpen(false);
 				// Toaster sukses, lalu arahkan ke riwayat permintaan.
 				setSuccessToast(
@@ -620,30 +661,27 @@ export default function DaftarAsetClient({
 				</div>
 
 				{/* Table */}
-				<div className="overflow-x-auto lg:overflow-x-hidden">
+				<div className="overflow-x-auto">
 					<table className="w-full text-left border-collapse">
 						<thead className="bg-gray-50/95 backdrop-blur-sm">
 							<tr className="border-b border-gray-300">
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
 									No
 								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left w-[240px] max-w-[280px]">
-									Nama Peralatan
-								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap w-[130px]">
 									Kode Alat
 								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
-									Plant
-								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
-									Func. Location
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left w-[240px] max-w-[280px]">
+									Nama Peralatan
 								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 									Tipe Objek
 								</th>
+								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
+									Plant
+								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left">
-									Lokasi Penyimpanan
+									Lokasi
 								</th>
 								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 									Kondisi
@@ -659,7 +697,7 @@ export default function DaftarAsetClient({
 						<tbody className="bg-white">
 							{paginatedItems.length === 0 ? (
 								<tr>
-									<td colSpan={10} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -684,6 +722,15 @@ export default function DaftarAsetClient({
 										<td className="px-2.5 py-2.5 text-[13px] text-gray-500 font-medium text-center">
 											{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
+										<td className="px-2.5 py-2.5 text-[13px] font-semibold text-[#0A356A] whitespace-nowrap">
+											<button
+												type="button"
+												onClick={() => openDetailModal(asset)}
+												className="hover:underline text-left font-semibold text-[#0A356A] cursor-pointer"
+											>
+												{asset.equipment_code}
+											</button>
+										</td>
 										<td className="px-2.5 py-2.5 text-[13px] font-medium text-gray-900 w-[240px] max-w-[280px]">
 											<button
 												type="button"
@@ -698,23 +745,11 @@ export default function DaftarAsetClient({
 												</span>
 											</button>
 										</td>
-										<td className="px-2.5 py-2.5 text-[13px] font-semibold text-[#0A356A] whitespace-nowrap">
-											<button
-												type="button"
-												onClick={() => openDetailModal(asset)}
-												className="hover:underline text-left font-semibold text-[#0A356A] cursor-pointer"
-											>
-												{asset.equipment_code}
-											</button>
+										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap">
+											{asset.object_type_name}
 										</td>
 										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap">
 											{asset.plant}
-										</td>
-										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap" title={asset.func_loc || "-"}>
-											{asset.func_loc || "-"}
-										</td>
-										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 whitespace-nowrap">
-											{asset.object_type_name}
 										</td>
 										<td className="px-2.5 py-2.5 text-[13px] text-gray-600">
 											{asset.storage_location}
@@ -722,8 +757,8 @@ export default function DaftarAsetClient({
 										<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
 											<span
 												className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${
-													asset.condition_name.toUpperCase().includes("BAIK")
-														? "bg-[#DCFCE7] text-[#16A34A]"
+													asset.condition_name.toUpperCase().includes("BAGUS") || asset.condition_name.toUpperCase().includes("BAIK")
+														? "bg-[#FEF9C3] text-[#CA8A04]"
 														: asset.condition_name.toUpperCase().includes("RUSAK")
 															? "bg-[#FEE2E2] text-[#DC2626]"
 															: "bg-[#FEF3C7] text-[#B45309]"
@@ -1425,8 +1460,8 @@ export default function DaftarAsetClient({
 													htmlFor="req-cost"
 													className="text-[12px] font-medium leading-snug text-[#0F172A]"
 												>
-													Estimasi Harga Unit Baru{" "}
-													<span className="font-normal text-[#64748B]">(opsional)</span>
+													Estimasi Harga Beli Baru{" "}
+													<span className="font-normal text-[#64748B]">(Opsional)</span>
 												</label>
 												<div className="flex items-stretch">
 													<span className="inline-flex items-center px-2.5 bg-[#F2F3F4] border border-r-0 border-[#E6E8EA] rounded-l-lg text-[12px] font-medium text-[#475569]">
@@ -1449,12 +1484,12 @@ export default function DaftarAsetClient({
 																estimated_new_purchase_cost: e.target.value.replace(/\D/g, ""),
 															})
 														}
-														placeholder="0"
+														placeholder="Masukkan estimasi harga jika ada (contoh: 50.000.000)..."
 														className="w-full min-h-10 px-3 py-2 bg-white border border-[#E6E8EA] rounded-r-lg text-[13px] leading-normal text-[#0F172A] tabular-nums placeholder:text-[#64748B] transition-colors duration-150 ease-out hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
 													/>
 												</div>
 												<p className="text-[11px] leading-snug text-[#64748B]">
-													Dipakai untuk menghitung cost avoidance (kosongkan jika belum diketahui).
+													ℹ️ Opsional: Boleh dikosongkan jika belum memiliki referensi harga pasar unit baru.
 												</p>
 											</div>
 										</div>
@@ -1486,6 +1521,16 @@ export default function DaftarAsetClient({
 												className="w-full min-h-10 px-3 py-2 bg-white border border-[#E6E8EA] rounded-lg text-[13px] leading-normal text-[#0F172A] resize-y placeholder:text-[#64748B] transition-colors duration-150 ease-out hover:border-[#64748B] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155]"
 											/>
 										</div>
+
+										{/* Dokumen Pendukung / Justifikasi Kebutuhan (US-13-FE) */}
+										<div className="mt-3">
+											<SupportingDocumentUpload
+												file={requestDocumentFile}
+												onFileChange={setRequestDocumentFile}
+												disabled={isSubmittingRequest}
+											/>
+										</div>
+
 										<div className="flex flex-col gap-1.5 mt-3">
 											<label
 												htmlFor="req-notes"

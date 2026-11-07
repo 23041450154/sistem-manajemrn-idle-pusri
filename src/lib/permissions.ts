@@ -33,7 +33,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   RENDAL_PEMELIHARAAN: [
     PERMS.equipmentRead, PERMS.equipmentCreate, PERMS.equipmentUpdate, PERMS.equipmentDelete,
     PERMS.disposalCreate, PERMS.disposalRevise, PERMS.disposalRead,
-    PERMS.approvalRevalidation, PERMS.reuseRequestRead,
+    PERMS.reuseRequestRead,
   ],
   INSPEKSI_TEKNIK: [
     PERMS.equipmentRead, PERMS.validationCreate, PERMS.validationUpdate, PERMS.revalidationCreate,

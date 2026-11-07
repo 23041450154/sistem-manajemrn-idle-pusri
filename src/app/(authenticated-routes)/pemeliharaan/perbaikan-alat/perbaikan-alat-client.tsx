@@ -142,13 +142,27 @@ const EMPTY_HINT: Record<RepairFlowStatus, string> = {
 	SCRAP: "Belum ada aset yang direkomendasikan scrap.",
 };
 
-function StatusBadge({ status }: { status: RepairFlowStatus }) {
+function StatusBadge({
+	status,
+	short,
+}: {
+	status: RepairFlowStatus;
+	short?: boolean;
+}) {
 	const style = statusBadgeStyle(status);
+	const label = short
+		? status === "REPAIR_COMPLETED"
+			? "Validasi Ulang"
+			: status === "REVALIDATION"
+				? "Approval Manajer"
+				: REPAIR_STATUS_LABEL[status]
+		: REPAIR_STATUS_LABEL[status];
 	return (
 		<span
+			title={REPAIR_STATUS_LABEL[status]}
 			className={`inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap border border-current/20 ${style}`}
 		>
-			{REPAIR_STATUS_LABEL[status]}
+			{label}
 		</span>
 	);
 }
@@ -518,6 +532,9 @@ export default function PerbaikanAlatClient({
 					router.refresh();
 				}
 
+				setActiveTab("REPAIR_COMPLETED");
+				setCurrentPage(1);
+
 				if (sowFiles.length > 0) {
 					if (uploadFailures === 0) {
 						setNotification({
@@ -741,19 +758,19 @@ export default function PerbaikanAlatClient({
 				</div>
 
 				{/* Table */}
-				<div className="w-full overflow-hidden">
-					<table className="w-full table-fixed text-left border-collapse">
+				<div className="w-full overflow-x-auto">
+					<table className="w-full table-fixed min-w-[960px] text-left border-collapse">
 						<colgroup>
 							<col className="w-[3.5%]" />
-							<col className="w-[18%]" />
-							<col className="w-[10%]" />
-							<col className="w-[6%]" />
-							<col className="w-[10.5%]" />
-							<col className="w-[7.5%]" />
-							<col className="w-[10.5%]" />
-							<col className="w-[10%]" />
-							<col className="w-[8.5%]" />
 							<col className="w-[16%]" />
+							<col className="w-[9.5%]" />
+							<col className="w-[5.5%]" />
+							<col className="w-[11%]" />
+							<col className="w-[8%]" />
+							<col className="w-[11.5%]" />
+							<col className="w-[9.5%]" />
+							<col className="w-[10%]" />
+							<col className="w-[15.5%]" />
 						</colgroup>
 						<thead>
 							<tr className="bg-[#F2F3F4] border-b border-[#E6E8EA]">
@@ -772,19 +789,19 @@ export default function PerbaikanAlatClient({
 								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-left truncate">
 									Func. Location
 								</th>
-								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-left truncate">
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-center whitespace-nowrap">
 									Tipe Objek
 								</th>
-								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-left truncate">
-									Lokasi Penyimpanan
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-left whitespace-nowrap" title="Lokasi Penyimpanan">
+									Lokasi Simpan
 								</th>
 								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-center truncate">
 									Kondisi
 								</th>
-								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-center truncate">
-									Tgl Diperbarui
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-center whitespace-nowrap" title="Tanggal Terakhir Diperbarui">
+									Tgl Update
 								</th>
-								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-center truncate">
+								<th className="px-2 py-2.5 text-[11px] font-semibold text-[#475569] uppercase tracking-[0.04em] text-center whitespace-nowrap">
 									Aksi
 								</th>
 							</tr>
@@ -843,7 +860,7 @@ export default function PerbaikanAlatClient({
 												{asset.funcLoc || "-"}
 											</span>
 										</td>
-										<td className="px-2 py-2.5 text-left" title={asset.tipeObjek}>
+										<td className="px-2 py-2.5 text-center" title={asset.tipeObjek}>
 											<span className="block truncate text-[12px] text-[#334155]">
 												{asset.tipeObjek}
 											</span>
@@ -872,7 +889,7 @@ export default function PerbaikanAlatClient({
 											</span>
 										</td>
 										<td className="px-2 py-2.5 text-center tabular-nums" title={asset.terakhirDiperbarui}>
-											<span className="block truncate text-[11.5px] text-[#64748B]">
+											<span className="block whitespace-nowrap text-[11.5px] text-[#64748B]">
 												{asset.terakhirDiperbarui}
 											</span>
 										</td>
@@ -891,14 +908,14 @@ export default function PerbaikanAlatClient({
 													<button
 														type="button"
 														onClick={() => handleOpenModal(asset)}
-														className="inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-[4px] text-[11px] font-semibold text-white bg-[#0A356A] hover:bg-[#0556B3] transition-colors shadow-none whitespace-nowrap"
+														className="inline-flex items-center justify-center gap-1 px-2.5 py-1 rounded-[4px] text-[11px] font-semibold text-white bg-[#0A356A] hover:bg-[#0556B3] transition-colors shadow-none whitespace-nowrap cursor-pointer"
 														title="Catat hasil perbaikan"
 													>
 														<Wrench className="w-3.5 h-3.5" />
 														<span>Perbaiki</span>
 													</button>
 												) : (
-													<StatusBadge status={asset.status} />
+													<StatusBadge status={asset.status} short />
 												)}
 											</div>
 										</td>

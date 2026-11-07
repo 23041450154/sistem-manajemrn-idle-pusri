@@ -65,8 +65,8 @@ export interface InspectionItem {
 interface InspeksiBerkalaClientProps {
 	antrean: Equipment[];
 	riwayat: InspectionItem[];
-	plants?: any[];
-	objectTypes?: any[];
+	plants?: unknown[];
+	objectTypes?: unknown[];
 	onRefresh?: () => Promise<void> | void;
 }
 
@@ -106,7 +106,14 @@ export default function InspeksiBerkalaClient({
 	// Opsi Plant diambil langsung dari database master plants, digabung dengan data antrean & riwayat
 	const plantOptions = useMemo(() => {
 		const dbPlants = (plants || [])
-			.map((p: any) => (typeof p === "string" ? p : p?.name || p?.code || ""))
+			.map((p) => {
+				if (typeof p === "string") return p;
+				if (p && typeof p === "object") {
+					const obj = p as { name?: string; code?: string };
+					return obj.name || obj.code || "";
+				}
+				return "";
+			})
 			.filter((v: string) => v && v !== "-");
 		const itemPlants = [
 			...clusterAntrean.map((e) => (typeof e.plant === "string" ? e.plant : e.plant?.name)),
@@ -118,7 +125,14 @@ export default function InspeksiBerkalaClient({
 	// Opsi Tipe Objek diambil langsung dari database master object types
 	const tipeObjekOptions = useMemo(() => {
 		const dbTypes = (objectTypes || [])
-			.map((t: any) => (typeof t === "string" ? t : t?.name || ""))
+			.map((t) => {
+				if (typeof t === "string") return t;
+				if (t && typeof t === "object") {
+					const obj = t as { name?: string };
+					return obj.name || "";
+				}
+				return "";
+			})
 			.filter((v: string) => v && v !== "-");
 		const itemTypes = [
 			...clusterAntrean.map((e) =>
@@ -146,7 +160,8 @@ export default function InspeksiBerkalaClient({
 			const name = row.name?.toLowerCase() || "";
 			const plant = (typeof row.plant === "string" ? row.plant : row.plant?.name || "").toLowerCase();
 			const funcLoc = (typeof row.func_loc === "object" ? (row.func_loc?.name ?? "") : row.func_loc || "").toLowerCase();
-			return code.includes(query) || name.includes(query) || plant.includes(query) || funcLoc.includes(query);
+			const storageLoc = (row.storage_location?.name || (typeof row.location === "string" ? row.location : row.location?.name) || "").toLowerCase();
+			return code.includes(query) || name.includes(query) || plant.includes(query) || funcLoc.includes(query) || storageLoc.includes(query);
 		});
 
 		if (filterPlant) {
@@ -214,7 +229,8 @@ export default function InspeksiBerkalaClient({
 				const name = row.equipment_name?.toLowerCase() || "";
 				const plant = (row.plant || "").toLowerCase();
 				const funcLoc = (row.func_loc || "").toLowerCase();
-				return code.includes(query) || name.includes(query) || plant.includes(query) || funcLoc.includes(query);
+				const storageLoc = (row.storage_location || "").toLowerCase();
+				return code.includes(query) || name.includes(query) || plant.includes(query) || funcLoc.includes(query) || storageLoc.includes(query);
 			})
 			.sort((a, b) => {
 				const timeA = a.inspection_date ? new Date(a.inspection_date).getTime() : 0;
@@ -432,7 +448,7 @@ export default function InspeksiBerkalaClient({
 				</div>
 
 				{/* Table */}
-				<div className="overflow-x-auto lg:overflow-x-hidden">
+				<div className="overflow-x-auto">
 					<table className="w-full text-left border-collapse">
 						<thead className="bg-[#F2F3F4]">
 							<tr className="border-b border-gray-300">

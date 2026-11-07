@@ -49,7 +49,7 @@ export function repairFlowStatus(equipment: {
 export const REPAIR_STATUS_LABEL: Record<RepairFlowStatus, string> = {
 	REPAIR: "Antrean Perbaikan",
 	REPAIR_COMPLETED: "Menunggu Validasi Ulang",
-	REVALIDATION: "Menunggu Persetujuan Rendal",
+	REVALIDATION: "Menunggu Approval Manajer",
 	READY_TO_USE: "Siap Digunakan",
 	SCRAP: "Rekomendasi Scrap",
 };
@@ -107,9 +107,12 @@ export function statusName(raw?: string | null): string {
 	return STATUS_ALIASES[key] ?? key;
 }
 
-/** Teks badge: nama backend, underscore diganti spasi. Tidak mengganti istilah. */
-export const statusText = (raw?: string | null) =>
-	statusName(raw).replace(/_/g, " ");
+/** Teks badge: nama backend, underscore diganti spasi. Remap DISPOSAL_RECOMMENDED -> SCRAP RECOMMENDED untuk standardisasi istilah BUMN (US-11-FE). */
+export const statusText = (raw?: string | null) => {
+	const name = statusName(raw);
+	if (name === "DISPOSAL_RECOMMENDED") return "SCRAP RECOMMENDED";
+	return name.replace(/_/g, " ");
+};
 
 /**
  * Kelompok status untuk kartu ringkasan/pie dashboard.
@@ -152,6 +155,39 @@ export function statusGroup(equipment: {
 	return STATUS_GROUP[statusName(raw)] ?? null;
 }
 
+export function isPendingStatus(raw?: string | null): boolean {
+	const norm = statusName(raw);
+	return norm === "REGISTERED" || norm === "VALIDATED" || norm === "PROPOSED" || STATUS_GROUP[norm] === "pending";
+}
+
+export function isReadyStatus(raw?: string | null): boolean {
+	const norm = statusName(raw);
+	return norm === "READY_TO_USE" || norm === "READY" || STATUS_GROUP[norm] === "ready";
+}
+
+export function isRepairStatus(raw?: string | null): boolean {
+	const norm = statusName(raw);
+	return (
+		norm === "REPAIR" ||
+		norm === "REPAIR_VENDOR" ||
+		norm === "REPAIR_COMPLETED" ||
+		norm === "REVALIDATION" ||
+		norm === "REJECTED" ||
+		STATUS_GROUP[norm] === "repair"
+	);
+}
+
+export function isScrapStatus(raw?: string | null): boolean {
+	const norm = statusName(raw);
+	return (
+		norm === "SCRAP" ||
+		norm === "DISPOSAL_RECOMMENDED" ||
+		norm === "SCRAP_REQUESTED" ||
+		norm === "SCRAP_REQUEST" ||
+		STATUS_GROUP[norm] === "scrap"
+	);
+}
+
 /**
  * Warna badge per status kanonik — DESIGN.md five-hue system.
  * Transparent fill, 1px border + text in the state hue:
@@ -169,6 +205,8 @@ const STATUS_BADGE_STYLE: Record<string, string> = {
 	READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
 	REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
 	DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+	SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+	"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
 	SCRAP_REQUESTED: "bg-[#FEF3C7] text-[#B45309]",
 	SCRAP_REQUEST: "bg-[#FEF3C7] text-[#B45309]",
 	SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
@@ -243,5 +281,6 @@ export function formatCondition(val: unknown): string {
 		.map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
 		.join(" ");
 }
+
 
 

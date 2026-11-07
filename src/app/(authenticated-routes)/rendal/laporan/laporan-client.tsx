@@ -290,7 +290,7 @@ export default function RendalLaporanClient({
 							<option value="Equipment">Equipment</option>
 							<option value="Inspection">Inspection</option>
 							<option value="Approval">Approval</option>
-							<option value="Disposal">Disposal</option>
+							<option value="Scrap">Scrap</option>
 						</select>
 
 						<select

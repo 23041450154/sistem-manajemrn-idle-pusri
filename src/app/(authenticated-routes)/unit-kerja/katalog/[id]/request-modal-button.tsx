@@ -5,6 +5,12 @@ import { useRouter } from "next/navigation";
 import { Send, X, Loader2, AlertCircle } from "lucide-react";
 import { createReuseRequest } from "@/action/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import SupportingDocumentUpload from "@/components/SupportingDocumentUpload";
+import {
+	saveSupportingDocument,
+	readFileAsDataUrl,
+	type SupportingDocumentMeta,
+} from "@/lib/reuse-documents";
 
 interface KatalogItemMinimal {
 	id: string;
@@ -12,6 +18,8 @@ interface KatalogItemMinimal {
 	name: string;
 	plant: string;
 	objectType: string;
+	state?: string;
+	statusLabel?: string;
 }
 
 export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
@@ -19,6 +27,7 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [isConfirmOpen, setIsConfirmOpen] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [documentFile, setDocumentFile] = useState<File | null>(null);
 	const router = useRouter();
 
 	const today = new Date().toISOString().split("T")[0];
@@ -43,6 +52,7 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 		if (isSubmitting) return;
 		setIsOpen(false);
 		setError(null);
+		setDocumentFile(null);
 	};
 
 	const handleSubmit = async (e?: React.FormEvent) => {
@@ -59,13 +69,8 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 			return;
 		}
 
-		const parsedCost = formData.estimatedNewPurchaseCost
-			? Number(formData.estimatedNewPurchaseCost)
-			: 0;
-		if (isNaN(parsedCost) || parsedCost < 0) {
-			setError("Estimasi harga unit baru tidak valid.");
-			return;
-		}
+		const rawCost = String(formData.estimatedNewPurchaseCost || "").replace(/\D/g, "");
+		const parsedCost = rawCost ? Number(rawCost) : undefined;
 
 		if (!formData.justification.trim()) {
 			setError("Alasan kebutuhan / justifikasi wajib diisi.");
@@ -76,18 +81,51 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 		setError(null);
 
 		try {
+			let docMeta: SupportingDocumentMeta | null = null;
+			if (documentFile) {
+				try {
+					const dataUrl = await readFileAsDataUrl(documentFile);
+					docMeta = {
+						fileName: documentFile.name,
+						fileSize: documentFile.size,
+						fileType: documentFile.type,
+						fileUrl: dataUrl,
+						equipmentId: String(eq.id),
+						uploadedAt: new Date().toISOString(),
+						uploadedBy: "Unit Kerja Operasi",
+					};
+					saveSupportingDocument(docMeta);
+				} catch (fileErr) {
+					console.warn("Gagal membaca berkas dokumen pendukung:", fileErr);
+				}
+			}
+
 			const result = await createReuseRequest({
 				equipment_id: eq.id,
 				requestingProject: formData.requestingPlant,
 				requestingPlant: formData.requestingPlant,
 				installationLocation: formData.installationLocation,
 				reuseDate: formData.reuseDate,
-				estimatedNewPurchaseCost: parsedCost,
 				justification: formData.justification,
+				documentFile,
+				documentMeta: docMeta,
+				...(parsedCost && parsedCost > 0
+					? { estimatedNewPurchaseCost: parsedCost, estimated_new_purchase_cost: parsedCost }
+					: {}),
+				book_value: (eq as any).book_value,
 			});
 
 			if (result && result.success) {
+				if (docMeta) {
+					const newId = result.data?.id || result.data?.ID;
+					const newNum = result.data?.request_number || result.data?.requestNumber;
+					if (newId) docMeta.requestId = String(newId);
+					if (newNum) docMeta.requestNumber = String(newNum);
+					saveSupportingDocument(docMeta);
+				}
+
 				setIsOpen(false);
+				setDocumentFile(null);
 				// Server action sudah revalidateApp() — router.push (basePath-aware)
 				// cukup; reload penuh tidak diperlukan.
 				router.push("/unit-kerja/riwayat-permintaan?submitted=true");
@@ -105,6 +143,15 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 			setIsSubmitting(false);
 		}
 	};
+
+	if (eq.state && eq.state !== "ready") {
+		return (
+			<div className="flex h-11 w-full items-center justify-center gap-2 rounded-[4px] bg-gray-100 px-4 text-[13px] font-semibold text-gray-500 border border-gray-200 cursor-not-allowed">
+				<AlertCircle className="w-4 h-4 text-amber-600" />
+				Belum Bisa Diajukan (Dalam Perbaikan)
+			</div>
+		);
+	}
 
 	return (
 		<>
@@ -219,22 +266,36 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 								</div>
 								<div>
 									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Estimasi Harga Unit Baru (Rp){" "}
-										<span className="font-normal normal-case text-gray-400">(opsional)</span>
+										Estimasi Harga Beli Baru{" "}
+										<span className="font-normal normal-case text-gray-500">(Opsional)</span>
 									</label>
-									<input
-										type="number"
-										value={formData.estimatedNewPurchaseCost}
-										onChange={(e) =>
-											setFormData({
-												...formData,
-												estimatedNewPurchaseCost: e.target.value,
-											})
-										}
-										min={0}
-										placeholder="0"
-										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
-									/>
+									<div className="flex items-stretch">
+										<span className="inline-flex items-center px-2.5 bg-[#F2F3F4] border border-r-0 border-gray-200 rounded-l-lg text-[12px] font-medium text-[#475569]">
+											Rp
+										</span>
+										<input
+											type="text"
+											inputMode="numeric"
+											value={
+												formData.estimatedNewPurchaseCost
+													? Number(
+															String(formData.estimatedNewPurchaseCost).replace(/\D/g, ""),
+														).toLocaleString("id-ID")
+													: ""
+											}
+											onChange={(e) =>
+												setFormData({
+													...formData,
+													estimatedNewPurchaseCost: e.target.value.replace(/\D/g, ""),
+												})
+											}
+											placeholder="Masukkan estimasi harga jika ada (contoh: 50.000.000)..."
+											className="w-full px-3 py-2 text-sm border border-gray-200 rounded-r-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
+										/>
+									</div>
+									<p className="text-[11px] leading-snug text-[#64748B] mt-1">
+										ℹ️ Opsional: Boleh dikosongkan jika belum memiliki referensi harga pasar unit baru.
+									</p>
 								</div>
 							</div>
 
@@ -254,6 +315,13 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 									className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none resize-none"
 								/>
 							</div>
+
+							{/* Dokumen Pendukung / Justifikasi Kebutuhan (US-13-FE) */}
+							<SupportingDocumentUpload
+								file={documentFile}
+								onFileChange={setDocumentFile}
+								disabled={isSubmitting}
+							/>
 
 							{/* Footer Actions */}
 							<div className="pt-3 border-t border-gray-200 flex items-center justify-end gap-2">

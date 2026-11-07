@@ -243,8 +243,51 @@ export default function RendalPerbaikanPage() {
 					continue;
 				}
 
-				// Jika alat sudah memiliki penugasan biaya riil (dari modal Rendal)
-				if (hasSavedCost || hasEqCost || stName === "REPAIR_VENDOR" || stName === "REPAIR_COMPLETED") {
+				const statusId = Number(eq.status_id || eq.status?.id || 0);
+
+				// Filter ketat: status non-perbaikan (PROPOSED, PROPOSAL_REJECTED, REGISTERED, VALIDATED, READY_TO_USE, REUSED, DISPOSAL_RECOMMENDED, SCRAP_REQUESTED, SCRAP)
+				// TIDAK BOLEH masuk ke modul perbaikan sama sekali.
+				const isNonRepairStatus =
+					stName === "PROPOSED" ||
+					stName === "PROPOSAL_REJECTED" ||
+					stName === "REGISTERED" ||
+					stName === "VALIDATED" ||
+					stName === "READY_TO_USE" ||
+					stName === "REUSED" ||
+					stName === "DISPOSAL_RECOMMENDED" ||
+					stName === "SCRAP_REQUESTED" ||
+					stName === "SCRAP" ||
+					statusId === 1 ||
+					statusId === 2 ||
+					statusId === 3 ||
+					statusId === 4 ||
+					statusId === 8 ||
+					statusId === 9 ||
+					statusId === 10 ||
+					statusId === 11 ||
+					statusId === 12;
+
+				if (isNonRepairStatus) {
+					continue;
+				}
+
+				// Hanya proses peralatan yang berada dalam lifecycle perbaikan
+				const isRepairStatus =
+					statusId === 5 ||
+					stName === "REPAIR" ||
+					stName === "DALAM_PERBAIKAN" ||
+					stName === "MAINTENANCE" ||
+					stName === "REPAIR_VENDOR" ||
+					statusId === 6 ||
+					stName === "REPAIR_COMPLETED" ||
+					Boolean(localAssign);
+
+				if (!isRepairStatus) {
+					continue;
+				}
+
+				// Jika alat sudah memiliki penugasan biaya riil (dari modal Rendal) atau statusnya REPAIR_VENDOR / REPAIR_COMPLETED
+				if (hasSavedCost || hasEqCost || stName === "REPAIR_VENDOR" || stName === "REPAIR_COMPLETED" || localAssign) {
 					const actualCost = Number(localAssign?.refurbishmentCost || eq.refurbishment_cost || eq.actual_cost || 0);
 					let pelaksana: "INTERNAL" | "VENDOR" = "INTERNAL";
 					let namaVendor = "";
@@ -300,49 +343,30 @@ export default function RendalPerbaikanPage() {
 					// Masuk ke ANTREAN PERBAIKAN:
 					// HANYA peralatan yang statusnya memang butuh perbaikan (REPAIR, DALAM_PERBAIKAN, MAINTENANCE)
 					// dan BELUM memiliki penugasan / biaya riil.
-					// Aset REGISTERED (masih antre di Inspeksi Teknik) dan VALIDATED/READY_TO_USE (sudah siap pakai) TIDAK masuk ke sini.
-					const isExplicitRepairStatus =
-						stName === "REPAIR" ||
-						stName === "DALAM_PERBAIKAN" ||
-						stName === "MAINTENANCE" ||
-						(stName.includes("REPAIR") && !stName.includes("COMPLETED") && !stName.includes("VENDOR"));
-
-					const isInspectedRepair =
-						stName !== "REGISTERED" &&
-						stName !== "VALIDATED" &&
-						stName !== "READY_TO_USE" &&
-						stName !== "SCRAP" &&
-						stName !== "DISPOSAL_RECOMMENDED" &&
-						(rekomendasi.toLowerCase().includes("perbaikan") || rekomendasi.toLowerCase().includes("overhaul"));
-
-					const isRepairNeeded = isExplicitRepairStatus || isInspectedRepair;
-
-					if (isRepairNeeded) {
-						antrean.push({
-							id: `antrean-${eqId}`,
-							equipmentId: eqId,
-							kodeAlat,
-							namaAlat,
-							plant: plantDisplay,
-							lokasiSimpan,
-							statusAset: statusName(stName),
-							biayaRiil: 0,
-							estimasiBiaya: estimatedCost,
-							selisihBiaya: estimatedCost,
-							persenSelisih: 0,
-							statusAnggaran: "BELUM_DIANGGARKAN",
-							pelaksana: "INTERNAL",
-							namaVendor: "",
-							rekomendasi,
-							workDescription: eq.notes || "",
-							notes: eq.notes || "",
-							history: [],
-							bookValue: Number(eq.book_value || eq.bookValue || 0),
-							originalValue: Number(eq.original_value || eq.originalValue || 0),
-							estimatedReuseValue: Number(eq.estimated_reuse_value || eq.estimatedReuseValue || 0),
-							hasAssignment: false,
-						});
-					}
+					antrean.push({
+						id: `antrean-${eqId}`,
+						equipmentId: eqId,
+						kodeAlat,
+						namaAlat,
+						plant: plantDisplay,
+						lokasiSimpan,
+						statusAset: statusName(stName),
+						biayaRiil: 0,
+						estimasiBiaya: estimatedCost,
+						selisihBiaya: estimatedCost,
+						persenSelisih: 0,
+						statusAnggaran: "BELUM_DIANGGARKAN",
+						pelaksana: "INTERNAL",
+						namaVendor: "",
+						rekomendasi,
+						workDescription: eq.notes || "",
+						notes: eq.notes || "",
+						history: [],
+						bookValue: Number(eq.book_value || eq.bookValue || 0),
+						originalValue: Number(eq.original_value || eq.originalValue || 0),
+						estimatedReuseValue: Number(eq.estimated_reuse_value || eq.estimatedReuseValue || 0),
+						hasAssignment: false,
+					});
 				}
 			}
 

@@ -596,7 +596,7 @@ export default function RendalPerbaikanClient({
 									onClick={() => handleSort("lokasiSimpan")}
 								>
 									<div className="flex items-center justify-center gap-1">
-										<span>Lokasi</span>
+										<span className="truncate" title="Lokasi Penyimpanan">Lokasi Penyimpanan</span>
 										{getSortIcon("lokasiSimpan")}
 									</div>
 								</th>

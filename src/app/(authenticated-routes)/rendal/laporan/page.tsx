@@ -101,7 +101,7 @@ function buildAuditLogs(
 		});
 	});
 
-	// Disposals
+	// Disposals / Scraps
 	disposals.forEach((disp: any) => {
 		logs.push({
 			id: `disp-${disp.id}`,
@@ -109,12 +109,12 @@ function buildAuditLogs(
 			actor: "Rendal Pemeliharaan",
 			actorRole: "Rendal Pemeliharaan",
 			action:
-				disp.status === "DISPOSED" ? "Disposal Disetujui" : "Pengajuan Disposal",
+				disp.status === "DISPOSED" ? "Scrap Disetujui" : "Pengajuan Scrap",
 			actionType: disp.status === "DISPOSED" ? "APPROVE" : "CREATE",
-			module: "Disposal",
+			module: "Scrap",
 			entityCode: disp.equipment_code || "-",
 			entityName: disp.equipment_name || "-",
-			description: `${disp.disposal_number}: ${disp.justification?.slice(0, 80) || "Pengajuan disposal aset"}`,
+			description: `${disp.disposal_number}: ${disp.justification?.slice(0, 80) || "Pengajuan scrap aset"}`,
 			oldValue: "PENDING",
 			newValue: disp.status || "PENDING",
 		});

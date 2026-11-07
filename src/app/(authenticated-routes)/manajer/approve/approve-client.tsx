@@ -163,7 +163,11 @@ export default function ManajerApproveClient({
 		if (selectedAsset && selectedAsset.approvalStatus === "PENDING") {
 			let res: { success: boolean; message?: string };
 			try {
-				res = await startReviewApproval(selectedAsset.id);
+				res = await startReviewApproval(
+					selectedAsset.id,
+					selectedAsset.kind || "validation",
+					selectedAsset.equipmentId,
+				);
 			} catch (err) {
 				res = {
 					success: false,
@@ -210,14 +214,15 @@ export default function ManajerApproveClient({
 			const res = await reviewApproval(
 				selectedAsset.id,
 				"APPROVE",
-				"Disetujui menjadi READY_TO_USE oleh Manajer Rendal",
+				"Disetujui oleh manajer",
 				selectedAsset.kind || "validation",
+				selectedAsset.equipmentId,
 			);
 
 			if (res.success) {
 				setNotification({
 					type: "success",
-					message: `Peralatan ${selectedAsset.kodeAset} berhasil disetujui! Status aset resmi ditetapkan menjadi READY_TO_USE.`,
+					message: "Berhasil menyetujui aset!",
 				});
 				if (onRefresh) {
 					await onRefresh();
@@ -249,6 +254,7 @@ export default function ManajerApproveClient({
 				"REVISION",
 				revisiCatatan,
 				selectedAsset.kind || "validation",
+				selectedAsset.equipmentId,
 			);
 
 			if (res.success) {
@@ -288,11 +294,8 @@ export default function ManajerApproveClient({
 				activeTab === "inbox" ? isAwaitingDecision : !isAwaitingDecision;
 			const matchSearch = query
 				? req.nomorRequest.toLowerCase().includes(query.toLowerCase()) ||
-					req.namaAset.toLowerCase().includes(query.toLowerCase()) ||
 					req.kodeAset.toLowerCase().includes(query.toLowerCase()) ||
-					(req.plant?.name || "").toLowerCase().includes(query.toLowerCase()) ||
-					(req.funcLoc?.name || "").toLowerCase().includes(query.toLowerCase()) ||
-					(req.objectType?.name || "").toLowerCase().includes(query.toLowerCase())
+					req.namaAset.toLowerCase().includes(query.toLowerCase())
 				: true;
 			const matchPlant =
 				plant !== "Semua Plant" ? req.plant?.name === plant : true;
@@ -390,14 +393,9 @@ export default function ManajerApproveClient({
 
 			{/* Header */}
 			<div className="flex items-center justify-between mb-6">
-				<div>
-					<h1 className="text-xl font-bold text-gray-900 tracking-tight">
-						Persetujuan Validasi Peralatan (Wewenang READY_TO_USE)
-					</h1>
-					<p className="text-xs text-gray-500 mt-1">
-						Wewenang manajerial final untuk menyetujui kelayakan peralatan menjadi status READY_TO_USE sehingga ketersediaan aset resmi berada di bawah kendali manajerial.
-					</p>
-				</div>
+				<h1 className="text-xl font-bold text-gray-900 tracking-tight">
+					Pusat Data Aset
+				</h1>
 			</div>
 
 			{/* Table Section */}
@@ -518,23 +516,14 @@ export default function ManajerApproveClient({
 								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
 									No. Registrasi
 								</th>
-								<th className="px-2.5 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider text-left">
-									Nama Peralatan
+								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
+									Kode
 								</th>
-								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">
-									Kode Aset / Tag
+								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider min-w-[120px] whitespace-nowrap text-center">
+									Nama
 								</th>
-								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">
+								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
 									Plant
-								</th>
-								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">
-									Lokasi Penyimpanan
-								</th>
-								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">
-									Functional Location
-								</th>
-								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-left">
-									Tipe Objek
 								</th>
 								<th className="px-2 py-2 text-[11px] font-bold text-gray-500 uppercase tracking-wider whitespace-nowrap text-center">
 									Tanggal
@@ -554,7 +543,7 @@ export default function ManajerApproveClient({
 							{paginatedRequests.length === 0 ? (
 								<tr>
 									<td
-										colSpan={12}
+										colSpan={9}
 										className="px-4 py-8 text-center text-[13px] text-gray-500"
 									>
 										Tidak ada pengajuan validasi.
@@ -569,25 +558,14 @@ export default function ManajerApproveClient({
 										<td className="px-2 py-2 text-[12px] font-bold text-[#0A356A] leading-snug text-center">
 											{req.nomorRequest}
 										</td>
-										<td className="px-2.5 py-2 text-[12px] font-semibold text-gray-800 text-left">
-											<span className="line-clamp-2 block leading-snug" title={req.namaAset}>
-												{req.namaAset}
-											</span>
-										</td>
-										<td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-[#0A356A] text-left">
+										<td className="px-2 py-2 whitespace-nowrap text-[12px] font-bold text-gray-900 text-center">
 											{req.kodeAset}
 										</td>
-										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-left">
+										<td className="px-2 py-2 text-[12px] text-gray-600 font-medium leading-snug text-center">
+											{req.namaAset}
+										</td>
+										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-center">
 											{req.plant?.name ?? "-"}
-										</td>
-										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-left">
-											{req.storage?.name ?? "-"}
-										</td>
-										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-left" title={req.funcLoc?.name ?? "-"}>
-											{req.funcLoc?.name ?? "-"}
-										</td>
-										<td className="px-2 py-2 whitespace-nowrap text-[12px] text-gray-600 font-medium text-left">
-											{req.objectType?.name ?? "-"}
 										</td>
 										<td className="px-2 py-2 text-[11px] text-gray-600 font-medium leading-snug text-center whitespace-nowrap">
 											{req.tanggalPengajuan}
@@ -699,16 +677,6 @@ export default function ManajerApproveClient({
 
 						{/* Modal Body */}
 						<div className="flex-1 overflow-y-auto px-6 py-5 bg-gray-50">
-							{/* Managerial Authority Notice */}
-							<div className="bg-[#EFF6FF] border border-[#BFDBFE] rounded-lg p-3.5 mb-4 flex items-start gap-3">
-								<Shield className="w-5 h-5 text-[#0A356A] shrink-0 mt-0.5" />
-								<div className="text-xs text-[#1E3A8A] leading-relaxed">
-									<span className="font-bold block">Wewenang Final Manajer Rendal</span>
-									Keputusan persetujuan pada tahap ini memegang wewenang final untuk menetapkan status peralatan menjadi{" "}
-									<span className="font-bold text-emerald-700 bg-emerald-50 px-1 py-0.5 rounded border border-emerald-200">READY_TO_USE</span> (Siap Digunakan) agar ketersediaan aset resmi berada di bawah kendali manajerial dan siap dialokasikan.
-								</div>
-							</div>
-
 							{/* Alert Banner Dinamis */}
 							<div
 								className={`border rounded-lg p-3.5 flex items-start gap-3 mb-6 ${
@@ -1181,22 +1149,20 @@ export default function ManajerApproveClient({
 					/>
 
 					<div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-						<div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-							<CheckCircle2 className="w-7 h-7 text-emerald-600" />
+						<div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
+							<CheckCircle2 className="w-7 h-7 text-green-600" />
 						</div>
 
 						<h3 className="text-lg font-bold text-gray-900 mb-2">
-							Konfirmasi Wewenang Final READY_TO_USE
+							Konfirmasi Persetujuan Aset
 						</h3>
 
 						<p className="text-[13px] text-gray-600 mb-6 leading-relaxed">
-							Apakah Anda yakin ingin menyetujui hasil validasi ini? Sebagai{" "}
-							<span className="font-semibold text-gray-900">Manajer Rendal</span>, persetujuan final ini akan menetapkan status peralatan{" "}
-							<span className="font-bold text-gray-900">{selectedAsset.kodeAset}</span> menjadi{" "}
-							<span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-								READY_TO_USE
-							</span>{" "}
-							(Siap Digunakan), sehingga penetapan ketersediaan dan alokasi aset pabrik resmi berada di bawah kendali manajerial.
+							Apakah Anda yakin ingin menyetujui hasil validasi ini? Setelah disetujui,{" "}
+							<span className="font-bold">{selectedAsset.kodeAset}</span> aset akan
+							berubah menjadi{" "}
+							<span className="font-bold text-green-700">READY_TO_USE</span>, proses
+							persetujuan selesai, dan pengajuan tidak lagi muncul pada Inbox Approval.
 						</p>
 
 						<div className="flex items-center gap-3 w-full justify-center">
@@ -1208,9 +1174,9 @@ export default function ManajerApproveClient({
 							</button>
 							<button
 								onClick={handleApprove}
-								className="px-5 py-2.5 bg-[#0556B3] text-white rounded-md text-[13px] font-semibold hover:bg-[#0A356A] transition-colors min-w-[170px]"
+								className="px-5 py-2.5 bg-[#166534] text-white rounded-md text-[13px] font-semibold hover:bg-[#14532d] transition-colors w-[120px]"
 							>
-								Ya, Setujui READY_TO_USE
+								Ya, Setujui
 							</button>
 						</div>
 					</div>

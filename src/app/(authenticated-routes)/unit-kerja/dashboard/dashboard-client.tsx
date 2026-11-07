@@ -105,13 +105,16 @@ export default function UnitKerjaDashboardContent({
 
 	// 2. Data Grafik 2: Status Pengajuan Reuse Unit Kerja (Donut Chart)
 	const { pieData, totalRequests } = useMemo(() => {
+		let installed = 0;
 		let approved = 0;
 		let pending = 0;
 		let rejected = 0;
 
 		reuseRequests.forEach((r) => {
 			const s = r.status.toUpperCase();
-			if (s.includes("APPROV") || s.includes("DISETUJUI")) {
+			if (s.includes("INSTALLED") || s.includes("TERPASANG") || s.includes("SELESAI")) {
+				installed++;
+			} else if (s.includes("APPROV") || s.includes("DISETUJUI")) {
 				approved++;
 			} else if (
 				s.includes("REJECT") ||
@@ -124,9 +127,10 @@ export default function UnitKerjaDashboardContent({
 			}
 		});
 
-		const total = approved + pending + rejected;
+		const total = installed + approved + pending + rejected;
 
 		const data = [
+			{ name: "Terpasang (Selesai)", value: installed, color: "#10B981" },
 			{ name: "Approved for Reuse", value: approved, color: "#059669" },
 			{ name: "Menunggu Review", value: pending, color: "#0556B3" },
 			{ name: "Perlu Revisi / Ditolak", value: rejected, color: "#DC2626" },
@@ -146,7 +150,10 @@ export default function UnitKerjaDashboardContent({
 		const s = status.toUpperCase();
 		let label = "Menunggu Review";
 		let style = "bg-[#FEF3C7] text-[#B45309]";
-		if (s.includes("APPROV") || s.includes("DISETUJUI")) {
+		if (s.includes("INSTALLED") || s.includes("TERPASANG") || s.includes("SELESAI")) {
+			label = "Terpasang (Selesai)";
+			style = "bg-[#DCFCE7] text-[#16A34A]";
+		} else if (s.includes("APPROV") || s.includes("DISETUJUI")) {
 			label = "Approved for Reuse";
 			style = "bg-[#DCFCE7] text-[#16A34A]";
 		} else if (s.includes("REJECT") || s.includes("DITOLAK")) {
@@ -260,7 +267,7 @@ export default function UnitKerjaDashboardContent({
 							</span>
 						</div>
 						<p className="text-[12px] text-[#64748B] mb-4">
-							Visualisasi perbandingan ketersediaan aset siap pakai dan status seluruh pengajuan peminjaman
+							Visualisasi perbandingan ketersediaan aset siap pakai dan status seluruh pengajuan pemakaian
 						</p>
 
 						<div className="border-t border-[#E6E8EA] pt-4">

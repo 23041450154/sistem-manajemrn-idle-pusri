@@ -109,7 +109,7 @@ export default function ManajerDashboardPage() {
 				<div>
 					<h1 className="page-title">Dashboard Manajer Rendal</h1>
 					<p className="page-subtitle">
-						Pusat wewenang manajerial penetapan ketersediaan aset (READY_TO_USE), persetujuan alokasi peminjaman (Approved for Reuse), dan monitoring efisiensi idle equipment.
+						Pusat wewenang manajerial penetapan ketersediaan aset (READY_TO_USE), persetujuan alokasi pemakaian (Approved for Reuse), dan monitoring efisiensi idle equipment.
 					</p>
 				</div>
 				<div className="header-actions">
@@ -121,11 +121,11 @@ export default function ManajerDashboardPage() {
 						Persetujuan Validasi
 					</Link>
 					<Link
-						href="/manajer/peminjaman"
+						href="/manajer/pemakaian"
 						className={buttonVariants({ variant: "brandOutline", size: "lg" })}
 					>
 						<ArrowUpRight className="w-4 h-4" />
-						Persetujuan Peminjaman
+						Persetujuan Pemakaian
 					</Link>
 					<Link
 						href="/manajer/scrap"

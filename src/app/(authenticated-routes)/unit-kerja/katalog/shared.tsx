@@ -14,7 +14,7 @@ export const STATE_STYLE: Record<
   repair: { label: "Dalam perbaikan", badge: "bg-[#FEF3C7] text-[#B45309]" },
   ready: { label: "Siap dipakai ulang", badge: "bg-[#DCFCE7] text-[#16A34A]" },
   rejected: { label: "Tidak layak", badge: "bg-[#FEE2E2] text-[#DC2626]" },
-  disposal: { label: "Disposal", badge: "bg-[#FEF3C7] text-[#B45309]" },
+  disposal: { label: "Scrap", badge: "bg-[#FEF3C7] text-[#B45309]" },
 };
 
 export function formatRupiah(value?: number) {

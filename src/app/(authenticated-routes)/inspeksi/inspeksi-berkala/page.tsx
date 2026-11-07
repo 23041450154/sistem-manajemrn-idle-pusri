@@ -71,6 +71,7 @@ export default function InspeksiAntreanPage() {
 				"Siap Pakai": "BAGUS",
 				"Perbaikan Ringan": "RUSAK_RINGAN",
 				Overhaul: "RUSAK_SEDANG",
+				Scrap: "RUSAK_BERAT",
 				Disposal: "RUSAK_BERAT",
 			};
 

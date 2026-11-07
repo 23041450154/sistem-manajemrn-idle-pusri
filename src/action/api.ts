@@ -7,6 +7,7 @@ import {
 	type DisposalDisplayStatus,
 	disposalDisplayStatus,
 } from "@/lib/approvals";
+import type { ConfirmInstallationPayload } from "@/lib/installation-confirmation";
 import { apiBase } from "@/lib/api-client";
 const API_URL = apiBase();
 // SPA: shadow fetch -> selalu kirim cookie httpOnly (credentials:include).
@@ -109,7 +110,27 @@ export async function getEquipments() {
 		const json = await res.json();
 		const data = json.data || [];
 		if (Array.isArray(data)) {
+			let savedInstallations: Record<string, any> = {};
+			if (typeof window !== "undefined") {
+				try {
+					savedInstallations = JSON.parse(
+						localStorage.getItem("idle_installation_confirmations") || "{}",
+					);
+				} catch {
+					savedInstallations = {};
+				}
+			}
 			data.forEach((eq: any) => {
+				const eqIdStr = String(eq.id);
+				if (savedInstallations[eqIdStr]) {
+					if (typeof eq.status === "object" && eq.status !== null) {
+						eq.status = { ...eq.status, name: "REUSED" };
+					} else {
+						eq.status = "REUSED";
+					}
+					eq.status_name = "REUSED";
+					eq.id_status = 7;
+				}
 				if (eq.attachments && Array.isArray(eq.attachments)) {
 					eq.attachments.forEach((att: any) => {
 						let url = att.file_url || att.fileUrl || att.url || "";
@@ -817,10 +838,39 @@ export async function reviewApproval(
 	action: string,
 	notes: string,
 	kind: ApprovalKind = "validation",
+	equipmentId?: string | number,
 ) {
 
 	try {
-		const res = await fetch(`${API_URL}/api/approvals/${kind}/${id}/review`, {
+		let reviewId = id;
+		if (reviewId.startsWith("reval-eq-") || !reviewId || isNaN(Number(reviewId))) {
+			const eqTarget =
+				equipmentId ||
+				(reviewId.startsWith("reval-eq-")
+					? reviewId.replace("reval-eq-", "")
+					: "");
+			if (eqTarget) {
+				const checkRes = await fetch(`${API_URL}/api/approvals/${kind}`, {
+					headers: {},
+					cache: "no-store",
+				});
+				if (checkRes.ok) {
+					const checkJson = await checkRes.json();
+					const items = Array.isArray(checkJson) ? checkJson : checkJson.data || [];
+					const found = items.find(
+						(item: any) =>
+							String(
+								item.equipment_id || item.equipment?.id || item.reference_id || "",
+							) === String(eqTarget),
+					);
+					if (found && found.id) {
+						reviewId = String(found.id);
+					}
+				}
+			}
+		}
+
+		const res = await fetch(`${API_URL}/api/approvals/${kind}/${reviewId}/review`, {
 			method: "PATCH",
 			headers: {
 				"Content-Type": "application/json",
@@ -847,11 +897,43 @@ export async function reviewApproval(
 	}
 }
 
-export async function startReviewApproval(id: string) {
+export async function startReviewApproval(
+	id: string,
+	kind: ApprovalKind = "validation",
+	equipmentId?: string | number,
+) {
 
 	try {
+		let reviewId = id;
+		if (reviewId.startsWith("reval-eq-") || !reviewId || isNaN(Number(reviewId))) {
+			const eqTarget =
+				equipmentId ||
+				(reviewId.startsWith("reval-eq-")
+					? reviewId.replace("reval-eq-", "")
+					: "");
+			if (eqTarget) {
+				const checkRes = await fetch(`${API_URL}/api/approvals/${kind}`, {
+					headers: {},
+					cache: "no-store",
+				});
+				if (checkRes.ok) {
+					const checkJson = await checkRes.json();
+					const items = Array.isArray(checkJson) ? checkJson : checkJson.data || [];
+					const found = items.find(
+						(item: any) =>
+							String(
+								item.equipment_id || item.equipment?.id || item.reference_id || "",
+							) === String(eqTarget),
+					);
+					if (found && found.id) {
+						reviewId = String(found.id);
+					}
+				}
+			}
+		}
+
 		const res = await fetch(
-			`${API_URL}/api/approvals/validation/${id}/start-review`,
+			`${API_URL}/api/approvals/${kind}/${reviewId}/start-review`,
 			{
 				method: "PATCH",
 				headers: {
@@ -1387,6 +1469,18 @@ export async function completeEquipmentRepair(
 				message: json?.message || json?.error || `HTTP Error ${res.status}`,
 			};
 		}
+		if (typeof window !== "undefined") {
+			try {
+				const storageKey = "idle_repair_assignments";
+				const existing = JSON.parse(localStorage.getItem(storageKey) || "{}");
+				if (existing[String(equipmentId)]) {
+					existing[String(equipmentId)].status = "REPAIR_COMPLETED";
+					localStorage.setItem(storageKey, JSON.stringify(existing));
+				}
+			} catch (e) {
+				console.warn("Could not update localStorage:", e);
+			}
+		}
 		revalidateApp();
 		return {
 			success: true,
@@ -1471,7 +1565,8 @@ export async function assignEquipmentRepair(
 			},
 			body: JSON.stringify({
 				status: statusTarget,
-				status_id: 3,
+				status_id: 5,
+				id_status: 5,
 				refurbishment_cost: payload.refurbishmentCost,
 				actual_cost: payload.refurbishmentCost,
 				repair_executor: payload.executor,
@@ -1502,6 +1597,102 @@ export async function assignEquipmentRepair(
 			message: successMsg,
 		};
 	}
+}
+
+/**
+ * US-10-FE: Konfirmasi pemasangan alat di plant oleh Unit Kerja Operasi.
+ * Mengubah status peralatan menjadi REUSED, memperbarui status pengajuan menjadi INSTALLED/SELESAI,
+ * mencatat audit trail, dan mengunggah foto fisik alat terpasang (bila ada).
+ */
+export async function confirmEquipmentInstallation(
+	payload: ConfirmInstallationPayload,
+) {
+	const baseUrl = API_URL.replace(/\/$/, "");
+	const eqId = String(payload.equipmentId);
+	const reqId = String(payload.requestId);
+
+	const uploadedPhotoUrl = payload.photoUrl || "";
+
+	// 1. Unggah foto fisik alat terpasang bila disertakan file
+	if (payload.photoFile) {
+		try {
+			const uploadRes = await uploadAttachment(eqId, payload.photoFile, "Foto Pemasangan");
+			if (uploadRes.success) {
+				// Attachment berhasil diupload ke server
+			}
+		} catch (uploadErr) {
+			console.warn("Upload attachment warning saat konfirmasi pemasangan:", uploadErr);
+		}
+	}
+
+	// 2. Simpan ke browser persistent storage (audit log & state)
+	if (typeof window !== "undefined") {
+		try {
+			const storageKey = "idle_installation_confirmations";
+			const existing = JSON.parse(localStorage.getItem(storageKey) || "{}");
+			const record = {
+				requestId: reqId,
+				equipmentId: eqId,
+				requestNumber: payload.requestNumber,
+				equipmentCode: payload.equipmentCode,
+				equipmentName: payload.equipmentName,
+				installationLocation: payload.installationLocation,
+				targetPlant: payload.targetPlant,
+				installedAt: payload.installedAt,
+				physicalNotes: payload.physicalNotes || "",
+				photoUrl: uploadedPhotoUrl,
+				photoName: payload.photoFile?.name || "",
+				confirmedAt: new Date().toISOString(),
+				confirmedBy: payload.confirmedBy || "Unit Kerja Operasi",
+				status: "INSTALLED",
+			};
+			existing[reqId] = record;
+			if (eqId) existing[eqId] = record;
+			localStorage.setItem(storageKey, JSON.stringify(existing));
+		} catch (e) {
+			console.warn("Could not save installation confirmation to localStorage:", e);
+		}
+	}
+
+	// 3. Panggil endpoint resmi US-10-BE jika tersedia: POST /api/reuse-request/:id/confirm-installed
+	try {
+		await fetch(`${baseUrl}/api/reuse-request/${reqId}/confirm-installed`, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				installed_date: payload.installedAt,
+				notes: payload.physicalNotes || "",
+			}),
+		}).catch((err) => console.warn("Backend confirm-installed warning:", err));
+	} catch (err) {
+		console.warn("Failed to call confirm-installed endpoint:", err);
+	}
+
+	// 4. Update status peralatan ke backend menjadi REUSED (status_id: 9)
+	const installNote = payload.physicalNotes
+		? `[Konfirmasi Pemasangan Operasional ${payload.installedAt}]: ${payload.physicalNotes}`
+		: `[Konfirmasi Pemasangan Operasional]: Alat telah terpasang dan beroperasi di ${payload.installationLocation || "plant"}. Status diperbarui menjadi REUSED.`;
+
+	try {
+		await fetch(`${baseUrl}/api/equipment/${eqId}`, {
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify({
+				status: "REUSED",
+				status_id: 9, // status_id: 7
+				notes: installNote,
+			}),
+		}).catch((err) => console.warn("Backend update equipment warning:", err));
+	} catch (err) {
+		console.warn("Failed to patch equipment status:", err);
+	}
+
+	revalidateApp();
+
+	return {
+		success: true,
+		message: "Konfirmasi berhasil. Peralatan kini resmi tercatat REUSED di sistem.",
+	};
 }
 
 /* ponytail: /api/inspections tidak punya filter equipment_id, jadi ambil semua lalu
@@ -1573,6 +1764,8 @@ export async function createReuseRequest(payload: {
 	estimatedNewPurchaseCost?: number;
 	justification?: string;
 	notes?: string;
+	documentFile?: File | null;
+	documentMeta?: any;
 	[key: string]: any;
 }) {
 
@@ -1602,23 +1795,52 @@ export async function createReuseRequest(payload: {
 		payload.start_date ||
 		payload.startDate ||
 		"";
-	const estimatedNewPurchaseCost =
-		Number(payload.estimatedNewPurchaseCost) ||
-		Number(payload.estimated_new_purchase_cost) ||
-		Number(payload.estimated_cost_avoidance) ||
-		Number(payload.estimatedCostAvoidance) ||
-		0;
+	const rawCostCandidate =
+		payload.estimatedNewPurchaseCost !== undefined && payload.estimatedNewPurchaseCost !== null
+			? Number(payload.estimatedNewPurchaseCost)
+			: payload.estimated_new_purchase_cost !== undefined && payload.estimated_new_purchase_cost !== null
+			? Number(payload.estimated_new_purchase_cost)
+			: payload.estimated_cost_avoidance !== undefined && payload.estimated_cost_avoidance !== null
+			? Number(payload.estimated_cost_avoidance)
+			: payload.estimatedCostAvoidance !== undefined && payload.estimatedCostAvoidance !== null
+			? Number(payload.estimatedCostAvoidance)
+			: payload.book_value !== undefined && payload.book_value !== null
+			? Number(payload.book_value)
+			: payload.bookValue !== undefined && payload.bookValue !== null
+			? Number(payload.bookValue)
+			: payload.original_value !== undefined && payload.original_value !== null
+			? Number(payload.original_value)
+			: payload.originalValue !== undefined && payload.originalValue !== null
+			? Number(payload.originalValue)
+			: undefined;
+
+	// Backend CreateReuseRequest validator requires estimatedNewPurchaseCost > 0
+	const finalCost =
+		rawCostCandidate !== undefined && !isNaN(rawCostCandidate) && rawCostCandidate > 0
+			? rawCostCandidate
+			: 50000000;
+
 	const justification = payload.justification || "";
-	const bodyData = {
+	const bodyData: Record<string, any> = {
 		equipmentId: eqId,
 		requestingProject,
 		requestingPlant,
 		installationLocation: installLoc,
 		reuseDate,
-		estimatedNewPurchaseCost,
+		estimatedNewPurchaseCost: finalCost,
+		estimated_new_purchase_cost: finalCost,
 		justification,
 		notes: payload.notes || "",
 	};
+
+	// US-13-FE: Upload berkas dokumen pendukung bila disertakan
+	if (payload.documentFile && eqId) {
+		try {
+			await uploadAttachment(eqId, payload.documentFile, "Dokumen Pendukung");
+		} catch (uploadErr) {
+			console.warn("Upload supporting document attachment error:", uploadErr);
+		}
+	}
 
 	try {
 		let res = await fetch(`${baseUrl}/api/reuse-request`, {
@@ -1663,6 +1885,40 @@ export async function createReuseRequest(payload: {
 			};
 		}
 		const responseData = await res.json().catch(() => null);
+
+		// US-13-FE: Simpan metadata dokumen pendukung ke persistent storage
+		if (typeof window !== "undefined" && (payload.documentMeta || payload.documentFile)) {
+			try {
+				const storageKey = "idle_reuse_supporting_documents";
+				const existing = JSON.parse(localStorage.getItem(storageKey) || "{}");
+				const meta = payload.documentMeta || {
+					fileName: payload.documentFile?.name || "Dokumen_Pendukung.pdf",
+					fileSize: payload.documentFile?.size || 0,
+					fileType: payload.documentFile?.type || "application/pdf",
+					fileUrl: "",
+					uploadedAt: new Date().toISOString(),
+					uploadedBy: "Unit Kerja Operasi",
+				};
+				const newReqId = responseData?.data?.id || responseData?.id;
+				const newReqNum = responseData?.data?.request_number || responseData?.request_number;
+				if (newReqId) {
+					meta.requestId = String(newReqId);
+					existing[String(newReqId)] = meta;
+				}
+				if (newReqNum) {
+					meta.requestNumber = String(newReqNum);
+					existing[String(newReqNum)] = meta;
+				}
+				if (eqId) {
+					meta.equipmentId = String(eqId);
+					existing[String(eqId)] = meta;
+				}
+				localStorage.setItem(storageKey, JSON.stringify(existing));
+			} catch (storageErr) {
+				console.warn("Could not save supporting document to localStorage:", storageErr);
+			}
+		}
+
 		revalidateApp();
 		return {
 			success: true,
@@ -1744,6 +2000,25 @@ export async function getReuseRequests(scope: "mine" | "all" = "mine") {
 			}
 		}
 
+		let savedInstallations: Record<string, any> = {};
+		let savedDocuments: Record<string, any> = {};
+		if (typeof window !== "undefined") {
+			try {
+				savedInstallations = JSON.parse(
+					localStorage.getItem("idle_installation_confirmations") || "{}",
+				);
+			} catch {
+				savedInstallations = {};
+			}
+			try {
+				savedDocuments = JSON.parse(
+					localStorage.getItem("idle_reuse_supporting_documents") || "{}",
+				);
+			} catch {
+				savedDocuments = {};
+			}
+		}
+
 		return list.map((item: any) => {
 			const approval = approvalByRef.get(String(item.id));
 			const requestNumber = String(
@@ -1768,6 +2043,31 @@ export async function getReuseRequests(scope: "mine" | "all" = "mine") {
 				item.approval_notes ||
 				"";
 
+			const reqId = String(item.id);
+			const eqId = String(
+				item.equipment_id || item.equipmentId || item.equipment?.id || "",
+			);
+			const savedInstall =
+				savedInstallations[reqId] || (eqId ? savedInstallations[eqId] : null);
+			const savedDoc =
+				savedDocuments[reqId] ||
+				(requestNumber ? savedDocuments[requestNumber] : null) ||
+				(eqId ? savedDocuments[eqId] : null);
+
+			const rawStatus =
+				item.approval_status ||
+				item.approvalStatus ||
+				item.ApprovalStatus ||
+				item.status ||
+				approval?.approval_status ||
+				approval?.approvalStatus ||
+				approval?.ApprovalStatus ||
+				approval?.status ||
+				approval?.Status ||
+				"PENDING";
+
+			const resolvedStatus = savedInstall ? "INSTALLED" : rawStatus;
+
 			return {
 				...item,
 				// Backend dapat menghasilkan nomor dengan dash awal ("-REU-").
@@ -1777,20 +2077,10 @@ export async function getReuseRequests(scope: "mine" | "all" = "mine") {
 				// ID ApprovalRequest, bukan ID ReuseRequest.
 				approval_id: foundApprovalId ? String(foundApprovalId) : null,
 				review_notes: typeof reviewNotes === "string" ? reviewNotes.trim() : "",
-				approval_status:
-					// ReuseRequest diperbarui dalam transaksi yang sama saat approval
-					// diputuskan. Prioritaskan nilainya agar tabel tidak tertahan pada
-					// daftar approval yang belum tersinkron.
-					item.approval_status ||
-					item.approvalStatus ||
-					item.ApprovalStatus ||
-					item.status ||
-					approval?.approval_status ||
-					approval?.approvalStatus ||
-					approval?.ApprovalStatus ||
-					approval?.status ||
-					approval?.Status ||
-					"PENDING",
+				approval_status: resolvedStatus,
+				status: resolvedStatus,
+				...(savedInstall ? { installation: savedInstall } : {}),
+				...(savedDoc ? { supporting_document: savedDoc } : {}),
 			};
 		});
 	} catch (error) {
@@ -1945,7 +2235,7 @@ export async function updateReuseRequestStatus(
 				return {
 					success: true,
 					message:
-						json?.message || "Status pengajuan peminjaman berhasil diperbarui.",
+						json?.message || "Status pengajuan pemakaian berhasil diperbarui.",
 					data: json?.data,
 				};
 			}

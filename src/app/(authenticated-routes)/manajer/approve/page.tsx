@@ -6,7 +6,7 @@ import { useAuth } from "@/components/AuthProvider";
 import { statusName } from "@/lib/equipment-status";
 import ManajerApproveClient, { type RequestAsset } from "./approve-client";
 
-/* ponytail: payload API legacy tetap untyped sampai backend mengekspor DTO bersama. */
+/* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
 // Label fallback bila backend belum mengirim status_label.
@@ -28,9 +28,8 @@ export default function ManajerApprovePage() {
 	const currentUserNPP = user?.npp || "";
 
 	const loadData = useCallback(async () => {
-		const [valData, revalData, equipmentsData, plantsData] = await Promise.all([
-			getApprovals("validation").catch(() => []),
-			getApprovals("revalidation").catch(() => []),
+		const [approvalsData, equipmentsData, plantsData] = await Promise.all([
+			getApprovals().catch(() => []),
 			getEquipments().catch(() => []),
 			getPlants().catch(() => []),
 		]);
@@ -45,17 +44,9 @@ export default function ManajerApprovePage() {
 			});
 		}
 
-		const valList = (Array.isArray(valData) ? valData : []).map((x: any) => ({
-			...x,
-			approval_kind: "validation" as const,
-		}));
-		const revalList = (Array.isArray(revalData) ? revalData : []).map((x: any) => ({
-			...x,
-			approval_kind: "revalidation" as const,
-		}));
-		const combinedApprovals = [...valList, ...revalList];
-
-		const mapped: RequestAsset[] = combinedApprovals.map((item: any): RequestAsset => {
+		const mapped: RequestAsset[] = (
+			Array.isArray(approvalsData) ? approvalsData : []
+		).map((item: any): RequestAsset => {
 			const equipmentId = item.equipment_id || item.equipment?.id;
 			const eq = equipmentMap.get(Number(equipmentId)) || item.equipment;
 			let approvalStatus = item.approval_status;
@@ -78,8 +69,7 @@ export default function ManajerApprovePage() {
 			return {
 				id: item.id.toString(),
 				equipmentId: equipmentId?.toString() || "",
-				kind: item.approval_kind || (item.request_type === "REVALIDATION" ? "revalidation" : "validation"),
-				nomorRequest: item.request_number || (item.request_type === "REVALIDATION" ? `REV-${item.id}` : `VAL-${item.id}`),
+				nomorRequest: item.request_number || `VAL-${item.id}`,
 				kodeAset: item.equipment_code || eq?.equipment_code || "-",
 				objectType: item.object_type ?? eq?.object_type ?? null,
 				namaAset: item.equipment_name || eq?.name || "-",

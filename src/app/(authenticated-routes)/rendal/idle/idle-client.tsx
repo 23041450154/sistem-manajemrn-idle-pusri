@@ -3,18 +3,20 @@
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
 	type RepairAuditLogEntry,
 } from "@/lib/repair-assignment";
 import {
 	type EquipmentStatus,
-	EQUIPMENT_STATUS,
-	statusText,
 	statusName,
 	rupiah as formatRupiah,
+	isPendingStatus,
+	isReadyStatus,
+	isRepairStatus,
+	isScrapStatus,
 } from "@/lib/equipment-status";
 import {
 	Search,
@@ -30,6 +32,8 @@ import {
 	Wrench,
 	CheckCircle2,
 	Clock,
+	Check,
+	Server,
 } from "lucide-react";
 
 export type AssetState = EquipmentStatus | "REJECTED" | "REPAIR_VENDOR";
@@ -84,12 +88,22 @@ export default function RendalIdleClient({
 	onRefresh,
 }: RendalIdleClientProps) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+
+	// Inisialisasi statusFilter dari URL query param (?status=...) jika tersedia
+	const urlStatus = searchParams?.get("status") || "Semua";
+	const [prevUrlStatus, setPrevUrlStatus] = useState(urlStatus);
+	const [statusFilter, setStatusFilter] = useState<string>(urlStatus);
+
+	if (prevUrlStatus !== urlStatus) {
+		setPrevUrlStatus(urlStatus);
+		setStatusFilter(urlStatus);
+	}
 
 	// States untuk Filter & Pagination
 	const [search, setSearch] = useState("");
 	const [searchInput, setSearchInput] = useState("");
 	const [plantFilter, setPlantFilter] = useState("Semua");
-	const [statusFilter, setStatusFilter] = useState("Semua");
 	const [currentPage, setCurrentPage] = useState(1);
 	const [sortConfig, setSortConfig] = useState<{
 		key: keyof Equipment;
@@ -113,6 +127,156 @@ export default function RendalIdleClient({
 		message: string;
 	} | null>(null);
 
+	// Fungsi update statusFilter sekaligus menyinkronkan URL query param (AC 4)
+	const updateStatusFilter = useCallback(
+		(newStatus: string) => {
+			setStatusFilter(newStatus);
+			if (typeof window !== "undefined") {
+				const url = new URL(window.location.href);
+				if (newStatus && newStatus !== "Semua" && newStatus !== "ALL") {
+					url.searchParams.set("status", newStatus);
+				} else {
+					url.searchParams.delete("status");
+				}
+				window.history.replaceState(null, "", url.toString());
+			}
+		},
+		[],
+	);
+
+	// Perhitungan counter metrik kartu ringkasan status (AC 2 & AC 3)
+	const statusCounts = useMemo(() => {
+		let pending = 0;
+		let ready = 0;
+		let repair = 0;
+		let scrap = 0;
+
+		equipments.forEach((item) => {
+			if (isReadyStatus(item.statusAset)) {
+				ready++;
+			} else if (isRepairStatus(item.statusAset)) {
+				repair++;
+			} else if (isScrapStatus(item.statusAset)) {
+				scrap++;
+			} else {
+				pending++;
+			}
+		});
+
+		return {
+			total: equipments.length,
+			pending,
+			ready,
+			repair,
+			scrap,
+		};
+	}, [equipments]);
+
+	// Penentuan kondisi aktif kartu ringkasan
+	const isAllActive =
+		statusFilter === "Semua" || statusFilter === "ALL" || !statusFilter;
+	const isPendingActive =
+		!isAllActive &&
+		(statusFilter === "REGISTERED" ||
+			statusFilter === "VALIDATED" ||
+			statusFilter === "MENUNGGU_VALIDASI");
+	const isReadyActive =
+		!isAllActive &&
+		(statusFilter === "READY_TO_USE" ||
+			statusFilter === "READY TO USE" ||
+			statusFilter === "SIAP DIGUNAKAN");
+	const isRepairActive =
+		!isAllActive &&
+		(statusFilter === "REPAIR" ||
+			statusFilter === "REPAIR_VENDOR" ||
+			statusFilter === "REPAIR_COMPLETED" ||
+			statusFilter === "REVALIDATION" ||
+			statusFilter === "DALAM_PERBAIKAN");
+	const isScrapActive =
+		!isAllActive &&
+		(statusFilter === "SCRAP" ||
+			statusFilter === "DISPOSAL_RECOMMENDED" ||
+			statusFilter === "SCRAP_RECOMMENDED" ||
+			statusFilter === "SCRAP_RECOMENDED");
+
+	// Toggle handler untuk kartu filter (AC 3)
+	const handleCardClick = (targetStatus: string) => {
+		let nextStatus = targetStatus;
+		if (targetStatus === "Semua" || targetStatus === "ALL") {
+			nextStatus = "Semua";
+		} else if (
+			(targetStatus === "READY_TO_USE" && isReadyActive) ||
+			(targetStatus === "REPAIR" && isRepairActive) ||
+			(targetStatus === "SCRAP" && isScrapActive) ||
+			(targetStatus === "REGISTERED" && isPendingActive) ||
+			statusFilter === targetStatus
+		) {
+			// Toggle off jika diklik ulang -> kembali ke Semua Aset
+			nextStatus = "Semua";
+		}
+
+		updateStatusFilter(nextStatus);
+	};
+
+	// Definisi Kartu Ringkasan Status / Counters (AC 1, AC 2, AC 3)
+	const summaryCards = [
+		{
+			key: "Semua",
+			label: "Semua Aset",
+			count: statusCounts.total,
+			caption: "Total inventaris tercatat",
+			rule: "#334155",
+			icon: Server,
+			isActive: isAllActive,
+			activeBg: "bg-slate-50 border-slate-300 ring-slate-600",
+			badgeColor: "bg-slate-100 text-slate-700 border-slate-300",
+		},
+		{
+			key: "REGISTERED",
+			label: "Menunggu Validasi",
+			count: statusCounts.pending,
+			caption: "Baru masuk / antrean inspeksi",
+			rule: "#0556B3",
+			icon: Clock,
+			isActive: isPendingActive,
+			activeBg: "bg-blue-50/70 border-blue-300 ring-[#0556B3]",
+			badgeColor: "bg-blue-100 text-[#0556B3] border-blue-200",
+		},
+		{
+			key: "READY_TO_USE",
+			label: "Siap Digunakan",
+			count: statusCounts.ready,
+			caption: "Layak & tervalidasi di pool",
+			rule: "#059669",
+			icon: CheckCircle2,
+			isActive: isReadyActive,
+			activeBg: "bg-emerald-50/70 border-emerald-300 ring-[#059669]",
+			badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
+		},
+		{
+			key: "REPAIR",
+			label: "Dalam Perbaikan",
+			count: statusCounts.repair,
+			caption: "Servis aktif / internal / vendor",
+			rule: "#B45309",
+			icon: Wrench,
+			isActive: isRepairActive,
+			activeBg: "bg-amber-50/70 border-amber-300 ring-[#B45309]",
+			badgeColor: "bg-amber-100 text-[#B45309] border-amber-200",
+		},
+		{
+			key: "SCRAP",
+			label: "Rekomendasi Scrap",
+			count: statusCounts.scrap,
+			caption: "Rusak berat / usulan afkir",
+			rule: "#DC2626",
+			icon: AlertCircle,
+			isActive: isScrapActive,
+			activeBg: "bg-red-50/70 border-red-300 ring-[#DC2626]",
+			badgeColor: "bg-red-100 text-red-700 border-red-200",
+		},
+	];
+
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect -- reset paginasi saat filter berubah
 		setCurrentPage(1);
@@ -133,7 +297,7 @@ export default function RendalIdleClient({
 		setSearch("");
 		setSearchInput("");
 		setPlantFilter("Semua");
-		setStatusFilter("Semua");
+		updateStatusFilter("Semua");
 		setCurrentPage(1);
 		setSortConfig(null);
 	};
@@ -150,10 +314,33 @@ export default function RendalIdleClient({
 				item.funcLoc?.toLowerCase().includes(query) ||
 				item.storageLocation?.toLowerCase().includes(query);
 			const matchPlant = plantFilter === "Semua" || item.plant === plantFilter;
-			const matchStatus =
-				statusFilter === "Semua" ||
-				item.statusAset === statusFilter ||
-				statusName(item.statusAset) === statusName(statusFilter);
+
+			let matchStatus = true;
+			if (statusFilter !== "Semua" && statusFilter !== "ALL" && statusFilter) {
+				const filterNorm = statusName(statusFilter);
+				if (filterNorm === "READY_TO_USE") {
+					matchStatus = isReadyStatus(item.statusAset);
+				} else if (filterNorm === "REPAIR") {
+					matchStatus = isRepairStatus(item.statusAset);
+				} else if (
+					filterNorm === "SCRAP" ||
+					filterNorm === "DISPOSAL_RECOMMENDED"
+				) {
+					matchStatus = isScrapStatus(item.statusAset);
+				} else if (
+					filterNorm === "REGISTERED" ||
+					filterNorm === "VALIDATED"
+				) {
+					matchStatus = isPendingStatus(item.statusAset);
+				} else {
+					const norm = statusName(item.statusAset);
+					matchStatus =
+						norm === filterNorm ||
+						item.statusAset === statusFilter ||
+						statusName(item.statusAset) === statusName(statusFilter);
+				}
+			}
+
 			return matchSearch && matchPlant && matchStatus;
 		});
 
@@ -275,9 +462,10 @@ export default function RendalIdleClient({
 			status === "DISPOSAL_RECOMMENDED" ||
 			displayStatus === "DISPOSAL RECOMMENDED" ||
 			displayStatus === "DISPOSAL RECOMENDED" ||
+			displayStatus === "SCRAP RECOMENDED" ||
 			displayStatus === "SCRAP RECOMMENDED"
 		) {
-			displayStatus = "SCRAP RECOMENDED";
+			displayStatus = "SCRAP RECOMMENDED";
 		}
 
 		const style = styles[displayStatus] || styles[status] || styles.SCRAP;
@@ -362,6 +550,67 @@ export default function RendalIdleClient({
 				</div>
 			</div>
 
+			{/* Status Summary Cards (Interactive Quick Filter Shortcuts - US-12-FE) */}
+			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-4">
+				{summaryCards.map((card) => {
+					const Icon = card.icon;
+					return (
+						<div
+							key={card.key}
+							role="button"
+							tabIndex={0}
+							aria-pressed={card.isActive}
+							aria-label={`Filter status: ${card.label}, ${card.count} peralatan`}
+							onClick={() => handleCardClick(card.key)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault();
+									handleCardClick(card.key);
+								}
+							}}
+							className={`relative rounded-lg border p-3.5 flex flex-col justify-between cursor-pointer select-none transition-all duration-200 border-l-[3px] ${
+								card.isActive
+									? `${card.activeBg} ring-2 ring-offset-1 shadow-sm`
+									: "bg-white border-[#E6E8EA] hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5"
+							}`}
+							style={{ borderLeftColor: card.rule }}
+						>
+							<div className="flex items-start justify-between gap-2">
+								<div className="min-w-0">
+									<p className="text-[12px] font-semibold text-gray-600 truncate">
+										{card.label}
+									</p>
+								</div>
+								<div className="flex items-center gap-1.5 shrink-0">
+									{card.isActive && card.key !== "Semua" && (
+										<span
+											className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold border ${card.badgeColor}`}
+										>
+											<Check className="w-2.5 h-2.5 stroke-[3]" />
+											Aktif
+										</span>
+									)}
+									<Icon
+										className="w-4 h-4"
+										style={{ color: card.rule }}
+										aria-hidden="true"
+									/>
+								</div>
+							</div>
+
+							<div className="mt-2.5">
+								<p className="text-[26px] leading-none font-bold text-[#0F172A] tabular-nums tracking-[-0.02em]">
+									{card.count}
+								</p>
+								<p className="text-[11px] text-gray-500 mt-1 truncate">
+									{card.caption}
+								</p>
+							</div>
+						</div>
+					);
+				})}
+			</div>
+
 			{/* Notification Banner */}
 			{filteredData.length > 0 && (
 				<div className="mb-4 flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
@@ -371,11 +620,35 @@ export default function RendalIdleClient({
 							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
 						</span>
 						<span className="text-[13px] text-blue-800 font-medium">
-							Terdapat{" "}
-							<strong className="font-bold">{filteredData.length} aset</strong>{" "}
-							terdaftar di sistem.
+							{statusFilter && statusFilter !== "Semua" && statusFilter !== "ALL" ? (
+								<>
+									Menampilkan{" "}
+									<strong className="font-bold">{filteredData.length} aset</strong>{" "}
+									dengan status{" "}
+									<strong className="font-bold">
+										{summaryCards.find((c) => c.key === statusFilter)?.label || statusFilter}
+									</strong>
+									.
+								</>
+							) : (
+								<>
+									Terdapat{" "}
+									<strong className="font-bold">{filteredData.length} aset</strong>{" "}
+									terdaftar di sistem.
+								</>
+							)}
 						</span>
 					</div>
+					{statusFilter && statusFilter !== "Semua" && statusFilter !== "ALL" && (
+						<button
+							type="button"
+							onClick={() => handleCardClick(statusFilter)}
+							className="text-[12px] font-semibold text-[#0A356A] hover:underline flex items-center gap-1"
+						>
+							<X className="w-3.5 h-3.5" />
+							<span>Hapus Filter</span>
+						</button>
+					)}
 				</div>
 			)}
 
@@ -425,18 +698,33 @@ export default function RendalIdleClient({
 						</select>
 
 						<select
-							value={statusFilter}
-							onChange={(e) => setStatusFilter(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
+							value={
+								isAllActive
+									? "Semua"
+									: isReadyActive
+										? "READY_TO_USE"
+										: isRepairActive && statusFilter === "REPAIR"
+											? "REPAIR"
+											: isScrapActive && statusFilter === "SCRAP"
+												? "SCRAP"
+												: isPendingActive && statusFilter === "REGISTERED"
+													? "REGISTERED"
+													: statusFilter
+							}
+							onChange={(e) => updateStatusFilter(e.target.value)}
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[150px] cursor-pointer"
 						>
 							<option value="Semua">Semua Status</option>
-							{EQUIPMENT_STATUS.map((s) => (
-								<option key={s} value={s}>
-									{s === "DISPOSAL_RECOMMENDED"
-										? "SCRAP RECOMENDED"
-										: statusText(s)}
-								</option>
-							))}
+							<option value="REGISTERED">Menunggu Validasi</option>
+							<option value="READY_TO_USE">Siap Digunakan</option>
+							<option value="REPAIR">Dalam Perbaikan</option>
+							<option value="SCRAP">Rekomendasi Scrap</option>
+							<option value="VALIDATED">VALIDATED</option>
+							<option value="REPAIR_VENDOR">REPAIR VENDOR</option>
+							<option value="REPAIR_COMPLETED">REPAIR COMPLETED</option>
+							<option value="REVALIDATION">REVALIDATION</option>
+							<option value="REUSED">REUSED</option>
+							<option value="DISPOSAL_RECOMMENDED">SCRAP RECOMMENDED</option>
 							<option value="REJECTED">REJECTED</option>
 						</select>
 

@@ -15,6 +15,7 @@ import {
 	uploadAttachment,
 } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
+import { scrapStatusBadge, mapScrapMethodName } from "@/lib/approvals";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
 	Trash2,
@@ -278,7 +279,9 @@ export default function RendalScrapPage() {
 			const matchSearch =
 				!query ||
 				eq.kodeAlat.toLowerCase().includes(query) ||
-				eq.namaAlat.toLowerCase().includes(query);
+				eq.namaAlat.toLowerCase().includes(query) ||
+				eq.storageLocation?.toLowerCase().includes(query) ||
+				eq.plant?.toLowerCase().includes(query);
 			return isRecommended && isNotSubmitted && matchSearch;
 		});
 	}, [equipments, disposals, search]);
@@ -294,7 +297,9 @@ export default function RendalScrapPage() {
 						item.disposal_number.toLowerCase().includes(query)) ||
 					(item.equipment_code &&
 						item.equipment_code.toLowerCase().includes(query)) ||
-					(item.equipment_name && item.equipment_name.toLowerCase().includes(query));
+					(item.equipment_name && item.equipment_name.toLowerCase().includes(query)) ||
+					((item as any).storage_location &&
+						String((item as any).storage_location).toLowerCase().includes(query));
 				return matchSearch;
 			})
 			.sort((a: any, b: any) => {
@@ -311,6 +316,55 @@ export default function RendalScrapPage() {
 		return map;
 	}, [equipments]);
 
+	// Pilihan resmi metode scrap sesuai regulasi tata kelola BUMN (US-11-FE):
+	// 1. Penjualan Scrap / Lelang
+	// 2. Pemusnahan Fisik
+	// 3. Hibah (Institusi Pendidikan / Lembaga)
+	// 4. Tukar Tambah (Trade-In)
+	const scrapMethodOptions = useMemo(() => {
+		return [
+			{
+				id:
+					methods.find(
+						(m) =>
+							m.name.toLowerCase().includes("scrap") ||
+							m.name.toLowerCase().includes("lelang") ||
+							Number(m.id) === 2,
+					)?.id ?? 2,
+				name: "Penjualan Scrap / Lelang",
+			},
+			{
+				id:
+					methods.find(
+						(m) =>
+							m.name.toLowerCase().includes("pemusnahan") ||
+							Number(m.id) === 1,
+					)?.id ?? 1,
+				name: "Pemusnahan Fisik",
+			},
+			{
+				id:
+					methods.find(
+						(m) =>
+							m.name.toLowerCase().includes("donasi") ||
+							m.name.toLowerCase().includes("hibah") ||
+							Number(m.id) === 3,
+					)?.id ?? 3,
+				name: "Hibah (Institusi Pendidikan / Lembaga)",
+			},
+			{
+				id:
+					methods.find(
+						(m) =>
+							m.name.toLowerCase().includes("tukar") ||
+							m.name.toLowerCase().includes("trade") ||
+							Number(m.id) === 4,
+					)?.id ?? 4,
+				name: "Tukar Tambah (Trade-In)",
+			},
+		];
+	}, [methods]);
+
 	// UI Helpers matching inspeksi/validasi design
 	const getStatusAsetBadge = (status: string) => {
 		const styles: Record<string, string> = {
@@ -325,6 +379,8 @@ export default function RendalScrapPage() {
 			SCRAP_REQUEST: "bg-[#FEF3C7] text-[#B45309]",
 			"SCRAP REQUEST": "bg-[#FEF3C7] text-[#B45309]",
 			DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+			"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
+			SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
 			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
 			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
@@ -336,6 +392,15 @@ export default function RendalScrapPage() {
 		let displayStatus = (status || "").replace(/_/g, " ");
 		if (displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
 			displayStatus = "READY TO USE";
+		}
+		if (
+			status === "DISPOSAL_RECOMMENDED" ||
+			displayStatus === "DISPOSAL RECOMMENDED" ||
+			displayStatus === "DISPOSAL RECOMENDED" ||
+			displayStatus === "SCRAP RECOMENDED" ||
+			displayStatus === "SCRAP RECOMMENDED"
+		) {
+			displayStatus = "SCRAP RECOMMENDED";
 		}
 
 		const style = styles[displayStatus] || styles[status] || styles.SCRAP;
@@ -349,36 +414,12 @@ export default function RendalScrapPage() {
 	};
 
 	const getApprovalBadge = (status?: string | null) => {
-		const styles: Record<string, string> = {
-			NONE: "bg-gray-100 text-gray-500",
-			PENDING_REVIEW: "bg-[#FEF9C3] text-[#CA8A04]",
-			PENDING: "bg-[#FEF9C3] text-[#CA8A04]",
-			IN_REVIEW: "bg-[#E0F2FE] text-[#0284C7]",
-			APPROVED: "bg-[#DCFCE7] text-[#16A34A]",
-			DISPOSED: "bg-[#DCFCE7] text-[#16A34A]",
-			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-			NEED_REVISION: "bg-[#F3E8FF] text-[#9333EA]",
-			REVISION: "bg-[#F3E8FF] text-[#9333EA]",
-			REVISION_REQUIRED: "bg-[#F3E8FF] text-[#9333EA]",
-		};
-		const labels: Record<string, string> = {
-			NONE: "-",
-			PENDING_REVIEW: "Menunggu Manajer",
-			PENDING: "Menunggu Manajer",
-			IN_REVIEW: "Sedang Direview",
-			APPROVED: "Disetujui Manajer",
-			DISPOSED: "Disetujui Manajer",
-			REJECTED: "Ditolak Manajer",
-			NEED_REVISION: "Perlu Revisi",
-			REVISION: "Perlu Revisi",
-			REVISION_REQUIRED: "Perlu Revisi",
-		};
-		const raw = (status || "PENDING").toUpperCase();
+		const badge = scrapStatusBadge(status);
 		return (
 			<span
-				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${styles[raw] || "bg-gray-100 text-gray-500"}`}
+				className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${badge.style}`}
 			>
-				{labels[raw] || raw.replace(/_/g, " ")}
+				{badge.label}
 			</span>
 		);
 	};
@@ -533,7 +574,7 @@ export default function RendalScrapPage() {
 		if (!selectedAsset) return;
 
 		if (!disposalMethodId) {
-			showToast("error", "Silakan pilih metode penghapusan terlebih dahulu.");
+			showToast("error", "Silakan pilih metode scrap terlebih dahulu.");
 			return;
 		}
 
@@ -819,7 +860,7 @@ export default function RendalScrapPage() {
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[110px]">
 										Status
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[90px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[115px]">
 										Aksi
 									</th>
 								</tr>
@@ -893,14 +934,14 @@ export default function RendalScrapPage() {
 											<td className="px-2 py-2 text-center whitespace-nowrap">
 												{getStatusAsetBadge(asset.statusAset || "RUSAK BERAT")}
 											</td>
-											<td className="px-2 py-2 text-center w-[90px]">
+											<td className="px-2 py-2 text-center w-[115px]">
 												<button
 													type="button"
 													onClick={() => handleOpenVerification(asset)}
-													className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
+													className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-2.5 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
 												>
 													<Trash2 className="w-3.5 h-3.5" />
-													Request
+													Ajukan Scrap
 												</button>
 											</td>
 										</tr>
@@ -931,16 +972,16 @@ export default function RendalScrapPage() {
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[120px]">
 										Lokasi Penyimpanan
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[110px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[155px]">
 										Metode Scrap
 									</th>
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[100px]">
 										Status Aset
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[135px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[145px]">
 										Status Persetujuan
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[140px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[130px]">
 										Aksi
 									</th>
 								</tr>
@@ -1025,9 +1066,9 @@ export default function RendalScrapPage() {
 												</td>
 												<td
 													className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate"
-													title={item.disposal_method}
+													title={mapScrapMethodName(item.disposal_method, item.disposal_method_id)}
 												>
-													{item.disposal_method || "Scrap"}
+													{mapScrapMethodName(item.disposal_method, item.disposal_method_id)}
 												</td>
 												<td className="px-2 py-2 text-center whitespace-nowrap">
 													{getStatusAsetBadge(assetStatus)}
@@ -1142,8 +1183,8 @@ export default function RendalScrapPage() {
 								<div>
 									<h2 className="text-base font-bold text-white leading-tight">
 										{modalMode === "revise"
-											? "Form Revisi Permintaan Scrap"
-											: "Form Permintaan Scrap Aset"}
+											? "Modal Revisi Pengajuan Scrap"
+											: "Modal Pengajuan Scrap"}
 									</h2>
 									<p className="text-xs text-blue-100 mt-0.5">
 										{selectedAsset.kodeAlat} - {selectedAsset.namaAlat}
@@ -1297,7 +1338,7 @@ export default function RendalScrapPage() {
 
 									<div>
 										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-											Metode Penghapusan <span className="text-red-500">*</span>
+											Metode Scrap <span className="text-red-500">*</span>
 										</label>
 										<select
 											value={disposalMethodId}
@@ -1307,11 +1348,11 @@ export default function RendalScrapPage() {
 											}`}
 										>
 											<option value="" disabled className="text-gray-400">
-												Pilih Metode
+												Pilih Metode Scrap
 											</option>
-											{methods.map((m) => (
-												<option key={m.id} value={String(m.id)} className="text-gray-800">
-													{m.name}
+											{scrapMethodOptions.map((opt) => (
+												<option key={opt.id} value={String(opt.id)} className="text-gray-800">
+													{opt.name}
 												</option>
 											))}
 										</select>
@@ -1506,7 +1547,7 @@ export default function RendalScrapPage() {
 										if (!disposalMethodId) {
 											showToast(
 												"error",
-												"Silakan pilih metode penghapusan terlebih dahulu.",
+												"Silakan pilih metode scrap terlebih dahulu.",
 											);
 											return;
 										}
@@ -1552,7 +1593,7 @@ export default function RendalScrapPage() {
 								</div>
 								<div>
 									<h2 className="text-base font-bold text-white leading-tight">
-										Detail Permintaan Scrap
+										Detail Usulan Scrap
 									</h2>
 									<p className="text-xs text-blue-100 mt-0.5">
 										{selectedHistoryItem.disposal_number}
@@ -1600,7 +1641,10 @@ export default function RendalScrapPage() {
 											Metode Scrap
 										</p>
 										<p className="text-xs font-semibold text-gray-800">
-											{selectedHistoryItem.disposal_method || "Scrap"}
+											{mapScrapMethodName(
+												selectedHistoryItem.disposal_method,
+												selectedHistoryItem.disposal_method_id,
+											)}
 										</p>
 									</div>
 									<div>
@@ -1698,9 +1742,9 @@ export default function RendalScrapPage() {
 				description={`${selectedAsset?.kodeAlat ?? ""} — ${
 					modalMode === "revise"
 						? "Revisi usulan scrap akan dikirim kembali ke Manajer Rendal untuk ditinjau ulang."
-						: "Usulan scrap akan dikirim dan masuk proses penghapusan aset."
+						: "Usulan scrap akan dikirim dan masuk antrean persetujuan scrap."
 				}`}
-				confirmLabel={modalMode === "revise" ? "Ya, Kirim Revisi" : "Ya, Kirim"}
+				confirmLabel={modalMode === "revise" ? "Ya, Kirim Revisi" : "Ya, Kirim Usulan Scrap"}
 				pendingLabel="Memproses..."
 				isPending={isSubmitting}
 			/>

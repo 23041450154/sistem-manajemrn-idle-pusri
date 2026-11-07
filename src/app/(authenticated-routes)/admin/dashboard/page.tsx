@@ -132,10 +132,10 @@ export default function AdminDashboardPage() {
       caption: "Lokasi penyimpanan fisik",
     },
     {
-      label: "Persetujuan Disposal",
+      label: "Persetujuan Scrap",
       value: stats.totalDisposals,
       icon: Trash2,
-      caption: "Usulan pembuangan aset",
+      caption: "Usulan scrap aset",
     },
   ];
 
