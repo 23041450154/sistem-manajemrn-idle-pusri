@@ -1,5 +1,7 @@
 "use client";
-import { useEffect, useState } from "react";
+/* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import { useEffect, useState, Suspense } from "react";
 import Link from "next/link";
 import { Plus, ListFilter } from "lucide-react";
 import { getEquipments, getScraps, getApprovals, getPlants } from "@/action/api";
@@ -74,12 +76,14 @@ export default function RendalDashboard() {
 			</div>
 
 			{/* Operational Dashboard Content */}
-			<RendalDashboardClient
-				equipments={Array.isArray(equipments) ? equipments : []}
-				scraps={Array.isArray(scraps) ? scraps : []}
-				revalidations={Array.isArray(revalidations) ? revalidations : []}
-				plants={Array.isArray(plants) ? plants : []}
-			/>
+			<Suspense fallback={null}>
+				<RendalDashboardClient
+					equipments={Array.isArray(equipments) ? equipments : []}
+					scraps={Array.isArray(scraps) ? scraps : []}
+					revalidations={Array.isArray(revalidations) ? revalidations : []}
+					plants={Array.isArray(plants) ? plants : []}
+				/>
+			</Suspense>
 		</div>
 	);
 }

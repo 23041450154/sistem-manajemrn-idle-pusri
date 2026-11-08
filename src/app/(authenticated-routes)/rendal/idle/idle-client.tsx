@@ -1,14 +1,22 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+/* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import { useEffect, useState, useMemo, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+import {
+	type RepairAuditLogEntry,
+} from "@/lib/repair-assignment";
 import {
 	type EquipmentStatus,
-	EQUIPMENT_STATUS,
-	statusText,
 	statusName,
-	formatPlantDisplay,
+	rupiah as formatRupiah,
+	isPendingStatus,
+	isReadyStatus,
+	isRepairStatus,
+	isScrapStatus,
 } from "@/lib/equipment-status";
 import {
 	Search,
@@ -21,9 +29,14 @@ import {
 	ArrowDown,
 	Eye,
 	X,
+	Wrench,
+	CheckCircle2,
+	Clock,
+	Check,
+	Server,
 } from "lucide-react";
 
-export type AssetState = EquipmentStatus | "REJECTED";
+export type AssetState = EquipmentStatus | "REJECTED" | "REPAIR_VENDOR";
 
 export interface Equipment {
 	id: string;
@@ -32,7 +45,7 @@ export interface Equipment {
 	plant: string;
 	jenisAlat: string;
 	tanggalRegistrasi: string;
-	statusAset: AssetState;
+	statusAset: AssetState | string;
 	storageLocation?: string;
 	funcLoc?: string;
 	vendor?: string;
@@ -42,8 +55,20 @@ export interface Equipment {
 	estimatedReuseValue?: number;
 	notes?: string;
 	idleReason?: string;
+	kondisi?: string;
 	photos?: string[];
 	createdAt?: string;
+	// Properti US-06-FE
+	rekomendasiInspeksi?: string;
+	estimasiBiayaInspeksi?: number;
+	refurbishmentCost?: number;
+	repairExecutor?: "INTERNAL" | "VENDOR" | string;
+	repairExecutorVendor?: string;
+	contractNumber?: string;
+	workNotes?: string;
+	repairAssignedAt?: string;
+	repairAssignedBy?: string;
+	repairHistory?: RepairAuditLogEntry[];
 }
 
 interface RendalIdleClientProps {
@@ -63,12 +88,22 @@ export default function RendalIdleClient({
 	onRefresh,
 }: RendalIdleClientProps) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+
+	// Inisialisasi statusFilter dari URL query param (?status=...) jika tersedia
+	const urlStatus = searchParams?.get("status") || "Semua";
+	const [prevUrlStatus, setPrevUrlStatus] = useState(urlStatus);
+	const [statusFilter, setStatusFilter] = useState<string>(urlStatus);
+
+	if (prevUrlStatus !== urlStatus) {
+		setPrevUrlStatus(urlStatus);
+		setStatusFilter(urlStatus);
+	}
 
 	// States untuk Filter & Pagination
 	const [search, setSearch] = useState("");
 	const [searchInput, setSearchInput] = useState("");
 	const [plantFilter, setPlantFilter] = useState("Semua");
-	const [statusFilter, setStatusFilter] = useState("Semua");
 	const [currentPage, setCurrentPage] = useState(1);
 	const [sortConfig, setSortConfig] = useState<{
 		key: keyof Equipment;
@@ -86,6 +121,161 @@ export default function RendalIdleClient({
 	);
 
 	const ITEMS_PER_PAGE = 10;
+
+	const [notification, setNotification] = useState<{
+		type: "success" | "error";
+		message: string;
+	} | null>(null);
+
+	// Fungsi update statusFilter sekaligus menyinkronkan URL query param (AC 4)
+	const updateStatusFilter = useCallback(
+		(newStatus: string) => {
+			setStatusFilter(newStatus);
+			if (typeof window !== "undefined") {
+				const url = new URL(window.location.href);
+				if (newStatus && newStatus !== "Semua" && newStatus !== "ALL") {
+					url.searchParams.set("status", newStatus);
+				} else {
+					url.searchParams.delete("status");
+				}
+				window.history.replaceState(null, "", url.toString());
+			}
+		},
+		[],
+	);
+
+	// Perhitungan counter metrik kartu ringkasan status (AC 2 & AC 3)
+	const statusCounts = useMemo(() => {
+		let pending = 0;
+		let ready = 0;
+		let repair = 0;
+		let scrap = 0;
+
+		equipments.forEach((item) => {
+			if (isReadyStatus(item.statusAset)) {
+				ready++;
+			} else if (isRepairStatus(item.statusAset)) {
+				repair++;
+			} else if (isScrapStatus(item.statusAset)) {
+				scrap++;
+			} else {
+				pending++;
+			}
+		});
+
+		return {
+			total: equipments.length,
+			pending,
+			ready,
+			repair,
+			scrap,
+		};
+	}, [equipments]);
+
+	// Penentuan kondisi aktif kartu ringkasan
+	const isAllActive =
+		statusFilter === "Semua" || statusFilter === "ALL" || !statusFilter;
+	const isPendingActive =
+		!isAllActive &&
+		(statusFilter === "REGISTERED" ||
+			statusFilter === "VALIDATED" ||
+			statusFilter === "MENUNGGU_VALIDASI");
+	const isReadyActive =
+		!isAllActive &&
+		(statusFilter === "READY_TO_USE" ||
+			statusFilter === "READY TO USE" ||
+			statusFilter === "SIAP DIGUNAKAN");
+	const isRepairActive =
+		!isAllActive &&
+		(statusFilter === "REPAIR" ||
+			statusFilter === "REPAIR_VENDOR" ||
+			statusFilter === "REPAIR_COMPLETED" ||
+			statusFilter === "REVALIDATION" ||
+			statusFilter === "DALAM_PERBAIKAN");
+	const isScrapActive =
+		!isAllActive &&
+		(statusFilter === "SCRAP" ||
+			statusFilter === "SCRAP_RECOMMENDED" ||
+			statusFilter === "SCRAP_RECOMMENDED" ||
+			statusFilter === "SCRAP_RECOMENDED");
+
+	// Toggle handler untuk kartu filter (AC 3)
+	const handleCardClick = (targetStatus: string) => {
+		let nextStatus = targetStatus;
+		if (targetStatus === "Semua" || targetStatus === "ALL") {
+			nextStatus = "Semua";
+		} else if (
+			(targetStatus === "READY_TO_USE" && isReadyActive) ||
+			(targetStatus === "REPAIR" && isRepairActive) ||
+			(targetStatus === "SCRAP" && isScrapActive) ||
+			(targetStatus === "REGISTERED" && isPendingActive) ||
+			statusFilter === targetStatus
+		) {
+			// Toggle off jika diklik ulang -> kembali ke Semua Aset
+			nextStatus = "Semua";
+		}
+
+		updateStatusFilter(nextStatus);
+	};
+
+	// Definisi Kartu Ringkasan Status / Counters (AC 1, AC 2, AC 3)
+	const summaryCards = [
+		{
+			key: "Semua",
+			label: "Semua Aset",
+			count: statusCounts.total,
+			caption: "Total inventaris tercatat",
+			rule: "#334155",
+			icon: Server,
+			isActive: isAllActive,
+			activeBg: "bg-slate-50 border-slate-300 ring-slate-600",
+			badgeColor: "bg-slate-100 text-slate-700 border-slate-300",
+		},
+		{
+			key: "REGISTERED",
+			label: "Menunggu Validasi",
+			count: statusCounts.pending,
+			caption: "Baru masuk / antrean inspeksi",
+			rule: "#0556B3",
+			icon: Clock,
+			isActive: isPendingActive,
+			activeBg: "bg-blue-50/70 border-blue-300 ring-[#0556B3]",
+			badgeColor: "bg-blue-100 text-[#0556B3] border-blue-200",
+		},
+		{
+			key: "READY_TO_USE",
+			label: "Siap Digunakan",
+			count: statusCounts.ready,
+			caption: "Layak & tervalidasi di pool",
+			rule: "#059669",
+			icon: CheckCircle2,
+			isActive: isReadyActive,
+			activeBg: "bg-emerald-50/70 border-emerald-300 ring-[#059669]",
+			badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
+		},
+		{
+			key: "REPAIR",
+			label: "Dalam Perbaikan",
+			count: statusCounts.repair,
+			caption: "Servis aktif / internal / vendor",
+			rule: "#B45309",
+			icon: Wrench,
+			isActive: isRepairActive,
+			activeBg: "bg-amber-50/70 border-amber-300 ring-[#B45309]",
+			badgeColor: "bg-amber-100 text-[#B45309] border-amber-200",
+		},
+		{
+			key: "SCRAP",
+			label: "Rekomendasi Scrap",
+			count: statusCounts.scrap,
+			caption: "Rusak berat / usulan afkir",
+			rule: "#DC2626",
+			icon: AlertCircle,
+			isActive: isScrapActive,
+			activeBg: "bg-red-50/70 border-red-300 ring-[#DC2626]",
+			badgeColor: "bg-red-100 text-red-700 border-red-200",
+		},
+	];
 
 	useEffect(() => {
 		// eslint-disable-next-line react-hooks/set-state-in-effect -- reset paginasi saat filter berubah
@@ -107,7 +297,7 @@ export default function RendalIdleClient({
 		setSearch("");
 		setSearchInput("");
 		setPlantFilter("Semua");
-		setStatusFilter("Semua");
+		updateStatusFilter("Semua");
 		setCurrentPage(1);
 		setSortConfig(null);
 	};
@@ -119,12 +309,38 @@ export default function RendalIdleClient({
 			const matchSearch =
 				!query ||
 				item.kodeAlat?.toLowerCase().includes(query) ||
-				item.namaAlat?.toLowerCase().includes(query);
+				item.namaAlat?.toLowerCase().includes(query) ||
+				item.plant?.toLowerCase().includes(query) ||
+				item.funcLoc?.toLowerCase().includes(query) ||
+				item.storageLocation?.toLowerCase().includes(query);
 			const matchPlant = plantFilter === "Semua" || item.plant === plantFilter;
-			const matchStatus =
-				statusFilter === "Semua" ||
-				item.statusAset === statusFilter ||
-				statusName(item.statusAset) === statusName(statusFilter);
+
+			let matchStatus = true;
+			if (statusFilter !== "Semua" && statusFilter !== "ALL" && statusFilter) {
+				const filterNorm = statusName(statusFilter);
+				if (filterNorm === "READY_TO_USE") {
+					matchStatus = isReadyStatus(item.statusAset);
+				} else if (filterNorm === "REPAIR") {
+					matchStatus = isRepairStatus(item.statusAset);
+				} else if (
+					filterNorm === "SCRAP" ||
+					filterNorm === "SCRAP_RECOMMENDED"
+				) {
+					matchStatus = isScrapStatus(item.statusAset);
+				} else if (
+					filterNorm === "REGISTERED" ||
+					filterNorm === "VALIDATED"
+				) {
+					matchStatus = isPendingStatus(item.statusAset);
+				} else {
+					const norm = statusName(item.statusAset);
+					matchStatus =
+						norm === filterNorm ||
+						item.statusAset === statusFilter ||
+						statusName(item.statusAset) === statusName(statusFilter);
+				}
+			}
+
 			return matchSearch && matchPlant && matchStatus;
 		});
 
@@ -197,7 +413,28 @@ export default function RendalIdleClient({
 		);
 	};
 
-	const getStatusBadge = (status: AssetState | string) => {
+	const getStatusBadge = (
+		status: AssetState | string,
+		executorVendor?: string,
+		executor?: string,
+	) => {
+		// Badge penanda khusus untuk aset dengan pelaksana Vendor (US-06-FE)
+		if (
+			executor === "VENDOR" ||
+			status === "REPAIR_VENDOR" ||
+			(typeof executorVendor === "string" && executorVendor.trim().length > 0)
+		) {
+			const label = executorVendor?.trim() || "Pihak Ketiga";
+			return (
+				<span
+					className="inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEF3C7] text-[#B45309] border border-[#B45309]/30 shadow-xs"
+					title={`Perbaikan Vendor: ${label}`}
+				>
+					Perbaikan Vendor: {label}
+				</span>
+			);
+		}
+
 		const styles: Record<string, string> = {
 			REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
 			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
@@ -205,9 +442,10 @@ export default function RendalIdleClient({
 			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
 			SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
 			"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
-			SCRAP_RECOMENDED: "bg-[#FEF3C7] text-[#B45309]",
 			"SCRAP RECOMENDED": "bg-[#FEF3C7] text-[#B45309]",
+			SCRAP_RECOMENDED: "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
+			REPAIR_VENDOR: "bg-[#FEF3C7] text-[#B45309]",
 			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
 			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
 			REVALIDATION: "bg-[#FEF3C7] text-[#B45309]",
@@ -221,9 +459,10 @@ export default function RendalIdleClient({
 			status === "SCRAP_RECOMMENDED" ||
 			displayStatus === "SCRAP RECOMMENDED" ||
 			displayStatus === "SCRAP RECOMENDED" ||
+			displayStatus === "SCRAP RECOMENDED" ||
 			displayStatus === "SCRAP RECOMMENDED"
 		) {
-			displayStatus = "SCRAP RECOMENDED";
+			displayStatus = "SCRAP RECOMMENDED";
 		}
 
 		const style = styles[displayStatus] || styles[status] || styles.SCRAP;
@@ -238,6 +477,33 @@ export default function RendalIdleClient({
 
 	return (
 		<div className="max-w-7xl mx-auto pt-2 pb-8">
+			{/* Toast Notification (US-06-FE) */}
+			{notification && (
+				<div
+					className={`mb-4 flex items-center justify-between p-3.5 rounded-[4px] border ${
+						notification.type === "success"
+							? "bg-emerald-50 border-emerald-200 text-emerald-900"
+							: "bg-red-50 border-red-200 text-red-900"
+					} shadow-xs transition-all duration-200`}
+				>
+					<div className="flex items-center gap-2.5 text-xs font-semibold">
+						{notification.type === "success" ? (
+							<CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+						) : (
+							<AlertCircle className="w-4 h-4 text-red-600 shrink-0" />
+						)}
+						<span>{notification.message}</span>
+					</div>
+					<button
+						type="button"
+						onClick={() => setNotification(null)}
+						className="text-gray-400 hover:text-gray-700 p-1"
+					>
+						<X className="w-4 h-4" />
+					</button>
+				</div>
+			)}
+
 			{/* Header */}
 			<div className="mb-4">
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
@@ -281,6 +547,67 @@ export default function RendalIdleClient({
 				</div>
 			</div>
 
+			{/* Status Summary Cards (Interactive Quick Filter Shortcuts - US-12-FE) */}
+			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-4">
+				{summaryCards.map((card) => {
+					const Icon = card.icon;
+					return (
+						<div
+							key={card.key}
+							role="button"
+							tabIndex={0}
+							aria-pressed={card.isActive}
+							aria-label={`Filter status: ${card.label}, ${card.count} peralatan`}
+							onClick={() => handleCardClick(card.key)}
+							onKeyDown={(e) => {
+								if (e.key === "Enter" || e.key === " ") {
+									e.preventDefault();
+									handleCardClick(card.key);
+								}
+							}}
+							className={`relative rounded-lg border p-3.5 flex flex-col justify-between cursor-pointer select-none transition-all duration-200 border-l-[3px] ${
+								card.isActive
+									? `${card.activeBg} ring-2 ring-offset-1 shadow-sm`
+									: "bg-white border-[#E6E8EA] hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5"
+							}`}
+							style={{ borderLeftColor: card.rule }}
+						>
+							<div className="flex items-start justify-between gap-2">
+								<div className="min-w-0">
+									<p className="text-[12px] font-semibold text-gray-600 truncate">
+										{card.label}
+									</p>
+								</div>
+								<div className="flex items-center gap-1.5 shrink-0">
+									{card.isActive && card.key !== "Semua" && (
+										<span
+											className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold border ${card.badgeColor}`}
+										>
+											<Check className="w-2.5 h-2.5 stroke-[3]" />
+											Aktif
+										</span>
+									)}
+									<Icon
+										className="w-4 h-4"
+										style={{ color: card.rule }}
+										aria-hidden="true"
+									/>
+								</div>
+							</div>
+
+							<div className="mt-2.5">
+								<p className="text-[26px] leading-none font-bold text-[#0F172A] tabular-nums tracking-[-0.02em]">
+									{card.count}
+								</p>
+								<p className="text-[11px] text-gray-500 mt-1 truncate">
+									{card.caption}
+								</p>
+							</div>
+						</div>
+					);
+				})}
+			</div>
+
 			{/* Notification Banner */}
 			{filteredData.length > 0 && (
 				<div className="mb-4 flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
@@ -290,11 +617,35 @@ export default function RendalIdleClient({
 							<span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-blue-500"></span>
 						</span>
 						<span className="text-[13px] text-blue-800 font-medium">
-							Terdapat{" "}
-							<strong className="font-bold">{filteredData.length} aset</strong>{" "}
-							terdaftar di sistem.
+							{statusFilter && statusFilter !== "Semua" && statusFilter !== "ALL" ? (
+								<>
+									Menampilkan{" "}
+									<strong className="font-bold">{filteredData.length} aset</strong>{" "}
+									dengan status{" "}
+									<strong className="font-bold">
+										{summaryCards.find((c) => c.key === statusFilter)?.label || statusFilter}
+									</strong>
+									.
+								</>
+							) : (
+								<>
+									Terdapat{" "}
+									<strong className="font-bold">{filteredData.length} aset</strong>{" "}
+									terdaftar di sistem.
+								</>
+							)}
 						</span>
 					</div>
+					{statusFilter && statusFilter !== "Semua" && statusFilter !== "ALL" && (
+						<button
+							type="button"
+							onClick={() => handleCardClick(statusFilter)}
+							className="text-[12px] font-semibold text-[#0A356A] hover:underline flex items-center gap-1"
+						>
+							<X className="w-3.5 h-3.5" />
+							<span>Hapus Filter</span>
+						</button>
+					)}
 				</div>
 			)}
 
@@ -308,7 +659,7 @@ export default function RendalIdleClient({
 							<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
 							<input
 								type="text"
-								placeholder="Cari kode atau nama alat..."
+								placeholder="Cari nama, kode aset, atau plant..."
 								value={searchInput}
 								onChange={(e) => {
 									setSearchInput(e.target.value);
@@ -344,18 +695,33 @@ export default function RendalIdleClient({
 						</select>
 
 						<select
-							value={statusFilter}
-							onChange={(e) => setStatusFilter(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
+							value={
+								isAllActive
+									? "Semua"
+									: isReadyActive
+										? "READY_TO_USE"
+										: isRepairActive && statusFilter === "REPAIR"
+											? "REPAIR"
+											: isScrapActive && statusFilter === "SCRAP"
+												? "SCRAP"
+												: isPendingActive && statusFilter === "REGISTERED"
+													? "REGISTERED"
+													: statusFilter
+							}
+							onChange={(e) => updateStatusFilter(e.target.value)}
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[150px] cursor-pointer"
 						>
 							<option value="Semua">Semua Status</option>
-							{EQUIPMENT_STATUS.map((s) => (
-								<option key={s} value={s}>
-									{s === "SCRAP_RECOMMENDED"
-										? "SCRAP RECOMENDED"
-										: statusText(s)}
-								</option>
-							))}
+							<option value="REGISTERED">Menunggu Validasi</option>
+							<option value="READY_TO_USE">Siap Digunakan</option>
+							<option value="REPAIR">Dalam Perbaikan</option>
+							<option value="SCRAP">Rekomendasi Scrap</option>
+							<option value="VALIDATED">VALIDATED</option>
+							<option value="REPAIR_VENDOR">REPAIR VENDOR</option>
+							<option value="REPAIR_COMPLETED">REPAIR COMPLETED</option>
+							<option value="REVALIDATION">REVALIDATION</option>
+							<option value="REUSED">REUSED</option>
+							<option value="SCRAP_RECOMMENDED">SCRAP RECOMMENDED</option>
 							<option value="REJECTED">REJECTED</option>
 						</select>
 
@@ -376,15 +742,16 @@ export default function RendalIdleClient({
 				<div className="w-full overflow-x-auto">
 					<table className="w-full table-fixed text-left border-collapse">
 						<colgroup>
-							<col className="w-[4%]" />
-							<col className="w-[22%]" />
-							<col className="w-[12%]" />
+							<col className="w-[3%]" />
+							<col className="w-[18%]" />
+							<col className="w-[10%]" />
 							<col className="w-[8%]" />
-							<col className="w-[15%]" />
-							<col className="w-[11%]" />
-							<col className="w-[11%]" />
-							<col className="w-[11%]" />
-							<col className="w-[6%]" />
+							<col className="w-[10%]" />
+							<col className="w-[10%]" />
+							<col className="w-[9%]" />
+							<col className="w-[8%]" />
+							<col className="w-[12%]" />
+							<col className="w-[12%]" />
 						</colgroup>
 						<thead className="bg-gray-50/95 backdrop-blur-sm">
 							<tr className="border-b border-gray-300">
@@ -429,6 +796,15 @@ export default function RendalIdleClient({
 								<th
 									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
 									title="Klik untuk mengurutkan"
+									onClick={() => handleSort("storageLocation")}
+								>
+									<div className="flex items-center justify-start gap-0.5 truncate">
+										Lokasi Penyimpanan {getSortIcon("storageLocation")}
+									</div>
+								</th>
+								<th
+									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("jenisAlat")}
 								>
 									<div className="flex items-center justify-start gap-0.5 truncate">
@@ -461,7 +837,7 @@ export default function RendalIdleClient({
 						<tbody className="bg-white text-[12px]">
 							{paginatedData.length === 0 ? (
 								<tr>
-									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={10} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -510,6 +886,12 @@ export default function RendalIdleClient({
 										</td>
 										<td
 											className="px-2 py-2 text-gray-600 font-medium text-left truncate"
+											title={item.storageLocation || "-"}
+										>
+											{item.storageLocation || "-"}
+										</td>
+										<td
+											className="px-2 py-2 text-gray-600 font-medium text-left truncate"
 											title={item.jenisAlat}
 										>
 											{item.jenisAlat}
@@ -518,16 +900,20 @@ export default function RendalIdleClient({
 											{item.tanggalRegistrasi}
 										</td>
 										<td className="px-2 py-2 text-center truncate">
-											{getStatusBadge(item.statusAset)}
+											{getStatusBadge(
+												item.statusAset,
+												item.repairExecutorVendor || (item.repairExecutor === "VENDOR" ? item.vendor : undefined),
+												item.repairExecutor,
+											)}
 										</td>
 										<td className="px-2 py-2 text-center">
-											<div className="flex justify-center items-center opacity-90 group-hover:opacity-100 transition-opacity">
+											<div className="flex justify-center items-center gap-1.5 opacity-90 group-hover:opacity-100 transition-opacity">
 												<button
 													onClick={() => {
 														setDetailModal(item);
 														setActivePhotoIdx(0);
 													}}
-													className="inline-flex items-center justify-center gap-1 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2 py-1 rounded text-[11px] font-bold transition-all shadow-sm"
+													className="inline-flex items-center justify-center gap-1 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2 py-1 rounded-[4px] text-[11px] font-bold transition-all shadow-sm"
 													title="Lihat Detail"
 												>
 													<Eye className="w-3 h-3" />
@@ -725,7 +1111,13 @@ export default function RendalIdleClient({
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
 											Status Aset
 										</p>
-										<div className="mt-0.5">{getStatusBadge(detailModal.statusAset)}</div>
+										<div className="mt-0.5">
+											{getStatusBadge(
+												detailModal.statusAset,
+												detailModal.repairExecutorVendor || (detailModal.repairExecutor === "VENDOR" ? detailModal.vendor : undefined),
+												detailModal.repairExecutor,
+											)}
+										</div>
 									</div>
 									<div>
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
@@ -751,6 +1143,112 @@ export default function RendalIdleClient({
 											{detailModal.notes || "Tidak ada catatan tambahan."}
 										</p>
 									</div>
+								</div>
+							</div>
+
+							{/* Section 3B: Penugasan & Biaya Perbaikan (Refurbishment) — US-06-FE / AC-07 */}
+							<div className="border-b border-gray-100 pb-4">
+								<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3 flex items-center gap-1.5">
+									<Wrench className="w-3.5 h-3.5 text-[#0A356A]" />
+									<span>Penugasan &amp; Biaya Perbaikan (Refurbishment)</span>
+								</h3>
+								<div className="grid grid-cols-2 gap-y-3.5 gap-x-4">
+									<div>
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+											Biaya Perbaikan Riil (Refurbishment Cost)
+										</p>
+										<p className="text-sm font-bold text-[#059669] tabular-nums">
+											{detailModal.refurbishmentCost && detailModal.refurbishmentCost > 0
+												? formatRupiah(detailModal.refurbishmentCost)
+												: "Belum Ditugaskan"}
+										</p>
+									</div>
+									<div>
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+											Estimasi Biaya Inspeksi (Referensi)
+										</p>
+										<p className="text-sm font-semibold text-gray-700 tabular-nums">
+											{detailModal.estimasiBiayaInspeksi
+												? formatRupiah(detailModal.estimasiBiayaInspeksi)
+												: "—"}
+										</p>
+									</div>
+									<div>
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+											Pelaksana Perbaikan
+										</p>
+										<p className="text-sm font-semibold text-gray-900">
+											{detailModal.repairExecutor === "VENDOR" || detailModal.statusAset === "REPAIR_VENDOR"
+												? `Pihak Ketiga (Vendor: ${detailModal.repairExecutorVendor || detailModal.vendor || "Eksternal"})`
+												: detailModal.repairExecutor === "INTERNAL" || detailModal.statusAset === "REPAIR"
+													? "Internal Pusri (Pemeliharaan Lapangan)"
+													: "Belum Ditugaskan"}
+										</p>
+									</div>
+									{detailModal.contractNumber && (
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+												Nomor PO / Kontrak Servis
+											</p>
+											<p className="text-sm font-medium text-gray-800">
+												{detailModal.contractNumber}
+											</p>
+										</div>
+									)}
+									<div className="col-span-2">
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+											Rekomendasi Tindak Lanjut dari Inspeksi
+										</p>
+										<p className="text-xs font-semibold text-amber-800 bg-amber-50 p-2 rounded border border-amber-200">
+											{detailModal.rekomendasiInspeksi || "Perbaikan Ringan / Overhaul"}
+										</p>
+									</div>
+									{detailModal.workNotes && (
+										<div className="col-span-2">
+											<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+												Catatan / Instruksi Kerja (Scope of Work)
+											</p>
+											<p className="text-xs text-gray-700 bg-gray-50 p-2.5 rounded border border-gray-200 whitespace-pre-line leading-relaxed">
+												{detailModal.workNotes}
+											</p>
+										</div>
+									)}
+
+									{/* Riwayat Log Penugasan Perbaikan (Audit Trail / AC-07) */}
+									{Array.isArray(detailModal.repairHistory) && detailModal.repairHistory.length > 0 && (
+										<div className="col-span-2 mt-1">
+											<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-1.5 flex items-center gap-1">
+												<Clock className="w-3 h-3 text-gray-400" />
+												<span>Riwayat Log Penugasan Perbaikan (Audit Trail)</span>
+											</p>
+											<div className="border border-gray-200 rounded divide-y divide-gray-100 bg-gray-50/50">
+												{detailModal.repairHistory.map((h, i) => (
+													<div key={i} className="p-2.5 text-xs">
+														<div className="flex items-center justify-between text-gray-500 text-[11px] mb-1">
+															<span>{new Date(h.assignedAt).toLocaleString("id-ID")}</span>
+															<span className="font-semibold text-gray-700">{h.assignedBy}</span>
+														</div>
+														<p className="font-medium text-gray-800">
+															Pelaksana:{" "}
+															<span className="font-bold">
+																{h.executor === "VENDOR" ? `Vendor (${h.vendorName || "Pihak Ketiga"})` : "Internal Pusri"}
+															</span>
+															{" — "}
+															Biaya:{" "}
+															<span className="font-bold text-[#059669]">
+																{formatRupiah(h.refurbishmentCost)}
+															</span>
+														</p>
+														{h.workNotes && (
+															<p className="text-gray-600 mt-1 italic">
+																&ldquo;{h.workNotes}&rdquo;
+															</p>
+														)}
+													</div>
+												))}
+											</div>
+										</div>
+									)}
 								</div>
 							</div>
 

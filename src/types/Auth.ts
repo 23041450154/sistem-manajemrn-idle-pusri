@@ -6,6 +6,14 @@ export interface User {
   role: string,
   createdAt: string,
   updatedAt: string,
+  inspection_category?: string,
+  inspectionCategory?: string,
+  inspection_cluster?: string,
+  inspectionCluster?: string,
+  role_name?: string,
+  roleName?: string,
+  contact_npp?: string,
+  contactNpp?: string,
 }
 
 export interface LoginRequest {

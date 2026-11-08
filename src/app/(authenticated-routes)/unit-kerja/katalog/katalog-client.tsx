@@ -47,6 +47,8 @@ export default function KatalogClient({
       return (
         i.name.toLowerCase().includes(q) ||
         i.code.toLowerCase().includes(q) ||
+        i.plant.toLowerCase().includes(q) ||
+        (i.funcLoc ?? "").toLowerCase().includes(q) ||
         (i.storageLocation ?? "").toLowerCase().includes(q)
       );
     });
@@ -61,8 +63,7 @@ export default function KatalogClient({
             Katalog Equipment Idle
           </h1>
           <p className="mt-1 text-[14px] text-[#64748B]">
-            Aset idle yang tersedia untuk dipinjam unit kerja. Pilih satu untuk melihat spesifikasi
-            lengkap dan mengajukan permintaan.
+            Peralatan idle yang siap digunakan dan yang sedang dalam perbaikan. Permintaan pemakaian hanya bisa diajukan untuk aset siap pakai.
           </p>
         </header>
       )}
@@ -149,29 +150,35 @@ function EquipmentCard({ item }: { item: KatalogItem }) {
         className="aspect-[4/3] w-full border-b border-[#E6E8EA]"
       />
       <div className="flex flex-1 flex-col gap-2 p-4">
+        {/* Header: Nama Peralatan (Judul Utama) & Status Badge */}
         <div className="flex items-start justify-between gap-2">
-          <span className="font-mono text-[12px] text-[#64748B]">{item.code}</span>
+          <h2 className="line-clamp-2 text-[15px] leading-[1.3] font-bold text-[#0F172A]" title={item.name}>
+            {item.name}
+          </h2>
           <span
             className={`shrink-0 inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${state.badge}`}
           >
             {state.label}
           </span>
         </div>
-        <h2 className="line-clamp-2 text-[14px] leading-[1.35] font-semibold text-[#0F172A]">
-          {item.name}
-        </h2>
-        <dl className="mt-auto space-y-1 text-[12px] text-[#64748B]">
+
+        {/* Sub-keterangan: Kode Aset / Tag */}
+        <p className="font-mono text-[12px] font-semibold text-[#0A356A]">
+          {item.code}
+        </p>
+
+        {/* Baris Lokasi: Plant dan Functional Location berdampingan */}
+        <div className="flex items-center gap-1.5 text-[12px] text-[#64748B] truncate" title={`${item.plant} • ${item.funcLoc || "-"}`}>
+          <span className="font-medium text-[#0F172A] shrink-0">{item.plant}</span>
+          <span className="text-[#CBD5E1] shrink-0">•</span>
+          <span className="truncate">{item.funcLoc || "-"}</span>
+        </div>
+
+        <dl className="mt-auto space-y-1 text-[12px] text-[#64748B] pt-2 border-t border-[#F1F5F9]">
           <div className="flex justify-between gap-2">
-            <dt>Plant</dt>
-            <dd className="truncate text-right text-[#0F172A]">{item.plant}</dd>
-          </div>
-          <div className="flex justify-between gap-2">
-            <dt>Func. Location</dt>
-            <dd
-              className="truncate text-right text-[#0F172A]"
-              title={item.funcLoc || "-"}
-            >
-              {item.funcLoc || "-"}
+            <dt>Lokasi Simpan</dt>
+            <dd className="truncate text-right text-[#0F172A]" title={item.storageLocation}>
+              {item.storageLocation || "-"}
             </dd>
           </div>
           <div className="flex justify-between gap-2">

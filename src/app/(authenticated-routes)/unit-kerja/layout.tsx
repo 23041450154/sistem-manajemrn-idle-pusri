@@ -9,7 +9,8 @@ import React from "react";
 export default function UnitKerjaLayout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
   const router = useRouter();
-  const allowed = normalizeRole(user?.role) === "UNIT_KERJA_OPERASI";
+  const role = normalizeRole(user?.role);
+  const allowed = role === "UNIT_KERJA_OPERASI" || role === "RENDAL_PEMELIHARAAN";
 
   useEffect(() => {
     if (!allowed) router.replace(homePathForRole(user?.role));

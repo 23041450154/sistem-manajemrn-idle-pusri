@@ -33,7 +33,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   RENDAL_PEMELIHARAAN: [
     PERMS.equipmentRead, PERMS.equipmentCreate, PERMS.equipmentUpdate, PERMS.equipmentDelete,
     PERMS.scrapCreate, PERMS.scrapRevise, PERMS.scrapRead,
-    PERMS.approvalRevalidation, PERMS.reuseRequestRead,
+    PERMS.reuseRequestRead,
   ],
   INSPEKSI_TEKNIK: [
     PERMS.equipmentRead, PERMS.validationCreate, PERMS.validationUpdate, PERMS.revalidationCreate,
@@ -42,7 +42,7 @@ export const ROLE_PERMISSIONS: Record<string, Permission[]> = {
   PEMELIHARAAN_LAPANGAN: [PERMS.equipmentRead, PERMS.repairCreate],
   MANAJER_RENDAL: [
     PERMS.equipmentRead, PERMS.scrapRead,
-    PERMS.approvalValidation, PERMS.approvalScrap, PERMS.approvalReuse,
+    PERMS.approvalValidation, PERMS.approvalRevalidation, PERMS.approvalScrap, PERMS.approvalReuse,
     PERMS.reuseRequestManage,
   ],
   UNIT_KERJA_OPERASI: [PERMS.equipmentRead, PERMS.reuseRequestCreate, PERMS.reuseRequestRead],

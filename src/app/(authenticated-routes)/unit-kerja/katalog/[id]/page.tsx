@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { notFound, useParams } from "next/navigation";
-import { ArrowLeft, MapPin, Factory, Wrench } from "lucide-react";
+import { ArrowLeft, MapPin, Factory, Wrench, AlertCircle } from "lucide-react";
 import { getEquipmentById } from "@/action/api";
 import { normalizeEquipment, STATE_STYLE, formatRupiah } from "../shared";
 import Gallery from "./gallery";
@@ -66,14 +66,22 @@ export default function KatalogDetailPage() {
       <header className="border-b border-[#E6E8EA] pb-5">
         <div className="flex flex-wrap items-start justify-between gap-4">
           <div>
-            <p className="font-mono text-[12px] text-[#64748B]">{eq.code}</p>
-            <h1 className="mt-1 text-[20px] font-semibold tracking-[-0.01em] text-[#0F172A]">
+            <h1 className="text-[20px] font-bold tracking-[-0.01em] text-[#0F172A]">
               {eq.name}
             </h1>
-            <p className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[#64748B]">
-              <span className="inline-flex items-center gap-1.5">
-                <Factory className="h-3.5 w-3.5" aria-hidden />
+            <p className="mt-0.5 font-mono text-[13px] font-semibold text-[#0A356A]">
+              {eq.code}
+            </p>
+            <p className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-[13px] text-[#64748B]">
+              <span className="inline-flex items-center gap-1.5 font-medium text-[#0F172A]">
+                <Factory className="h-3.5 w-3.5 text-[#64748B]" aria-hidden />
                 {eq.plant}
+                {eq.funcLoc && (
+                  <>
+                    <span className="text-[#CBD5E1]">•</span>
+                    <span className="font-normal text-[#64748B]">{eq.funcLoc}</span>
+                  </>
+                )}
               </span>
               <span className="inline-flex items-center gap-1.5">
                 <MapPin className="h-3.5 w-3.5" aria-hidden />
@@ -127,7 +135,14 @@ export default function KatalogDetailPage() {
             </section>
           )}
 
-          <RequestModalButton eq={eq} />
+          {eq.state === "ready" ? (
+            <RequestModalButton eq={eq} />
+          ) : (
+            <div className="flex h-11 w-full items-center justify-center gap-2 rounded-[4px] bg-gray-100 px-4 text-[13px] font-semibold text-gray-500 border border-gray-200">
+              <AlertCircle className="w-4 h-4 text-amber-600" />
+              Belum Bisa Diajukan (Dalam Perbaikan)
+            </div>
+          )}
         </div>
       </div>
     </div>

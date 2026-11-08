@@ -15,6 +15,7 @@ import {
 	uploadAttachment,
 } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
+import { scrapStatusBadge, mapScrapMethodName } from "@/lib/approvals";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
 	Trash2,
@@ -30,6 +31,7 @@ import {
 	Loader2,
 	Eye,
 	Clock,
+	Download,
 } from "lucide-react";
 
 interface Equipment {
@@ -116,6 +118,7 @@ export default function RendalScrapPage() {
 	// Dokumen pendukung: banyak file (gambar/PDF) + preview thumbnail.
 	const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 	const [fileError, setFileError] = useState<string | null>(null);
+	const [previewModal, setPreviewModal] = useState<{ url: string; title?: string; isPdf?: boolean } | null>(null);
 	// Hasil validasi teknik (GET /api/validation) — sumber alasan & rekomendasi scrap.
 	const [assetValidation, setAssetValidation] = useState<any>(null);
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -276,7 +279,9 @@ export default function RendalScrapPage() {
 			const matchSearch =
 				!query ||
 				eq.kodeAlat.toLowerCase().includes(query) ||
-				eq.namaAlat.toLowerCase().includes(query);
+				eq.namaAlat.toLowerCase().includes(query) ||
+				eq.storageLocation?.toLowerCase().includes(query) ||
+				eq.plant?.toLowerCase().includes(query);
 			return isRecommended && isNotSubmitted && matchSearch;
 		});
 	}, [equipments, scraps, search]);
@@ -292,7 +297,9 @@ export default function RendalScrapPage() {
 						item.scrap_number.toLowerCase().includes(query)) ||
 					(item.equipment_code &&
 						item.equipment_code.toLowerCase().includes(query)) ||
-					(item.equipment_name && item.equipment_name.toLowerCase().includes(query));
+					(item.equipment_name && item.equipment_name.toLowerCase().includes(query)) ||
+					((item as any).storage_location &&
+						String((item as any).storage_location).toLowerCase().includes(query));
 				return matchSearch;
 			})
 			.sort((a: any, b: any) => {
@@ -309,6 +316,55 @@ export default function RendalScrapPage() {
 		return map;
 	}, [equipments]);
 
+	// Pilihan resmi metode scrap sesuai regulasi tata kelola BUMN (US-11-FE):
+	// 1. Penjualan Scrap / Lelang
+	// 2. Pemusnahan Fisik
+	// 3. Hibah (Institusi Pendidikan / Lembaga)
+	// 4. Tukar Tambah (Trade-In)
+	const scrapMethodOptions = useMemo(() => {
+		return [
+			{
+				id:
+					methods.find(
+						(m) =>
+							m.name.toLowerCase().includes("scrap") ||
+							m.name.toLowerCase().includes("lelang") ||
+							Number(m.id) === 2,
+					)?.id ?? 2,
+				name: "Penjualan Scrap / Lelang",
+			},
+			{
+				id:
+					methods.find(
+						(m) =>
+							m.name.toLowerCase().includes("pemusnahan") ||
+							Number(m.id) === 1,
+					)?.id ?? 1,
+				name: "Pemusnahan Fisik",
+			},
+			{
+				id:
+					methods.find(
+						(m) =>
+							m.name.toLowerCase().includes("donasi") ||
+							m.name.toLowerCase().includes("hibah") ||
+							Number(m.id) === 3,
+					)?.id ?? 3,
+				name: "Hibah (Institusi Pendidikan / Lembaga)",
+			},
+			{
+				id:
+					methods.find(
+						(m) =>
+							m.name.toLowerCase().includes("tukar") ||
+							m.name.toLowerCase().includes("trade") ||
+							Number(m.id) === 4,
+					)?.id ?? 4,
+				name: "Tukar Tambah (Trade-In)",
+			},
+		];
+	}, [methods]);
+
 	// UI Helpers matching inspeksi/validasi design
 	const getStatusAsetBadge = (status: string) => {
 		const styles: Record<string, string> = {
@@ -323,6 +379,7 @@ export default function RendalScrapPage() {
 			SCRAP_REQUEST: "bg-[#FEF3C7] text-[#B45309]",
 			"SCRAP REQUEST": "bg-[#FEF3C7] text-[#B45309]",
 			SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+			"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
 			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
 			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
@@ -334,6 +391,15 @@ export default function RendalScrapPage() {
 		let displayStatus = (status || "").replace(/_/g, " ");
 		if (displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
 			displayStatus = "READY TO USE";
+		}
+		if (
+			status === "SCRAP_RECOMMENDED" ||
+			displayStatus === "SCRAP RECOMMENDED" ||
+			displayStatus === "SCRAP RECOMENDED" ||
+			displayStatus === "SCRAP RECOMENDED" ||
+			displayStatus === "SCRAP RECOMMENDED"
+		) {
+			displayStatus = "SCRAP RECOMMENDED";
 		}
 
 		const style = styles[displayStatus] || styles[status] || styles.SCRAP;
@@ -347,36 +413,12 @@ export default function RendalScrapPage() {
 	};
 
 	const getApprovalBadge = (status?: string | null) => {
-		const styles: Record<string, string> = {
-			NONE: "bg-gray-100 text-gray-500",
-			PENDING_REVIEW: "bg-[#FEF9C3] text-[#CA8A04]",
-			PENDING: "bg-[#FEF9C3] text-[#CA8A04]",
-			IN_REVIEW: "bg-[#E0F2FE] text-[#0284C7]",
-			APPROVED: "bg-[#DCFCE7] text-[#16A34A]",
-			DISPOSED: "bg-[#DCFCE7] text-[#16A34A]",
-			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
-			NEED_REVISION: "bg-[#F3E8FF] text-[#9333EA]",
-			REVISION: "bg-[#F3E8FF] text-[#9333EA]",
-			REVISION_REQUIRED: "bg-[#F3E8FF] text-[#9333EA]",
-		};
-		const labels: Record<string, string> = {
-			NONE: "-",
-			PENDING_REVIEW: "Menunggu Manajer",
-			PENDING: "Menunggu Manajer",
-			IN_REVIEW: "Sedang Direview",
-			APPROVED: "Disetujui Manajer",
-			DISPOSED: "Disetujui Manajer",
-			REJECTED: "Ditolak Manajer",
-			NEED_REVISION: "Perlu Revisi",
-			REVISION: "Perlu Revisi",
-			REVISION_REQUIRED: "Perlu Revisi",
-		};
-		const raw = (status || "PENDING").toUpperCase();
+		const badge = scrapStatusBadge(status);
 		return (
 			<span
-				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${styles[raw] || "bg-gray-100 text-gray-500"}`}
+				className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${badge.style}`}
 			>
-				{labels[raw] || raw.replace(/_/g, " ")}
+				{badge.label}
 			</span>
 		);
 	};
@@ -502,14 +544,22 @@ export default function RendalScrapPage() {
 		[assetValidation, assetInspection],
 	);
 
-	/** Tambah file pendukung (maks 5MB/file) untuk preview & upload. */
+	/** Tambah file pendukung (maks 25MB/file) untuk preview & upload. */
 	const addSupportingFiles = (files: FileList | null) => {
 		if (!files?.length) return;
 		const valid: File[] = [];
 		let err: string | null = null;
+		const allowedExtensions = [
+			".pdf", ".doc", ".docx", ".xls", ".xlsx", ".dwg", ".dxf", ".jpg", ".jpeg", ".png", ".webp"
+		];
 		for (const f of Array.from(files)) {
-			if (f.size > 5 * 1024 * 1024) {
-				err = `Ukuran file ${f.name} melebihi batas 5MB.`;
+			const ext = "." + (f.name.split(".").pop()?.toLowerCase() || "");
+			if (!allowedExtensions.includes(ext) && !f.type.startsWith("image/")) {
+				err = `Format file ${f.name} tidak didukung. Harap gunakan PDF, DOCX, XLSX, DWG, atau Foto.`;
+				continue;
+			}
+			if (f.size > 25 * 1024 * 1024) {
+				err = `Ukuran file ${f.name} melebihi batas 25MB.`;
 				continue;
 			}
 			valid.push(f);
@@ -523,7 +573,12 @@ export default function RendalScrapPage() {
 		if (!selectedAsset) return;
 
 		if (!scrapMethodId) {
-			showToast("error", "Silakan pilih metode penghapusan terlebih dahulu.");
+			showToast("error", "Silakan pilih metode scrap terlebih dahulu.");
+			return;
+		}
+
+		if (uploadedFiles.length === 0) {
+			showToast("error", "Lampiran dokumen/foto pendukung usulan scrap wajib diunggah.");
 			return;
 		}
 
@@ -595,8 +650,8 @@ export default function RendalScrapPage() {
 							String(m.id) === String(scrapMethodId),
 					);
 					const newScrapItem: ScrapItem = {
-						id: String(res.data?.id || `SCRP-${Date.now()}`),
-						// Nomor usulan berasal dari backend (SCRP-<tahun>-<seq>).
+						id: String(res.data?.id || `DSP-${Date.now()}`),
+						// Nomor usulan berasal dari backend (DISP-<tahun>-<seq>).
 						scrap_number: res.data?.scrap_number || "-",
 						equipment_id: String(selectedAsset.id),
 						equipment_code: selectedAsset.kodeAlat,
@@ -795,8 +850,8 @@ export default function RendalScrapPage() {
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[65px]">
 										Plant
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[110px]">
-										Lokasi
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[130px]">
+										Lokasi Penyimpanan
 									</th>
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[95px]">
 										Tipe Objek
@@ -804,7 +859,7 @@ export default function RendalScrapPage() {
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[110px]">
 										Status
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[90px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[115px]">
 										Aksi
 									</th>
 								</tr>
@@ -878,14 +933,14 @@ export default function RendalScrapPage() {
 											<td className="px-2 py-2 text-center whitespace-nowrap">
 												{getStatusAsetBadge(asset.statusAset || "RUSAK BERAT")}
 											</td>
-											<td className="px-2 py-2 text-center w-[90px]">
+											<td className="px-2 py-2 text-center w-[115px]">
 												<button
 													type="button"
 													onClick={() => handleOpenVerification(asset)}
-													className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-3 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
+													className="inline-flex items-center justify-center gap-1.5 bg-[#0A356A] text-white px-2.5 py-1.5 rounded-md text-[11px] font-bold hover:bg-[#0556B3] transition-colors whitespace-nowrap shadow-2xs cursor-pointer"
 												>
 													<Trash2 className="w-3.5 h-3.5" />
-													Request
+													Ajukan Scrap
 												</button>
 											</td>
 										</tr>
@@ -913,16 +968,19 @@ export default function RendalScrapPage() {
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[65px]">
 										Plant
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[110px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[120px]">
+										Lokasi Penyimpanan
+									</th>
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[155px]">
 										Metode Scrap
 									</th>
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[100px]">
 										Status Aset
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[135px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[145px]">
 										Status Persetujuan
 									</th>
-									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[140px]">
+									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[130px]">
 										Aksi
 									</th>
 								</tr>
@@ -931,7 +989,7 @@ export default function RendalScrapPage() {
 								{isLoading ? (
 									<tr>
 										<td
-											colSpan={9}
+											colSpan={10}
 											className="px-4 py-8 text-center text-xs text-gray-500"
 										>
 											<div className="flex flex-col items-center">
@@ -943,7 +1001,7 @@ export default function RendalScrapPage() {
 								) : paginatedHistory.length === 0 ? (
 									<tr>
 										<td
-											colSpan={9}
+											colSpan={10}
 											className="px-4 py-8 text-center text-xs text-gray-500"
 										>
 											<div className="flex flex-col items-center">
@@ -1001,9 +1059,15 @@ export default function RendalScrapPage() {
 												</td>
 												<td
 													className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate"
-													title={item.scrap_method}
+													title={(item as any).storage_location || eq?.storageLocation || "-"}
 												>
-													{item.scrap_method || "Scrap"}
+													{(item as any).storage_location || eq?.storageLocation || "-"}
+												</td>
+												<td
+													className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate"
+													title={mapScrapMethodName(item.scrap_method, item.scrap_method_id)}
+												>
+													{mapScrapMethodName(item.scrap_method, item.scrap_method_id)}
 												</td>
 												<td className="px-2 py-2 text-center whitespace-nowrap">
 													{getStatusAsetBadge(assetStatus)}
@@ -1118,8 +1182,8 @@ export default function RendalScrapPage() {
 								<div>
 									<h2 className="text-base font-bold text-white leading-tight">
 										{modalMode === "revise"
-											? "Form Revisi Permintaan Scrap"
-											: "Form Permintaan Scrap Aset"}
+											? "Modal Revisi Pengajuan Scrap"
+											: "Modal Pengajuan Scrap"}
 									</h2>
 									<p className="text-xs text-blue-100 mt-0.5">
 										{selectedAsset.kodeAlat} - {selectedAsset.namaAlat}
@@ -1273,7 +1337,7 @@ export default function RendalScrapPage() {
 
 									<div>
 										<label className="block text-xs font-bold text-gray-700 uppercase mb-1.5">
-											Metode Penghapusan <span className="text-red-500">*</span>
+											Metode Scrap <span className="text-red-500">*</span>
 										</label>
 										<select
 											value={scrapMethodId}
@@ -1283,11 +1347,11 @@ export default function RendalScrapPage() {
 											}`}
 										>
 											<option value="" disabled className="text-gray-400">
-												Pilih Metode
+												Pilih Metode Scrap
 											</option>
-											{methods.map((m) => (
-												<option key={m.id} value={String(m.id)} className="text-gray-800">
-													{m.name}
+											{scrapMethodOptions.map((opt) => (
+												<option key={opt.id} value={String(opt.id)} className="text-gray-800">
+													{opt.name}
 												</option>
 											))}
 										</select>
@@ -1346,16 +1410,16 @@ export default function RendalScrapPage() {
 									<div>
 										<div className="flex items-center justify-between mb-1.5">
 											<label className="block text-xs font-bold text-gray-700 uppercase">
-												Dokumen Pendukung
+												Upload File / Attachment <span className="text-red-500 font-bold normal-case">* (Wajib)</span>
 											</label>
-											<span className="text-[11px] text-gray-400 font-medium">
-												Opsional
+											<span className="text-[11px] text-red-500 font-medium">
+												Wajib
 											</span>
 										</div>
 										<div className="border-2 border-dashed border-gray-300 rounded-lg p-4 flex flex-col items-center justify-center bg-gray-50/50 hover:bg-blue-50/40 hover:border-[#0A356A] transition-colors relative">
 											<input
 												type="file"
-												accept=".pdf,.png,.jpg,.jpeg"
+												accept=".pdf,.doc,.docx,.xls,.xlsx,.dwg,.dxf,.jpg,.jpeg,.png,.webp"
 												multiple
 												onChange={(e) => {
 													addSupportingFiles(e.target.files);
@@ -1367,45 +1431,87 @@ export default function RendalScrapPage() {
 											<span className="text-xs font-semibold text-gray-600 text-center px-4">
 												{uploadedFiles.length > 0
 													? `${uploadedFiles.length} file dipilih — klik untuk menambah lagi`
-													: "Klik atau seret file PDF / Gambar pendukung (opsional, bisa lebih dari satu)"}
+													: "Klik atau tarik & lepas file dokumen/foto di sini"}
 											</span>
 											<span className="text-[10px] text-gray-400 mt-0.5">
-												Maks. 5MB per file (Opsional)
+												Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 25MB per file)
 											</span>
 										</div>
 
 										{/* Preview file terpilih */}
 										{uploadedFiles.length > 0 && (
-											<div className="mt-2 grid grid-cols-3 gap-2">
+											<div className="mt-2.5 grid grid-cols-3 gap-2">
 												{uploadedFiles.map((file, i) => {
 													const isImage = file.type.startsWith("image/");
+													const isPdf =
+														file.type === "application/pdf" ||
+														file.name.toLowerCase().endsWith(".pdf");
+													const previewUrl = URL.createObjectURL(file);
+													const ext = file.name.split(".").pop()?.toUpperCase() || "FILE";
 													return (
 														<div
 															key={`${file.name}-${i}`}
-															title={file.name}
-															className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white"
+															title={`Klik untuk melihat preview: ${file.name}`}
+															onClick={(e) => {
+																e.stopPropagation();
+																if (isPdf) {
+																	setPreviewModal({
+																		url: previewUrl,
+																		title: file.name,
+																		isPdf: true,
+																	});
+																} else if (isImage) {
+																	setPreviewModal({
+																		url: previewUrl,
+																		title: file.name,
+																		isPdf: false,
+																	});
+																} else {
+																	const a = document.createElement("a");
+																	a.href = previewUrl;
+																	a.download = file.name;
+																	a.click();
+																}
+															}}
+															className="relative group border border-gray-200 rounded-lg overflow-hidden bg-white shadow-sm hover:shadow-md hover:border-[#0A356A] transition-all cursor-pointer"
 														>
-															<div className="h-16 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
+															<div className="h-16 w-full bg-gray-100 flex flex-col items-center justify-center overflow-hidden p-1 relative">
 																{isImage ? (
 																	// eslint-disable-next-line @next/next/no-img-element -- URL blob lokal (createObjectURL) tak bisa lewat next/image
 																	<img
-																		src={URL.createObjectURL(file)}
+																		src={previewUrl}
 																		alt={file.name}
-																		className="w-full h-full object-cover"
+																		className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
 																	/>
 																) : (
-																	<FileText className="w-6 h-6 text-gray-400" />
+																	<div className="flex flex-col items-center justify-center">
+																		<FileText className="w-5 h-5 text-gray-400 mb-0.5 group-hover:text-[#0A356A] transition-colors" />
+																		<span className="text-[8px] font-bold px-1 bg-gray-200 group-hover:bg-blue-100 text-gray-700 group-hover:text-[#0A356A] rounded">
+																			{ext}
+																		</span>
+																	</div>
 																)}
+
+																{/* Hover Overlay */}
+																<div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center text-white">
+																	<Eye className="w-4 h-4 drop-shadow" />
+																</div>
 															</div>
-															<p className="text-[9px] text-gray-600 truncate px-1 py-0.5 text-center">
-																{file.name}
-															</p>
+															<div className="px-1.5 py-1 bg-white border-t border-gray-100">
+																<p className="text-[9px] text-gray-700 font-medium truncate text-center">
+																	{file.name}
+																</p>
+																<p className="text-[8px] text-gray-400 text-center">
+																	{(file.size / (1024 * 1024)).toFixed(2)} MB
+																</p>
+															</div>
 															<button
 																type="button"
-																onClick={() =>
-																	setUploadedFiles((prev) => prev.filter((_, idx) => idx !== i))
-																}
-																className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 shadow-md opacity-0 group-hover:opacity-100 transition-opacity"
+																onClick={(e) => {
+																	e.stopPropagation();
+																	setUploadedFiles((prev) => prev.filter((_, idx) => idx !== i));
+																}}
+																className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white rounded-full p-0.5 shadow-md opacity-90 hover:opacity-100 transition-opacity z-10"
 																aria-label={`Hapus ${file.name}`}
 															>
 																<X className="w-3 h-3" />
@@ -1440,7 +1546,14 @@ export default function RendalScrapPage() {
 										if (!scrapMethodId) {
 											showToast(
 												"error",
-												"Silakan pilih metode penghapusan terlebih dahulu.",
+												"Silakan pilih metode scrap terlebih dahulu.",
+											);
+											return;
+										}
+										if (uploadedFiles.length === 0) {
+											showToast(
+												"error",
+												"Lampiran dokumen/foto pendukung usulan scrap wajib diunggah.",
 											);
 											return;
 										}
@@ -1479,7 +1592,7 @@ export default function RendalScrapPage() {
 								</div>
 								<div>
 									<h2 className="text-base font-bold text-white leading-tight">
-										Detail Permintaan Scrap
+										Detail Usulan Scrap
 									</h2>
 									<p className="text-xs text-blue-100 mt-0.5">
 										{selectedHistoryItem.scrap_number}
@@ -1527,7 +1640,10 @@ export default function RendalScrapPage() {
 											Metode Scrap
 										</p>
 										<p className="text-xs font-semibold text-gray-800">
-											{selectedHistoryItem.scrap_method || "Scrap"}
+											{mapScrapMethodName(
+												selectedHistoryItem.scrap_method,
+												selectedHistoryItem.scrap_method_id,
+											)}
 										</p>
 									</div>
 									<div>
@@ -1625,12 +1741,59 @@ export default function RendalScrapPage() {
 				description={`${selectedAsset?.kodeAlat ?? ""} — ${
 					modalMode === "revise"
 						? "Revisi usulan scrap akan dikirim kembali ke Manajer Rendal untuk ditinjau ulang."
-						: "Usulan scrap akan dikirim dan masuk proses penghapusan aset."
+						: "Usulan scrap akan dikirim dan masuk antrean persetujuan scrap."
 				}`}
-				confirmLabel={modalMode === "revise" ? "Ya, Kirim Revisi" : "Ya, Kirim"}
+				confirmLabel={modalMode === "revise" ? "Ya, Kirim Revisi" : "Ya, Kirim Usulan Scrap"}
 				pendingLabel="Memproses..."
 				isPending={isSubmitting}
 			/>
+
+			{previewModal && (
+				<div
+					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm"
+					onClick={() => setPreviewModal(null)}
+				>
+					<div className="absolute top-4 right-4 flex items-center gap-3 z-20">
+						<a
+							href={previewModal.url}
+							download={previewModal.title || "lampiran"}
+							target="_blank"
+							rel="noreferrer"
+							className="bg-white/10 hover:bg-white/25 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
+							onClick={(e) => e.stopPropagation()}
+						>
+							<Download className="w-4 h-4" /> Buka Tab Baru / Unduh
+						</a>
+						<button
+							className="text-white hover:bg-white/20 p-2 rounded transition-colors"
+							onClick={(e) => {
+								e.stopPropagation();
+								setPreviewModal(null);
+							}}
+							title="Tutup preview"
+						>
+							<X className="w-6 h-6" />
+						</button>
+					</div>
+					<div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center p-2">
+						{previewModal.isPdf ? (
+							<iframe
+								src={previewModal.url}
+								title={previewModal.title || "Preview PDF"}
+								className="w-full h-full rounded-lg bg-white shadow-2xl border-0"
+							/>
+						) : (
+							/* eslint-disable-next-line @next/next/no-img-element */
+							<img
+								src={previewModal.url}
+								alt={previewModal.title || "Preview Foto"}
+								className="max-w-full max-h-full object-contain rounded shadow-2xl"
+								onClick={(e) => e.stopPropagation()}
+							/>
+						)}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

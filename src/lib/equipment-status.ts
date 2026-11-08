@@ -49,7 +49,7 @@ export function repairFlowStatus(equipment: {
 export const REPAIR_STATUS_LABEL: Record<RepairFlowStatus, string> = {
 	REPAIR: "Antrean Perbaikan",
 	REPAIR_COMPLETED: "Menunggu Validasi Ulang",
-	REVALIDATION: "Menunggu Persetujuan Rendal",
+	REVALIDATION: "Menunggu Approval Manajer",
 	READY_TO_USE: "Siap Digunakan",
 	SCRAP: "Rekomendasi Scrap",
 };
@@ -60,9 +60,12 @@ export const REPAIR_STATUS_LABEL: Record<RepairFlowStatus, string> = {
  * IDLE->READY TO USE, dsb. yang dulu bikin halaman saling beda sebutan.
  */
 export const EQUIPMENT_STATUS = [
+	"PROPOSED",
+	"PROPOSAL_REJECTED",
 	"REGISTERED",
 	"VALIDATED",
 	"REPAIR",
+	"REPAIR_VENDOR",
 	"REPAIR_COMPLETED",
 	"REVALIDATION",
 	"READY_TO_USE",
@@ -85,6 +88,10 @@ const STATUS_ALIASES: Record<string, EquipmentStatus> = {
 	SCRAP_RECOMENDED: "SCRAP_RECOMMENDED",
 	SCRAP_REQUEST: "SCRAP_REQUESTED",
 	"SCRAP REQUEST": "SCRAP_REQUESTED",
+	"PROPOSAL REJECTED": "PROPOSAL_REJECTED",
+	"USULAN DITOLAK": "PROPOSAL_REJECTED",
+	MENUNGGU_VERIFIKASI: "PROPOSED",
+	DIAJUKAN: "PROPOSED",
 	RUSAK_BERAT: "SCRAP",
 	CONDEMNED: "SCRAP",
 	DISPOSED: "SCRAP",
@@ -100,9 +107,12 @@ export function statusName(raw?: string | null): string {
 	return STATUS_ALIASES[key] ?? key;
 }
 
-/** Teks badge: nama backend, underscore diganti spasi. Tidak mengganti istilah. */
-export const statusText = (raw?: string | null) =>
-	statusName(raw).replace(/_/g, " ");
+/** Teks badge: nama backend, underscore diganti spasi. Remap SCRAP_RECOMMENDED -> SCRAP RECOMMENDED untuk standardisasi istilah BUMN (US-11-FE). */
+export const statusText = (raw?: string | null) => {
+	const name = statusName(raw);
+	if (name === "SCRAP_RECOMMENDED") return "SCRAP RECOMMENDED";
+	return name.replace(/_/g, " ");
+};
 
 /**
  * Kelompok status untuk kartu ringkasan/pie dashboard.
@@ -112,9 +122,12 @@ export const statusText = (raw?: string | null) =>
 export type StatusGroup = "pending" | "repair" | "ready" | "scrap" | "reused";
 
 const STATUS_GROUP: Record<string, StatusGroup> = {
+	PROPOSED: "pending",
+	PROPOSAL_REJECTED: "scrap",
 	REGISTERED: "pending",
 	VALIDATED: "pending",
 	REPAIR: "repair",
+	REPAIR_VENDOR: "repair",
 	REPAIR_COMPLETED: "repair",
 	REVALIDATION: "repair",
 	REJECTED: "repair",
@@ -142,6 +155,39 @@ export function statusGroup(equipment: {
 	return STATUS_GROUP[statusName(raw)] ?? null;
 }
 
+export function isPendingStatus(raw?: string | null): boolean {
+	const norm = statusName(raw);
+	return norm === "REGISTERED" || norm === "VALIDATED" || norm === "PROPOSED" || STATUS_GROUP[norm] === "pending";
+}
+
+export function isReadyStatus(raw?: string | null): boolean {
+	const norm = statusName(raw);
+	return norm === "READY_TO_USE" || norm === "READY" || STATUS_GROUP[norm] === "ready";
+}
+
+export function isRepairStatus(raw?: string | null): boolean {
+	const norm = statusName(raw);
+	return (
+		norm === "REPAIR" ||
+		norm === "REPAIR_VENDOR" ||
+		norm === "REPAIR_COMPLETED" ||
+		norm === "REVALIDATION" ||
+		norm === "REJECTED" ||
+		STATUS_GROUP[norm] === "repair"
+	);
+}
+
+export function isScrapStatus(raw?: string | null): boolean {
+	const norm = statusName(raw);
+	return (
+		norm === "SCRAP" ||
+		norm === "SCRAP_RECOMMENDED" ||
+		norm === "SCRAP_REQUESTED" ||
+		norm === "SCRAP_REQUEST" ||
+		STATUS_GROUP[norm] === "scrap"
+	);
+}
+
 /**
  * Warna badge per status kanonik — DESIGN.md five-hue system.
  * Transparent fill, 1px border + text in the state hue:
@@ -153,11 +199,13 @@ const STATUS_BADGE_STYLE: Record<string, string> = {
 	REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
 	VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
 	REPAIR: "bg-[#FEF3C7] text-[#B45309]",
+	REPAIR_VENDOR: "bg-[#FEF3C7] text-[#B45309]",
 	REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
 	REVALIDATION: "bg-[#FEF3C7] text-[#B45309]",
 	READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
 	REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
 	SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+	"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
 	SCRAP_REQUESTED: "bg-[#FEF3C7] text-[#B45309]",
 	SCRAP_REQUEST: "bg-[#FEF3C7] text-[#B45309]",
 	SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
@@ -232,5 +280,6 @@ export function formatCondition(val: unknown): string {
 		.map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
 		.join(" ");
 }
+
 
 

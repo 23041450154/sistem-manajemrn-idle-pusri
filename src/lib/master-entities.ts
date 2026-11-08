@@ -58,7 +58,7 @@ export const MASTER_ENTITIES: MasterEntity[] = [
 	},
 	{
 		slug: "scrap-method",
-		label: "Scrap Method",
+		label: "Metode Scrap",
 		listPath: "/api/scrap-method",
 		adminPath: "/api/admin/scrap-method",
 		nameField: "name",

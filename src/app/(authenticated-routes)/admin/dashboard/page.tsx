@@ -135,7 +135,7 @@ export default function AdminDashboardPage() {
       label: "Persetujuan Scrap",
       value: stats.totalScraps,
       icon: Trash2,
-      caption: "Usulan pembuangan aset",
+      caption: "Usulan scrap aset",
     },
   ];
 

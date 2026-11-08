@@ -42,6 +42,7 @@ export interface RequestAsset {
 	id: string;
 	nomorRequest: string;
 	kodeAset: string;
+	kind?: "validation" | "revalidation";
 	objectType: Lookup | null;
 	namaAset: string;
 	plant: Lookup | null;
@@ -129,7 +130,7 @@ export default function ManajerApproveClient({
 		setAttachments([]);
 		try {
 			const [data, attsData, validations, eqDetail] = await Promise.all([
-				getApprovalById(asset.id),
+				getApprovalById(asset.id, asset.kind || "validation"),
 				getAttachmentsByEquipmentId(asset.equipmentId),
 				getValidations(asset.equipmentId),
 				getEquipmentById(asset.equipmentId),
@@ -162,7 +163,11 @@ export default function ManajerApproveClient({
 		if (selectedAsset && selectedAsset.approvalStatus === "PENDING") {
 			let res: { success: boolean; message?: string };
 			try {
-				res = await startReviewApproval(selectedAsset.id);
+				res = await startReviewApproval(
+					selectedAsset.id,
+					selectedAsset.kind || "validation",
+					selectedAsset.equipmentId,
+				);
 			} catch (err) {
 				res = {
 					success: false,
@@ -210,6 +215,8 @@ export default function ManajerApproveClient({
 				selectedAsset.id,
 				"APPROVE",
 				"Disetujui oleh manajer",
+				selectedAsset.kind || "validation",
+				selectedAsset.equipmentId,
 			);
 
 			if (res.success) {
@@ -246,6 +253,8 @@ export default function ManajerApproveClient({
 				selectedAsset.id,
 				"REVISION",
 				revisiCatatan,
+				selectedAsset.kind || "validation",
+				selectedAsset.equipmentId,
 			);
 
 			if (res.success) {

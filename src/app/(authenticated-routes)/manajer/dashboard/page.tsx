@@ -30,9 +30,18 @@ export default function ManajerDashboardPage() {
 	useEffect(() => {
 		let alive = true;
 		void (async () => {
-			const [equipments, validationApprovals, reuseRequestsData, scrapsData, financialSummaryData, financialTrendData] = await Promise.all([
+			const [
+				equipments,
+				validationApprovals,
+				revalidationApprovals,
+				reuseRequestsData,
+				scrapsData,
+				financialSummaryData,
+				financialTrendData,
+			] = await Promise.all([
 				getEquipments().catch(() => []),
 				getApprovals("validation").catch(() => []),
+				getApprovals("revalidation").catch(() => []),
 				getReuseRequests("all").catch(() => []),
 				getScraps().catch(() => []),
 				getFinancialSummary().catch(() => null),
@@ -45,7 +54,12 @@ export default function ManajerDashboardPage() {
 				if (eq.id != null) equipmentMap.set(String(eq.id), eq);
 			});
 
-			const normalized = (Array.isArray(validationApprovals) ? validationApprovals : []).map((item: any) => {
+			const allValidationList = [
+				...(Array.isArray(validationApprovals) ? validationApprovals : []),
+				...(Array.isArray(revalidationApprovals) ? revalidationApprovals : []),
+			];
+
+			const normalized = allValidationList.map((item: any) => {
 				const equipmentId = item.equipment_id || item.equipment?.id;
 				const eq = (equipmentId != null && equipmentMap.get(String(equipmentId))) || item.equipment;
 				let approvalStatus = item.approval_status;
@@ -95,7 +109,7 @@ export default function ManajerDashboardPage() {
 				<div>
 					<h1 className="page-title">Dashboard Manajer Rendal</h1>
 					<p className="page-subtitle">
-						Pusat persetujuan manajerial, monitoring kesiapan utilisasi, dan tata kelola aset idle.
+						Pusat wewenang manajerial penetapan ketersediaan aset (READY_TO_USE), persetujuan alokasi pemakaian (Approved for Reuse), dan monitoring efisiensi idle equipment.
 					</p>
 				</div>
 				<div className="header-actions">
@@ -107,11 +121,11 @@ export default function ManajerDashboardPage() {
 						Persetujuan Validasi
 					</Link>
 					<Link
-						href="/manajer/peminjaman"
+						href="/manajer/pemakaian"
 						className={buttonVariants({ variant: "brandOutline", size: "lg" })}
 					>
 						<ArrowUpRight className="w-4 h-4" />
-						Persetujuan Peminjaman
+						Persetujuan Pemakaian
 					</Link>
 					<Link
 						href="/manajer/scrap"

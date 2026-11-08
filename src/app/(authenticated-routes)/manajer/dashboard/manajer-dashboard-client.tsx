@@ -34,7 +34,6 @@ import {
 	Area,
 	Legend,
 } from "recharts";
-import { statusGroup } from "@/lib/equipment-status";
 
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -154,7 +153,9 @@ export default function ManajerDashboardClient({
 		reuseRequests.forEach((r: any) => {
 			const st = (r.approval_status || r.status || "").toUpperCase();
 			if (st === "APPROVED" || st === "DISETUJUI") {
-				const d = new Date(r.updated_at || r.created_at || Date.now());
+				const rawDate = r.updated_at || r.created_at;
+				if (!rawDate) return;
+				const d = new Date(rawDate);
 				if (isNaN(d.getTime())) return;
 
 				const dateKey = d.toISOString().split("T")[0];
@@ -174,7 +175,9 @@ export default function ManajerDashboardClient({
 		scraps.forEach((d: any) => {
 			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
 			if (st === "APPROVED" || st === "DISETUJUI") {
-				const dObj = new Date(d.updated_at || d.created_at || Date.now());
+				const rawDate = d.updated_at || d.created_at;
+				if (!rawDate) return;
+				const dObj = new Date(rawDate);
 				if (isNaN(dObj.getTime())) return;
 
 				const dateKey = dObj.toISOString().split("T")[0];
@@ -189,12 +192,14 @@ export default function ManajerDashboardClient({
 			}
 		});
 
-		let list = Array.from(dateMap.values()).sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+		const list = Array.from(dateMap.values()).sort((a, b) => a.dateKey.localeCompare(b.dateKey));
 
 		if (list.length === 0) {
 			const eqDatesMap = new Map<string, number>();
 			equipments.forEach((e: any) => {
-				const d = new Date(e.created_at || Date.now());
+				const rawDate = e.created_at;
+				if (!rawDate) return;
+				const d = new Date(rawDate);
 				if (!isNaN(d.getTime())) {
 					const dateKey = d.toISOString().split("T")[0];
 					eqDatesMap.set(dateKey, d.getTime());
@@ -239,7 +244,9 @@ export default function ManajerDashboardClient({
 		reuseRequests.forEach((r: any) => {
 			const st = (r.approval_status || r.status || "").toUpperCase();
 			if (st === "APPROVED" || st === "DISETUJUI") {
-				const d = new Date(r.updated_at || r.created_at || Date.now());
+				const rawDate = r.updated_at || r.created_at;
+				if (!rawDate) return;
+				const d = new Date(rawDate);
 				if (isNaN(d.getTime())) return;
 
 				const monthKey = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
@@ -259,7 +266,9 @@ export default function ManajerDashboardClient({
 		scraps.forEach((d: any) => {
 			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
 			if (st === "APPROVED" || st === "DISETUJUI") {
-				const dObj = new Date(d.updated_at || d.created_at || Date.now());
+				const rawDate = d.updated_at || d.created_at;
+				if (!rawDate) return;
+				const dObj = new Date(rawDate);
 				if (isNaN(dObj.getTime())) return;
 
 				const monthKey = `${dObj.getFullYear()}-${String(dObj.getMonth() + 1).padStart(2, "0")}`;
@@ -274,7 +283,7 @@ export default function ManajerDashboardClient({
 			}
 		});
 
-		let list = Array.from(monthMap.values()).sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+		const list = Array.from(monthMap.values()).sort((a, b) => a.dateKey.localeCompare(b.dateKey));
 
 		if (list.length === 0) {
 			const curr = new Date();
@@ -419,7 +428,7 @@ export default function ManajerDashboardClient({
 			const code = a.equipment_code || a.equipment?.equipment_code || "";
 			const st = (a.approval_status || "PENDING").toUpperCase();
 			let text = "";
-			if (st === "APPROVED") text = `Persetujuan validasi kelayakan: ${name} (${code}) disetujui`;
+			if (st === "APPROVED") text = `Persetujuan validasi kelayakan: ${name} (${code}) disetujui menjadi READY_TO_USE`;
 			else if (st === "REJECTED") text = `Persetujuan validasi: ${name} (${code}) ditolak/revisi`;
 			else text = `Pengajuan validasi masuk: ${name} (${code}) menunggu review`;
 			const t = a.updated_at || a.request_date || a.created_at;
@@ -436,7 +445,7 @@ export default function ManajerDashboardClient({
 			const name = eq.name || r.equipment_name || "Peralatan";
 			const st = (r.approval_status || "PENDING").toUpperCase();
 			let text = "";
-			if (st === "APPROVED") text = `Permintaan reuse ${name} disetujui untuk ${r.requesting_plant || "Unit Operasi"}`;
+			if (st === "APPROVED") text = `Permohonan reuse ${name} disetujui (Approved for Reuse) untuk ${r.requesting_plant || "Unit Operasi"}`;
 			else text = `Permohonan pinjam pakai ${name} diajukan oleh ${r.requested_by_user?.name || "Unit Kerja"}`;
 			const t = r.updated_at || r.created_at;
 			list.push({
@@ -472,7 +481,7 @@ export default function ManajerDashboardClient({
 			icon: Server,
 		},
 		{
-			label: "Persetujuan Peminjaman",
+			label: "Persetujuan Pemakaian",
 			value: reuseRequests.length.toString(),
 			caption:
 				pendingReuses.length > 0
@@ -482,12 +491,12 @@ export default function ManajerDashboardClient({
 			icon: ArrowUpRight,
 		},
 		{
-			label: "Persetujuan Scrap & Scrap",
+			label: "Persetujuan Scrap",
 			value: scraps.length.toString(),
 			caption:
 				pendingScraps.length > 0
-					? `${pendingScraps.length} usulan penghapusan`
-					: "0 usulan penghapusan",
+					? `${pendingScraps.length} usulan scrap`
+					: "0 usulan scrap",
 			rule: "#DC2626",
 			icon: Trash2,
 		},
@@ -648,7 +657,7 @@ export default function ManajerDashboardClient({
 					{/* Card 3: Scrap Recovery */}
 					<div className="bg-gradient-to-br from-[#FFFBEB] to-[#FEF3C7] rounded-lg border border-[#FDE68A] p-4 flex flex-col justify-between">
 						<div className="flex items-center justify-between">
-							<span className="text-[12px] font-semibold text-[#92400E]">Scrap Recovery (Scrap)</span>
+							<span className="text-[12px] font-semibold text-[#92400E]">Scrap Recovery</span>
 							<span className="p-2 bg-[#FEF3C7] text-[#D97706] rounded-full">
 								<Coins className="w-4 h-4" />
 							</span>
@@ -772,7 +781,7 @@ export default function ManajerDashboardClient({
 								<Area
 									type="monotone"
 									dataKey="scrapValue"
-									name="Hasil Scrap (Scrap)"
+									name="Hasil Scrap"
 									stroke="#D97706"
 									strokeWidth={2}
 									fillOpacity={0}
@@ -838,7 +847,7 @@ export default function ManajerDashboardClient({
 											<th className="py-2.5 px-3">No</th>
 											<th className="py-2.5 px-3">{filterMode === "daily" ? "Tanggal Transaksi" : "Bulan Transaksi"}</th>
 											<th className="py-2.5 px-3">Cost Avoidance (Reuse)</th>
-											<th className="py-2.5 px-3">Scrap Recovery (Scrap)</th>
+											<th className="py-2.5 px-3">Scrap Recovery</th>
 											<th className="py-2.5 px-3">Total Net Benefit</th>
 											<th className="py-2.5 px-3">Pergerakan Stock</th>
 										</tr>

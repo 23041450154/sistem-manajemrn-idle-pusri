@@ -101,7 +101,7 @@ function buildAuditLogs(
 		});
 	});
 
-	// Scraps
+	// Scraps / Scraps
 	scraps.forEach((disp: any) => {
 		logs.push({
 			id: `disp-${disp.id}`,

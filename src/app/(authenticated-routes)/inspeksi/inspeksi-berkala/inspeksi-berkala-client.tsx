@@ -19,6 +19,12 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 import { type LastInspection } from "@/lib/inspection-schedule";
+import { useAuth } from "@/components/AuthProvider";
+import {
+	getUserInspectionCluster,
+	getEquipmentInspectionCluster,
+	getInspectionClusterName,
+} from "@/lib/inspection-cluster";
 
 export interface Equipment extends Partial<LastInspection> {
 	id: string | number;
@@ -33,6 +39,9 @@ export interface Equipment extends Partial<LastInspection> {
 	object_type?: string | { name: string };
 	updated_at?: string;
 	created_at?: string;
+	inspection_cluster?: string;
+	inspection_purpose?: string;
+	tujuan_inspeksi?: string;
 }
 
 export interface InspectionItem {
@@ -43,6 +52,7 @@ export interface InspectionItem {
 	plant?: string;
 	func_loc?: string;
 	object_type?: string;
+	storage_location?: string;
 	inspection_date?: string;
 	created_at?: string;
 	notes?: string;
@@ -55,8 +65,8 @@ export interface InspectionItem {
 interface InspeksiBerkalaClientProps {
 	antrean: Equipment[];
 	riwayat: InspectionItem[];
-	plants?: any[];
-	objectTypes?: any[];
+	plants?: unknown[];
+	objectTypes?: unknown[];
 	onRefresh?: () => Promise<void> | void;
 }
 
@@ -69,6 +79,9 @@ export default function InspeksiBerkalaClient({
 	onRefresh,
 }: InspeksiBerkalaClientProps) {
 	const router = useRouter();
+	const { user } = useAuth();
+	const userCluster = getUserInspectionCluster(user);
+
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
 	const [searchInput, setSearchInput] = useState("");
 	const [search, setSearch] = useState("");
@@ -84,31 +97,51 @@ export default function InspeksiBerkalaClient({
 		direction: "asc" | "desc";
 	} | null>(null);
 
+	// Filter antrean berdasarkan rumpun akun yang login (AC-02)
+	const clusterAntrean = useMemo(() => {
+		if (!userCluster) return antrean;
+		return antrean.filter((row) => getEquipmentInspectionCluster(row) === userCluster);
+	}, [antrean, userCluster]);
+
 	// Opsi Plant diambil langsung dari database master plants, digabung dengan data antrean & riwayat
 	const plantOptions = useMemo(() => {
 		const dbPlants = (plants || [])
-			.map((p: any) => (typeof p === "string" ? p : p?.name || p?.code || ""))
+			.map((p) => {
+				if (typeof p === "string") return p;
+				if (p && typeof p === "object") {
+					const obj = p as { name?: string; code?: string };
+					return obj.name || obj.code || "";
+				}
+				return "";
+			})
 			.filter((v: string) => v && v !== "-");
 		const itemPlants = [
-			...antrean.map((e) => (typeof e.plant === "string" ? e.plant : e.plant?.name)),
+			...clusterAntrean.map((e) => (typeof e.plant === "string" ? e.plant : e.plant?.name)),
 			...riwayat.map((r) => r.plant),
 		].filter((v): v is string => Boolean(v && v !== "-"));
 		return [...new Set([...dbPlants, ...itemPlants])].sort();
-	}, [plants, antrean, riwayat]);
+	}, [plants, clusterAntrean, riwayat]);
 
 	// Opsi Tipe Objek diambil langsung dari database master object types
 	const tipeObjekOptions = useMemo(() => {
 		const dbTypes = (objectTypes || [])
-			.map((t: any) => (typeof t === "string" ? t : t?.name || ""))
+			.map((t) => {
+				if (typeof t === "string") return t;
+				if (t && typeof t === "object") {
+					const obj = t as { name?: string };
+					return obj.name || "";
+				}
+				return "";
+			})
 			.filter((v: string) => v && v !== "-");
 		const itemTypes = [
-			...antrean.map((e) =>
+			...clusterAntrean.map((e) =>
 				typeof e.object_type === "string" ? e.object_type : e.object_type?.name,
 			),
 			...riwayat.map((r) => r.object_type),
 		].filter((v): v is string => Boolean(v && v !== "-"));
 		return [...new Set([...dbTypes, ...itemTypes])].sort();
-	}, [objectTypes, antrean, riwayat]);
+	}, [objectTypes, clusterAntrean, riwayat]);
 
 	const handleReset = () => {
 		setSearchInput("");
@@ -120,12 +153,15 @@ export default function InspeksiBerkalaClient({
 	};
 
 	const filteredAntrean = useMemo(() => {
-		let filtered = antrean.filter((row) => {
+		let filtered = clusterAntrean.filter((row) => {
 			if (!search.trim()) return true;
 			const query = search.toLowerCase().trim();
 			const code = row.equipment_code?.toLowerCase() || "";
 			const name = row.name?.toLowerCase() || "";
-			return code.includes(query) || name.includes(query);
+			const plant = (typeof row.plant === "string" ? row.plant : row.plant?.name || "").toLowerCase();
+			const funcLoc = (typeof row.func_loc === "object" ? (row.func_loc?.name ?? "") : row.func_loc || "").toLowerCase();
+			const storageLoc = (row.storage_location?.name || (typeof row.location === "string" ? row.location : row.location?.name) || "").toLowerCase();
+			return code.includes(query) || name.includes(query) || plant.includes(query) || funcLoc.includes(query) || storageLoc.includes(query);
 		});
 
 		if (filterPlant) {
@@ -182,7 +218,7 @@ export default function InspeksiBerkalaClient({
 		}
 
 		return filtered;
-	}, [antrean, search, filterPlant, filterTipeObjek, sortConfig]);
+	}, [clusterAntrean, search, filterPlant, filterTipeObjek, sortConfig]);
 
 	const filteredRiwayat = useMemo(() => {
 		return riwayat
@@ -191,7 +227,10 @@ export default function InspeksiBerkalaClient({
 				const query = search.toLowerCase().trim();
 				const code = row.equipment_code?.toLowerCase() || "";
 				const name = row.equipment_name?.toLowerCase() || "";
-				return code.includes(query) || name.includes(query);
+				const plant = (row.plant || "").toLowerCase();
+				const funcLoc = (row.func_loc || "").toLowerCase();
+				const storageLoc = (row.storage_location || "").toLowerCase();
+				return code.includes(query) || name.includes(query) || plant.includes(query) || funcLoc.includes(query) || storageLoc.includes(query);
 			})
 			.sort((a, b) => {
 				const timeA = a.inspection_date ? new Date(a.inspection_date).getTime() : 0;
@@ -243,12 +282,18 @@ export default function InspeksiBerkalaClient({
 				</div>
 				<div className="flex items-center justify-between">
 					<div>
-						<h1 className="text-xl font-bold text-gray-900 tracking-tight">
-							Inspeksi Berkala
+						<h1 className="text-xl font-bold text-gray-900 tracking-tight flex items-center gap-2">
+							<span>Inspeksi Berkala</span>
+							{userCluster && (
+								<span className="text-xs font-semibold px-2 py-0.5 rounded bg-blue-100 text-[#0A356A]">
+									{getInspectionClusterName(userCluster)}
+								</span>
+							)}
 						</h1>
 						<p className="text-[13px] text-gray-500 mt-1">
-							Daftar peralatan berstatus READY_TO_USE beserta tanggal inspeksi fisik
-							terakhirnya.
+							{userCluster
+								? `Daftar peralatan berstatus READY_TO_USE yang ditugaskan ke ${getInspectionClusterName(userCluster)}.`
+								: "Daftar peralatan berstatus READY_TO_USE beserta tanggal inspeksi fisik terakhirnya."}
 						</p>
 					</div>
 					<button
@@ -294,7 +339,7 @@ export default function InspeksiBerkalaClient({
 									: "bg-gray-100 text-gray-600"
 							}`}
 						>
-							{antrean.length}
+							{clusterAntrean.length}
 						</span>
 					</button>
 
@@ -403,7 +448,7 @@ export default function InspeksiBerkalaClient({
 				</div>
 
 				{/* Table */}
-				<div className="overflow-x-auto lg:overflow-x-hidden">
+				<div className="overflow-x-auto">
 					<table className="w-full text-left border-collapse">
 						<thead className="bg-[#F2F3F4]">
 							<tr className="border-b border-gray-300">
@@ -426,9 +471,6 @@ export default function InspeksiBerkalaClient({
 										Kode Alat {getSortIcon("equipment_code")}
 									</div>
 								</th>
-								<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
-									Tipe Objek
-								</th>
 								<th
 									className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
 									onClick={() => handleSort("plant")}
@@ -440,10 +482,13 @@ export default function InspeksiBerkalaClient({
 								<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
 									Func. Location
 								</th>
+								<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
+									Tipe Objek
+								</th>
 								{activeTab === "antrean" ? (
 									<>
 										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
-											Lokasi
+											Lokasi Penyimpanan
 										</th>
 										<th
 											className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
@@ -468,6 +513,9 @@ export default function InspeksiBerkalaClient({
 								) : (
 									<>
 										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
+											Lokasi Penyimpanan
+										</th>
+										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
 											Tgl Inspeksi
 										</th>
 										<th className="px-2.5 py-2.5 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left">
@@ -486,7 +534,10 @@ export default function InspeksiBerkalaClient({
 						<tbody className="bg-white">
 							{paginatedAssets.length === 0 ? (
 								<tr>
-									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
+									<td
+										colSpan={activeTab === "antrean" ? 10 : 11}
+										className="px-5 py-12 text-center text-gray-500"
+									>
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -536,13 +587,13 @@ export default function InspeksiBerkalaClient({
 												{row.equipment_code}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
-												{typeStr}
-											</td>
-											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{plantStr}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{typeof row.func_loc === "object" ? (row.func_loc?.name ?? "-") : row.func_loc || "-"}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
+												{typeStr}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left">
 												{lokasiStr}
@@ -595,13 +646,16 @@ export default function InspeksiBerkalaClient({
 												{row.equipment_code}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
-												{row.object_type}
-											</td>
-											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{row.plant}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{row.func_loc || "-"}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
+												{row.object_type}
+											</td>
+											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
+												{row.storage_location || "-"}
 											</td>
 											<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 												{dateStr}

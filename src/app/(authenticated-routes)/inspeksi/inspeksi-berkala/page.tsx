@@ -90,6 +90,12 @@ export default function InspeksiAntreanPage() {
 				func_loc:
 					eq.func_loc?.name || (typeof eq.func_loc === "string" ? eq.func_loc : "") || "",
 				object_type: typeStr,
+				storage_location:
+					(typeof eq.storage_location === "object"
+						? eq.storage_location?.name
+						: eq.storage_location) ||
+					ins.storage_location ||
+					"-",
 				inspection_date:
 					ins.inspection_date || ins.created_at || new Date().toISOString(),
 				notes: ins.notes || ins.summary || "Inspeksi berkala selesai.",

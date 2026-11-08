@@ -1,25 +1,31 @@
 "use client";
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import {
 	Server,
 	Clock,
 	CheckCircle2,
 	Wrench,
-	Plus,
-	FileText,
 	ArrowRight,
 	AlertCircle,
 	Check,
 	Building2,
-	RefreshCw,
-	Layers,
 	ChevronRight,
+	X,
 } from "lucide-react";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip } from "recharts";
-import { statusGroup, statusBadgeStyle, statusText, statusName } from "@/lib/equipment-status";
-import { buttonVariants } from "@/components/ui/button";
+import {
+	statusGroup,
+	statusBadgeStyle,
+	statusText,
+	statusName,
+	isPendingStatus,
+	isReadyStatus,
+	isRepairStatus,
+	isScrapStatus,
+} from "@/lib/equipment-status";
 
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -28,15 +34,37 @@ interface RendalDashboardClientProps {
 	equipments: any[];
 	scraps: any[];
 	revalidations: any[];
-	plants: any[];
+	plants?: any[];
 }
 
 export default function RendalDashboardClient({
 	equipments,
 	scraps,
 	revalidations,
-	plants,
 }: RendalDashboardClientProps) {
+	const searchParams = useSearchParams();
+	const urlStatus = searchParams?.get("status") || "ALL";
+	const [prevUrlStatus, setPrevUrlStatus] = useState(urlStatus);
+	const [statusFilter, setStatusFilter] = useState<string>(urlStatus);
+
+	if (prevUrlStatus !== urlStatus) {
+		setPrevUrlStatus(urlStatus);
+		setStatusFilter(urlStatus);
+	}
+
+	const updateStatusFilter = useCallback((newStatus: string) => {
+		setStatusFilter(newStatus);
+		if (typeof window !== "undefined") {
+			const url = new URL(window.location.href);
+			if (newStatus && newStatus !== "ALL" && newStatus !== "Semua") {
+				url.searchParams.set("status", newStatus);
+			} else {
+				url.searchParams.delete("status");
+			}
+			window.history.replaceState(null, "", url.toString());
+		}
+	}, []);
+
 	// 1. Kategorisasi status aset operasional
 	const scrapEquipmentIds = useMemo(
 		() =>
@@ -96,13 +124,56 @@ export default function RendalDashboardClient({
 
 	const totalUnit = equipments.length;
 
+	// Penentuan kondisi aktif kartu ringkasan status di dashboard (AC 1, AC 3)
+	const isAllActive = statusFilter === "ALL" || statusFilter === "Semua" || !statusFilter;
+	const isPendingActive =
+		!isAllActive &&
+		(statusFilter === "VALIDATED" ||
+			statusFilter === "REGISTERED" ||
+			statusFilter === "MENUNGGU_VALIDASI");
+	const isReadyActive =
+		!isAllActive &&
+		(statusFilter === "READY_TO_USE" ||
+			statusFilter === "READY TO USE" ||
+			statusFilter === "SIAP DIGUNAKAN");
+	const isRepairActive =
+		!isAllActive &&
+		(statusFilter === "REPAIR" ||
+			statusFilter === "REPAIR_VENDOR" ||
+			statusFilter === "REPAIR_COMPLETED" ||
+			statusFilter === "REVALIDATION" ||
+			statusFilter === "DALAM_PERBAIKAN");
+	const isScrapActive =
+		!isAllActive &&
+		(statusFilter === "SCRAP" ||
+			statusFilter === "SCRAP_RECOMMENDED" ||
+			statusFilter === "SCRAP_RECOMMENDED" ||
+			statusFilter === "SCRAP_RECOMENDED");
+
+	const handleCardClick = (targetStatus: string) => {
+		let nextStatus = targetStatus;
+		if (targetStatus === "ALL" || targetStatus === "Semua") {
+			nextStatus = "ALL";
+		} else if (
+			(targetStatus === "READY_TO_USE" && isReadyActive) ||
+			(targetStatus === "REPAIR" && isRepairActive) ||
+			(targetStatus === "SCRAP" && isScrapActive) ||
+			(targetStatus === "VALIDATED" && isPendingActive) ||
+			statusFilter === targetStatus
+		) {
+			// Toggle off jika diklik ulang (AC 3)
+			nextStatus = "ALL";
+		}
+		updateStatusFilter(nextStatus);
+	};
+
 	// 2. Data Donut Chart (Distribusi Status Operasional)
 	const pieData = useMemo(() => {
 		const data = [
 			{ name: "Menunggu Validasi", value: menungguValidasiCount, color: "#0556B3" },
 			{ name: "Siap Digunakan", value: readyCount, color: "#059669" },
 			{ name: "Dalam Perbaikan", value: dalamPerbaikanCount, color: "#B45309" },
-			{ name: "Scrap / Scrap", value: scrapCount, color: "#DC2626" },
+			{ name: "Scrap", value: scrapCount, color: "#DC2626" },
 			{ name: "Sudah Digunakan", value: reusedCount, color: "#4F46E5" },
 		].filter((item) => item.value > 0);
 
@@ -131,19 +202,46 @@ export default function RendalDashboardClient({
 			.slice(0, 5);
 	}, [equipments]);
 
-	// 4. Registrasi Aset Terbaru (5 teratas)
-	const recentEquipments = useMemo(() => {
-		return [...equipments]
-			.sort((a: any, b: any) => {
-				const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
-				const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
-				if (timeB !== timeA) return timeB - timeA;
-				return (Number(b.id) || 0) - (Number(a.id) || 0);
-			})
-			.slice(0, 5);
-	}, [equipments]);
+	// 4. Registrasi Aset (difilter jika ada KPI card aktif, default 5 teratas)
+	const filteredEquipmentsForTable = useMemo(() => {
+		let list = equipments;
+		if (statusFilter && statusFilter !== "ALL" && statusFilter !== "Semua") {
+			const filterNorm = statusName(statusFilter);
+			list = equipments.filter((e: any) => {
+				const eqId = String(e.id || "");
+				const rawStatus =
+					(typeof e.status === "string" ? e.status : e.status?.name) ||
+					e.statusAset ||
+					"";
+				if (filterNorm === "READY_TO_USE") {
+					return isReadyStatus(rawStatus);
+				}
+				if (filterNorm === "REPAIR") {
+					return isRepairStatus(rawStatus);
+				}
+				if (filterNorm === "SCRAP" || filterNorm === "SCRAP_RECOMMENDED") {
+					return isScrapStatus(rawStatus) || scrapEquipmentIds.has(eqId);
+				}
+				if (filterNorm === "VALIDATED" || filterNorm === "REGISTERED") {
+					return isPendingStatus(rawStatus);
+				}
+				return statusName(rawStatus) === filterNorm;
+			});
+		}
 
-	// KPI Cards specification (DESIGN.md: 2px left border rule, value-dominant)
+		return [...list].sort((a: any, b: any) => {
+			const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
+			const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
+			if (timeB !== timeA) return timeB - timeA;
+			return (Number(b.id) || 0) - (Number(a.id) || 0);
+		});
+	}, [equipments, statusFilter, scrapEquipmentIds]);
+
+	const recentEquipments = useMemo(() => {
+		return filteredEquipmentsForTable.slice(0, 5);
+	}, [filteredEquipmentsForTable]);
+
+	// KPI Cards specification (DESIGN.md: 2px left border rule, value-dominant - US-12-FE)
 	const kpis = [
 		{
 			label: "Total Aset Terdaftar",
@@ -151,6 +249,10 @@ export default function RendalDashboardClient({
 			caption: "Total inventaris idle tercatat",
 			rule: "#334155",
 			icon: Server,
+			statusKey: "ALL",
+			isActive: isAllActive,
+			activeBg: "bg-slate-50 border-slate-300 ring-slate-600",
+			badgeColor: "bg-slate-100 text-slate-700 border-slate-300",
 		},
 		{
 			label: "Menunggu Validasi",
@@ -158,6 +260,10 @@ export default function RendalDashboardClient({
 			caption: "Baru masuk, antrean inspeksi",
 			rule: "#0556B3",
 			icon: Clock,
+			statusKey: "VALIDATED",
+			isActive: isPendingActive,
+			activeBg: "bg-blue-50/70 border-blue-300 ring-[#0556B3]",
+			badgeColor: "bg-blue-100 text-[#0556B3] border-blue-200",
 		},
 		{
 			label: "Siap Digunakan",
@@ -165,37 +271,74 @@ export default function RendalDashboardClient({
 			caption: "Tervalidasi di pool idle",
 			rule: "#059669",
 			icon: CheckCircle2,
+			statusKey: "READY_TO_USE",
+			isActive: isReadyActive,
+			activeBg: "bg-emerald-50/70 border-emerald-300 ring-[#059669]",
+			badgeColor: "bg-emerald-100 text-emerald-800 border-emerald-200",
 		},
 		{
-			label: "Perbaikan & Scrap",
-			value: dalamPerbaikanCount + scrapCount,
-			caption: "Servis aktif atau usulan afkir",
+			label: "Dalam Perbaikan",
+			value: dalamPerbaikanCount,
+			caption: "Sedang dalam servis/reparasi",
 			rule: "#B45309",
 			icon: Wrench,
+			statusKey: "REPAIR",
+			isActive: isRepairActive,
+			activeBg: "bg-amber-50/70 border-amber-300 ring-[#B45309]",
+			badgeColor: "bg-amber-100 text-[#B45309] border-amber-200",
 		},
 		{
-			label: "Sudah Digunakan",
-			value: reusedCount,
-			caption: "Telah dialokasikan ke unit",
-			rule: "#4F46E5",
-			icon: RefreshCw,
+			label: "Rekomendasi Scrap",
+			value: scrapCount,
+			caption: "Rusak berat atau usulan afkir",
+			rule: "#DC2626",
+			icon: AlertCircle,
+			statusKey: "SCRAP",
+			isActive: isScrapActive,
+			activeBg: "bg-red-50/70 border-red-300 ring-[#DC2626]",
+			badgeColor: "bg-red-100 text-red-700 border-red-200",
 		},
 	];
 
 	return (
 		<div className="flex flex-col gap-6">
-			{/* 1. Operational KPI Strip */}
+			{/* 1. Operational KPI Strip (Interactive Quick Filter Shortcuts - US-12-FE) */}
 			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4">
 				{kpis.map((kpi) => (
 					<div
 						key={kpi.label}
-						className="bg-white rounded border border-[#E6E8EA] border-l-2 p-4 flex items-start justify-between gap-3 shadow-none"
+						role="button"
+						tabIndex={0}
+						aria-pressed={kpi.isActive}
+						aria-label={`Filter status: ${kpi.label}, ${kpi.value} peralatan`}
+						onClick={() => handleCardClick(kpi.statusKey)}
+						onKeyDown={(e) => {
+							if (e.key === "Enter" || e.key === " ") {
+								e.preventDefault();
+								handleCardClick(kpi.statusKey);
+							}
+						}}
+						className={`rounded border border-l-2 p-4 flex items-start justify-between gap-3 cursor-pointer select-none transition-all duration-200 ${
+							kpi.isActive
+								? `${kpi.activeBg} ring-2 ring-offset-1 shadow-sm`
+								: "bg-white border-[#E6E8EA] hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5"
+						}`}
 						style={{ borderLeftColor: kpi.rule }}
 					>
 						<div className="min-w-0">
-							<p className="text-[12px] font-medium text-[#64748B] truncate">
-								{kpi.label}
-							</p>
+							<div className="flex items-center gap-1.5">
+								<p className="text-[12px] font-medium text-[#64748B] truncate">
+									{kpi.label}
+								</p>
+								{kpi.isActive && kpi.statusKey !== "ALL" && (
+									<span
+										className={`inline-flex items-center gap-0.5 px-1.5 py-0.2 text-[9px] font-bold rounded border ${kpi.badgeColor}`}
+									>
+										<Check className="w-2.5 h-2.5 stroke-[3]" />
+										Aktif
+									</span>
+								)}
+							</div>
 							<p className="text-[28px] leading-none font-semibold text-[#0F172A] tabular-nums mt-2 tracking-[-0.02em]">
 								{kpi.value}
 							</p>
@@ -256,10 +399,10 @@ export default function RendalDashboardClient({
 										<span className="w-1 h-8 rounded-full bg-[#B45309] shrink-0" />
 										<div>
 											<p className="font-semibold text-[#0F172A]">
-												{menungguRevalidasiCount} persetujuan validasi ulang perbaikan
+												{menungguRevalidasiCount} validasi ulang (Menunggu Approval Manajer)
 											</p>
 											<p className="text-[12px] text-[#64748B] mt-0.5">
-												Perbaikan alat telah selesai diinspeksi ulang dan menunggu review Rendal.
+												Perbaikan alat telah lolos inspeksi ulang dan menunggu persetujuan final Manajer Rendal.
 											</p>
 										</div>
 									</div>
@@ -267,7 +410,7 @@ export default function RendalDashboardClient({
 										href="/rendal/validasi-ulang"
 										className="inline-flex items-center gap-1 text-[12px] font-semibold text-[#B45309] hover:text-[#92400E] whitespace-nowrap bg-amber-50 px-2.5 py-1 rounded hover:bg-amber-100 transition-colors"
 									>
-										<span>Review</span>
+										<span>Monitoring</span>
 										<ChevronRight className="w-3.5 h-3.5" />
 									</Link>
 								</div>
@@ -279,7 +422,7 @@ export default function RendalDashboardClient({
 										<span className="w-1 h-8 rounded-full bg-[#DC2626] shrink-0" />
 										<div>
 											<p className="font-semibold text-[#0F172A]">
-												{scrapCount} aset berstatus rekomendasi scrap / scrap
+												{scrapCount} aset berstatus rekomendasi scrap
 											</p>
 											<p className="text-[12px] text-[#64748B] mt-0.5">
 												Peralatan rusak berat yang perlu diajukan proses penghapusan buku ke Manajer.
@@ -314,18 +457,35 @@ export default function RendalDashboardClient({
 						<div>
 							<div className="flex items-center justify-between mb-3">
 								<div>
-									<h3 className="text-[14px] font-semibold text-[#0F172A]">
-										Registrasi Aset Terkini
-									</h3>
+									<div className="flex items-center gap-2">
+										<h3 className="text-[14px] font-semibold text-[#0F172A]">
+											Registrasi Aset Terkini
+										</h3>
+										{!isAllActive && (
+											<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[11px] font-semibold bg-blue-50 text-[#0A356A] border border-blue-200">
+												Filter: {kpis.find((k) => k.statusKey === statusFilter)?.label || statusFilter} ({filteredEquipmentsForTable.length} unit)
+												<button
+													type="button"
+													onClick={() => handleCardClick(statusFilter)}
+													className="text-blue-500 hover:text-blue-800 ml-0.5"
+													title="Hapus filter"
+												>
+													<X className="w-3 h-3" />
+												</button>
+											</span>
+										)}
+									</div>
 									<p className="text-[12px] text-[#64748B] mt-0.5">
-										5 peralatan terakhir yang didaftarkan ke sistem manajemen idle
+										{!isAllActive
+											? `Menampilkan peralatan yang difilter berdasarkan kartu status ${kpis.find((k) => k.statusKey === statusFilter)?.label}`
+											: "5 peralatan terakhir yang didaftarkan ke sistem manajemen idle"}
 									</p>
 								</div>
 								<Link
-									href="/rendal/idle"
+									href={!isAllActive ? `/rendal/idle?status=${statusFilter}` : "/rendal/idle"}
 									className="text-[12px] font-semibold text-[#0A356A] hover:text-[#0556B3] flex items-center gap-1"
 								>
-									<span>Lihat Semua</span>
+									<span>Lihat Semua{!isAllActive ? ` (${filteredEquipmentsForTable.length})` : ""}</span>
 									<ArrowRight className="w-3.5 h-3.5" />
 								</Link>
 							</div>
@@ -337,7 +497,7 @@ export default function RendalDashboardClient({
 											<th className="py-2.5 px-3">Kode Alat</th>
 											<th className="py-2.5 px-3">Nama Peralatan</th>
 											<th className="py-2.5 px-3">Plant</th>
-											<th className="py-2.5 px-3">Lokasi Simpan</th>
+											<th className="py-2.5 px-3">Lokasi Penyimpanan</th>
 											<th className="py-2.5 px-3 text-center">Status</th>
 											<th className="py-2.5 px-3 text-right">Tgl Registrasi</th>
 										</tr>

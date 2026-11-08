@@ -12,6 +12,8 @@ import {
 	ChevronLeft,
 	Paperclip,
 	XCircle,
+	Eye,
+	Download,
 } from "lucide-react";
 import Link from "next/link";
 import {
@@ -58,6 +60,7 @@ export interface RegisterInitialData {
 	idleReason: string;
 	storageLocationId: string;
 	notes: string;
+	inspectionCluster: string;
 }
 
 const EMPTY_FORM: RegisterInitialData = {
@@ -74,6 +77,7 @@ const EMPTY_FORM: RegisterInitialData = {
 	idleReason: "",
 	storageLocationId: "",
 	notes: "",
+	inspectionCluster: "",
 };
 
 /** Autocomplete dari baris SAP: satu sumber data, dua tampilan (kode-dulu / nama-dulu). */
@@ -150,6 +154,7 @@ export default function RegisterEquipmentClient({
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
 	const [isDragging, setIsDragging] = useState(false);
+	const [previewModal, setPreviewModal] = useState<{ url: string; title?: string; isPdf?: boolean } | null>(null);
 
 	// State untuk efek Loading dan Validasi
 	const [isSubmitting, setIsSubmitting] = useState(false);
@@ -367,8 +372,8 @@ export default function RegisterEquipmentClient({
 			const files = Array.from(e.target.files);
 			let errorMsg: string | null = null;
 			const validFiles = files.filter((f) => {
-				if (f.size > 5 * 1024 * 1024) {
-					errorMsg = `Ukuran file ${f.name} melebihi batas 5MB.`;
+				if (f.size > 25 * 1024 * 1024) {
+					errorMsg = `Ukuran file ${f.name} melebihi batas 25MB.`;
 					return false;
 				}
 				return true;
@@ -396,8 +401,8 @@ export default function RegisterEquipmentClient({
 			const files = Array.from(e.dataTransfer.files);
 			let errorMsg: string | null = null;
 			const validFiles = files.filter((f) => {
-				if (f.size > 5 * 1024 * 1024) {
-					errorMsg = `Ukuran file ${f.name} melebihi batas 5MB.`;
+				if (f.size > 25 * 1024 * 1024) {
+					errorMsg = `Ukuran file ${f.name} melebihi batas 25MB.`;
 					return false;
 				}
 				return true;
@@ -423,9 +428,14 @@ export default function RegisterEquipmentClient({
 			!formData.storageLocationId ||
 			!formData.funcLocId ||
 			!formData.vendor ||
-			!formData.idleReason
+			!formData.idleReason ||
+			!formData.inspectionCluster ||
+			(!editId && uploadedFiles.length === 0)
 		) {
 			setShowValidationErrors(true);
+			if (!editId && uploadedFiles.length === 0) {
+				setFileError("Berkas wajib diunggah minimal 1 file (foto/dokumen).");
+			}
 			return;
 		}
 
@@ -450,6 +460,9 @@ export default function RegisterEquipmentClient({
 					Number(formData.estimatedReuseValue.replace(/\./g, "")) || 0,
 				idle_reason: formData.idleReason,
 				notes: formData.notes,
+				inspection_cluster: formData.inspectionCluster,
+				inspection_purpose: formData.inspectionCluster,
+				tujuan_inspeksi: formData.inspectionCluster,
 			});
 
 			if (res.success && uploadedFiles.length) {
@@ -495,6 +508,9 @@ export default function RegisterEquipmentClient({
 		);
 		fd.append("idle_reason", formData.idleReason);
 		fd.append("notes", formData.notes);
+		fd.append("tujuan_inspeksi", formData.inspectionCluster);
+		fd.append("inspection_purpose", formData.inspectionCluster);
+		fd.append("inspection_cluster", formData.inspectionCluster);
 		for (const file of uploadedFiles) fd.append("photo", file);
 
 		const res = await createEquipment(fd);
@@ -575,7 +591,45 @@ export default function RegisterEquipmentClient({
 
 						{/* Grid Isian Kiri */}
 						<div className="p-4 sm:p-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-x-5 gap-y-4">
-							{/* Baris 1: Peralatan */}
+							{/* Baris 1: Peralatan — Nama di posisi utama sebelum Kode Aset */}
+							<div className="space-y-1.5 lg:col-span-2">
+								<div className="flex justify-between items-end">
+									<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+										NAMA PERALATAN <span className="text-red-500">*</span>
+									</label>
+									<span
+										className={`text-[9px] font-medium ${formData.name.length >= 150 ? "text-orange-500" : "text-gray-400"}`}
+									>
+										Maks 150 karakter
+									</span>
+								</div>
+								<AutocompleteInput
+									mode="text"
+									name="name"
+									maxLength={150}
+									showOnFocus
+									value={formData.name}
+									onChange={handleNameChange}
+									onQueryChange={handleSapQueryChange}
+									onBlur={handleBlur as unknown as () => void}
+									options={nameOptions}
+									placeholder="Ketik nama peralatan (mis. FLOW TRANSMITTER)..."
+									hasError={
+										(showValidationErrors || touched.name) && !formData.name
+									}
+									emptyMessage="Tidak ada nama peralatan yang cocok."
+								/>
+								{(showValidationErrors || touched.name) && !formData.name && (
+									<p className="text-[10px] text-red-500 mt-1 font-medium">
+										* Nama Peralatan wajib diisi.
+									</p>
+								)}
+								{formData.name.length >= 150 && (
+									<p className="text-[10px] text-orange-500 mt-1 font-medium">
+										* Batas maksimal karakter (150) telah tercapai.
+									</p>
+								)}
+							</div>
 							<div className="space-y-1.5 lg:col-span-1">
 								<div className="flex justify-between items-end">
 									<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
@@ -595,7 +649,7 @@ export default function RegisterEquipmentClient({
 									onQueryChange={handleSapQueryChange}
 									onBlur={() => handleSelectBlur("equipmentCode")}
 									options={codeOptions}
-									placeholder="Ketik kode aset..."
+									placeholder="Ketik kode aset (mis. F1N-FT201)..."
 									hasError={
 										(showValidationErrors || touched.equipmentCode) &&
 										!formData.equipmentCode
@@ -609,46 +663,58 @@ export default function RegisterEquipmentClient({
 										</p>
 									)}
 							</div>
-							<div className="space-y-1.5 lg:col-span-2">
-								<div className="flex justify-between items-end">
-									<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-										NAMA PERALATAN <span className="text-red-500">*</span>
-									</label>
-									<span
-										className={`text-[9px] font-medium ${formData.name.length >= 150 ? "text-orange-500" : "text-gray-400"}`}
-									>
-										Maks 150 karakter
-									</span>
-								</div>
-									<AutocompleteInput
-										mode="text"
-										name="name"
-										maxLength={150}
-										showOnFocus
-										value={formData.name}
-										onChange={handleNameChange}
-										onQueryChange={handleSapQueryChange}
-										onBlur={handleBlur as unknown as () => void}
-										options={nameOptions}
-										placeholder="Ketik nama peralatan (mis. FLOW TRANSMITTER)..."
-										hasError={
-											(showValidationErrors || touched.name) && !formData.name
-										}
-										emptyMessage="Tidak ada nama peralatan yang cocok."
-									/>
-								{(showValidationErrors || touched.name) && !formData.name && (
+
+							{/* Baris 2: Trisula Informasi (Pabrik & Functional Location) */}
+							<div className="space-y-1.5 lg:col-span-1">
+								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+									PABRIK / PLANT <span className="text-red-500">*</span>
+								</label>
+								<AutocompleteInput
+									mode="select"
+									name="plantId"
+									showOnFocus
+									value={formData.plantId}
+									onChange={(val) => handleSelectChange("plantId", val)}
+									onBlur={() => handleSelectBlur("plantId")}
+									options={plants}
+									placeholder="Ketik pabrik / plant..."
+									hasError={
+										(showValidationErrors || touched.plantId) && !formData.plantId
+									}
+									emptyMessage="Pabrik tidak ditemukan."
+								/>
+								{(showValidationErrors || touched.plantId) && !formData.plantId && (
 									<p className="text-[10px] text-red-500 mt-1 font-medium">
-										* Nama Peralatan wajib diisi.
+										* Pabrik / Plant wajib dipilih.
 									</p>
 								)}
-								{formData.name.length >= 150 && (
-									<p className="text-[10px] text-orange-500 mt-1 font-medium">
-										* Batas maksimal karakter (150) telah tercapai.
+							</div>
+							<div className="space-y-1.5 lg:col-span-2">
+								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
+									AREA (FUNCLOC) <span className="text-red-500">*</span>
+								</label>
+								<AutocompleteInput
+									mode="select"
+									name="funcLocId"
+									showOnFocus
+									value={formData.funcLocId}
+									onChange={(val) => handleSelectChange("funcLocId", val)}
+									onBlur={() => handleSelectBlur("funcLocId")}
+									options={funcLocs}
+									placeholder="Ketik functional location..."
+									hasError={
+										(showValidationErrors || touched.funcLocId) && !formData.funcLocId
+									}
+									emptyMessage="Functional location tidak ditemukan."
+								/>
+								{(showValidationErrors || touched.funcLocId) && !formData.funcLocId && (
+									<p className="text-[10px] text-red-500 mt-1 font-medium">
+										* Area (Funcloc) wajib dipilih.
 									</p>
 								)}
 							</div>
 
-							{/* Baris 2: Klasifikasi */}
+							{/* Baris 3: Klasifikasi & Lokasi Simpan */}
 							<div className="space-y-1.5 lg:col-span-1">
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									KATEGORI (TIPE) <span className="text-red-500">*</span>
@@ -677,32 +743,6 @@ export default function RegisterEquipmentClient({
 							</div>
 							<div className="space-y-1.5 lg:col-span-2">
 								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-									PABRIK / PLANT <span className="text-red-500">*</span>
-								</label>
-								<AutocompleteInput
-									mode="select"
-									name="plantId"
-									showOnFocus
-									value={formData.plantId}
-									onChange={(val) => handleSelectChange("plantId", val)}
-									onBlur={() => handleSelectBlur("plantId")}
-									options={plants}
-									placeholder="Ketik pabrik / plant..."
-									hasError={
-										(showValidationErrors || touched.plantId) && !formData.plantId
-									}
-									emptyMessage="Pabrik tidak ditemukan."
-								/>
-								{(showValidationErrors || touched.plantId) && !formData.plantId && (
-									<p className="text-[10px] text-red-500 mt-1 font-medium">
-										* Pabrik / Plant wajib dipilih.
-									</p>
-								)}
-							</div>
-
-							{/* Baris 3: Area */}
-							<div className="space-y-1.5 lg:col-span-1">
-								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
 									LOKASI PENYIMPANAN <span className="text-red-500">*</span>
 								</label>
 								<AutocompleteInput
@@ -727,29 +767,36 @@ export default function RegisterEquipmentClient({
 										</p>
 									)}
 							</div>
-							<div className="space-y-1.5 lg:col-span-2">
-								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">
-									AREA (FUNCLOC) <span className="text-red-500">*</span>
+
+							{/* Baris Rumpun Inspeksi Tujuan */}
+							<div className="space-y-1.5 lg:col-span-3">
+								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block">
+									RUMPUN INSPEKSI TUJUAN <span className="text-red-500">*</span>
 								</label>
-								<AutocompleteInput
-									mode="select"
-									name="funcLocId"
-									showOnFocus
-									value={formData.funcLocId}
-									onChange={(val) => handleSelectChange("funcLocId", val)}
-									onBlur={() => handleSelectBlur("funcLocId")}
-									options={funcLocs}
-									placeholder="Ketik functional location..."
-									hasError={
-										(showValidationErrors || touched.funcLocId) && !formData.funcLocId
-									}
-									emptyMessage="Functional location tidak ditemukan."
-								/>
-								{(showValidationErrors || touched.funcLocId) && !formData.funcLocId && (
-									<p className="text-[10px] text-red-500 mt-1 font-medium">
-										* Area (Funcloc) wajib dipilih.
-									</p>
-								)}
+								<select
+									name="inspectionCluster"
+									value={formData.inspectionCluster}
+									onChange={handleChange}
+									onBlur={handleBlur}
+									className={`w-full px-3 py-2 text-sm border rounded outline-none transition-all cursor-pointer ${
+										(showValidationErrors || touched.inspectionCluster) &&
+										!formData.inspectionCluster
+											? "border-red-400 focus:border-red-500 focus:ring-1 focus:ring-red-500 bg-red-50/10 text-gray-900"
+											: "border-gray-300 bg-white text-gray-900 focus:border-[#0556B3] focus:ring-1 focus:ring-[#0556B3]"
+									}`}
+								>
+									<option value="">Pilih Rumpun Inspeksi Tujuan...</option>
+									<option value="INSPEKSI_1">Inspeksi 1</option>
+									<option value="INSPEKSI_2">Inspeksi 2</option>
+									<option value="INSPEKSI_LISTRIK">Inspeksi Listrik</option>
+									<option value="INSPEKSI_INSTRUMEN">Inspeksi Instrumen</option>
+								</select>
+								{(showValidationErrors || touched.inspectionCluster) &&
+									!formData.inspectionCluster && (
+										<p className="text-[10px] text-red-500 mt-1 font-medium">
+											* Rumpun Inspeksi Tujuan wajib dipilih.
+										</p>
+									)}
 							</div>
 
 							{/* Garis Pemisah Visual */}
@@ -889,10 +936,10 @@ export default function RegisterEquipmentClient({
 								></textarea>
 							</div>
 
-							{/* Upload Dropzone (Lebih proporsional) */}
+							{/* Upload Dropzone */}
 							<div className="flex-1 flex flex-col">
-								<label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider block mb-2">
-									FOTO PERALATAN
+								<label className="text-[10px] font-bold text-gray-700 uppercase tracking-wider block mb-2">
+									Upload File / Attachment {!editId ? <span className="text-red-500">* (Wajib min. 1 berkas)</span> : <span className="text-gray-400 font-normal normal-case">(Opsional)</span>}
 								</label>
 								<input
 									type="file"
@@ -900,86 +947,138 @@ export default function RegisterEquipmentClient({
 									ref={fileInputRef}
 									className="hidden"
 									onChange={handleFileChange}
-									accept=".jpg,.jpeg,.png,.pdf"
+									accept=".pdf,.doc,.docx,.xls,.xlsx,.dwg,.dxf,.jpg,.jpeg,.png,.webp"
 								/>
 								<div
-									onClick={() => fileInputRef.current?.click()}
 									onDragOver={handleDragOver}
 									onDragLeave={handleDragLeave}
 									onDrop={handleDrop}
-									className={`flex-1 border-2 border-dashed rounded p-4 flex flex-col items-center justify-center text-center cursor-pointer transition-all min-h-[110px] ${
-										isDragging
-											? "border-[#0556B3] bg-blue-50/80"
-											: "border-gray-300 hover:bg-blue-50/40 hover:border-[#0556B3]"
+									className={`border-2 border-dashed rounded-lg p-4 sm:p-5 transition-all ${
+										(showValidationErrors && !editId && uploadedFiles.length === 0) || fileError
+											? "border-red-400 bg-red-50/20"
+											: isDragging
+												? "border-[#0556B3] bg-blue-50/80"
+												: "border-gray-300 hover:border-[#0556B3] bg-gray-50/60"
 									}`}
 								>
-									<UploadCloud
-										className={`w-7 h-7 mb-2 ${isDragging ? "text-[#0556B3] animate-bounce" : "text-gray-400"}`}
-									/>
-									<span className="text-xs font-bold text-gray-900">
-										Klik atau tarik & lepas foto di sini
-									</span>
-									<span className="text-[10px] text-gray-500 mt-1">
-										Maksimal 5MB per file
-									</span>
+									{/* Area Dropzone Klik */}
+									<div
+										onClick={() => fileInputRef.current?.click()}
+										className="flex flex-col items-center justify-center text-center cursor-pointer py-1.5 hover:opacity-80 transition-opacity"
+									>
+										<UploadCloud
+											className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0556B3] animate-bounce" : (showValidationErrors && !editId && uploadedFiles.length === 0) || fileError ? "text-red-400" : "text-gray-400"}`}
+										/>
+										<span className="text-xs font-bold text-gray-900">
+											Klik atau tarik & lepas file dokumen/foto di sini
+										</span>
+										<span className="text-[10px] text-gray-500 mt-0.5">
+											Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks. 25MB per file)
+										</span>
+										<span className="text-[10px] text-gray-400 mt-0.5">
+											{!editId ? "Wajib melampirkan minimal 1 file dokumen/foto aset" : "Klik untuk memilih file lampiran (Opsional)"}
+										</span>
+									</div>
 
-									{/* Preview Selected Files */}
+									{/* Daftar Berkas Terlampir (Tetap di dalam kotak) */}
 									{uploadedFiles.length > 0 && (
-										<div
-											className="mt-4 w-full flex flex-wrap justify-center gap-3"
-											onClick={(e) => e.stopPropagation()}
-										>
-											{uploadedFiles.map((file, i) => {
-												const isImage = file.type.startsWith("image/");
-												const previewUrl = isImage ? URL.createObjectURL(file) : null;
-												return (
-													<div
-														key={i}
-														className="relative group border border-gray-200 rounded overflow-hidden bg-white w-[100px] shadow-sm hover:shadow-md transition-all hover:border-[#0A356A]"
-													>
-														{isImage ? (
-															<div className="h-16 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
-																{/* <img> wajib: URL blob lokal (createObjectURL) tak bisa lewat next/image remotePatterns */}
-																{/* eslint-disable-next-line @next/next/no-img-element -- URL blob lokal (createObjectURL) tidak dapat melewati next/image remotePatterns */}
-																<img
-																	src={previewUrl!}
-																	alt={file.name}
-																	className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-																/>
-															</div>
-														) : (
-															<div className="h-16 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
-																<Paperclip className="w-5 h-5 mb-1" />
-																<span className="text-[9px] font-bold">PDF</span>
-															</div>
-														)}
-														<div className="px-1.5 py-1 border-t border-gray-100 bg-white">
-															<span
-																className="block text-[9px] font-medium text-gray-700 truncate text-center"
-																title={file.name}
-															>
-																{file.name}
-															</span>
-														</div>
-														<button
+										<div className="mt-4 pt-3.5 border-t border-gray-200">
+											<div className="flex items-center justify-between mb-2 px-0.5">
+												<span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+													Berkas Terlampir ({uploadedFiles.length})
+												</span>
+												<span className="text-[10px] text-gray-400">
+													Klik baris untuk melihat preview
+												</span>
+											</div>
+											<div className="space-y-2">
+												{uploadedFiles.map((file, i) => {
+													const isImage = file.type.startsWith("image/");
+													const isPdf =
+														file.type === "application/pdf" ||
+														file.name.toLowerCase().endsWith(".pdf");
+													const previewUrl = URL.createObjectURL(file);
+													const ext =
+														file.name.split(".").pop()?.toUpperCase() || "FILE";
+
+													return (
+														<div
+															key={i}
 															onClick={(e) => {
 																e.stopPropagation();
-																removeFile(i);
+																if (isPdf) {
+																	setPreviewModal({
+																		url: previewUrl,
+																		title: file.name,
+																		isPdf: true,
+																	});
+																} else if (isImage) {
+																	setPreviewModal({
+																		url: previewUrl,
+																		title: file.name,
+																		isPdf: false,
+																	});
+																} else {
+																	const a = document.createElement("a");
+																	a.href = previewUrl;
+																	a.download = file.name;
+																	a.click();
+																}
 															}}
-															className="absolute top-1 right-1 bg-red-500 rounded-full p-1 text-white hover:bg-red-600 shadow-md transition-colors opacity-0 group-hover:opacity-100"
-															title="Hapus"
+															className="group flex items-center justify-between p-2.5 bg-white border border-gray-200 rounded-lg hover:border-[#0A356A] hover:shadow-sm transition-all cursor-pointer"
+															title={`Klik untuk melihat preview: ${file.name}`}
 														>
-															<X className="w-3 h-3" />
-														</button>
-													</div>
-												);
-											})}
+															<div className="flex items-center gap-3 min-w-0 flex-1">
+																<div className="w-10 h-10 rounded border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 relative">
+																	{isImage ? (
+																		/* eslint-disable-next-line @next/next/no-img-element */
+																		<img
+																			src={previewUrl}
+																			alt={file.name}
+																			className="w-full h-full object-cover"
+																		/>
+																	) : (
+																		<span className="text-[9px] font-bold px-1.5 py-0.5 bg-gray-200 text-gray-700 rounded">
+																			{ext}
+																		</span>
+																	)}
+																</div>
+																<div className="min-w-0 flex-1">
+																	<p className="text-[12px] font-semibold text-gray-800 truncate group-hover:text-[#0A356A] transition-colors">
+																		{file.name}
+																	</p>
+																	<p className="text-[10px] text-gray-400">
+																		{(file.size / (1024 * 1024)).toFixed(2)} MB
+																	</p>
+																</div>
+															</div>
+
+															<div className="flex items-center gap-2 shrink-0 ml-3">
+																<span className="text-[11px] font-medium text-[#0A356A] bg-blue-50 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+																	<Eye className="w-3.5 h-3.5" /> Preview
+																</span>
+																<button
+																	type="button"
+																	onClick={(e) => {
+																		e.stopPropagation();
+																		removeFile(i);
+																	}}
+																	className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+																	title="Hapus berkas"
+																>
+																	<X className="w-4 h-4" />
+																</button>
+															</div>
+														</div>
+													);
+												})}
+											</div>
 										</div>
 									)}
 								</div>
-								{fileError && (
+								{(fileError || (showValidationErrors && !editId && uploadedFiles.length === 0)) && (
 									<p className="text-[10px] text-red-500 mt-1.5 font-medium">
-										* {fileError}
+										* {fileError || "Berkas wajib diunggah minimal 1 file (foto/dokumen)."}
 									</p>
 								)}
 							</div>
@@ -1005,9 +1104,14 @@ export default function RegisterEquipmentClient({
 									!formData.storageLocationId ||
 									!formData.funcLocId ||
 									!formData.vendor ||
-									!formData.idleReason
+									!formData.idleReason ||
+									!formData.inspectionCluster ||
+									(!editId && uploadedFiles.length === 0)
 								) {
 									setShowValidationErrors(true);
+									if (!editId && uploadedFiles.length === 0) {
+										setFileError("Berkas wajib diunggah minimal 1 file (foto/dokumen).");
+									}
 									return;
 								}
 								setIsConfirmOpen(true);
@@ -1050,6 +1154,53 @@ export default function RegisterEquipmentClient({
 				pendingLabel="Menyimpan..."
 				isPending={isSubmitting}
 			/>
+
+			{previewModal && (
+				<div
+					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm"
+					onClick={() => setPreviewModal(null)}
+				>
+					<div className="absolute top-4 right-4 flex items-center gap-3 z-20">
+						<a
+							href={previewModal.url}
+							download={previewModal.title || "lampiran"}
+							target="_blank"
+							rel="noreferrer"
+							className="bg-white/10 hover:bg-white/25 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
+							onClick={(e) => e.stopPropagation()}
+						>
+							<Download className="w-4 h-4" /> Buka Tab Baru / Unduh
+						</a>
+						<button
+							className="text-white hover:bg-white/20 p-2 rounded transition-colors"
+							onClick={(e) => {
+								e.stopPropagation();
+								setPreviewModal(null);
+							}}
+							title="Tutup preview"
+						>
+							<X className="w-6 h-6" />
+						</button>
+					</div>
+					<div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center p-2">
+						{previewModal.isPdf ? (
+							<iframe
+								src={previewModal.url}
+								title={previewModal.title || "Preview PDF"}
+								className="w-full h-full rounded-lg bg-white shadow-2xl border-0"
+							/>
+						) : (
+							/* eslint-disable-next-line @next/next/no-img-element */
+							<img
+								src={previewModal.url}
+								alt={previewModal.title || "Preview Foto"}
+								className="max-w-full max-h-full object-contain rounded shadow-2xl"
+								onClick={(e) => e.stopPropagation()}
+							/>
+						)}
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

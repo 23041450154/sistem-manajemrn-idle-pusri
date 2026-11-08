@@ -22,6 +22,8 @@ import {
 	History,
 	RefreshCw,
 	Users,
+	PlusCircle,
+	ShoppingBag,
 } from "lucide-react";
 import { useSidebar } from "./SidebarProvider";
 import { useState, useEffect } from "react";
@@ -120,6 +122,20 @@ export function Sidebar({ role }: { role?: string }) {
 					);
 				}).length;
 
+				// Perbaikan Rendal (/rendal/perbaikan):
+				const rendalPerbaikanAntrean = data.filter((item: any) => {
+					const statusName = String(
+						item.status?.name || item.statusAset || "",
+					).toUpperCase();
+					const statusId = item.status_id || item.status?.id;
+					return (
+						statusId === 5 ||
+						statusName === "REPAIR" ||
+						statusName === "MAINTENANCE" ||
+						statusName.includes("PERBAIKAN")
+					);
+				}).length;
+
 				// Perbaikan Alat (/pemeliharaan/perbaikan-alat):
 				const perbaikanAntrean = data.filter((item: any) => {
 					const statusName = String(
@@ -127,7 +143,7 @@ export function Sidebar({ role }: { role?: string }) {
 					).toUpperCase();
 					const statusId = item.status_id || item.status?.id;
 					return (
-						statusId === 3 ||
+						statusId === 5 ||
 						statusName === "REPAIR" ||
 						statusName === "MAINTENANCE" ||
 						statusName === "DALAM_PERBAIKAN"
@@ -137,9 +153,11 @@ export function Sidebar({ role }: { role?: string }) {
 				setPendingCounts({
 					"/inspeksi/validasi": validasiAntrean,
 					"/inspeksi/validasi-ulang": validasiUlangAntrean,
+					"/rendal/perbaikan": rendalPerbaikanAntrean,
 					"/rendal/validasi-ulang": rendalValidasiUlangAntrean,
 					"/pemeliharaan/perbaikan-alat": perbaikanAntrean,
 					"/manajer/approve": validationApprovalAntrean,
+					"/manajer/pemakaian": reuseApprovalAntrean,
 					"/manajer/peminjaman": reuseApprovalAntrean,
 					"/manajer/scrap": scrapApprovalAntrean,
 				});
@@ -173,13 +191,23 @@ export function Sidebar({ role }: { role?: string }) {
 			// Rendal Pemeliharaan
 			mainNavItems = [
 				{ name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
-				{ name: "Peralatan", href: "/rendal/idle", icon: Wrench },
+				{ name: "Peralatan", href: "/rendal/idle", icon: Database },
 				{
-					name: "Persetujuan Perbaikan",
+					name: "Perbaikan",
+					href: "/rendal/perbaikan",
+					icon: Wrench,
+				},
+				{
+					name: "Monitoring Validasi Ulang",
 					href: "/rendal/validasi-ulang",
-					icon: CheckSquare,
+					icon: ClipboardCheck,
 				},
 				{ name: "Permintaan Scrap", href: "/rendal/scrap", icon: Trash2 },
+				{
+					name: "Katalog Peralatan",
+					href: "/unit-kerja/katalog",
+					icon: ShoppingBag,
+				},
 			];
 			break;
 
@@ -239,8 +267,8 @@ export function Sidebar({ role }: { role?: string }) {
 					icon: CheckSquare,
 				},
 				{
-					name: "Persetujuan Peminjaman",
-					href: "/manajer/peminjaman",
+					name: "Persetujuan Pemakaian",
+					href: "/manajer/pemakaian",
 					icon: Wrench,
 				},
 				{
@@ -264,6 +292,11 @@ export function Sidebar({ role }: { role?: string }) {
 					name: "Daftar Aset",
 					href: "/unit-kerja/daftar-aset",
 					icon: Wrench,
+				},
+				{
+					name: "Usulkan Alat Idle",
+					href: "/unit-kerja/usulan-idle",
+					icon: PlusCircle,
 				},
 				{
 					name: "Riwayat Permintaan",

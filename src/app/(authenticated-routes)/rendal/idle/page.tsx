@@ -1,12 +1,22 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
-import { getEquipments, getObjectTypes, getPlants } from "@/action/api";
+import { useEffect, useState, useCallback, Suspense } from "react";
+import {
+	getEquipments,
+	getObjectTypes,
+	getPlants,
+	getInspections,
+	getValidations,
+} from "@/action/api";
 import {
 	EQUIPMENT_STATUS,
 	formatPlantDisplay,
-	statusGroup,
 	statusName,
 } from "@/lib/equipment-status";
+import {
+	resolveRepairRecommendation,
+	resolveInspectionEstimatedCost,
+	getSavedRepairAssignment,
+} from "@/lib/repair-assignment";
 import RendalIdleClient, {
 	type AssetState,
 	type Equipment,
@@ -28,15 +38,20 @@ export default function RendalIdlePage() {
 	const [loading, setLoading] = useState(true);
 
 	const loadData = useCallback(async () => {
-		const [data, objTypes, plantsData] = await Promise.all([
+		const [data, objTypes, plantsData, inspectionsData, validationsData] =
+			await Promise.all([
 				getEquipments().catch(() => []),
 				getObjectTypes().catch(() => []),
 				getPlants().catch(() => []),
+				getInspections().catch(() => []),
+				getValidations().catch(() => []),
 			]);
 
-			const plants = Array.isArray(plantsData) ? plantsData : [];
+		const plants = Array.isArray(plantsData) ? plantsData : [];
+		const inspectionsList = Array.isArray(inspectionsData) ? inspectionsData : [];
+		const validationsList = Array.isArray(validationsData) ? validationsData : [];
 
-			(Array.isArray(data) ? data : []).sort((a: any, b: any) => {
+		(Array.isArray(data) ? data : []).sort((a: any, b: any) => {
 		const timeA = a.created_at ? new Date(a.created_at).getTime() : 0;
 		const timeB = b.created_at ? new Date(b.created_at).getTime() : 0;
 		if (timeB !== timeA) return timeB - timeA;
@@ -46,6 +61,19 @@ export default function RendalIdlePage() {
 	});
 
 	const equipments: Equipment[] = (Array.isArray(data) ? data : [])
+			.filter((item: any) => {
+				const s = (
+					typeof item.status === "string"
+						? item.status
+						: item.status?.name || ""
+				).toUpperCase();
+				// Aset yang masih berstatus usulan (PROPOSED / PROPOSAL_REJECTED) belum masuk ke inventaris resmi Rendal
+				return (
+					s !== "PROPOSED" &&
+					s !== "PROPOSAL_REJECTED" &&
+					s !== "MENUNGGU VERIFIKASI"
+				);
+			})
 			.map((item: any): Equipment => {
 			let objectTypeName = "Belum Ditentukan";
 			if (item.object_type?.name) {
@@ -73,6 +101,44 @@ export default function RendalIdlePage() {
 				item.plant_description,
 			);
 
+			// Cari temuan inspeksi dan validasi terkait untuk referensi Rendal
+			const eqInsps = inspectionsList.filter(
+				(ins: any) => String(ins.equipment_id || ins.equipment?.id || "") === String(item.id),
+			);
+			const latestInspection = eqInsps.length > 0 ? eqInsps[eqInsps.length - 1] : null;
+
+			const eqValids = validationsList.filter(
+				(v: any) => String(v.equipment_id || v.equipment?.id || "") === String(item.id),
+			);
+			const latestValidation = eqValids.length > 0 ? eqValids[eqValids.length - 1] : null;
+
+			const rekomendasiInspeksi = resolveRepairRecommendation(item, latestValidation, latestInspection);
+			const estimasiBiayaInspeksi = resolveInspectionEstimatedCost(item, latestValidation, latestInspection);
+
+			// Muat penugasan perbaikan lokal bila ada
+			const savedAssignment = getSavedRepairAssignment(item.id);
+			const effectiveExecutor =
+				savedAssignment?.executor ||
+				item.repair_executor ||
+				(rawStatus === "REPAIR_VENDOR" ? "VENDOR" : undefined);
+			const effectiveVendorName =
+				savedAssignment?.vendorName ||
+				item.repair_executor_vendor ||
+				(effectiveExecutor === "VENDOR" ? item.vendor : undefined);
+			const effectiveRefurbishmentCost =
+				savedAssignment?.refurbishmentCost ??
+				(Number(item.refurbishment_cost || item.actual_cost) || undefined);
+			const effectiveContractNo =
+				savedAssignment?.contractNumber || item.contract_number || item.po_number;
+			const effectiveWorkNotes = savedAssignment?.workNotes || item.work_notes;
+
+			let effectiveStatus: AssetState | string = statusStr;
+			if (savedAssignment?.status === "REPAIR_VENDOR" || effectiveExecutor === "VENDOR" || rawStatus === "REPAIR_VENDOR") {
+				effectiveStatus = "REPAIR_VENDOR";
+			} else if (savedAssignment?.status === "REPAIR") {
+				effectiveStatus = "REPAIR";
+			}
+
 			return {
 				id: item.id?.toString() || "-",
 				kodeAlat: item.equipment_code || item.kodeAlat || `EQ-${item.id}`,
@@ -83,7 +149,7 @@ export default function RendalIdlePage() {
 					? new Date(item.created_at).toISOString().split("T")[0]
 					: "-",
 				createdAt: item.created_at || "",
-				statusAset: statusStr,
+				statusAset: effectiveStatus as AssetState,
 				storageLocation:
 					(typeof item.storage_location === "object"
 						? item.storage_location?.name
@@ -94,13 +160,12 @@ export default function RendalIdlePage() {
 						: item.func_loc?.name || "-",
 				vendor: item.vendor || "-",
 				year: item.year || item.year_of_purchase || "-",
-				// ponytail: fallback book_value dihapus — nilai perolehan ≠ nilai buku.
-				// bookValue & estimatedReuseValue ditampilkan di modal Detail Aset Idle.
 				originalValue: item.original_value || 0,
 				bookValue: item.book_value || 0,
 				estimatedReuseValue: item.estimated_reuse_value || 0,
 				notes: item.notes || "-",
 				idleReason: item.idle_reason || "-",
+				kondisi: typeof item.condition === "object" ? item.condition?.name : item.condition || "-",
 				photos: item.attachments
 					? item.attachments
 							.filter(
@@ -115,6 +180,17 @@ export default function RendalIdlePage() {
 								return url.replace(/\\/g, "/");
 							})
 					: [],
+				// Properti US-06-FE
+				rekomendasiInspeksi,
+				estimasiBiayaInspeksi,
+				refurbishmentCost: effectiveRefurbishmentCost,
+				repairExecutor: effectiveExecutor,
+				repairExecutorVendor: effectiveVendorName,
+				contractNumber: effectiveContractNo,
+				workNotes: effectiveWorkNotes,
+				repairAssignedAt: savedAssignment?.assignedAt,
+				repairAssignedBy: savedAssignment?.assignedBy,
+				repairHistory: savedAssignment?.history,
 			};
 			});
 
@@ -145,10 +221,12 @@ export default function RendalIdlePage() {
 		);
 
 	return (
-		<RendalIdleClient
-			equipments={equipments}
-			plants={plants}
-			onRefresh={loadData}
-		/>
+		<Suspense fallback={null}>
+			<RendalIdleClient
+				equipments={equipments}
+				plants={plants}
+				onRefresh={loadData}
+			/>
+		</Suspense>
 	);
 }

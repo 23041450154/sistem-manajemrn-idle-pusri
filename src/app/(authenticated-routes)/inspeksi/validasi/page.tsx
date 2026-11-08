@@ -90,7 +90,7 @@ export default function ValidasiPage() {
 		const currentUserNPP = user?.npp || "NPP2304145";
 
 		const mappedData = (Array.isArray(data) ? data : []).map((item: any) => {
-		let objectTypeName = "Belum Ditentukan";
+		let objectTypeName = "-";
 		if (item.object_type?.name) {
 			objectTypeName = item.object_type.name;
 		} else if (item.objectType?.name) {
@@ -129,9 +129,11 @@ export default function ValidasiPage() {
 			spesifikasi: item.notes || "Belum ada spesifikasi",
 			lampiran: [] as string[],
 			lokasiPenyimpanan:
+				(typeof item.storage_location === "string" && item.storage_location.trim() && item.storage_location !== "-" ? item.storage_location : null) ||
 				item.storage_location?.name ||
 				item.storageLocation?.name ||
-				"Belum ditentukan",
+				item.storage_location_name ||
+				"-",
 			area:
 				typeof item.func_loc === "string"
 					? item.func_loc
@@ -147,6 +149,12 @@ export default function ValidasiPage() {
 				return /^\d/.test(p) ? `NPP${p}` : p;
 			})(),
 			updated_at: item.updated_at || item.created_at || undefined,
+			inspectionCluster:
+				item.inspection_cluster ||
+				item.inspection_purpose ||
+				item.tujuan_inspeksi ||
+				item.inspectionCluster ||
+				undefined,
 		};
 	});
 

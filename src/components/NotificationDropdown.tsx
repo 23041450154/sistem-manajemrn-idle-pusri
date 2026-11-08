@@ -220,7 +220,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 						}
 					});
 
-					// 2. Antrean persetujuan peminjaman/reuse dari database
+					// 2. Antrean persetujuan pemakaian/reuse dari database
 					toList(reuseApps).forEach((app: any) => {
 						const status = String(
 							app.approval_status || app.status || "",
@@ -239,12 +239,12 @@ export function NotificationDropdown({ role }: { role?: string }) {
 
 							items.push({
 								id: `mgr-reuse-${app.id}`,
-								title: `Persetujuan Peminjaman (${reqNum})`,
+								title: `Persetujuan Pemakaian (${reqNum})`,
 								message: `Permohonan reuse alat ${code} (${name}) menunggu persetujuan Manajer.`,
 								timestamp: app.created_at || new Date().toISOString(),
-								href: "/manajer/peminjaman",
+								href: "/manajer/pemakaian",
 								category: "reuse",
-								badgeText: "Peminjaman",
+								badgeText: "Pemakaian",
 								badgeColor: "#059669",
 							});
 						}
@@ -270,7 +270,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 							items.push({
 								id: `mgr-disp-${app.id}`,
 								title: `Persetujuan Usulan Scrap (${dispNum})`,
-								message: `Usulan penghapusan aset ${code} (${name}) menunggu verifikasi Manajer.`,
+								message: `Usulan scrap aset ${code} (${name}) menunggu verifikasi Manajer.`,
 								timestamp: app.created_at || new Date().toISOString(),
 								href: "/manajer/scrap",
 								category: "scrap",
@@ -318,7 +318,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								items.push({
 									id: `rdl-scrap-${item.id}`,
 									title: `Rekomendasi Scrap: ${code}`,
-									message: `Peralatan ${name} direkomendasikan untuk diajukan penghapusan (scrap) ke Manajer.`,
+									message: `Peralatan ${name} direkomendasikan untuk diajukan usulan scrap ke Manajer.`,
 									timestamp:
 										item.updated_at || item.created_at || new Date().toISOString(),
 									href: "/rendal/scrap",
@@ -440,7 +440,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 						getEquipments().catch(() => []),
 					]);
 
-					// 1. Status pengajuan peminjaman milik unit kerja yang login dari DB
+					// 1. Status pengajuan pemakaian milik unit kerja yang login dari DB
 					if (Array.isArray(myRequests)) {
 						myRequests.forEach((req: any) => {
 							const rawStatus = String(
@@ -458,7 +458,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								items.push({
 									id: `uk-req-app-${req.id}`,
 									title: `Pengajuan Disetujui: ${reqNum}`,
-									message: `Permohonan peminjaman ${code} (${name}) telah disetujui Rendal. Siap dimobilisasi.`,
+									message: `Permohonan pemakaian ${code} (${name}) telah disetujui Rendal. Siap dimobilisasi.`,
 									timestamp:
 										req.updated_at || req.created_at || new Date().toISOString(),
 									href: "/unit-kerja/riwayat-permintaan",
@@ -470,7 +470,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								items.push({
 									id: `uk-req-rej-${req.id}`,
 									title: `Pengajuan Ditolak: ${reqNum}`,
-									message: `Permohonan peminjaman ${code} (${name}) tidak disetujui.`,
+									message: `Permohonan pemakaian ${code} (${name}) tidak disetujui.`,
 									timestamp:
 										req.updated_at || req.created_at || new Date().toISOString(),
 									href: "/unit-kerja/riwayat-permintaan",
@@ -485,7 +485,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								items.push({
 									id: `uk-req-pen-${req.id}`,
 									title: `Pengajuan Direview: ${reqNum}`,
-									message: `Permohonan peminjaman ${code} (${name}) sedang dalam peninjauan Rendal.`,
+									message: `Permohonan pemakaian ${code} (${name}) sedang dalam peninjauan Rendal.`,
 									timestamp: req.created_at || new Date().toISOString(),
 									href: "/unit-kerja/riwayat-permintaan",
 									category: "reuse",
@@ -517,7 +517,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 							items.push({
 								id: `uk-ready-${item.id}`,
 								title: `Aset Siap Pakai: ${code}`,
-								message: `Peralatan ${name} (${plant}) dalam kondisi siap pakai (Ready to Use) dan dapat diajukan peminjaman.`,
+								message: `Peralatan ${name} (${plant}) dalam kondisi siap pakai (Ready to Use) dan dapat diajukan pemakaian.`,
 								timestamp:
 									item.updated_at || item.created_at || new Date().toISOString(),
 								href: "/unit-kerja/daftar-aset",

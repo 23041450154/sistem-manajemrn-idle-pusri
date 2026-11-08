@@ -26,6 +26,7 @@ import {
   type ScrapItemDTO,
 } from "@/action/api";
 import { formatDate } from "@/lib/utils";
+import { scrapStatusBadge, mapScrapMethodName } from "@/lib/approvals";
 
 type ScrapItem = ScrapItemDTO;
 
@@ -110,7 +111,8 @@ export default function ManajerScrapClient({
     return (
       item.scrap_number.toLowerCase().includes(q) ||
       item.equipment_code.toLowerCase().includes(q) ||
-      item.equipment_name.toLowerCase().includes(q)
+      item.equipment_name.toLowerCase().includes(q) ||
+      (item.storage_location || "").toLowerCase().includes(q)
     );
   });
 
@@ -436,23 +438,16 @@ export default function ManajerScrapClient({
                     </td>
                     {activeTab === "history" && (
                       <td className="px-3 py-3 text-center whitespace-nowrap">
-                        {item.status === "DISPOSED" || item.status === "APPROVED" ? (
-                          <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#DCFCE7] text-[#16A34A]">
-                            Disetujui
-                          </span>
-                        ) : item.status === "REJECTED" ? (
-                          <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEE2E2] text-[#DC2626]">
-                            Ditolak
-                          </span>
-                        ) : item.status === "REVISION_REQUIRED" ? (
-                          <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#F3E8FF] text-[#9333EA]">
-                            Perlu Revisi
-                          </span>
-                        ) : (
-                          <span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEF3C7] text-[#B45309]">
-                            Menunggu Persetujuan
-                          </span>
-                        )}
+                        {(() => {
+                          const badge = scrapStatusBadge(item.status);
+                          return (
+                            <span
+                              className={`inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-semibold whitespace-nowrap ${badge.style}`}
+                            >
+                              {badge.label}
+                            </span>
+                          );
+                        })()}
                       </td>
                     )}
                     <td className="px-3 py-3 text-center whitespace-nowrap">
@@ -556,7 +551,7 @@ export default function ManajerScrapClient({
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">
-                    Detail Peninjauan Permintaan Scrap Aset
+                    Detail Peninjauan Usulan Scrap Aset
                   </h2>
                   <p className="text-[12px] text-gray-500 font-medium">
                     No. Pengajuan:{" "}
@@ -754,7 +749,18 @@ export default function ManajerScrapClient({
                     Rincian Permintaan Scrap
                   </h3>
                 </div>
-                <div className="grid grid-cols-1 gap-4 mb-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                  <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-3.5">
+                    <p className="text-[11px] font-semibold text-[#0A356A] uppercase">
+                      Metode Scrap
+                    </p>
+                    <p className="text-[14px] font-bold text-gray-900 mt-1">
+                      {mapScrapMethodName(
+                        selectedScrap.scrap_method,
+                        selectedScrap.scrap_method_id,
+                      )}
+                    </p>
+                  </div>
                   <div className="bg-emerald-50/50 border border-emerald-100 rounded-xl p-3.5">
                     <p className="text-[11px] font-semibold text-emerald-700 uppercase">
                       Taksiran Nilai Scrap (Besi Tua)
@@ -862,20 +868,18 @@ export default function ManajerScrapClient({
                                 : "Ahmad Fauzi (Manajer Rendal)"}
                             </td>
                             <td className="py-2.5">
-                              {selectedScrap.status === "DISPOSED" ||
-                              selectedScrap.status === "APPROVED" ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100">
-                                  Disetujui
-                                </span>
-                              ) : selectedScrap.status === "REVISION_REQUIRED" ? (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
-                                  Perlu Revisi
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-100">
-                                  Ditolak
-                                </span>
-                              )}
+                              {(() => {
+                                const badge = scrapStatusBadge(
+                                  selectedScrap.status,
+                                );
+                                return (
+                                  <span
+                                    className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${badge.style}`}
+                                  >
+                                    {badge.label}
+                                  </span>
+                                );
+                              })()}
                             </td>
                             <td className="py-2.5">
                               {formatDate(
@@ -980,7 +984,7 @@ export default function ManajerScrapClient({
             </div>
 
             <h3 className="text-lg font-bold text-gray-900 mb-2">
-              Setujui Pengajuan Scrap?
+              Modal Konfirmasi Persetujuan Scrap
             </h3>
 
             <div className="text-[13px] text-gray-600 mb-6 leading-relaxed text-left w-full bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-100">
@@ -1004,6 +1008,18 @@ export default function ManajerScrapClient({
                 </p>
                 <p className="font-semibold text-gray-700">
                   {selectedScrap.equipment_name}
+                </p>
+              </div>
+
+              <div>
+                <p className="text-[11px] uppercase text-gray-400 font-semibold mb-0.5">
+                  Metode Scrap
+                </p>
+                <p className="font-bold text-gray-900">
+                  {mapScrapMethodName(
+                    selectedScrap.scrap_method,
+                    selectedScrap.scrap_method_id,
+                  )}
                 </p>
               </div>
 
@@ -1088,7 +1104,7 @@ export default function ManajerScrapClient({
               </div>
               <div>
                 <h3 className="text-base font-bold text-gray-900">
-                  Tolak Pengajuan Scrap?
+                  Modal Konfirmasi Penolakan Scrap
                 </h3>
                 <p className="text-[12px] text-gray-500 font-medium">
                   {selectedScrap.equipment_code}
@@ -1165,7 +1181,7 @@ export default function ManajerScrapClient({
                 ) : modalError ? (
                   "Coba Lagi"
                 ) : (
-                  "Tolak Pengajuan"
+                  "Tolak Pengajuan Scrap"
                 )}
               </button>
             </div>

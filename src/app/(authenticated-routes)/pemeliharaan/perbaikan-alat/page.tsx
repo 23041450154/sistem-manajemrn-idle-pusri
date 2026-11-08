@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import { getEquipments } from "@/action/api";
-import { repairFlowStatus } from "@/lib/equipment-status";
+import { repairFlowStatus, formatCondition } from "@/lib/equipment-status";
 import PerbaikanAlatClient, {
 	type MaintenanceEquipment,
 } from "./perbaikan-alat-client";
@@ -24,7 +24,63 @@ export default function PerbaikanAlatPage() {
 		const equipments: MaintenanceEquipment[] = (
 			Array.isArray(data) ? data : []
 		).flatMap((item: any): MaintenanceEquipment[] => {
-			const status = repairFlowStatus(item);
+			// Periksa apakah aset ditugaskan ke pihak ketiga (vendor) atau internal
+			let assignment: any = null;
+			if (typeof window !== "undefined") {
+				try {
+					const raw = localStorage.getItem("idle_repair_assignments");
+					if (raw) {
+						const map = JSON.parse(raw);
+						assignment = map[String(item.id)];
+					}
+				} catch {}
+			}
+
+			const rawStatus = (typeof item.status === "string" ? item.status : item.status?.name) || "";
+			const stUpper = rawStatus.toUpperCase();
+			const statusId = Number(item.status_id || item.status?.id || 0);
+
+			// Status non-perbaikan tidak boleh masuk ke modul pemeliharaan
+			const isNonRepairStatus =
+				stUpper === "PROPOSED" ||
+				stUpper === "PROPOSAL_REJECTED" ||
+				stUpper === "REGISTERED" ||
+				stUpper === "REUSED" ||
+				stUpper === "SCRAP_RECOMMENDED" ||
+				stUpper === "SCRAP_REQUESTED" ||
+				stUpper === "SCRAP" ||
+				statusId === 1 ||
+				statusId === 2 ||
+				statusId === 3 ||
+				statusId === 9 ||
+				statusId === 10 ||
+				statusId === 11 ||
+				statusId === 12;
+
+			if (isNonRepairStatus) {
+				return [];
+			}
+
+			const effectiveExecutor =
+				assignment?.executor ||
+				item.repair_executor ||
+				(rawStatus === "REPAIR_VENDOR" || String(item.notes || "").includes("[Instruksi Kerja Vendor")
+					? "VENDOR"
+					: "INTERNAL");
+
+			// Jika perbaikan ditugaskan ke Vendor, pekerjaan tidak masuk ke antrean bengkel internal Pemeliharaan Lapangan
+			if (effectiveExecutor === "VENDOR" || rawStatus === "REPAIR_VENDOR") {
+				return [];
+			}
+
+			// Prioritaskan status asli dari backend; jangan biarkan assignment localStorage menimpa status yang sudah selesai/naik
+			const resolvedStatusName =
+				stUpper === "REPAIR_COMPLETED" || statusId === 6
+					? "REPAIR_COMPLETED"
+					: rawStatus || assignment?.status || "REPAIR";
+
+			const effectiveItem = { ...item, status: resolvedStatusName };
+			const status = repairFlowStatus(effectiveItem);
 			if (!status) return [];
 
 			const pick = (val: any, fallback = "-") =>
@@ -43,7 +99,7 @@ export default function PerbaikanAlatPage() {
 					tipeObjek: pick(item.object_type),
 					plant: pick(item.plant),
 					lokasiPenyimpanan: pick(item.storage_location),
-					kondisi: pick(item.condition).replace(/_/g, " "),
+					kondisi: formatCondition(item.condition),
 					terakhirDiperbarui: (stamp ? new Date(stamp) : new Date())
 						.toISOString()
 						.split("T")[0],

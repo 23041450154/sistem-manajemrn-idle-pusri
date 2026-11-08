@@ -26,6 +26,12 @@ import {
 } from "lucide-react";
 
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useAuth } from "@/components/AuthProvider";
+import {
+	getUserInspectionCluster,
+	getEquipmentInspectionCluster,
+	getInspectionClusterName,
+} from "@/lib/inspection-cluster";
 
 import {
 	validateEquipment,
@@ -70,6 +76,10 @@ export interface Asset {
 	pemohon: string;
 	approvalId?: string;
 	updated_at?: string;
+	inspectionCluster?: string;
+	inspection_cluster?: string;
+	inspection_purpose?: string;
+	tujuan_inspeksi?: string;
 }
 
 /** Client Component: interaksi tabel/modal inspeksi — data di-fetch Server Component. */
@@ -87,7 +97,16 @@ export default function ManajemenInspeksiClient({
 	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
+	const { user } = useAuth();
+	const userCluster = getUserInspectionCluster(user);
+
 	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
+
+	// Filter antrean validasi sesuai rumpun akun login
+	const clusterAssets = useMemo(() => {
+		if (!userCluster) return assets;
+		return assets.filter((a) => getEquipmentInspectionCluster(a) === userCluster);
+	}, [assets, userCluster]);
 
 	// Filter States
 	const [searchInput, setSearchInput] = useState("");
@@ -101,11 +120,11 @@ export default function ManajemenInspeksiClient({
 		const dbPlants = (plants || [])
 			.map((p: any) => (typeof p === "string" ? p : p?.name || p?.code || ""))
 			.filter((v: string) => v && v !== "-");
-		const itemPlants = assets
+		const itemPlants = clusterAssets
 			.map((a) => a.plant)
 			.filter((v) => v && v !== "-");
 		return [...new Set([...dbPlants, ...itemPlants])].sort();
-	}, [plants, assets]);
+	}, [plants, clusterAssets]);
 
 	// Modal & Form States
 	const [selectedAsset, setSelectedAsset] = useState<Asset | null>(null);
@@ -144,6 +163,7 @@ export default function ManajemenInspeksiClient({
 		return () => clearTimeout(timer);
 	}, []);
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
+	const [previewModal, setPreviewModal] = useState<{ url: string; title?: string; isPdf?: boolean } | null>(null);
 	// Nomor Pemeriksaan digenerate backend saat validasi dibuat, jadi kosong sebelum submit.
 	const [inspectionNumber, setInspectionNumber] = useState("");
 
@@ -340,6 +360,7 @@ export default function ManajemenInspeksiClient({
 	const closeModal = () => {
 		setIsModalOpen(false);
 		setPreviewImage(null);
+		setPreviewModal(null);
 		setTimeout(() => {
 			setSelectedAsset(null);
 			setHasilPemeriksaan("");
@@ -574,17 +595,26 @@ export default function ManajemenInspeksiClient({
 			setFileError(null);
 			const files = Array.from(e.target.files);
 			let hasError = false;
+			const allowedExtensions = [
+				".pdf", ".doc", ".docx", ".xls", ".xlsx", ".dwg", ".dxf", ".jpg", ".jpeg", ".png", ".webp"
+			];
 			const validFiles = files.filter((f) => {
-				if (f.size > 5 * 1024 * 1024) {
+				const ext = "." + (f.name.split(".").pop()?.toLowerCase() || "");
+				if (!allowedExtensions.includes(ext) && !f.type.startsWith("image/")) {
+					setFileError(`Format file ${f.name} tidak didukung. Harap gunakan PDF, DOCX, XLSX, DWG, atau Foto.`);
 					hasError = true;
+					return false;
+				}
+				if (f.size > 25 * 1024 * 1024) {
+					hasError = true;
+					setFileError(`Ukuran file ${f.name} melebihi batas 25MB.`);
 					return false;
 				}
 				return true;
 			});
-			if (hasError) {
-				setFileError("file anda lebih dari 5mb");
+			if (!hasError) {
+				setUploadedFiles((prev) => [...prev, ...validFiles]);
 			}
-			setUploadedFiles((prev) => [...prev, ...validFiles]);
 			e.target.value = ""; // Reset input to allow selecting the same file again
 		}
 	};
@@ -606,17 +636,26 @@ export default function ManajemenInspeksiClient({
 			setFileError(null);
 			const files = Array.from(e.dataTransfer.files);
 			let hasError = false;
+			const allowedExtensions = [
+				".pdf", ".doc", ".docx", ".xls", ".xlsx", ".dwg", ".dxf", ".jpg", ".jpeg", ".png", ".webp"
+			];
 			const validFiles = files.filter((f) => {
-				if (f.size > 5 * 1024 * 1024) {
+				const ext = "." + (f.name.split(".").pop()?.toLowerCase() || "");
+				if (!allowedExtensions.includes(ext) && !f.type.startsWith("image/")) {
+					setFileError(`Format file ${f.name} tidak didukung. Harap gunakan PDF, DOCX, XLSX, DWG, atau Foto.`);
 					hasError = true;
+					return false;
+				}
+				if (f.size > 25 * 1024 * 1024) {
+					hasError = true;
+					setFileError(`Ukuran file ${f.name} melebihi batas 25MB.`);
 					return false;
 				}
 				return true;
 			});
-			if (hasError) {
-				setFileError("file anda lebih dari 5mb");
+			if (!hasError) {
+				setUploadedFiles((prev) => [...prev, ...validFiles]);
 			}
-			setUploadedFiles((prev) => [...prev, ...validFiles]);
 		}
 	};
 
@@ -649,16 +688,16 @@ export default function ManajemenInspeksiClient({
 
 	// Counts untuk tab navigation
 	const antreanCount = useMemo(() => {
-		return assets.filter((a) => !isFinalStatus(a)).length;
-	}, [assets]);
+		return clusterAssets.filter((a) => !isFinalStatus(a)).length;
+	}, [clusterAssets]);
 
 	const riwayatCount = useMemo(() => {
-		return assets.filter((a) => isFinalStatus(a)).length;
-	}, [assets]);
+		return clusterAssets.filter((a) => isFinalStatus(a)).length;
+	}, [clusterAssets]);
 
 	// Filter & Sort Data
 	const filteredAssets = useMemo(() => {
-		const filtered = assets.filter((a) => {
+		const filtered = clusterAssets.filter((a) => {
 			const finalState = isFinalStatus(a);
 
 			if (activeTab === "antrean" && finalState) return false;
@@ -666,7 +705,8 @@ export default function ManajemenInspeksiClient({
 
 			const matchSearch =
 				a.kodeAlat.toLowerCase().includes(search.toLowerCase()) ||
-				a.namaAlat.toLowerCase().includes(search.toLowerCase());
+				a.namaAlat.toLowerCase().includes(search.toLowerCase()) ||
+				a.lokasiPenyimpanan?.toLowerCase().includes(search.toLowerCase());
 			const matchPlant = plantFilter === "Semua" || a.plant === plantFilter;
 
 			let matchStatus = false;
@@ -728,7 +768,7 @@ export default function ManajemenInspeksiClient({
 
 		return filtered;
 	}, [
-		assets,
+		clusterAssets,
 		activeTab,
 		search,
 		plantFilter,
@@ -767,20 +807,34 @@ export default function ManajemenInspeksiClient({
 			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
 			SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+			"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
 			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
 			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
 			REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
-			"READY TO USE": "bg-[#E0E7FF] text-[#4F46E5]",
-			READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
+			"READY TO USE": "bg-[#DCFCE7] text-[#16A34A]",
+			READY_TO_USE: "bg-[#DCFCE7] text-[#16A34A]",
+			PROPOSED: "bg-[#FEF3C7] text-[#B45309]",
 		};
 
 		let displayStatus = (status || "").replace(/_/g, " ");
 		if (displayStatus === "READY TO REUSE" || displayStatus === "REUSED") {
 			displayStatus = "READY TO USE";
 		}
+		if (
+			status === "SCRAP_RECOMMENDED" ||
+			displayStatus === "SCRAP RECOMMENDED" ||
+			displayStatus === "SCRAP RECOMENDED" ||
+			displayStatus === "SCRAP RECOMENDED" ||
+			displayStatus === "SCRAP RECOMMENDED"
+		) {
+			displayStatus = "SCRAP RECOMMENDED";
+		}
 
-		const style = styles[displayStatus] || styles[status] || styles.SCRAP;
+		const style =
+			styles[displayStatus] ||
+			styles[status] ||
+			"bg-gray-100 text-gray-600";
 		return (
 			<span
 				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${style}`}
@@ -791,7 +845,11 @@ export default function ManajemenInspeksiClient({
 	};
 
 	const getApprovalBadge = (status: ApprovalState) => {
-		const styles = {
+		if (status === "NONE" || !status) {
+			return <span className="text-gray-400 font-mono text-[13px]">-</span>;
+		}
+
+		const styles: Record<string, string> = {
 			NONE: "bg-gray-100 text-gray-500",
 			PENDING_REVIEW: "bg-[#FEF9C3] text-[#CA8A04]",
 			IN_REVIEW: "bg-[#E0F2FE] text-[#0284C7]",
@@ -799,7 +857,7 @@ export default function ManajemenInspeksiClient({
 			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 			NEED_REVISION: "bg-[#F3E8FF] text-[#9333EA]",
 		};
-		const labels = {
+		const labels: Record<string, string> = {
 			NONE: "-",
 			PENDING_REVIEW: "Menunggu Review",
 			IN_REVIEW: "Sedang Direview",
@@ -811,7 +869,7 @@ export default function ManajemenInspeksiClient({
 			<span
 				className={`inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap ${styles[status] || "bg-gray-100 text-gray-500"}`}
 			>
-				{labels[status]}
+				{labels[status] || status}
 			</span>
 		);
 	};
@@ -828,9 +886,10 @@ export default function ManajemenInspeksiClient({
 			<div className="flex items-center gap-1.5 justify-center">
 				{showInspeksi && (
 					<button
+						type="button"
 						title="Inspeksi"
 						onClick={() => openModal(asset, "VALIDASI")}
-						className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+						className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
 					>
 						<Check className="w-3.5 h-3.5" />
 						<span className="text-[11px] font-bold">Inspeksi</span>
@@ -838,9 +897,10 @@ export default function ManajemenInspeksiClient({
 				)}
 				{showUbah && (
 					<button
+						type="button"
 						title="Ubah Inspeksi"
 						onClick={() => openModal(asset, "VALIDASI")}
-						className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+						className="text-orange-500 hover:text-orange-700 hover:bg-orange-50 p-1 px-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
 					>
 						<Edit className="w-3.5 h-3.5" />
 						<span className="text-[11px] font-bold">Ubah Inspeksi</span>
@@ -848,9 +908,10 @@ export default function ManajemenInspeksiClient({
 				)}
 				{showRevisi && (
 					<button
+						type="button"
 						title="Revisi Inspeksi"
 						onClick={() => openModal(asset, "VALIDASI")}
-						className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+						className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
 					>
 						<Edit className="w-3.5 h-3.5" />
 						<span className="text-[11px] font-bold">Revisi Inspeksi</span>
@@ -858,9 +919,10 @@ export default function ManajemenInspeksiClient({
 				)}
 				{!showInspeksi && !showUbah && !showRevisi && (
 					<button
+						type="button"
 						title="Detail Info"
 						onClick={() => openModal(asset, "DETAIL")}
-						className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1 px-2 rounded-md transition-colors flex items-center gap-1"
+						className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1 px-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
 					>
 						<Eye className="w-3.5 h-3.5" />
 						<span className="text-[11px] font-bold">Detail Info</span>
@@ -881,6 +943,10 @@ export default function ManajemenInspeksiClient({
 		} else {
 			if (hasilPemeriksaan === "Tidak Layak" && !catatan.trim()) return false;
 		}
+
+		const hasAttachment =
+			uploadedFiles.length > 0 || (isRevision && attachments.length > 0);
+		if (!hasAttachment) return false;
 
 		return true;
 	};
@@ -952,9 +1018,22 @@ export default function ManajemenInspeksiClient({
 				id="validasi-table-container"
 				className="bg-white border border-gray-200 rounded overflow-hidden scroll-mt-4"
 			>
+				{userCluster && (
+					<div className="bg-[#E0F2FE]/60 border-b border-[#BAE6FD] px-5 py-2.5 flex items-center justify-between text-xs text-[#0A356A]">
+						<span className="font-semibold flex items-center gap-1.5">
+							<Info className="w-4 h-4 text-[#0A356A]" />
+							Menampilkan antrean khusus untuk {getInspectionClusterName(userCluster)}
+						</span>
+						<span className="bg-white px-2 py-0.5 rounded-[2px] border border-[#BAE6FD] font-semibold text-[11px]">
+							{getInspectionClusterName(userCluster)}
+						</span>
+					</div>
+				)}
+
 				{/* Tab Navigation */}
 				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
 					<button
+						type="button"
 						onClick={() => {
 							setActiveTab("antrean");
 							setCurrentPage(1);
@@ -978,6 +1057,7 @@ export default function ManajemenInspeksiClient({
 					</button>
 
 					<button
+						type="button"
 						onClick={() => {
 							setActiveTab("riwayat");
 							setCurrentPage(1);
@@ -1015,12 +1095,13 @@ export default function ManajemenInspeksiClient({
 									setSearchInput(e.target.value);
 									setSearch(e.target.value); // Realtime search!
 								}}
-								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
+								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400 text-gray-800"
 							/>
 						</div>
 						<button
+							type="button"
 							onClick={() => setSearch(searchInput)}
-							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded hover:bg-[#0556B3] transition-colors whitespace-nowrap"
+							className="px-4 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded hover:bg-[#072448] transition-colors whitespace-nowrap cursor-pointer"
 						>
 							Cari
 						</button>
@@ -1030,7 +1111,10 @@ export default function ManajemenInspeksiClient({
 					<div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
 						<select
 							value={plantFilter}
-							onChange={(e) => setPlantFilter(e.target.value)}
+							onChange={(e) => {
+								setPlantFilter(e.target.value);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="Semua">Semua Plant</option>
@@ -1043,8 +1127,11 @@ export default function ManajemenInspeksiClient({
 
 						<select
 							value={statusFilter}
-							onChange={(e) => setStatusFilter(e.target.value)}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[140px] cursor-pointer"
+							onChange={(e) => {
+								setStatusFilter(e.target.value);
+								setCurrentPage(1);
+							}}
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
 						>
 							<option value="Semua">Semua Status</option>
 							<option value="REGISTERED">REGISTERED</option>
@@ -1052,14 +1139,17 @@ export default function ManajemenInspeksiClient({
 							<option value="NEED_REVISION">Perlu Revisi</option>
 							<option value="READY_TO_USE">READY TO USE</option>
 							<option value="REPAIR">REPAIR (Dalam / Selesai Perbaikan)</option>
-							<option value="SCRAP">SCRAP / SCRAP RECOMMENDED</option>
+							<option value="SCRAP">SCRAP (REKOMENDASI SCRAP)</option>
 							<option value="REJECTED">Ditolak</option>
 						</select>
 
 						<input
 							type="date"
 							value={dateFilter}
-							onChange={(e) => setDateFilter(e.target.value)}
+							onChange={(e) => {
+								setDateFilter(e.target.value);
+								setCurrentPage(1);
+							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						/>
 
@@ -1067,8 +1157,9 @@ export default function ManajemenInspeksiClient({
 
 						{/* Reset Button */}
 						<button
+							type="button"
 							onClick={resetFilter}
-							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors whitespace-nowrap"
+							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors whitespace-nowrap cursor-pointer"
 							title="Reset semua filter"
 						>
 							<RefreshCw className="w-3.5 h-3.5" />
@@ -1101,6 +1192,15 @@ export default function ManajemenInspeksiClient({
 								>
 									<div className="flex items-center justify-center">
 										Plant {getSortIcon("plant")}
+									</div>
+								</th>
+								<th
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center whitespace-nowrap"
+									title="Klik untuk mengurutkan"
+									onClick={() => handleSort("lokasiPenyimpanan")}
+								>
+									<div className="flex items-center justify-center">
+										Lokasi Penyimpanan {getSortIcon("lokasiPenyimpanan")}
 									</div>
 								</th>
 								<th
@@ -1147,42 +1247,29 @@ export default function ManajemenInspeksiClient({
 						<tbody className="bg-white">
 							{paginatedAssets.length === 0 ? (
 								<tr>
-									<td colSpan={8} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={9} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-7 h-7 text-gray-300 mb-2" />
-											{search ||
-											plantFilter !== "Semua" ||
-											statusFilter !== "Semua" ||
-											dateFilter ? (
-												<>
-													<p className="text-[14px] font-semibold text-gray-800">
-														Hasil Pencarian Tidak Ditemukan
-													</p>
-													<p className="text-[12px] text-gray-500 mt-1">
-														Tidak ada data yang cocok dengan kriteria filter pencarian Anda.
-													</p>
-												</>
-											) : activeTab === "antrean" ? (
-												<>
-													<p className="text-[14px] font-semibold text-gray-800">
-														Tidak Ada Antrean Validasi
-													</p>
-													<p className="text-[12px] text-gray-500 mt-1">
-														Saat ini belum ada peralatan yang membutuhkan tindakan inspeksi
-														atau revisi dari Anda.
-													</p>
-												</>
-											) : (
-												<>
-													<p className="text-[14px] font-semibold text-gray-800">
-														Belum Ada Riwayat Validasi
-													</p>
-													<p className="text-[12px] text-gray-500 mt-1">
-														Peralatan yang telah selesai diinspeksi dan diproses akan muncul
-														di sini.
-													</p>
-												</>
-											)}
+											<p className="text-[14px] font-semibold text-gray-800">
+												{search ||
+												plantFilter !== "Semua" ||
+												statusFilter !== "Semua" ||
+												dateFilter
+													? "Hasil Pencarian Tidak Ditemukan"
+													: activeTab === "antrean"
+														? "Tidak Ada Antrean Validasi"
+														: "Belum Ada Riwayat Validasi"}
+											</p>
+											<p className="text-[12px] text-gray-500 mt-1">
+												{search ||
+												plantFilter !== "Semua" ||
+												statusFilter !== "Semua" ||
+												dateFilter
+													? "Tidak ada data yang cocok dengan kriteria filter pencarian Anda."
+													: activeTab === "antrean"
+														? "Saat ini belum ada peralatan yang membutuhkan tindakan inspeksi atau revisi dari Anda."
+														: "Peralatan yang telah selesai diinspeksi dan diproses akan muncul di sini."}
+											</p>
 										</div>
 									</td>
 								</tr>
@@ -1207,6 +1294,9 @@ export default function ManajemenInspeksiClient({
 											</td>
 											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center">
 												{asset.plant}
+											</td>
+											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center">
+												{asset.lokasiPenyimpanan || "-"}
 											</td>
 											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center">
 												{asset.jenisAlat}
@@ -1237,6 +1327,7 @@ export default function ManajemenInspeksiClient({
 					</table>
 				</div>
 
+				{/* Pagination */}
 				<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
 					<span className="text-[11px] font-medium text-gray-500">
 						Menampilkan{" "}
@@ -1246,9 +1337,10 @@ export default function ManajemenInspeksiClient({
 					</span>
 					<div className="flex items-center gap-1.5">
 						<button
+							type="button"
 							onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
 							disabled={currentPage === 1}
-							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
 						>
 							Prev
 						</button>
@@ -1257,9 +1349,10 @@ export default function ManajemenInspeksiClient({
 							{Array.from({ length: Math.max(1, totalPages) }, (_, i) => i + 1).map(
 								(page) => (
 									<button
+										type="button"
 										key={page}
 										onClick={() => setCurrentPage(page)}
-										className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors ${
+										className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors cursor-pointer ${
 											currentPage === page
 												? "bg-[#0A356A] text-white"
 												: "text-gray-600 hover:bg-gray-100"
@@ -1272,11 +1365,12 @@ export default function ManajemenInspeksiClient({
 						</div>
 
 						<button
+							type="button"
 							onClick={() =>
 								setCurrentPage((p) => Math.min(Math.max(1, totalPages), p + 1))
 							}
 							disabled={currentPage === Math.max(1, totalPages)}
-							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors"
+							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
 						>
 							Next
 						</button>
@@ -1762,101 +1856,155 @@ export default function ManajemenInspeksiClient({
 
 								{/* Row 4: Upload */}
 								{!isReadOnly && (
-									<div className="mt-1">
+									<div className="mt-2 space-y-2">
 										<input
 											type="file"
 											multiple
 											className="hidden"
 											ref={fileInputRef}
 											onChange={handleFileChange}
-											accept=".jpg,.jpeg,.png,.pdf"
+											accept=".pdf,.doc,.docx,.xls,.xlsx,.dwg,.dxf,.jpg,.jpeg,.png,.webp"
 										/>
 										<div
-											onClick={() => fileInputRef.current?.click()}
 											onDragOver={handleDragOver}
 											onDragLeave={handleDragLeave}
 											onDrop={handleDrop}
-											className={`border-2 border-dashed rounded-md p-5 flex flex-col items-center justify-center gap-2 cursor-pointer transition-all ${
-												isDragging
-													? "border-[#0A356A] bg-[#F2F3F4]"
-													: "border-gray-300 bg-gray-50 hover:bg-[#F2F3F4] hover:border-[#0A356A]"
+											className={`border-2 border-dashed rounded-lg p-4 sm:p-5 transition-all ${
+												showValidationErrors &&
+												uploadedFiles.length === 0 &&
+												!(selectedAsset?.statusPersetujuan === "NEED_REVISION" && attachments.length > 0)
+													? "border-red-400 bg-red-50/20"
+													: isDragging
+														? "border-[#0A356A] bg-blue-50/70"
+														: "border-gray-300 bg-gray-50/60 hover:border-[#0A356A]"
 											}`}
 										>
-											<UploadCloud
-												className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A]" : "text-gray-400"}`}
-											/>
-											<div className="text-[13px] text-center">
-												<span className="font-bold text-[#0A356A]">
-													📎 Upload File/Attachment Pemeriksaan
+											{/* Area Dropzone Klik */}
+											<div
+												onClick={() => fileInputRef.current?.click()}
+												className="flex flex-col items-center justify-center text-center cursor-pointer py-1.5 hover:opacity-80 transition-opacity"
+											>
+												<UploadCloud
+													className={`w-7 h-7 mb-1 ${isDragging ? "text-[#0A356A] animate-bounce" : "text-gray-400"}`}
+												/>
+												<div className="text-[13px] text-center">
+													<span className="font-bold text-[#0A356A]">
+														Upload File / Attachment Pemeriksaan <span className="text-red-500">* (Wajib)</span>
+													</span>
+												</div>
+												<span className="text-[11px] text-gray-500 font-medium text-center mt-0.5">
+													Format: PDF, DOCX, XLSX, DWG, JPG, PNG (Maks 25MB)
+												</span>
+												<span className="text-[10px] text-gray-400 mt-1">
+													Klik atau seret file ke sini untuk mengunggah (Wajib minimal 1 file)
 												</span>
 											</div>
-											<span className="text-[11px] text-gray-500 font-medium text-center">
-												Format: JPG, PNG, PDF (Max 5MB)
-											</span>
 
-											{uploadedFiles.length === 0 && (
-												<span className="text-[9px] font-bold text-gray-500 border border-[#E6E8EA] bg-white px-1.5 py-0.5 rounded-sm mt-1">
-													Opsional
-												</span>
-											)}
+											{showValidationErrors &&
+												uploadedFiles.length === 0 &&
+												!(selectedAsset?.statusPersetujuan === "NEED_REVISION" && attachments.length > 0) && (
+													<p className="text-[11px] text-[#DC2626] font-medium text-center mt-2">
+														* Berkas lampiran/foto hasil pemeriksaan wajib diunggah minimal 1 file.
+													</p>
+												)}
 
-											{/* Preview Selected Files (Inside Dropzone) */}
+											{/* Daftar Berkas Terlampir (Tetap di dalam kotak, selebar kontainer) */}
 											{uploadedFiles.length > 0 && (
-												<div
-													className="mt-4 w-full flex flex-wrap justify-center gap-4"
-													onClick={(e) => e.stopPropagation()}
-												>
-													{uploadedFiles.map((file, i) => {
-														const isImage = file.type.startsWith("image/");
-														const previewUrl = isImage ? URL.createObjectURL(file) : null;
-														return (
-															<div
-																key={i}
-																className="relative group border border-gray-200 rounded overflow-hidden bg-white w-[150px] transition-all hover:border-[#0A356A]"
-															>
-																{isImage ? (
-																	<div className="h-28 w-full bg-gray-100 flex items-center justify-center overflow-hidden">
-																		{/* <img> wajib: URL blob lokal (createObjectURL) tak bisa lewat next/image remotePatterns */}
-																		{/* eslint-disable-next-line @next/next/no-img-element -- URL blob lokal tidak dapat melewati next/image remotePatterns */}
-																		<img
-																			src={previewUrl!}
-																			alt={file.name}
-																			className="h-full w-full object-cover group-hover:scale-105 transition-transform duration-300"
-																		/>
-																	</div>
-																) : (
-																	<div className="h-28 w-full bg-gray-50 flex flex-col items-center justify-center text-gray-400">
-																		<Paperclip className="w-8 h-8 mb-2" />
-																		<span className="text-[10px] font-bold">PDF / DOC</span>
-																	</div>
-																)}
-																<div className="px-2 py-1.5 border-t border-gray-100 bg-white">
-																	<span
-																		className="block text-[10px] font-medium text-gray-700 truncate text-center"
-																		title={file.name}
-																	>
-																		{file.name}
-																	</span>
-																</div>
-																<button
+												<div className="mt-4 pt-3.5 border-t border-gray-200">
+													<div className="flex items-center justify-between mb-2 px-0.5">
+														<span className="text-[11px] font-bold text-gray-700 uppercase tracking-wider">
+															Berkas Terlampir ({uploadedFiles.length})
+														</span>
+														<span className="text-[10px] text-gray-400">
+															Klik baris untuk melihat preview
+														</span>
+													</div>
+													<div className="space-y-2">
+														{uploadedFiles.map((file, i) => {
+															const isImage = file.type.startsWith("image/");
+															const isPdf =
+																file.type === "application/pdf" ||
+																file.name.toLowerCase().endsWith(".pdf");
+															const previewUrl = URL.createObjectURL(file);
+															const ext =
+																file.name.split(".").pop()?.toUpperCase() || "FILE";
+
+															return (
+																<div
+																	key={`${file.name}-${i}`}
 																	onClick={(e) => {
 																		e.stopPropagation();
-																		removeFile(i);
+																		if (isPdf) {
+																			setPreviewModal({
+																				url: previewUrl,
+																				title: file.name,
+																				isPdf: true,
+																			});
+																		} else if (isImage) {
+																			setPreviewImage(previewUrl);
+																		} else {
+																			const a = document.createElement("a");
+																			a.href = previewUrl;
+																			a.download = file.name;
+																			a.click();
+																		}
 																	}}
-																	className="absolute top-1.5 right-1.5 bg-[#DC2626] rounded p-1 text-white hover:bg-[#DC2626] transition-colors opacity-0 group-hover:opacity-100"
-																	title="Hapus"
+																	className="group flex items-center justify-between p-2.5 bg-white border border-gray-200 rounded-lg hover:border-[#0A356A] hover:shadow-sm transition-all cursor-pointer"
+																	title={`Klik untuk melihat preview: ${file.name}`}
 																>
-																	<X className="w-3.5 h-3.5" />
-																</button>
-															</div>
-														);
-													})}
+																	{/* Left: Icon/Thumbnail + Info */}
+																	<div className="flex items-center gap-3 min-w-0 flex-1">
+																		<div className="w-10 h-10 rounded border border-gray-200 bg-gray-50 flex items-center justify-center overflow-hidden shrink-0 relative">
+																			{isImage ? (
+																				/* eslint-disable-next-line @next/next/no-img-element */
+																				<img
+																					src={previewUrl}
+																					alt={file.name}
+																					className="w-full h-full object-cover"
+																				/>
+																			) : (
+																				<span className="text-[9px] font-bold px-1.5 py-0.5 bg-gray-200 text-gray-700 rounded">
+																					{ext}
+																				</span>
+																			)}
+																		</div>
+																		<div className="min-w-0 flex-1">
+																			<p className="text-[12px] font-semibold text-gray-800 truncate group-hover:text-[#0A356A] transition-colors">
+																				{file.name}
+																			</p>
+																			<p className="text-[10px] text-gray-400">
+																				{(file.size / (1024 * 1024)).toFixed(2)} MB
+																			</p>
+																		</div>
+																	</div>
+
+																	{/* Right: Preview badge & Delete Button */}
+																	<div className="flex items-center gap-2 shrink-0 ml-3">
+																		<span className="text-[11px] font-medium text-[#0A356A] bg-blue-50 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+																			<Eye className="w-3.5 h-3.5" /> Preview
+																		</span>
+																		<button
+																			type="button"
+																			onClick={(e) => {
+																				e.stopPropagation();
+																				removeFile(i);
+																			}}
+																			className="p-1 rounded-md text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+																			title="Hapus berkas"
+																		>
+																			<X className="w-4 h-4" />
+																		</button>
+																	</div>
+																</div>
+															);
+														})}
+													</div>
 												</div>
 											)}
 										</div>
 
 										{fileError && (
-											<p className="text-[10px] text-[#DC2626] mt-1.5 font-medium">
+											<p className="text-[11px] text-[#DC2626] font-medium">
 												* {fileError}
 											</p>
 										)}
@@ -2189,28 +2337,53 @@ export default function ManajemenInspeksiClient({
 					</div>
 				</div>
 			)}
-			{previewImage && (
+			{(previewImage || previewModal) && (
 				<div
-					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90"
-					onClick={() => setPreviewImage(null)}
+					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm"
+					onClick={() => {
+						setPreviewImage(null);
+						setPreviewModal(null);
+					}}
 				>
-					<button
-						className="absolute top-4 right-4 text-white hover:bg-white/20 p-2 rounded transition-colors"
-						onClick={(e) => {
-							e.stopPropagation();
-							setPreviewImage(null);
-						}}
-					>
-						<X className="w-6 h-6" />
-					</button>
-					<div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center">
-						{/* eslint-disable-next-line @next/next/no-img-element -- lihat catatan ponytail di atas */}
-						<img
-							src={previewImage}
-							alt="Preview Foto"
-							className="max-w-full max-h-full object-contain rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
+					<div className="absolute top-4 right-4 flex items-center gap-3 z-20">
+						<a
+							href={previewModal?.url || previewImage!}
+							download={previewModal?.title || "lampiran"}
+							target="_blank"
+							rel="noreferrer"
+							className="bg-white/10 hover:bg-white/25 text-white px-3 py-1.5 rounded text-xs font-semibold flex items-center gap-1.5 transition-colors"
 							onClick={(e) => e.stopPropagation()}
-						/>
+						>
+							<Download className="w-4 h-4" /> Buka Tab Baru / Unduh
+						</a>
+						<button
+							className="text-white hover:bg-white/20 p-2 rounded transition-colors"
+							onClick={(e) => {
+								e.stopPropagation();
+								setPreviewImage(null);
+								setPreviewModal(null);
+							}}
+							title="Tutup preview"
+						>
+							<X className="w-6 h-6" />
+						</button>
+					</div>
+					<div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center p-2">
+						{previewModal?.isPdf ? (
+							<iframe
+								src={previewModal.url}
+								title={previewModal.title || "Preview PDF"}
+								className="w-full h-full rounded-lg bg-white shadow-2xl border-0"
+							/>
+						) : (
+							/* eslint-disable-next-line @next/next/no-img-element -- URL blob lokal / remote */
+							<img
+								src={previewModal?.url || previewImage!}
+								alt={previewModal?.title || "Preview Foto"}
+								className="max-w-full max-h-full object-contain rounded shadow-2xl"
+								onClick={(e) => e.stopPropagation()}
+							/>
+						)}
 					</div>
 				</div>
 			)}
