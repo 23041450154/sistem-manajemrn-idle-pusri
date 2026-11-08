@@ -4,8 +4,8 @@
 
 import {
 	type ApprovalKind,
-	type DisposalDisplayStatus,
-	disposalDisplayStatus,
+	type ScrapDisplayStatus,
+	scrapDisplayStatus,
 } from "@/lib/approvals";
 import { apiBase } from "@/lib/api-client";
 const API_URL = apiBase();
@@ -125,22 +125,22 @@ export async function getEquipments() {
 	}
 }
 
-export type DisposalItemDTO = {
+export type ScrapItemDTO = {
 	id: string;
 	approval_id: string | null;
-	disposal_number: string;
+	scrap_number: string;
 	equipment_id: string;
 	equipment_code: string;
 	equipment_name: string;
-	disposal_method_id?: number;
-	disposal_method: string;
-	disposal_date?: string;
+	scrap_method_id?: number;
+	scrap_method: string;
+	scrap_date?: string;
 	scrap_value: number;
 	book_value: number;
 	original_value: number;
 	plant: string;
 	justification: string;
-	status: DisposalDisplayStatus;
+	status: ScrapDisplayStatus;
 	created_at: string;
 	updated_at?: string;
 	created_by_name?: string;
@@ -158,12 +158,12 @@ function absoluteFileUrl(raw?: string | null): string {
 }
 
 /**
- * GET /api/disposal (role RENDAL_PEMELIHARAAN | MANAJER_RENDAL).
- * Backend sudah Preload Equipment, Equipment.Attachments, DisposalMethod, dan
+ * GET /api/scrap (role RENDAL_PEMELIHARAAN | MANAJER_RENDAL).
+ * Backend sudah Preload Equipment, Equipment.Attachments, ScrapMethod, dan
  * CreatedByUser, jadi satu request cukup — tidak perlu agregasi di klien.
  *
- * approval_id diambil dari GET /api/approvals/disposal karena review dilakukan
- * lewat PATCH /api/approvals/disposal/:approvalId/review, bukan lewat id disposal.
+ * approval_id diambil dari GET /api/approvals/scrap karena review dilakukan
+ * lewat PATCH /api/approvals/scrap/:approvalId/review, bukan lewat id scrap.
  */
 /**
  * ponytail: backend kini mengirim equipment_code sebagai relasi {id, code, description},
@@ -183,27 +183,27 @@ function flattenEquipmentCode<T>(data: T): T {
 	return data;
 }
 
-export async function getDisposals(): Promise<DisposalItemDTO[]> {
+export async function getScraps(): Promise<ScrapItemDTO[]> {
 	const headers = {};
 
 	try {
-		const [dispRes, appRes] = await Promise.all([
-			fetch(`${API_URL}/api/disposal`, { headers, cache: "no-store" }),
-			fetch(`${API_URL}/api/approvals/disposal`, {
+		const [scrapRes, appRes] = await Promise.all([
+			fetch(`${API_URL}/api/scrap`, { headers, cache: "no-store" }),
+			fetch(`${API_URL}/api/approvals/scrap`, {
 				headers,
 				cache: "no-store",
 			}).catch(() => null),
 		]);
 
-		if (!dispRes.ok) {
-			console.error("GET /api/disposal failed:", dispRes.status);
+		if (!scrapRes.ok) {
+			console.error("GET /api/scrap failed:", scrapRes.status);
 			return [];
 		}
 
-		const list = flattenEquipmentCode((await dispRes.json())?.data || []);
+		const list = flattenEquipmentCode((await scrapRes.json())?.data || []);
 		if (!Array.isArray(list)) return [];
 
-		// reference_id approval == id disposal request.
+		// reference_id approval == id scrap request.
 		const approvalByRef = new Map<number, any>();
 		if (appRes?.ok) {
 			const apps = (await appRes.json())?.data || [];
@@ -212,7 +212,7 @@ export async function getDisposals(): Promise<DisposalItemDTO[]> {
 			}
 		}
 
-		return list.map((item: any): DisposalItemDTO => {
+		return list.map((item: any): ScrapItemDTO => {
 			const eq = item.equipment || {};
 			const approval = approvalByRef.get(Number(item.id));
 			const atts = Array.isArray(eq.attachments) ? eq.attachments : [];
@@ -220,21 +220,21 @@ export async function getDisposals(): Promise<DisposalItemDTO[]> {
 			return {
 				id: String(item.id),
 				approval_id: approval ? String(approval.id) : null,
-				disposal_number: item.disposal_number || `DSP-${item.id}`,
+				scrap_number: item.scrap_number || `SCRP-${item.id}`,
 				equipment_id: String(item.equipment_id ?? eq.id ?? ""),
 				equipment_code: eq.equipment_code || "-",
 				equipment_name: eq.name || "-",
-				disposal_method_id: item.disposal_method_id ?? item.disposal_method?.id,
-				disposal_method: item.disposal_method?.name || "-",
-				disposal_date: item.disposal_date,
+				scrap_method_id: item.scrap_method_id ?? item.scrap_method?.id,
+				scrap_method: item.scrap_method?.name || "-",
+				scrap_date: item.scrap_date,
 				scrap_value: Number(item.scrap_value) || 0,
 				book_value: Number(eq.book_value) || 0,
 				original_value: Number(eq.original_value) || 0,
 				plant: eq.plant?.name || eq.plant?.description || "-",
 				justification: item.justification || "-",
-				// Approval adalah sumber kebenaran status; disposal.approval_status
+				// Approval adalah sumber kebenaran status; scrap.approval_status
 				// hanya ikut diperbarui pada REVISION/REJECTED.
-				status: disposalDisplayStatus(
+				status: scrapDisplayStatus(
 					approval?.approval_status || item.approval_status,
 				),
 				created_at: item.created_at || new Date().toISOString(),
@@ -249,17 +249,17 @@ export async function getDisposals(): Promise<DisposalItemDTO[]> {
 			};
 		});
 	} catch (error) {
-		console.error("Fetch disposals error:", error);
+		console.error("Fetch scraps error:", error);
 		return [];
 	}
 }
 
 /**
- * Keputusan Manajer atas usulan disposal.
- * PATCH /api/approvals/disposal/:approvalId/review — action APPROVE | REJECTED |
- * REVISION (role MANAJER_RENDAL). approvalId berasal dari DisposalItemDTO.approval_id.
+ * Keputusan Manajer atas usulan scrap.
+ * PATCH /api/approvals/scrap/:approvalId/review — action APPROVE | REJECTED |
+ * REVISION (role MANAJER_RENDAL). approvalId berasal dari ScrapItemDTO.approval_id.
  */
-export async function approveDisposal(
+export async function approveScrap(
 	approvalId: string | null,
 	payload: {
 		status: "DISPOSED" | "REJECTED" | "REVISION";
@@ -293,7 +293,7 @@ export async function approveDisposal(
 
 	try {
 		const res = await fetch(
-			`${API_URL}/api/approvals/disposal/${approvalId}/review`,
+			`${API_URL}/api/approvals/scrap/${approvalId}/review`,
 			{
 				method: "PATCH",
 				headers: {
@@ -307,13 +307,13 @@ export async function approveDisposal(
 		if (!res.ok) {
 			return {
 				success: false,
-				message: json?.message || `Gagal memproses disposal (HTTP ${res.status})`,
+				message: json?.message || `Gagal memproses scrap (HTTP ${res.status})`,
 			};
 		}
 		revalidateApp();
 		return { success: true, message: json?.message, data: json?.data };
 	} catch (error) {
-		console.error("Approve disposal error:", error);
+		console.error("Approve scrap error:", error);
 		return {
 			success: false,
 			message: error instanceof Error ? error.message : String(error),
@@ -321,12 +321,12 @@ export async function approveDisposal(
 	}
 }
 
-// disposal_number TIDAK dikirim: backend yang generate (DISP-<tahun>-<seq 6 digit>).
-export async function createDisposalRequest(payload: {
+// scrap_number TIDAK dikirim: backend yang generate (SCRP-<tahun>-<seq 6 digit>).
+export async function createScrapRequest(payload: {
 	equipment_id: number;
-	disposal_method_id: number;
+	scrap_method_id: number;
 	scrap_value: number;
-	disposal_date: string;
+	scrap_date: string;
 	justification: string;
 }) {
 	const headers = {
@@ -335,10 +335,10 @@ export async function createDisposalRequest(payload: {
 
 	const cleanPayload = {
 		equipment_id: Number(payload.equipment_id),
-		disposal_method_id: Number(payload.disposal_method_id),
+		scrap_method_id: Number(payload.scrap_method_id),
 		scrap_value: Number(payload.scrap_value) || 0,
-		disposal_date: payload.disposal_date
-			? payload.disposal_date.split("T")[0]
+		scrap_date: payload.scrap_date
+			? payload.scrap_date.split("T")[0]
 			: new Date().toISOString().split("T")[0],
 		justification:
 			payload.justification || "Permintaan scrap dari Rendal Pemeliharaan.",
@@ -348,13 +348,13 @@ export async function createDisposalRequest(payload: {
 		const controller = new AbortController();
 		const timeoutId = setTimeout(() => controller.abort(), 8000);
 
-		const res = await fetch(`${API_URL}/api/disposal`, {
+		const res = await fetch(`${API_URL}/api/scrap`, {
 			method: "POST",
 			headers,
 			body: JSON.stringify(cleanPayload),
 			signal: controller.signal,
 		}).catch((err) => {
-			console.error("POST /api/disposal fetch error:", err);
+			console.error("POST /api/scrap fetch error:", err);
 			return null;
 		});
 
@@ -389,7 +389,7 @@ export async function createDisposalRequest(payload: {
 				"Koneksi ke server backend terputus atau mengalami batas waktu (timeout).",
 		};
 	} catch (error) {
-		console.error("Create disposal request error:", error);
+		console.error("Create scrap request error:", error);
 		return {
 			success: false,
 			message:
@@ -401,15 +401,15 @@ export async function createDisposalRequest(payload: {
 }
 
 /**
- * Revisi usulan disposal yang diminta revisi oleh Manajer (status REVISION_REQUIRED).
- * PATCH /api/disposal/:id/revise (role RENDAL_PEMELIHARAAN).
+ * Revisi usulan scrap yang diminta revisi oleh Manajer (status REVISION_REQUIRED).
+ * PATCH /api/scrap/:id/revise (role RENDAL_PEMELIHARAAN).
  */
-export async function reviseDisposalRequest(
+export async function reviseScrapRequest(
 	id: string | number,
 	payload: {
-		disposal_method_id?: number;
+		scrap_method_id?: number;
 		scrap_value?: number;
-		disposal_date?: string;
+		scrap_date?: string;
 		justification?: string;
 	},
 ) {
@@ -418,15 +418,15 @@ export async function reviseDisposalRequest(
 	};
 
 	const cleanPayload: Record<string, any> = {};
-	if (payload.disposal_method_id !== undefined && payload.disposal_method_id !== null) {
-		cleanPayload.disposal_method_id = Number(payload.disposal_method_id);
+	if (payload.scrap_method_id !== undefined && payload.scrap_method_id !== null) {
+		cleanPayload.scrap_method_id = Number(payload.scrap_method_id);
 	}
 	if (payload.scrap_value !== undefined && payload.scrap_value !== null) {
 		cleanPayload.scrap_value = Number(payload.scrap_value) || 0;
 	}
-	if (payload.disposal_date !== undefined && payload.disposal_date !== null) {
-		cleanPayload.disposal_date = payload.disposal_date
-			? payload.disposal_date.split("T")[0]
+	if (payload.scrap_date !== undefined && payload.scrap_date !== null) {
+		cleanPayload.scrap_date = payload.scrap_date
+			? payload.scrap_date.split("T")[0]
 			: new Date().toISOString().split("T")[0];
 	}
 	if (payload.justification !== undefined && payload.justification !== null) {
@@ -434,7 +434,7 @@ export async function reviseDisposalRequest(
 	}
 
 	try {
-		const res = await fetch(`${API_URL}/api/disposal/${id}/revise`, {
+		const res = await fetch(`${API_URL}/api/scrap/${id}/revise`, {
 			method: "PATCH",
 			headers,
 			body: JSON.stringify(cleanPayload),
@@ -460,7 +460,7 @@ export async function reviseDisposalRequest(
 			data: json?.data,
 		};
 	} catch (error) {
-		console.error("Revise disposal request error:", error);
+		console.error("Revise scrap request error:", error);
 		return {
 			success: false,
 			message:
@@ -473,7 +473,7 @@ export async function reviseDisposalRequest(
 
 /**
  * Backend memecah approval per jenis request:
- *   /api/approvals/{validation|disposal|reuse|revalidation}
+ *   /api/approvals/{validation|scrap|reuse|revalidation}
  * Endpoint datar /api/approvals sudah tidak ada lagi.
  */
 export async function getApprovals(kind: ApprovalKind = "validation") {
@@ -646,7 +646,7 @@ export async function updateValidation(
 
 export async function createRevalidation(
 	equipmentId: string,
-	// Status tujuan hasil validasi ulang: REVALIDATION | REPAIR | DISPOSAL_RECOMMENDED.
+	// Status tujuan hasil validasi ulang: REVALIDATION | REPAIR | SCRAP_RECOMMENDED.
 	targetStatus: string,
 	opts: {
 		startAt?: string;
@@ -703,7 +703,7 @@ export async function createRevalidation(
  * action yang diterima backend per jenis approval:
  *   validation   : IN_REVIEW | APPROVE | REVISION
  *   revalidation : IN_REVIEW | APPROVE | REVISION | REJECT
- *   disposal     : IN_REVIEW | APPROVE | REVISION | REJECTED
+ *   scrap     : IN_REVIEW | APPROVE | REVISION | REJECTED
  *   reuse        : IN_REVIEW | APPROVE | REVISION   (tidak ada penolakan)
  */
 export async function reviewApproval(
@@ -1568,11 +1568,11 @@ export async function getFunctionalLocations() {
 	}
 }
 
-export async function getDisposalMethods() {
+export async function getScrapMethods() {
 	const baseUrl = API_URL.endsWith("/") ? API_URL.slice(0, -1) : API_URL;
 
 	try {
-		const res = await fetch(`${baseUrl}/api/disposal-method`, {
+		const res = await fetch(`${baseUrl}/api/scrap-method`, {
 			headers: {},
 			cache: "no-store",
 		});
@@ -1580,7 +1580,7 @@ export async function getDisposalMethods() {
 		const json = await res.json();
 		return json.data || [];
 	} catch (error) {
-		console.error("Fetch disposal methods error:", error);
+		console.error("Fetch scrap methods error:", error);
 		return [];
 	}
 }

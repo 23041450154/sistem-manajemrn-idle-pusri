@@ -7,7 +7,7 @@ Frontend aplikasi pengelolaan peralatan idle PT PUSRI. Dibangun dengan Next.js (
 - **Autentikasi berbasis peran** — 6 role dengan dashboard masing-masing
 - **Manajemen peralatan idle** — registrasi, validasi, status peralatan
 - **Alur persetujuan** — permintaan, approve, validasi ulang
-- **Peminjaman, perbaikan, disposal, dan scrap** peralatan
+- **Peminjaman, perbaikan, scrap, dan scrap** peralatan
 - **Inspeksi berkala** dan jadwalnya
 - **Laporan & dashboard** dengan grafik (Recharts)
 - **Ekspor PDF** laporan/riwayat

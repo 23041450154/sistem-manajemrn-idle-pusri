@@ -71,7 +71,7 @@ export default function InspeksiAntreanPage() {
 				"Siap Pakai": "BAGUS",
 				"Perbaikan Ringan": "RUSAK_RINGAN",
 				Overhaul: "RUSAK_SEDANG",
-				Disposal: "RUSAK_BERAT",
+				Scrap: "RUSAK_BERAT",
 			};
 
 			const rawCondition =

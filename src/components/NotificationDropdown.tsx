@@ -32,7 +32,7 @@ export interface NotificationItem {
 	message: string;
 	timestamp: string;
 	href: string;
-	category: "validation" | "repair" | "reuse" | "disposal" | "system";
+	category: "validation" | "repair" | "reuse" | "scrap" | "system";
 	badgeText?: string;
 	badgeColor?: string;
 }
@@ -185,7 +185,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 					const [valApps, reuseApps, dispApps] = await Promise.all([
 						getApprovals("validation").catch(() => []),
 						getApprovals("reuse").catch(() => []),
-						getApprovals("disposal").catch(() => []),
+						getApprovals("scrap").catch(() => []),
 					]);
 
 					const toList = (v: any) => (Array.isArray(v) ? v : v?.data || []);
@@ -250,7 +250,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 						}
 					});
 
-					// 3. Antrean persetujuan scrap/disposal dari database
+					// 3. Antrean persetujuan scrap dari database
 					toList(dispApps).forEach((app: any) => {
 						const status = String(
 							app.approval_status || app.status || "",
@@ -265,7 +265,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								`EQ-${app.equipment_id || app.id}`;
 							const name = app.equipment?.name || app.equipment_name || "Aset";
 							const dispNum =
-								app.disposal_number || app.disposalNumber || `DSP-${app.id}`;
+								app.scrap_number || app.scrapNumber || `SCRP-${app.id}`;
 
 							items.push({
 								id: `mgr-disp-${app.id}`,
@@ -273,7 +273,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								message: `Usulan penghapusan aset ${code} (${name}) menunggu verifikasi Manajer.`,
 								timestamp: app.created_at || new Date().toISOString(),
 								href: "/manajer/scrap",
-								category: "disposal",
+								category: "scrap",
 								badgeText: "Scrap",
 								badgeColor: "#475569",
 							});
@@ -311,8 +311,8 @@ export function NotificationDropdown({ role }: { role?: string }) {
 								});
 							}
 
-							// 2. Data peralatan berstatus DISPOSAL_RECOMMENDED
-							if (norm === "DISPOSAL_RECOMMENDED") {
+							// 2. Data peralatan berstatus SCRAP_RECOMMENDED
+							if (norm === "SCRAP_RECOMMENDED") {
 								const code = item.equipment_code || item.kodeAlat || `EQ-${item.id}`;
 								const name = item.name || item.namaAlat || "Equipment";
 								items.push({
@@ -322,7 +322,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 									timestamp:
 										item.updated_at || item.created_at || new Date().toISOString(),
 									href: "/rendal/scrap",
-									category: "disposal",
+									category: "scrap",
 									badgeText: "Usulan Scrap",
 									badgeColor: "#B45309",
 								});
@@ -674,7 +674,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 				return <Wrench className="w-4 h-4 text-[#B45309]" />;
 			case "reuse":
 				return <HandCoins className="w-4 h-4 text-[#059669]" />;
-			case "disposal":
+			case "scrap":
 				return <Trash2 className="w-4 h-4 text-[#475569]" />;
 			case "system":
 			default:

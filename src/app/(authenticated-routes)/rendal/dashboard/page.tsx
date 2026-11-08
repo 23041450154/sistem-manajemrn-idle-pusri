@@ -2,13 +2,13 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Plus, ListFilter } from "lucide-react";
-import { getEquipments, getDisposals, getApprovals, getPlants } from "@/action/api";
+import { getEquipments, getScraps, getApprovals, getPlants } from "@/action/api";
 import { buttonVariants } from "@/components/ui/button";
 import RendalDashboardClient from "./rendal-dashboard-client";
 
 export default function RendalDashboard() {
 	const [equipments, setEquipments] = useState<any[]>([]);
-	const [disposals, setDisposals] = useState<any[]>([]);
+	const [scraps, setScraps] = useState<any[]>([]);
 	const [revalidations, setRevalidations] = useState<any[]>([]);
 	const [plants, setPlants] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -16,16 +16,16 @@ export default function RendalDashboard() {
 	useEffect(() => {
 		let alive = true;
 		void (async () => {
-			const [equipments, disposals, revalidations, plants] = await Promise.all([
+			const [equipments, scraps, revalidations, plants] = await Promise.all([
 				getEquipments().catch(() => []),
-				getDisposals().catch(() => []),
+				getScraps().catch(() => []),
 				getApprovals("revalidation").catch(() => []),
 				getPlants().catch(() => []),
 			]);
 
 			if (!alive) return;
 			setEquipments(Array.isArray(equipments) ? equipments : []);
-			setDisposals(Array.isArray(disposals) ? disposals : []);
+			setScraps(Array.isArray(scraps) ? scraps : []);
 			setRevalidations(Array.isArray(revalidations) ? revalidations : []);
 			setPlants(Array.isArray(plants) ? plants : []);
 			setLoading(false);
@@ -76,7 +76,7 @@ export default function RendalDashboard() {
 			{/* Operational Dashboard Content */}
 			<RendalDashboardClient
 				equipments={Array.isArray(equipments) ? equipments : []}
-				disposals={Array.isArray(disposals) ? disposals : []}
+				scraps={Array.isArray(scraps) ? scraps : []}
 				revalidations={Array.isArray(revalidations) ? revalidations : []}
 				plants={Array.isArray(plants) ? plants : []}
 			/>

@@ -23,7 +23,7 @@ const PAGES = [
   { path: "/unit-kerja/katalog", npp: "100006" },
   { path: "/pemeliharaan/perbaikan-alat", npp: "100004" },
   { path: "/inspeksi/inspeksi-berkala", npp: "100003" },
-  { path: "/manajer/disposal", npp: "100005" },
+  { path: "/manajer/scrap", npp: "100005" },
   { path: "/manajer/approve", npp: "100005" },
 ];
 

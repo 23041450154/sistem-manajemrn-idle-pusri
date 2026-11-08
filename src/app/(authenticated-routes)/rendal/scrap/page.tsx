@@ -6,11 +6,11 @@
 import React, { useEffect, useState, useMemo } from "react";
 import {
 	getEquipments,
-	getDisposals,
+	getScraps,
 	getInspections,
-	getDisposalMethods,
-	createDisposalRequest,
-	reviseDisposalRequest,
+	getScrapMethods,
+	createScrapRequest,
+	reviseScrapRequest,
 	getValidations,
 	uploadAttachment,
 } from "@/action/api";
@@ -58,21 +58,21 @@ interface Inspection {
 	followup_recommendation?: string;
 }
 
-interface DisposalMethod {
+interface ScrapMethod {
 	id: number;
 	name: string;
 	description: string;
 }
 
-interface DisposalItem {
+interface ScrapItem {
 	id: string;
 	equipment_id: string;
-	disposal_number: string;
+	scrap_number: string;
 	equipment_code?: string;
 	equipment_name?: string;
-	disposal_method_id?: number;
-	disposal_method?: string;
-	disposal_date?: string;
+	scrap_method_id?: number;
+	scrap_method?: string;
+	scrap_date?: string;
 	scrap_value?: number;
 	plant?: string;
 	justification?: string;
@@ -86,8 +86,8 @@ export default function RendalScrapPage() {
 
 	const [equipments, setEquipments] = useState<Equipment[]>([]);
 	const [inspections, setInspections] = useState<Inspection[]>([]);
-	const [disposals, setDisposals] = useState<DisposalItem[]>([]);
-	const [methods, setMethods] = useState<DisposalMethod[]>([]);
+	const [scraps, setScraps] = useState<ScrapItem[]>([]);
+	const [methods, setMethods] = useState<ScrapMethod[]>([]);
 	const [isLoading, setIsLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
 
@@ -100,17 +100,17 @@ export default function RendalScrapPage() {
 	// Modal State
 	const [modalMode, setModalMode] = useState<"create" | "revise">("create");
 	const [selectedReviseItem, setSelectedReviseItem] =
-		useState<DisposalItem | null>(null);
+		useState<ScrapItem | null>(null);
 	const [selectedAsset, setSelectedAsset] = useState<Equipment | null>(null);
 	const [isModalOpen, setIsModalOpen] = useState(false);
 	const [selectedHistoryItem, setSelectedHistoryItem] =
-		useState<DisposalItem | null>(null);
+		useState<ScrapItem | null>(null);
 	const [isDetailOpen, setIsDetailOpen] = useState(false);
 
 	// Form Fields State
 	const [verificationDate, setVerificationDate] = useState("");
-	const [disposalMethodId, setDisposalMethodId] = useState("");
-	// Nilai scrap (Rp) — field struct backend CreateDisposalRequest.scrap_value.
+	const [scrapMethodId, setScrapMethodId] = useState("");
+	// Nilai scrap (Rp) — field struct backend CreateScrapRequest.scrap_value.
 	const [scrapValue, setScrapValue] = useState("");
 	const [justification, setJustification] = useState("");
 	// Dokumen pendukung: banyak file (gambar/PDF) + preview thumbnail.
@@ -132,30 +132,30 @@ export default function RendalScrapPage() {
 			const [eqData, insData, dispData, methData] = await Promise.all([
 				getEquipments(),
 				getInspections(),
-				getDisposals(),
-				getDisposalMethods(),
+				getScraps(),
+				getScrapMethods(),
 			]);
 
-			// Build a set of equipment IDs that have a disposal-recommending inspection
+			// Build a set of equipment IDs that have a scrap-recommending inspection
 			const inspArr: any[] = insData || [];
-			const disposalInspectedIds = new Set<string>();
+			const scrapInspectedIds = new Set<string>();
 			inspArr.forEach((ins: any) => {
-				const isDisposal =
+				const isScrap =
 					ins.is_utilizable === false ||
-					ins.require_action?.name?.toLowerCase().includes("disposal") ||
+					ins.require_action?.name?.toLowerCase().includes("scrap") ||
 					ins.require_action?.name?.toLowerCase().includes("scrap") ||
 					ins.condition?.name?.toUpperCase() === "RUSAK_BERAT" ||
 					ins.condition?.name?.toUpperCase() === "RUSAK BERAT";
-				if (isDisposal && ins.equipment_id) {
-					disposalInspectedIds.add(String(ins.equipment_id));
+				if (isScrap && ins.equipment_id) {
+					scrapInspectedIds.add(String(ins.equipment_id));
 				}
 			});
 
-			// Build a map of equipment IDs that already have a submitted disposal request
-			const submittedDisposalMap = new Map<string, any>();
+			// Build a map of equipment IDs that already have a submitted scrap request
+			const submittedScrapMap = new Map<string, any>();
 			(dispData || []).forEach((d: any) => {
 				if (d.equipment_id) {
-					submittedDisposalMap.set(String(d.equipment_id), d);
+					submittedScrapMap.set(String(d.equipment_id), d);
 				}
 			});
 
@@ -170,7 +170,7 @@ export default function RendalScrapPage() {
 
 				// Aset yang sudah diajukan scrap menjadi SCRAP_REQUESTED / SCRAP.
 				const eqId = item.id?.toString() || "-";
-				const dispItem = submittedDisposalMap.get(eqId);
+				const dispItem = submittedScrapMap.get(eqId);
 
 				if (dispItem) {
 					if (dispItem.status === "DISPOSED" || dispItem.status === "APPROVED") {
@@ -181,12 +181,12 @@ export default function RendalScrapPage() {
 						normalizedStatus = "SCRAP_REQUESTED";
 					}
 				} else if (
-					disposalInspectedIds.has(eqId) &&
-					!["DISPOSAL_RECOMMENDED", "SCRAP_REQUESTED", "SCRAP"].includes(
+					scrapInspectedIds.has(eqId) &&
+					!["SCRAP_RECOMMENDED", "SCRAP_REQUESTED", "SCRAP"].includes(
 						normalizedStatus,
 					)
 				) {
-					normalizedStatus = "DISPOSAL_RECOMMENDED";
+					normalizedStatus = "SCRAP_RECOMMENDED";
 				}
 
 				return {
@@ -226,7 +226,7 @@ export default function RendalScrapPage() {
 
 			setEquipments(mappedEq);
 			setInspections(insData || []);
-			setDisposals(
+			setScraps(
 				(dispData || []).sort((a: any, b: any) => {
 					const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
 					const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
@@ -264,11 +264,11 @@ export default function RendalScrapPage() {
 
 	// 1. Filter equipments waiting for scrap request (Tab 1: Antrean Request)
 	const pendingAssets = useMemo(() => {
-		const submittedIds = new Set(disposals.map((d) => String(d.equipment_id)));
+		const submittedIds = new Set(scraps.map((d) => String(d.equipment_id)));
 		const query = search.toLowerCase().trim();
-		const disposalStatuses = new Set(["DISPOSAL_RECOMMENDED", "SCRAP"]);
+		const scrapStatuses = new Set(["SCRAP_RECOMMENDED", "SCRAP"]);
 		return equipments.filter((eq) => {
-			const isRecommended = disposalStatuses.has(statusName(eq.statusAset));
+			const isRecommended = scrapStatuses.has(statusName(eq.statusAset));
 			const isNotSubmitted =
 				!submittedIds.has(eq.id) &&
 				statusName(eq.statusAset) !== "SCRAP_REQUESTED" &&
@@ -279,17 +279,17 @@ export default function RendalScrapPage() {
 				eq.namaAlat.toLowerCase().includes(query);
 			return isRecommended && isNotSubmitted && matchSearch;
 		});
-	}, [equipments, disposals, search]);
+	}, [equipments, scraps, search]);
 
 	// 2. Filter submitted scrap requests (Tab 2: Riwayat Permintaan)
 	const historyRequests = useMemo(() => {
 		const query = search.toLowerCase().trim();
-		return disposals
+		return scraps
 			.filter((item) => {
 				const matchSearch =
 					!query ||
-					(item.disposal_number &&
-						item.disposal_number.toLowerCase().includes(query)) ||
+					(item.scrap_number &&
+						item.scrap_number.toLowerCase().includes(query)) ||
 					(item.equipment_code &&
 						item.equipment_code.toLowerCase().includes(query)) ||
 					(item.equipment_name && item.equipment_name.toLowerCase().includes(query));
@@ -301,7 +301,7 @@ export default function RendalScrapPage() {
 				if (timeB !== timeA) return timeB - timeA;
 				return (Number(b.id) || 0) - (Number(a.id) || 0);
 			});
-	}, [disposals, search]);
+	}, [scraps, search]);
 
 	const equipmentMap = useMemo(() => {
 		const map = new Map<string, Equipment>();
@@ -322,7 +322,7 @@ export default function RendalScrapPage() {
 			"SCRAP REQUESTED": "bg-[#FEF3C7] text-[#B45309]",
 			SCRAP_REQUEST: "bg-[#FEF3C7] text-[#B45309]",
 			"SCRAP REQUEST": "bg-[#FEF3C7] text-[#B45309]",
-			DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+			SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
 			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
 			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
@@ -405,7 +405,7 @@ export default function RendalScrapPage() {
 		const todayStr = new Date().toISOString().split("T")[0];
 		setVerificationDate(todayStr);
 
-		setDisposalMethodId("");
+		setScrapMethodId("");
 		setJustification("");
 		setScrapValue("");
 		setUploadedFiles([]);
@@ -418,7 +418,7 @@ export default function RendalScrapPage() {
 		}
 	};
 
-	const handleOpenRevision = async (item: DisposalItem) => {
+	const handleOpenRevision = async (item: ScrapItem) => {
 		setModalMode("revise");
 		setSelectedReviseItem(item);
 
@@ -440,17 +440,17 @@ export default function RendalScrapPage() {
 		setSelectedAsset(eq);
 		setAssetValidation(null);
 
-		const dispDateStr = item.disposal_date
-			? item.disposal_date.split("T")[0]
+		const dispDateStr = item.scrap_date
+			? item.scrap_date.split("T")[0]
 			: new Date().toISOString().split("T")[0];
 		setVerificationDate(dispDateStr);
 
-		const methodId = item.disposal_method_id
-			? String(item.disposal_method_id)
-			: methods.find((m) => m.name === item.disposal_method)?.id
-				? String(methods.find((m) => m.name === item.disposal_method)?.id)
+		const methodId = item.scrap_method_id
+			? String(item.scrap_method_id)
+			: methods.find((m) => m.name === item.scrap_method)?.id
+				? String(methods.find((m) => m.name === item.scrap_method)?.id)
 				: "";
-		setDisposalMethodId(methodId);
+		setScrapMethodId(methodId);
 
 		setScrapValue(
 			item.scrap_value ? Number(item.scrap_value).toLocaleString("id-ID") : "",
@@ -522,33 +522,33 @@ export default function RendalScrapPage() {
 		e?.preventDefault();
 		if (!selectedAsset) return;
 
-		if (!disposalMethodId) {
+		if (!scrapMethodId) {
 			showToast("error", "Silakan pilih metode penghapusan terlebih dahulu.");
 			return;
 		}
 
 		setIsSubmitting(true);
 		try {
-			const targetMethodId = Number(disposalMethodId);
+			const targetMethodId = Number(scrapMethodId);
 			const cleanScrapVal = Number(scrapValue.replace(/\./g, "")) || 0;
 
 			if (modalMode === "revise" && selectedReviseItem) {
 				const payload = {
-					disposal_method_id: targetMethodId,
+					scrap_method_id: targetMethodId,
 					scrap_value: cleanScrapVal,
-					disposal_date: verificationDate,
+					scrap_date: verificationDate,
 					justification:
 						justification.trim() ||
 						"Revisi permohonan scrap dari Rendal Pemeliharaan.",
 				};
 
-				const res = await reviseDisposalRequest(selectedReviseItem.id, payload);
+				const res = await reviseScrapRequest(selectedReviseItem.id, payload);
 				if (res.success) {
 					for (const file of uploadedFiles) {
 						const up = await uploadAttachment(
 							selectedAsset.id,
 							file,
-							"disposal_attachment",
+							"scrap_attachment",
 						);
 						if (!up.success) {
 							console.error("Gagal upload dokumen scrap:", file.name, up.message);
@@ -567,21 +567,21 @@ export default function RendalScrapPage() {
 			} else {
 				const payload = {
 					equipment_id: Number(selectedAsset.id),
-					disposal_method_id: targetMethodId,
+					scrap_method_id: targetMethodId,
 					scrap_value: cleanScrapVal,
-					disposal_date: verificationDate,
+					scrap_date: verificationDate,
 					justification:
 						justification.trim() ||
 						"Diverifikasi oleh Rendal Pemeliharaan untuk pengajuan scrap.",
 				};
 
-				const res = await createDisposalRequest(payload);
+				const res = await createScrapRequest(payload);
 				if (res.success) {
 					for (const file of uploadedFiles) {
 						const up = await uploadAttachment(
 							selectedAsset.id,
 							file,
-							"disposal_attachment",
+							"scrap_attachment",
 						);
 						if (!up.success) {
 							console.error("Gagal upload dokumen scrap:", file.name, up.message);
@@ -592,19 +592,19 @@ export default function RendalScrapPage() {
 					const selectedMethod = methods.find(
 						(m) =>
 							Number(m.id) === targetMethodId ||
-							String(m.id) === String(disposalMethodId),
+							String(m.id) === String(scrapMethodId),
 					);
-					const newDisposalItem: DisposalItem = {
-						id: String(res.data?.id || `DSP-${Date.now()}`),
-						// Nomor usulan berasal dari backend (DISP-<tahun>-<seq>).
-						disposal_number: res.data?.disposal_number || "-",
+					const newScrapItem: ScrapItem = {
+						id: String(res.data?.id || `SCRP-${Date.now()}`),
+						// Nomor usulan berasal dari backend (SCRP-<tahun>-<seq>).
+						scrap_number: res.data?.scrap_number || "-",
 						equipment_id: String(selectedAsset.id),
 						equipment_code: selectedAsset.kodeAlat,
 						equipment_name: selectedAsset.namaAlat,
-						disposal_method_id: targetMethodId,
+						scrap_method_id: targetMethodId,
 						// Label optimistis; nama final tetap dari backend setelah loadData().
-						disposal_method: selectedMethod?.name || "-",
-						disposal_date: verificationDate,
+						scrap_method: selectedMethod?.name || "-",
+						scrap_date: verificationDate,
 						scrap_value: cleanScrapVal,
 						plant: selectedAsset.plant,
 						justification:
@@ -614,7 +614,7 @@ export default function RendalScrapPage() {
 						created_at: new Date().toISOString(),
 					};
 
-					setDisposals((prev) => [newDisposalItem, ...prev]);
+					setScraps((prev) => [newScrapItem, ...prev]);
 
 					// Update equipment status in state
 					setEquipments((prev) =>
@@ -978,9 +978,9 @@ export default function RendalScrapPage() {
 												</td>
 												<td
 													className="px-2 py-2 text-xs font-bold text-[#0A356A] text-center truncate"
-													title={item.disposal_number}
+													title={item.scrap_number}
 												>
-													{item.disposal_number || "-"}
+													{item.scrap_number || "-"}
 												</td>
 												<td
 													className="px-2 py-2 text-xs font-bold text-gray-900 text-center truncate"
@@ -1001,9 +1001,9 @@ export default function RendalScrapPage() {
 												</td>
 												<td
 													className="px-2 py-2 text-xs text-gray-600 font-medium text-left truncate"
-													title={item.disposal_method}
+													title={item.scrap_method}
 												>
-													{item.disposal_method || "Scrap"}
+													{item.scrap_method || "Scrap"}
 												</td>
 												<td className="px-2 py-2 text-center whitespace-nowrap">
 													{getStatusAsetBadge(assetStatus)}
@@ -1250,7 +1250,7 @@ export default function RendalScrapPage() {
 												type="text"
 												value={
 													modalMode === "revise"
-														? selectedReviseItem?.disposal_number || "-"
+														? selectedReviseItem?.scrap_number || "-"
 														: "Digenerate otomatis oleh sistem"
 												}
 												readOnly
@@ -1276,10 +1276,10 @@ export default function RendalScrapPage() {
 											Metode Penghapusan <span className="text-red-500">*</span>
 										</label>
 										<select
-											value={disposalMethodId}
-											onChange={(e) => setDisposalMethodId(e.target.value)}
+											value={scrapMethodId}
+											onChange={(e) => setScrapMethodId(e.target.value)}
 											className={`w-full px-3 py-2 border border-gray-200 rounded-lg text-sm bg-gray-50 focus:bg-white focus:outline-none focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] transition-colors ${
-												!disposalMethodId ? "text-gray-400" : "text-gray-800"
+												!scrapMethodId ? "text-gray-400" : "text-gray-800"
 											}`}
 										>
 											<option value="" disabled className="text-gray-400">
@@ -1437,7 +1437,7 @@ export default function RendalScrapPage() {
 								<button
 									type="button"
 									onClick={() => {
-										if (!disposalMethodId) {
+										if (!scrapMethodId) {
 											showToast(
 												"error",
 												"Silakan pilih metode penghapusan terlebih dahulu.",
@@ -1482,7 +1482,7 @@ export default function RendalScrapPage() {
 										Detail Permintaan Scrap
 									</h2>
 									<p className="text-xs text-blue-100 mt-0.5">
-										{selectedHistoryItem.disposal_number}
+										{selectedHistoryItem.scrap_number}
 									</p>
 								</div>
 							</div>
@@ -1527,7 +1527,7 @@ export default function RendalScrapPage() {
 											Metode Scrap
 										</p>
 										<p className="text-xs font-semibold text-gray-800">
-											{selectedHistoryItem.disposal_method || "Scrap"}
+											{selectedHistoryItem.scrap_method || "Scrap"}
 										</p>
 									</div>
 									<div>

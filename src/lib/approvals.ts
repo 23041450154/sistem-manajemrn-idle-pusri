@@ -7,12 +7,12 @@
 
 export type ApprovalKind =
 	| "validation"
-	| "disposal"
+	| "scrap"
 	| "reuse"
 	| "revalidation";
 
-/** Status disposal/scrap yang dipakai halaman Manajer & Rendal. */
-export type DisposalDisplayStatus =
+/** Status scrap yang dipakai halaman Manajer & Rendal. */
+export type ScrapDisplayStatus =
 	| "PENDING"
 	| "IN_REVIEW"
 	| "APPROVED"
@@ -20,9 +20,9 @@ export type DisposalDisplayStatus =
 	| "REJECTED"
 	| "REVISION_REQUIRED";
 
-export function disposalDisplayStatus(
+export function scrapDisplayStatus(
 	approvalStatus?: string | null,
-): DisposalDisplayStatus {
+): ScrapDisplayStatus {
 	switch (String(approvalStatus || "PENDING").toUpperCase()) {
 		case "APPROVED":
 			return "APPROVED";

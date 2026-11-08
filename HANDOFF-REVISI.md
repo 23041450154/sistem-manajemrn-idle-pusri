@@ -24,7 +24,7 @@
 | Kelompok status aset | `statusGroup()` / `statusName()` dari `src/lib/equipment-status.ts`. **Larangan: magic number `status_id === 1..8`** |
 | Invalidasi cache pasca-mutasi | `revalidateApp()` dari `src/lib/revalidate.ts` — WAJIB dipanggil di jalur sukses setiap action mutasi (sudah terpasang di 20 titik) |
 | Format tanggal/uang | `formatDate`/`formatDateTime` di `src/lib/utils.ts`; `rupiah` di `lib/equipment-status.ts` |
-| Label status approval | `lib/approvals.ts` (`disposalDisplayStatus`, `reuseDisplayStatus`) |
+| Label status approval | `lib/approvals.ts` (`scrapDisplayStatus`, `reuseDisplayStatus`) |
 | Styling | **Tailwind saja** — module.css sudah dihapus total |
 | Role kanonik | `src/lib/roles.ts` (`RENDAL_PEMELIHARAAN`, `MANAJER_RENDAL`, dst.) — dipakai proxy.ts |
 
@@ -66,8 +66,8 @@ Pola konversi terbukti (lihat contoh jadi):
 Urutan eksekusi disarankan (satu role per sesi, mulai dari yang termudah):
 
 1. **pemeliharaan**: `perbaikan-alat/page.tsx` (~1100 baris)
-2. **rendal**: `idle` (~1050), `validasi-ulang` (~1010), `laporan` (~700), `register-equipment` (~1020). `scrap` & `disposal` menyusul (ada mutasi → `loadData()` lokal bisa diganti `router.refresh()` karena mutasi server-side sudah `revalidateApp()`)
-3. **manajer**: `disposal` (~880), `scrap` (~950), `peminjaman` (~950), `approve` (~1310, paling hati-hati — alur multi-step approval)
+2. **rendal**: `idle` (~1050), `validasi-ulang` (~1010), `laporan` (~700), `register-equipment` (~1020). `scrap` & `scrap` menyusul (ada mutasi → `loadData()` lokal bisa diganti `router.refresh()` karena mutasi server-side sudah `revalidateApp()`)
+3. **manajer**: `scrap` (~880), `scrap` (~950), `peminjaman` (~950), `approve` (~1310, paling hati-hati — alur multi-step approval)
 4. **unit-kerja**: `riwayat-permintaan` (~945), `idle` (~1690), `daftar-aset` (~1560)
 5. **inspeksi** (terbesar, terakhir): `inspeksi-berkala` (~750), `formInspeksi`, `validasi-ulang` (~1060), `revisi-validasi` (~1360), `validasi` (~2245 — pecah dulu komponennya kalau perlu)
 
@@ -88,7 +88,7 @@ Per-halaman langkahnya:
 Lokasi terakhir tercatat (grep ulang `@next/next/no-img-element` untuk posisi kini):
 `inspeksi/validasi` ×5, `ManajemenInspeksi` ×4, `unit-kerja/idle` ×3,
 `manajer/approve` ×3, `manajer/scrap` ×2, `revisi-validasi` ×2,
-`manajer/disposal` ×2, `rendal/idle` ×1, `rendal/register-equipment` ×1,
+`manajer/scrap` ×2, `rendal/idle` ×1, `rendal/register-equipment` ×1,
 `formInspeksi` ×1.
 
 Pola konversi: pastikan kontainer `relative` + berukuran jelas → `<Image fill

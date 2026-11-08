@@ -20,21 +20,21 @@ import {
   Clock,
 } from "lucide-react";
 import {
-  approveDisposal,
+  approveScrap,
   getValidations,
   getApprovalById,
-  type DisposalItemDTO,
+  type ScrapItemDTO,
 } from "@/action/api";
 import { formatDate } from "@/lib/utils";
 
-type DisposalItem = DisposalItemDTO;
+type ScrapItem = ScrapItemDTO;
 
 /** Client Component: interaksi (tab/search/paginasi/review approve-reject) — data di-fetch Server Component. */
 export default function ManajerScrapClient({
-  disposals,
+  scraps,
   onRefresh,
 }: {
-  disposals: DisposalItem[];
+  scraps: ScrapItem[];
   onRefresh?: () => Promise<void> | void;
 }) {
   const router = useRouter();
@@ -44,7 +44,7 @@ export default function ManajerScrapClient({
   const [search, setSearch] = useState("");
 
   // Modal detail states
-  const [selectedDisposal, setSelectedDisposal] = useState<DisposalItem | null>(
+  const [selectedScrap, setSelectedScrap] = useState<ScrapItem | null>(
     null,
   );
   const [isDetailOpen, setIsDetailOpen] = useState(false);
@@ -89,11 +89,11 @@ export default function ManajerScrapClient({
   };
 
   // Pending inbox items
-  const pendingDisposals = disposals.filter(
+  const pendingScraps = scraps.filter(
     (item) => item.status === "PENDING",
   );
   // Processed history items — diurutkan berdasarkan timestamp aksi/update terbaru (updated_at)
-  const historyDisposals = disposals
+  const historyScraps = scraps
     .filter((item) => item.status !== "PENDING")
     .sort((a, b) => {
       const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
@@ -103,25 +103,25 @@ export default function ManajerScrapClient({
     });
 
   const currentList =
-    activeTab === "inbox" ? pendingDisposals : historyDisposals;
+    activeTab === "inbox" ? pendingScraps : historyScraps;
 
-  const filteredDisposals = currentList.filter((item) => {
+  const filteredScraps = currentList.filter((item) => {
     const q = search.toLowerCase();
     return (
-      item.disposal_number.toLowerCase().includes(q) ||
+      item.scrap_number.toLowerCase().includes(q) ||
       item.equipment_code.toLowerCase().includes(q) ||
       item.equipment_name.toLowerCase().includes(q)
     );
   });
 
-  const totalPages = Math.ceil(filteredDisposals.length / ITEMS_PER_PAGE);
-  const paginatedDisposals = filteredDisposals.slice(
+  const totalPages = Math.ceil(filteredScraps.length / ITEMS_PER_PAGE);
+  const paginatedScraps = filteredScraps.slice(
     (currentPage - 1) * ITEMS_PER_PAGE,
     currentPage * ITEMS_PER_PAGE,
   );
 
-  const handleOpenDetail = async (item: DisposalItem) => {
-    setSelectedDisposal(item);
+  const handleOpenDetail = async (item: ScrapItem) => {
+    setSelectedScrap(item);
     setIsDetailOpen(true);
     setValidationDetail(null);
     setApprovalDetail(null);
@@ -131,7 +131,7 @@ export default function ManajerScrapClient({
           ? getValidations(item.equipment_id)
           : Promise.resolve([]),
         item.approval_id
-          ? getApprovalById(item.approval_id, "disposal")
+          ? getApprovalById(item.approval_id, "scrap")
           : Promise.resolve(null),
       ]);
       if (Array.isArray(valids) && valids.length > 0) {
@@ -147,7 +147,7 @@ export default function ManajerScrapClient({
 
   const handleCloseDetail = () => {
     setIsDetailOpen(false);
-    setSelectedDisposal(null);
+    setSelectedScrap(null);
     setPreviewImage(null);
     setModalError(null);
     setValidationDetail(null);
@@ -156,14 +156,14 @@ export default function ManajerScrapClient({
 
   // Submit Approval (Green Button)
   const handleConfirmApprove = async () => {
-    if (!selectedDisposal || isSubmitting) return;
+    if (!selectedScrap || isSubmitting) return;
 
     setIsSubmitting(true);
     setModalError(null);
     try {
       // Delay for smooth loading state animation
       await new Promise((resolve) => setTimeout(resolve, 800));
-      const res = await approveDisposal(selectedDisposal.approval_id, {
+      const res = await approveScrap(selectedScrap.approval_id, {
         status: "DISPOSED",
       });
 
@@ -195,14 +195,14 @@ export default function ManajerScrapClient({
 
   // Submit Rejection (Red Button)
   const handleConfirmReject = async () => {
-    if (!selectedDisposal || isSubmitting || !rejectionReason.trim()) return;
+    if (!selectedScrap || isSubmitting || !rejectionReason.trim()) return;
 
     setIsSubmitting(true);
     setModalError(null);
     try {
       // Delay for smooth loading state animation
       await new Promise((resolve) => setTimeout(resolve, 800));
-      const res = await approveDisposal(selectedDisposal.approval_id, {
+      const res = await approveScrap(selectedScrap.approval_id, {
         status: "REJECTED",
         rejection_reason: rejectionReason.trim(),
       });
@@ -210,7 +210,7 @@ export default function ManajerScrapClient({
       if (res.success) {
         showToast(
           "reject",
-          `Pengajuan ${selectedDisposal.disposal_number} untuk ${selectedDisposal.equipment_code} berhasil ditolak.`,
+          `Pengajuan ${selectedScrap.scrap_number} untuk ${selectedScrap.equipment_code} berhasil ditolak.`,
         );
         setIsRejectModalOpen(false);
         setRejectionReason("");
@@ -298,7 +298,7 @@ export default function ManajerScrapClient({
                   : "bg-gray-100 text-gray-600"
               }`}
             >
-              {pendingDisposals.length}
+              {pendingScraps.length}
             </span>
           </button>
 
@@ -319,7 +319,7 @@ export default function ManajerScrapClient({
                   : "bg-gray-100 text-gray-600"
               }`}
             >
-              {historyDisposals.length}
+              {historyScraps.length}
             </span>
           </button>
         </div>
@@ -388,7 +388,7 @@ export default function ManajerScrapClient({
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 bg-white">
-              {filteredDisposals.length === 0 ? (
+              {filteredScraps.length === 0 ? (
                 <tr>
                   <td
                     colSpan={activeTab === "history" ? 8 : 7}
@@ -406,7 +406,7 @@ export default function ManajerScrapClient({
                   </td>
                 </tr>
               ) : (
-                paginatedDisposals.map((item, index) => (
+                paginatedScraps.map((item, index) => (
                   <tr
                     key={item.id}
                     className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
@@ -415,7 +415,7 @@ export default function ManajerScrapClient({
                       {(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
                     </td>
                     <td className="px-3 py-3 text-[13px] font-semibold text-[#0A356A] whitespace-nowrap text-center">
-                      {item.disposal_number || "-"}
+                      {item.scrap_number || "-"}
                     </td>
                     <td className="px-3 py-3 text-[13px] font-semibold text-[#0A356A] whitespace-nowrap text-left">
                       {item.equipment_code || "-"}
@@ -485,16 +485,16 @@ export default function ManajerScrapClient({
           </table>
         </div>
 
-        {filteredDisposals.length > 0 && (
+        {filteredScraps.length > 0 && (
           <div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
             <span className="text-[11px] font-medium text-gray-500">
               Menampilkan{" "}
-              {filteredDisposals.length === 0
+              {filteredScraps.length === 0
                 ? 0
                 : (currentPage - 1) * ITEMS_PER_PAGE + 1}{" "}
               -{" "}
-              {Math.min(currentPage * ITEMS_PER_PAGE, filteredDisposals.length)}{" "}
-              dari {filteredDisposals.length} data ({ITEMS_PER_PAGE}{" "}
+              {Math.min(currentPage * ITEMS_PER_PAGE, filteredScraps.length)}{" "}
+              dari {filteredScraps.length} data ({ITEMS_PER_PAGE}{" "}
               baris/halaman)
             </span>
             <div className="flex items-center gap-1.5">
@@ -540,7 +540,7 @@ export default function ManajerScrapClient({
       </div>
 
       {/* Modal Detail Review & Persetujuan */}
-      {isDetailOpen && selectedDisposal && (
+      {isDetailOpen && selectedScrap && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
             className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
@@ -561,7 +561,7 @@ export default function ManajerScrapClient({
                   <p className="text-[12px] text-gray-500 font-medium">
                     No. Pengajuan:{" "}
                     <span className="font-bold text-[#0A356A]">
-                      {selectedDisposal.disposal_number}
+                      {selectedScrap.scrap_number}
                     </span>
                   </p>
                 </div>
@@ -577,8 +577,8 @@ export default function ManajerScrapClient({
             {/* Content Body */}
             <div className="flex-1 overflow-y-auto px-6 py-5 bg-gray-50/50 space-y-6">
               {/* Alert Status */}
-              {(selectedDisposal.status === "PENDING" ||
-                selectedDisposal.status === "IN_REVIEW") && (
+              {(selectedScrap.status === "PENDING" ||
+                selectedScrap.status === "IN_REVIEW") && (
                 <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-900">
                   <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
                   <div>
@@ -597,8 +597,8 @@ export default function ManajerScrapClient({
                 </div>
               )}
 
-              {(selectedDisposal.status === "DISPOSED" ||
-                selectedDisposal.status === "APPROVED") && (
+              {(selectedScrap.status === "DISPOSED" ||
+                selectedScrap.status === "APPROVED") && (
                 <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex items-start gap-3 text-emerald-900">
                   <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
                   <div>
@@ -608,13 +608,13 @@ export default function ManajerScrapClient({
                     <p className="text-[12px] text-emerald-800 mt-0.5 leading-relaxed">
                       Pengajuan scrap ini telah disetujui oleh Manajer Rendal.
                       Status aset di inventaris telah diperbarui menjadi{" "}
-                      <strong>DISPOSAL_VERIFIED</strong> (Scrap).
+                      <strong>SCRAP_VERIFIED</strong> (Scrap).
                     </p>
                   </div>
                 </div>
               )}
 
-              {selectedDisposal.status === "REJECTED" && (
+              {selectedScrap.status === "REJECTED" && (
                 <div className="bg-rose-50 border border-rose-200 rounded-xl p-4 flex items-start gap-3 text-rose-900">
                   <XCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
                   <div>
@@ -630,7 +630,7 @@ export default function ManajerScrapClient({
                 </div>
               )}
 
-              {selectedDisposal.status === "REVISION_REQUIRED" && (
+              {selectedScrap.status === "REVISION_REQUIRED" && (
                 <div className="bg-purple-50 border border-purple-200 rounded-xl p-4 flex items-start gap-3 text-purple-900">
                   <AlertCircle className="w-5 h-5 text-purple-600 shrink-0 mt-0.5" />
                   <div>
@@ -646,14 +646,14 @@ export default function ManajerScrapClient({
               )}
 
               {/* Catatan Keputusan Manajer (jika ditolak) */}
-              {selectedDisposal.status === "REJECTED" &&
-                selectedDisposal.notes && (
+              {selectedScrap.status === "REJECTED" &&
+                selectedScrap.notes && (
                   <div className="border rounded-xl p-4 flex flex-col gap-1.5 bg-rose-50/50 border-rose-200 text-rose-900">
                     <h4 className="text-[12px] font-bold uppercase tracking-wider text-gray-500">
                       Catatan Penolakan Manajer
                     </h4>
                     <p className="text-[13px] font-medium italic text-gray-800">
-                      &quot;{selectedDisposal.notes}&quot;
+                      &quot;{selectedScrap.notes}&quot;
                     </p>
                   </div>
                 )}
@@ -672,7 +672,7 @@ export default function ManajerScrapClient({
                       No. Pengajuan
                     </p>
                     <p className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {selectedDisposal.disposal_number}
+                      {selectedScrap.scrap_number}
                     </p>
                   </div>
                   <div>
@@ -680,7 +680,7 @@ export default function ManajerScrapClient({
                       Tanggal Pengajuan
                     </p>
                     <p className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {formatDate(selectedDisposal.created_at)}
+                      {formatDate(selectedScrap.created_at)}
                     </p>
                   </div>
                   <div>
@@ -688,7 +688,7 @@ export default function ManajerScrapClient({
                       Diajukan Oleh
                     </p>
                     <p className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {selectedDisposal.created_by_name || "Budi Santoso"}
+                      {selectedScrap.created_by_name || "Budi Santoso"}
                     </p>
                   </div>
                   <div>
@@ -716,7 +716,7 @@ export default function ManajerScrapClient({
                       Kode Alat
                     </p>
                     <p className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {selectedDisposal.equipment_code}
+                      {selectedScrap.equipment_code}
                     </p>
                   </div>
                   <div className="col-span-2">
@@ -724,7 +724,7 @@ export default function ManajerScrapClient({
                       Nama Alat
                     </p>
                     <p className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {selectedDisposal.equipment_name}
+                      {selectedScrap.equipment_name}
                     </p>
                   </div>
                   <div>
@@ -732,7 +732,7 @@ export default function ManajerScrapClient({
                       Plant Asal
                     </p>
                     <p className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {selectedDisposal.plant || "-"}
+                      {selectedScrap.plant || "-"}
                     </p>
                   </div>
                   <div>
@@ -740,7 +740,7 @@ export default function ManajerScrapClient({
                       Nilai Perolehan Awal
                     </p>
                     <p className="text-[13px] font-bold text-gray-900 mt-0.5">
-                      {formatCurrency(selectedDisposal.original_value)}
+                      {formatCurrency(selectedScrap.original_value)}
                     </p>
                   </div>
                 </div>
@@ -760,7 +760,7 @@ export default function ManajerScrapClient({
                       Taksiran Nilai Scrap (Besi Tua)
                     </p>
                     <p className="text-[15px] font-extrabold text-emerald-700 mt-1">
-                      {formatCurrency(selectedDisposal.scrap_value)}
+                      {formatCurrency(selectedScrap.scrap_value)}
                     </p>
                   </div>
                 </div>
@@ -770,7 +770,7 @@ export default function ManajerScrapClient({
                   </p>
                   <div className="bg-gray-50 border border-gray-200 rounded-xl p-3.5 text-[13px] text-gray-800 leading-relaxed italic">
                     &quot;
-                    {selectedDisposal.justification ||
+                    {selectedScrap.justification ||
                       "Tidak ada rincian justifikasi."}
                     &quot;
                   </div>
@@ -813,15 +813,15 @@ export default function ManajerScrapClient({
                           {formatDate(
                             validationDetail?.start_at ||
                               validationDetail?.created_at ||
-                              selectedDisposal.created_at,
+                              selectedScrap.created_at,
                           )}
                         </td>
                       </tr>
                       <tr>
                         <td className="py-2.5 font-bold">Pengajuan Scrap</td>
                         <td className="py-2.5">
-                          {selectedDisposal.created_by_name
-                            ? `${selectedDisposal.created_by_name} (Rendal Pemeliharaan)`
+                          {selectedScrap.created_by_name
+                            ? `${selectedScrap.created_by_name} (Rendal Pemeliharaan)`
                             : "Budi Santoso (Rendal Pemeliharaan)"}
                         </td>
                         <td className="py-2.5">
@@ -831,13 +831,13 @@ export default function ManajerScrapClient({
                         </td>
                         <td className="py-2.5">
                           {formatDate(
-                            selectedDisposal.disposal_date ||
-                              selectedDisposal.created_at,
+                            selectedScrap.scrap_date ||
+                              selectedScrap.created_at,
                           )}
                         </td>
                       </tr>
-                      {selectedDisposal.status !== "PENDING" &&
-                        selectedDisposal.status !== "IN_REVIEW" && (
+                      {selectedScrap.status !== "PENDING" &&
+                        selectedScrap.status !== "IN_REVIEW" && (
                           <tr>
                             <td className="py-2.5 font-bold">
                               Keputusan Manajer
@@ -862,12 +862,12 @@ export default function ManajerScrapClient({
                                 : "Ahmad Fauzi (Manajer Rendal)"}
                             </td>
                             <td className="py-2.5">
-                              {selectedDisposal.status === "DISPOSED" ||
-                              selectedDisposal.status === "APPROVED" ? (
+                              {selectedScrap.status === "DISPOSED" ||
+                              selectedScrap.status === "APPROVED" ? (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-green-50 text-green-700 border border-green-100">
                                   Disetujui
                                 </span>
-                              ) : selectedDisposal.status === "REVISION_REQUIRED" ? (
+                              ) : selectedScrap.status === "REVISION_REQUIRED" ? (
                                 <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-purple-50 text-purple-700 border border-purple-100">
                                   Perlu Revisi
                                 </span>
@@ -880,7 +880,7 @@ export default function ManajerScrapClient({
                             <td className="py-2.5">
                               {formatDate(
                                 approvalDetail?.updated_at ||
-                                  selectedDisposal.created_at,
+                                  selectedScrap.created_at,
                               )}
                             </td>
                           </tr>
@@ -896,9 +896,9 @@ export default function ManajerScrapClient({
                   Lampiran Bukti Fisik (Nameplate & Kerusakan)
                 </h3>
                 <div className="flex flex-wrap gap-4">
-                  {selectedDisposal.attachments &&
-                  selectedDisposal.attachments.length > 0 ? (
-                    selectedDisposal.attachments.map((att, idx) => (
+                  {selectedScrap.attachments &&
+                  selectedScrap.attachments.length > 0 ? (
+                    selectedScrap.attachments.map((att, idx) => (
                       <div
                         key={idx}
                         className="group relative w-36 h-36 bg-gray-100 rounded-xl overflow-hidden border border-gray-200 cursor-pointer hover:shadow-md transition-all"
@@ -933,8 +933,8 @@ export default function ManajerScrapClient({
                 Tutup
               </button>
 
-              {(selectedDisposal.status === "PENDING" ||
-                selectedDisposal.status === "IN_REVIEW") && (
+              {(selectedScrap.status === "PENDING" ||
+                selectedScrap.status === "IN_REVIEW") && (
                 <div className="flex items-center gap-3">
                   <button
                     onClick={() => {
@@ -962,7 +962,7 @@ export default function ManajerScrapClient({
       )}
 
       {/* Modal Konfirmasi Persetujuan (Approve) */}
-      {isApproveConfirmOpen && selectedDisposal && (
+      {isApproveConfirmOpen && selectedScrap && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div
             className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
@@ -991,7 +991,7 @@ export default function ManajerScrapClient({
                   No. Pengajuan
                 </p>
                 <p className="font-bold text-[#0A356A]">
-                  {selectedDisposal.disposal_number}
+                  {selectedScrap.scrap_number}
                 </p>
               </div>
 
@@ -1000,10 +1000,10 @@ export default function ManajerScrapClient({
                   Kode & Nama Aset
                 </p>
                 <p className="font-bold text-gray-900">
-                  {selectedDisposal.equipment_code}
+                  {selectedScrap.equipment_code}
                 </p>
                 <p className="font-semibold text-gray-700">
-                  {selectedDisposal.equipment_name}
+                  {selectedScrap.equipment_name}
                 </p>
               </div>
 
@@ -1012,7 +1012,7 @@ export default function ManajerScrapClient({
                   Estimasi Nilai Scrap
                 </p>
                 <p className="text-[16px] font-extrabold text-emerald-700">
-                  {formatCurrency(selectedDisposal.scrap_value)}
+                  {formatCurrency(selectedScrap.scrap_value)}
                 </p>
               </div>
 
@@ -1069,7 +1069,7 @@ export default function ManajerScrapClient({
       )}
 
       {/* Modal Penolakan (Reject) dengan Textarea Wajib Alasan */}
-      {isRejectModalOpen && selectedDisposal && (
+      {isRejectModalOpen && selectedScrap && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div
             className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
@@ -1091,7 +1091,7 @@ export default function ManajerScrapClient({
                   Tolak Pengajuan Scrap?
                 </h3>
                 <p className="text-[12px] text-gray-500 font-medium">
-                  {selectedDisposal.equipment_code}
+                  {selectedScrap.equipment_code}
                 </p>
               </div>
             </div>
@@ -1099,8 +1099,8 @@ export default function ManajerScrapClient({
             <p className="text-[13px] text-gray-600 mb-4 leading-relaxed">
               Pengajuan scrap untuk aset{" "}
               <strong className="text-gray-900">
-                {selectedDisposal.equipment_code} –{" "}
-                {selectedDisposal.equipment_name}
+                {selectedScrap.equipment_code} –{" "}
+                {selectedScrap.equipment_name}
               </strong>{" "}
               akan ditolak.
             </p>

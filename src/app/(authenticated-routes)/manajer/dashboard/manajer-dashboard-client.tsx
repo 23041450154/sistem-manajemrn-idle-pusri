@@ -43,7 +43,7 @@ interface ManajerDashboardClientProps {
 	equipments: any[];
 	validationApprovals: any[];
 	reuseRequests: any[];
-	disposals: any[];
+	scraps: any[];
 	financialSummary?: any;
 	financialTrend?: any[];
 }
@@ -61,7 +61,7 @@ export default function ManajerDashboardClient({
 	equipments,
 	validationApprovals,
 	reuseRequests,
-	disposals,
+	scraps,
 }: ManajerDashboardClientProps) {
 	const [filterMode, setFilterMode] = useState<"daily" | "monthly">("daily");
 	const [showDetailTable, setShowDetailTable] = useState<boolean>(true);
@@ -84,11 +84,11 @@ export default function ManajerDashboardClient({
 	}, [reuseRequests]);
 
 	const pendingScraps = useMemo(() => {
-		return disposals.filter((d: any) => {
+		return scraps.filter((d: any) => {
 			const st = (d.approval_status || d.approval?.approval_status || "").toUpperCase();
 			return st === "PENDING" || st === "IN_REVIEW" || st === "DRAFT" || !st;
 		});
-	}, [disposals]);
+	}, [scraps]);
 
 	// 2. Metrik Valuasi Aset Idle Terdaftar
 	const idleAssetValuation = useMemo(() => {
@@ -129,7 +129,7 @@ export default function ManajerDashboardClient({
 			}
 		});
 
-		disposals.forEach((d: any) => {
+		scraps.forEach((d: any) => {
 			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
 			if (st === "APPROVED" || st === "DISETUJUI") {
 				scrapValue += Number(d.scrap_value) || 0;
@@ -145,7 +145,7 @@ export default function ManajerDashboardClient({
 			scrapValue,
 			totalSaving,
 		};
-	}, [reuseRequests, disposals]);
+	}, [reuseRequests, scraps]);
 
 	// 4. Format Data Stock Market per TANGGAL (100% REAL DB Data)
 	const dailyStockChartData = useMemo(() => {
@@ -171,7 +171,7 @@ export default function ManajerDashboardClient({
 			}
 		});
 
-		disposals.forEach((d: any) => {
+		scraps.forEach((d: any) => {
 			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
 			if (st === "APPROVED" || st === "DISETUJUI") {
 				const dObj = new Date(d.updated_at || d.created_at || Date.now());
@@ -229,7 +229,7 @@ export default function ManajerDashboardClient({
 		}
 
 		return list;
-	}, [reuseRequests, disposals, equipments]);
+	}, [reuseRequests, scraps, equipments]);
 
 	// 5. Format Data Stock Market per BULAN (100% REAL DB Data)
 	const monthlyStockChartData = useMemo(() => {
@@ -256,7 +256,7 @@ export default function ManajerDashboardClient({
 			}
 		});
 
-		disposals.forEach((d: any) => {
+		scraps.forEach((d: any) => {
 			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
 			if (st === "APPROVED" || st === "DISETUJUI") {
 				const dObj = new Date(d.updated_at || d.created_at || Date.now());
@@ -309,7 +309,7 @@ export default function ManajerDashboardClient({
 		}
 
 		return list;
-	}, [reuseRequests, disposals]);
+	}, [reuseRequests, scraps]);
 
 	// Data Grafik Aktif Sesuai Filter (Harian vs Bulanan)
 	const activeStockChartData = filterMode === "daily" ? dailyStockChartData : monthlyStockChartData;
@@ -382,7 +382,7 @@ export default function ManajerDashboardClient({
 			else pending++;
 		});
 
-		disposals.forEach((d: any) => {
+		scraps.forEach((d: any) => {
 			const st = (d.approval_status || d.approval?.approval_status || d.status || "").toUpperCase();
 			if (st === "APPROVED" || st === "DISETUJUI") approved++;
 			else if (st === "REJECTED" || st === "DITOLAK") rejected++;
@@ -408,7 +408,7 @@ export default function ManajerDashboardClient({
 			pieData: data,
 			allStatusLegend: legend,
 		};
-	}, [validationApprovals, reuseRequests, disposals]);
+	}, [validationApprovals, reuseRequests, scraps]);
 
 	// Log Keputusan Terkini
 	const recentDecisions = useMemo(() => {
@@ -482,8 +482,8 @@ export default function ManajerDashboardClient({
 			icon: ArrowUpRight,
 		},
 		{
-			label: "Persetujuan Scrap & Disposal",
-			value: disposals.length.toString(),
+			label: "Persetujuan Scrap & Scrap",
+			value: scraps.length.toString(),
 			caption:
 				pendingScraps.length > 0
 					? `${pendingScraps.length} usulan penghapusan`
@@ -648,7 +648,7 @@ export default function ManajerDashboardClient({
 					{/* Card 3: Scrap Recovery */}
 					<div className="bg-gradient-to-br from-[#FFFBEB] to-[#FEF3C7] rounded-lg border border-[#FDE68A] p-4 flex flex-col justify-between">
 						<div className="flex items-center justify-between">
-							<span className="text-[12px] font-semibold text-[#92400E]">Scrap Recovery (Disposal)</span>
+							<span className="text-[12px] font-semibold text-[#92400E]">Scrap Recovery (Scrap)</span>
 							<span className="p-2 bg-[#FEF3C7] text-[#D97706] rounded-full">
 								<Coins className="w-4 h-4" />
 							</span>
@@ -772,7 +772,7 @@ export default function ManajerDashboardClient({
 								<Area
 									type="monotone"
 									dataKey="scrapValue"
-									name="Hasil Scrap (Disposal)"
+									name="Hasil Scrap (Scrap)"
 									stroke="#D97706"
 									strokeWidth={2}
 									fillOpacity={0}
@@ -838,7 +838,7 @@ export default function ManajerDashboardClient({
 											<th className="py-2.5 px-3">No</th>
 											<th className="py-2.5 px-3">{filterMode === "daily" ? "Tanggal Transaksi" : "Bulan Transaksi"}</th>
 											<th className="py-2.5 px-3">Cost Avoidance (Reuse)</th>
-											<th className="py-2.5 px-3">Scrap Recovery (Disposal)</th>
+											<th className="py-2.5 px-3">Scrap Recovery (Scrap)</th>
 											<th className="py-2.5 px-3">Total Net Benefit</th>
 											<th className="py-2.5 px-3">Pergerakan Stock</th>
 										</tr>

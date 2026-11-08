@@ -1,5 +1,5 @@
 // Self-check: resolusi "Hasil Inspeksi" + "Alasan Scrap" dari data validasi/inspeksi.
-// Mirror dari logika useMemo di rendal/scrap & rendal/disposal page.tsx.
+// Mirror dari logika useMemo di rendal/scrap & rendal/scrap page.tsx.
 // Jalankan: node scripts/check-scrap-reason.mjs
 import assert from "node:assert/strict";
 
@@ -31,12 +31,12 @@ assert.equal(resolveReason(null, null), null);
 // 2. Validasi menang atas inspeksi berkala.
 const val = {
 	is_utilizable: false,
-	require_action: { name: "DISPOSAL" },
+	require_action: { name: "SCRAP" },
 	followup_recommendation: "Casing pecah, perbaikan tidak ekonomis",
 	notes: "catatan validasi",
 };
 const ins = { is_utilizable: true, notes: "catatan inspeksi" };
-assert.equal(resolveResult(val, ins), "Tidak Layak (DISPOSAL)");
+assert.equal(resolveResult(val, ins), "Tidak Layak (SCRAP)");
 assert.equal(resolveReason(val, ins), "Casing pecah, perbaikan tidak ekonomis");
 
 // 3. Validasi tanpa rekomendasi -> jatuh ke notes validasi, lalu notes inspeksi.
@@ -52,4 +52,4 @@ assert.equal(
 // 5. Layak tidak boleh dilabeli "Tidak Layak" (regresi hardcode lama).
 assert.equal(resolveResult({ is_utilizable: true }, null), "Layak");
 
-console.log("ok: scrap/disposal reason resolution");
+console.log("ok: scrap reason resolution");

@@ -26,26 +26,26 @@ import { buttonVariants } from "@/components/ui/button";
 
 interface RendalDashboardClientProps {
 	equipments: any[];
-	disposals: any[];
+	scraps: any[];
 	revalidations: any[];
 	plants: any[];
 }
 
 export default function RendalDashboardClient({
 	equipments,
-	disposals,
+	scraps,
 	revalidations,
 	plants,
 }: RendalDashboardClientProps) {
 	// 1. Kategorisasi status aset operasional
-	const disposalEquipmentIds = useMemo(
+	const scrapEquipmentIds = useMemo(
 		() =>
 			new Set(
-				disposals
+				scraps
 					.map((d: any) => String(d.equipment_id || d.equipment?.id || d.id))
 					.filter(Boolean),
 			),
-		[disposals],
+		[scraps],
 	);
 
 	const {
@@ -66,7 +66,7 @@ export default function RendalDashboardClient({
 			const eqId = String(e.id || "");
 			const group = statusGroup(e);
 
-			if (group === "scrap" || disposalEquipmentIds.has(eqId)) {
+			if (group === "scrap" || scrapEquipmentIds.has(eqId)) {
 				scrap++;
 			} else if (group === "repair") {
 				dalamPerbaikan++;
@@ -92,7 +92,7 @@ export default function RendalDashboardClient({
 			reusedCount: reused,
 			menungguRevalidasiCount: revalPending,
 		};
-	}, [equipments, disposalEquipmentIds, revalidations]);
+	}, [equipments, scrapEquipmentIds, revalidations]);
 
 	const totalUnit = equipments.length;
 
@@ -102,7 +102,7 @@ export default function RendalDashboardClient({
 			{ name: "Menunggu Validasi", value: menungguValidasiCount, color: "#0556B3" },
 			{ name: "Siap Digunakan", value: readyCount, color: "#059669" },
 			{ name: "Dalam Perbaikan", value: dalamPerbaikanCount, color: "#B45309" },
-			{ name: "Scrap / Disposal", value: scrapCount, color: "#DC2626" },
+			{ name: "Scrap / Scrap", value: scrapCount, color: "#DC2626" },
 			{ name: "Sudah Digunakan", value: reusedCount, color: "#4F46E5" },
 		].filter((item) => item.value > 0);
 
@@ -279,7 +279,7 @@ export default function RendalDashboardClient({
 										<span className="w-1 h-8 rounded-full bg-[#DC2626] shrink-0" />
 										<div>
 											<p className="font-semibold text-[#0F172A]">
-												{scrapCount} aset berstatus rekomendasi scrap / disposal
+												{scrapCount} aset berstatus rekomendasi scrap / scrap
 											</p>
 											<p className="text-[12px] text-[#64748B] mt-0.5">
 												Peralatan rusak berat yang perlu diajukan proses penghapusan buku ke Manajer.

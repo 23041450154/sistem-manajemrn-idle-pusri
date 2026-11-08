@@ -1,21 +1,21 @@
-# Graph Report - sistem-manajemrn-idle-pusri  (2026-10-07)
+# Graph Report - sistem-manajemrn-idle-pusri  (2026-11-08)
 
 ## Corpus Check
-- 171 files · ~457,659 words
+- 168 files · ~453,182 words
 - Verdict: corpus is large enough that graph structure adds value.
 
 ## Summary
-- 851 nodes · 1733 edges · 66 communities (45 shown, 21 thin omitted)
+- 843 nodes · 1713 edges · 67 communities (45 shown, 22 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 4 edges (avg confidence: 0.8)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `1ce0ccaa`
+- Built from commit: `ad0b90ed`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
 ## Community Hubs (Navigation)
-- equipment-status.ts
+- buttonVariants
 - useAuth
 - open-in-terminal/main.js
 - shared.tsx
@@ -23,7 +23,7 @@
 - dependencies
 - devDependencies
 - components.json
-- buttonVariants
+- perbaikan-alat-client.tsx
 - users.ts
 - Handoff — Lanjutan Audit & Cleanup Frontend Idle PUSRI
 - package.json
@@ -37,7 +37,7 @@
 - PRODUCT.md
 - permissions.ts
 - tw-animate-css
-- register-equipment-client.tsx
+- inspection-schedule.ts
 - getEquipments
 - open-in-terminal/manifest.json
 - check-auth-clear.mjs
@@ -55,15 +55,14 @@
 - check-photo-url.mjs
 - clear/route.ts
 - DeleteConfirmDialog.tsx
-- next
 - eslint.config.mjs
 - postcss.config.mjs
 - check-inspection-validation-mapping.mjs
 - SearchableSelect.tsx
-- UnitKerjaDashboard
+- class-variance-authority
 - next.config.ts
-- utils.ts
-- tailwind-merge
+- pdfkit
+- shadcn
 - check-file-url.mjs
 - check-table-overflow.mjs
 - clsx
@@ -71,22 +70,22 @@
 - API_URL_PUBLIC
 
 ## God Nodes (most connected - your core abstractions)
-1. `getEquipments()` - 59 edges
+1. `getEquipments()` - 57 edges
 2. `fetch()` - 41 edges
-3. `statusName()` - 37 edges
+3. `statusName()` - 35 edges
 4. `revalidateApp()` - 27 edges
 5. `getObjectTypes()` - 24 edges
 6. `getApprovals()` - 23 edges
 7. `useAuth()` - 23 edges
 8. `buttonVariants` - 23 edges
-9. `getDisposals()` - 22 edges
+9. `homePathForRole()` - 22 edges
 10. `normalizeRole()` - 21 edges
 
 ## Surprising Connections (you probably didn't know these)
-- `str()` --indirect_call--> `v()`  [INFERRED]
-  src/app/(authenticated-routes)/unit-kerja/dashboard/page.tsx → .obsidian/plugins/claude-code-ide/main.js
 - `PemeliharaanDashboardPage()` --indirect_call--> `eq()`  [INFERRED]
   src/app/(authenticated-routes)/pemeliharaan/dashboard/page.tsx → scripts/check-inspection-schedule.mjs
+- `str()` --indirect_call--> `v()`  [INFERRED]
+  src/app/(authenticated-routes)/unit-kerja/dashboard/page.tsx → .obsidian/plugins/claude-code-ide/main.js
 - `getPageWindow()` --indirect_call--> `p()`  [INFERRED]
   src/app/(authenticated-routes)/unit-kerja/riwayat-permintaan/riwayat-permintaan-client.tsx → .obsidian/plugins/claude-code-ide/main.js
 - `UnitKerjaDashboard()` --references--> `react`  [EXTRACTED]
@@ -97,31 +96,31 @@
 ## Import Cycles
 - None detected.
 
-## Communities (66 total, 21 thin omitted)
+## Communities (67 total, 22 thin omitted)
 
-### Community 0 - "equipment-status.ts"
-Cohesion: 0.05
-Nodes (58): createReuseRequest(), getReuseRequests(), EquipmentManagementPage(), EquipmentRow, nameOf(), plantOf(), InspeksiDashboardClient(), isFinalStatus() (+50 more)
+### Community 0 - "buttonVariants"
+Cohesion: 0.06
+Nodes (35): react, react, Error(), InspeksiDashboardClient(), isFinalStatus(), formatRupiah(), ManajerDashboardClient(), ManajerDashboardClientProps (+27 more)
 
 ### Community 1 - "useAuth"
-Cohesion: 0.13
-Nodes (25): CurrentUserResult, getCurrentUserAction(), LoginPage(), AdminLayout(), InspeksiLayout(), ManajerLayout(), PemeliharaanLayout(), RendalLayout() (+17 more)
+Cohesion: 0.07
+Nodes (46): CurrentUserResult, getCurrentUserAction(), logoutAction(), LoginForm(), LoginPage(), LogoutPage(), AdminLayout(), InspeksiLayout() (+38 more)
 
 ### Community 2 - "open-in-terminal/main.js"
 Cohesion: 0.10
 Nodes (28): __awaiter(), buildDefaultTerminalAppSetting(), buildLaunchCommand(), buildMacLaunch(), buildUnixLaunch(), buildWindowsLaunch(), DEFAULT_SETTINGS, defaultTerminalApp() (+20 more)
 
 ### Community 3 - "shared.tsx"
-Cohesion: 0.12
-Nodes (20): Equipment, KatalogDetailPage(), EquipmentCard(), KatalogClient(), uniq(), KatalogItem, KatalogPage(), flat (+12 more)
+Cohesion: 0.08
+Nodes (35): createReuseRequest(), EquipmentManagementPage(), EquipmentRow, nameOf(), plantOf(), RendalDashboardClient(), RendalDashboardClientProps, DaftarAsetClient() (+27 more)
 
 ### Community 4 - "compilerOptions"
 Cohesion: 0.07
 Nodes (28): dom, dom.iterable, esnext, **/*.mts, .next/dev/types/**/*.ts, next-env.d.ts, .next/types/**/*.ts, node_modules (+20 more)
 
 ### Community 5 - "dependencies"
-Cohesion: 0.12
-Nodes (17): @base-ui/react, class-variance-authority, lucide-react, nextjs-toploader, dependencies, @base-ui/react, class-variance-authority, lucide-react (+9 more)
+Cohesion: 0.13
+Nodes (15): @base-ui/react, lucide-react, next, nextjs-toploader, dependencies, @base-ui/react, lucide-react, next (+7 more)
 
 ### Community 6 - "devDependencies"
 Cohesion: 0.12
@@ -131,13 +130,13 @@ Nodes (17): eslint, eslint-config-next, devDependencies, eslint, eslint-config-n
 Cohesion: 0.09
 Nodes (21): aliases, components, hooks, lib, ui, utils, iconLibrary, menuAccent (+13 more)
 
-### Community 8 - "buttonVariants"
-Cohesion: 0.10
-Nodes (24): p(), Error(), PerbaikanAlatPage(), EMPTY_HINT, extractPhotoUrls(), MaintenanceEquipment, PerbaikanAlatClient(), rupiah() (+16 more)
+### Community 8 - "perbaikan-alat-client.tsx"
+Cohesion: 0.14
+Nodes (15): FormInspeksiClient(), PerbaikanAlatPage(), EMPTY_HINT, extractPhotoUrls(), MaintenanceEquipment, PerbaikanAlatClient(), rupiah(), StatusBadge() (+7 more)
 
 ### Community 9 - "users.ts"
-Cohesion: 0.10
-Nodes (32): createMasterItem(), deleteMasterItem(), fail(), getMasterItems(), MasterItem, resolve(), Result, updateMasterItem() (+24 more)
+Cohesion: 0.08
+Nodes (37): createMasterItem(), deleteMasterItem(), fail(), getMasterItems(), MasterItem, resolve(), Result, updateMasterItem() (+29 more)
 
 ### Community 10 - "Handoff — Lanjutan Audit & Cleanup Frontend Idle PUSRI"
 Cohesion: 0.22
@@ -165,7 +164,7 @@ Nodes (12): API Backend, Arsitektur, Autentikasi, Backend (`backend-idle/`), Car
 
 ### Community 18 - "1. Pemetaan Peran Pengguna (User Roles) & Tanggung Jawab"
 Cohesion: 0.17
-Nodes (11): 1. Pemetaan Peran Pengguna (User Roles) & Tanggung Jawab, 2. Alur Status & Siklus Hidup Aset (Asset Lifecycle), 3. Penyesuaian Formulir & Aturan Teknis Sistem, A. Parameter Informasi Aset (Pendaftaran Alat), A. Rendal Pemeliharaan (Planner & Coordinator), B. Form Inspeksi & Penomoran Pemeriksaan, B. Inspeksi Teknik - Instek (Validator & Auditor), C. Logika Validasi Kondisi & Kelayakan Aset (+3 more)
+Nodes (11): 1. Pemetaan Peran Pengguna (User Roles) & Tanggung Jawab, 2. Alur Status & Siklus Hidup Aset (Asset Lifecycle), 3. Penyesuaian Formulir & Aturan Teknis Sistem, A. Parameter Informasi Aset (Pendaftaran Alat), A. Rendal Pemeliharaan (Planner & Coordinator), B. Form Inspeksi & Penomoran, B. Inspeksi Teknik - Instek (Validator & Auditor), C. Logika Validasi Kondisi & Kelayakan Aset (+3 more)
 
 ### Community 19 - "PRODUCT.md"
 Cohesion: 0.17
@@ -175,13 +174,13 @@ Nodes (10): Anti-references, Brand voice, Constraints, Key messages, Missing fac
 Cohesion: 0.40
 Nodes (3): Permission, PERMS, ROLE_PERMISSIONS
 
-### Community 22 - "register-equipment-client.tsx"
-Cohesion: 0.10
-Nodes (14): FormInspeksiClient(), EMPTY_FORM, MasterEquipmentCode, MasterOption, RegisterInitialData, KatalogItemMinimal, RequestModalButton(), AutocompleteInputProps (+6 more)
+### Community 22 - "inspection-schedule.ts"
+Cohesion: 0.15
+Nodes (12): eq(), NOW, Equipment, InspectionItem, InspeksiBerkalaClientProps, EquipmentLike, InspectionLike, inspectionQueue() (+4 more)
 
 ### Community 23 - "getEquipments"
-Cohesion: 0.07
-Nodes (53): eq(), NOW, getConditions(), getEquipments(), getFunctionalLocations(), getObjectTypes(), getPlants(), getRequireActions() (+45 more)
+Cohesion: 0.06
+Nodes (66): getApprovals(), getConditions(), getEquipments(), getFunctionalLocations(), getObjectTypes(), getPlants(), getRequireActions(), getStorageLocations() (+58 more)
 
 ### Community 24 - "open-in-terminal/manifest.json"
 Cohesion: 0.20
@@ -196,16 +195,16 @@ Cohesion: 0.22
 Nodes (8): api, body, fn, modal, page, pages, required, tabel
 
 ### Community 28 - "action/api.ts"
-Cohesion: 0.06
-Nodes (77): absoluteFileUrl(), API_URL, approveDisposal(), approveRevalidationEquipment(), completeEquipmentRepair(), createDisposalRequest(), createEquipment(), createRevalidation() (+69 more)
+Cohesion: 0.05
+Nodes (77): absoluteFileUrl(), API_URL, approveRevalidationEquipment(), approveScrap(), completeEquipmentRepair(), createEquipment(), createRevalidation(), createScrapRequest() (+69 more)
 
 ### Community 29 - "check-equipment-form.mjs"
 Cohesion: 0.25
 Nodes (7): api, appended, body, createFn, optional, page, required
 
 ### Community 31 - "claude-code-ide/main.js"
-Cohesion: 0.17
-Nodes (16): b(), broadcastSelection(), D(), E(), I(), L(), N(), onload() (+8 more)
+Cohesion: 0.11
+Nodes (22): b(), broadcastSelection(), D(), E(), I(), L(), N(), onload() (+14 more)
 
 ### Community 32 - "ui-layouts-mcp"
 Cohesion: 0.40
@@ -219,37 +218,29 @@ Nodes (8): Fitur, Lisensi, Menjalankan Secara Lokal, Peran Pengguna (Role), Pras
 Cohesion: 0.50
 Nodes (3): doc, fs, PDFDocument
 
-### Community 56 - "UnitKerjaDashboard"
-Cohesion: 0.67
-Nodes (3): react, react, UnitKerjaDashboard()
-
 ### Community 57 - "next.config.ts"
 Cohesion: 0.33
 Nodes (4): allowedOrigins, apiUrl, basePath, nextConfig
 
-### Community 58 - "utils.ts"
-Cohesion: 0.07
-Nodes (29): logoutAction(), LogoutPage(), Shell(), actionTypeConfig, AuditLogEntry, RendalLaporanClient(), geistMono, geistSans (+21 more)
-
 ## Knowledge Gaps
-- **299 isolated node(s):** `21st`, `npx`, `@ui-layouts/mcp`, `id`, `name` (+294 more)
+- **293 isolated node(s):** `21st`, `npx`, `@ui-layouts/mcp`, `id`, `name` (+288 more)
   These have ≤1 connection - possible missing edges or undocumented components.
-- **21 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
+- **22 thin communities (<3 nodes) omitted from report** — run `graphify query` to explore isolated nodes.
 
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `UnitKerjaDashboard()` connect `UnitKerjaDashboard` to `equipment-status.ts`, `action/api.ts`?**
-  _High betweenness centrality (0.072) - this node is a cross-community bridge._
-- **Why does `react` connect `UnitKerjaDashboard` to `dependencies`?**
+- **Why does `UnitKerjaDashboard()` connect `buttonVariants` to `action/api.ts`?**
+  _High betweenness centrality (0.071) - this node is a cross-community bridge._
+- **Why does `react` connect `buttonVariants` to `dependencies`?**
   _High betweenness centrality (0.070) - this node is a cross-community bridge._
-- **Why does `dependencies` connect `dependencies` to `next`, `package.json`, `tw-animate-css`, `UnitKerjaDashboard`, `tailwind-merge`, `clsx`?**
+- **Why does `dependencies` connect `dependencies` to `buttonVariants`, `package.json`, `tw-animate-css`, `class-variance-authority`, `pdfkit`, `shadcn`, `clsx`?**
   _High betweenness centrality (0.070) - this node is a cross-community bridge._
 - **What connects `21st`, `npx`, `@ui-layouts/mcp` to the rest of the system?**
-  _299 weakly-connected nodes found - possible documentation gaps or missing edges._
-- **Should `equipment-status.ts` be split into smaller, more focused modules?**
-  _Cohesion score 0.05092592592592592 - nodes in this community are weakly interconnected._
+  _293 weakly-connected nodes found - possible documentation gaps or missing edges._
+- **Should `buttonVariants` be split into smaller, more focused modules?**
+  _Cohesion score 0.06292517006802721 - nodes in this community are weakly interconnected._
 - **Should `useAuth` be split into smaller, more focused modules?**
-  _Cohesion score 0.13472706155632985 - nodes in this community are weakly interconnected._
+  _Cohesion score 0.07496194824961948 - nodes in this community are weakly interconnected._
 - **Should `open-in-terminal/main.js` be split into smaller, more focused modules?**
   _Cohesion score 0.09565217391304348 - nodes in this community are weakly interconnected._

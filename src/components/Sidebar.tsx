@@ -39,12 +39,12 @@ export function Sidebar({ role }: { role?: string }) {
 		const isMounted = true;
 		const checkPending = async () => {
 			try {
-				const [data, approvalsData, reuseApprovalsData, disposalApprovalsData] =
+				const [data, approvalsData, reuseApprovalsData, scrapApprovalsData] =
 					await Promise.all([
 						getEquipments(),
 						getApprovals().catch(() => []),
 						getApprovals("reuse").catch(() => []),
-						getApprovals("disposal").catch(() => []),
+						getApprovals("scrap").catch(() => []),
 					]);
 				if (!Array.isArray(data) || !isMounted) return;
 
@@ -70,8 +70,8 @@ export function Sidebar({ role }: { role?: string }) {
 				const reuseApprovalAntrean = awaitingManagerAction(
 					asList(reuseApprovalsData),
 				);
-				const disposalApprovalAntrean = awaitingManagerAction(
-					asList(disposalApprovalsData),
+				const scrapApprovalAntrean = awaitingManagerAction(
+					asList(scrapApprovalsData),
 				);
 
 				// Validasi Kelayakan (/inspeksi/validasi): HANYA aset yang butuh tindakan Inspeksi (REGISTERED / REVISION_REQUIRED)
@@ -141,7 +141,7 @@ export function Sidebar({ role }: { role?: string }) {
 					"/pemeliharaan/perbaikan-alat": perbaikanAntrean,
 					"/manajer/approve": validationApprovalAntrean,
 					"/manajer/peminjaman": reuseApprovalAntrean,
-					"/manajer/scrap": disposalApprovalAntrean,
+					"/manajer/scrap": scrapApprovalAntrean,
 				});
 			} catch (err) {
 				console.error("Error checking sidebar pending badges:", err);

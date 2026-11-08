@@ -7,7 +7,7 @@ import {
 	getEquipments,
 	getApprovals,
 	getReuseRequests,
-	getDisposals,
+	getScraps,
 	getFinancialSummary,
 	getFinancialMonthlyTrend,
 } from "@/action/api";
@@ -22,7 +22,7 @@ export default function ManajerDashboardPage() {
 	const [equipmentList, setEquipmentList] = useState<any[]>([]);
 	const [normalizedValidations, setNormalizedValidations] = useState<any[]>([]);
 	const [reuseRequests, setReuseRequests] = useState<any[]>([]);
-	const [disposals, setDisposals] = useState<any[]>([]);
+	const [scraps, setScraps] = useState<any[]>([]);
 	const [financialSummary, setFinancialSummary] = useState<any>(null);
 	const [financialTrend, setFinancialTrend] = useState<any[]>([]);
 	const [loading, setLoading] = useState(true);
@@ -30,11 +30,11 @@ export default function ManajerDashboardPage() {
 	useEffect(() => {
 		let alive = true;
 		void (async () => {
-			const [equipments, validationApprovals, reuseRequestsData, disposalsData, financialSummaryData, financialTrendData] = await Promise.all([
+			const [equipments, validationApprovals, reuseRequestsData, scrapsData, financialSummaryData, financialTrendData] = await Promise.all([
 				getEquipments().catch(() => []),
 				getApprovals("validation").catch(() => []),
 				getReuseRequests("all").catch(() => []),
-				getDisposals().catch(() => []),
+				getScraps().catch(() => []),
 				getFinancialSummary().catch(() => null),
 				getFinancialMonthlyTrend().catch(() => []),
 			]);
@@ -73,7 +73,7 @@ export default function ManajerDashboardPage() {
 			setEquipmentList(list);
 			setNormalizedValidations(normalized);
 			setReuseRequests(Array.isArray(reuseRequestsData) ? reuseRequestsData : []);
-			setDisposals(Array.isArray(disposalsData) ? disposalsData : []);
+			setScraps(Array.isArray(scrapsData) ? scrapsData : []);
 			setFinancialSummary(financialSummaryData);
 			setFinancialTrend(Array.isArray(financialTrendData) ? financialTrendData : []);
 			setLoading(false);
@@ -128,7 +128,7 @@ export default function ManajerDashboardPage() {
 				equipments={equipmentList}
 				validationApprovals={normalizedValidations}
 				reuseRequests={reuseRequests}
-				disposals={disposals}
+				scraps={scraps}
 				financialSummary={financialSummary}
 				financialTrend={financialTrend}
 			/>
