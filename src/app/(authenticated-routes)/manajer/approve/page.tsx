@@ -69,6 +69,7 @@ export default function ManajerApprovePage() {
 			return {
 				id: item.id.toString(),
 				equipmentId: equipmentId?.toString() || "",
+				referenceId: item.reference_id ?? null,
 				nomorRequest: item.request_number || `VAL-${item.id}`,
 				kodeAset: item.equipment_code || eq?.equipment_code || "-",
 				objectType: item.object_type ?? eq?.object_type ?? null,

@@ -118,24 +118,32 @@ export default function AdminDashboardPage() {
       value: stats.totalEquipment,
       icon: Wrench,
       caption: "Peralatan aktif & idle terdaftar",
+      rule: "#0A356A",
+      href: "/admin/equipment",
     },
     {
       label: "Kategori (ObjectType)",
       value: stats.totalCategories,
       icon: Layers,
       caption: "Klasifikasi tipe mesin & alat",
+      rule: "#0556B3",
+      href: "/admin/master/object-types",
     },
     {
       label: "Gudang & Penyimpanan",
       value: stats.totalStorage,
       icon: MapPin,
       caption: "Lokasi penyimpanan fisik",
+      rule: "#059669",
+      href: "/admin/master/storage-locations",
     },
     {
       label: "Persetujuan Scrap",
       value: stats.totalDisposals,
       icon: Trash2,
       caption: "Usulan scrap aset",
+      rule: "#DC2626",
+      href: "/admin/equipment?status=SCRAP",
     },
   ];
 
@@ -169,28 +177,35 @@ export default function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* KPI Row */}
+      {/* KPI Row (Interactive Quick Filter Shortcuts - US-12-FE) */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-        {kpis.map(({ label, value, icon: Icon, caption }) => (
-          <div
+        {kpis.map(({ label, value, icon: Icon, caption, href, rule }) => (
+          <Link
             key={label}
-            className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm"
+            href={href}
+            className="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm hover:border-slate-300 hover:shadow-md hover:-translate-y-0.5 transition-all block cursor-pointer group"
           >
             <div className="flex items-center justify-between mb-3">
-              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
+              <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider group-hover:text-[#0A356A] transition-colors">
                 {label}
               </span>
-              <div className="w-9 h-9 rounded-lg bg-slate-100 text-[#0A356A] flex items-center justify-center shrink-0">
+              <div
+                className="w-9 h-9 rounded-lg bg-slate-100 flex items-center justify-center shrink-0 transition-transform duration-200 group-hover:scale-110"
+                style={{ color: rule }}
+              >
                 <Icon className="w-5 h-5" />
               </div>
             </div>
             <div className="text-3xl font-bold text-slate-900 tracking-tight">
               {value}
             </div>
-            <p className="text-[11px] text-slate-400 mt-1.5 font-medium">
-              {caption}
+            <p className="text-[11px] text-slate-400 mt-1.5 font-medium flex items-center gap-1">
+              <span>{caption}</span>
+              <span className="opacity-0 group-hover:opacity-100 transition-opacity text-[#0A356A]">
+                &rarr;
+              </span>
             </p>
-          </div>
+          </Link>
         ))}
       </div>
 

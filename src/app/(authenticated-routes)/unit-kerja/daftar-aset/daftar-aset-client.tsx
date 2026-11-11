@@ -351,7 +351,7 @@ export default function DaftarAsetClient({
 				setSuccessToast(
 					`Pengajuan pemakaian ${requestModalAsset.equipment_code} berhasil dikirim.`,
 				);
-				setTimeout(() => router.push("/unit-kerja/riwayat-permintaan"), 1200);
+				setTimeout(() => router.push("/unit-kerja/konfirmasi-pemasangan"), 1200);
 			} else {
 				setRequestErrorMessage(
 					res?.message || "Gagal mengirim pengajuan pemakaian.",

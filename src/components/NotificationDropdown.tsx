@@ -461,7 +461,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 									message: `Permohonan pemakaian ${code} (${name}) telah disetujui Rendal. Siap dimobilisasi.`,
 									timestamp:
 										req.updated_at || req.created_at || new Date().toISOString(),
-									href: "/unit-kerja/riwayat-permintaan",
+									href: "/unit-kerja/konfirmasi-pemasangan",
 									category: "reuse",
 									badgeText: "Disetujui",
 									badgeColor: "#059669",
@@ -473,7 +473,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 									message: `Permohonan pemakaian ${code} (${name}) tidak disetujui.`,
 									timestamp:
 										req.updated_at || req.created_at || new Date().toISOString(),
-									href: "/unit-kerja/riwayat-permintaan",
+									href: "/unit-kerja/konfirmasi-pemasangan",
 									category: "reuse",
 									badgeText: "Ditolak",
 									badgeColor: "#DC2626",
@@ -487,7 +487,7 @@ export function NotificationDropdown({ role }: { role?: string }) {
 									title: `Pengajuan Direview: ${reqNum}`,
 									message: `Permohonan pemakaian ${code} (${name}) sedang dalam peninjauan Rendal.`,
 									timestamp: req.created_at || new Date().toISOString(),
-									href: "/unit-kerja/riwayat-permintaan",
+									href: "/unit-kerja/konfirmasi-pemasangan",
 									category: "reuse",
 									badgeText: "Dalam Review",
 									badgeColor: "#B45309",

@@ -98,6 +98,7 @@ export default function InspeksiDashboardClient({
 			caption: "Total aset idle terdaftar",
 			rule: "#334155",
 			icon: FileText,
+			href: "/inspeksi/validasi?status=ALL",
 		},
 		{
 			label: "Menunggu Validasi",
@@ -105,6 +106,7 @@ export default function InspeksiDashboardClient({
 			caption: "Baru terdaftar, belum diperiksa",
 			rule: "#0556B3",
 			icon: Clock,
+			href: "/inspeksi/validasi?status=ACTION_NEEDED",
 		},
 		{
 			label: "Tervalidasi / Ready",
@@ -112,6 +114,7 @@ export default function InspeksiDashboardClient({
 			caption: "Layak operasional",
 			rule: "#059669",
 			icon: CheckCircle2,
+			href: "/inspeksi/validasi?tab=riwayat",
 		},
 		{
 			label: "Perbaikan / Scrap",
@@ -119,6 +122,7 @@ export default function InspeksiDashboardClient({
 			caption: "Rusak atau tidak layak",
 			rule: "#B45309",
 			icon: AlertTriangle,
+			href: "/inspeksi/validasi?status=REPAIR",
 		},
 	];
 
@@ -178,29 +182,36 @@ export default function InspeksiDashboardClient({
 				</div>
 			</header>
 
-			{/* KPI Strip */}
+			{/* KPI Strip (Interactive Quick Filter Shortcuts - US-12-FE) */}
 			<div className="grid grid-cols-2 gap-4 md:grid-cols-4">
 				{kpis.map((kpi) => (
-					<div
+					<Link
 						key={kpi.label}
-						className="flex items-start justify-between gap-3 rounded border border-[#E6E8EA] border-l-2 bg-white p-4"
+						href={kpi.href}
+						className="flex items-start justify-between gap-3 rounded border border-[#E6E8EA] border-l-2 bg-white p-4 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all group"
 						style={{ borderLeftColor: kpi.rule }}
+						title={`Buka ${kpi.label}`}
 					>
 						<div className="min-w-0">
-							<p className="truncate text-[12px] font-medium text-[#64748B]">
+							<p className="truncate text-[12px] font-medium text-[#64748B] group-hover:text-[#0A356A] transition-colors">
 								{kpi.label}
 							</p>
 							<p className="mt-2 text-[28px] leading-none font-semibold tracking-[-0.02em] text-[#0F172A] tabular-nums">
 								{kpi.value}
 							</p>
-							<p className="mt-1.5 text-[12px] text-[#64748B]">{kpi.caption}</p>
+							<p className="mt-1.5 text-[12px] text-[#64748B] flex items-center gap-1">
+								<span>{kpi.caption}</span>
+								<span className="opacity-0 group-hover:opacity-100 transition-opacity text-[#0A356A]">
+									&rarr;
+								</span>
+							</p>
 						</div>
 						<kpi.icon
-							className="mt-0.5 h-4 w-4 shrink-0"
+							className="mt-0.5 h-4 w-4 shrink-0 transition-transform duration-200 group-hover:scale-110"
 							style={{ color: kpi.rule }}
 							aria-hidden="true"
 						/>
-					</div>
+					</Link>
 				))}
 			</div>
 

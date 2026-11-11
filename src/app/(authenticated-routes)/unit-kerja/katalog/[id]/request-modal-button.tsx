@@ -128,7 +128,7 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 				setDocumentFile(null);
 				// Server action sudah revalidateApp() — router.push (basePath-aware)
 				// cukup; reload penuh tidak diperlukan.
-				router.push("/unit-kerja/riwayat-permintaan?submitted=true");
+				router.push("/unit-kerja/konfirmasi-pemasangan?submitted=true");
 			} else {
 				setError(result?.message || "Gagal mengirim pengajuan pemakaian.");
 			}

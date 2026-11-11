@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useMemo } from "react";
+import Link from "next/link";
 import {
 	CheckSquare,
 	Server,
@@ -469,6 +470,7 @@ export default function ManajerDashboardClient({
 			caption: "Menunggu review & keputusan",
 			rule: "#0A356A",
 			icon: CheckSquare,
+			href: "/manajer/approve?tab=inbox",
 		},
 		{
 			label: "Persetujuan Validasi",
@@ -479,6 +481,7 @@ export default function ManajerDashboardClient({
 					: "0 antrean baru",
 			rule: "#0556B3",
 			icon: Server,
+			href: "/manajer/approve?tab=inbox",
 		},
 		{
 			label: "Persetujuan Pemakaian",
@@ -489,6 +492,7 @@ export default function ManajerDashboardClient({
 					: "0 permohonan baru",
 			rule: "#B45309",
 			icon: ArrowUpRight,
+			href: "/manajer/pemakaian",
 		},
 		{
 			label: "Persetujuan Scrap",
@@ -499,34 +503,42 @@ export default function ManajerDashboardClient({
 					: "0 usulan scrap",
 			rule: "#DC2626",
 			icon: Trash2,
+			href: "/manajer/scrap",
 		},
 	];
 
 	return (
 		<div className="flex flex-col gap-6">
-			{/* 1. Executive KPI Strip */}
+			{/* 1. Executive KPI Strip (Interactive Quick Filter Shortcuts - US-12-FE) */}
 			<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 				{kpis.map((kpi) => (
-					<div
+					<Link
 						key={kpi.label}
-						className="bg-white rounded border border-[#E6E8EA] border-l-2 p-4 flex items-start justify-between gap-3 shadow-none"
+						href={kpi.href}
+						className="bg-white rounded border border-[#E6E8EA] border-l-2 p-4 flex items-start justify-between gap-3 shadow-none hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 cursor-pointer transition-all group"
 						style={{ borderLeftColor: kpi.rule }}
+						title={`Buka ${kpi.label}`}
 					>
 						<div className="min-w-0">
-							<p className="text-[12px] font-medium text-[#64748B] truncate">
+							<p className="text-[12px] font-medium text-[#64748B] group-hover:text-[#0A356A] transition-colors truncate">
 								{kpi.label}
 							</p>
 							<p className="text-[28px] leading-none font-semibold text-[#0F172A] tabular-nums mt-2 tracking-[-0.02em]">
 								{kpi.value}
 							</p>
-							<p className="text-[12px] text-[#64748B] mt-1.5">{kpi.caption}</p>
+							<p className="text-[12px] text-[#64748B] mt-1.5 flex items-center gap-1">
+								<span>{kpi.caption}</span>
+								<span className="opacity-0 group-hover:opacity-100 transition-opacity text-[#0A356A]">
+									&rarr;
+								</span>
+							</p>
 						</div>
 						<kpi.icon
-							className="w-4 h-4 shrink-0 mt-0.5"
+							className="w-4 h-4 shrink-0 mt-0.5 transition-transform duration-200 group-hover:scale-110"
 							style={{ color: kpi.rule }}
 							aria-hidden="true"
 						/>
-					</div>
+					</Link>
 				))}
 			</div>
 

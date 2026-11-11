@@ -23,6 +23,7 @@ import {
 	getValidations,
 } from "@/action/api";
 import { statusBadgeStyle, statusText } from "@/lib/equipment-status";
+import { fileUrl } from "@/lib/file-url";
 
 type Lookup = {
 	id: number;
@@ -42,6 +43,7 @@ export interface RequestAsset {
 	id: string;
 	nomorRequest: string;
 	kodeAset: string;
+	referenceId?: string | number | null;
 	kind?: "validation" | "revalidation";
 	objectType: Lookup | null;
 	namaAset: string;
@@ -116,7 +118,8 @@ export default function ManajerApproveClient({
 	// Validasi & data finansial diambil dari DB saat modal dibuka (bukan hardcode).
 	const [validationDetail, setValidationDetail] = useState<any>(null);
 	const [equipmentDetail, setEquipmentDetail] = useState<any>(null);
-	const [attachments, setAttachments] = useState<any[]>([]);
+	const [validationAttachments, setValidationAttachments] = useState<any[]>([]);
+	const [registrationAttachments, setRegistrationAttachments] = useState<any[]>([]);
 
 	// Pagination State
 	const [currentPage, setCurrentPage] = useState(1);
@@ -127,7 +130,8 @@ export default function ManajerApproveClient({
 		setIsModalOpen(true);
 		setValidationDetail(null);
 		setEquipmentDetail(null);
-		setAttachments([]);
+		setValidationAttachments([]);
+		setRegistrationAttachments([]);
 		try {
 			const [data, attsData, validations, eqDetail] = await Promise.all([
 				getApprovalById(asset.id, asset.kind || "validation"),
@@ -142,14 +146,55 @@ export default function ManajerApproveClient({
 				setApprovalSteps([]);
 			}
 
-			if (attsData && Array.isArray(attsData)) {
-				setAttachments(attsData);
+			const regAtts = Array.isArray(attsData) ? attsData : [];
+			setRegistrationAttachments(regAtts);
+
+			// Temukan data validasi yang bersesuaian dengan request approval ini
+			const targetValId = data?.reference_id || asset.referenceId;
+			let selectedVal: any = null;
+			if (Array.isArray(validations) && validations.length > 0) {
+				if (targetValId) {
+					selectedVal = validations.find(
+						(v: any) => Number(v.id) === Number(targetValId),
+					);
+				}
+				if (!selectedVal) {
+					selectedVal = validations[0];
+				}
 			}
 
-			// Validasi terbaru (GET /api/validation) — sumber data Hasil Validasi.
-			if (Array.isArray(validations) && validations.length > 0) {
-				setValidationDetail(validations[0]);
+			// Fallback jika query param equipment_id tidak mengembalikan validasi
+			if (!selectedVal) {
+				try {
+					const allValids = await getValidations();
+					if (Array.isArray(allValids) && allValids.length > 0) {
+						if (targetValId) {
+							selectedVal = allValids.find(
+								(v: any) => Number(v.id) === Number(targetValId),
+							);
+						}
+						if (!selectedVal) {
+							selectedVal = allValids.find(
+								(v: any) =>
+									Number(v.equipment_id) === Number(asset.equipmentId),
+							);
+						}
+					}
+				} catch (err) {
+					console.error("Fallback getValidations error:", err);
+				}
 			}
+
+			if (selectedVal) {
+				setValidationDetail(selectedVal);
+			}
+
+			// Ambil foto dokumentasi langsung dari inspeksi validasi
+			const valAtts = Array.isArray(selectedVal?.attachments)
+				? selectedVal.attachments
+				: [];
+			setValidationAttachments(valAtts);
+
 			if (eqDetail) {
 				setEquipmentDetail(eqDetail);
 			}
@@ -206,6 +251,8 @@ export default function ManajerApproveClient({
 		setIsModalOpen(false);
 		setPreviewImage(null);
 		setApprovalSteps([]);
+		setValidationAttachments([]);
+		setRegistrationAttachments([]);
 		setTimeout(() => setSelectedAsset(null), 300);
 	};
 
@@ -792,32 +839,40 @@ export default function ManajerApproveClient({
 									</div>
 								</div>
 
-								{/* Foto Dokumentasi Aset */}
-								{attachments.length > 0 && (
+								{/* Foto Dokumentasi Validasi Inspeksi */}
+								{validationAttachments.length > 0 ? (
 									<div className="mt-4">
-										<p className="text-[12px] text-gray-500 font-medium mb-2">
-											Foto Dokumentasi:
-										</p>
+										<div className="flex items-center justify-between mb-2">
+											<p className="text-[12px] text-gray-700 font-semibold flex items-center gap-1.5">
+												<span>Foto Dokumentasi (Hasil Validasi Inspeksi):</span>
+												<span className="text-[10px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+													Inspeksi Teknik
+												</span>
+											</p>
+											<span className="text-[11px] text-gray-400">
+												{validationAttachments.length} foto
+											</span>
+										</div>
 										<div className="grid grid-cols-3 gap-3">
-											{attachments.map((att: any, idx: number) => (
+											{validationAttachments.map((att: any, idx: number) => (
 												<div
 													key={idx}
 													className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-square"
-													onClick={() => setPreviewImage(att.file_url || att.url)}
+													onClick={() => setPreviewImage(fileUrl(att.file_url || att.url))}
 												>
 													{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
 													<img
-														src={att.file_url || att.url}
-														alt={att.description || att.file_name || `Foto ${idx + 1}`}
+														src={fileUrl(att.file_url || att.url)}
+														alt={att.description || att.file_name || `Foto Validasi ${idx + 1}`}
 														className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
 													/>
 													<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
 														<Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
 													</div>
-													{att.description && (
+													{(att.description || att.file_name) && (
 														<div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-1.5">
 															<p className="text-[10px] text-white font-medium truncate">
-																{att.description}
+																{att.description || att.file_name}
 															</p>
 														</div>
 													)}
@@ -825,7 +880,47 @@ export default function ManajerApproveClient({
 											))}
 										</div>
 									</div>
-								)}
+								) : registrationAttachments.length > 0 ? (
+									<div className="mt-4">
+										<div className="flex items-center justify-between mb-2">
+											<p className="text-[12px] text-gray-700 font-semibold flex items-center gap-1.5">
+												<span>Foto Dokumentasi:</span>
+												<span className="text-[10px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
+													Registrasi Aset
+												</span>
+											</p>
+											<span className="text-[11px] text-gray-400">
+												{registrationAttachments.length} foto
+											</span>
+										</div>
+										<div className="grid grid-cols-3 gap-3">
+											{registrationAttachments.map((att: any, idx: number) => (
+												<div
+													key={idx}
+													className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-square"
+													onClick={() => setPreviewImage(fileUrl(att.file_url || att.url))}
+												>
+													{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+													<img
+														src={fileUrl(att.file_url || att.url)}
+														alt={att.description || att.file_name || `Foto Registrasi ${idx + 1}`}
+														className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
+													/>
+													<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+														<Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+													</div>
+													{(att.description || att.file_name) && (
+														<div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-1.5">
+															<p className="text-[10px] text-white font-medium truncate">
+																{att.description || att.file_name}
+															</p>
+														</div>
+													)}
+												</div>
+											))}
+										</div>
+									</div>
+								) : null}
 							</div>
 
 							{/* Section 2: Informasi Finansial */}
@@ -1040,28 +1135,62 @@ export default function ManajerApproveClient({
 
 								{/* Dokumentasi */}
 								<p className="text-[12px] text-gray-500 font-medium mb-2">
-									Dokumentasi Foto & Riwayat Audit:
+									Dokumentasi Foto Validasi & Riwayat Audit:
 								</p>
 								<div className="flex gap-3">
-									{attachments.length > 0 ? (
-										attachments.slice(0, 2).map((att: any, idx: number) => (
-											<div
-												key={idx}
-												className="relative w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
-												onClick={() => setPreviewImage(att.file_url || att.url)}
-											>
-												{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
-												<img
-													src={att.file_url || att.url}
-													className="absolute inset-0 w-full h-full object-cover"
-													alt={`Foto ${idx + 1}`}
-												/>
-											</div>
-										))
+									{validationAttachments.length > 0 ? (
+										<div className="flex gap-2 max-w-[55%] overflow-x-auto pb-1 shrink-0">
+											{validationAttachments.map((att: any, idx: number) => (
+												<div
+													key={idx}
+													className="relative w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity shrink-0 group"
+													onClick={() => setPreviewImage(fileUrl(att.file_url || att.url))}
+													title={att.file_name || `Foto Validasi ${idx + 1}`}
+												>
+													{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+													<img
+														src={fileUrl(att.file_url || att.url)}
+														className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform"
+														alt={att.file_name || `Foto Validasi ${idx + 1}`}
+													/>
+													<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+														<Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+													</div>
+													{att.file_name && (
+														<div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-1">
+															<p className="text-[9px] text-white font-medium truncate">
+																{att.file_name}
+															</p>
+														</div>
+													)}
+												</div>
+											))}
+										</div>
+									) : registrationAttachments.length > 0 ? (
+										<div className="flex gap-2 max-w-[55%] overflow-x-auto pb-1 shrink-0">
+											{registrationAttachments.slice(0, 2).map((att: any, idx: number) => (
+												<div
+													key={idx}
+													className="relative w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity shrink-0 group"
+													onClick={() => setPreviewImage(fileUrl(att.file_url || att.url))}
+													title={`Foto Registrasi ${idx + 1}`}
+												>
+													{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+													<img
+														src={fileUrl(att.file_url || att.url)}
+														className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform"
+														alt={`Foto Registrasi ${idx + 1}`}
+													/>
+													<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+														<Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+													</div>
+												</div>
+											))}
+										</div>
 									) : (
 										<div className="w-24 h-24 bg-gray-100 rounded-lg border border-gray-200 flex flex-col items-center justify-center text-gray-400 shrink-0">
 											<span className="text-[10px] font-medium text-center px-2">
-												Tidak ada foto
+												Tidak ada foto validasi
 											</span>
 										</div>
 									)}
@@ -1263,7 +1392,7 @@ export default function ManajerApproveClient({
 					<div className="relative w-[92vw] max-w-5xl h-[85vh] flex items-center justify-center">
 						{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
 						<img
-							src={previewImage}
+							src={fileUrl(previewImage)}
 							alt="Preview Foto"
 							className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
 							onClick={(e) => e.stopPropagation()}

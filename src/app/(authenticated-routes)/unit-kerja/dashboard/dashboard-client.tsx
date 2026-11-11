@@ -208,48 +208,64 @@ export default function UnitKerjaDashboardContent({
 				</div>
 			</div>
 
-			{/* KPI strip */}
+			{/* KPI strip (Interactive Quick Filter Shortcuts - US-12-FE) */}
 			<div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-				<div
-					className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2"
+				<Link
+					href="/unit-kerja/daftar-aset?status=READY_TO_USE"
+					className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all block cursor-pointer group"
 					style={{ borderLeftColor: "#059669" }}
+					title="Buka daftar aset siap pakai"
 				>
-					<p className="text-[12px] font-medium text-[#64748B]">Aset siap dipakai</p>
+					<p className="text-[12px] font-medium text-[#64748B] group-hover:text-[#059669] transition-colors">
+						Aset siap dipakai
+					</p>
 					<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-1">
 						{String(readyToUseCount)}
 					</p>
-					<p className="text-[12px] text-[#64748B] mt-1">Tersedia di daftar aset</p>
-				</div>
-				<div
-					className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2"
+					<p className="text-[12px] text-[#64748B] mt-1">Tersedia di daftar aset &rarr;</p>
+				</Link>
+				<Link
+					href="/unit-kerja/konfirmasi-pemasangan"
+					className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all block cursor-pointer group"
 					style={{ borderLeftColor: "#0556B3" }}
+					title="Buka seluruh riwayat pengajuan & konfirmasi pemasangan"
 				>
-					<p className="text-[12px] font-medium text-[#64748B]">Total pengajuan</p>
+					<p className="text-[12px] font-medium text-[#64748B] group-hover:text-[#0556B3] transition-colors">
+						Total pengajuan
+					</p>
 					<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-1">
 						{String(totalSubmittedRequests)}
 					</p>
-					<p className="text-[12px] text-[#64748B] mt-1">Seluruh riwayat unit</p>
-				</div>
-				<div
-					className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2"
+					<p className="text-[12px] text-[#64748B] mt-1">Seluruh riwayat unit &rarr;</p>
+				</Link>
+				<Link
+					href="/unit-kerja/konfirmasi-pemasangan?status=PENDING"
+					className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all block cursor-pointer group"
 					style={{ borderLeftColor: "#B45309" }}
+					title="Buka pengajuan yang sedang menunggu review"
 				>
-					<p className="text-[12px] font-medium text-[#64748B]">Menunggu review</p>
+					<p className="text-[12px] font-medium text-[#64748B] group-hover:text-[#B45309] transition-colors">
+						Menunggu review
+					</p>
 					<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-1">
 						{String(pendingRequestsCount)}
 					</p>
-					<p className="text-[12px] text-[#64748B] mt-1">Dalam evaluasi Rendal</p>
-				</div>
-				<div
-					className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2"
+					<p className="text-[12px] text-[#64748B] mt-1">Dalam evaluasi Rendal &rarr;</p>
+				</Link>
+				<Link
+					href="/unit-kerja/konfirmasi-pemasangan?status=APPROVED"
+					className="bg-white border border-[#E6E8EA] rounded-[4px] p-5 border-l-2 hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5 transition-all block cursor-pointer group"
 					style={{ borderLeftColor: "#059669" }}
+					title="Buka pengajuan yang siap konfirmasi pemasangan"
 				>
-					<p className="text-[12px] font-medium text-[#64748B]">Disetujui Rendal</p>
+					<p className="text-[12px] font-medium text-[#64748B] group-hover:text-[#059669] transition-colors">
+						Disetujui Rendal
+					</p>
 					<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-1">
 						{String(approvedRequests.length)}
 					</p>
-					<p className="text-[12px] text-[#64748B] mt-1">Siap dimobilisasi</p>
-				</div>
+					<p className="text-[12px] text-[#64748B] mt-1">Siap konfirmasi pemasangan &rarr;</p>
+				</Link>
 			</div>
 
 			{/* Visualisasi Grafik: Rekapitulasi Metrik Operasional & Donut Status Pengajuan */}
@@ -447,10 +463,10 @@ export default function UnitKerjaDashboardContent({
 							</p>
 						</div>
 						<Link
-							href="/unit-kerja/riwayat-permintaan"
+							href="/unit-kerja/konfirmasi-pemasangan"
 							className="text-[12px] font-medium text-[#0A356A] hover:text-[#0556B3] inline-flex items-center gap-1"
 						>
-							Lihat riwayat
+							Konfirmasi Pemasangan
 							<ArrowRight className="w-3.5 h-3.5" />
 						</Link>
 					</div>

@@ -208,22 +208,33 @@ export default function PemeliharaanDashboardPage() {
 
 				<ol className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 lg:divide-x divide-[#E6E8EA]">
 					{stages.map((stage, i) => (
-						<li key={stage.status} className="p-5">
-							<div
-								className="h-0.5 w-8 mb-3"
-								style={{ backgroundColor: stage.hue }}
-								aria-hidden="true"
-							/>
-							<p className="text-[12px] text-[#64748B] tabular-nums">Tahap {i + 1}</p>
-							<p className="text-[13px] font-semibold text-[#0F172A] mt-0.5">
-								{stage.label}
-							</p>
-							<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-2">
-								{stage.count}
-							</p>
-							<p className="text-[12px] text-[#64748B] mt-1">
-								Ditangani {stage.owner}
-							</p>
+						<li key={stage.status}>
+							<Link
+								href={`/pemeliharaan/perbaikan-alat?status=${stage.status}`}
+								className="p-5 block hover:bg-slate-50/80 transition-all duration-200 cursor-pointer group"
+								title={`Buka antrean ${stage.label}`}
+							>
+								<div
+									className="h-0.5 w-8 mb-3 transition-all duration-200 group-hover:w-12"
+									style={{ backgroundColor: stage.hue }}
+									aria-hidden="true"
+								/>
+								<div className="flex items-center justify-between">
+									<p className="text-[12px] text-[#64748B] tabular-nums">Tahap {i + 1}</p>
+									<span className="text-[11px] text-[#0A356A] font-semibold opacity-0 group-hover:opacity-100 transition-opacity">
+										Lihat &rarr;
+									</span>
+								</div>
+								<p className="text-[13px] font-semibold text-[#0F172A] mt-0.5 group-hover:text-[#0A356A] transition-colors">
+									{stage.label}
+								</p>
+								<p className="text-[28px] font-semibold text-[#0F172A] tracking-[-0.02em] tabular-nums leading-tight mt-2">
+									{stage.count}
+								</p>
+								<p className="text-[12px] text-[#64748B] mt-1">
+									Ditangani {stage.owner}
+								</p>
+							</Link>
 						</li>
 					))}
 				</ol>

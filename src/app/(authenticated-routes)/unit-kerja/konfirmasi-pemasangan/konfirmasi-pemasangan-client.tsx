@@ -114,7 +114,7 @@ function getPageWindow(current: number, total: number): (number | "gap")[] {
 }
 
 /** Client Component: interaksi (search/filter/sort/paginasi/modal) — data di-fetch Server Component. */
-function RiwayatPermintaanContent({
+function KonfirmasiPemasanganContent({
 	items,
 	isJustSubmitted,
 	onRefresh,
@@ -481,11 +481,11 @@ function RiwayatPermintaanContent({
 					>
 						<span>Unit Kerja Operasi</span>
 						<ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
-						<span className="font-medium text-[#0A356A]">Riwayat Permintaan</span>
+						<span className="font-medium text-[#0A356A]">Konfirmasi Pemasangan</span>
 					</nav>
-					<h1 className="page-title">Riwayat Permintaan Pemakaian Aset</h1>
+					<h1 className="page-title">Konfirmasi Pemasangan Aset</h1>
 					<p className="page-subtitle">
-						Status persetujuan pengajuan penggunaan kembali peralatan idle.
+						Status persetujuan pengajuan dan konfirmasi pemasangan fisik peralatan idle.
 					</p>
 				</div>
 				<div className="header-actions">
@@ -1290,4 +1290,4 @@ function RiwayatPermintaanContent({
 	);
 }
 
-export default RiwayatPermintaanContent;
+export default KonfirmasiPemasanganContent;

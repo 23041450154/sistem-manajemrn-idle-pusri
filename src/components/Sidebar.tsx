@@ -299,9 +299,9 @@ export function Sidebar({ role }: { role?: string }) {
 					icon: PlusCircle,
 				},
 				{
-					name: "Riwayat Permintaan",
-					href: "/unit-kerja/riwayat-permintaan",
-					icon: History,
+					name: "Konfirmasi Pemasangan",
+					href: "/unit-kerja/konfirmasi-pemasangan",
+					icon: CheckSquare,
 				},
 			];
 			break;
