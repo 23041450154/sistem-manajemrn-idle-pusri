@@ -14,7 +14,7 @@ export const STATE_STYLE: Record<
   repair: { label: "Dalam perbaikan", badge: "bg-[#FEF3C7] text-[#B45309]" },
   ready: { label: "Siap dipakai ulang", badge: "bg-[#DCFCE7] text-[#16A34A]" },
   rejected: { label: "Tidak layak", badge: "bg-[#FEE2E2] text-[#DC2626]" },
-  disposal: { label: "Scrap", badge: "bg-[#FEF3C7] text-[#B45309]" },
+  scrap: { label: "Scrap", badge: "bg-[#FEF3C7] text-[#B45309]" },
 };
 
 export function formatRupiah(value?: number) {
@@ -28,7 +28,7 @@ export function formatRupiah(value?: number) {
 
 export function toState(status?: string, condition?: string): EquipmentState {
   const s = `${status ?? ""} ${condition ?? ""}`.toUpperCase();
-  if (s.includes("DISPOSAL")) return "disposal";
+  if (s.includes("SCRAP")) return "scrap";
   if (s.includes("REJECT") || s.includes("TIDAK LAYAK")) return "rejected";
   if (s.includes("REPAIR") || s.includes("PERBAIKAN")) return "repair";
   if (s.includes("READY") || s.includes("VALIDATED") || s.includes("APPROVED"))

@@ -10,7 +10,7 @@ import {
 	AlertTriangle,
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { getEquipments, getDisposals } from "@/action/api";
+import { getEquipments, getScraps } from "@/action/api";
 import { statusGroup } from "@/lib/equipment-status";
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -18,7 +18,7 @@ type Equipment = any;
 
 export function CostAvoidanceSection() {
 	const [equipments, setEquipments] = useState<Equipment[]>([]);
-	const [disposals, setDisposals] = useState<Equipment[]>([]);
+	const [scraps, setScraps] = useState<Equipment[]>([]);
 	// Clock snapshot taken when data lands, so relative timestamps ("2 hari yang
 	// lalu") stay stable across re-renders instead of being read during render.
 	const [loadedAt, setLoadedAt] = useState<number | null>(null);
@@ -26,9 +26,9 @@ export function CostAvoidanceSection() {
 	useEffect(() => {
 		async function fetchData() {
 			try {
-				const [eq, disp] = await Promise.all([getEquipments(), getDisposals()]);
+				const [eq, disp] = await Promise.all([getEquipments(), getScraps()]);
 				setEquipments(eq || []);
-				setDisposals(disp || []);
+				setScraps(disp || []);
 				setLoadedAt(Date.now());
 			} catch (error) {
 				console.error("CostAvoidance fetch error:", error);
@@ -38,9 +38,9 @@ export function CostAvoidanceSection() {
 	}, []);
 
 	// --- Dynamic Operational Counts ---
-	// Set ID aset yang ada di daftar disposals
-	const disposalEquipmentIds = new Set(
-		disposals
+	// Set ID aset yang ada di daftar scraps
+	const scrapEquipmentIds = new Set(
+		scraps
 			.map((d: Equipment) => String(d.equipment_id || d.equipment?.id || d.id))
 			.filter(Boolean),
 	);
@@ -56,9 +56,9 @@ export function CostAvoidanceSection() {
 		const eqId = String(e.id || "");
 		const group = statusGroup(e);
 
-		// 1. Scrap / Disposal — item di daftar disposal selalu dihitung scrap
+		// 1. Scrap / Scrap — item di daftar scrap selalu dihitung scrap
 		//    meski statusnya belum berubah.
-		if (group === "scrap" || disposalEquipmentIds.has(eqId)) {
+		if (group === "scrap" || scrapEquipmentIds.has(eqId)) {
 			scrapCount++;
 		}
 		// 2. Dalam Perbaikan (termasuk REJECTED)

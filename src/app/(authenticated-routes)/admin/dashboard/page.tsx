@@ -15,7 +15,7 @@ import {
   getEquipments,
   getObjectTypes,
   getStorageLocations,
-  getDisposals,
+  getScraps,
 } from "@/action/api";
 
 const MODULES = [
@@ -59,7 +59,7 @@ export default function AdminDashboardPage() {
     totalEquipment: 0,
     totalCategories: 0,
     totalStorage: 0,
-    totalDisposals: 0,
+    totalScraps: 0,
   });
   const [recentEquipments, setRecentEquipments] = useState<RecentEquipment[]>(
     [],
@@ -69,18 +69,18 @@ export default function AdminDashboardPage() {
   useEffect(() => {
     let alive = true;
     void (async () => {
-      const [eqList, objTypes, storageLocs, disposals] = await Promise.all([
+      const [eqList, objTypes, storageLocs, scraps] = await Promise.all([
         getEquipments(),
         getObjectTypes(),
         getStorageLocations(),
-        getDisposals(),
+        getScraps(),
       ]);
 
       const computedStats = {
         totalEquipment: eqList.length,
         totalCategories: objTypes.length,
         totalStorage: storageLocs.length,
-        totalDisposals: disposals.length,
+        totalScraps: scraps.length,
       };
 
       const computedRecent = (eqList || []).slice(0, 5) as RecentEquipment[];
@@ -139,7 +139,7 @@ export default function AdminDashboardPage() {
     },
     {
       label: "Persetujuan Scrap",
-      value: stats.totalDisposals,
+      value: stats.totalScraps,
       icon: Trash2,
       caption: "Usulan scrap aset",
       rule: "#DC2626",

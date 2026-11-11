@@ -32,14 +32,14 @@ import {
 
 interface RendalDashboardClientProps {
 	equipments: any[];
-	disposals: any[];
+	scraps: any[];
 	revalidations: any[];
 	plants?: any[];
 }
 
 export default function RendalDashboardClient({
 	equipments,
-	disposals,
+	scraps,
 	revalidations,
 }: RendalDashboardClientProps) {
 	const searchParams = useSearchParams();
@@ -66,14 +66,14 @@ export default function RendalDashboardClient({
 	}, []);
 
 	// 1. Kategorisasi status aset operasional
-	const disposalEquipmentIds = useMemo(
+	const scrapEquipmentIds = useMemo(
 		() =>
 			new Set(
-				disposals
+				scraps
 					.map((d: any) => String(d.equipment_id || d.equipment?.id || d.id))
 					.filter(Boolean),
 			),
-		[disposals],
+		[scraps],
 	);
 
 	const {
@@ -94,7 +94,7 @@ export default function RendalDashboardClient({
 			const eqId = String(e.id || "");
 			const group = statusGroup(e);
 
-			if (group === "scrap" || disposalEquipmentIds.has(eqId)) {
+			if (group === "scrap" || scrapEquipmentIds.has(eqId)) {
 				scrap++;
 			} else if (group === "repair") {
 				dalamPerbaikan++;
@@ -120,7 +120,7 @@ export default function RendalDashboardClient({
 			reusedCount: reused,
 			menungguRevalidasiCount: revalPending,
 		};
-	}, [equipments, disposalEquipmentIds, revalidations]);
+	}, [equipments, scrapEquipmentIds, revalidations]);
 
 	const totalUnit = equipments.length;
 
@@ -146,7 +146,7 @@ export default function RendalDashboardClient({
 	const isScrapActive =
 		!isAllActive &&
 		(statusFilter === "SCRAP" ||
-			statusFilter === "DISPOSAL_RECOMMENDED" ||
+			statusFilter === "SCRAP_RECOMMENDED" ||
 			statusFilter === "SCRAP_RECOMMENDED" ||
 			statusFilter === "SCRAP_RECOMENDED");
 
@@ -219,8 +219,8 @@ export default function RendalDashboardClient({
 				if (filterNorm === "REPAIR") {
 					return isRepairStatus(rawStatus);
 				}
-				if (filterNorm === "SCRAP" || filterNorm === "DISPOSAL_RECOMMENDED") {
-					return isScrapStatus(rawStatus) || disposalEquipmentIds.has(eqId);
+				if (filterNorm === "SCRAP" || filterNorm === "SCRAP_RECOMMENDED") {
+					return isScrapStatus(rawStatus) || scrapEquipmentIds.has(eqId);
 				}
 				if (filterNorm === "VALIDATED" || filterNorm === "REGISTERED") {
 					return isPendingStatus(rawStatus);
@@ -235,7 +235,7 @@ export default function RendalDashboardClient({
 			if (timeB !== timeA) return timeB - timeA;
 			return (Number(b.id) || 0) - (Number(a.id) || 0);
 		});
-	}, [equipments, statusFilter, disposalEquipmentIds]);
+	}, [equipments, statusFilter, scrapEquipmentIds]);
 
 	const recentEquipments = useMemo(() => {
 		return filteredEquipmentsForTable.slice(0, 5);

@@ -254,7 +254,7 @@ export default function ManajemenInspeksiClient({
 			setHasilPemeriksaan(
 				asset.statusAset === "REJECTED" ||
 					asset.statusAset === "SCRAP" ||
-					asset.statusAset === "DISPOSAL_RECOMMENDED" ||
+					asset.statusAset === "SCRAP_RECOMMENDED" ||
 					asset.statusAset === "REPAIR" ||
 					asset.statusAset === "REPAIR_COMPLETED"
 					? "Tidak Layak"
@@ -723,7 +723,7 @@ export default function ManajemenInspeksiClient({
 				matchStatus = a.statusPersetujuan === "NEED_REVISION";
 			else if (statusFilter === "SCRAP")
 				matchStatus =
-					a.statusAset === "SCRAP" || a.statusAset === "DISPOSAL_RECOMMENDED";
+					a.statusAset === "SCRAP" || a.statusAset === "SCRAP_RECOMMENDED";
 			else if (statusFilter === "REPAIR")
 				matchStatus =
 					a.statusAset === "REPAIR" || a.statusAset === "REPAIR_COMPLETED";
@@ -806,9 +806,8 @@ export default function ManajemenInspeksiClient({
 			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
 			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
-			DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
-			"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
 			SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+			"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
 			"REPAIR COMPLETED": "bg-[#CCFBF1] text-[#0F766E]",
 			REPAIR_COMPLETED: "bg-[#CCFBF1] text-[#0F766E]",
@@ -823,9 +822,9 @@ export default function ManajemenInspeksiClient({
 			displayStatus = "READY TO USE";
 		}
 		if (
-			status === "DISPOSAL_RECOMMENDED" ||
-			displayStatus === "DISPOSAL RECOMMENDED" ||
-			displayStatus === "DISPOSAL RECOMENDED" ||
+			status === "SCRAP_RECOMMENDED" ||
+			displayStatus === "SCRAP RECOMMENDED" ||
+			displayStatus === "SCRAP RECOMENDED" ||
 			displayStatus === "SCRAP RECOMENDED" ||
 			displayStatus === "SCRAP RECOMMENDED"
 		) {

@@ -57,10 +57,10 @@ export const MASTER_ENTITIES: MasterEntity[] = [
 		placeholder: "Contoh: Idle, Ready To Use",
 	},
 	{
-		slug: "disposal-method",
+		slug: "scrap-method",
 		label: "Metode Scrap",
-		listPath: "/api/disposal-method",
-		adminPath: "/api/admin/disposal-method",
+		listPath: "/api/scrap-method",
+		adminPath: "/api/admin/scrap-method",
 		nameField: "name",
 		placeholder: "Contoh: Lelang, Scrap",
 	},

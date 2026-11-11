@@ -56,7 +56,7 @@ export const REPAIR_STATUS_LABEL: Record<RepairFlowStatus, string> = {
 
 /**
  * Status aset kanonik = isi tabel `statuses` di backend (database/seeder.go).
- * UI menampilkan nama ini apa adanya; tidak ada lagi remap DISPOSAL->SCRAP,
+ * UI menampilkan nama ini apa adanya; tidak ada lagi remap SCRAP->SCRAP,
  * IDLE->READY TO USE, dsb. yang dulu bikin halaman saling beda sebutan.
  */
 export const EQUIPMENT_STATUS = [
@@ -70,7 +70,7 @@ export const EQUIPMENT_STATUS = [
 	"REVALIDATION",
 	"READY_TO_USE",
 	"REUSED",
-	"DISPOSAL_RECOMMENDED",
+	"SCRAP_RECOMMENDED",
 	"SCRAP_REQUESTED",
 	"SCRAP",
 ] as const;
@@ -84,8 +84,8 @@ const STATUS_ALIASES: Record<string, EquipmentStatus> = {
 	DALAM_PERBAIKAN: "REPAIR",
 	MAINTENANCE: "REPAIR",
 	REVALIDASI: "REVALIDATION",
-	SCRAP_RECOMMENDED: "DISPOSAL_RECOMMENDED",
-	SCRAP_RECOMENDED: "DISPOSAL_RECOMMENDED",
+	SCRAP_RECOMMENDED: "SCRAP_RECOMMENDED",
+	SCRAP_RECOMENDED: "SCRAP_RECOMMENDED",
 	SCRAP_REQUEST: "SCRAP_REQUESTED",
 	"SCRAP REQUEST": "SCRAP_REQUESTED",
 	"PROPOSAL REJECTED": "PROPOSAL_REJECTED",
@@ -107,10 +107,10 @@ export function statusName(raw?: string | null): string {
 	return STATUS_ALIASES[key] ?? key;
 }
 
-/** Teks badge: nama backend, underscore diganti spasi. Remap DISPOSAL_RECOMMENDED -> SCRAP RECOMMENDED untuk standardisasi istilah BUMN (US-11-FE). */
+/** Teks badge: nama backend, underscore diganti spasi. Remap SCRAP_RECOMMENDED -> SCRAP RECOMMENDED untuk standardisasi istilah BUMN (US-11-FE). */
 export const statusText = (raw?: string | null) => {
 	const name = statusName(raw);
-	if (name === "DISPOSAL_RECOMMENDED") return "SCRAP RECOMMENDED";
+	if (name === "SCRAP_RECOMMENDED") return "SCRAP RECOMMENDED";
 	return name.replace(/_/g, " ");
 };
 
@@ -133,7 +133,7 @@ const STATUS_GROUP: Record<string, StatusGroup> = {
 	REJECTED: "repair",
 	READY_TO_USE: "ready",
 	REUSED: "reused",
-	DISPOSAL_RECOMMENDED: "scrap",
+	SCRAP_RECOMMENDED: "scrap",
 	SCRAP_REQUESTED: "scrap",
 	SCRAP_REQUEST: "scrap",
 	SCRAP: "scrap",
@@ -181,7 +181,7 @@ export function isScrapStatus(raw?: string | null): boolean {
 	const norm = statusName(raw);
 	return (
 		norm === "SCRAP" ||
-		norm === "DISPOSAL_RECOMMENDED" ||
+		norm === "SCRAP_RECOMMENDED" ||
 		norm === "SCRAP_REQUESTED" ||
 		norm === "SCRAP_REQUEST" ||
 		STATUS_GROUP[norm] === "scrap"
@@ -193,7 +193,7 @@ export function isScrapStatus(raw?: string | null): boolean {
  * Transparent fill, 1px border + text in the state hue:
  *   biru #0556B3 menunggu/proses berikutnya · amber #B45309 dalam pengerjaan
  *   hijau #059669 layak/disetujui · merah #DC2626 ditolak/tidak layak
- *   slate #475569 netral/disposal.
+ *   slate #475569 netral/scrap.
  */
 const STATUS_BADGE_STYLE: Record<string, string> = {
 	REGISTERED: "bg-[#E0F2FE] text-[#0284C7]",
@@ -204,7 +204,6 @@ const STATUS_BADGE_STYLE: Record<string, string> = {
 	REVALIDATION: "bg-[#FEF3C7] text-[#B45309]",
 	READY_TO_USE: "bg-[#E0E7FF] text-[#4F46E5]",
 	REUSED: "bg-[#E0E7FF] text-[#4F46E5]",
-	DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
 	SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
 	"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
 	SCRAP_REQUESTED: "bg-[#FEF3C7] text-[#B45309]",

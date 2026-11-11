@@ -45,7 +45,7 @@ State colour is carried by a **2px left rule + text colour**, never by a filled 
 - Dalam perbaikan: `#B45309`
 - Ready to reuse / validated: `#059669`
 - Rejected / tidak layak: `#DC2626`
-- Disposal: `#475569`
+- Scrap: `#475569`
 
 Five states, five hues, no sixth. Purple, cyan, pink, teal, and indigo are removed from this surface.
 

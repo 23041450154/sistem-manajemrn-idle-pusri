@@ -195,7 +195,7 @@ export default function RendalIdleClient({
 	const isScrapActive =
 		!isAllActive &&
 		(statusFilter === "SCRAP" ||
-			statusFilter === "DISPOSAL_RECOMMENDED" ||
+			statusFilter === "SCRAP_RECOMMENDED" ||
 			statusFilter === "SCRAP_RECOMMENDED" ||
 			statusFilter === "SCRAP_RECOMENDED");
 
@@ -324,7 +324,7 @@ export default function RendalIdleClient({
 					matchStatus = isRepairStatus(item.statusAset);
 				} else if (
 					filterNorm === "SCRAP" ||
-					filterNorm === "DISPOSAL_RECOMMENDED"
+					filterNorm === "SCRAP_RECOMMENDED"
 				) {
 					matchStatus = isScrapStatus(item.statusAset);
 				} else if (
@@ -440,12 +440,9 @@ export default function RendalIdleClient({
 			VALIDATED: "bg-[#DCFCE7] text-[#16A34A]",
 			REJECTED: "bg-[#FEE2E2] text-[#DC2626]",
 			SCRAP: "bg-[#FEE2E2] text-[#DC2626]",
-			DISPOSAL_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
-			"DISPOSAL RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
-			"DISPOSAL RECOMENDED": "bg-[#FEF3C7] text-[#B45309]",
-			"SCRAP RECOMENDED": "bg-[#FEF3C7] text-[#B45309]",
-			"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
 			SCRAP_RECOMMENDED: "bg-[#FEF3C7] text-[#B45309]",
+			"SCRAP RECOMMENDED": "bg-[#FEF3C7] text-[#B45309]",
+			"SCRAP RECOMENDED": "bg-[#FEF3C7] text-[#B45309]",
 			SCRAP_RECOMENDED: "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR: "bg-[#FEF3C7] text-[#B45309]",
 			REPAIR_VENDOR: "bg-[#FEF3C7] text-[#B45309]",
@@ -459,9 +456,9 @@ export default function RendalIdleClient({
 
 		let displayStatus = (status || "").replace(/_/g, " ");
 		if (
-			status === "DISPOSAL_RECOMMENDED" ||
-			displayStatus === "DISPOSAL RECOMMENDED" ||
-			displayStatus === "DISPOSAL RECOMENDED" ||
+			status === "SCRAP_RECOMMENDED" ||
+			displayStatus === "SCRAP RECOMMENDED" ||
+			displayStatus === "SCRAP RECOMENDED" ||
 			displayStatus === "SCRAP RECOMENDED" ||
 			displayStatus === "SCRAP RECOMMENDED"
 		) {
@@ -724,7 +721,7 @@ export default function RendalIdleClient({
 							<option value="REPAIR_COMPLETED">REPAIR COMPLETED</option>
 							<option value="REVALIDATION">REVALIDATION</option>
 							<option value="REUSED">REUSED</option>
-							<option value="DISPOSAL_RECOMMENDED">SCRAP RECOMMENDED</option>
+							<option value="SCRAP_RECOMMENDED">SCRAP RECOMMENDED</option>
 							<option value="REJECTED">REJECTED</option>
 						</select>
 

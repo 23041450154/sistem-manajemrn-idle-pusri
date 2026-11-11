@@ -245,7 +245,7 @@ export default function RendalPerbaikanPage() {
 
 				const statusId = Number(eq.status_id || eq.status?.id || 0);
 
-				// Filter ketat: status non-perbaikan (PROPOSED, PROPOSAL_REJECTED, REGISTERED, VALIDATED, READY_TO_USE, REUSED, DISPOSAL_RECOMMENDED, SCRAP_REQUESTED, SCRAP)
+				// Filter ketat: status non-perbaikan (PROPOSED, PROPOSAL_REJECTED, REGISTERED, VALIDATED, READY_TO_USE, REUSED, SCRAP_RECOMMENDED, SCRAP_REQUESTED, SCRAP)
 				// TIDAK BOLEH masuk ke modul perbaikan sama sekali.
 				const isNonRepairStatus =
 					stName === "PROPOSED" ||
@@ -254,7 +254,7 @@ export default function RendalPerbaikanPage() {
 					stName === "VALIDATED" ||
 					stName === "READY_TO_USE" ||
 					stName === "REUSED" ||
-					stName === "DISPOSAL_RECOMMENDED" ||
+					stName === "SCRAP_RECOMMENDED" ||
 					stName === "SCRAP_REQUESTED" ||
 					stName === "SCRAP" ||
 					statusId === 1 ||

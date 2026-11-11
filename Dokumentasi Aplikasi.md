@@ -1,6 +1,6 @@
 # Sistem Manajemen Idle Equipment PUSRI
 
-Aplikasi manajemen aset/peralatan yang tidak terpakai (idle equipment) untuk PT Pupuk Sriwidjaja (PUSRI). Mengelola siklus hidup peralatan idle: deklarasi idle, inspeksi, permintaan penggunaan kembali (reuse), penghapusan (disposal), dan alur persetujuan (approval).
+Aplikasi manajemen aset/peralatan yang tidak terpakai (idle equipment) untuk PT Pupuk Sriwidjaja (PUSRI). Mengelola siklus hidup peralatan idle: deklarasi idle, inspeksi, permintaan penggunaan kembali (reuse), penghapusan (scrap), dan alur persetujuan (approval).
 
 ## Arsitektur
 
@@ -94,11 +94,11 @@ Entitas utama:
 - **IdleDeclaration** — pernyataan peralatan menjadi idle (alasan, kondisi, status preservasi, lokasi).
 - **EquipmentInspection** — hasil inspeksi (kondisi mekanikal/elektrikal, estimasi biaya refurbish, tindakan yang diperlukan).
 - **ReuseRequest** — permintaan penggunaan kembali (proyek, plant, biaya, estimasi cost avoidance).
-- **DisposalRequest** — permintaan penghapusan (metode disposal, nilai ).
+- **ScrapRequest** — permintaan penghapusan (metode scrap, nilai ).
 - **ApprovalRequest** + **ApprovalStep** — alur persetujuan berjenjang (mis. Kepala Seksi → Manager Teknik → GM Operasi).
 - **EquipmentAttachment** — lampiran/dokumen polimorfik (reference_table + reference_id).
 
-Tabel master (lookup): **Status**, **Condition**, **ObjectType**, **StorageLocation**, **IdleReason**, **RequireAction**, **DisposalMethod**.
+Tabel master (lookup): **Status**, **Condition**, **ObjectType**, **StorageLocation**, **IdleReason**, **RequireAction**, **ScrapMethod**.
 
 Status peralatan: Aktif, Idle, Dalam Perbaikan, Digunakan Kembali, Disposed.
 

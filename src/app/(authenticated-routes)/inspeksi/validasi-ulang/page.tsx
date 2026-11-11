@@ -26,8 +26,8 @@ const INCLUDED_STATUSES = [
 	"REVALIDASI", // ejaan lama yang masih ada di data lama
 	"READY_TO_USE",
 	"SCRAP",
-	"DISPOSAL_VERIFIED",
-	"DISPOSAL_RECOMMENDED",
+	"SCRAP_VERIFIED",
+	"SCRAP_RECOMMENDED",
 ];
 
 /** Client Component — fetch + filter visibilitas + mapping murni di browser.

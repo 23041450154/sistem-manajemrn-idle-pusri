@@ -175,8 +175,8 @@ export default function FormInspeksiClient({
 						: resolveRequireActionId("REPAIR", "RUSAK_SEDANG");
 				isUtilizableStr = "true";
 				needsRefurbishmentStr = "true";
-			} else if (hasilInspeksi === "DISPOSAL") {
-				resolvedId = resolveRequireActionId("DISPOSAL_RECOMMENDED");
+			} else if (hasilInspeksi === "SCRAP") {
+				resolvedId = resolveRequireActionId("SCRAP_RECOMMENDED");
 				isUtilizableStr = "false";
 				needsRefurbishmentStr = "false";
 			}
@@ -247,7 +247,7 @@ export default function FormInspeksiClient({
 			color: "amber",
 		},
 		{
-			value: "DISPOSAL",
+			value: "SCRAP",
 			title: "Tidak Layak",
 			desc: "Rekomendasi scrap",
 			color: "red",
@@ -502,8 +502,8 @@ export default function FormInspeksiClient({
 							})}
 						</div>
 
-						{/* Disposal Warning */}
-						{hasilInspeksi === "DISPOSAL" && (
+						{/* Scrap Warning */}
+						{hasilInspeksi === "SCRAP" && (
 							<div className="mt-3 flex items-start gap-2 bg-white border border-[#B45309] rounded p-3 animate-in fade-in duration-200">
 								<AlertCircle className="w-4 h-4 text-[#B45309] shrink-0 mt-0.5" />
 								<p className="text-[12px] text-[#B45309] font-medium">

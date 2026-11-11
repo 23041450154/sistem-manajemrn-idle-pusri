@@ -25,7 +25,7 @@ graph TD
 ### B. Inspeksi Teknik - Instek (Validator & Auditor)
 * **Validasi Kelayakan Awal:** Melakukan uji kelayakan pertama setelah alat didaftarkan oleh Rendal Pemeliharaan.
 * **Inspeksi Periodik:** Melakukan inspeksi secara berkala dan terjadwal terhadap seluruh peralatan yang sedang menganggur (*Idle* atau *Ready to Use*) untuk memastikan kesiapan operasi.
-* **Rekomendasi Tindakan:** Menetapkan rekomendasi teknis (Layak Digunakan, Perlu Refurbishment/Perbaikan, atau *Disposal Recommended*).
+* **Rekomendasi Tindakan:** Menetapkan rekomendasi teknis (Layak Digunakan, Perlu Refurbishment/Perbaikan, atau *Scrap Recommended*).
 * **Re-Validasi Pasca-Perbaikan:** Melakukan pengetesan ulang (Uji Fungsi) setelah tim Pemeliharaan Lapangan menyelesaikan perbaikan aset, lalu menerbitkan keputusan kelayakan ulang (*Yes / No*).
 
 ### C. Pemeliharaan Lapangan (Eksekutor Lapangan)
@@ -86,5 +86,5 @@ Untuk mempermudah penggunaan di lapangan dan menghindari kesalahan input data, d
 ### C. Logika Validasi Kondisi & Kelayakan Aset
 * **Status: LAYAK DIGUNAKAN**
   * Pilihan kondisi aset dibatasi hanya pada 3 kategori: **Bagus**, **Rusak Ringan**, atau **Rusak Sedang**.
-* **Status: TIDAK LAYAK DIGUNAKAN (Rekomendasi Disposal)**
+* **Status: TIDAK LAYAK DIGUNAKAN (Rekomendasi Scrap)**
   * Sistem akan **secara otomatis mengunci kondisi aset menjadi RUSAK BERAT** (pilihan kondisi lain akan dinonaktifkan/disembunyikan oleh sistem untuk mencegah inkonsistensi data).

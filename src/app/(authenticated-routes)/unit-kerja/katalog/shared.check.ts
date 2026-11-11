@@ -41,7 +41,7 @@ assert.equal(flat.state, "registered");
 assert.equal(flat.condition, "Belum dinilai");
 assert.equal(flat.images.length, 0);
 
-assert.equal(toState("DISPOSAL", "BAIK"), "disposal", "disposal wins over condition");
+assert.equal(toState("SCRAP", "BAIK"), "scrap", "scrap wins over condition");
 assert.equal(toState(undefined, "PERBAIKAN"), "repair");
 assert.equal(formatRupiah(undefined), "Belum dinilai");
 assert.match(formatRupiah(1500000), /1\.500\.000/);

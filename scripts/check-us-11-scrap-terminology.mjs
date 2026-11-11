@@ -5,7 +5,7 @@ import {
 	mapScrapMethodName,
 	scrapStatusBadge,
 	scrapStatusLabel,
-	disposalDisplayStatus,
+	scrapDisplayStatus,
 } from "../src/lib/approvals.ts";
 import {
 	statusText,
@@ -53,18 +53,6 @@ assert.equal(
 	"Trade-In ID 4 harus dipetakan ke 'Tukar Tambah (Trade-In)'",
 );
 
-// Jika ada teks lama 'Disposal', harus dipetakan ke 'Penjualan Scrap / Lelang'
-assert.equal(
-	mapScrapMethodName("Disposal"),
-	"Penjualan Scrap / Lelang",
-	"Teks 'Disposal' harus diganti dengan 'Penjualan Scrap / Lelang'",
-);
-assert.equal(
-	mapScrapMethodName("Disposal Aset"),
-	"Penjualan Scrap / Lelang",
-	"Teks 'Disposal Aset' harus dipetakan ke 'Penjualan Scrap / Lelang'",
-);
-
 console.log("   ✓ AC-02 & AC-05 lulus: Opsi metode Hibah dan Scrap terpetakan dengan benar dan kompatibel");
 
 // =========================================================================
@@ -106,10 +94,10 @@ assert.equal(scrapStatusLabel("PENDING"), "Menunggu Review Scrap");
 assert.equal(scrapStatusLabel("REJECTED"), "Ditolak Scrap");
 assert.equal(scrapStatusLabel("REVISION_REQUIRED"), "Perlu Revisi Scrap");
 
-// Status asset kanonik: DISPOSAL_RECOMMENDED -> SCRAP RECOMMENDED
-assert.equal(statusText("DISPOSAL_RECOMMENDED"), "SCRAP RECOMMENDED");
+// Status asset kanonik: SCRAP_RECOMMENDED -> SCRAP RECOMMENDED
 assert.equal(statusText("SCRAP_RECOMMENDED"), "SCRAP RECOMMENDED");
-assert.match(statusBadgeStyle("DISPOSAL_RECOMMENDED"), /bg-\[#FEF3C7\]/);
+assert.equal(statusText("SCRAP_RECOMMENDED"), "SCRAP RECOMMENDED");
+assert.match(statusBadgeStyle("SCRAP_RECOMMENDED"), /bg-\[#FEF3C7\]/);
 
 console.log("   ✓ AC-04 lulus: Format badge status scrap sesuai standar warna & teks");
 

@@ -7,12 +7,12 @@
 
 export type ApprovalKind =
 	| "validation"
-	| "disposal"
+	| "scrap"
 	| "reuse"
 	| "revalidation";
 
-/** Status disposal/scrap yang dipakai halaman Manajer & Rendal. */
-export type DisposalDisplayStatus =
+/** Status scrap yang dipakai halaman Manajer & Rendal. */
+export type ScrapDisplayStatus =
 	| "PENDING"
 	| "IN_REVIEW"
 	| "APPROVED"
@@ -20,9 +20,9 @@ export type DisposalDisplayStatus =
 	| "REJECTED"
 	| "REVISION_REQUIRED";
 
-export function disposalDisplayStatus(
+export function scrapDisplayStatus(
 	approvalStatus?: string | null,
-): DisposalDisplayStatus {
+): ScrapDisplayStatus {
 	switch (String(approvalStatus || "PENDING").toUpperCase()) {
 		case "APPROVED":
 			return "APPROVED";
@@ -91,7 +91,7 @@ export function reuseStatusLabel(approvalStatus?: string | null): string {
 
 /** Label tampilan status scrap — US-11-FE (contoh: 'Disetujui Scrap', 'Menunggu Review Scrap'). */
 export function scrapStatusLabel(approvalStatus?: string | null): string {
-	const status = disposalDisplayStatus(approvalStatus);
+	const status = scrapDisplayStatus(approvalStatus);
 	switch (status) {
 		case "APPROVED":
 		case "DISPOSED":
@@ -112,7 +112,7 @@ export function scrapStatusBadge(approvalStatus?: string | null): {
 	label: string;
 	style: string;
 } {
-	const status = disposalDisplayStatus(approvalStatus);
+	const status = scrapDisplayStatus(approvalStatus);
 	switch (status) {
 		case "APPROVED":
 		case "DISPOSED":
@@ -166,11 +166,11 @@ export function mapScrapMethodName(
 	if (numId === 1 && !raw.includes("scrap")) {
 		return "Pemusnahan Fisik";
 	}
-	if (raw.includes("scrap") || raw.includes("lelang") || raw.includes("disposal") || numId === 2) {
+	if (raw.includes("scrap") || raw.includes("lelang") || numId === 2) {
 		return "Penjualan Scrap / Lelang";
 	}
 	if (name) {
-		return name.replace(/disposal/gi, "Scrap").replace(/donasi/gi, "Hibah");
+		return name.replace(/scrap/gi, "Scrap").replace(/donasi/gi, "Hibah");
 	}
 	return "Penjualan Scrap / Lelang";
 }

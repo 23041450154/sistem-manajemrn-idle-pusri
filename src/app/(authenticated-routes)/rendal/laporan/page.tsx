@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
 import {
-	getDisposals,
+	getScraps,
 	getApprovals,
 	getEquipments,
 	getInspections,
@@ -15,7 +15,7 @@ function buildAuditLogs(
 	equipments: any[],
 	approvals: any[],
 	inspections: any[],
-	disposals: any[],
+	scraps: any[],
 ): AuditLogEntry[] {
 	const logs: AuditLogEntry[] = [];
 
@@ -101,8 +101,8 @@ function buildAuditLogs(
 		});
 	});
 
-	// Disposals / Scraps
-	disposals.forEach((disp: any) => {
+	// Scraps / Scraps
+	scraps.forEach((disp: any) => {
 		logs.push({
 			id: `disp-${disp.id}`,
 			timestamp: disp.created_at || new Date().toISOString(),
@@ -114,7 +114,7 @@ function buildAuditLogs(
 			module: "Scrap",
 			entityCode: disp.equipment_code || "-",
 			entityName: disp.equipment_name || "-",
-			description: `${disp.disposal_number}: ${disp.justification?.slice(0, 80) || "Pengajuan scrap aset"}`,
+			description: `${disp.scrap_number}: ${disp.justification?.slice(0, 80) || "Pengajuan scrap aset"}`,
 			oldValue: "PENDING",
 			newValue: disp.status || "PENDING",
 		});
@@ -134,22 +134,22 @@ export default function RendalLaporanPage() {
 	const [loading, setLoading] = useState(true);
 
 	const loadData = useCallback(async () => {
-		const [eq, validationApps, revalApps, disposalApps, reuseApps, ins, disps] =
+		const [eq, validationApps, revalApps, scrapApps, reuseApps, ins, disps] =
 			await Promise.all([
 				getEquipments().catch(() => []),
 				// Audit trail mencakup semua jenis approval, jadi keempat grup diambil.
 				getApprovals("validation").catch(() => []),
 				getApprovals("revalidation").catch(() => []),
-				getApprovals("disposal").catch(() => []),
+				getApprovals("scrap").catch(() => []),
 				getApprovals("reuse").catch(() => []),
 				getInspections().catch(() => []),
-				getDisposals().catch(() => []),
+				getScraps().catch(() => []),
 			]);
 
 		const apps = [
 			...(validationApps as any[]),
 			...(revalApps as any[]),
-			...(disposalApps as any[]),
+			...(scrapApps as any[]),
 			...(reuseApps as any[]),
 		];
 

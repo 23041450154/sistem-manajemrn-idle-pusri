@@ -4,7 +4,7 @@ import { existsSync, readFileSync } from "node:fs";
 const mappings = [
 	"src/app/(authenticated-routes)/inspeksi/validasi/page.tsx",
 	"src/app/(authenticated-routes)/inspeksi/validasi/validasi-client.tsx",
-	"src/app/(authenticated-routes)/rendal/disposal/page.tsx",
+	"src/app/(authenticated-routes)/rendal/scrap/page.tsx",
 	"src/app/(authenticated-routes)/rendal/scrap/page.tsx",
 	"src/app/(authenticated-routes)/rendal/idle/page.tsx",
 	"src/app/(authenticated-routes)/rendal/register-equipment/page.tsx",

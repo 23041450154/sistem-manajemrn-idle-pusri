@@ -6,7 +6,7 @@ export type EquipmentState =
   | "repair"
   | "ready"
   | "rejected"
-  | "disposal";
+  | "scrap";
 
 export interface KatalogItem {
   id: string;

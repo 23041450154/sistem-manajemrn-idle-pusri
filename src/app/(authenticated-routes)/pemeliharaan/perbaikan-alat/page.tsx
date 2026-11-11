@@ -46,7 +46,7 @@ export default function PerbaikanAlatPage() {
 				stUpper === "PROPOSAL_REJECTED" ||
 				stUpper === "REGISTERED" ||
 				stUpper === "REUSED" ||
-				stUpper === "DISPOSAL_RECOMMENDED" ||
+				stUpper === "SCRAP_RECOMMENDED" ||
 				stUpper === "SCRAP_REQUESTED" ||
 				stUpper === "SCRAP" ||
 				statusId === 1 ||

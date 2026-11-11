@@ -57,7 +57,7 @@ export default function InspeksiDashboardPage() {
 					statusAset === "VALIDATED" ||
 					statusAset === "REVALIDATION" ||
 					statusAset === "SCRAP" ||
-					statusAset === "DISPOSAL_RECOMMENDED"
+					statusAset === "SCRAP_RECOMMENDED"
 				) {
 					statusPersetujuan = "PENDING_REVIEW";
 				} else if (statusAset === "REJECTED") {
