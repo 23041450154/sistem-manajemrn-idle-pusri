@@ -16,6 +16,7 @@ import {
 } from "@/action/api";
 import { statusName } from "@/lib/equipment-status";
 import { scrapStatusBadge, mapScrapMethodName } from "@/lib/approvals";
+import { extractSapNotification } from "@/lib/sap-notification";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
 	Trash2,
@@ -48,6 +49,7 @@ interface Equipment {
 	year: string | number;
 	originalValue: number;
 	notes: string;
+	sapNotificationNumber?: string;
 }
 
 interface Inspection {
@@ -58,6 +60,7 @@ interface Inspection {
 	condition?: { name?: string };
 	require_action?: { name?: string };
 	followup_recommendation?: string;
+	sap_notification_number?: string;
 }
 
 interface ScrapMethod {
@@ -81,6 +84,7 @@ interface ScrapItem {
 	status?: string;
 	notes?: string;
 	created_at?: string;
+	sapNotificationNumber?: string;
 }
 
 export default function RendalScrapPage() {
@@ -141,16 +145,22 @@ export default function RendalScrapPage() {
 
 			// Build a set of equipment IDs that have a scrap-recommending inspection
 			const inspArr: any[] = insData || [];
+			const inspectionByEqMap = new Map<string, any>();
 			const scrapInspectedIds = new Set<string>();
 			inspArr.forEach((ins: any) => {
 				const isScrap =
 					ins.is_utilizable === false ||
 					ins.require_action?.name?.toLowerCase().includes("scrap") ||
-					ins.require_action?.name?.toLowerCase().includes("scrap") ||
 					ins.condition?.name?.toUpperCase() === "RUSAK_BERAT" ||
 					ins.condition?.name?.toUpperCase() === "RUSAK BERAT";
 				if (isScrap && ins.equipment_id) {
 					scrapInspectedIds.add(String(ins.equipment_id));
+				}
+				if (ins.equipment_id) {
+					const existing = inspectionByEqMap.get(String(ins.equipment_id));
+					if (!existing || Number(ins.id) > Number(existing.id)) {
+						inspectionByEqMap.set(String(ins.equipment_id), ins);
+					}
 				}
 			});
 
@@ -211,6 +221,10 @@ export default function RendalScrapPage() {
 					year: item.year || "-",
 					originalValue: item.original_value || 0,
 					notes: item.notes || "-",
+					sapNotificationNumber:
+						extractSapNotification(inspectionByEqMap.get(eqId)) ||
+						extractSapNotification(item) ||
+						"-",
 				};
 			});
 
@@ -230,12 +244,24 @@ export default function RendalScrapPage() {
 			setEquipments(mappedEq);
 			setInspections(insData || []);
 			setScraps(
-				(dispData || []).sort((a: any, b: any) => {
-					const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
-					const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
-					if (timeB !== timeA) return timeB - timeA;
-					return (Number(b.id) || 0) - (Number(a.id) || 0);
-				}),
+				(dispData || [])
+					.map((item: any) => {
+						const relatedInsp = inspectionByEqMap.get(String(item.equipment_id));
+						const sapNum =
+							extractSapNotification(item) ||
+							extractSapNotification(relatedInsp) ||
+							"-";
+						return {
+							...item,
+							sapNotificationNumber: sapNum,
+						};
+					})
+					.sort((a: any, b: any) => {
+						const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
+						const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
+						if (timeB !== timeA) return timeB - timeA;
+						return (Number(b.id) || 0) - (Number(a.id) || 0);
+					}),
 			);
 			setMethods(methData || []);
 		} catch (err) {
@@ -649,6 +675,11 @@ export default function RendalScrapPage() {
 							Number(m.id) === targetMethodId ||
 							String(m.id) === String(scrapMethodId),
 					);
+					const sapNum =
+						extractSapNotification(assetValidation) ||
+						extractSapNotification(assetInspection) ||
+						selectedAsset.sapNotificationNumber;
+
 					const newScrapItem: ScrapItem = {
 						id: String(res.data?.id || `DSP-${Date.now()}`),
 						// Nomor usulan berasal dari backend (DISP-<tahun>-<seq>).
@@ -662,6 +693,7 @@ export default function RendalScrapPage() {
 						scrap_date: verificationDate,
 						scrap_value: cleanScrapVal,
 						plant: selectedAsset.plant,
+						sapNotificationNumber: sapNum,
 						justification:
 							justification.trim() ||
 							"Diverifikasi oleh Rendal Pemeliharaan untuk pengajuan scrap.",
@@ -902,10 +934,18 @@ export default function RendalScrapPage() {
 												{(currentPage - 1) * ITEMS_PER_PAGE + index + 1}
 											</td>
 											<td
-												className="px-2 py-2 text-xs font-bold text-[#0A356A] text-center truncate"
+												className="px-2 py-2 text-xs font-bold text-[#0A356A] text-center"
 												title={asset.kodeAlat}
 											>
-												{asset.kodeAlat}
+												<span className="truncate block">{asset.kodeAlat}</span>
+												{asset.sapNotificationNumber && (
+													<span
+														className="mt-0.5 inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-semibold bg-blue-50 text-blue-700 border border-blue-200"
+														title={`SAP Notification: ${asset.sapNotificationNumber}`}
+													>
+														SAP: {asset.sapNotificationNumber}
+													</span>
+												)}
 											</td>
 											<td
 												className="px-2 py-2 text-xs font-semibold text-gray-800 text-left truncate"
@@ -1041,10 +1081,18 @@ export default function RendalScrapPage() {
 													{item.scrap_number || "-"}
 												</td>
 												<td
-													className="px-2 py-2 text-xs font-bold text-gray-900 text-center truncate"
+													className="px-2 py-2 text-xs font-bold text-gray-900 text-center"
 													title={item.equipment_code}
 												>
-													{item.equipment_code || "-"}
+													<span className="truncate block">{item.equipment_code || "-"}</span>
+													{(item.sapNotificationNumber || equipmentMap.get(String(item.equipment_id))?.sapNotificationNumber) && (
+														<span
+															className="mt-0.5 inline-flex items-center px-1.5 py-0.5 rounded text-[9.5px] font-semibold bg-blue-50 text-blue-700 border border-blue-200"
+															title={`SAP Notification: ${item.sapNotificationNumber || equipmentMap.get(String(item.equipment_id))?.sapNotificationNumber}`}
+														>
+															SAP: {item.sapNotificationNumber || equipmentMap.get(String(item.equipment_id))?.sapNotificationNumber}
+														</span>
+													)}
 												</td>
 												<td
 													className="px-2 py-2 text-xs font-semibold text-gray-800 text-left truncate"
@@ -1266,6 +1314,17 @@ export default function RendalScrapPage() {
 											</p>
 											<p className="text-sm font-medium text-gray-800">
 												{selectedAsset.jenisAlat}
+											</p>
+										</div>
+										<div>
+											<p className="text-[10px] font-bold text-gray-400 uppercase">
+												No. Notifikasi SAP
+											</p>
+											<p className="text-sm font-bold text-[#0A356A]">
+												{extractSapNotification(assetValidation) ||
+													extractSapNotification(assetInspection) ||
+													selectedAsset.sapNotificationNumber ||
+													"-"}
 											</p>
 										</div>
 										<div>
@@ -1632,6 +1691,16 @@ export default function RendalScrapPage() {
 										<p className="text-xs font-medium text-gray-700">
 											{selectedHistoryItem.plant ||
 												equipmentMap.get(String(selectedHistoryItem.equipment_id))?.plant ||
+												"-"}
+										</p>
+									</div>
+									<div>
+										<p className="text-[10px] font-bold text-gray-400 uppercase">
+											No. Notifikasi SAP
+										</p>
+										<p className="text-xs font-bold text-[#0A356A]">
+											{selectedHistoryItem.sapNotificationNumber ||
+												equipmentMap.get(String(selectedHistoryItem.equipment_id))?.sapNotificationNumber ||
 												"-"}
 										</p>
 									</div>

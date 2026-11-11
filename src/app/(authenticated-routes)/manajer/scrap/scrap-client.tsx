@@ -23,10 +23,12 @@ import {
   approveScrap,
   getValidations,
   getApprovalById,
+  getInspections,
   type ScrapItemDTO,
 } from "@/action/api";
 import { formatDate } from "@/lib/utils";
 import { scrapStatusBadge, mapScrapMethodName } from "@/lib/approvals";
+import { extractSapNotification } from "@/lib/sap-notification";
 
 type ScrapItem = ScrapItemDTO;
 
@@ -68,6 +70,8 @@ export default function ManajerScrapClient({
   const [validationDetail, setValidationDetail] = useState<any>(null);
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [approvalDetail, setApprovalDetail] = useState<any>(null);
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [inspectionDetail, setInspectionDetail] = useState<any>(null);
 
   // Pagination State
   const [currentPage, setCurrentPage] = useState(1);
@@ -127,20 +131,34 @@ export default function ManajerScrapClient({
     setIsDetailOpen(true);
     setValidationDetail(null);
     setApprovalDetail(null);
+    setInspectionDetail(null);
     try {
-      const [valids, appData] = await Promise.all([
+      const [valids, appData, inspList] = await Promise.all([
         item.equipment_id
           ? getValidations(item.equipment_id)
           : Promise.resolve([]),
         item.approval_id
           ? getApprovalById(item.approval_id, "scrap")
           : Promise.resolve(null),
+        getInspections().catch(() => []),
       ]);
       if (Array.isArray(valids) && valids.length > 0) {
         setValidationDetail(valids[0]);
       }
       if (appData) {
         setApprovalDetail(appData);
+      }
+      if (Array.isArray(inspList) && item.equipment_id) {
+        const eqInspections = inspList
+          .filter(
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            (ins: any) => String(ins.equipment_id) === String(item.equipment_id),
+          )
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          .sort((a: any, b: any) => Number(b.id) - Number(a.id));
+        if (eqInspections.length > 0) {
+          setInspectionDetail(eqInspections[0]);
+        }
       }
     } catch (err) {
       console.error("Gagal memuat riwayat validasi/approval scrap:", err);
@@ -154,7 +172,15 @@ export default function ManajerScrapClient({
     setModalError(null);
     setValidationDetail(null);
     setApprovalDetail(null);
+    setInspectionDetail(null);
   };
+
+  const selectedScrapSapNum = selectedScrap
+    ? extractSapNotification(validationDetail) ||
+      extractSapNotification(inspectionDetail) ||
+      selectedScrap.sap_notification_number ||
+      extractSapNotification(selectedScrap)
+    : null;
 
   // Submit Approval (Green Button)
   const handleConfirmApprove = async () => {
@@ -420,7 +446,17 @@ export default function ManajerScrapClient({
                       {item.scrap_number || "-"}
                     </td>
                     <td className="px-3 py-3 text-[13px] font-semibold text-[#0A356A] whitespace-nowrap text-left">
-                      {item.equipment_code || "-"}
+                      <div>{item.equipment_code || "-"}</div>
+                      {item.sap_notification_number && (
+                        <div className="mt-0.5">
+                          <span
+                            className="inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-blue-700 border border-blue-200"
+                            title={`SAP Notification: ${item.sap_notification_number}`}
+                          >
+                            SAP: {item.sap_notification_number}
+                          </span>
+                        </div>
+                      )}
                     </td>
                     <td
                       className="px-3 py-3 text-[13px] font-semibold text-gray-800 text-left"
@@ -584,8 +620,14 @@ export default function ManajerScrapClient({
                       Aset ini telah dinyatakan{" "}
                       <strong>&quot;Rusak Berat&quot;</strong> berdasarkan hasil
                       inspeksi teknik dan telah diajukan oleh Rendal
-                      Pemeliharaan untuk proses scrap. Persetujuan Manajer
-                      Rendal diperlukan sebelum usulan dapat diproses lebih
+                      Pemeliharaan untuk proses scrap.
+                      {selectedScrapSapNum && (
+                        <>
+                          {" "}Nomor Notifikasi SAP PM resmi:{" "}
+                          <strong className="underline text-amber-950 font-bold">{selectedScrapSapNum}</strong>.
+                        </>
+                      )}
+                      {" "}Persetujuan Manajer Rendal diperlukan sebelum usulan dapat diproses lebih
                       lanjut.
                     </p>
                   </div>
@@ -738,6 +780,20 @@ export default function ManajerScrapClient({
                       {formatCurrency(selectedScrap.original_value)}
                     </p>
                   </div>
+                  <div>
+                    <p className="text-[11px] font-semibold text-gray-400 uppercase">
+                      No. Notifikasi SAP (SAP PM)
+                    </p>
+                    <div className="mt-0.5">
+                      {selectedScrapSapNum ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded text-xs font-bold bg-blue-50 text-[#0A356A] border border-blue-200">
+                          {selectedScrapSapNum}
+                        </span>
+                      ) : (
+                        <span className="text-[13px] font-medium text-gray-500">-</span>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
 
@@ -803,22 +859,38 @@ export default function ManajerScrapClient({
                     </thead>
                     <tbody className="divide-y divide-gray-100 text-gray-700">
                       <tr>
-                        <td className="py-2.5 font-bold">Inspeksi Teknik</td>
+                        <td className="py-2.5 font-bold">
+                          <div>Inspeksi Teknik</div>
+                          {selectedScrapSapNum && (
+                            <span className="inline-flex items-center mt-0.5 px-1.5 py-0.5 rounded text-[10px] font-semibold bg-blue-50 text-[#0A356A] border border-blue-200">
+                              SAP: {selectedScrapSapNum}
+                            </span>
+                          )}
+                        </td>
                         <td className="py-2.5">
                           {validationDetail?.inspector_user?.name ||
+                            inspectionDetail?.inspector_name ||
                             "Tim Inspeksi Teknik"}
                         </td>
                         <td className="py-2.5">
-                          <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100">
-                            {validationDetail?.condition?.name
-                              ? validationDetail.condition.name.replace(/_/g, " ")
-                              : "Rusak Berat"}
-                          </span>
+                          <div className="flex flex-col gap-1 items-start">
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-red-50 text-red-700 border border-red-100">
+                              {validationDetail?.condition?.name
+                                ? validationDetail.condition.name.replace(/_/g, " ")
+                                : "Rusak Berat"}
+                            </span>
+                            {selectedScrapSapNum && (
+                              <span className="text-[10px] text-gray-500 font-medium">
+                                Ref SAP PM: <strong className="text-gray-800">{selectedScrapSapNum}</strong>
+                              </span>
+                            )}
+                          </div>
                         </td>
                         <td className="py-2.5">
                           {formatDate(
                             validationDetail?.start_at ||
                               validationDetail?.created_at ||
+                              inspectionDetail?.inspection_date ||
                               selectedScrap.created_at,
                           )}
                         </td>

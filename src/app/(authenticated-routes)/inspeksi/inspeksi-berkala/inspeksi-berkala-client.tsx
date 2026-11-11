@@ -58,6 +58,7 @@ export interface InspectionItem {
 	notes?: string;
 	condition_name?: string;
 	require_action_name?: string;
+	sap_notification_number?: string;
 	status_name?: string;
 	photos?: string[];
 }
@@ -664,6 +665,11 @@ export default function InspeksiBerkalaClient({
 												<span className="font-semibold text-gray-800 block">
 													Kondisi: {row.condition_name}
 												</span>
+												{row.sap_notification_number && row.sap_notification_number !== "-" && (
+													<span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-800 bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200 mt-0.5">
+														SAP: {row.sap_notification_number}
+													</span>
+												)}
 												<span className="text-gray-500 text-[11px] block">{row.notes}</span>
 											</td>
 											<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
@@ -776,6 +782,7 @@ export default function InspeksiBerkalaClient({
 										],
 										["Kondisi", detailIns.condition_name],
 										["Tindak Lanjut", detailIns.require_action_name],
+										["No. Notifikasi SAP", detailIns.sap_notification_number || "-"],
 										["Status", detailIns.status_name],
 									].map(([label, value]) => (
 										<div key={label}>

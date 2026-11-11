@@ -24,6 +24,7 @@ import { submitInspectionData } from "@/action/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useAuth } from "@/components/AuthProvider";
 import { getInspectionClusterName } from "@/lib/inspection-cluster";
+import { formatNotesWithSapNotification } from "@/lib/sap-notification";
 
 /** Client Component: form inspeksi — data awal & master di-fetch Server Component. */
 export default function FormInspeksiClient({
@@ -44,6 +45,8 @@ export default function FormInspeksiClient({
 	const [jenisPerbaikan, setJenisPerbaikan] = useState<string>("");
 	const [inspectionCondition, setInspectionCondition] = useState<string>("");
 	const [notes, setNotes] = useState<string>("");
+	const [sapNotificationNumber, setSapNotificationNumber] = useState<string>("");
+	const [sapNotificationError, setSapNotificationError] = useState<string>("");
 	const [files, setFiles] = useState<File[]>([]);
 	const [fileError, setFileError] = useState<string>("");
 
@@ -122,11 +125,20 @@ export default function FormInspeksiClient({
 		hasilInspeksi === "REPAIR" && jenisPerbaikan === "";
 	const isKondisiEmpty = !inspectionCondition || inspectionCondition.trim() === "";
 	const isFilesEmpty = files.length === 0;
+
+	// AC 1: Kondisional wajib untuk rekomendasi Scrap / kondisi Rusak Berat
+	const isSapNotificationRequired =
+		hasilInspeksi === "SCRAP" ||
+		inspectionCondition.toLowerCase().includes("rusak berat");
+	const isSapNotificationEmpty =
+		isSapNotificationRequired && (!sapNotificationNumber || sapNotificationNumber.trim() === "");
+
 	const isSubmitDisabled =
 		isKelayakanNotSelected ||
 		isPerbaikanKhususNotSelected ||
 		isKondisiEmpty ||
 		isNotesEmpty ||
+		isSapNotificationEmpty ||
 		isFilesEmpty ||
 		loading;
 
@@ -136,6 +148,19 @@ export default function FormInspeksiClient({
 			setFileError("Berkas lampiran/foto inspeksi wajib diunggah minimal 1 file.");
 			return;
 		}
+
+		if (isSapNotificationRequired && !sapNotificationNumber.trim()) {
+			setSapNotificationError(
+				"Nomor Notifikasi SAP wajib diisi untuk rekomendasi Scrap / kondisi Rusak Berat.",
+			);
+			return;
+		}
+
+		if (sapNotificationNumber.trim().length > 50) {
+			setSapNotificationError("Nomor Notifikasi SAP maksimal 50 karakter.");
+			return;
+		}
+
 		if (isSubmitDisabled) return;
 
 		setLoading(true);
@@ -204,7 +229,15 @@ export default function FormInspeksiClient({
 			formData.append("mechanical_condition", inspectionCondition.trim());
 			formData.append("electrical_condition", inspectionCondition.trim());
 			formData.append("inspection_condition", inspectionCondition.trim());
-			formData.append("notes", notes.trim());
+
+			if (sapNotificationNumber.trim()) {
+				formData.append("sap_notification_number", sapNotificationNumber.trim());
+				formData.append("sap_notification_num", sapNotificationNumber.trim());
+				formData.append("notification_number", sapNotificationNumber.trim());
+			}
+
+			const finalNotes = formatNotesWithSapNotification(notes, sapNotificationNumber);
+			formData.append("notes", finalNotes);
 
 			files.forEach((file) => {
 				formData.append("photo", file);
@@ -604,6 +637,49 @@ export default function FormInspeksiClient({
 						<p className="text-[11px] text-gray-500 mt-1.5 font-medium">
 							Wajib diisi dan tidak boleh hanya berupa spasi kosong.
 						</p>
+					</div>
+
+					{/* Section: Nomor Notifikasi SAP (US-17-FE) */}
+					<div>
+						<div className="flex items-center justify-between mb-2">
+							<label className="block text-[13px] font-bold text-gray-700">
+								Nomor Notifikasi SAP{" "}
+								{isSapNotificationRequired ? (
+									<span className="text-[#DC2626] font-bold">* (Wajib untuk Scrap / Rusak Berat)</span>
+								) : (
+									<span className="text-gray-400 font-normal text-xs">(Opsional)</span>
+								)}
+							</label>
+							<span className="text-[11px] text-gray-400 font-medium">
+								{sapNotificationNumber.length}/50
+							</span>
+						</div>
+						<input
+							type="text"
+							maxLength={50}
+							value={sapNotificationNumber}
+							onChange={(e) => {
+								setSapNotificationNumber(e.target.value);
+								if (sapNotificationError) setSapNotificationError("");
+							}}
+							placeholder="Contoh: 10023489"
+							className={`w-full px-3 py-2.5 text-[13px] border rounded bg-gray-50 focus:bg-white outline-none transition-all font-medium ${
+								sapNotificationError
+									? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500"
+									: isSapNotificationRequired && !sapNotificationNumber.trim()
+										? "border-amber-400 focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"
+										: "border-gray-200 focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"
+							}`}
+						/>
+						{sapNotificationError ? (
+							<p className="text-[11px] text-red-500 mt-1.5 font-medium">
+								{sapNotificationError}
+							</p>
+						) : (
+							<p className="text-[11px] text-gray-500 mt-1.5 font-medium">
+								Masukkan nomor Maintenance Notification resmi dari SAP PM sebagai referensi audit.
+							</p>
+						)}
 					</div>
 
 					{/* Section: Upload Foto */}

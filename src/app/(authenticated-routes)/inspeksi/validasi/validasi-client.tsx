@@ -45,6 +45,7 @@ import {
 } from "@/action/api";
 import { type EquipmentStatus, statusName } from "@/lib/equipment-status";
 import { fileUrl } from "@/lib/file-url";
+import { extractSapNotification, formatNotesWithSapNotification } from "@/lib/sap-notification";
 
 // Tipe Data
 type AssetState = EquipmentStatus | "REJECTED";
@@ -172,6 +173,8 @@ export default function ManajemenInspeksiClient({
 	const [conditionId, setConditionId] = useState("");
 	const [catatan, setCatatan] = useState("");
 	const [rekomendasi, setRekomendasi] = useState("");
+	const [sapNotificationNumber, setSapNotificationNumber] = useState("");
+	const [sapNotificationError, setSapNotificationError] = useState("");
 	const [tglMulai, setTglMulai] = useState(
 		new Date().toISOString().split("T")[0],
 	);
@@ -246,6 +249,8 @@ export default function ManajemenInspeksiClient({
 			setConditionId("");
 			setCatatan("");
 			setRekomendasi("");
+			setSapNotificationNumber("");
+			setSapNotificationError("");
 			setRequiredActionId("");
 			setTglMulai(new Date().toISOString().split("T")[0]);
 			setTglSelesai(new Date().toISOString().split("T")[0]);
@@ -268,6 +273,8 @@ export default function ManajemenInspeksiClient({
 			setConditionId(matchedCond ? matchedCond.id.toString() : "");
 			setCatatan("");
 			setRekomendasi("");
+			setSapNotificationNumber("");
+			setSapNotificationError("");
 			setTglMulai(new Date().toISOString().split("T")[0]);
 			setTglSelesai(new Date().toISOString().split("T")[0]);
 		}
@@ -280,6 +287,10 @@ export default function ManajemenInspeksiClient({
 					setValidationId(String(latest.id));
 				}
 				setInspectionNumber(latest.inspection_number || "");
+				const existingSap = extractSapNotification(latest) || extractSapNotification(asset);
+				if (existingSap) {
+					setSapNotificationNumber(existingSap);
+				}
 				if (!isRevision && asset.statusPersetujuan === "PENDING_REVIEW") {
 					if (latest.notes) setCatatan(latest.notes);
 					if (latest.followup_recommendation) setRekomendasi(latest.followup_recommendation);
@@ -367,6 +378,8 @@ export default function ManajemenInspeksiClient({
 			setConditionId("");
 			setCatatan("");
 			setRekomendasi("");
+			setSapNotificationNumber("");
+			setSapNotificationError("");
 			setRequiredActionId("");
 			setValidationId("");
 			setApprovalId("");
@@ -383,9 +396,24 @@ export default function ManajemenInspeksiClient({
 
 		try {
 			const isUtilizable = hasilPemeriksaan === "Layak";
-			const notes = isUtilizable
+			const isScrapOrHeavy =
+				hasilPemeriksaan === "Tidak Layak" ||
+				effectiveConditionId === severeCondition?.id.toString();
+
+			if (isScrapOrHeavy && !sapNotificationNumber.trim()) {
+				setNotification({
+					type: "error",
+					message:
+						"Nomor Notifikasi SAP wajib diisi untuk hasil pemeriksaan Tidak Layak / rekomendasi Scrap.",
+				});
+				setIsSubmitting(false);
+				return;
+			}
+
+			const baseNotes = isUtilizable
 				? catatan.trim()
 				: (catatan || rekomendasi || "Hasil validasi").trim();
+			const notes = formatNotesWithSapNotification(baseNotes, sapNotificationNumber);
 
 			const isRevision = selectedAsset.statusPersetujuan === "NEED_REVISION";
 			let res;
@@ -1854,7 +1882,50 @@ export default function ManajemenInspeksiClient({
 									</div>
 								</div>
 
-								{/* Row 4: Upload */}
+								{/* Row 3b: Nomor Notifikasi SAP (US-17-FE) */}
+								<div className="mb-3">
+									<div className="flex items-center justify-between mb-1">
+										<label className="block text-[11px] font-semibold text-gray-700">
+											Nomor Notifikasi SAP{" "}
+											{hasilPemeriksaan === "Tidak Layak" || effectiveConditionId === severeCondition?.id.toString() ? (
+												<span className="text-[#DC2626] font-bold">* (Wajib untuk Scrap / Rusak Berat)</span>
+											) : (
+												<span className="text-gray-400 font-normal">(Opsional)</span>
+											)}
+										</label>
+										<span className="text-[10px] text-gray-400">
+											{sapNotificationNumber.length}/50
+										</span>
+									</div>
+									<input
+										type="text"
+										maxLength={50}
+										disabled={isReadOnly}
+										value={sapNotificationNumber}
+										onChange={(e) => {
+											setSapNotificationNumber(e.target.value);
+											if (sapNotificationError) setSapNotificationError("");
+										}}
+										placeholder="Contoh: 10023489"
+										className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 font-medium ${
+											sapNotificationError ||
+											(showValidationErrors &&
+												(hasilPemeriksaan === "Tidak Layak" || effectiveConditionId === severeCondition?.id.toString()) &&
+												!sapNotificationNumber.trim())
+												? "border-[#DC2626] focus:border-[#DC2626]"
+												: "border-gray-300 focus:border-[#0A356A]"
+										}`}
+									/>
+									{sapNotificationError ? (
+										<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
+											{sapNotificationError}
+										</p>
+									) : (
+										<p className="text-[10px] text-gray-500 mt-0.5">
+											Masukkan nomor Maintenance Notification resmi dari SAP PM sebagai referensi audit.
+										</p>
+									)}
+								</div>
 								{!isReadOnly && (
 									<div className="mt-2 space-y-2">
 										<input

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { getScraps } from "@/action/api";
+import { getScraps, getInspections } from "@/action/api";
+import { extractSapNotification } from "@/lib/sap-notification";
 import ManajerScrapClient from "./scrap-client";
 
 /* eslint-disable @typescript-eslint/no-explicit-any */
@@ -12,9 +13,38 @@ export default function ManajerScrapPage() {
 	const [loading, setLoading] = useState(true);
 
 	const loadData = useCallback(async () => {
-		const data = await getScraps().catch(() => []);
+		const [data, inspectionsData] = await Promise.all([
+			getScraps().catch(() => []),
+			getInspections().catch(() => []),
+		]);
 
-		const sorted = (Array.isArray(data) ? data : []).sort((a, b) => {
+		const inspectionByEqMap = new Map<string, any>();
+		if (Array.isArray(inspectionsData)) {
+			inspectionsData.forEach((ins: any) => {
+				const eqId = String(ins.equipment_id);
+				const existing = inspectionByEqMap.get(eqId);
+				if (!existing || Number(ins.id) > Number(existing.id)) {
+					inspectionByEqMap.set(eqId, ins);
+				}
+			});
+		}
+
+		const mapped = (Array.isArray(data) ? data : []).map((item: any) => {
+			const eqId = String(item.equipment_id);
+			const relatedInsp = inspectionByEqMap.get(eqId);
+			const sapNum =
+				item.sap_notification_number ||
+				extractSapNotification(item) ||
+				extractSapNotification(relatedInsp) ||
+				undefined;
+
+			return {
+				...item,
+				sap_notification_number: sapNum,
+			};
+		});
+
+		const sorted = mapped.sort((a, b) => {
 			const timeA = new Date(a.updated_at || a.created_at || 0).getTime();
 			const timeB = new Date(b.updated_at || b.created_at || 0).getTime();
 			if (timeB !== timeA) return timeB - timeA;

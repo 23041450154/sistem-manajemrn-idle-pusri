@@ -264,6 +264,7 @@ export type ScrapItemDTO = {
 	updated_at?: string;
 	created_by_name?: string;
 	notes?: string;
+	sap_notification_number?: string;
 	attachments?: { id: string; file_url: string; caption?: string }[];
 };
 
@@ -368,6 +369,10 @@ export async function getScraps(): Promise<ScrapItemDTO[]> {
 				updated_at: approval?.updated_at || item.updated_at || item.created_at || undefined,
 				created_by_name: item.created_by_user?.name,
 				notes: item.notes || approval?.notes,
+				sap_notification_number:
+					item.sap_notification_number ||
+					eq.sap_notification_number ||
+					undefined,
 				attachments: atts.map((a: any) => ({
 					id: String(a.id),
 					file_url: absoluteFileUrl(a.file_url),

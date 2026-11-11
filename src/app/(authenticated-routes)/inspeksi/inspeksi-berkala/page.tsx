@@ -8,6 +8,7 @@ import {
 } from "@/action/api";
 import { inspectionQueue } from "@/lib/inspection-schedule";
 import { formatPlantDisplay, formatCondition } from "@/lib/equipment-status";
+import { extractSapNotification } from "@/lib/sap-notification";
 import InspeksiBerkalaClient, {
 	type Equipment,
 	type InspectionItem,
@@ -102,6 +103,7 @@ export default function InspeksiAntreanPage() {
 				condition_name: formatCondition(rawCondition),
 				require_action_name:
 					ins.require_action?.name || ins.require_action_name || "-",
+				sap_notification_number: extractSapNotification(ins) || "-",
 				status_name: "Selesai",
 				photos: Array.isArray(ins.attachments)
 					? ins.attachments
