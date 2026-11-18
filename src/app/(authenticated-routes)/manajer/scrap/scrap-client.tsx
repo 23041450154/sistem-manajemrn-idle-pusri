@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   Eye,
   X,
@@ -12,7 +12,6 @@ import {
   Trash2,
   AlertTriangle,
   Loader2,
-  Check,
   DollarSign,
   Tag,
   Search,
@@ -26,6 +25,7 @@ import {
   getInspections,
   type ScrapItemDTO,
 } from "@/action/api";
+import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { formatDate } from "@/lib/utils";
 import { scrapStatusBadge, mapScrapMethodName } from "@/lib/approvals";
 import { extractSapNotification } from "@/lib/sap-notification";
@@ -33,7 +33,7 @@ import { extractSapNotification } from "@/lib/sap-notification";
 type ScrapItem = ScrapItemDTO;
 
 /** Client Component: interaksi (tab/search/paginasi/review approve-reject) — data di-fetch Server Component. */
-export default function ManajerScrapClient({
+function ManajerScrapContent({
   scraps,
   onRefresh,
 }: {
@@ -41,7 +41,17 @@ export default function ManajerScrapClient({
   onRefresh?: () => Promise<void> | void;
 }) {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<"inbox" | "history">("inbox");
+  const searchParams = useSearchParams();
+  const rawTab = (searchParams?.get("tab") || "").toLowerCase();
+  const resolvedUrlTab: "inbox" | "history" =
+    rawTab === "history" || rawTab === "riwayat" ? "history" : "inbox";
+
+  const [prevUrlTab, setPrevUrlTab] = useState<"inbox" | "history">(resolvedUrlTab);
+  const [activeTab, setActiveTab] = useState<"inbox" | "history">(resolvedUrlTab);
+  if (prevUrlTab !== resolvedUrlTab) {
+    setPrevUrlTab(resolvedUrlTab);
+    setActiveTab(resolvedUrlTab);
+  }
 
   // Filter states
   const [search, setSearch] = useState("");
@@ -83,10 +93,15 @@ export default function ManajerScrapClient({
     setSearch(value);
     setCurrentPage(1);
   };
-  const changeTab = (tab: "inbox" | "history") => {
+  const changeTab = useCallback((tab: "inbox" | "history") => {
     setActiveTab(tab);
     setCurrentPage(1);
-  };
+    if (typeof window !== "undefined") {
+      const url = new URL(window.location.href);
+      url.searchParams.set("tab", tab);
+      window.history.replaceState(null, "", url.toString());
+    }
+  }, []);
 
   const showToast = (type: "success" | "error" | "reject", message: string) => {
     setToast({ type, message });
@@ -186,6 +201,7 @@ export default function ManajerScrapClient({
   const handleConfirmApprove = async () => {
     if (!selectedScrap || isSubmitting) return;
 
+    const approvedCode = selectedScrap.equipment_code;
     setIsSubmitting(true);
     setModalError(null);
     try {
@@ -196,10 +212,14 @@ export default function ManajerScrapClient({
       });
 
       if (res.success) {
-        showToast("success", "Scrap sukses disetujui.");
+        showToast(
+          "success",
+          `Berhasil! Usulan scrap untuk peralatan ${approvedCode} telah disetujui.`,
+        );
         setIsApproveConfirmOpen(false);
         setModalError(null);
         handleCloseDetail();
+        changeTab("history");
         if (onRefresh) {
           await onRefresh();
         } else {
@@ -244,6 +264,7 @@ export default function ManajerScrapClient({
         setRejectionReason("");
         setModalError(null);
         handleCloseDetail();
+        changeTab("history");
         if (onRefresh) {
           await onRefresh();
         } else {
@@ -383,7 +404,7 @@ export default function ManajerScrapClient({
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="w-full overflow-x-auto">
           <table className="w-full text-left border-collapse">
             <thead className="bg-gray-50/80 border-b border-gray-200">
               <tr className="border-b border-gray-300">
@@ -574,16 +595,21 @@ export default function ManajerScrapClient({
       {isDetailOpen && selectedScrap && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div
-            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-[#0F172A]/50 transition-opacity"
             onClick={handleCloseDetail}
           />
 
-          <div className="relative w-full max-w-4xl max-h-[92vh] bg-white rounded-2xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label={`Detail Peninjauan Usulan Scrap Aset ${selectedScrap.scrap_number}`}
+            className="relative w-full max-w-4xl max-h-[85vh] bg-white rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
+          >
             {/* Header Modal */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shrink-0">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-xl bg-red-50 border border-red-100 flex items-center justify-center text-red-600 shrink-0">
-                  <Trash2 className="w-5 h-5" />
+                <div className="w-10 h-10 rounded bg-red-50 border border-red-100 flex items-center justify-center text-red-600 shrink-0">
+                  <Trash2 className="w-5 h-5" aria-hidden="true" />
                 </div>
                 <div>
                   <h2 className="text-lg font-bold text-gray-900">
@@ -598,15 +624,17 @@ export default function ManajerScrapClient({
                 </div>
               </div>
               <button
+                type="button"
+                aria-label="Tutup detail usulan scrap"
                 onClick={handleCloseDetail}
-                className="text-gray-400 hover:text-gray-900 hover:bg-gray-100 p-1.5 rounded-lg transition-colors font-bold"
+                className="text-gray-400 hover:text-gray-900 hover:bg-gray-100 p-2 rounded transition-colors font-bold"
               >
-                <X className="w-5 h-5" />
+                <X className="w-5 h-5" aria-hidden="true" />
               </button>
             </div>
 
             {/* Content Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 bg-gray-50/50 space-y-6">
+            <div className="flex-1 min-h-0 overflow-y-auto scroll-smooth px-6 py-5 bg-gray-50/50 space-y-6">
               {/* Alert Status */}
               {(selectedScrap.status === "PENDING" ||
                 selectedScrap.status === "IN_REVIEW") && (
@@ -1003,8 +1031,9 @@ export default function ManajerScrapClient({
             {/* Action Footer */}
             <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200 bg-white shrink-0">
               <button
+                type="button"
                 onClick={handleCloseDetail}
-                className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl text-[13px] font-semibold hover:bg-gray-50 transition-colors"
+                className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded text-[13px] font-semibold hover:bg-gray-50 transition-colors"
               >
                 Tutup
               </button>
@@ -1013,22 +1042,28 @@ export default function ManajerScrapClient({
                 selectedScrap.status === "IN_REVIEW") && (
                 <div className="flex items-center gap-3">
                   <button
+                    type="button"
                     onClick={() => {
                       setRejectionReason("");
+                      setModalError(null);
                       setIsRejectModalOpen(true);
                     }}
-                    className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[13px] font-bold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded text-[13px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
-                    <XCircle className="w-4 h-4" />
+                    <XCircle className="w-4 h-4" aria-hidden="true" />
                     Tolak Pengajuan
                   </button>
 
                   <button
-                    onClick={() => setIsApproveConfirmOpen(true)}
-                    className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[13px] font-bold transition-colors shadow-sm flex items-center gap-1.5 cursor-pointer"
+                    type="button"
+                    onClick={() => {
+                      setModalError(null);
+                      setIsApproveConfirmOpen(true);
+                    }}
+                    className="px-5 py-2.5 bg-[#059669] hover:bg-[#15803D] text-white rounded text-[13px] font-bold transition-colors flex items-center gap-1.5 cursor-pointer"
                   >
-                    <Check className="w-4 h-4" />
-                    Setujui Scrap
+                    <CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+                    Setujui Usulan Scrap
                   </button>
                 </div>
               )}
@@ -1037,130 +1072,35 @@ export default function ManajerScrapClient({
         </div>
       )}
 
-      {/* Modal Konfirmasi Persetujuan (Approve) */}
-      {isApproveConfirmOpen && selectedScrap && (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
-          <div
-            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
-            onClick={() => {
-              if (!isSubmitting) {
-                setIsApproveConfirmOpen(false);
-                setModalError(null);
-              }
-            }}
-          />
-
-          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200 border border-gray-100">
-            <div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-4 text-emerald-600">
-              <CheckCircle2 className="w-7 h-7" />
-            </div>
-
-            <h3 className="text-lg font-bold text-gray-900 mb-2">
-              Modal Konfirmasi Persetujuan Scrap
-            </h3>
-
-            <div className="text-[13px] text-gray-600 mb-6 leading-relaxed text-left w-full bg-gray-50 p-4 rounded-xl space-y-3 border border-gray-100">
-              <p>Anda akan menyetujui pengajuan scrap untuk aset berikut:</p>
-
-              <div>
-                <p className="text-[11px] uppercase text-gray-400 font-semibold mb-0.5">
-                  No. Pengajuan
-                </p>
-                <p className="font-bold text-[#0A356A]">
-                  {selectedScrap.scrap_number}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-[11px] uppercase text-gray-400 font-semibold mb-0.5">
-                  Kode & Nama Aset
-                </p>
-                <p className="font-bold text-gray-900">
-                  {selectedScrap.equipment_code}
-                </p>
-                <p className="font-semibold text-gray-700">
-                  {selectedScrap.equipment_name}
-                </p>
-              </div>
-
-              <div>
-                <p className="text-[11px] uppercase text-gray-400 font-semibold mb-0.5">
-                  Metode Scrap
-                </p>
-                <p className="font-bold text-gray-900">
-                  {mapScrapMethodName(
-                    selectedScrap.scrap_method,
-                    selectedScrap.scrap_method_id,
-                  )}
-                </p>
-              </div>
-
-              <div className="pt-2 border-t border-gray-200">
-                <p className="text-[11px] uppercase text-gray-400 font-semibold mb-0.5">
-                  Estimasi Nilai Scrap
-                </p>
-                <p className="text-[16px] font-extrabold text-emerald-700">
-                  {formatCurrency(selectedScrap.scrap_value)}
-                </p>
-              </div>
-
-              <p className="text-[11px] text-gray-400 italic pt-1">
-                Setelah disetujui, pengajuan akan diteruskan ke proses
-                berikutnya.
-              </p>
-            </div>
-
-            {modalError && (
-              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12px] flex items-start gap-2.5 text-left w-full">
-                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-extrabold text-[12px] text-rose-900 leading-normal">
-                    Pengajuan belum dapat diproses
-                  </p>
-                  <p className="mt-0.5 font-medium leading-relaxed">
-                    {modalError}
-                  </p>
-                </div>
-              </div>
-            )}
-
-            <div className="flex items-center gap-3 w-full justify-center">
-              <button
-                disabled={isSubmitting}
-                onClick={() => {
-                  setIsApproveConfirmOpen(false);
-                  setModalError(null);
-                }}
-                className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl text-[13px] font-semibold hover:bg-gray-50 transition-colors w-[120px] disabled:opacity-50"
-              >
-                Batal
-              </button>
-              <button
-                disabled={isSubmitting}
-                onClick={handleConfirmApprove}
-                className="px-5 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-[13px] font-bold transition-colors w-[140px] flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
-              >
-                {isSubmitting ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    <span>Memproses...</span>
-                  </>
-                ) : modalError ? (
-                  "Coba Lagi"
-                ) : (
-                  "Setujui Scrap"
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Dialog Peringatan Audit Persetujuan Usulan Scrap (DEV-16737) */}
+      <ConfirmDialog
+        open={Boolean(isApproveConfirmOpen && selectedScrap)}
+        onClose={() => {
+          if (!isSubmitting) {
+            setIsApproveConfirmOpen(false);
+            setModalError(null);
+          }
+        }}
+        onConfirm={handleConfirmApprove}
+        title="Konfirmasi Persetujuan Usulan Scrap"
+        description={
+          selectedScrap
+            ? `Apakah Anda yakin menyetujui dokumen usulan scrap untuk peralatan ${selectedScrap.equipment_code} - ${selectedScrap.equipment_name}? Tindakan ini akan meneruskan berkas usulan ke tahap administrasi penghapusan aset resmi perusahaan.`
+            : ""
+        }
+        cancelLabel="Kembali / Periksa Ulang"
+        confirmLabel={modalError ? "Coba Lagi" : "Ya, Setujui Usulan"}
+        pendingLabel="Memproses..."
+        isPending={isSubmitting}
+        tone="success"
+        errorMessage={modalError}
+      />
 
       {/* Modal Penolakan (Reject) dengan Textarea Wajib Alasan */}
       {isRejectModalOpen && selectedScrap && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
           <div
-            className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
+            className="fixed inset-0 bg-[#0F172A]/50 transition-opacity"
             onClick={() => {
               if (!isSubmitting) {
                 setIsRejectModalOpen(false);
@@ -1169,81 +1109,111 @@ export default function ManajerScrapClient({
             }}
           />
 
-          <div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 flex flex-col animate-in zoom-in-95 duration-200 border border-gray-100">
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center text-red-600 shrink-0">
-                <XCircle className="w-6 h-6" />
-              </div>
-              <div>
-                <h3 className="text-base font-bold text-gray-900">
-                  Modal Konfirmasi Penolakan Scrap
-                </h3>
-                <p className="text-[12px] text-gray-500 font-medium">
-                  {selectedScrap.equipment_code}
-                </p>
-              </div>
-            </div>
-
-            <p className="text-[13px] text-gray-600 mb-4 leading-relaxed">
-              Pengajuan scrap untuk aset{" "}
-              <strong className="text-gray-900">
-                {selectedScrap.equipment_code} –{" "}
-                {selectedScrap.equipment_name}
-              </strong>{" "}
-              akan ditolak.
-            </p>
-
-            <div className="mb-6">
-              <label className="block text-[12px] font-bold text-gray-800 mb-1.5">
-                Alasan Penolakan <span className="text-red-500">*</span>
-              </label>
-              <textarea
-                value={rejectionReason}
-                onChange={(e) => setRejectionReason(e.target.value)}
-                placeholder="Tuliskan alasan penolakan pengajuan scrap..."
-                rows={4}
-                className="w-full p-3 border border-gray-300 rounded-xl text-[13px] focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-colors resize-none placeholder:text-gray-400 text-gray-800"
-              />
-              <p className="text-[11px] text-gray-400 mt-1.5 font-medium leading-normal">
-                Contoh: Aset masih dapat diperbaiki dan digunakan kembali.
-              </p>
-              {!rejectionReason.trim() && (
-                <p className="text-[11px] text-red-500 mt-1 font-semibold">
-                  * Alasan wajib diisi untuk menolak pengajuan.
-                </p>
-              )}
-            </div>
-
-            {modalError && (
-              <div className="mb-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded-xl text-[12px] flex items-start gap-2.5 text-left w-full">
-                <AlertCircle className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-                <div className="flex-1">
-                  <p className="font-extrabold text-[12px] text-rose-900 leading-normal">
-                    Pengajuan belum dapat diproses
-                  </p>
-                  <p className="mt-0.5 font-medium leading-relaxed">
-                    {modalError}
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Modal Konfirmasi Penolakan Scrap"
+            className="relative w-full max-w-md max-h-[85vh] bg-white rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+          >
+            <div className="flex items-center justify-between gap-3 px-6 py-4 shrink-0 border-b border-gray-200 bg-white">
+              <div className="flex items-center gap-3 min-w-0">
+                <div className="w-10 h-10 bg-red-100 rounded flex items-center justify-center text-red-600 shrink-0">
+                  <XCircle className="w-5 h-5" aria-hidden="true" />
+                </div>
+                <div className="min-w-0">
+                  <h3 className="text-base font-bold text-gray-900">
+                    Modal Konfirmasi Penolakan Scrap
+                  </h3>
+                  <p className="text-[12px] text-gray-500 font-medium truncate">
+                    {selectedScrap.equipment_code}
                   </p>
                 </div>
               </div>
-            )}
-
-            <div className="flex items-center justify-end gap-3 w-full">
               <button
+                type="button"
+                aria-label="Tutup dialog penolakan scrap"
                 disabled={isSubmitting}
                 onClick={() => {
                   setIsRejectModalOpen(false);
                   setModalError(null);
                 }}
-                className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-xl text-[13px] font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
+                className="p-1.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
+              >
+                <X className="w-4 h-4" aria-hidden="true" />
+              </button>
+            </div>
+
+            <div className="px-6 py-5 flex-1 min-h-0 overflow-y-auto scroll-smooth">
+              <p className="text-[13px] text-gray-600 mb-4 leading-relaxed">
+                Pengajuan scrap untuk aset{" "}
+                <strong className="text-gray-900">
+                  {selectedScrap.equipment_code} -{" "}
+                  {selectedScrap.equipment_name}
+                </strong>{" "}
+                akan ditolak.
+              </p>
+
+              <div>
+                <label
+                  htmlFor="scrap-rejection-reason"
+                  className="block text-[12px] font-bold text-gray-800 mb-1.5"
+                >
+                  Alasan Penolakan <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  id="scrap-rejection-reason"
+                  value={rejectionReason}
+                  onChange={(e) => setRejectionReason(e.target.value)}
+                  placeholder="Tuliskan alasan penolakan pengajuan scrap..."
+                  rows={4}
+                  className="w-full p-3 border border-gray-300 rounded text-[13px] focus:border-red-500 focus:ring-1 focus:ring-red-500 outline-none transition-colors resize-none placeholder:text-gray-400 text-gray-800"
+                />
+                <p className="text-[11px] text-gray-500 mt-1.5 font-medium leading-normal">
+                  Contoh: Aset masih dapat diperbaiki dan digunakan kembali.
+                </p>
+                {!rejectionReason.trim() && (
+                  <p className="text-[11px] text-red-500 mt-1 font-semibold">
+                    * Alasan wajib diisi untuk menolak pengajuan.
+                  </p>
+                )}
+              </div>
+
+              {modalError && (
+                <div className="mt-4 p-3.5 bg-rose-50 border border-rose-200 text-rose-800 rounded text-[12px] flex items-start gap-2.5 text-left w-full">
+                  <AlertCircle
+                    className="w-5 h-5 text-rose-600 shrink-0 mt-0.5"
+                    aria-hidden="true"
+                  />
+                  <div className="flex-1">
+                    <p className="font-extrabold text-[12px] text-rose-900 leading-normal">
+                      Pengajuan belum dapat diproses
+                    </p>
+                    <p className="mt-0.5 font-medium leading-relaxed">
+                      {modalError}
+                    </p>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 px-6 py-4 shrink-0 border-t border-gray-200 bg-gray-50">
+              <button
+                type="button"
+                disabled={isSubmitting}
+                onClick={() => {
+                  setIsRejectModalOpen(false);
+                  setModalError(null);
+                }}
+                className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded text-[13px] font-semibold hover:bg-gray-50 transition-colors disabled:opacity-50"
               >
                 Batal
               </button>
 
               <button
+                type="button"
                 disabled={!rejectionReason.trim() || isSubmitting}
                 onClick={handleConfirmReject}
-                className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-xl text-[13px] font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white rounded text-[13px] font-bold transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 cursor-pointer"
               >
                 {isSubmitting ? (
                   <>
@@ -1288,5 +1258,15 @@ export default function ManajerScrapClient({
         </div>
       )}
     </div>
+  );
+}
+
+export default function ManajerScrapClient(
+  props: React.ComponentProps<typeof ManajerScrapContent>,
+) {
+  return (
+    <Suspense fallback={null}>
+      <ManajerScrapContent {...props} />
+    </Suspense>
   );
 }

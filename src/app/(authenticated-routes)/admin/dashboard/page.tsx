@@ -6,7 +6,7 @@ import {
   Database,
   Trash2,
   ArrowRight,
-  ShieldCheck,
+  Users,
   MapPin,
   Layers,
   FileText,
@@ -32,16 +32,16 @@ const MODULES = [
     desc: "ObjectType, StorageLocation, RequireAction",
   },
   {
-    href: "/manajer/scrap",
-    icon: Trash2,
-    title: "Persetujuan Scrap",
-    desc: "Antrean usulan penghapusan aset",
+    href: "/admin/users",
+    icon: Users,
+    title: "Manajemen Pengguna",
+    desc: "Kelola akun dan penetapan role pengguna",
   },
   {
-    href: "/manajer/approve",
-    icon: ShieldCheck,
-    title: "Persetujuan Validasi",
-    desc: "Verifikasi kelayakan aset idle",
+    href: "/admin/equipment?status=SCRAP",
+    icon: Trash2,
+    title: "Aset Scrap",
+    desc: "Daftar peralatan berstatus penghapusan aset",
   },
 ];
 

@@ -8,6 +8,7 @@ import {
 	Trash2,
 	UserRoundCog,
 	Users,
+	X,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
@@ -211,7 +212,7 @@ export default function UserManagementPage() {
 						<p className="text-sm">Tidak ada pengguna yang sesuai.</p>
 					</div>
 				) : (
-					<div className="overflow-x-auto">
+					<div className="w-full overflow-x-auto">
 						<table className="w-full border-collapse text-left text-[13px] tabular-nums">
 							<thead className="sticky top-0 bg-[#F2F3F4] text-[11px] font-semibold uppercase tracking-[0.04em] text-slate-600">
 								<tr>
@@ -273,8 +274,9 @@ export default function UserManagementPage() {
 			{formOpen && (
 				<div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
 					<button
+						type="button"
 						aria-label="Tutup formulir"
-						className="absolute inset-0 bg-slate-900/50"
+						className="absolute inset-0 bg-[#0F172A]/50"
 						onClick={() => !busy && setFormOpen(false)}
 					/>
 					<form
@@ -282,25 +284,36 @@ export default function UserManagementPage() {
 						role="dialog"
 						aria-modal="true"
 						aria-labelledby="user-form-title"
-						className="relative w-full max-w-lg rounded border border-[#E6E8EA] bg-white shadow-2xl"
+						className="relative w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden rounded border border-[#E6E8EA] bg-white shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
 					>
-						<div className="flex items-center gap-3 border-b border-[#E6E8EA] p-5">
-							<UserRoundCog className="h-5 w-5 text-[#0A356A]" />
-							<div>
-								<h2
-									id="user-form-title"
-									className="text-sm font-semibold text-slate-900"
-								>
-									{editing ? "Edit pengguna" : "Tambah pengguna"}
-								</h2>
-								<p className="text-xs text-slate-500">
-									{editing
-										? "Perbarui identitas dan hak akses akun."
-										: "Buat akun baru untuk pengguna aplikasi."}
-								</p>
+						<div className="flex items-center justify-between gap-3 shrink-0 border-b border-[#E6E8EA] px-5 py-4 bg-white">
+							<div className="flex items-center gap-3 min-w-0">
+								<UserRoundCog className="h-5 w-5 text-[#0A356A] shrink-0" aria-hidden="true" />
+								<div className="min-w-0">
+									<h2
+										id="user-form-title"
+										className="text-sm font-semibold text-slate-900"
+									>
+										{editing ? "Edit pengguna" : "Tambah pengguna"}
+									</h2>
+									<p className="text-xs text-slate-500">
+										{editing
+											? "Perbarui identitas dan hak akses akun."
+											: "Buat akun baru untuk pengguna aplikasi."}
+									</p>
+								</div>
 							</div>
+							<button
+								type="button"
+								aria-label="Tutup formulir pengguna"
+								disabled={busy}
+								onClick={() => setFormOpen(false)}
+								className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
+							>
+								<X className="h-4 w-4" aria-hidden="true" />
+							</button>
 						</div>
-						<div className="grid gap-4 p-5 sm:grid-cols-2">
+						<div className="flex-1 min-h-0 overflow-y-auto scroll-smooth grid gap-4 p-5 sm:grid-cols-2">
 							<label className="text-xs font-medium text-slate-700">
 								Nama
 								<input
@@ -384,7 +397,7 @@ export default function UserManagementPage() {
 								</label>
 							)}
 						</div>
-						<div className="flex justify-end gap-3 border-t border-[#E6E8EA] bg-[#F8FAFC] p-4">
+						<div className="flex shrink-0 justify-end gap-3 border-t border-[#E6E8EA] bg-gray-50 p-4">
 							<button
 								type="button"
 								disabled={busy}

@@ -11,9 +11,11 @@ const ALL = "Semua";
 export default function KatalogClient({
   items,
   embedded = false,
+  detailBasePath = "/unit-kerja/katalog",
 }: {
   items: KatalogItem[];
   embedded?: boolean;
+  detailBasePath?: string;
 }) {
   const [query, setQuery] = useState("");
   const [plant, setPlant] = useState(ALL);
@@ -128,7 +130,7 @@ export default function KatalogClient({
         <ul className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map((item) => (
             <li key={item.id}>
-              <EquipmentCard item={item} />
+              <EquipmentCard item={item} detailBasePath={detailBasePath} />
             </li>
           ))}
         </ul>
@@ -137,11 +139,17 @@ export default function KatalogClient({
   );
 }
 
-function EquipmentCard({ item }: { item: KatalogItem }) {
+function EquipmentCard({
+  item,
+  detailBasePath,
+}: {
+  item: KatalogItem;
+  detailBasePath: string;
+}) {
   const state = STATE_STYLE[item.state];
   return (
     <Link
-      href={`/unit-kerja/katalog/${item.id}`}
+      href={`${detailBasePath}/${item.id}`}
       className="group flex h-full flex-col border border-[#E6E8EA] bg-white transition-colors duration-140 hover:bg-[#F2F3F4] focus-visible:ring-2 focus-visible:ring-[#334155] focus-visible:ring-offset-1 focus-visible:outline-none"
     >
       <EquipmentThumb

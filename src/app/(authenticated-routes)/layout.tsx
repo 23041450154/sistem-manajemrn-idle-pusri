@@ -1,9 +1,12 @@
 "use client";
 
+import { usePathname } from "next/navigation";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 import { SidebarProvider } from "@/components/SidebarProvider";
 import { AuthProvider, useAuth } from "@/components/AuthProvider";
+import { UnauthorizedView } from "@/components/UnauthorizedView";
+import { normalizeRole, requiredRoleForPath } from "@/lib/roles";
 import React from "react";
 
 // Guard + shell aplikasi. AuthProvider (client) memvalidasi sesi ke BE dari
@@ -22,8 +25,17 @@ export default function AuthenticatedLayout({
 
 function Shell({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const pathname = usePathname();
   // AuthProvider menjamin user non-null di sini.
   const role = user!.role;
+  const currentRole = normalizeRole(role);
+  const requiredRole = requiredRoleForPath(pathname);
+
+  if (requiredRole && currentRole !== requiredRole) {
+    return (
+      <UnauthorizedView currentRole={currentRole} requiredRole={requiredRole} />
+    );
+  }
 
   return (
     <SidebarProvider>

@@ -137,10 +137,10 @@
   @apply flex h-screen overflow-hidden bg-[#f8f9fb];
 }
 @utility app-main-column {
-  @apply flex flex-1 flex-col overflow-hidden;
+  @apply flex min-w-0 flex-1 flex-col overflow-hidden;
 }
 @utility app-main-area {
-  @apply flex-1 overflow-y-auto p-6;
+  @apply min-w-0 flex-1 overflow-y-auto p-4 sm:p-6;
 }
 @utility page-container {
   @apply mx-auto flex w-full max-w-[1400px] flex-col gap-6;
@@ -189,6 +189,25 @@
   /* DESIGN.md typography: rupiah columns and equipment codes align by digit. */
   table :where(td, th) {
     font-variant-numeric: tabular-nums;
+  }
+
+  /* Interaction affordance: pointer cursor on enabled interactive controls. */
+  :where(
+    a[href],
+    button:not(:disabled),
+    summary,
+    select:not(:disabled),
+    label[for],
+    input[type="checkbox"]:not(:disabled),
+    input[type="radio"]:not(:disabled),
+    [role="button"]:not([aria-disabled="true"]),
+    [role="tab"]:not([aria-disabled="true"]),
+    [role="switch"]:not([aria-disabled="true"])
+  ) {
+    cursor: pointer;
+  }
+  :where(button:disabled, select:disabled, input:disabled, textarea:disabled, [aria-disabled="true"]) {
+    cursor: not-allowed;
   }
 }
 

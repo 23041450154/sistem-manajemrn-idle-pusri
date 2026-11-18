@@ -1146,7 +1146,7 @@ export default function UsulanIdleClient({
 																</div>
 
 																<div className="flex items-center gap-1.5 shrink-0 ml-2">
-																	<span className="text-[10px] font-medium text-[#0A356A] bg-blue-50 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+																	<span className="text-[10px] font-medium text-[#0A356A] bg-blue-50 group-hover:bg-blue-100 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1">
 																		<Eye className="w-3 h-3" /> Preview
 																	</span>
 																	<button
@@ -1454,7 +1454,7 @@ export default function UsulanIdleClient({
 
 				{/* Table */}
 				<div className="w-full overflow-x-auto">
-					<table className="w-full table-fixed text-left border-collapse">
+					<table className="w-full min-w-[920px] table-fixed text-left border-collapse">
 						<colgroup>
 							<col className="w-[3%]" />
 							<col className="w-[18%]" />
@@ -1693,9 +1693,9 @@ export default function UsulanIdleClient({
 			{/* MODAL DETAIL INFORMASI USULAN IDLE                        */}
 			{/* ========================================================= */}
 			{detailModal && (
-				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-					<div className="bg-white rounded-xl shadow-2xl w-full max-w-xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
-						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
+				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0F172A]/50 animate-in fade-in duration-200">
+					<div className="bg-white rounded-xl shadow-2xl w-full max-w-xl overflow-hidden border border-gray-100 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+						<div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
 							<div className="flex items-center gap-3">
 								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
 									<FileText className="w-5 h-5 text-white" />
@@ -1710,6 +1710,8 @@ export default function UsulanIdleClient({
 								</div>
 							</div>
 							<button
+								type="button"
+								aria-label="Tutup dialog"
 								onClick={() => setDetailModal(null)}
 								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
 							>
@@ -1717,7 +1719,7 @@ export default function UsulanIdleClient({
 							</button>
 						</div>
 
-						<div className="p-6 overflow-y-auto flex-1 flex flex-col gap-5">
+						<div className="p-6 flex-1 min-h-0 overflow-y-auto scroll-smooth flex flex-col gap-5">
 							{/* Section 1: Informasi Usulan & Lokasi */}
 							<div className="border-b border-gray-100 pb-4">
 								<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">
@@ -1936,8 +1938,9 @@ export default function UsulanIdleClient({
 								)}
 						</div>
 
-						<div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end bg-gray-50">
+						<div className="px-6 py-4 shrink-0 border-t border-gray-200 flex items-center justify-end bg-gray-50">
 							<button
+								type="button"
 								onClick={() => setDetailModal(null)}
 								className="px-5 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors shadow-sm"
 							>

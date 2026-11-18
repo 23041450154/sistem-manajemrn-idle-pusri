@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useMemo, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
 	Eye,
 	X,
@@ -88,7 +88,7 @@ export interface ReuseRequestApi {
 }
 
 /** Client Component: interaksi (tab/filter/paginasi/review approve-revisi) — data di-fetch Server Component. */
-export default function ManajerPemakaianClient({
+function ManajerPemakaianContent({
 	requests,
 	onRefresh,
 }: {
@@ -96,11 +96,30 @@ export default function ManajerPemakaianClient({
 	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const rawTab = (searchParams?.get("tab") || "").toLowerCase();
+	const resolvedUrlTab: "inbox" | "history" =
+		rawTab === "history" || rawTab === "riwayat" ? "history" : "inbox";
+
+	const [prevUrlTab, setPrevUrlTab] = useState<"inbox" | "history">(resolvedUrlTab);
 	const [search, setSearch] = useState("");
 	const [searchInput, setSearchInput] = useState("");
 	const [plant, setPlant] = useState("Semua Plant");
 	const [status, setStatus] = useState("Semua Status");
-	const [listTab, setListTab] = useState<"inbox" | "history">("inbox");
+	const [listTab, setListTab] = useState<"inbox" | "history">(resolvedUrlTab);
+	if (prevUrlTab !== resolvedUrlTab) {
+		setPrevUrlTab(resolvedUrlTab);
+		setListTab(resolvedUrlTab);
+	}
+
+	const syncListTab = useCallback((nextTab: "inbox" | "history") => {
+		setListTab(nextTab);
+		if (typeof window !== "undefined") {
+			const url = new URL(window.location.href);
+			url.searchParams.set("tab", nextTab);
+			window.history.replaceState(null, "", url.toString());
+		}
+	}, []);
 	const [startDate, setStartDate] = useState("");
 	const [endDate, setEndDate] = useState("");
 
@@ -228,12 +247,10 @@ export default function ManajerPemakaianClient({
 				selectedRequest.id,
 			);
 			if (result.success) {
-				if (onRefresh) {
-					await onRefresh();
-				} else {
-					router.refresh();
-				}
-
+				setIsConfirmOpen(false);
+				closeDrawer();
+				syncListTab("history");
+				setCurrentPage(1);
 				setNotification({
 					type: "success",
 					message:
@@ -241,10 +258,13 @@ export default function ManajerPemakaianClient({
 							? `Pengajuan pemakaian ${selectedRequest.request_number} telah disetujui! Status beralih menjadi APPROVED (Approved for Reuse) dan instruksi serah terima fisik aset telah diterbitkan.`
 							: `Pengajuan pemakaian ${selectedRequest.request_number} dikembalikan untuk revisi.`,
 				});
+				if (onRefresh) {
+					await onRefresh();
+				} else {
+					router.refresh();
+				}
 
 				setTimeout(() => setNotification(null), 3000);
-				setIsConfirmOpen(false);
-				closeDrawer();
 			} else {
 				alert(result.message || "Gagal memperbarui status.");
 			}
@@ -330,14 +350,14 @@ export default function ManajerPemakaianClient({
 					<button
 						type="button"
 						onClick={() => {
-							setListTab("inbox");
+							syncListTab("inbox");
 							setCurrentPage(1);
 						}}
-						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${listTab === "inbox" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
+						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors cursor-pointer ${listTab === "inbox" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
 					>
 						Antrean Persetujuan
 						<span
-							className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${listTab === "inbox" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}
+							className={`rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums ${listTab === "inbox" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}
 						>
 							{inboxCount}
 						</span>
@@ -345,14 +365,14 @@ export default function ManajerPemakaianClient({
 					<button
 						type="button"
 						onClick={() => {
-							setListTab("history");
+							syncListTab("history");
 							setCurrentPage(1);
 						}}
-						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${listTab === "history" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
+						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors cursor-pointer ${listTab === "history" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
 					>
 						Riwayat Persetujuan
 						<span
-							className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${listTab === "history" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}
+							className={`rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums ${listTab === "history" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}
 						>
 							{historyCount}
 						</span>
@@ -432,7 +452,8 @@ export default function ManajerPemakaianClient({
 						</button>
 					</div>
 				</div>
-				<table className="w-full text-left border-collapse table-fixed">
+				<div className="w-full overflow-x-auto">
+					<table className="w-full min-w-[1040px] text-left border-collapse table-fixed">
 					<thead className="bg-gray-50 border-b border-gray-200">
 						<tr>
 							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[35px]">
@@ -537,6 +558,7 @@ export default function ManajerPemakaianClient({
 						)}
 					</tbody>
 				</table>
+				</div>
 
 				{/* Table Pagination */}
 				{filteredRequests.length > 0 && (
@@ -590,17 +612,22 @@ export default function ManajerPemakaianClient({
 				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
 					{/* Backdrop */}
 					<div
-						className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
+						className="fixed inset-0 bg-[#0F172A]/50 transition-opacity animate-in fade-in duration-200"
 						onClick={closeDrawer}
 					/>
 
 					{/* Centered Dialog Window */}
-					<div className="relative bg-white w-full max-w-2xl max-h-[90vh] rounded-2xl shadow-2xl flex flex-col z-10 animate-in fade-in zoom-in-95 duration-200 border border-slate-100 overflow-hidden">
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-label={`Persetujuan Pemakaian Aset ${selectedRequest.request_number}`}
+						className="relative bg-white w-full max-w-2xl max-h-[85vh] rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col z-10 animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
+					>
 						{/* Header */}
-						<div className="bg-gradient-to-r from-[#0A356A] to-[#0D478A] text-white px-6 py-4 flex items-center justify-between shrink-0 shadow-md">
+						<div className="bg-[#0A356A] text-white px-6 py-4 flex items-center justify-between shrink-0 border-b border-[#E6E8EA]">
 							<div>
 								<div className="flex items-center gap-2">
-									<span className="text-[10px] font-bold uppercase tracking-wider bg-blue-400/20 text-blue-200 px-2 py-0.5 rounded-md border border-blue-300/30">
+									<span className="text-[10px] font-bold uppercase tracking-wider bg-white/15 text-blue-100 px-2 py-0.5 rounded border border-white/20">
 										Persetujuan Pemakaian Aset
 									</span>
 								</div>
@@ -610,15 +637,16 @@ export default function ManajerPemakaianClient({
 							</div>
 							<button
 								type="button"
+								aria-label="Tutup dialog persetujuan pemakaian"
 								onClick={(e) => {
 									e.preventDefault();
 									e.stopPropagation();
 									closeDrawer();
 								}}
-								className="text-white/80 hover:text-white p-2 rounded-xl hover:bg-white/10 transition-colors"
+								className="text-white/80 hover:text-white p-2 rounded hover:bg-white/10 transition-colors"
 								title="Tutup"
 							>
-								<X className="w-5 h-5" />
+								<X className="w-5 h-5" aria-hidden="true" />
 							</button>
 						</div>
 
@@ -632,13 +660,13 @@ export default function ManajerPemakaianClient({
 							</div>
 
 							{/* Tabs */}
-							<div className="flex items-center gap-1 bg-white p-1 rounded-xl border border-slate-200 shadow-xs">
+							<div className="flex items-center gap-1 bg-white p-1 rounded border border-slate-200">
 								<button
 									type="button"
 									onClick={() => setActiveTab("detail")}
-									className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+									className={`px-3.5 py-1.5 rounded text-xs font-bold transition-all ${
 										activeTab === "detail"
-											? "bg-[#0A356A] text-white shadow-xs"
+											? "bg-[#0A356A] text-white"
 											: "text-slate-600 hover:bg-slate-100"
 									}`}
 								>
@@ -647,9 +675,9 @@ export default function ManajerPemakaianClient({
 								<button
 									type="button"
 									onClick={() => setActiveTab("history")}
-									className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
+									className={`px-3.5 py-1.5 rounded text-xs font-bold transition-all ${
 										activeTab === "history"
-											? "bg-[#0A356A] text-white shadow-xs"
+											? "bg-[#0A356A] text-white"
 											: "text-slate-600 hover:bg-slate-100"
 									}`}
 								>
@@ -659,7 +687,7 @@ export default function ManajerPemakaianClient({
 						</div>
 
 						{/* Scrollable Modal Body */}
-						<div className="flex-1 overflow-y-auto p-6 space-y-5 bg-slate-50/50">
+						<div className="flex-1 min-h-0 overflow-y-auto scroll-smooth p-6 space-y-5 bg-slate-50/50">
 							{activeTab === "detail" && (
 								<>
 									{/* Managerial Authority Notice */}
@@ -990,35 +1018,54 @@ export default function ManajerPemakaianClient({
 			{isConfirmOpen && selectedRequest && (
 				<div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
 					<div
-						className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
+						className="fixed inset-0 bg-[#0F172A]/50 transition-opacity"
 						onClick={() => !isSubmitting && setIsConfirmOpen(false)}
 					/>
-					<div className="relative z-10 w-full max-w-md bg-white rounded-xl shadow-2xl p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-						<div className="w-12 h-12 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
-							<CheckCircle2 className="w-7 h-7 text-emerald-600" />
-						</div>
-
-						<h3 className="text-lg font-bold text-gray-900 mb-2">
-							Konfirmasi Persetujuan Pemakaian Aset
-						</h3>
-
-						<p className="text-[13px] text-gray-600 mb-6 leading-relaxed">
-							Apakah Anda yakin ingin menyetujui permohonan pemakaian{" "}
-							<span className="font-semibold text-gray-900">{selectedRequest.request_number}</span>?
-							Sebagai <span className="font-semibold text-gray-900">Manajer Rendal</span>, persetujuan ini akan menetapkan transisi status menjadi{" "}
-							<span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
-								Approved for Reuse
-							</span>, mengurangi kuota ketersediaan alat di sistem, dan menerbitkan instruksi serah terima fisik peralatan{" "}
-							<span className="font-bold text-gray-900">{selectedRequest.equipment_code}</span> ({selectedRequest.equipment_name}) untuk unit kerja{" "}
-							<span className="font-semibold text-gray-900">{selectedRequest.requesting_unit}</span> di bawah kendali manajerial.
-						</p>
-
-						<div className="flex items-center gap-3 w-full justify-center">
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-label="Konfirmasi Persetujuan Pemakaian Aset"
+						className="relative z-10 w-full max-w-md bg-white rounded-lg shadow-2xl border border-gray-200 flex flex-col max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-200"
+					>
+						<div className="px-5 py-3.5 shrink-0 border-b border-gray-200 flex items-center justify-between bg-white">
+							<div className="flex items-center gap-2.5">
+								<div className="w-8 h-8 bg-emerald-100 rounded flex items-center justify-center shrink-0">
+									<CheckCircle2 className="w-4 h-4 text-emerald-600" />
+								</div>
+								<h3 className="text-[15px] font-bold text-gray-900">
+									Konfirmasi Persetujuan Pemakaian Aset
+								</h3>
+							</div>
 							<button
 								type="button"
 								disabled={isSubmitting}
 								onClick={() => setIsConfirmOpen(false)}
-								className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md text-[13px] font-semibold hover:bg-gray-50 transition-colors w-[120px]"
+								aria-label="Tutup konfirmasi persetujuan"
+								className="p-1.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors disabled:opacity-50"
+							>
+								<X className="w-4 h-4" />
+							</button>
+						</div>
+
+						<div className="px-5 py-4 flex-1 min-h-0 overflow-y-auto scroll-smooth">
+							<p className="text-[13px] text-gray-600 leading-relaxed">
+								Apakah Anda yakin ingin menyetujui permohonan pemakaian{" "}
+								<span className="font-semibold text-gray-900">{selectedRequest.request_number}</span>?
+								Sebagai <span className="font-semibold text-gray-900">Manajer Rendal</span>, persetujuan ini akan menetapkan transisi status menjadi{" "}
+								<span className="font-bold text-emerald-700 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200">
+									Approved for Reuse
+								</span>, mengurangi kuota ketersediaan alat di sistem, dan menerbitkan instruksi serah terima fisik peralatan{" "}
+								<span className="font-bold text-gray-900">{selectedRequest.equipment_code}</span> ({selectedRequest.equipment_name}) untuk unit kerja{" "}
+								<span className="font-semibold text-gray-900">{selectedRequest.requesting_unit}</span> di bawah kendali manajerial.
+							</p>
+						</div>
+
+						<div className="px-5 py-3.5 shrink-0 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-2.5">
+							<button
+								type="button"
+								disabled={isSubmitting}
+								onClick={() => setIsConfirmOpen(false)}
+								className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded text-[13px] font-semibold hover:bg-gray-50 transition-colors"
 							>
 								Batal
 							</button>
@@ -1026,7 +1073,7 @@ export default function ManajerPemakaianClient({
 								type="button"
 								disabled={isSubmitting}
 								onClick={() => handleAction("APPROVED")}
-								className="px-5 py-2.5 bg-[#0556B3] text-white rounded-md text-[13px] font-semibold hover:bg-[#0A356A] transition-colors min-w-[170px] flex items-center justify-center gap-2 cursor-pointer"
+								className="px-4 py-2 bg-[#0556B3] text-white rounded text-[13px] font-semibold hover:bg-[#0A356A] transition-colors flex items-center justify-center gap-2 cursor-pointer"
 							>
 								{isSubmitting ? (
 									<RefreshCw className="w-4 h-4 animate-spin" />
@@ -1040,5 +1087,15 @@ export default function ManajerPemakaianClient({
 				</div>
 			)}
 		</div>
+	);
+}
+
+export default function ManajerPemakaianClient(
+	props: React.ComponentProps<typeof ManajerPemakaianContent>,
+) {
+	return (
+		<Suspense fallback={null}>
+			<ManajerPemakaianContent {...props} />
+		</Suspense>
 	);
 }

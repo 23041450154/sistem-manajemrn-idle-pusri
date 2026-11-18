@@ -98,7 +98,11 @@ export default function InspeksiAntreanPage() {
 					ins.storage_location ||
 					"-",
 				inspection_date:
-					ins.inspection_date || ins.created_at || new Date().toISOString(),
+					ins.inspection_date ||
+					ins.inspected_at ||
+					ins.date ||
+					ins.created_at ||
+					new Date().toISOString(),
 				notes: ins.notes || ins.summary || "Inspeksi berkala selesai.",
 				condition_name: formatCondition(rawCondition),
 				require_action_name:

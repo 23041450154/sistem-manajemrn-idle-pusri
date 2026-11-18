@@ -3,8 +3,8 @@
 /* ponytail: payload API legacy tetap untyped sampai backend mengekspor DTO bersama. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useMemo, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
 	Eye,
 	X,
@@ -24,6 +24,10 @@ import {
 } from "@/action/api";
 import { statusBadgeStyle, statusText } from "@/lib/equipment-status";
 import { fileUrl } from "@/lib/file-url";
+import {
+	extractSapNotification,
+	cleanNotesWithoutSapNotification,
+} from "@/lib/sap-notification";
 
 type Lookup = {
 	id: number;
@@ -85,7 +89,7 @@ const CONDITION_RESULT: Record<string, string> = {
 
 /** Client Component: alur review multi-step (mulai review -> approve/revisi).
  * Data inbox di-fetch Server Component; detail per-aset tetap dimuat saat modal dibuka. */
-export default function ManajerApproveClient({
+function ManajerApproveContent({
 	requests,
 	plants,
 	onRefresh,
@@ -95,11 +99,30 @@ export default function ManajerApproveClient({
 	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const rawTabParam = (searchParams?.get("tab") || "").toLowerCase();
+	const resolvedUrlTab: "inbox" | "history" =
+		rawTabParam === "history" || rawTabParam === "riwayat" ? "history" : "inbox";
+
+	const [prevUrlTab, setPrevUrlTab] = useState<"inbox" | "history">(resolvedUrlTab);
 	const [search, setSearch] = useState("");
 	const [searchInput, setSearchInput] = useState("");
 	const [plant, setPlant] = useState("Semua Plant");
 	const [status, setStatus] = useState("Semua Status");
-	const [activeTab, setActiveTab] = useState<"inbox" | "history">("inbox");
+	const [activeTab, setActiveTab] = useState<"inbox" | "history">(resolvedUrlTab);
+	if (prevUrlTab !== resolvedUrlTab) {
+		setPrevUrlTab(resolvedUrlTab);
+		setActiveTab(resolvedUrlTab);
+	}
+
+	const syncTab = useCallback((nextTab: "inbox" | "history") => {
+		setActiveTab(nextTab);
+		if (typeof window !== "undefined") {
+			const url = new URL(window.location.href);
+			url.searchParams.set("tab", nextTab);
+			window.history.replaceState(null, "", url.toString());
+		}
+	}, []);
 	const [startDate, setStartDate] = useState("");
 	const [endDate, setEndDate] = useState("");
 
@@ -267,6 +290,10 @@ export default function ManajerApproveClient({
 			);
 
 			if (res.success) {
+				setIsConfirmOpen(false);
+				closeModal();
+				syncTab("history");
+				setCurrentPage(1);
 				setNotification({
 					type: "success",
 					message: "Berhasil menyetujui aset!",
@@ -276,8 +303,6 @@ export default function ManajerApproveClient({
 				} else {
 					router.refresh();
 				}
-				setIsConfirmOpen(false);
-				closeModal();
 				setTimeout(() => setNotification(null), 3000);
 			} else {
 				setNotification({
@@ -305,6 +330,10 @@ export default function ManajerApproveClient({
 			);
 
 			if (res.success) {
+				setIsRevisiOpen(false);
+				closeModal();
+				syncTab("history");
+				setCurrentPage(1);
 				setNotification({
 					type: "success",
 					message: "Berhasil mengirim permintaan revisi!",
@@ -314,8 +343,6 @@ export default function ManajerApproveClient({
 				} else {
 					router.refresh();
 				}
-				setIsRevisiOpen(false);
-				closeModal();
 				setTimeout(() => setNotification(null), 3000);
 			} else {
 				setNotification({
@@ -451,14 +478,14 @@ export default function ManajerApproveClient({
 					<button
 						type="button"
 						onClick={() => {
-							setActiveTab("inbox");
+							syncTab("inbox");
 							setCurrentPage(1);
 						}}
-						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${activeTab === "inbox" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
+						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors cursor-pointer ${activeTab === "inbox" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
 					>
 						Antrean Persetujuan
 						<span
-							className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${activeTab === "inbox" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}
+							className={`rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums ${activeTab === "inbox" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}
 						>
 							{inboxCount}
 						</span>
@@ -466,14 +493,14 @@ export default function ManajerApproveClient({
 					<button
 						type="button"
 						onClick={() => {
-							setActiveTab("history");
+							syncTab("history");
 							setCurrentPage(1);
 						}}
-						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors ${activeTab === "history" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
+						className={`relative flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors cursor-pointer ${activeTab === "history" ? "border-b-2 border-[#0A356A] text-[#0A356A]" : "text-gray-500 hover:text-gray-700"}`}
 					>
 						Riwayat Persetujuan
 						<span
-							className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${activeTab === "history" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}
+							className={`rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums ${activeTab === "history" ? "bg-[#0A356A] text-white" : "bg-gray-100 text-gray-600"}`}
 						>
 							{historyCount}
 						</span>
@@ -553,7 +580,7 @@ export default function ManajerApproveClient({
 						</div>
 					</div>
 				</div>
-				<div className="overflow-x-auto">
+				<div className="w-full overflow-x-auto">
 					<table className="w-full text-left border-collapse">
 						<thead className="bg-gray-50 border-b border-gray-200">
 							<tr>
@@ -699,11 +726,16 @@ export default function ManajerApproveClient({
 			{isModalOpen && selectedAsset && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 					<div
-						className="fixed inset-0 bg-gray-900/50 backdrop-blur-sm transition-opacity"
+						className="fixed inset-0 bg-[#0F172A]/50 transition-opacity"
 						onClick={closeModal}
 					/>
 
-					<div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-label={`Detail Review Persetujuan ${selectedAsset.kodeAset}`}
+						className="relative w-full max-w-4xl max-h-[85vh] bg-white rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden"
+					>
 						{/* Modal Header */}
 						<div className="flex items-start justify-between px-6 py-4 border-b border-gray-200 bg-white shrink-0">
 							<div>
@@ -715,15 +747,17 @@ export default function ManajerApproveClient({
 								</p>
 							</div>
 							<button
+								type="button"
+								aria-label="Tutup detail review persetujuan"
 								onClick={closeModal}
-								className="text-gray-400 hover:text-gray-900 hover:bg-gray-100 p-1 rounded-md transition-colors font-bold mt-1"
+								className="text-gray-400 hover:text-gray-900 hover:bg-gray-100 p-1.5 rounded transition-colors font-bold mt-1"
 							>
-								<X className="w-5 h-5" strokeWidth={3} />
+								<X className="w-5 h-5" strokeWidth={3} aria-hidden="true" />
 							</button>
 						</div>
 
 						{/* Modal Body */}
-						<div className="flex-1 overflow-y-auto px-6 py-5 bg-gray-50">
+						<div className="flex-1 min-h-0 overflow-y-auto scroll-smooth px-6 py-5 bg-gray-50">
 							{/* Alert Banner Dinamis */}
 							<div
 								className={`border rounded-lg p-3.5 flex items-start gap-3 mb-6 ${
@@ -1112,7 +1146,7 @@ export default function ManajerApproveClient({
 												</p>
 												<p className="text-[13px] text-gray-800 italic">
 													{validationDetail?.notes ? (
-														`"${validationDetail.notes}"`
+														`"${cleanNotesWithoutSapNotification(validationDetail.notes)}"`
 													) : (
 														<span className="text-gray-400">Belum ada catatan</span>
 													)}
@@ -1127,6 +1161,15 @@ export default function ManajerApproveClient({
 															Belum ada rekomendasi
 														</span>
 													)}
+												</p>
+
+												<p className="text-[12px] text-gray-500 font-medium mt-3">
+													No. Notifikasi SAP:
+												</p>
+												<p className="text-[13px] font-bold text-[#0A356A] tabular-nums">
+													{extractSapNotification(validationDetail) ||
+														extractSapNotification(equipmentDetail) ||
+														"-"}
 												</p>
 											</div>
 										</div>
@@ -1273,37 +1316,57 @@ export default function ManajerApproveClient({
 			{isConfirmOpen && selectedAsset && (
 				<div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
 					<div
-						className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
+						className="fixed inset-0 bg-[#0F172A]/50 transition-opacity"
 						onClick={() => setIsConfirmOpen(false)}
 					/>
 
-					<div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-						<div className="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center mb-4">
-							<CheckCircle2 className="w-7 h-7 text-green-600" />
+					<div
+						role="alertdialog"
+						aria-modal="true"
+						aria-label="Konfirmasi Persetujuan Aset"
+						className="relative w-full max-w-md max-h-[85vh] bg-white rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+					>
+						<div className="flex items-center justify-between gap-3 px-6 py-4 shrink-0 border-b border-gray-200 bg-white">
+							<div className="flex items-center gap-3">
+								<div className="w-9 h-9 bg-green-100 rounded-full flex items-center justify-center shrink-0">
+									<CheckCircle2 className="w-5 h-5 text-green-600" aria-hidden="true" />
+								</div>
+								<h3 className="text-base font-bold text-gray-900">
+									Konfirmasi Persetujuan Aset
+								</h3>
+							</div>
+							<button
+								type="button"
+								aria-label="Tutup konfirmasi persetujuan"
+								onClick={() => setIsConfirmOpen(false)}
+								className="p-1.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+							>
+								<X className="w-4 h-4" aria-hidden="true" />
+							</button>
 						</div>
 
-						<h3 className="text-lg font-bold text-gray-900 mb-2">
-							Konfirmasi Persetujuan Aset
-						</h3>
+						<div className="px-6 py-5 flex-1 min-h-0 overflow-y-auto scroll-smooth">
+							<p className="text-[13px] text-gray-600 leading-relaxed">
+								Apakah Anda yakin ingin menyetujui hasil validasi ini? Setelah disetujui,{" "}
+								<span className="font-bold">{selectedAsset.kodeAset}</span> aset akan
+								berubah menjadi{" "}
+								<span className="font-bold text-green-700">READY_TO_USE</span>, proses
+								persetujuan selesai, dan pengajuan tidak lagi muncul pada Inbox Approval.
+							</p>
+						</div>
 
-						<p className="text-[13px] text-gray-600 mb-6 leading-relaxed">
-							Apakah Anda yakin ingin menyetujui hasil validasi ini? Setelah disetujui,{" "}
-							<span className="font-bold">{selectedAsset.kodeAset}</span> aset akan
-							berubah menjadi{" "}
-							<span className="font-bold text-green-700">READY_TO_USE</span>, proses
-							persetujuan selesai, dan pengajuan tidak lagi muncul pada Inbox Approval.
-						</p>
-
-						<div className="flex items-center gap-3 w-full justify-center">
+						<div className="flex items-center justify-end gap-3 px-6 py-4 shrink-0 border-t border-gray-200 bg-gray-50">
 							<button
+								type="button"
 								onClick={() => setIsConfirmOpen(false)}
-								className="px-5 py-2.5 bg-white border border-gray-300 text-gray-700 rounded-md text-[13px] font-semibold hover:bg-gray-50 transition-colors w-[120px]"
+								className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded text-[13px] font-semibold hover:bg-gray-50 transition-colors"
 							>
 								Batal
 							</button>
 							<button
+								type="button"
 								onClick={handleApprove}
-								className="px-5 py-2.5 bg-[#166534] text-white rounded-md text-[13px] font-semibold hover:bg-[#14532d] transition-colors w-[120px]"
+								className="px-5 py-2 bg-[#166534] text-white rounded text-[13px] font-semibold hover:bg-[#14532d] transition-colors"
 							>
 								Ya, Setujui
 							</button>
@@ -1316,56 +1379,79 @@ export default function ManajerApproveClient({
 			{isRevisiOpen && selectedAsset && (
 				<div className="fixed inset-0 z-[60] flex items-center justify-center p-4">
 					<div
-						className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm transition-opacity"
+						className="fixed inset-0 bg-[#0F172A]/50 transition-opacity"
 						onClick={() => setIsRevisiOpen(false)}
 					/>
 
-					<div className="relative w-full max-w-md bg-white rounded-xl shadow-2xl p-6 flex flex-col items-start animate-in zoom-in-95 duration-200">
-						<div className="flex items-center gap-3 mb-3">
-							<div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-								<RefreshCw className="w-4 h-4 text-purple-600" strokeWidth={3} />
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-label="Minta Revisi Validasi"
+						className="relative w-full max-w-md max-h-[85vh] bg-white rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col overflow-hidden animate-in zoom-in-95 duration-200"
+					>
+						<div className="flex items-center justify-between gap-3 px-6 py-4 shrink-0 border-b border-gray-200 bg-white">
+							<div className="flex items-center gap-3">
+								<div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center shrink-0">
+									<RefreshCw className="w-4 h-4 text-purple-600" strokeWidth={3} aria-hidden="true" />
+								</div>
+								<h3 className="text-[16px] font-bold text-gray-900">
+									Minta Revisi Validasi
+								</h3>
 							</div>
-							<h3 className="text-[16px] font-bold text-gray-900">
-								Minta Revisi Validasi
-							</h3>
-						</div>
-
-						<p className="text-[13px] text-gray-600 mb-5 leading-relaxed text-left">
-							Apakah Anda yakin ingin meminta revisi? Tim Inspeksi Teknik akan dapat
-							memperbarui hasil validasi berdasarkan catatan revisi yang Anda berikan
-							di bawah ini.
-						</p>
-
-						<div className="text-left w-full mb-6">
-							<label className="block text-[12px] font-bold text-gray-800 mb-1.5">
-								Catatan Revisi Manajer (Wajib) *
-							</label>
-							<textarea
-								value={revisiCatatan}
-								onChange={(e) => {
-									setRevisiCatatan(e.target.value);
-									if (e.target.value.trim()) setRevisiError(false);
-								}}
-								placeholder="Tulis instruksi revisi secara spesifik (misal: 'Perbaiki foto plat nama yang buram')..."
-								className={`w-full p-3 border rounded-lg text-[13px] outline-none transition-colors resize-none h-24 ${revisiError ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500" : "border-gray-300 focus:border-purple-500 focus:ring-1 focus:ring-purple-500"}`}
-							/>
-							{revisiError && (
-								<p className="text-red-500 text-[11px] mt-1.5 font-medium">
-									Catatan revisi tidak boleh kosong.
-								</p>
-							)}
-						</div>
-
-						<div className="flex items-center justify-end gap-3 w-full">
 							<button
+								type="button"
+								aria-label="Tutup dialog minta revisi"
 								onClick={() => setIsRevisiOpen(false)}
-								className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded-md text-[13px] font-semibold hover:bg-gray-50 transition-colors"
+								className="p-1.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors"
+							>
+								<X className="w-4 h-4" aria-hidden="true" />
+							</button>
+						</div>
+
+						<div className="px-6 py-5 flex-1 min-h-0 overflow-y-auto scroll-smooth">
+							<p className="text-[13px] text-gray-600 mb-4 leading-relaxed text-left">
+								Apakah Anda yakin ingin meminta revisi? Tim Inspeksi Teknik akan dapat
+								memperbarui hasil validasi berdasarkan catatan revisi yang Anda berikan
+								di bawah ini.
+							</p>
+
+							<div className="text-left w-full">
+								<label
+									htmlFor="revisi-catatan-manajer"
+									className="block text-[12px] font-bold text-gray-800 mb-1.5"
+								>
+									Catatan Revisi Manajer (Wajib) *
+								</label>
+								<textarea
+									id="revisi-catatan-manajer"
+									value={revisiCatatan}
+									onChange={(e) => {
+										setRevisiCatatan(e.target.value);
+										if (e.target.value.trim()) setRevisiError(false);
+									}}
+									placeholder="Tulis instruksi revisi secara spesifik (misal: 'Perbaiki foto plat nama yang buram')..."
+									className={`w-full p-3 border rounded text-[13px] outline-none transition-colors resize-none h-24 ${revisiError ? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500" : "border-gray-300 focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"}`}
+								/>
+								{revisiError && (
+									<p className="text-red-500 text-[11px] mt-1.5 font-medium">
+										Catatan revisi tidak boleh kosong.
+									</p>
+								)}
+							</div>
+						</div>
+
+						<div className="flex items-center justify-end gap-3 px-6 py-4 shrink-0 border-t border-gray-200 bg-gray-50">
+							<button
+								type="button"
+								onClick={() => setIsRevisiOpen(false)}
+								className="px-5 py-2 bg-white border border-gray-300 text-gray-700 rounded text-[13px] font-semibold hover:bg-gray-50 transition-colors"
 							>
 								Batal
 							</button>
 							<button
+								type="button"
 								onClick={handleKirimRevisi}
-								className="px-5 py-2 bg-[#ff0000] text-white rounded-md text-[13px] font-semibold hover:bg-[#8c0000] transition-colors"
+								className="px-5 py-2 bg-[#DC2626] text-white rounded text-[13px] font-semibold hover:bg-[#b91c1c] transition-colors"
 							>
 								Kirim Permintaan Revisi
 							</button>
@@ -1401,5 +1487,15 @@ export default function ManajerApproveClient({
 				</div>
 			)}
 		</div>
+	);
+}
+
+export default function ManajerApproveClient(
+	props: React.ComponentProps<typeof ManajerApproveContent>,
+) {
+	return (
+		<Suspense fallback={null}>
+			<ManajerApproveContent {...props} />
+		</Suspense>
 	);
 }

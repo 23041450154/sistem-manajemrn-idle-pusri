@@ -1,20 +1,12 @@
 "use client";
 
-import { useAuth } from "@/components/AuthProvider";
-import { homePathForRole, normalizeRole } from "@/lib/roles";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import React from "react";
+import { RoleGuard } from "@/components/RoleGuard";
 
-export default function InspeksiLayout({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth();
-  const router = useRouter();
-  const allowed = normalizeRole(user?.role) === "INSPEKSI_TEKNIK";
-
-  useEffect(() => {
-    if (!allowed) router.replace(homePathForRole(user?.role));
-  }, [allowed, router, user?.role]);
-
-  if (!allowed) return null;
-  return <>{children}</>;
+export default function InspeksiLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  return <RoleGuard allowedRole="INSPEKSI_TEKNIK">{children}</RoleGuard>;
 }

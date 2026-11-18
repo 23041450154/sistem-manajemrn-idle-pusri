@@ -39,9 +39,18 @@ for (const file of files) {
     if (/^\s*(\/\/|\/\*|\*)/.test(line)) return;
     // Hanya baris atribut kelas yang nyata.
     if (!/className=/.test(line)) return;
-    if (!/overflow-x-(hidden|clip)/.test(line)) return;
-    if (!/(lg|md|xl|2xl):overflow-x-(hidden|clip)/.test(line)) return;
-    offenders.push(`${file}:${i + 1}  ${line.trim()}`);
+    if (/overflow-x-(hidden|clip)/.test(line)) {
+      offenders.push(`${file}:${i + 1}  ${line.trim()}`);
+    }
+  });
+
+  // Pastikan setiap <table> berada di dalam kontainer yang memiliki overflow-x-auto
+  lines.forEach((line, i) => {
+    if (!/<table[\s>]/.test(line)) return;
+    const lookback = lines.slice(Math.max(0, i - 8), i + 1).join("\n");
+    if (!/overflow-x-auto/.test(lookback)) {
+      offenders.push(`${file}:${i + 1}  <table> tanpa wrapper overflow-x-auto di sekitarnya`);
+    }
   });
 }
 

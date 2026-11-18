@@ -25,8 +25,9 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import { useAuth } from "@/components/AuthProvider";
 import { getInspectionClusterName } from "@/lib/inspection-cluster";
 import { formatNotesWithSapNotification } from "@/lib/sap-notification";
+import { todayLocalDate } from "@/lib/utils";
 
-/** Client Component: form inspeksi — data awal & master di-fetch Server Component. */
+/** Client Component: form inspeksi, data awal & master di-fetch Server Component. */
 export default function FormInspeksiClient({
 	equipmentId,
 	equipment,
@@ -39,8 +40,11 @@ export default function FormInspeksiClient({
 	const router = useRouter();
 	const { user } = useAuth();
 	const inspectionRoleName = getInspectionClusterName(user);
+	const todayStr = todayLocalDate();
 
 	// Form State
+	const [tanggalPemeriksaan, setTanggalPemeriksaan] = useState<string>(todayStr);
+	const [tanggalPemeriksaanError, setTanggalPemeriksaanError] = useState<string>("");
 	const [hasilInspeksi, setHasilInspeksi] = useState<string>("");
 	const [jenisPerbaikan, setJenisPerbaikan] = useState<string>("");
 	const [inspectionCondition, setInspectionCondition] = useState<string>("");
@@ -119,6 +123,10 @@ export default function FormInspeksiClient({
 		if (fileError) setFileError("");
 	};
 
+	const isTanggalEmpty = !tanggalPemeriksaan || tanggalPemeriksaan.trim() === "";
+	const isTanggalFuture = Boolean(
+		tanggalPemeriksaan && tanggalPemeriksaan > todayStr,
+	);
 	const isNotesEmpty = !notes || notes.trim() === "";
 	const isKelayakanNotSelected = hasilInspeksi === "";
 	const isPerbaikanKhususNotSelected =
@@ -126,14 +134,20 @@ export default function FormInspeksiClient({
 	const isKondisiEmpty = !inspectionCondition || inspectionCondition.trim() === "";
 	const isFilesEmpty = files.length === 0;
 
-	// AC 1: Kondisional wajib untuk rekomendasi Scrap / kondisi Rusak Berat
+	// US-17-FE: Muncul hanya saat Tidak Layak (Scrap -> wajib) atau Perlu Perbaikan (Repair -> opsional).
+	// Saat Layak Digunakan (READY) atau belum dipilih, kolom disembunyikan.
+	const showSapNotificationField =
+		hasilInspeksi === "SCRAP" || hasilInspeksi === "REPAIR";
 	const isSapNotificationRequired =
-		hasilInspeksi === "SCRAP" ||
-		inspectionCondition.toLowerCase().includes("rusak berat");
+		showSapNotificationField &&
+		(hasilInspeksi === "SCRAP" ||
+			inspectionCondition.toLowerCase().includes("rusak berat"));
 	const isSapNotificationEmpty =
 		isSapNotificationRequired && (!sapNotificationNumber || sapNotificationNumber.trim() === "");
 
 	const isSubmitDisabled =
+		isTanggalEmpty ||
+		isTanggalFuture ||
 		isKelayakanNotSelected ||
 		isPerbaikanKhususNotSelected ||
 		isKondisiEmpty ||
@@ -144,19 +158,33 @@ export default function FormInspeksiClient({
 
 	const handleSubmit = async (e?: React.FormEvent) => {
 		e?.preventDefault();
+		if (!tanggalPemeriksaan || !tanggalPemeriksaan.trim()) {
+			setTanggalPemeriksaanError("Tanggal pemeriksaan fisik wajib diisi.");
+			return;
+		}
+		if (tanggalPemeriksaan > todayStr) {
+			setTanggalPemeriksaanError(
+				"Tidak dapat memilih tanggal di masa depan.",
+			);
+			return;
+		}
 		if (files.length === 0) {
 			setFileError("Berkas lampiran/foto inspeksi wajib diunggah minimal 1 file.");
 			return;
 		}
 
-		if (isSapNotificationRequired && !sapNotificationNumber.trim()) {
+		const effectiveSap = showSapNotificationField
+			? sapNotificationNumber.trim()
+			: "";
+
+		if (isSapNotificationRequired && !effectiveSap) {
 			setSapNotificationError(
 				"Nomor Notifikasi SAP wajib diisi untuk rekomendasi Scrap / kondisi Rusak Berat.",
 			);
 			return;
 		}
 
-		if (sapNotificationNumber.trim().length > 50) {
+		if (effectiveSap.length > 50) {
 			setSapNotificationError("Nomor Notifikasi SAP maksimal 50 karakter.");
 			return;
 		}
@@ -219,6 +247,7 @@ export default function FormInspeksiClient({
 
 			const formData = new FormData();
 			formData.append("equipment_id", equipmentId || "");
+			formData.append("inspection_date", tanggalPemeriksaan);
 
 			formData.append("is_utilizable", isUtilizableStr);
 			if (isUtilizableStr === "true") {
@@ -230,13 +259,13 @@ export default function FormInspeksiClient({
 			formData.append("electrical_condition", inspectionCondition.trim());
 			formData.append("inspection_condition", inspectionCondition.trim());
 
-			if (sapNotificationNumber.trim()) {
-				formData.append("sap_notification_number", sapNotificationNumber.trim());
-				formData.append("sap_notification_num", sapNotificationNumber.trim());
-				formData.append("notification_number", sapNotificationNumber.trim());
+			if (effectiveSap) {
+				formData.append("sap_notification_number", effectiveSap);
+				formData.append("sap_notification_num", effectiveSap);
+				formData.append("notification_number", effectiveSap);
 			}
 
-			const finalNotes = formatNotesWithSapNotification(notes, sapNotificationNumber);
+			const finalNotes = formatNotesWithSapNotification(notes, effectiveSap);
 			formData.append("notes", finalNotes);
 
 			files.forEach((file) => {
@@ -251,7 +280,7 @@ export default function FormInspeksiClient({
 					`Hasil inspeksi berhasil disimpan dengan status ${response.new_status || "BERHASIL"}`,
 				);
 				setTimeout(() => {
-					router.push("/inspeksi/inspeksi-berkala");
+					router.push("/inspeksi/inspeksi-berkala?tab=riwayat");
 				}, 2000);
 			} else {
 				showToast("error", response.message || "Gagal menyimpan hasil inspeksi.");
@@ -367,86 +396,65 @@ export default function FormInspeksiClient({
 				</button>
 			</div>
 
-			{/* Equipment Info Card */}
-			<div className="bg-white border border-gray-200 rounded overflow-hidden mb-6">
-				<div className="px-5 py-3 border-b border-gray-200 bg-[#F2F3F4]">
-					<h2 className="text-[14px] font-bold text-gray-700flex items-center gap-2">
+			{/* Equipment Info Card (ringkas agar tidak makan tinggi layar) */}
+			<div className="bg-white border border-gray-200 rounded overflow-hidden mb-3">
+				<div className="px-4 py-2 border-b border-gray-200 bg-[#F2F3F4] flex items-center justify-between gap-2">
+					<h2 className="text-[13px] font-bold text-gray-700 flex items-center gap-2">
 						<FileText className="w-4 h-4 text-[#0A356A]" />
 						Informasi Aset
 					</h2>
+					<span className="inline-flex items-center px-2 py-0.5 rounded-[2px] text-[11px] font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200">
+						{(() => {
+							const s =
+								typeof equipment?.status === "string"
+									? equipment.status
+									: equipment?.status?.name || "READY TO USE";
+							return s === "IDLE" ? "READY TO USE" : s;
+						})()}
+					</span>
 				</div>
-				<div className="p-5 grid grid-cols-2 md:grid-cols-4 gap-4">
+				<div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 mb-1">Kode Aset</p>
-						<p className="text-[14px] font-bold text-[#0A356A]">
+						<p className="text-[10.5px] font-semibold text-gray-500">Kode Aset</p>
+						<p className="text-[13px] font-mono font-bold text-[#0A356A]">
 							{equipment?.equipment_code || "Memuat..."}
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 mb-1">Nama Aset</p>
-						<p className="text-[14px] font-bold text-gray-800">
+						<p className="text-[10.5px] font-semibold text-gray-500">Nama Aset</p>
+						<p className="text-[13px] font-bold text-gray-800 truncate" title={equipment?.name}>
 							{equipment?.name || "Memuat..."}
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 mb-1">Plant</p>
-						<p className="text-[14px] font-medium text-gray-700">
+						<p className="text-[10.5px] font-semibold text-gray-500">Plant</p>
+						<p className="text-[13px] font-medium text-gray-700">
 							{(typeof equipment?.plant === "string"
 								? equipment.plant
 								: equipment?.plant?.name) || "-"}
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 mb-1">
-							Lokasi Penyimpanan
-						</p>
-						<p className="text-[14px] font-medium text-gray-700">
+						<p className="text-[10.5px] font-semibold text-gray-500">Lokasi Simpan</p>
+						<p className="text-[13px] font-medium text-gray-700 truncate">
 							{equipment?.storage_location?.name || equipment?.location?.name || "-"}
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 mb-1">
-							Status Saat Ini
-						</p>
-						<span className="inline-flex items-center px-2.5 py-0.5 rounded text-[11px] font-bold bg-indigo-50 text-indigo-700 border border-indigo-200">
-							{(() => {
-								const s =
-									typeof equipment?.status === "string"
-										? equipment.status
-										: equipment?.status?.name || "READY TO USE";
-								return s === "IDLE" ? "READY TO USE" : s;
-							})()}
-						</span>
-					</div>
-					<div>
-						<p className="text-[11px] font-bold text-gray-500 mb-1">
-							Kondisi Fisik
-						</p>
-						<p className="text-[14px] font-medium text-gray-700">
+						<p className="text-[10.5px] font-semibold text-gray-500">Kondisi Fisik</p>
+						<p className="text-[13px] font-medium text-gray-700">
 							{(typeof equipment?.condition === "object"
 								? equipment?.condition?.name
 								: equipment?.condition) || "BAIK"}
 						</p>
 					</div>
 					<div>
-						<p className="text-[11px] font-bold text-gray-500 mb-1">
-							Tanggal Inspeksi
-						</p>
-						<p className="text-[14px] font-medium text-gray-700">
-							{new Date().toISOString().split("T")[0]}
-						</p>
-					</div>
-
-					{/* Catatan Aset / Catatan Sebelumnya */}
-					<div className="col-span-2 md:col-span-4 mt-1 p-3 bg-blue-50/70 border border-blue-100 rounded text-[13px]">
-						<p className="text-[11px] font-bold text-blue-900 uppercase tracking-wide mb-1">
-							Catatan Aset / Keterangan Sebelumnya:
-						</p>
-						<p className="text-gray-800 italic">
+						<p className="text-[10.5px] font-semibold text-gray-500">Catatan Aset</p>
+						<p className="text-[12px] text-gray-700 italic truncate" title={equipment?.notes || equipment?.description || "-"}>
 							{equipment?.notes && equipment?.notes !== "-"
-								? `"${equipment.notes}"`
+								? equipment.notes
 								: equipment?.description && equipment?.description !== "-"
-									? `"${equipment.description}"`
+									? equipment.description
 									: "-"}
 						</p>
 					</div>
@@ -459,92 +467,140 @@ export default function FormInspeksiClient({
 				className="bg-white border border-gray-200 rounded overflow-hidden"
 			>
 				{/* Form Header */}
-				<div className="px-5 py-3 border-b border-gray-200 bg-[#F2F3F4] flex items-center justify-between">
-					<h2 className="text-[14px] font-bold text-gray-700flex items-center gap-2">
+				<div className="px-4 py-2 border-b border-gray-200 bg-[#F2F3F4] flex items-center justify-between">
+					<h2 className="text-[13px] font-bold text-gray-700 flex items-center gap-2">
 						<ClipboardCheck className="w-4 h-4 text-[#0A356A]" />
 						Hasil Inspeksi
 					</h2>
 					<span className="text-[11px] font-bold text-[#DC2626]">* Wajib diisi</span>
 				</div>
 
-				<div className="p-5 space-y-6">
-					{/* Section: Hasil Inspeksi */}
-					<div>
-						<label className="block text-[13px] font-bold text-gray-700 mb-3">
-							Hasil Inspeksi Aset <span className="text-[#DC2626]">*</span>
-						</label>
-						<div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-							{hasilOptions.map((opt) => {
-								const isSelected = hasilInspeksi === opt.value;
-								const colorMap: Record<
-									string,
-									{ selected: string; hover: string; ring: string }
-								> = {
-									emerald: {
-										selected: "border-[#059669] bg-white ring-1 ring-[#059669]",
-										hover: "hover:border-[#059669]",
-										ring: "text-[#059669]",
-									},
-									amber: {
-										selected: "border-[#B45309] bg-white ring-1 ring-[#B45309]",
-										hover: "hover:border-[#B45309]",
-										ring: "text-[#B45309]",
-									},
-									red: {
-										selected: "border-[#DC2626] bg-white ring-1 ring-[#DC2626]",
-										hover: "hover:border-[#DC2626]",
-										ring: "text-[#DC2626]",
-									},
-								};
-								const c = colorMap[opt.color];
-								return (
-									<label
-										key={opt.value}
-										className={`relative flex flex-col gap-1 p-4 border-2 rounded cursor-pointer transition-all ${isSelected ? c.selected : `border-gray-200 ${c.hover} bg-white`} group`}
-									>
-										<input
-											type="radio"
-											name="hasil_inspeksi"
-											value={opt.value}
-											checked={isSelected}
-											onChange={(e) => {
-												setHasilInspeksi(e.target.value);
-												setJenisPerbaikan("");
-											}}
-											className="sr-only"
-										/>
-										<div className="flex items-center gap-2">
-											<div
-												className={`w-4 h-4 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? `${c.ring} border-current` : "border-gray-300"}`}
-											>
-												{isSelected && (
-													<div className={`w-2 h-2 rounded-full ${c.ring} bg-current`} />
-												)}
-											</div>
-											<span
-												className={`text-[14px] font-bold ${isSelected ? "text-gray-900" : "text-gray-700"} group-hover:text-gray-900 transition-colors`}
-											>
-												{opt.title}
-											</span>
-										</div>
-										<p className="text-[11px] text-gray-500 font-medium pl-6">
-											{opt.desc}
-										</p>
-									</label>
-								);
-							})}
+				<div className="p-4 space-y-3.5">
+					{/* Baris 1: Tanggal Pemeriksaan Fisik + Hasil Inspeksi Aset sejajar */}
+					<div className="grid grid-cols-1 lg:grid-cols-12 gap-3.5 items-start">
+						{/* Tanggal Pemeriksaan Fisik (DEV-16711) */}
+						<div className="lg:col-span-4">
+							<label
+								htmlFor="tanggal-pemeriksaan-fisik"
+								className="block text-[12.5px] font-bold text-gray-700 mb-1.5"
+							>
+								Tanggal Pemeriksaan Fisik <span className="text-[#DC2626]">*</span>
+							</label>
+							<input
+								id="tanggal-pemeriksaan-fisik"
+								type="date"
+								required
+								value={tanggalPemeriksaan}
+								max={todayStr}
+								onChange={(e) => {
+									const val = e.target.value;
+									setTanggalPemeriksaan(val);
+									if (!val) {
+										setTanggalPemeriksaanError(
+											"Tanggal pemeriksaan fisik wajib diisi.",
+										);
+									} else if (val > todayStr) {
+										setTanggalPemeriksaanError(
+											"Tidak dapat memilih tanggal di masa depan.",
+										);
+									} else {
+										setTanggalPemeriksaanError("");
+									}
+								}}
+								className={`h-9 w-full px-3 text-[13px] border rounded bg-white outline-none transition-colors font-medium tabular-nums ${
+									tanggalPemeriksaanError || isTanggalFuture
+										? "border-[#DC2626] focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
+										: "border-gray-300 focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"
+								}`}
+							/>
+							{tanggalPemeriksaanError ? (
+								<p className="text-[11px] text-[#DC2626] mt-1 font-medium">
+									{tanggalPemeriksaanError}
+								</p>
+							) : (
+								<p className="text-[11px] text-gray-500 mt-1">
+									Maksimal tanggal hari ini.
+								</p>
+							)}
 						</div>
 
-						{/* Scrap Warning */}
-						{hasilInspeksi === "SCRAP" && (
-							<div className="mt-3 flex items-start gap-2 bg-white border border-[#B45309] rounded p-3 animate-in fade-in duration-200">
-								<AlertCircle className="w-4 h-4 text-[#B45309] shrink-0 mt-0.5" />
-								<p className="text-[12px] text-[#B45309] font-medium">
-									Aset akan diajukan sebagai rekomendasi scrap dan memerlukan persetujuan
-									Manajer Rendal.
-								</p>
+						{/* Hasil Inspeksi */}
+						<div className="lg:col-span-8">
+							<label className="block text-[12.5px] font-bold text-gray-700 mb-1.5">
+								Hasil Inspeksi Aset <span className="text-[#DC2626]">*</span>
+							</label>
+							<div className="grid grid-cols-1 sm:grid-cols-3 gap-2.5">
+								{hasilOptions.map((opt) => {
+									const isSelected = hasilInspeksi === opt.value;
+									const colorMap: Record<
+										string,
+										{ selected: string; hover: string; ring: string }
+									> = {
+										emerald: {
+											selected: "border-[#059669] bg-white ring-1 ring-[#059669]",
+											hover: "hover:border-[#059669]",
+											ring: "text-[#059669]",
+										},
+										amber: {
+											selected: "border-[#B45309] bg-white ring-1 ring-[#B45309]",
+											hover: "hover:border-[#B45309]",
+											ring: "text-[#B45309]",
+										},
+										red: {
+											selected: "border-[#DC2626] bg-white ring-1 ring-[#DC2626]",
+											hover: "hover:border-[#DC2626]",
+											ring: "text-[#DC2626]",
+										},
+									};
+									const c = colorMap[opt.color];
+									return (
+										<label
+											key={opt.value}
+											className={`relative flex flex-col gap-0.5 p-2.5 border-2 rounded cursor-pointer transition-all ${isSelected ? c.selected : `border-gray-200 ${c.hover} bg-white`} group`}
+										>
+											<input
+												type="radio"
+												name="hasil_inspeksi"
+												value={opt.value}
+												checked={isSelected}
+												onChange={(e) => {
+													setHasilInspeksi(e.target.value);
+													setJenisPerbaikan("");
+												}}
+												className="sr-only"
+											/>
+											<div className="flex items-center gap-2">
+												<div
+													className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? `${c.ring} border-current` : "border-gray-300"}`}
+												>
+													{isSelected && (
+														<div className={`w-1.5 h-1.5 rounded-full ${c.ring} bg-current`} />
+													)}
+												</div>
+												<span
+													className={`text-[13px] font-bold ${isSelected ? "text-gray-900" : "text-gray-700"} group-hover:text-gray-900 transition-colors`}
+												>
+													{opt.title}
+												</span>
+											</div>
+											<p className="text-[11px] text-gray-500 pl-5">
+												{opt.desc}
+											</p>
+										</label>
+									);
+								})}
 							</div>
-						)}
+
+							{/* Scrap Warning */}
+							{hasilInspeksi === "SCRAP" && (
+								<div className="mt-2 flex items-center gap-2 bg-white border border-[#B45309] rounded px-3 py-2 animate-in fade-in duration-200">
+									<AlertCircle className="w-4 h-4 text-[#B45309] shrink-0" />
+									<p className="text-[12px] text-[#B45309] font-medium">
+										Aset akan diajukan sebagai rekomendasi scrap dan memerlukan persetujuan Manajer Rendal.
+									</p>
+								</div>
+							)}
+						</div>
 					</div>
 
 					{/* Section: Jenis Perbaikan (Conditional) */}
@@ -604,83 +660,83 @@ export default function FormInspeksiClient({
 						</div>
 					)}
 
-					{/* Section: Kondisi Sesuai Rumpun Akun Login */}
-					<div>
-						<label className="block text-[13px] font-bold text-gray-700 mb-2 uppercase">
-							Kondisi {inspectionRoleName} <span className="text-[#DC2626]">*</span>
-						</label>
-						<textarea
-							value={inspectionCondition}
-							onChange={(e) => {
-								setInspectionCondition(e.target.value);
-								e.target.style.height = "auto";
-								e.target.style.height = `${Math.max(90, e.target.scrollHeight)}px`;
-							}}
-							placeholder="Tuliskan hasil evaluasi pemeriksaan kondisi alat di sini..."
-							rows={4}
-							className="w-full px-3 py-2.5 text-[13px] border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
-						/>
-					</div>
-
-					{/* Section: Catatan */}
-					<div>
-						<label className="block text-[13px] font-bold text-gray-700 mb-2">
-							Catatan Inspeksi <span className="text-[#DC2626]">*</span>
-						</label>
-						<textarea
-							value={notes}
-							onChange={(e) => setNotes(e.target.value)}
-							placeholder="Tuliskan temuan lapangan secara rinci di sini..."
-							rows={5}
-							className="w-full px-3 py-2.5 text-[13px] border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
-						/>
-						<p className="text-[11px] text-gray-500 mt-1.5 font-medium">
-							Wajib diisi dan tidak boleh hanya berupa spasi kosong.
-						</p>
-					</div>
-
-					{/* Section: Nomor Notifikasi SAP (US-17-FE) */}
-					<div>
-						<div className="flex items-center justify-between mb-2">
-							<label className="block text-[13px] font-bold text-gray-700">
-								Nomor Notifikasi SAP{" "}
-								{isSapNotificationRequired ? (
-									<span className="text-[#DC2626] font-bold">* (Wajib untuk Scrap / Rusak Berat)</span>
-								) : (
-									<span className="text-gray-400 font-normal text-xs">(Opsional)</span>
-								)}
+					{/* Baris 2: Kondisi + Catatan Inspeksi sejajar */}
+					<div className="grid grid-cols-1 lg:grid-cols-2 gap-3.5">
+						<div>
+							<label className="block text-[12.5px] font-bold text-gray-700 mb-1.5 uppercase">
+								Kondisi {inspectionRoleName} <span className="text-[#DC2626]">*</span>
 							</label>
-							<span className="text-[11px] text-gray-400 font-medium">
-								{sapNotificationNumber.length}/50
-							</span>
+							<textarea
+								value={inspectionCondition}
+								onChange={(e) => {
+									setInspectionCondition(e.target.value);
+									e.target.style.height = "auto";
+									e.target.style.height = `${Math.max(72, e.target.scrollHeight)}px`;
+								}}
+								placeholder="Tuliskan hasil evaluasi pemeriksaan kondisi alat..."
+								rows={3}
+								className="w-full px-3 py-2 text-[13px] border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
+							/>
 						</div>
-						<input
-							type="text"
-							maxLength={50}
-							value={sapNotificationNumber}
-							onChange={(e) => {
-								setSapNotificationNumber(e.target.value);
-								if (sapNotificationError) setSapNotificationError("");
-							}}
-							placeholder="Contoh: 10023489"
-							className={`w-full px-3 py-2.5 text-[13px] border rounded bg-gray-50 focus:bg-white outline-none transition-all font-medium ${
-								sapNotificationError
-									? "border-red-500 focus:border-red-500 focus:ring-1 focus:ring-red-500"
-									: isSapNotificationRequired && !sapNotificationNumber.trim()
-										? "border-amber-400 focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"
-										: "border-gray-200 focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"
-							}`}
-						/>
-						{sapNotificationError ? (
-							<p className="text-[11px] text-red-500 mt-1.5 font-medium">
-								{sapNotificationError}
-							</p>
-						) : (
-							<p className="text-[11px] text-gray-500 mt-1.5 font-medium">
-								Masukkan nomor Maintenance Notification resmi dari SAP PM sebagai referensi audit.
-							</p>
-						)}
+
+						<div>
+							<label className="block text-[12.5px] font-bold text-gray-700 mb-1.5">
+								Catatan Inspeksi <span className="text-[#DC2626]">*</span>
+							</label>
+							<textarea
+								value={notes}
+								onChange={(e) => setNotes(e.target.value)}
+								placeholder="Tuliskan temuan lapangan secara rinci di sini..."
+								rows={3}
+								className="w-full px-3 py-2 text-[13px] border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all font-medium resize-none"
+							/>
+						</div>
 					</div>
+
+					{/* Section: Nomor Notifikasi SAP (US-17-FE: tampil kondisional saat Scrap / Repair) */}
+					{showSapNotificationField && (
+						<div>
+							<div className="flex items-center justify-between mb-1.5">
+								<label
+									htmlFor="sap-notification-berkala"
+									className="block text-[12.5px] font-bold text-gray-700"
+								>
+									Nomor Notifikasi SAP{" "}
+									{isSapNotificationRequired ? (
+										<span className="text-[#DC2626] font-bold">* (Wajib)</span>
+									) : (
+										<span className="text-gray-400 font-normal text-xs">(Opsional)</span>
+									)}
+								</label>
+								<span className="text-[11px] text-gray-400 font-medium tabular-nums">
+									{sapNotificationNumber.length}/50
+								</span>
+							</div>
+							<input
+								id="sap-notification-berkala"
+								type="text"
+								maxLength={50}
+								value={sapNotificationNumber}
+								onChange={(e) => {
+									setSapNotificationNumber(e.target.value);
+									if (sapNotificationError) setSapNotificationError("");
+								}}
+								placeholder="Contoh: 10023489"
+								className={`h-9 w-full px-3 text-[13px] border rounded bg-gray-50 focus:bg-white outline-none transition-all font-medium ${
+									sapNotificationError
+										? "border-[#DC2626] focus:border-[#DC2626] focus:ring-1 focus:ring-[#DC2626]"
+										: isSapNotificationRequired && !sapNotificationNumber.trim()
+											? "border-[#B45309] focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"
+											: "border-gray-200 focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"
+								}`}
+							/>
+							{sapNotificationError && (
+								<p className="text-[11px] text-[#DC2626] mt-1 font-medium">
+									{sapNotificationError}
+								</p>
+							)}
+						</div>
+					)}
 
 					{/* Section: Upload Foto */}
 					<div>
@@ -799,7 +855,7 @@ export default function FormInspeksiClient({
 													</div>
 
 													<div className="flex items-center gap-2 shrink-0 ml-3">
-														<span className="text-[11px] font-medium text-[#0A356A] bg-blue-50 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+														<span className="text-[11px] font-medium text-[#0A356A] bg-blue-50 group-hover:bg-blue-100 px-2 py-0.5 rounded transition-colors flex items-center gap-1">
 															<Eye className="w-3.5 h-3.5" /> Preview
 														</span>
 														<button

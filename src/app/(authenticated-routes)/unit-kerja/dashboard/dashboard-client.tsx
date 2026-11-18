@@ -130,7 +130,7 @@ export default function UnitKerjaDashboardContent({
 		const total = installed + approved + pending + rejected;
 
 		const data = [
-			{ name: "Terpasang (Selesai)", value: installed, color: "#10B981" },
+			{ name: "REUSED", value: installed, color: "#4F46E5" },
 			{ name: "Approved for Reuse", value: approved, color: "#059669" },
 			{ name: "Menunggu Review", value: pending, color: "#0556B3" },
 			{ name: "Perlu Revisi / Ditolak", value: rejected, color: "#DC2626" },
@@ -150,9 +150,9 @@ export default function UnitKerjaDashboardContent({
 		const s = status.toUpperCase();
 		let label = "Menunggu Review";
 		let style = "bg-[#FEF3C7] text-[#B45309]";
-		if (s.includes("INSTALLED") || s.includes("TERPASANG") || s.includes("SELESAI")) {
-			label = "Terpasang (Selesai)";
-			style = "bg-[#DCFCE7] text-[#16A34A]";
+		if (s.includes("INSTALLED") || s.includes("TERPASANG") || s.includes("SELESAI") || s.includes("REUSED")) {
+			label = "REUSED";
+			style = "bg-[#E0E7FF] text-[#4F46E5]";
 		} else if (s.includes("APPROV") || s.includes("DISETUJUI")) {
 			label = "Approved for Reuse";
 			style = "bg-[#DCFCE7] text-[#16A34A]";
@@ -471,7 +471,7 @@ export default function UnitKerjaDashboardContent({
 						</Link>
 					</div>
 
-					<div className="overflow-x-auto">
+					<div className="w-full overflow-x-auto">
 						<table className="w-full text-left border-collapse">
 							<thead>
 								<tr className="bg-[#F2F3F4] border-b border-[#E6E8EA]">

@@ -521,7 +521,9 @@ export default function RegisterEquipmentClient({
 			setIsSubmitting(false);
 			setNotification({
 				type: "success",
-				message: "Berhasil! Peralatan idle telah didaftarkan.",
+				message:
+					res.message ||
+					"Peralatan berhasil didaftarkan sebagai siklus idle baru.",
 			});
 			setTimeout(() => {
 				router.push("/rendal/idle");
@@ -1054,7 +1056,7 @@ export default function RegisterEquipmentClient({
 															</div>
 
 															<div className="flex items-center gap-2 shrink-0 ml-3">
-																<span className="text-[11px] font-medium text-[#0A356A] bg-blue-50 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+																<span className="text-[11px] font-medium text-[#0A356A] bg-blue-50 group-hover:bg-blue-100 px-2 py-0.5 rounded transition-colors flex items-center gap-1">
 																	<Eye className="w-3.5 h-3.5" /> Preview
 																</span>
 																<button

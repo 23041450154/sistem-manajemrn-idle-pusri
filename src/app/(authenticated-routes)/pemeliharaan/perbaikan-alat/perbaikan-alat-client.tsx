@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useEffect, useState, useMemo, useRef } from "react";
-import { useRouter } from "next/navigation";
+import React, { useEffect, useState, useMemo, useRef, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
 	completeEquipmentRepair,
 	getAttachmentsByEquipmentId,
@@ -167,8 +167,8 @@ function StatusBadge({
 	);
 }
 
-/** Client Component: interaksi (tab/search/filter/paginasi/modal) — data di-fetch Server Component. */
-export default function PerbaikanAlatClient({
+/** Client Component: interaksi (tab/search/filter/paginasi/modal) - data di-fetch di halaman. */
+function PerbaikanAlatContent({
 	equipments,
 	onRefresh,
 }: {
@@ -176,7 +176,29 @@ export default function PerbaikanAlatClient({
 	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
-	const [activeTab, setActiveTab] = useState<RepairFlowStatus>("REPAIR");
+	const searchParams = useSearchParams();
+	const urlStatusParam = (searchParams?.get("status") || "").toUpperCase();
+	const resolvedUrlStage: RepairFlowStatus = (
+		TABS as readonly string[]
+	).includes(urlStatusParam)
+		? (urlStatusParam as RepairFlowStatus)
+		: "REPAIR";
+
+	const [prevUrlStage, setPrevUrlStage] = useState<RepairFlowStatus>(resolvedUrlStage);
+	const [activeTab, setActiveTab] = useState<RepairFlowStatus>(resolvedUrlStage);
+	if (prevUrlStage !== resolvedUrlStage) {
+		setPrevUrlStage(resolvedUrlStage);
+		setActiveTab(resolvedUrlStage);
+	}
+
+	const syncStageTab = useCallback((stage: RepairFlowStatus) => {
+		setActiveTab(stage);
+		if (typeof window !== "undefined") {
+			const url = new URL(window.location.href);
+			url.searchParams.set("status", stage);
+			window.history.replaceState(null, "", url.toString());
+		}
+	}, []);
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [filterPlant, setFilterPlant] = useState("");
@@ -655,10 +677,11 @@ export default function PerbaikanAlatClient({
 						return (
 							<button
 								key={stage}
+								type="button"
 								role="tab"
 								aria-selected={isActive}
 								onClick={() => {
-									setActiveTab(stage);
+									syncStageTab(stage);
 									setCurrentPage(1);
 								}}
 								className={`min-h-[44px] flex items-center gap-2 whitespace-nowrap text-[13px] transition-colors duration-[140ms] ease-out border-b-2 -mb-px ${
@@ -984,10 +1007,10 @@ export default function PerbaikanAlatClient({
 						role="dialog"
 						aria-modal="true"
 						aria-label={`Pencatatan hasil perbaikan ${selectedAsset.kodeAlat}`}
-						className="bg-white rounded-[4px] shadow-[0_8px_24px_-4px_rgb(15_23_42_/_0.12)] w-full max-w-6xl overflow-hidden border border-[#E6E8EA] flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200"
+						className="bg-white rounded-[4px] shadow-[0_8px_24px_-4px_rgb(15_23_42_/_0.12)] w-full max-w-6xl overflow-hidden border border-[#E6E8EA] flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
 					>
 						{/* Modal Header */}
-						<div className="flex items-center justify-between px-5 py-4 border-b border-[#E6E8EA] bg-[#0A356A]">
+						<div className="flex items-center justify-between px-5 py-4 shrink-0 border-b border-[#E6E8EA] bg-[#0A356A]">
 							<div className="flex items-center gap-3">
 								<div className="w-9 h-9 rounded-[4px] bg-white/10 flex items-center justify-center">
 									<Wrench className="w-4 h-4 text-white" aria-hidden="true" />
@@ -1002,6 +1025,7 @@ export default function PerbaikanAlatClient({
 								</div>
 							</div>
 							<button
+								type="button"
 								onClick={handleCloseModal}
 								disabled={isSubmitting}
 								aria-label="Tutup dialog"
@@ -1011,7 +1035,7 @@ export default function PerbaikanAlatClient({
 							</button>
 						</div>
 
-						<div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] overflow-y-auto flex-1 divide-y lg:divide-y-0 lg:divide-x divide-[#E6E8EA]">
+						<div className="grid grid-cols-1 lg:grid-cols-[340px_1fr] flex-1 min-h-0 overflow-y-auto scroll-smooth divide-y lg:divide-y-0 lg:divide-x divide-[#E6E8EA]">
 							{/* Detail Equipment */}
 							<aside className="p-5 space-y-4 bg-[#F8FAFC]">
 								<h3 className="text-[13px] font-semibold text-[#0F172A]">
@@ -1495,32 +1519,32 @@ export default function PerbaikanAlatClient({
 										)}
 									</div>
 								</div>
-
-								{/* Footer */}
-								<div className="px-5 py-4 border-t border-[#E6E8EA] bg-[#F8FAFC] flex justify-end gap-3">
-									<button
-										type="button"
-										disabled={isSubmitting}
-										onClick={handleCloseModal}
-										className="min-h-[44px] px-4 text-[13px] font-medium text-[#334155] bg-white border border-[#E6E8EA] rounded-[4px] hover:bg-[#F2F3F4] transition-colors duration-[140ms] ease-out disabled:opacity-50"
-									>
-										Batal
-									</button>
-									<button
-										type="button"
-										onClick={() => setIsConfirmOpen(true)}
-										disabled={isFormInvalid || isSubmitting}
-										className="min-h-[44px] flex items-center gap-2 px-5 text-[13px] font-semibold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-[4px] transition-colors duration-[140ms] ease-out disabled:opacity-50 disabled:cursor-not-allowed"
-									>
-										{isSubmitting ? (
-											<Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
-										) : (
-											<CheckCircle2 className="w-4 h-4" aria-hidden="true" />
-										)}
-										{isSubmitting ? "Menyimpan..." : "Selesai Perbaikan"}
-									</button>
-								</div>
 							</form>
+						</div>
+
+						{/* Footer */}
+						<div className="px-5 py-4 shrink-0 border-t border-[#E6E8EA] bg-[#F8FAFC] flex justify-end gap-3">
+							<button
+								type="button"
+								disabled={isSubmitting}
+								onClick={handleCloseModal}
+								className="min-h-[44px] px-4 text-[13px] font-medium text-[#334155] bg-white border border-[#E6E8EA] rounded-[4px] hover:bg-[#F2F3F4] transition-colors duration-[140ms] ease-out disabled:opacity-50"
+							>
+								Batal
+							</button>
+							<button
+								type="button"
+								onClick={() => setIsConfirmOpen(true)}
+								disabled={isFormInvalid || isSubmitting}
+								className="min-h-[44px] flex items-center gap-2 px-5 text-[13px] font-semibold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded-[4px] transition-colors duration-[140ms] ease-out disabled:opacity-50 disabled:cursor-not-allowed"
+							>
+								{isSubmitting ? (
+									<Loader2 className="w-4 h-4 animate-spin" aria-hidden="true" />
+								) : (
+									<CheckCircle2 className="w-4 h-4" aria-hidden="true" />
+								)}
+								{isSubmitting ? "Menyimpan..." : "Selesai Perbaikan"}
+							</button>
 						</div>
 					</div>
 				</div>
@@ -1558,10 +1582,10 @@ export default function PerbaikanAlatClient({
 						role="dialog"
 						aria-modal="true"
 						aria-label={`Detail equipment ${detailAsset.kodeAlat}`}
-						className="bg-white rounded-[4px] shadow-[0_8px_24px_-4px_rgb(15_23_42_/_0.12)] w-full max-w-xl overflow-hidden border border-[#E6E8EA] max-h-[90vh] flex flex-col animate-in zoom-in-95 duration-200"
+						className="bg-white rounded-[4px] shadow-[0_8px_24px_-4px_rgb(15_23_42_/_0.12)] w-full max-w-xl overflow-hidden border border-[#E6E8EA] max-h-[85vh] flex flex-col animate-in zoom-in-95 duration-200"
 						onClick={(e) => e.stopPropagation()}
 					>
-						<div className="flex items-center justify-between px-5 py-4 border-b border-[#E6E8EA] bg-[#0A356A]">
+						<div className="flex items-center justify-between px-5 py-4 shrink-0 border-b border-[#E6E8EA] bg-[#0A356A]">
 							<div className="flex items-center gap-3">
 								<div className="w-9 h-9 rounded-[4px] bg-white/10 flex items-center justify-center">
 									<Eye className="w-5 h-5 text-white" />
@@ -1576,6 +1600,7 @@ export default function PerbaikanAlatClient({
 								</div>
 							</div>
 							<button
+								type="button"
 								onClick={handleCloseDetail}
 								aria-label="Tutup dialog"
 								className="text-white/70 hover:text-white p-1.5 rounded-[4px] hover:bg-white/10 transition-colors"
@@ -1584,7 +1609,7 @@ export default function PerbaikanAlatClient({
 							</button>
 						</div>
 
-						<div className="p-5 overflow-y-auto flex flex-col gap-4 text-xs">
+						<div className="p-5 flex-1 min-h-0 overflow-y-auto scroll-smooth flex flex-col gap-4 text-xs">
 							{/* Status Perbaikan */}
 							<div className="border border-[#E6E8EA] rounded-[4px] p-3 bg-[#F8FAFC] flex items-center justify-between">
 								<div>
@@ -1813,8 +1838,9 @@ export default function PerbaikanAlatClient({
 							</div>
 						</div>
 
-						<div className="px-5 py-3.5 border-t border-[#E6E8EA] flex items-center justify-end bg-[#F8FAFC]">
+						<div className="px-5 py-3.5 shrink-0 border-t border-[#E6E8EA] flex items-center justify-end bg-[#F8FAFC]">
 							<button
+								type="button"
 								onClick={handleCloseDetail}
 								className="px-4 py-2 rounded-[4px] bg-white border border-[#E6E8EA] text-[#334155] text-[13px] font-medium hover:bg-[#F2F3F4] transition-colors"
 							>
@@ -1887,5 +1913,15 @@ export default function PerbaikanAlatClient({
 				isPending={isSubmitting}
 			/>
 		</div>
+	);
+}
+
+export default function PerbaikanAlatClient(
+	props: React.ComponentProps<typeof PerbaikanAlatContent>,
+) {
+	return (
+		<Suspense fallback={null}>
+			<PerbaikanAlatContent {...props} />
+		</Suspense>
 	);
 }

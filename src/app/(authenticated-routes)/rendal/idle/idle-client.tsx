@@ -32,7 +32,6 @@ import {
 	Wrench,
 	CheckCircle2,
 	Clock,
-	Check,
 	Server,
 } from "lucide-react";
 
@@ -547,67 +546,6 @@ export default function RendalIdleClient({
 				</div>
 			</div>
 
-			{/* Status Summary Cards (Interactive Quick Filter Shortcuts - US-12-FE) */}
-			<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3.5 mb-4">
-				{summaryCards.map((card) => {
-					const Icon = card.icon;
-					return (
-						<div
-							key={card.key}
-							role="button"
-							tabIndex={0}
-							aria-pressed={card.isActive}
-							aria-label={`Filter status: ${card.label}, ${card.count} peralatan`}
-							onClick={() => handleCardClick(card.key)}
-							onKeyDown={(e) => {
-								if (e.key === "Enter" || e.key === " ") {
-									e.preventDefault();
-									handleCardClick(card.key);
-								}
-							}}
-							className={`relative rounded-lg border p-3.5 flex flex-col justify-between cursor-pointer select-none transition-all duration-200 border-l-[3px] ${
-								card.isActive
-									? `${card.activeBg} ring-2 ring-offset-1 shadow-sm`
-									: "bg-white border-[#E6E8EA] hover:border-gray-300 hover:shadow-md hover:-translate-y-0.5"
-							}`}
-							style={{ borderLeftColor: card.rule }}
-						>
-							<div className="flex items-start justify-between gap-2">
-								<div className="min-w-0">
-									<p className="text-[12px] font-semibold text-gray-600 truncate">
-										{card.label}
-									</p>
-								</div>
-								<div className="flex items-center gap-1.5 shrink-0">
-									{card.isActive && card.key !== "Semua" && (
-										<span
-											className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded text-[10px] font-bold border ${card.badgeColor}`}
-										>
-											<Check className="w-2.5 h-2.5 stroke-[3]" />
-											Aktif
-										</span>
-									)}
-									<Icon
-										className="w-4 h-4"
-										style={{ color: card.rule }}
-										aria-hidden="true"
-									/>
-								</div>
-							</div>
-
-							<div className="mt-2.5">
-								<p className="text-[26px] leading-none font-bold text-[#0F172A] tabular-nums tracking-[-0.02em]">
-									{card.count}
-								</p>
-								<p className="text-[11px] text-gray-500 mt-1 truncate">
-									{card.caption}
-								</p>
-							</div>
-						</div>
-					);
-				})}
-			</div>
-
 			{/* Notification Banner */}
 			{filteredData.length > 0 && (
 				<div className="mb-4 flex items-center justify-between bg-blue-50 border border-blue-100 rounded-lg px-4 py-2.5 animate-in fade-in slide-in-from-top-2">
@@ -740,7 +678,7 @@ export default function RendalIdleClient({
 
 				{/* Table */}
 				<div className="w-full overflow-x-auto">
-					<table className="w-full table-fixed text-left border-collapse">
+					<table className="w-full min-w-[920px] table-fixed text-left border-collapse">
 						<colgroup>
 							<col className="w-[3%]" />
 							<col className="w-[18%]" />
@@ -979,8 +917,8 @@ export default function RendalIdleClient({
 			{/* Modal Detail Informasi Aset */}
 			{detailModal && (
 				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-					<div className="bg-white rounded-xl shadow-2xl w-full max-w-xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
-						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
+					<div className="bg-white rounded-xl shadow-2xl w-full max-w-xl overflow-hidden border border-gray-100 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+						<div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
 							<div className="flex items-center gap-3">
 								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
 									<Eye className="w-5 h-5 text-white" />
@@ -995,6 +933,8 @@ export default function RendalIdleClient({
 								</div>
 							</div>
 							<button
+								type="button"
+								aria-label="Tutup dialog"
 								onClick={() => setDetailModal(null)}
 								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
 							>
@@ -1002,7 +942,7 @@ export default function RendalIdleClient({
 							</button>
 						</div>
 
-						<div className="p-6 overflow-y-auto flex-1 flex flex-col gap-5">
+						<div className="p-6 flex-1 min-h-0 overflow-y-auto scroll-smooth flex flex-col gap-5">
 							{/* Section 1: Informasi Dasar */}
 							<div className="border-b border-gray-100 pb-4">
 								<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">
@@ -1304,8 +1244,9 @@ export default function RendalIdleClient({
 							)}
 						</div>
 
-						<div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end bg-gray-50">
+						<div className="px-6 py-4 shrink-0 border-t border-gray-200 flex items-center justify-end bg-gray-50">
 							<button
+								type="button"
 								onClick={() => setDetailModal(null)}
 								className="px-5 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors shadow-sm"
 							>

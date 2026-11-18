@@ -864,10 +864,10 @@ export default function RendalScrapPage() {
 				</div>
 
 				{/* Table Container */}
-				<div className="overflow-x-hidden">
+				<div className="w-full overflow-x-auto">
 					{activeTab === "inbox" ? (
 						/* Tab 1: Antrean Request */
-						<table className="w-full text-left border-collapse table-fixed">
+						<table className="w-full min-w-[840px] text-left border-collapse table-fixed">
 							<thead className="bg-gray-50 border-b border-gray-200">
 								<tr>
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[35px]">
@@ -990,7 +990,7 @@ export default function RendalScrapPage() {
 						</table>
 					) : (
 						/* Tab 2: Riwayat Permintaan */
-						<table className="w-full text-left border-collapse table-fixed">
+						<table className="w-full min-w-[1080px] text-left border-collapse table-fixed">
 							<thead className="bg-gray-50 border-b border-gray-200">
 								<tr>
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[35px]">
@@ -1216,9 +1216,9 @@ export default function RendalScrapPage() {
 						onClick={() => setIsModalOpen(false)}
 					/>
 
-					<div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
+					<div className="relative bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[85vh] overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
 						{/* Header */}
-						<div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3] flex items-center justify-between">
+						<div className="px-6 py-4 shrink-0 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3] flex items-center justify-between">
 							<div className="flex items-center gap-3">
 								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
 									{modalMode === "revise" ? (
@@ -1239,6 +1239,8 @@ export default function RendalScrapPage() {
 								</div>
 							</div>
 							<button
+								type="button"
+								aria-label="Tutup dialog"
 								onClick={() => setIsModalOpen(false)}
 								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
 							>
@@ -1249,9 +1251,9 @@ export default function RendalScrapPage() {
 						{/* Scrollable Form Body */}
 						<form
 							onSubmit={handleSubmitVerification}
-							className="flex-1 overflow-y-auto flex flex-col"
+							className="flex flex-col flex-1 min-h-0 overflow-hidden"
 						>
-							<div className="p-6 flex flex-col gap-5">
+							<div className="p-6 flex-1 min-h-0 overflow-y-auto scroll-smooth flex flex-col gap-5">
 								{/* Alert Catatan Revisi dari Manajer (hanya tampil saat mode revisi) */}
 								{modalMode === "revise" && selectedReviseItem?.notes && (
 									<div className="bg-purple-50 border border-purple-200 rounded-lg p-4 flex items-start gap-3">
@@ -1642,9 +1644,9 @@ export default function RendalScrapPage() {
 						onClick={() => setIsDetailOpen(false)}
 					/>
 
-					<div className="relative bg-white rounded-xl shadow-2xl w-full max-w-xl max-h-[90vh] overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
+					<div className="relative bg-white rounded-xl shadow-2xl w-full max-w-xl max-h-[85vh] overflow-hidden border border-gray-200 flex flex-col animate-in fade-in zoom-in-95 duration-200">
 						{/* Header */}
-						<div className="px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3] flex items-center justify-between">
+						<div className="px-6 py-4 shrink-0 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3] flex items-center justify-between">
 							<div className="flex items-center gap-3">
 								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center text-white">
 									<FileText className="w-5 h-5" />
@@ -1659,6 +1661,8 @@ export default function RendalScrapPage() {
 								</div>
 							</div>
 							<button
+								type="button"
+								aria-label="Tutup dialog"
 								onClick={() => setIsDetailOpen(false)}
 								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors cursor-pointer"
 							>
@@ -1667,7 +1671,7 @@ export default function RendalScrapPage() {
 						</div>
 
 						{/* Body */}
-						<div className="p-6 flex flex-col gap-4 overflow-y-auto">
+						<div className="p-6 flex-1 min-h-0 overflow-y-auto scroll-smooth flex flex-col gap-4">
 							<div className="bg-gray-50 rounded-lg p-4 border border-gray-200 space-y-3">
 								<div className="grid grid-cols-2 gap-3">
 									<div>
@@ -1788,8 +1792,9 @@ export default function RendalScrapPage() {
 						</div>
 
 						{/* Footer */}
-						<div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+						<div className="px-6 py-4 shrink-0 border-t border-gray-200 bg-gray-50 flex justify-end">
 							<button
+								type="button"
 								onClick={() => setIsDetailOpen(false)}
 								className="px-4 py-2 bg-white border border-gray-300 text-gray-700 rounded-lg text-sm font-semibold hover:bg-gray-50 transition-colors cursor-pointer"
 							>

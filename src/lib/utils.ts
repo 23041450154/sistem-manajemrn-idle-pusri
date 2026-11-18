@@ -41,3 +41,29 @@ export function formatDateTime(iso?: string | null) {
     minute: "2-digit",
   }).format(d);
 }
+
+/** Tanggal hari ini (YYYY-MM-DD) dalam zona waktu Asia/Jakarta untuk default/max input date. */
+export function todayLocalDate(): string {
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(new Date());
+}
+
+/** Konversi string tanggal/ISO ke YYYY-MM-DD (Asia/Jakarta) tanpa pergeseran hari UTC. */
+export function formatIsoDate(iso?: string | null): string {
+  if (!iso) return "-";
+  const trimmed = iso.trim();
+  if (!trimmed || trimmed === "-") return "-";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return trimmed;
+  const d = new Date(trimmed);
+  if (Number.isNaN(d.getTime())) return "-";
+  return new Intl.DateTimeFormat("en-CA", {
+    timeZone: "Asia/Jakarta",
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).format(d);
+}

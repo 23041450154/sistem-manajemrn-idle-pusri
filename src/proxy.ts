@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { BASE_PATH } from "./lib/base-path";
+import { isValidRole, requiredRoleForPath, type Role } from "./lib/roles";
 
 // Next.js 16: file middleware bernama proxy.ts, fungsinya `proxy`.
 
@@ -8,15 +9,34 @@ import { BASE_PATH } from "./lib/base-path";
 const AUTH_COOKIES = ["access_token", "token"];
 
 // Path publik yang boleh diakses tanpa sesi.
-// /forbidden & /logout wajib publik: user "tak terdaftar" punya cookie SSO tapi
-// ditolak (403) — harus bisa lihat /forbidden & keluar tanpa dilempar balik.
+// /forbidden, /unauthorized & /logout wajib publik agar tidak memicu loop.
 const PUBLIC_PATHS = [
   "/login",
   "/forgot-password",
   "/forbidden",
+  "/unauthorized",
   "/logout",
   "/error",
 ];
+
+// Decode klaim `role` dari JWT (tanpa memutus alur bila token adalah SSO token
+// yang role aplikasinya baru di-resolve lewat /api/auth/me di client).
+function extractRoleFromJwt(jwt?: string): Role | null {
+  if (!jwt) return null;
+  const parts = jwt.split(".");
+  if (parts.length < 2) return null;
+  try {
+    const base64 = parts[1].replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+    const payload = JSON.parse(atob(padded)) as { role?: unknown };
+    if (typeof payload?.role === "string" && isValidRole(payload.role)) {
+      return payload.role.toUpperCase() as Role;
+    }
+  } catch {
+    return null;
+  }
+  return null;
+}
 
 // NextResponse.redirect TIDAK basePath-aware (beda dgn redirect() dari
 // next/navigation), jadi tujuan redirect harus di-prefix BASE_PATH manual.
@@ -52,6 +72,22 @@ export function proxy(request: NextRequest) {
   // Tanpa sesi & bukan path publik -> ke login.
   if (!hasSession && !isPublicPath) {
     return NextResponse.redirect(new URL(`${BASE_PATH}/login`, request.url));
+  }
+
+  // RBAC level edge/server: bila JWT membawa role aplikasi yang sah dan user
+  // mencoba mengakses prefix rute milik role lain, kembalikan HTTP 401 Unauthorized.
+  if (hasSession && !isPublicPath) {
+    const requiredRole = requiredRoleForPath(pathname);
+    const jwtRole =
+      extractRoleFromJwt(request.cookies.get("token")?.value) ??
+      extractRoleFromJwt(request.cookies.get("access_token")?.value);
+
+    if (requiredRole && jwtRole && jwtRole !== requiredRole) {
+      return NextResponse.rewrite(
+        new URL(`${BASE_PATH}/unauthorized`, request.url),
+        { status: 401 },
+      );
+    }
   }
 
   // CATATAN ANTI-LOOP (penyebab lama ERR_TOO_MANY_REDIRECTS):

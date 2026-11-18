@@ -28,11 +28,13 @@ export default function ManajerApprovePage() {
 	const currentUserNPP = user?.npp || "";
 
 	const loadData = useCallback(async () => {
-		const [approvalsData, equipmentsData, plantsData] = await Promise.all([
-			getApprovals().catch(() => []),
-			getEquipments().catch(() => []),
-			getPlants().catch(() => []),
-		]);
+		const [validationData, revalidationData, equipmentsData, plantsData] =
+			await Promise.all([
+				getApprovals("validation").catch(() => []),
+				getApprovals("revalidation").catch(() => []),
+				getEquipments().catch(() => []),
+				getPlants().catch(() => []),
+			]);
 
 		const plantList = Array.isArray(plantsData) ? plantsData : [];
 
@@ -44,54 +46,74 @@ export default function ManajerApprovePage() {
 			});
 		}
 
-		const mapped: RequestAsset[] = (
-			Array.isArray(approvalsData) ? approvalsData : []
-		).map((item: any): RequestAsset => {
-			const equipmentId = item.equipment_id || item.equipment?.id;
-			const eq = equipmentMap.get(Number(equipmentId)) || item.equipment;
-			let approvalStatus = item.approval_status;
-			let statusAset = statusName(
-				item.equipment_status || eq?.status?.name || "VALIDATED",
-			);
+		const mapApprovalList = (
+			rawList: any[],
+			kind: "validation" | "revalidation",
+		): RequestAsset[] =>
+			(Array.isArray(rawList) ? rawList : []).map((item: any): RequestAsset => {
+				const equipmentId = item.equipment_id || item.equipment?.id;
+				const eq = equipmentMap.get(Number(equipmentId)) || item.equipment;
+				let approvalStatus = item.approval_status;
+				let statusAset = statusName(
+					item.equipment_status || eq?.status?.name || "VALIDATED",
+				);
 
-			// Jika aset sudah READY_TO_USE di database, otomatis anggap approval sudah APPROVED (masuk riwayat)
-			if (statusAset === "READY_TO_USE" && (!approvalStatus || approvalStatus === "PENDING")) {
-				approvalStatus = "APPROVED";
-			}
+				// Jika aset sudah READY_TO_USE di database, otomatis anggap approval sudah APPROVED (masuk riwayat)
+				if (
+					statusAset === "READY_TO_USE" &&
+					(!approvalStatus || approvalStatus === "PENDING")
+				) {
+					approvalStatus = "APPROVED";
+				}
 
-			if (approvalStatus === "APPROVED") {
-				statusAset = "READY_TO_USE";
-			}
+				if (approvalStatus === "APPROVED") {
+					statusAset = "READY_TO_USE";
+				}
 
-			const statusLabel =
-				item.status_label || APPROVAL_STATUS_LABEL[approvalStatus] || approvalStatus;
+				const statusLabel =
+					item.status_label ||
+					APPROVAL_STATUS_LABEL[approvalStatus] ||
+					approvalStatus;
 
-			return {
-				id: item.id.toString(),
-				equipmentId: equipmentId?.toString() || "",
-				referenceId: item.reference_id ?? null,
-				nomorRequest: item.request_number || `VAL-${item.id}`,
-				kodeAset: item.equipment_code || eq?.equipment_code || "-",
-				objectType: item.object_type ?? eq?.object_type ?? null,
-				namaAset: item.equipment_name || eq?.name || "-",
-				plant: item.plant ?? eq?.plant ?? null,
-				funcLoc: item.func_loc ?? eq?.func_loc ?? null,
-				storage: item.storage_location ?? eq?.storage_location ?? null,
-				tanggalPengajuan: item.request_date
-					? new Date(item.request_date).toISOString().split("T")[0]
-					: "-",
-				statusAset: statusAset,
-				approvalStatus: approvalStatus,
-				statusLabel: statusLabel,
-				inspekturNPP: (() => {
-					const p = eq?.updated_by_npp || eq?.created_by_npp || currentUserNPP;
-					if (!p) return "-";
-					return /^\d/.test(p) ? `NPP${p}` : p;
-				})(),
-				updated_at: item.updated_at || item.created_at || eq?.updated_at || eq?.created_at || undefined,
-				created_at: item.created_at || eq?.created_at || undefined,
-			};
-		});
+				return {
+					id: item.id.toString(),
+					kind,
+					equipmentId: equipmentId?.toString() || "",
+					referenceId: item.reference_id ?? null,
+					nomorRequest:
+						item.request_number ||
+						`${kind === "revalidation" ? "REVAL" : "VAL"}-${item.id}`,
+					kodeAset: item.equipment_code || eq?.equipment_code || "-",
+					objectType: item.object_type ?? eq?.object_type ?? null,
+					namaAset: item.equipment_name || eq?.name || "-",
+					plant: item.plant ?? eq?.plant ?? null,
+					funcLoc: item.func_loc ?? eq?.func_loc ?? null,
+					storage: item.storage_location ?? eq?.storage_location ?? null,
+					tanggalPengajuan: item.request_date
+						? new Date(item.request_date).toISOString().split("T")[0]
+						: "-",
+					statusAset,
+					approvalStatus,
+					statusLabel,
+					inspekturNPP: (() => {
+						const p = eq?.updated_by_npp || eq?.created_by_npp || currentUserNPP;
+						if (!p) return "-";
+						return /^\d/.test(p) ? `NPP${p}` : p;
+					})(),
+					updated_at:
+						item.updated_at ||
+						item.created_at ||
+						eq?.updated_at ||
+						eq?.created_at ||
+						undefined,
+					created_at: item.created_at || eq?.created_at || undefined,
+				};
+			});
+
+		const mapped: RequestAsset[] = [
+			...mapApprovalList(validationData, "validation"),
+			...mapApprovalList(revalidationData, "revalidation"),
+		];
 
 		mapped.sort((a, b) => {
 			const timeA = new Date(a.updated_at || a.created_at || a.tanggalPengajuan || 0).getTime();

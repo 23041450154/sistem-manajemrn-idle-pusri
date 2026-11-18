@@ -3,8 +3,8 @@
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import React, { useState, useMemo, useRef, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useMemo, useRef, useEffect, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
 	Search,
 	Eye,
@@ -45,7 +45,11 @@ import {
 } from "@/action/api";
 import { type EquipmentStatus, statusName } from "@/lib/equipment-status";
 import { fileUrl } from "@/lib/file-url";
-import { extractSapNotification, formatNotesWithSapNotification } from "@/lib/sap-notification";
+import {
+	extractSapNotification,
+	formatNotesWithSapNotification,
+	cleanNotesWithoutSapNotification,
+} from "@/lib/sap-notification";
 
 // Tipe Data
 type AssetState = EquipmentStatus | "REJECTED";
@@ -83,8 +87,57 @@ export interface Asset {
 	tujuan_inspeksi?: string;
 }
 
-/** Client Component: interaksi tabel/modal inspeksi — data di-fetch Server Component. */
-export default function ManajemenInspeksiClient({
+function resolveInitialTabAndStatus(
+	tabParam: string | null,
+	statusParam: string | null,
+): { tab: "antrean" | "riwayat" | "semua"; status: string } {
+	const rawTab = (tabParam || "").toLowerCase();
+	const rawStatus = (statusParam || "").toUpperCase();
+
+	if (
+		rawTab === "semua" ||
+		rawStatus === "INSPECTION_SCOPE" ||
+		rawStatus === "ALL"
+	) {
+		return {
+			tab: "semua",
+			status: rawStatus === "INSPECTION_SCOPE" ? "INSPECTION_SCOPE" : "Semua",
+		};
+	}
+
+	if (rawTab === "riwayat") {
+		return {
+			tab: "riwayat",
+			status:
+				rawStatus && rawStatus !== "ALL" && rawStatus !== "SEMUA"
+					? rawStatus
+					: "Semua",
+		};
+	}
+
+	if (rawTab === "antrean" || rawStatus === "ACTION_NEEDED" || rawStatus === "ACTION") {
+		return { tab: "antrean", status: "Semua" };
+	}
+
+	if (
+		[
+			"READY_TO_USE",
+			"REPAIR",
+			"REPAIR_COMPLETED",
+			"SCRAP",
+			"REJECTED",
+			"VALIDATED",
+			"REVALIDATION",
+		].includes(rawStatus)
+	) {
+		return { tab: "riwayat", status: rawStatus };
+	}
+
+	return { tab: "antrean", status: statusParam || "Semua" };
+}
+
+/** Client Component: interaksi tabel/modal inspeksi - data di-fetch di halaman. */
+function ManajemenInspeksiContent({
 	assets,
 	conditions,
 	requireActions,
@@ -98,10 +151,18 @@ export default function ManajemenInspeksiClient({
 	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
 	const { user } = useAuth();
 	const userCluster = getUserInspectionCluster(user);
 
-	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
+	const urlTab = searchParams?.get("tab") ?? null;
+	const urlStatus = searchParams?.get("status") ?? null;
+	const initialUrlState = resolveInitialTabAndStatus(urlTab, urlStatus);
+
+	const [prevUrlKey, setPrevUrlKey] = useState(`${urlTab ?? ""}|${urlStatus ?? ""}`);
+	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat" | "semua">(
+		initialUrlState.tab,
+	);
 
 	// Filter antrean validasi sesuai rumpun akun login
 	const clusterAssets = useMemo(() => {
@@ -113,8 +174,40 @@ export default function ManajemenInspeksiClient({
 	const [searchInput, setSearchInput] = useState("");
 	const [search, setSearch] = useState("");
 	const [plantFilter, setPlantFilter] = useState("Semua");
-	const [statusFilter, setStatusFilter] = useState("Semua");
+	const [statusFilter, setStatusFilter] = useState(initialUrlState.status);
 	const [dateFilter, setDateFilter] = useState("");
+
+	const currentUrlKey = `${urlTab ?? ""}|${urlStatus ?? ""}`;
+	if (prevUrlKey !== currentUrlKey) {
+		setPrevUrlKey(currentUrlKey);
+		const next = resolveInitialTabAndStatus(urlTab, urlStatus);
+		setActiveTab(next.tab);
+		setStatusFilter(next.status);
+	}
+
+	const syncUrlFilter = (
+		nextTab: "antrean" | "riwayat" | "semua",
+		nextStatus: string,
+	) => {
+		setActiveTab(nextTab);
+		setStatusFilter(nextStatus);
+		if (typeof window !== "undefined") {
+			const url = new URL(window.location.href);
+			if (nextTab === "antrean") {
+				url.searchParams.set("tab", "antrean");
+			} else if (nextTab === "riwayat") {
+				url.searchParams.set("tab", "riwayat");
+			} else {
+				url.searchParams.set("tab", "semua");
+			}
+			if (nextStatus && nextStatus !== "Semua" && nextStatus !== "ALL") {
+				url.searchParams.set("status", nextStatus);
+			} else {
+				url.searchParams.delete("status");
+			}
+			window.history.replaceState(null, "", url.toString());
+		}
+	};
 
 	// Opsi filter Plant diambil langsung dari database master plants, digabung dengan data aset
 	const plantOptions = useMemo(() => {
@@ -175,6 +268,7 @@ export default function ManajemenInspeksiClient({
 	const [rekomendasi, setRekomendasi] = useState("");
 	const [sapNotificationNumber, setSapNotificationNumber] = useState("");
 	const [sapNotificationError, setSapNotificationError] = useState("");
+	const [latestValidation, setLatestValidation] = useState<any>(null);
 	const [tglMulai, setTglMulai] = useState(
 		new Date().toISOString().split("T")[0],
 	);
@@ -203,6 +297,23 @@ export default function ManajemenInspeksiClient({
 		: conditionId === severeCondition?.id.toString()
 			? ""
 			: conditionId;
+
+	// US-17-FE: Aturan kondisional Nomor Notifikasi SAP:
+	// - Tidak Layak (Rusak Berat / Scrap) -> WAJIB MUNCUL & WAJIB DIISI
+	// - Perlu Perbaikan (Layak + kondisi selain BAGUS/BAIK, mis. RUSAK_RINGAN/RUSAK_SEDANG) -> MUNCUL & OPSIONAL
+	// - Layak Digunakan (Ready / kondisi BAGUS/BAIK) atau belum dipilih -> TIDAK MUNCUL
+	const selectedConditionObj = conditions.find(
+		(c) => String(c.id) === String(effectiveConditionId),
+	);
+	const selectedCondUpper = (selectedConditionObj?.name || "").toUpperCase();
+	const isSapRequired =
+		hasilPemeriksaan === "Tidak Layak" || selectedCondUpper === "RUSAK_BERAT";
+	const isSapOptional =
+		!isSapRequired &&
+		hasilPemeriksaan === "Layak" &&
+		!!effectiveConditionId &&
+		!["BAGUS", "BAIK", "LAYAK", "GOOD"].includes(selectedCondUpper);
+	const showSapField = isSapRequired || isSapOptional;
 
 	// Upload States
 	const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
@@ -238,6 +349,7 @@ export default function ManajemenInspeksiClient({
 		setRequiredActionId("");
 		setInspectionNumber("");
 		setValidationId("");
+		setLatestValidation(null);
 
 		// Reset Form jika status belum divalidasi (baru pertama kali) atau dalam mode revisi
 		const isRevision = asset.statusPersetujuan === "NEED_REVISION";
@@ -283,6 +395,7 @@ export default function ManajemenInspeksiClient({
 			const validations = await getValidations(asset.id);
 			if (validations && validations.length > 0) {
 				const latest = validations[0];
+				setLatestValidation(latest);
 				if (latest.id) {
 					setValidationId(String(latest.id));
 				}
@@ -292,7 +405,7 @@ export default function ManajemenInspeksiClient({
 					setSapNotificationNumber(existingSap);
 				}
 				if (!isRevision && asset.statusPersetujuan === "PENDING_REVIEW") {
-					if (latest.notes) setCatatan(latest.notes);
+					if (latest.notes) setCatatan(cleanNotesWithoutSapNotification(latest.notes));
 					if (latest.followup_recommendation) setRekomendasi(latest.followup_recommendation);
 					if (latest.start_at) {
 						setTglMulai(new Date(latest.start_at).toISOString().split("T")[0]);
@@ -328,8 +441,12 @@ export default function ManajemenInspeksiClient({
 					if (latest.require_action_id) {
 						setRequiredActionId(latest.require_action_id.toString());
 					}
+					const inspSap = extractSapNotification(latest);
+					if (inspSap) {
+						setSapNotificationNumber((prev) => prev || inspSap);
+					}
 					if (!isRevision && latest.notes && !catatan) {
-						setCatatan(latest.notes);
+						setCatatan(cleanNotesWithoutSapNotification(latest.notes));
 					}
 				}
 			} catch (err) {
@@ -396,11 +513,9 @@ export default function ManajemenInspeksiClient({
 
 		try {
 			const isUtilizable = hasilPemeriksaan === "Layak";
-			const isScrapOrHeavy =
-				hasilPemeriksaan === "Tidak Layak" ||
-				effectiveConditionId === severeCondition?.id.toString();
+			const effectiveSap = showSapField ? sapNotificationNumber.trim() : "";
 
-			if (isScrapOrHeavy && !sapNotificationNumber.trim()) {
+			if (isSapRequired && !effectiveSap) {
 				setNotification({
 					type: "error",
 					message:
@@ -413,7 +528,7 @@ export default function ManajemenInspeksiClient({
 			const baseNotes = isUtilizable
 				? catatan.trim()
 				: (catatan || rekomendasi || "Hasil validasi").trim();
-			const notes = formatNotesWithSapNotification(baseNotes, sapNotificationNumber);
+			const notes = formatNotesWithSapNotification(baseNotes, effectiveSap);
 
 			const isRevision = selectedAsset.statusPersetujuan === "NEED_REVISION";
 			let res;
@@ -464,6 +579,7 @@ export default function ManajemenInspeksiClient({
 							startAt: tglMulai,
 							endAt: tglSelesai,
 							followupRecommendation: rekomendasi,
+							sapNotificationNumber: effectiveSap,
 							photos: uploadedFiles,
 						},
 					);
@@ -474,6 +590,9 @@ export default function ManajemenInspeksiClient({
 				const formData = new FormData();
 				formData.append("is_utilizable", isUtilizable ? "true" : "false");
 				formData.append("notes", notes);
+				if (effectiveSap) {
+					formData.append("sap_notification_number", effectiveSap);
+				}
 				if (isUtilizable) {
 					// Backend mewajibkan field 'required_action' saat aset dinyatakan layak.
 					// Resolusi dinamis dari master requireActions sesuai kondisi aset (effectiveConditionId),
@@ -547,6 +666,7 @@ export default function ManajemenInspeksiClient({
 							startAt: tglMulai,
 							endAt: tglSelesai,
 							followupRecommendation: rekomendasi,
+							sapNotificationNumber: effectiveSap,
 							photos: uploadedFiles,
 						},
 					);
@@ -560,6 +680,7 @@ export default function ManajemenInspeksiClient({
 							startAt: tglMulai,
 							endAt: tglSelesai,
 							followupRecommendation: rekomendasi,
+							sapNotificationNumber: effectiveSap,
 							photos: uploadedFiles,
 						},
 					);
@@ -574,6 +695,7 @@ export default function ManajemenInspeksiClient({
 						startAt: tglMulai,
 						endAt: tglSelesai,
 						followupRecommendation: rekomendasi,
+						sapNotificationNumber: effectiveSap,
 						photos: uploadedFiles,
 					},
 				);
@@ -584,15 +706,12 @@ export default function ManajemenInspeksiClient({
 					? "Hasil revisi validasi berhasil dikirim ulang ke Manajer."
 					: "Data inspeksi berhasil disubmit ke sistem.";
 
+				// Tutup modal terlebih dahulu sebelum pindah ke tab Riwayat
+				setIsSubmitting(false);
+				closeModal();
 				setNotification({ type: "success", message: successMessage });
-
-				// Jika peralatan masuk ke Riwayat Validasi (misal: Tidak Layak -> REPAIR / SCRAP),
-				// arahkan langsung ke tab Riwayat. Jika tetap di antrean (Layak / VALIDATED), biarkan di tab saat ini.
-				const willGoToRiwayat = !isUtilizable;
-				if (willGoToRiwayat) {
-					setActiveTab("riwayat");
-					setCurrentPage(1);
-				}
+				syncUrlFilter("riwayat", "Semua");
+				setCurrentPage(1);
 
 				// Refresh data via onRefresh agar antrean & riwayat langsung terupdate tanpa reload manual
 				if (onRefresh) {
@@ -613,7 +732,6 @@ export default function ManajemenInspeksiClient({
 			});
 		} finally {
 			setIsSubmitting(false);
-			closeModal();
 			setTimeout(() => setNotification(null), 3000);
 		}
 	};
@@ -714,13 +832,26 @@ export default function ManajemenInspeksiClient({
 		return !isActionNeeded;
 	};
 
-	// Counts untuk tab navigation
+	// Counts untuk tab navigation & kartu ringkasan status (US-12-FE)
 	const antreanCount = useMemo(() => {
 		return clusterAssets.filter((a) => !isFinalStatus(a)).length;
 	}, [clusterAssets]);
 
 	const riwayatCount = useMemo(() => {
 		return clusterAssets.filter((a) => isFinalStatus(a)).length;
+	}, [clusterAssets]);
+
+	const readyCount = useMemo(() => {
+		return clusterAssets.filter(
+			(a) =>
+				isFinalStatus(a) &&
+				(a.statusAset === "READY_TO_USE" || a.statusAset === "REUSED"),
+		).length;
+	}, [clusterAssets]);
+
+	const needRevalCount = useMemo(() => {
+		return clusterAssets.filter((a) => a.statusAset === "REPAIR_COMPLETED")
+			.length;
 	}, [clusterAssets]);
 
 	// Filter & Sort Data
@@ -738,8 +869,15 @@ export default function ManajemenInspeksiClient({
 			const matchPlant = plantFilter === "Semua" || a.plant === plantFilter;
 
 			let matchStatus = false;
-			if (statusFilter === "Semua") matchStatus = true;
-			else if (statusFilter === "ACTION_NEEDED") {
+			if (statusFilter === "Semua" || statusFilter === "ALL") matchStatus = true;
+			else if (statusFilter === "INSPECTION_SCOPE") {
+				const inAntrean = !finalState;
+				const inReady =
+					finalState &&
+					(a.statusAset === "READY_TO_USE" || a.statusAset === "REUSED");
+				const inNeedReval = a.statusAset === "REPAIR_COMPLETED";
+				matchStatus = inAntrean || inReady || inNeedReval;
+			} else if (statusFilter === "ACTION_NEEDED") {
 				const showInspeksi =
 					a.statusAset === "REGISTERED" && a.statusPersetujuan === "NONE";
 				const showUbah =
@@ -749,12 +887,17 @@ export default function ManajemenInspeksiClient({
 				matchStatus = showInspeksi || showUbah || showRevisi;
 			} else if (statusFilter === "NEED_REVISION")
 				matchStatus = a.statusPersetujuan === "NEED_REVISION";
+			else if (statusFilter === "READY_TO_USE")
+				matchStatus =
+					a.statusAset === "READY_TO_USE" || a.statusAset === "REUSED";
 			else if (statusFilter === "SCRAP")
 				matchStatus =
 					a.statusAset === "SCRAP" || a.statusAset === "SCRAP_RECOMMENDED";
 			else if (statusFilter === "REPAIR")
 				matchStatus =
 					a.statusAset === "REPAIR" || a.statusAset === "REPAIR_COMPLETED";
+			else if (statusFilter === "REPAIR_COMPLETED")
+				matchStatus = a.statusAset === "REPAIR_COMPLETED";
 			else if (statusFilter === "REVALIDATION")
 				matchStatus = a.statusAset === "REVALIDATION";
 			else matchStatus = a.statusAset === statusFilter;
@@ -816,7 +959,7 @@ export default function ManajemenInspeksiClient({
 		setSearchInput("");
 		setSearch("");
 		setPlantFilter("Semua");
-		setStatusFilter("Semua");
+		syncUrlFilter(activeTab === "semua" ? "antrean" : activeTab, "Semua");
 		setDateFilter("");
 		setCurrentPage(1);
 		setSortConfig({ key: "tanggalRegistrasi", direction: "desc" });
@@ -964,6 +1107,14 @@ export default function ManajemenInspeksiClient({
 		if (!hasilPemeriksaan || !effectiveConditionId || !isDateRangeValid)
 			return false;
 
+		if (isSapRequired && !sapNotificationNumber.trim()) {
+			return false;
+		}
+		if (showSapField && sapNotificationNumber.trim().length > 50) {
+			setSapNotificationError("Nomor Notifikasi SAP maksimal 50 karakter.");
+			return false;
+		}
+
 		const isRevision = selectedAsset?.statusPersetujuan === "NEED_REVISION";
 
 		if (isRevision) {
@@ -1063,10 +1214,10 @@ export default function ManajemenInspeksiClient({
 					<button
 						type="button"
 						onClick={() => {
-							setActiveTab("antrean");
+							syncUrlFilter("antrean", "Semua");
 							setCurrentPage(1);
 						}}
-						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 cursor-pointer ${
 							activeTab === "antrean"
 								? "text-[#0A356A] border-b-2 border-[#0A356A]"
 								: "text-gray-500 hover:text-gray-700"
@@ -1074,7 +1225,7 @@ export default function ManajemenInspeksiClient({
 					>
 						<span>Antrean Validasi</span>
 						<span
-							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold ${
+							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold tabular-nums ${
 								activeTab === "antrean"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -1087,10 +1238,10 @@ export default function ManajemenInspeksiClient({
 					<button
 						type="button"
 						onClick={() => {
-							setActiveTab("riwayat");
+							syncUrlFilter("riwayat", statusFilter === "INSPECTION_SCOPE" ? "Semua" : statusFilter);
 							setCurrentPage(1);
 						}}
-						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 cursor-pointer ${
 							activeTab === "riwayat"
 								? "text-[#0A356A] border-b-2 border-[#0A356A]"
 								: "text-gray-500 hover:text-gray-700"
@@ -1098,7 +1249,7 @@ export default function ManajemenInspeksiClient({
 					>
 						<span>Riwayat Validasi</span>
 						<span
-							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold ${
+							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold tabular-nums ${
 								activeTab === "riwayat"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -1107,6 +1258,22 @@ export default function ManajemenInspeksiClient({
 							{riwayatCount}
 						</span>
 					</button>
+
+					{activeTab === "semua" && (
+						<button
+							type="button"
+							onClick={() => {
+								syncUrlFilter("semua", statusFilter);
+								setCurrentPage(1);
+							}}
+							className="pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 text-[#0A356A] border-b-2 border-[#0A356A] cursor-pointer"
+						>
+							<span>Semua Cakupan</span>
+							<span className="px-2 py-0.5 text-[11px] rounded-sm font-bold bg-[#0A356A] text-white tabular-nums">
+								{filteredAssets.length}
+							</span>
+						</button>
+					)}
 				</div>
 
 				{/* Toolbar / Filters */}
@@ -1156,16 +1323,29 @@ export default function ManajemenInspeksiClient({
 						<select
 							value={statusFilter}
 							onChange={(e) => {
-								setStatusFilter(e.target.value);
+								const val = e.target.value;
+								const nextTab =
+									val === "INSPECTION_SCOPE"
+										? "semua"
+										: val === "REGISTERED" || val === "NEED_REVISION"
+											? "antrean"
+											: val === "Semua"
+												? activeTab === "semua"
+													? "antrean"
+													: activeTab
+												: "riwayat";
+								syncUrlFilter(nextTab, val);
 								setCurrentPage(1);
 							}}
 							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
 						>
 							<option value="Semua">Semua Status</option>
+							<option value="INSPECTION_SCOPE">Semua Cakupan Inspeksi</option>
 							<option value="REGISTERED">REGISTERED</option>
 							<option value="VALIDATED">VALIDATED</option>
 							<option value="NEED_REVISION">Perlu Revisi</option>
 							<option value="READY_TO_USE">READY TO USE</option>
+							<option value="REPAIR_COMPLETED">Perlu Revalidasi Pasca Perbaikan</option>
 							<option value="REPAIR">REPAIR (Dalam / Selesai Perbaikan)</option>
 							<option value="SCRAP">SCRAP (REKOMENDASI SCRAP)</option>
 							<option value="REJECTED">Ditolak</option>
@@ -1197,7 +1377,7 @@ export default function ManajemenInspeksiClient({
 				</div>
 
 				{/* Table */}
-				<div className="overflow-x-auto">
+				<div className="w-full overflow-x-auto">
 					<table className="w-full text-center border-collapse">
 						<thead className="bg-[#F2F3F4]">
 							<tr className="border-b border-gray-300">
@@ -1416,9 +1596,14 @@ export default function ManajemenInspeksiClient({
 					/>
 
 					{/* Modal Dialog */}
-					<div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-label={`Inspeksi Equipment ${selectedAsset.kodeAlat}`}
+						className="relative w-full max-w-4xl max-h-[85vh] bg-white rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+					>
 						{/* Header */}
-						<div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
+						<div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-200 bg-white shrink-0">
 							<div className="flex items-center gap-3">
 								<h2 className="text-base font-bold text-gray-900">
 									{selectedAsset.statusPersetujuan === "NEED_REVISION"
@@ -1433,15 +1618,17 @@ export default function ManajemenInspeksiClient({
 								</span>
 							</div>
 							<button
+								type="button"
+								aria-label="Tutup modal inspeksi"
 								onClick={closeModal}
-								className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded-md transition-colors"
+								className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded transition-colors"
 							>
-								<X className="w-4 h-4" />
+								<X className="w-4 h-4" aria-hidden="true" />
 							</button>
 						</div>
 
 						{/* Body (Compact UI) */}
-						<div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50/50">
+						<div className="flex-1 min-h-0 overflow-y-auto scroll-smooth px-6 py-4 bg-gray-50/50">
 							{/* Thin Asset Info Ribbon */}
 							<div className="bg-[#F2F3F4] border border-[#E6E8EA] rounded p-2.5 mb-4 flex items-center justify-between gap-4">
 								<div className="flex items-center gap-5 overflow-hidden">
@@ -1882,50 +2069,62 @@ export default function ManajemenInspeksiClient({
 									</div>
 								</div>
 
-								{/* Row 3b: Nomor Notifikasi SAP (US-17-FE) */}
-								<div className="mb-3">
-									<div className="flex items-center justify-between mb-1">
-										<label className="block text-[11px] font-semibold text-gray-700">
-											Nomor Notifikasi SAP{" "}
-											{hasilPemeriksaan === "Tidak Layak" || effectiveConditionId === severeCondition?.id.toString() ? (
-												<span className="text-[#DC2626] font-bold">* (Wajib untuk Scrap / Rusak Berat)</span>
-											) : (
-												<span className="text-gray-400 font-normal">(Opsional)</span>
-											)}
-										</label>
-										<span className="text-[10px] text-gray-400">
-											{sapNotificationNumber.length}/50
-										</span>
+								{/* Row 3b: Nomor Notifikasi SAP (US-17-FE: tampil kondisional saat Scrap / Repair) */}
+								{showSapField && (
+									<div className="mb-3">
+										<div className="flex items-center justify-between mb-1">
+											<label
+												htmlFor="sap-notification-validasi"
+												className="block text-[11px] font-semibold text-gray-700"
+											>
+												Nomor Notifikasi SAP{" "}
+												{isSapRequired ? (
+													<span className="text-[#DC2626] font-bold">*</span>
+												) : (
+													<span className="text-gray-400 font-normal">(Opsional)</span>
+												)}
+											</label>
+											<span className="text-[10px] text-gray-400 tabular-nums">
+												{sapNotificationNumber.length}/50
+											</span>
+										</div>
+										<input
+											id="sap-notification-validasi"
+											type="text"
+											maxLength={50}
+											disabled={isReadOnly}
+											value={sapNotificationNumber}
+											onChange={(e) => {
+												setSapNotificationNumber(e.target.value);
+												if (sapNotificationError) setSapNotificationError("");
+											}}
+											placeholder="Contoh: 10023489"
+											className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 font-medium ${
+												sapNotificationError ||
+												(showValidationErrors &&
+													isSapRequired &&
+													!sapNotificationNumber.trim())
+													? "border-[#DC2626] focus:border-[#DC2626]"
+													: "border-gray-300 focus:border-[#0A356A]"
+											}`}
+										/>
+										{sapNotificationError ? (
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
+												{sapNotificationError}
+											</p>
+										) : showValidationErrors &&
+										  isSapRequired &&
+										  !sapNotificationNumber.trim() ? (
+											<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
+												* Nomor Notifikasi SAP wajib diisi untuk hasil Tidak Layak / Rusak Berat.
+											</p>
+										) : (
+											<p className="text-[10px] text-gray-500 mt-0.5">
+												Masukkan nomor Maintenance Notification resmi dari SAP PM sebagai referensi audit.
+											</p>
+										)}
 									</div>
-									<input
-										type="text"
-										maxLength={50}
-										disabled={isReadOnly}
-										value={sapNotificationNumber}
-										onChange={(e) => {
-											setSapNotificationNumber(e.target.value);
-											if (sapNotificationError) setSapNotificationError("");
-										}}
-										placeholder="Contoh: 10023489"
-										className={`w-full bg-white border rounded-md px-3 py-1.5 text-[13px] outline-none disabled:bg-gray-50 font-medium ${
-											sapNotificationError ||
-											(showValidationErrors &&
-												(hasilPemeriksaan === "Tidak Layak" || effectiveConditionId === severeCondition?.id.toString()) &&
-												!sapNotificationNumber.trim())
-												? "border-[#DC2626] focus:border-[#DC2626]"
-												: "border-gray-300 focus:border-[#0A356A]"
-										}`}
-									/>
-									{sapNotificationError ? (
-										<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
-											{sapNotificationError}
-										</p>
-									) : (
-										<p className="text-[10px] text-gray-500 mt-0.5">
-											Masukkan nomor Maintenance Notification resmi dari SAP PM sebagai referensi audit.
-										</p>
-									)}
-								</div>
+								)}
 								{!isReadOnly && (
 									<div className="mt-2 space-y-2">
 										<input
@@ -2051,7 +2250,7 @@ export default function ManajemenInspeksiClient({
 
 																	{/* Right: Preview badge & Delete Button */}
 																	<div className="flex items-center gap-2 shrink-0 ml-3">
-																		<span className="text-[11px] font-medium text-[#0A356A] bg-blue-50 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+																		<span className="text-[11px] font-medium text-[#0A356A] bg-blue-50 group-hover:bg-blue-100 px-2 py-0.5 rounded transition-colors flex items-center gap-1">
 																			<Eye className="w-3.5 h-3.5" /> Preview
 																		</span>
 																		<button
@@ -2188,11 +2387,16 @@ export default function ManajemenInspeksiClient({
 			{isModalOpen && modalMode === "DETAIL" && selectedAsset && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 					<div
-						className="fixed inset-0 bg-gray-900/50 transition-opacity"
+						className="fixed inset-0 bg-[#0F172A]/50 transition-opacity"
 						onClick={closeModal}
 					/>
-					<div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col animate-in fade-in zoom-in-95 duration-200">
-						<div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-label={`Detail Informasi Aset ${selectedAsset.kodeAlat}`}
+						className="relative w-full max-w-4xl max-h-[85vh] bg-white rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200"
+					>
+						<div className="flex items-center justify-between px-5 py-3 border-b border-gray-200 bg-white shrink-0">
 							<div>
 								<h2 className="text-lg font-bold text-gray-900 leading-tight">
 									Detail Informasi Aset
@@ -2202,14 +2406,16 @@ export default function ManajemenInspeksiClient({
 								</p>
 							</div>
 							<button
+								type="button"
+								aria-label="Tutup detail aset"
 								onClick={closeModal}
-								className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded-md transition-colors"
+								className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1.5 rounded transition-colors"
 							>
-								<X className="w-4 h-4" />
+								<X className="w-4 h-4" aria-hidden="true" />
 							</button>
 						</div>
 
-						<div className="flex-1 overflow-y-auto px-5 py-4">
+						<div className="flex-1 min-h-0 overflow-y-auto scroll-smooth px-5 py-4">
 							<h3 className="text-[#0A356A] font-bold text-[13px] mb-2.5 tracking-normal">
 								Spesifikasi Alat
 							</h3>
@@ -2286,8 +2492,42 @@ export default function ManajemenInspeksiClient({
 								<div className="col-span-4">
 									<p className="text-[11px] text-gray-500 mb-1">Catatan Pendaftaran:</p>
 									<div className="bg-gray-50 p-2 rounded text-[12px] italic text-gray-700 border border-gray-100">
-										&quot;Kompresor cadangan dari decommission utilitas lama.&quot;
+										{cleanNotesWithoutSapNotification(selectedAsset.spesifikasi) || "-"}
 									</div>
+								</div>
+							</div>
+
+							<hr className="border-gray-200 my-4" />
+
+							<h3 className="text-[#0A356A] font-bold text-[13px] mb-2.5 tracking-normal">
+								Hasil Pemeriksaan & Referensi SAP
+							</h3>
+							<div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 bg-gray-50/70 border border-gray-200 rounded p-3">
+								<div>
+									<p className="text-[11px] text-gray-500 mb-0.5">
+										Rekomendasi Tindak Lanjut:
+									</p>
+									<p className="text-[12px] font-bold text-gray-900">
+										{latestValidation?.followup_recommendation || "-"}
+									</p>
+								</div>
+								<div>
+									<p className="text-[11px] text-gray-500 mb-0.5">
+										No. Notifikasi SAP:
+									</p>
+									<p className="text-[12px] font-bold text-[#0A356A] tabular-nums">
+										{sapNotificationNumber || "-"}
+									</p>
+								</div>
+								<div className="md:col-span-2">
+									<p className="text-[11px] text-gray-500 mb-0.5">
+										Catatan Pemeriksaan:
+									</p>
+									<p className="text-[12px] text-gray-800">
+										{cleanNotesWithoutSapNotification(
+											latestValidation?.notes || "",
+										) || "-"}
+									</p>
 								</div>
 							</div>
 
@@ -2481,5 +2721,15 @@ export default function ManajemenInspeksiClient({
 				isPending={isSubmitting}
 			/>
 		</div>
+	);
+}
+
+export default function ManajemenInspeksiClient(
+	props: React.ComponentProps<typeof ManajemenInspeksiContent>,
+) {
+	return (
+		<Suspense fallback={null}>
+			<ManajemenInspeksiContent {...props} />
+		</Suspense>
 	);
 }

@@ -526,7 +526,7 @@ export default function RendalPerbaikanClient({
 
 				{/* Table (Desain terkalibrasi agar tidak horizontal scroll & tidak terpotong) */}
 				<div className="w-full overflow-x-auto">
-					<table className="w-full table-fixed text-center border-collapse">
+					<table className="w-full min-w-[920px] table-fixed text-center border-collapse">
 						<colgroup>
 							{activeTab === "antrean" ? (
 								<>
@@ -832,7 +832,7 @@ export default function RendalPerbaikanClient({
 					/>
 
 					{/* Modal Dialog */}
-					<div className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-xl shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+					<div className="relative w-full max-w-2xl max-h-[85vh] overflow-hidden bg-white rounded-xl shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col animate-in fade-in zoom-in-95 duration-200">
 						{/* Header (Clean White Header persis Validasi Inspeksi) */}
 						<div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
 							<div className="flex items-center gap-3">
@@ -855,7 +855,7 @@ export default function RendalPerbaikanClient({
 						</div>
 
 						{/* Body */}
-						<div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50/50 space-y-4">
+						<div className="flex-1 min-h-0 overflow-y-auto scroll-smooth px-6 py-4 bg-gray-50/50 space-y-4">
 							{/* Thin Asset Info Ribbon (Identik Validasi Inspeksi) */}
 							<div className="bg-[#F2F3F4] border border-[#E6E8EA] rounded p-2.5 flex items-center justify-between gap-4">
 								<div className="flex items-center gap-5 overflow-hidden">
@@ -1162,7 +1162,7 @@ export default function RendalPerbaikanClient({
 					/>
 
 					{/* Modal Dialog */}
-					<div className="relative w-full max-w-2xl max-h-[90vh] bg-white rounded-xl shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col animate-in fade-in zoom-in-95 duration-200">
+					<div className="relative w-full max-w-2xl max-h-[85vh] overflow-hidden bg-white rounded-xl shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col animate-in fade-in zoom-in-95 duration-200">
 						{/* Detail Header */}
 						<div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
 							<div className="flex items-center gap-3">
@@ -1185,7 +1185,7 @@ export default function RendalPerbaikanClient({
 						</div>
 
 						{/* Detail Body */}
-						<div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50/50 space-y-3.5">
+						<div className="flex-1 min-h-0 overflow-y-auto scroll-smooth px-6 py-4 bg-gray-50/50 space-y-3.5">
 							{/* Thin Asset Info Ribbon */}
 							<div className="bg-[#F2F3F4] border border-[#E6E8EA] rounded p-2.5 flex items-center justify-between gap-4">
 								<div className="flex items-center gap-5 overflow-hidden">

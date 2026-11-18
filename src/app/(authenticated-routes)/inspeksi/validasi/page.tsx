@@ -188,12 +188,11 @@ export default function ValidasiPage() {
 			}
 		} else {
 			// statusAset sudah kanonik (statusName), jadi cukup cek nama backend.
-			if (statusAset === "REGISTERED") {
+			if (statusAset === "REGISTERED" || statusAset === "REPAIR") {
 				statusPersetujuan = "NONE";
 			} else if (
 				statusAset === "READY_TO_USE" ||
-				statusAset === "REUSED" ||
-				statusAset === "REPAIR"
+				statusAset === "REUSED"
 			) {
 				statusPersetujuan = "APPROVED";
 			} else if (

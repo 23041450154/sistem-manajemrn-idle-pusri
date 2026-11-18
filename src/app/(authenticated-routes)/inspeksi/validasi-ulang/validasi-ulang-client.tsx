@@ -1,9 +1,22 @@
 "use client";
 
-import React, { useState, useMemo, useRef } from "react";
-import { useRouter } from "next/navigation";
+/* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
+import React, { useState, useMemo, useRef, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { createRevalidation } from "@/action/api";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
+import { useAuth } from "@/components/AuthProvider";
+import {
+	getUserInspectionCluster,
+	getEquipmentInspectionCluster,
+} from "@/lib/inspection-cluster";
+import {
+	extractSapNotification,
+	formatNotesWithSapNotification,
+	cleanNotesWithoutSapNotification,
+} from "@/lib/sap-notification";
 import {
 	CheckCircle2,
 	Search,
@@ -18,7 +31,6 @@ import {
 	Wrench,
 	Eye,
 	UploadCloud,
-	Paperclip,
 	Download,
 } from "lucide-react";
 
@@ -39,6 +51,8 @@ export interface RevalidasiItem {
 	serialNumber?: string;
 	tahun?: number | string;
 	alasanIdle?: string;
+	sapNotificationNumber?: string;
+	inspectionCluster?: string;
 	updated_at?: string;
 }
 
@@ -51,8 +65,8 @@ interface InspeksiValidasiUlangClientProps {
 	onRefresh?: () => Promise<void> | void;
 }
 
-/** Client Component: interaksi tab/filter/modal validasi — data di-fetch Server Component. */
-export default function InspeksiValidasiUlangClient({
+/** Client Component: interaksi tab/filter/modal validasi - data di-fetch di halaman. */
+function InspeksiValidasiUlangContent({
 	items,
 	plants = [],
 	storageLocations = [],
@@ -61,7 +75,41 @@ export default function InspeksiValidasiUlangClient({
 	onRefresh,
 }: InspeksiValidasiUlangClientProps) {
 	const router = useRouter();
-	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat">("antrean");
+	const searchParams = useSearchParams();
+	const { user } = useAuth();
+	const userCluster = getUserInspectionCluster(user);
+
+	const clusterItems = useMemo(() => {
+		if (!userCluster) return items;
+		return items.filter(
+			(it) => getEquipmentInspectionCluster(it) === userCluster,
+		);
+	}, [items, userCluster]);
+
+	const rawTabParam = (searchParams?.get("tab") || "").toLowerCase();
+	const resolvedUrlTab: "antrean" | "riwayat" | "semua" =
+		rawTabParam === "riwayat"
+			? "riwayat"
+			: rawTabParam === "semua"
+				? "semua"
+				: "antrean";
+	const [prevUrlTab, setPrevUrlTab] = useState(resolvedUrlTab);
+	const [activeTab, setActiveTab] = useState<"antrean" | "riwayat" | "semua">(
+		resolvedUrlTab,
+	);
+	if (prevUrlTab !== resolvedUrlTab) {
+		setPrevUrlTab(resolvedUrlTab);
+		setActiveTab(resolvedUrlTab);
+	}
+
+	const syncTabWithUrl = (nextTab: "antrean" | "riwayat" | "semua") => {
+		setActiveTab(nextTab);
+		if (typeof window !== "undefined") {
+			const url = new URL(window.location.href);
+			url.searchParams.set("tab", nextTab);
+			window.history.replaceState(null, "", url.toString());
+		}
+	};
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
 	const [filterPlant, setFilterPlant] = useState("");
@@ -81,6 +129,8 @@ export default function InspeksiValidasiUlangClient({
 	const [hasilStatus, setHasilStatus] = useState("");
 	const [notes, setNotes] = useState("");
 	const [followupRecommendation, setFollowupRecommendation] = useState("");
+	const [sapNotificationNumber, setSapNotificationNumber] = useState("");
+	const [sapNotificationError, setSapNotificationError] = useState("");
 	const [tglMulai, setTglMulai] = useState(
 		new Date().toISOString().split("T")[0],
 	);
@@ -184,22 +234,24 @@ export default function InspeksiValidasiUlangClient({
 		item.statusAset === "REPAIR_COMPLETED";
 
 	const antreanCount = useMemo(
-		() => items.filter(isAntreanItem).length,
-		[items],
+		() => clusterItems.filter(isAntreanItem).length,
+		[clusterItems],
 	);
 
 	const riwayatCount = useMemo(
-		() => items.filter((item) => !isAntreanItem(item)).length,
-		[items],
+		() => clusterItems.filter((item) => !isAntreanItem(item)).length,
+		[clusterItems],
 	);
 
 	const filteredItems = useMemo(() => {
-		let result = items;
+		let result = clusterItems;
 
-		result = result.filter((item) => {
-			const isAntrean = isAntreanItem(item);
-			return activeTab === "antrean" ? isAntrean : !isAntrean;
-		});
+		if (activeTab !== "semua") {
+			result = result.filter((item) => {
+				const isAntrean = isAntreanItem(item);
+				return activeTab === "antrean" ? isAntrean : !isAntrean;
+			});
+		}
 
 		if (searchQuery.trim()) {
 			const q = searchQuery.toLowerCase();
@@ -237,7 +289,7 @@ export default function InspeksiValidasiUlangClient({
 			return (Number(b.id) || 0) - (Number(a.id) || 0);
 		});
 	}, [
-		items,
+		clusterItems,
 		activeTab,
 		searchQuery,
 		filterPlant,
@@ -277,6 +329,8 @@ export default function InspeksiValidasiUlangClient({
 		setHasilStatus("");
 		setNotes("");
 		setFollowupRecommendation("");
+		setSapNotificationNumber(asset.sapNotificationNumber || "");
+		setSapNotificationError("");
 		setTglMulai(new Date().toISOString().split("T")[0]);
 		setTglSelesai(new Date().toISOString().split("T")[0]);
 		setUploadedFiles([]);
@@ -293,12 +347,18 @@ export default function InspeksiValidasiUlangClient({
 		setHasilStatus("");
 		setNotes("");
 		setFollowupRecommendation("");
+		setSapNotificationNumber("");
+		setSapNotificationError("");
 		setTglMulai(new Date().toISOString().split("T")[0]);
 		setTglSelesai(new Date().toISOString().split("T")[0]);
 		setUploadedFiles([]);
 		setShowValidationErrors(false);
 		setModalError(null);
 	};
+
+	const showSapField =
+		hasilStatus === "REPAIR" || hasilStatus === "SCRAP_RECOMMENDED";
+	const isSapRequired = hasilStatus === "SCRAP_RECOMMENDED";
 
 	const handleInitiateSubmit = () => {
 		setShowValidationErrors(true);
@@ -322,6 +382,18 @@ export default function InspeksiValidasiUlangClient({
 			setModalError("Catatan pemeriksaan wajib diisi.");
 			return;
 		}
+		if (isSapRequired && !sapNotificationNumber.trim()) {
+			setSapNotificationError(
+				"Nomor Notifikasi SAP wajib diisi untuk rekomendasi Scrap.",
+			);
+			setModalError("Nomor Notifikasi SAP wajib diisi.");
+			return;
+		}
+		if (showSapField && sapNotificationNumber.trim().length > 50) {
+			setSapNotificationError("Nomor Notifikasi SAP maksimal 50 karakter.");
+			setModalError("Nomor Notifikasi SAP maksimal 50 karakter.");
+			return;
+		}
 		if (uploadedFiles.length === 0) {
 			setModalError("File lampiran/foto hasil validasi ulang wajib diunggah minimal 1 file.");
 			return;
@@ -343,11 +415,14 @@ export default function InspeksiValidasiUlangClient({
 		setIsSubmitting(true);
 		setModalError(null);
 		try {
+			const effectiveSap = showSapField ? sapNotificationNumber.trim() : "";
+			const finalNotes = formatNotesWithSapNotification(notes.trim(), effectiveSap);
 			const result = await createRevalidation(selectedAsset.id, hasilStatus, {
 				startAt: tglMulai,
 				endAt: tglSelesai,
-				notes: notes.trim(),
+				notes: finalNotes,
 				followupRecommendation: followupRecommendation.trim() || undefined,
+				sapNotificationNumber: effectiveSap || undefined,
 				photos: uploadedFiles,
 			});
 
@@ -365,7 +440,7 @@ export default function InspeksiValidasiUlangClient({
 				}
 
 				handleCloseModal();
-				setActiveTab("riwayat");
+				syncTabWithUrl("riwayat");
 				setCurrentPage(1);
 				if (onRefresh) {
 					await onRefresh();
@@ -454,11 +529,12 @@ export default function InspeksiValidasiUlangClient({
 				{/* Navigation Tabs */}
 				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
 					<button
+						type="button"
 						onClick={() => {
-							setActiveTab("antrean");
+							syncTabWithUrl("antrean");
 							setCurrentPage(1);
 						}}
-						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 cursor-pointer ${
 							activeTab === "antrean"
 								? "text-[#0A356A] border-b-2 border-[#0A356A]"
 								: "text-gray-500 hover:text-gray-700"
@@ -466,7 +542,7 @@ export default function InspeksiValidasiUlangClient({
 					>
 						<span>Antrean Validasi Perbaikan</span>
 						<span
-							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold ${
+							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold tabular-nums ${
 								activeTab === "antrean"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -477,11 +553,12 @@ export default function InspeksiValidasiUlangClient({
 					</button>
 
 					<button
+						type="button"
 						onClick={() => {
-							setActiveTab("riwayat");
+							syncTabWithUrl("riwayat");
 							setCurrentPage(1);
 						}}
-						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 cursor-pointer ${
 							activeTab === "riwayat"
 								? "text-[#0A356A] border-b-2 border-[#0A356A]"
 								: "text-gray-500 hover:text-gray-700"
@@ -489,7 +566,7 @@ export default function InspeksiValidasiUlangClient({
 					>
 						<span>Riwayat Validasi Perbaikan</span>
 						<span
-							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold ${
+							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold tabular-nums ${
 								activeTab === "riwayat"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -498,40 +575,70 @@ export default function InspeksiValidasiUlangClient({
 							{riwayatCount}
 						</span>
 					</button>
+
+					{activeTab === "semua" && (
+						<button
+							type="button"
+							onClick={() => {
+								syncTabWithUrl("semua");
+								setCurrentPage(1);
+							}}
+							className="pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 text-[#0A356A] border-b-2 border-[#0A356A] cursor-pointer"
+						>
+							<span>Semua Data</span>
+							<span className="px-2 py-0.5 text-[11px] rounded-sm font-bold bg-[#0A356A] text-white tabular-nums">
+								{clusterItems.length}
+							</span>
+						</button>
+					)}
 				</div>
 
 				{/* Toolbar / Filters */}
-				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
-					{/* Search */}
-					<div className="flex w-full lg:w-auto gap-2">
-						<div className="relative flex-1 lg:w-72">
-							<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-							<input
-								type="text"
-								placeholder="Cari kode atau nama alat..."
-								value={searchInput}
-								onChange={(e) => setSearchInput(e.target.value)}
-								onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
-							/>
+				<div className="p-3.5 border-b border-[#E6E8EA] bg-white space-y-2.5">
+					{/* Baris 1: Pencarian + Reset */}
+					<div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+						<div className="flex flex-1 gap-2 max-w-xl">
+							<div className="relative flex-1">
+								<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+								<input
+									type="text"
+									placeholder="Cari kode atau nama alat..."
+									value={searchInput}
+									onChange={(e) => setSearchInput(e.target.value)}
+									onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+									className="h-9 w-full pl-9 pr-3 text-[13px] bg-white border border-[#E6E8EA] rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
+								/>
+							</div>
+							<button
+								type="button"
+								onClick={handleSearch}
+								className="h-9 px-3.5 bg-[#0A356A] text-white text-[13px] font-medium rounded hover:bg-[#0556B3] transition-colors whitespace-nowrap cursor-pointer"
+							>
+								Cari
+							</button>
 						</div>
+
+						{/* Reset Button */}
 						<button
-							onClick={handleSearch}
-							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded hover:bg-[#0556B3] transition-colors whitespace-nowrap"
+							type="button"
+							onClick={handleReset}
+							className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 px-3 text-[13px] font-medium text-gray-600 border border-[#E6E8EA] hover:text-gray-900 hover:bg-gray-50 rounded transition-colors whitespace-nowrap cursor-pointer self-end sm:self-auto"
+							title="Reset semua filter"
 						>
-							Cari
+							<RefreshCw className="w-3.5 h-3.5" />
+							<span>Reset Filter</span>
 						</button>
 					</div>
 
-					{/* Filter Group */}
-					<div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
+					{/* Baris 2: Filter Dropdown Sejajar */}
+					<div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
 						<select
 							value={filterPlant}
 							onChange={(e) => {
 								setFilterPlant(e.target.value);
 								setCurrentPage(1);
 							}}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="h-9 w-full px-2.5 text-[13px] bg-white border border-[#E6E8EA] rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						>
 							<option value="">Semua Plant</option>
 							{plantOptions.map((p) => (
@@ -547,7 +654,7 @@ export default function InspeksiValidasiUlangClient({
 								setFilterLokasi(e.target.value);
 								setCurrentPage(1);
 							}}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="h-9 w-full px-2.5 text-[13px] bg-white border border-[#E6E8EA] rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						>
 							<option value="">Semua Lokasi</option>
 							{lokasiOptions.map((l) => (
@@ -563,7 +670,7 @@ export default function InspeksiValidasiUlangClient({
 								setFilterKondisi(e.target.value);
 								setCurrentPage(1);
 							}}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="h-9 w-full px-2.5 text-[13px] bg-white border border-[#E6E8EA] rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						>
 							<option value="">Semua Kondisi</option>
 							{kondisiOptions.map((k) => (
@@ -579,7 +686,7 @@ export default function InspeksiValidasiUlangClient({
 								setFilterTipeObjek(e.target.value);
 								setCurrentPage(1);
 							}}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="h-9 w-full px-2.5 text-[13px] bg-white border border-[#E6E8EA] rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						>
 							<option value="">Semua Tipe</option>
 							{tipeObjekOptions.map((t) => (
@@ -588,24 +695,12 @@ export default function InspeksiValidasiUlangClient({
 								</option>
 							))}
 						</select>
-
-						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
-
-						{/* Reset Button */}
-						<button
-							onClick={handleReset}
-							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors whitespace-nowrap"
-							title="Reset semua filter"
-						>
-							<RefreshCw className="w-3.5 h-3.5" />
-							Reset
-						</button>
 					</div>
 				</div>
 
 				{/* Table */}
-				<div className="overflow-hidden">
-					<table className="w-full text-left border-collapse table-fixed">
+				<div className="w-full overflow-x-auto">
+					<table className="w-full min-w-[920px] text-left border-collapse table-fixed">
 						<thead className="bg-[#F2F3F4]">
 							<tr className="border-b border-gray-300">
 								<th className="px-2 py-3 text-[10px] font-bold text-gray-600 uppercase tracking-wide text-center w-[4%]">
@@ -810,11 +905,16 @@ export default function InspeksiValidasiUlangClient({
 			{/* Modal Validasi / Detail Perbaikan Alat */}
 			{isModalOpen && selectedAsset && (
 				<div className="fixed inset-0 z-[100] flex items-center justify-center bg-[#0F172A]/50 p-4 animate-in fade-in duration-200">
-					<div className="bg-white rounded w-full max-w-xl overflow-hidden border border-[#E6E8EA] flex flex-col max-h-[90vh] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] animate-in zoom-in-95 fade-in duration-200">
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-labelledby="modal-title"
+						className="bg-white rounded w-full max-w-xl overflow-hidden border border-[#E6E8EA] flex flex-col max-h-[85vh] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] animate-in zoom-in-95 fade-in duration-200"
+					>
 						{modalMode === "DETAIL" ? (
 							<>
 								{/* Detail Header */}
-								<div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-[#E6E8EA]">
+								<div className="flex items-start justify-between gap-3 px-5 py-4 shrink-0 border-b border-[#E6E8EA] bg-white">
 									<div className="min-w-0">
 										<h2
 											id="modal-title"
@@ -827,16 +927,17 @@ export default function InspeksiValidasiUlangClient({
 										</p>
 									</div>
 									<button
+										type="button"
 										onClick={handleCloseModal}
 										aria-label="Tutup dialog"
 										className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-[#64748B] transition-colors duration-150 hover:bg-[#F2F3F4] hover:text-[#0F172A]"
 									>
-										<X className="h-4 w-4" />
+										<X className="h-4 w-4" aria-hidden="true" />
 									</button>
 								</div>
 
 								{/* Detail Body */}
-								<div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+								<div className="px-6 py-5 space-y-4 flex-1 min-h-0 overflow-y-auto scroll-smooth">
 									<div className="bg-[#F2F3F4] border border-[#E6E8EA] rounded p-3 grid grid-cols-2 gap-3 text-xs">
 										<div>
 											<p className="text-[#64748B] text-[11px] font-medium mb-0.5">
@@ -929,20 +1030,33 @@ export default function InspeksiValidasiUlangClient({
 												{selectedAsset.alasanIdle || "-"}
 											</span>
 										</div>
+										<div className="flex justify-between py-1 border-b border-gray-100">
+											<span className="text-[#64748B] font-medium">
+												No. Notifikasi SAP
+											</span>
+											<span className="font-semibold text-[#0A356A] tabular-nums">
+												{selectedAsset.sapNotificationNumber ||
+													extractSapNotification(selectedAsset) ||
+													"-"}
+											</span>
+										</div>
 										<div className="pt-1">
 											<span className="text-[#64748B] font-medium block mb-1">
 												Catatan
 											</span>
 											<p className="text-[#0F172A] leading-relaxed bg-gray-50 p-2 rounded border border-gray-100">
-												{selectedAsset.catatan || "-"}
+												{cleanNotesWithoutSapNotification(
+													selectedAsset.catatan || "",
+												) || "-"}
 											</p>
 										</div>
 									</div>
 								</div>
 
 								{/* Detail Footer */}
-								<div className="px-6 py-3.5 border-t border-[#E6E8EA] bg-gray-50 flex justify-end">
+								<div className="px-6 py-3.5 shrink-0 border-t border-[#E6E8EA] bg-gray-50 flex justify-end">
 									<button
+										type="button"
 										onClick={handleCloseModal}
 										className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors"
 									>
@@ -953,13 +1067,13 @@ export default function InspeksiValidasiUlangClient({
 						) : (
 							<>
 								{/* Modal Header */}
-								<div className="flex items-start justify-between gap-3 px-5 py-4 border-b border-[#E6E8EA]">
+								<div className="flex items-start justify-between gap-3 px-5 py-4 shrink-0 border-b border-[#E6E8EA] bg-white">
 									<div className="min-w-0">
 										<h2
 											id="modal-title"
 											className="text-[14px] font-semibold leading-tight text-[#0F172A] flex items-center gap-2"
 										>
-											<ClipboardCheck className="w-4 h-4 text-[#0A356A]" />
+											<ClipboardCheck className="w-4 h-4 text-[#0A356A]" aria-hidden="true" />
 											Validasi Perbaikan Alat
 										</h2>
 										<p className="mt-0.5 truncate font-mono text-[12px] text-[#64748B]">
@@ -971,17 +1085,18 @@ export default function InspeksiValidasiUlangClient({
 											* Wajib diisi
 										</span>
 										<button
+											type="button"
 											onClick={handleCloseModal}
 											aria-label="Tutup dialog"
 											className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded text-[#64748B] transition-colors duration-150 hover:bg-[#F2F3F4] hover:text-[#0F172A]"
 										>
-											<X className="h-4 w-4" />
+											<X className="h-4 w-4" aria-hidden="true" />
 										</button>
 									</div>
 								</div>
 
 								{/* Modal Body */}
-								<div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+								<div className="px-6 py-5 space-y-4 flex-1 min-h-0 overflow-y-auto scroll-smooth">
 									{/* Info Aset */}
 									<div className="bg-[#F2F3F4] rounded p-3 border border-[#E6E8EA] grid grid-cols-2 gap-2 text-xs">
 										<div>
@@ -1071,7 +1186,7 @@ export default function InspeksiValidasiUlangClient({
 												{
 													value: "REVALIDATION",
 													title: "Perbaikan Berhasil",
-													desc: "Aset layak, lanjut ke persetujuan Rendal",
+													desc: "Aset layak, lanjut ke persetujuan Manajer Renhar",
 												},
 												{
 													value: "REPAIR",
@@ -1122,7 +1237,7 @@ export default function InspeksiValidasiUlangClient({
 													</p>
 													<p className="text-[11px] text-[#059669] mt-0.5 leading-relaxed">
 														Perbaikan dinyatakan berhasil. Aset akan diteruskan ke{" "}
-														<strong>Rendal Pemeliharaan</strong> untuk persetujuan status{" "}
+														<strong>Manajer Renhar</strong> untuk persetujuan akhir status{" "}
 														<strong>Ready to Use</strong>.
 													</p>
 												</div>
@@ -1184,6 +1299,55 @@ export default function InspeksiValidasiUlangClient({
 											className="w-full px-3 py-2 text-sm border border-gray-200 rounded bg-gray-50 focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all"
 										/>
 									</div>
+
+									{/* Nomor Notifikasi SAP (US-17-FE: tampil kondisional saat perlu perbaikan/scrap) */}
+									{showSapField && (
+										<div>
+											<div className="flex items-center justify-between mb-1.5">
+												<label
+													htmlFor="sap-notification-reval"
+													className="text-[11px] font-semibold text-gray-700"
+												>
+													Nomor Notifikasi SAP{" "}
+													{isSapRequired ? (
+														<span className="text-[#DC2626] font-bold">*</span>
+													) : (
+														<span className="text-gray-400 font-normal text-[11px]">
+															(Opsional)
+														</span>
+													)}
+												</label>
+												<span className="text-[10px] text-gray-400 tabular-nums">
+													{sapNotificationNumber.length}/50
+												</span>
+											</div>
+											<input
+												id="sap-notification-reval"
+												type="text"
+												maxLength={50}
+												value={sapNotificationNumber}
+												onChange={(e) => {
+													setSapNotificationNumber(e.target.value);
+													if (sapNotificationError) setSapNotificationError("");
+												}}
+												placeholder="Contoh: 10023489"
+												className={`w-full px-3 py-2 text-sm border rounded bg-gray-50 focus:bg-white outline-none transition-all ${
+													sapNotificationError
+														? "border-[#DC2626] focus:border-[#DC2626]"
+														: "border-gray-200 focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"
+												}`}
+											/>
+											{sapNotificationError ? (
+												<p className="text-[10px] text-[#DC2626] mt-0.5 font-medium">
+													{sapNotificationError}
+												</p>
+											) : (
+												<p className="text-[10px] text-gray-500 mt-0.5">
+													Masukkan nomor Maintenance Notification resmi dari SAP PM sebagai referensi audit.
+												</p>
+											)}
+										</div>
+									)}
 
 									{/* Upload File / Attachment */}
 									<div>
@@ -1315,7 +1479,7 @@ export default function InspeksiValidasiUlangClient({
 																	</div>
 
 																	<div className="flex items-center gap-2 shrink-0 ml-3">
-																		<span className="text-[11px] font-medium text-[#0A356A] bg-blue-50 px-2 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+																		<span className="text-[11px] font-medium text-[#0A356A] bg-blue-50 group-hover:bg-blue-100 px-2 py-0.5 rounded transition-colors flex items-center gap-1">
 																			<Eye className="w-3.5 h-3.5" /> Preview
 																		</span>
 																		<button
@@ -1349,8 +1513,9 @@ export default function InspeksiValidasiUlangClient({
 								</div>
 
 								{/* Modal Footer */}
-								<div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
+								<div className="px-6 py-4 shrink-0 border-t border-gray-200 bg-gray-50 flex justify-end gap-3">
 									<button
+										type="button"
 										onClick={handleCloseModal}
 										disabled={isSubmitting}
 										className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded hover:bg-gray-50 transition-colors disabled:opacity-50"
@@ -1358,6 +1523,7 @@ export default function InspeksiValidasiUlangClient({
 										Batal
 									</button>
 									<button
+										type="button"
 										onClick={handleInitiateSubmit}
 										disabled={isSubmitting}
 										className="flex items-center gap-2 px-5 py-2 text-sm font-bold text-white bg-[#0A356A] hover:bg-[#0556B3] rounded transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
@@ -1437,5 +1603,15 @@ export default function InspeksiValidasiUlangClient({
 				</div>
 			)}
 		</div>
+	);
+}
+
+export default function InspeksiValidasiUlangClient(
+	props: InspeksiValidasiUlangClientProps,
+) {
+	return (
+		<Suspense fallback={null}>
+			<InspeksiValidasiUlangContent {...props} />
+		</Suspense>
 	);
 }

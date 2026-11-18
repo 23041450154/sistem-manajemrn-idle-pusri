@@ -279,7 +279,7 @@ export default function PemeliharaanDashboardPage() {
 									Antrean kosong. Tidak ada aset berstatus REPAIR.
 								</div>
 							) : (
-								<div className="overflow-x-auto">
+								<div className="w-full overflow-x-auto">
 									<table className="w-full text-left border-collapse">
 										<thead>
 											<tr className="bg-[#F2F3F4] border-b border-[#E6E8EA]">

@@ -66,7 +66,7 @@ export function UpcomingInspections({
           Lihat Semua
         </button>
       </div>
-      <div className="overflow-x-auto flex-1">
+      <div className="w-full overflow-x-auto flex-1">
         <table className="w-full text-left border-collapse">
           <thead>
             <tr className="bg-gray-50/50">
