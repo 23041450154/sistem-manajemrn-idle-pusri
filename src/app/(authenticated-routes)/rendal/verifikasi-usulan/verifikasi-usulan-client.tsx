@@ -354,7 +354,7 @@ export default function VerifikasiUsulanClient({
 								</th>
 							</tr>
 						</thead>
-						<tbody className="bg-white">
+						<tbody className="bg-white text-[12px]">
 							{paginated.length === 0 ? (
 								<tr>
 									<td
@@ -374,32 +374,32 @@ export default function VerifikasiUsulanClient({
 											key={item.id}
 											className="border-b border-gray-200 last:border-b-0 hover:bg-[#F2F3F4] transition-colors group"
 										>
-											<td className="px-3 py-3 text-[15px] text-gray-500 font-medium text-center tabular-nums">
+											<td className="px-3 py-2.5 text-gray-500 font-medium text-center tabular-nums">
 												{rowNum}
 											</td>
-											<td className="px-3 py-3 text-left">
-												<span className="text-[15px] font-semibold text-gray-800 leading-tight line-clamp-2 block">
+											<td className="px-3 py-2.5 text-left">
+												<span className="font-semibold text-gray-800 leading-tight line-clamp-2 block">
 													{item.equipmentName}
 												</span>
 											</td>
-											<td className="px-3 py-3 text-left whitespace-nowrap">
-												<span className="font-mono text-[13px] font-semibold text-[#0A356A]">
+											<td className="px-3 py-2.5 text-left whitespace-nowrap">
+												<span className="font-semibold text-[#0A356A]">
 													{item.equipmentCode}
 												</span>
 											</td>
-											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center whitespace-nowrap">
+											<td className="px-3 py-2.5 text-gray-600 font-medium text-center whitespace-nowrap">
 												{item.plant}
 											</td>
-											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center">
+											<td className="px-3 py-2.5 text-gray-600 font-medium text-center">
 												{item.storageLocation || "-"}
 											</td>
-											<td className="px-3 py-3 text-[14px] text-gray-600 text-left max-w-[240px]">
+											<td className="px-3 py-2.5 text-gray-600 text-left max-w-[240px]">
 												<span className="line-clamp-2">{item.idleReason}</span>
 											</td>
-											<td className="px-3 py-3 text-[14px] text-gray-600 font-medium text-center whitespace-nowrap tabular-nums">
+											<td className="px-3 py-2.5 text-gray-600 font-medium text-center whitespace-nowrap tabular-nums">
 												{item.createdAt || "-"}
 											</td>
-											<td className="px-3 py-3 text-[15px] text-center whitespace-nowrap">
+											<td className="px-3 py-2.5 text-center whitespace-nowrap">
 												<div className="flex justify-center">
 													{item.status === "PROPOSAL_REJECTED" ? (
 														<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEE2E2] text-[#DC2626]">

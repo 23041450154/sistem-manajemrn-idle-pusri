@@ -29,6 +29,11 @@ import YearPicker from "@/components/YearPicker";
 import AutocompleteInput, {
 	type AutocompleteOption,
 } from "@/components/AutocompleteInput";
+import {
+	useFilePreviewUrls,
+	formatFileSize,
+	compressImageFile,
+} from "@/lib/file-preview";
 
 export interface MasterEquipmentCode {
 	// Baris SAP live; FK lokal tidak dikirim backend lagi — plant/funcloc/object type
@@ -153,6 +158,7 @@ export default function RegisterEquipmentClient({
 	const router = useRouter();
 	const fileInputRef = useRef<HTMLInputElement>(null);
 	const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+	const filePreviewUrls = useFilePreviewUrls(uploadedFiles);
 	const [isDragging, setIsDragging] = useState(false);
 	const [previewModal, setPreviewModal] = useState<{ url: string; title?: string; isPdf?: boolean } | null>(null);
 
@@ -367,7 +373,7 @@ export default function RegisterEquipmentClient({
 		}
 	};
 
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files) {
 			const files = Array.from(e.target.files);
 			let errorMsg: string | null = null;
@@ -379,8 +385,13 @@ export default function RegisterEquipmentClient({
 				return true;
 			});
 			setFileError(errorMsg);
-			setUploadedFiles((prev) => [...prev, ...validFiles]);
 			e.target.value = ""; // Reset input to allow selecting the same file again
+			if (validFiles.length > 0) {
+				const processed = await Promise.all(
+					validFiles.map((f) => compressImageFile(f)),
+				);
+				setUploadedFiles((prev) => [...prev, ...processed]);
+			}
 		}
 	};
 
@@ -394,7 +405,7 @@ export default function RegisterEquipmentClient({
 		setIsDragging(false);
 	};
 
-	const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+	const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
 		setIsDragging(false);
 		if (e.dataTransfer.files) {
@@ -408,7 +419,12 @@ export default function RegisterEquipmentClient({
 				return true;
 			});
 			setFileError(errorMsg);
-			setUploadedFiles((prev) => [...prev, ...validFiles]);
+			if (validFiles.length > 0) {
+				const processed = await Promise.all(
+					validFiles.map((f) => compressImageFile(f)),
+				);
+				setUploadedFiles((prev) => [...prev, ...processed]);
+			}
 		}
 	};
 
@@ -999,7 +1015,7 @@ export default function RegisterEquipmentClient({
 													const isPdf =
 														file.type === "application/pdf" ||
 														file.name.toLowerCase().endsWith(".pdf");
-													const previewUrl = URL.createObjectURL(file);
+													const previewUrl = filePreviewUrls[i] || "";
 													const ext =
 														file.name.split(".").pop()?.toUpperCase() || "FILE";
 
@@ -1050,7 +1066,7 @@ export default function RegisterEquipmentClient({
 																		{file.name}
 																	</p>
 																	<p className="text-[10px] text-gray-400">
-																		{(file.size / (1024 * 1024)).toFixed(2)} MB
+																		{formatFileSize(file.size)}
 																	</p>
 																</div>
 															</div>

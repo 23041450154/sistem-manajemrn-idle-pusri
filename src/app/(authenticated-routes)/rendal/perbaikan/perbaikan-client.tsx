@@ -359,7 +359,7 @@ export default function RendalPerbaikanClient({
 		if (isReady) {
 			return (
 				<span
-					className="inline-flex items-center justify-center text-[10.5px] font-semibold text-emerald-800 bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200 whitespace-nowrap"
+					className="text-[12px] font-semibold text-emerald-700 whitespace-nowrap"
 					title={raw}
 				>
 					{label}
@@ -369,12 +369,12 @@ export default function RendalPerbaikanClient({
 
 		return (
 			<span
-				className={`inline-flex items-center justify-center text-[10.5px] font-semibold px-2.5 py-0.5 rounded-full border whitespace-nowrap ${
+				className={`text-[12px] font-semibold whitespace-nowrap ${
 					isHeavy
-						? "text-rose-800 bg-rose-50 border-rose-200"
+						? "text-rose-700"
 						: isMedium
-							? "text-amber-800 bg-amber-50 border-amber-200"
-							: "text-amber-800 bg-amber-50 border-amber-200"
+							? "text-amber-800"
+							: "text-amber-800"
 				}`}
 				title={raw}
 			>

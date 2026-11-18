@@ -413,7 +413,7 @@ export default function FormInspeksiClient({
 						})()}
 					</span>
 				</div>
-				<div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+				<div className="px-4 py-3 grid grid-cols-2 sm:grid-cols-4 gap-3">
 					<div>
 						<p className="text-[10.5px] font-semibold text-gray-500">Kode Aset</p>
 						<p className="text-[13px] font-mono font-bold text-[#0A356A]">
@@ -438,6 +438,29 @@ export default function FormInspeksiClient({
 						<p className="text-[10.5px] font-semibold text-gray-500">Lokasi Simpan</p>
 						<p className="text-[13px] font-medium text-gray-700 truncate">
 							{equipment?.storage_location?.name || equipment?.location?.name || "-"}
+						</p>
+					</div>
+					<div>
+						<p className="text-[10.5px] font-semibold text-gray-500">Tipe Objek</p>
+						<p className="text-[13px] font-medium text-gray-700">
+							{(typeof equipment?.object_type === "string"
+								? equipment.object_type
+								: equipment?.object_type?.name) || "-"}
+						</p>
+					</div>
+					<div>
+						<p className="text-[10.5px] font-semibold text-gray-500">Func. Location</p>
+						<p
+							className="text-[12.5px] font-mono text-gray-700 truncate"
+							title={
+								(typeof equipment?.func_loc === "string"
+									? equipment.func_loc
+									: equipment?.func_loc?.name) || "-"
+							}
+						>
+							{(typeof equipment?.func_loc === "string"
+								? equipment.func_loc
+								: equipment?.func_loc?.name) || "-"}
 						</p>
 					</div>
 					<div>

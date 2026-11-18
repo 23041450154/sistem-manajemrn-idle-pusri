@@ -13,6 +13,10 @@ import {
 	RefreshCw,
 	XCircle,
 	Search,
+	FileText,
+	FileSpreadsheet,
+	Download,
+	ExternalLink,
 } from "lucide-react";
 import {
 	reviewApproval,
@@ -28,6 +32,151 @@ import {
 	extractSapNotification,
 	cleanNotesWithoutSapNotification,
 } from "@/lib/sap-notification";
+
+const IMAGE_EXTENSIONS = new Set([
+	"jpg",
+	"jpeg",
+	"png",
+	"webp",
+	"gif",
+	"avif",
+	"bmp",
+	"svg",
+]);
+
+function getAttachmentMeta(att: any, idx: number) {
+	const rawUrl = String(att?.file_url || att?.fileUrl || att?.url || "");
+	const url = fileUrl(rawUrl);
+	const fileName = String(att?.file_name || att?.description || `Lampiran ${idx + 1}`);
+	const extFromName = fileName.includes(".") ? fileName.split(".").pop() : "";
+	const cleanPath = rawUrl.split("?")[0];
+	const extFromUrl = cleanPath.includes(".") ? cleanPath.split(".").pop() : "";
+	const ext = (extFromName || extFromUrl || "FILE").toLowerCase();
+	const isImage = IMAGE_EXTENSIONS.has(ext) || rawUrl.startsWith("data:image");
+	const isPdf = ext === "pdf";
+	return { url, fileName, ext: ext.toUpperCase(), isImage, isPdf };
+}
+
+function AttachmentGallery({
+	attachments,
+	compact = false,
+	onPreviewImage,
+	onPreviewPdf,
+}: {
+	attachments: any[];
+	compact?: boolean;
+	onPreviewImage: (url: string) => void;
+	onPreviewPdf: (pdf: { url: string; name: string }) => void;
+}) {
+	const parsed = attachments.map((att, idx) => ({
+		att,
+		idx,
+		...getAttachmentMeta(att, idx),
+	}));
+	const images = parsed.filter((item) => item.isImage);
+	const docs = parsed.filter((item) => !item.isImage);
+
+	return (
+		<div className="space-y-3">
+			{images.length > 0 && (
+				<div className={compact ? "flex gap-2 overflow-x-auto pb-1" : "grid grid-cols-3 gap-3"}>
+					{images.map(({ att, idx, url, fileName }) => (
+						<div
+							key={`img-${idx}`}
+							className={
+								compact
+									? "relative w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity shrink-0 group"
+									: "relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-square"
+							}
+							onClick={() => onPreviewImage(url)}
+							title={fileName}
+						>
+							{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
+							<img
+								src={url}
+								alt={att.description || fileName}
+								className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
+							/>
+							<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+								<Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
+							</div>
+							<div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/65 to-transparent p-1.5">
+								<p className="text-[10px] text-white font-medium truncate">
+									{att.description || fileName}
+								</p>
+							</div>
+						</div>
+					))}
+				</div>
+			)}
+
+			{docs.length > 0 && (
+				<div className={compact ? "space-y-2" : "grid grid-cols-1 sm:grid-cols-2 gap-2.5"}>
+					{docs.map(({ idx, url, fileName, ext, isPdf }) => {
+						const isSpreadsheet = ext === "XLSX" || ext === "XLS" || ext === "CSV";
+						const badgeColor = isPdf
+							? "bg-red-50 text-red-700 border-red-200"
+							: isSpreadsheet
+								? "bg-emerald-50 text-emerald-700 border-emerald-200"
+								: ext === "DWG"
+									? "bg-amber-50 text-amber-700 border-amber-200"
+									: "bg-blue-50 text-[#0A356A] border-blue-200";
+						const IconComponent = isSpreadsheet ? FileSpreadsheet : FileText;
+
+						return (
+							<div
+								key={`doc-${idx}`}
+								className="flex flex-col justify-between gap-2 rounded-lg border border-gray-200 bg-gray-50/70 p-2.5"
+							>
+								<div className="flex items-center gap-2.5 min-w-0">
+									<div
+										className={`w-9 h-9 rounded-md border flex flex-col items-center justify-center shrink-0 ${badgeColor}`}
+									>
+										<IconComponent className="w-4 h-4" />
+										<span className="text-[8px] font-bold leading-none mt-0.5">{ext}</span>
+									</div>
+									<div className="min-w-0 flex-1">
+										<p
+											className="text-[12px] font-semibold text-gray-800 truncate"
+											title={fileName}
+										>
+											{fileName}
+										</p>
+										<p className="text-[10px] text-gray-500">
+											{isPdf ? "Dokumen PDF" : `Berkas ${ext}`}
+										</p>
+									</div>
+								</div>
+								<div className="flex flex-wrap items-center gap-1.5 justify-end">
+									{isPdf && (
+										<button
+											type="button"
+											onClick={() => onPreviewPdf({ url, name: fileName })}
+											className="inline-flex items-center gap-1 rounded border border-[#0A356A]/25 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#0A356A] hover:bg-blue-50 transition-colors cursor-pointer"
+										>
+											<FileText className="w-3 h-3" />
+											<span>Buka / Preview PDF</span>
+										</button>
+									)}
+									<a
+										href={url}
+										download={fileName}
+										target="_blank"
+										rel="noopener noreferrer"
+										className="inline-flex items-center gap-1 rounded border border-gray-300 bg-white px-2.5 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-100 transition-colors"
+									>
+										<Download className="w-3 h-3" />
+										<span>Unduh Berkas</span>
+									</a>
+								</div>
+							</div>
+						);
+					})}
+				</div>
+			)}
+		</div>
+	);
+}
 
 type Lookup = {
 	id: number;
@@ -137,6 +286,10 @@ function ManajerApproveContent({
 		message: string;
 	} | null>(null);
 	const [previewImage, setPreviewImage] = useState<string | null>(null);
+	const [previewPdf, setPreviewPdf] = useState<{
+		url: string;
+		name: string;
+	} | null>(null);
 	const [approvalSteps, setApprovalSteps] = useState<any[]>([]);
 	// Validasi & data finansial diambil dari DB saat modal dibuka (bukan hardcode).
 	const [validationDetail, setValidationDetail] = useState<any>(null);
@@ -873,86 +1026,44 @@ function ManajerApproveContent({
 									</div>
 								</div>
 
-								{/* Foto Dokumentasi Validasi Inspeksi */}
+								{/* Berkas Lampiran & Dokumentasi Inspeksi */}
 								{validationAttachments.length > 0 ? (
 									<div className="mt-4">
 										<div className="flex items-center justify-between mb-2">
 											<p className="text-[12px] text-gray-700 font-semibold flex items-center gap-1.5">
-												<span>Foto Dokumentasi (Hasil Validasi Inspeksi):</span>
+												<span>Berkas Lampiran &amp; Dokumentasi Inspeksi:</span>
 												<span className="text-[10px] font-medium text-blue-700 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
 													Inspeksi Teknik
 												</span>
 											</p>
 											<span className="text-[11px] text-gray-400">
-												{validationAttachments.length} foto
+												{validationAttachments.length} berkas
 											</span>
 										</div>
-										<div className="grid grid-cols-3 gap-3">
-											{validationAttachments.map((att: any, idx: number) => (
-												<div
-													key={idx}
-													className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-square"
-													onClick={() => setPreviewImage(fileUrl(att.file_url || att.url))}
-												>
-													{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
-													<img
-														src={fileUrl(att.file_url || att.url)}
-														alt={att.description || att.file_name || `Foto Validasi ${idx + 1}`}
-														className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
-													/>
-													<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-														<Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-													</div>
-													{(att.description || att.file_name) && (
-														<div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-1.5">
-															<p className="text-[10px] text-white font-medium truncate">
-																{att.description || att.file_name}
-															</p>
-														</div>
-													)}
-												</div>
-											))}
-										</div>
+										<AttachmentGallery
+											attachments={validationAttachments}
+											onPreviewImage={setPreviewImage}
+											onPreviewPdf={setPreviewPdf}
+										/>
 									</div>
 								) : registrationAttachments.length > 0 ? (
 									<div className="mt-4">
 										<div className="flex items-center justify-between mb-2">
 											<p className="text-[12px] text-gray-700 font-semibold flex items-center gap-1.5">
-												<span>Foto Dokumentasi:</span>
+												<span>Berkas Lampiran &amp; Dokumentasi Inspeksi:</span>
 												<span className="text-[10px] font-medium text-amber-700 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-200">
 													Registrasi Aset
 												</span>
 											</p>
 											<span className="text-[11px] text-gray-400">
-												{registrationAttachments.length} foto
+												{registrationAttachments.length} berkas
 											</span>
 										</div>
-										<div className="grid grid-cols-3 gap-3">
-											{registrationAttachments.map((att: any, idx: number) => (
-												<div
-													key={idx}
-													className="relative group cursor-pointer rounded-lg overflow-hidden border border-gray-200 bg-gray-100 aspect-square"
-													onClick={() => setPreviewImage(fileUrl(att.file_url || att.url))}
-												>
-													{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
-													<img
-														src={fileUrl(att.file_url || att.url)}
-														alt={att.description || att.file_name || `Foto Registrasi ${idx + 1}`}
-														className="absolute inset-0 w-full h-full object-cover transition-transform group-hover:scale-105"
-													/>
-													<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-														<Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-													</div>
-													{(att.description || att.file_name) && (
-														<div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-1.5">
-															<p className="text-[10px] text-white font-medium truncate">
-																{att.description || att.file_name}
-															</p>
-														</div>
-													)}
-												</div>
-											))}
-										</div>
+										<AttachmentGallery
+											attachments={registrationAttachments}
+											onPreviewImage={setPreviewImage}
+											onPreviewPdf={setPreviewPdf}
+										/>
 									</div>
 								) : null}
 							</div>
@@ -1177,63 +1288,32 @@ function ManajerApproveContent({
 								})()}
 
 								{/* Dokumentasi */}
-								<p className="text-[12px] text-gray-500 font-medium mb-2">
-									Dokumentasi Foto Validasi & Riwayat Audit:
+								<p className="text-[12px] text-gray-700 font-semibold mb-2">
+									Berkas Lampiran &amp; Dokumentasi Inspeksi:
 								</p>
-								<div className="flex gap-3">
+								<div className="flex flex-col sm:flex-row gap-3">
 									{validationAttachments.length > 0 ? (
-										<div className="flex gap-2 max-w-[55%] overflow-x-auto pb-1 shrink-0">
-											{validationAttachments.map((att: any, idx: number) => (
-												<div
-													key={idx}
-													className="relative w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity shrink-0 group"
-													onClick={() => setPreviewImage(fileUrl(att.file_url || att.url))}
-													title={att.file_name || `Foto Validasi ${idx + 1}`}
-												>
-													{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
-													<img
-														src={fileUrl(att.file_url || att.url)}
-														className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform"
-														alt={att.file_name || `Foto Validasi ${idx + 1}`}
-													/>
-													<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-														<Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-													</div>
-													{att.file_name && (
-														<div className="absolute bottom-0 inset-x-0 bg-gradient-to-t from-black/60 to-transparent p-1">
-															<p className="text-[9px] text-white font-medium truncate">
-																{att.file_name}
-															</p>
-														</div>
-													)}
-												</div>
-											))}
+										<div className="sm:w-[58%] shrink-0">
+											<AttachmentGallery
+												attachments={validationAttachments}
+												compact
+												onPreviewImage={setPreviewImage}
+												onPreviewPdf={setPreviewPdf}
+											/>
 										</div>
 									) : registrationAttachments.length > 0 ? (
-										<div className="flex gap-2 max-w-[55%] overflow-x-auto pb-1 shrink-0">
-											{registrationAttachments.slice(0, 2).map((att: any, idx: number) => (
-												<div
-													key={idx}
-													className="relative w-24 h-24 bg-gray-200 rounded-lg overflow-hidden border border-gray-300 cursor-pointer hover:opacity-90 transition-opacity shrink-0 group"
-													onClick={() => setPreviewImage(fileUrl(att.file_url || att.url))}
-													title={`Foto Registrasi ${idx + 1}`}
-												>
-													{/* eslint-disable-next-line @next/next/no-img-element -- next/image optimizer gagal utk foto /uploads backend */}
-													<img
-														src={fileUrl(att.file_url || att.url)}
-														className="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform"
-														alt={`Foto Registrasi ${idx + 1}`}
-													/>
-													<div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
-														<Eye className="w-5 h-5 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
-													</div>
-												</div>
-											))}
+										<div className="sm:w-[58%] shrink-0">
+											<AttachmentGallery
+												attachments={registrationAttachments}
+												compact
+												onPreviewImage={setPreviewImage}
+												onPreviewPdf={setPreviewPdf}
+											/>
 										</div>
 									) : (
 										<div className="w-24 h-24 bg-gray-100 rounded-lg border border-gray-200 flex flex-col items-center justify-center text-gray-400 shrink-0">
 											<span className="text-[10px] font-medium text-center px-2">
-												Tidak ada foto validasi
+												Tidak ada berkas lampiran
 											</span>
 										</div>
 									)}
@@ -1482,6 +1562,61 @@ function ManajerApproveContent({
 							alt="Preview Foto"
 							className="max-w-full max-h-full object-contain rounded-lg shadow-2xl"
 							onClick={(e) => e.stopPropagation()}
+						/>
+					</div>
+				</div>
+			)}
+
+			{previewPdf && (
+				<div
+					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/90 backdrop-blur-sm"
+					onClick={() => setPreviewPdf(null)}
+				>
+					<div
+						className="relative flex w-full max-w-5xl h-[85vh] flex-col overflow-hidden rounded-lg bg-white shadow-2xl"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<div className="flex items-center justify-between gap-3 border-b border-gray-200 px-4 py-3 bg-white">
+							<div className="flex items-center gap-2 min-w-0">
+								<FileText className="w-4 h-4 text-red-600 shrink-0" />
+								<span className="truncate text-[13px] font-semibold text-gray-800">
+									{previewPdf.name}
+								</span>
+							</div>
+							<div className="flex items-center gap-2 shrink-0">
+								<a
+									href={previewPdf.url}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="inline-flex items-center gap-1 rounded border border-[#0A356A]/25 px-2.5 py-1 text-[11px] font-semibold text-[#0A356A] hover:bg-blue-50"
+								>
+									<ExternalLink className="w-3.5 h-3.5" />
+									<span>Buka Tab Baru</span>
+								</a>
+								<a
+									href={previewPdf.url}
+									download={previewPdf.name}
+									target="_blank"
+									rel="noopener noreferrer"
+									className="inline-flex items-center gap-1 rounded border border-gray-300 px-2.5 py-1 text-[11px] font-semibold text-gray-700 hover:bg-gray-100"
+								>
+									<Download className="w-3.5 h-3.5" />
+									<span>Unduh Berkas</span>
+								</a>
+								<button
+									type="button"
+									onClick={() => setPreviewPdf(null)}
+									className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 cursor-pointer"
+									aria-label="Tutup preview PDF"
+								>
+									<X className="w-4 h-4" />
+								</button>
+							</div>
+						</div>
+						<iframe
+							src={previewPdf.url}
+							title={previewPdf.name}
+							className="w-full flex-1 border-0 bg-gray-100"
 						/>
 					</div>
 				</div>
