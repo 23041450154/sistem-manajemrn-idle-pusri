@@ -2,6 +2,7 @@
 
 import React, { useMemo, useState } from "react";
 import {
+	Check,
 	CheckCircle2,
 	ChevronRight,
 	Eye,
@@ -12,6 +13,7 @@ import {
 	XCircle,
 } from "lucide-react";
 import { verifyEquipmentProposal } from "@/action/api";
+import { fileUrl } from "@/lib/file-url";
 
 export interface ProposalAttachment {
 	id?: string | number;
@@ -55,9 +57,16 @@ export default function VerifikasiUsulanClient({
 	onRefresh: () => Promise<void>;
 }) {
 	const [activeTab, setActiveTab] = useState<"antrean" | "ditolak">("antrean");
+	const [searchInput, setSearchInput] = useState("");
 	const [search, setSearch] = useState("");
 	const [plantFilter, setPlantFilter] = useState("");
+	const [currentPage, setCurrentPage] = useState(1);
+	const ITEMS_PER_PAGE = 10;
 	const [selectedItem, setSelectedItem] = useState<ProposalItem | null>(null);
+	const [previewImage, setPreviewImage] = useState<{
+		url: string;
+		name: string;
+	} | null>(null);
 	const [decisionMode, setDecisionMode] = useState<"none" | "approve" | "reject">(
 		"none",
 	);
@@ -97,6 +106,20 @@ export default function VerifikasiUsulanClient({
 			);
 		});
 	}, [sourceList, search, plantFilter]);
+
+	const totalPages = Math.max(1, Math.ceil(filtered.length / ITEMS_PER_PAGE));
+	const safePage = Math.min(currentPage, totalPages);
+	const paginated = useMemo(() => {
+		const start = (safePage - 1) * ITEMS_PER_PAGE;
+		return filtered.slice(start, start + ITEMS_PER_PAGE);
+	}, [filtered, safePage]);
+
+	const resetFilter = () => {
+		setSearchInput("");
+		setSearch("");
+		setPlantFilter("");
+		setCurrentPage(1);
+	};
 
 	const openReviewModal = (item: ProposalItem) => {
 		setSelectedItem(item);
@@ -189,20 +212,23 @@ export default function VerifikasiUsulanClient({
 				</div>
 			</div>
 
-			<div className="overflow-hidden rounded border border-[#E6E8EA] bg-white">
-				<div className="flex items-center gap-6 border-b border-[#E6E8EA] bg-white px-5 pt-3">
+			<div className="bg-white rounded-md border border-gray-200 overflow-hidden">
+				<div className="flex items-center gap-6 px-5 pt-3 border-b border-gray-200 bg-white">
 					<button
 						type="button"
-						onClick={() => setActiveTab("antrean")}
-						className={`flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors cursor-pointer ${
+						onClick={() => {
+							setActiveTab("antrean");
+							setCurrentPage(1);
+						}}
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 cursor-pointer ${
 							activeTab === "antrean"
-								? "border-b-2 border-[#0A356A] text-[#0A356A]"
+								? "text-[#0A356A] border-b-2 border-[#0A356A]"
 								: "text-gray-500 hover:text-gray-700"
 						}`}
 					>
 						<span>Antrean Usulan</span>
 						<span
-							className={`rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums ${
+							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold tabular-nums ${
 								activeTab === "antrean"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -214,16 +240,19 @@ export default function VerifikasiUsulanClient({
 
 					<button
 						type="button"
-						onClick={() => setActiveTab("ditolak")}
-						className={`flex items-center gap-2 pb-3 text-[14px] font-semibold transition-colors cursor-pointer ${
+						onClick={() => {
+							setActiveTab("ditolak");
+							setCurrentPage(1);
+						}}
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 cursor-pointer ${
 							activeTab === "ditolak"
-								? "border-b-2 border-[#0A356A] text-[#0A356A]"
+								? "text-[#0A356A] border-b-2 border-[#0A356A]"
 								: "text-gray-500 hover:text-gray-700"
 						}`}
 					>
 						<span>Riwayat Ditolak</span>
 						<span
-							className={`rounded-full px-2 py-0.5 text-[11px] font-bold tabular-nums ${
+							className={`px-2 py-0.5 text-[11px] rounded-sm font-bold tabular-nums ${
 								activeTab === "ditolak"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -234,24 +263,43 @@ export default function VerifikasiUsulanClient({
 					</button>
 				</div>
 
-				<div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-b border-[#E6E8EA] p-3.5">
-					<div className="relative flex-1 max-w-md">
-						<Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-						<input
-							type="text"
-							value={search}
-							onChange={(e) => setSearch(e.target.value)}
-							placeholder="Cari kode alat, nama, plant, atau alasan..."
-							className="h-9 w-full rounded border border-[#E6E8EA] bg-white pl-9 pr-3 text-[13px] text-gray-900 placeholder:text-gray-400 focus:border-[#0A356A] focus:outline-none"
-						/>
+				<div className="p-3 border-b border-gray-200 bg-white flex flex-col lg:flex-row gap-3 justify-between items-start lg:items-center">
+					<div className="flex w-full lg:w-auto gap-2">
+						<div className="relative flex-1 lg:w-72">
+							<Search className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+							<input
+								type="text"
+								value={searchInput}
+								onChange={(e) => {
+									setSearchInput(e.target.value);
+									setSearch(e.target.value);
+									setCurrentPage(1);
+								}}
+								placeholder="Cari kode atau nama alat..."
+								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400 text-gray-800"
+							/>
+						</div>
+						<button
+							type="button"
+							onClick={() => {
+								setSearch(searchInput);
+								setCurrentPage(1);
+							}}
+							className="px-4 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded hover:bg-[#072448] transition-colors whitespace-nowrap cursor-pointer"
+						>
+							Cari
+						</button>
 					</div>
 
-					<div className="flex items-center gap-2">
+					<div className="flex flex-wrap items-center gap-2 w-full lg:w-auto">
 						<select
 							value={plantFilter}
-							onChange={(e) => setPlantFilter(e.target.value)}
+							onChange={(e) => {
+								setPlantFilter(e.target.value);
+								setCurrentPage(1);
+							}}
 							aria-label="Filter plant"
-							className="h-9 rounded border border-[#E6E8EA] bg-white px-2.5 text-[13px] text-gray-700 focus:border-[#0A356A] focus:outline-none"
+							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
 						>
 							<option value="">Semua Plant</option>
 							{plantOptions.map((p) => (
@@ -260,57 +308,58 @@ export default function VerifikasiUsulanClient({
 								</option>
 							))}
 						</select>
-						{(search || plantFilter) && (
-							<button
-								type="button"
-								onClick={() => {
-									setSearch("");
-									setPlantFilter("");
-								}}
-								className="h-9 rounded border border-[#E6E8EA] px-3 text-[13px] font-medium text-gray-600 hover:bg-gray-50 cursor-pointer"
-							>
-								Reset
-							</button>
-						)}
+						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
+						<button
+							type="button"
+							onClick={resetFilter}
+							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded transition-colors whitespace-nowrap cursor-pointer"
+							title="Reset semua filter"
+						>
+							<RefreshCw className="w-3.5 h-3.5" />
+							Reset
+						</button>
 					</div>
 				</div>
 
 				<div className="w-full overflow-x-auto">
-					<table className="w-full border-collapse text-left">
-						<thead className="bg-[#F8F9FA]">
-							<tr className="border-b border-[#E6E8EA]">
-								<th className="w-10 px-3 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+					<table className="w-full text-center border-collapse">
+						<thead className="bg-[#F2F3F4]">
+							<tr className="border-b border-gray-300">
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center w-12 whitespace-nowrap">
 									No
 								</th>
-								<th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[#64748B] whitespace-nowrap">
-									Tgl Usulan
-								</th>
-								<th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[#64748B] whitespace-nowrap">
-									Unit Kerja / Plant
-								</th>
-								<th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
 									Peralatan
 								</th>
-								<th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
+									Kode Alat
+								</th>
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center whitespace-nowrap">
+									Plant
+								</th>
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center whitespace-nowrap">
 									Lokasi Penyimpanan
 								</th>
-								<th className="px-3 py-2.5 text-left text-[11px] font-semibold uppercase tracking-wider text-[#64748B]">
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-left whitespace-nowrap">
 									Alasan Idle
 								</th>
-								<th className="px-3 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-[#64748B] whitespace-nowrap">
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center whitespace-nowrap">
+									Tgl Usulan
+								</th>
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center whitespace-nowrap">
 									Status
 								</th>
-								<th className="px-3 py-2.5 text-center text-[11px] font-semibold uppercase tracking-wider text-[#64748B] whitespace-nowrap">
-									Aksi
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center whitespace-nowrap">
+									Tindakan
 								</th>
 							</tr>
 						</thead>
-						<tbody className="divide-y divide-[#E6E8EA] bg-white text-[13px]">
-							{filtered.length === 0 ? (
+						<tbody className="bg-white">
+							{paginated.length === 0 ? (
 								<tr>
 									<td
-										colSpan={8}
-										className="px-4 py-10 text-center text-gray-500"
+										colSpan={9}
+										className="px-4 py-12 text-center text-[13px] text-gray-500"
 									>
 										{activeTab === "antrean"
 											? "Belum ada usulan peralatan idle yang menunggu verifikasi."
@@ -318,67 +367,130 @@ export default function VerifikasiUsulanClient({
 									</td>
 								</tr>
 							) : (
-								filtered.map((item, idx) => (
-									<tr key={item.id} className="hover:bg-blue-50/30">
-										<td className="px-3 py-2.5 text-center text-gray-500 tabular-nums">
-											{idx + 1}
-										</td>
-										<td className="px-3 py-2.5 text-gray-600 whitespace-nowrap tabular-nums">
-											{item.createdAt}
-										</td>
-										<td className="px-3 py-2.5 font-medium text-gray-800 whitespace-nowrap">
-											{item.plant}
-										</td>
-										<td className="px-3 py-2.5">
-											<p className="font-semibold text-gray-900">
-												{item.equipmentName}
-											</p>
-											<p className="font-mono text-[11px] font-semibold text-[#0A356A]">
-												{item.equipmentCode}
-											</p>
-										</td>
-										<td className="px-3 py-2.5 text-gray-600">
-											{item.storageLocation}
-										</td>
-										<td className="px-3 py-2.5 text-gray-600 max-w-[240px]">
-											<span className="line-clamp-2">{item.idleReason}</span>
-										</td>
-										<td className="px-3 py-2.5 text-center whitespace-nowrap">
-											{item.status === "PROPOSAL_REJECTED" ? (
-												<span className="inline-flex items-center rounded-[2px] border border-current/20 bg-[#FEE2E2] px-2 py-0.5 text-[11px] font-semibold text-[#DC2626]">
-													PROPOSAL REJECTED
+								paginated.map((item, idx) => {
+									const rowNum = (safePage - 1) * ITEMS_PER_PAGE + idx + 1;
+									return (
+										<tr
+											key={item.id}
+											className="border-b border-gray-200 last:border-b-0 hover:bg-[#F2F3F4] transition-colors group"
+										>
+											<td className="px-3 py-3 text-[15px] text-gray-500 font-medium text-center tabular-nums">
+												{rowNum}
+											</td>
+											<td className="px-3 py-3 text-left">
+												<span className="text-[15px] font-semibold text-gray-800 leading-tight line-clamp-2 block">
+													{item.equipmentName}
 												</span>
-											) : (
-												<span className="inline-flex items-center rounded-[2px] border border-current/20 bg-[#FEF3C7] px-2 py-0.5 text-[11px] font-semibold text-[#B45309]">
-													PROPOSED
+											</td>
+											<td className="px-3 py-3 text-left whitespace-nowrap">
+												<span className="font-mono text-[13px] font-semibold text-[#0A356A]">
+													{item.equipmentCode}
 												</span>
-											)}
-										</td>
-										<td className="px-3 py-2.5 text-center whitespace-nowrap">
-											{activeTab === "antrean" ? (
-												<button
-													type="button"
-													onClick={() => openReviewModal(item)}
-													className="inline-flex items-center gap-1.5 rounded bg-[#0A356A] px-3 py-1.5 text-[12px] font-semibold text-white hover:bg-[#062854] cursor-pointer"
-												>
-													Review Usulan
-												</button>
-											) : (
-												<button
-													type="button"
-													onClick={() => openReviewModal(item)}
-													className="inline-flex items-center gap-1 rounded border border-[#E6E8EA] bg-white px-2.5 py-1 text-[12px] font-medium text-gray-700 hover:bg-gray-50 cursor-pointer"
-												>
-													<Eye className="h-3.5 w-3.5" />
-													<span>Detail</span>
-												</button>
-											)}
-										</td>
-									</tr>
-								))
+											</td>
+											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center whitespace-nowrap">
+												{item.plant}
+											</td>
+											<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center">
+												{item.storageLocation || "-"}
+											</td>
+											<td className="px-3 py-3 text-[14px] text-gray-600 text-left max-w-[240px]">
+												<span className="line-clamp-2">{item.idleReason}</span>
+											</td>
+											<td className="px-3 py-3 text-[14px] text-gray-600 font-medium text-center whitespace-nowrap tabular-nums">
+												{item.createdAt || "-"}
+											</td>
+											<td className="px-3 py-3 text-[15px] text-center whitespace-nowrap">
+												<div className="flex justify-center">
+													{item.status === "PROPOSAL_REJECTED" ? (
+														<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEE2E2] text-[#DC2626]">
+															PROPOSAL REJECTED
+														</span>
+													) : (
+														<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEF9C3] text-[#CA8A04]">
+															PROPOSED
+														</span>
+													)}
+												</div>
+											</td>
+											<td className="px-3 py-3 text-center whitespace-nowrap">
+												<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
+													{activeTab === "antrean" ? (
+														<button
+															type="button"
+															title="Review Usulan"
+															onClick={() => openReviewModal(item)}
+															className="text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] p-1 px-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
+														>
+															<Check className="w-3.5 h-3.5" />
+															<span className="text-[11px] font-bold">
+																Review Usulan
+															</span>
+														</button>
+													) : (
+														<button
+															type="button"
+															title="Detail Info"
+															onClick={() => openReviewModal(item)}
+															className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1 px-2 rounded-md transition-colors flex items-center gap-1 cursor-pointer"
+														>
+															<Eye className="w-3.5 h-3.5" />
+															<span className="text-[11px] font-bold">
+																Detail Info
+															</span>
+														</button>
+													)}
+												</div>
+											</td>
+										</tr>
+									);
+								})
 							)}
 						</tbody>
 					</table>
+				</div>
+
+				{/* Pagination */}
+				<div className="px-5 py-3 border-t border-gray-200 bg-white flex justify-between items-center">
+					<span className="text-[11px] font-medium text-gray-500">
+						Menampilkan{" "}
+						{filtered.length === 0 ? 0 : (safePage - 1) * ITEMS_PER_PAGE + 1} -{" "}
+						{Math.min(safePage * ITEMS_PER_PAGE, filtered.length)} dari{" "}
+						{filtered.length} data (10 baris/halaman)
+					</span>
+					<div className="flex items-center gap-1.5">
+						<button
+							type="button"
+							onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+							disabled={safePage === 1}
+							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
+						>
+							Prev
+						</button>
+						<div className="flex items-center gap-1">
+							{Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+								<button
+									type="button"
+									key={page}
+									onClick={() => setCurrentPage(page)}
+									className={`w-6 h-6 rounded-md text-[11px] font-bold flex items-center justify-center transition-colors cursor-pointer ${
+										safePage === page
+											? "bg-[#0A356A] text-white"
+											: "text-gray-600 hover:bg-gray-100"
+									}`}
+								>
+									{page}
+								</button>
+							))}
+						</div>
+						<button
+							type="button"
+							onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+							disabled={safePage === totalPages}
+							className="px-2.5 py-1 text-[11px] font-semibold text-gray-600 bg-white border border-gray-200 rounded-md disabled:opacity-40 disabled:cursor-not-allowed hover:bg-gray-50 transition-colors cursor-pointer"
+						>
+							Next
+						</button>
+					</div>
 				</div>
 			</div>
 
@@ -393,81 +505,94 @@ export default function VerifikasiUsulanClient({
 						role="dialog"
 						aria-modal="true"
 						aria-label={`Review Usulan ${selectedItem.equipmentCode}`}
-						className="relative z-10 flex max-h-[85vh] w-full max-w-2xl flex-col overflow-hidden rounded border border-[#E6E8EA] bg-white shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
+						className="relative z-10 flex max-h-[85vh] w-full max-w-3xl flex-col overflow-hidden rounded border border-[#E6E8EA] bg-white shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)]"
 					>
-						<div className="flex shrink-0 items-center justify-between gap-3 border-b border-[#E6E8EA] bg-[#0A356A] px-6 py-4 text-white">
-							<div className="min-w-0">
-								<p className="font-mono text-[12px] text-blue-200">
-									{selectedItem.equipmentCode}
-								</p>
-								<h2 className="truncate text-base font-bold">
-									{selectedItem.equipmentName}
+						<div className="flex shrink-0 items-center justify-between gap-3 border-b border-gray-200 bg-white px-6 py-3.5">
+							<div className="flex min-w-0 items-center gap-3">
+								<h2 className="truncate text-base font-bold text-gray-900">
+									{selectedItem.status === "PROPOSED"
+										? "Review Usulan Peralatan Idle"
+										: "Detail Usulan Peralatan Idle"}
 								</h2>
+								<span className="text-gray-300">|</span>
+								<span className="font-mono text-[13px] font-semibold text-[#0A356A] shrink-0">
+									{selectedItem.equipmentCode}
+								</span>
 							</div>
 							<button
 								type="button"
 								aria-label="Tutup modal review usulan"
 								onClick={closeModal}
-								className="rounded p-1.5 text-white/80 hover:bg-white/10 hover:text-white cursor-pointer"
+								className="rounded p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600 transition-colors cursor-pointer"
 							>
-								<X className="h-4 w-4" />
+								<X className="h-4 w-4" aria-hidden="true" />
 							</button>
 						</div>
 
-						<div className="flex-1 min-h-0 overflow-y-auto p-6 space-y-4 text-[13px]">
-							<dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded border border-[#E6E8EA] bg-[#F8F9FA] p-4">
-								<div>
-									<dt className="text-[11px] font-semibold uppercase text-[#64748B]">
-										Unit Kerja / Plant
-									</dt>
-									<dd className="mt-0.5 font-medium text-gray-900">
-										{selectedItem.plant}
-									</dd>
+						<div className="flex-1 min-h-0 overflow-y-auto bg-gray-50/50 px-6 py-4 space-y-4 text-[13px]">
+							<div className="rounded border border-[#E6E8EA] bg-[#F2F3F4] p-3">
+								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+									<div className="sm:col-span-2">
+										<span className="block text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">
+											Nama Peralatan
+										</span>
+										<span className="mt-0.5 block font-bold text-[13px] text-[#0F172A]">
+											{selectedItem.equipmentName}
+										</span>
+									</div>
+									<div>
+										<span className="block text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">
+											Unit Kerja / Plant
+										</span>
+										<span className="mt-0.5 block font-semibold text-[13px] text-[#0F172A]">
+											{selectedItem.plant}
+										</span>
+									</div>
+									<div>
+										<span className="block text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">
+											Lokasi Penyimpanan
+										</span>
+										<span className="mt-0.5 block font-semibold text-[13px] text-[#0F172A]">
+											{selectedItem.storageLocation || "-"}
+										</span>
+									</div>
+									<div className="sm:col-span-2">
+										<span className="block text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">
+											Functional Location
+										</span>
+										<span className="mt-0.5 block font-mono text-[12px] font-medium text-[#334155]">
+											{selectedItem.funcLoc || "-"}
+										</span>
+									</div>
+									<div className="sm:col-span-2">
+										<span className="block text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">
+											Pengusul & Tanggal
+										</span>
+										<span className="mt-0.5 block font-medium text-[13px] text-[#0F172A]">
+											{selectedItem.proposerName} ({selectedItem.createdAt})
+										</span>
+									</div>
 								</div>
-								<div>
-									<dt className="text-[11px] font-semibold uppercase text-[#64748B]">
-										Functional Location
-									</dt>
-									<dd className="mt-0.5 font-medium text-gray-900">
-										{selectedItem.funcLoc}
-									</dd>
-								</div>
-								<div>
-									<dt className="text-[11px] font-semibold uppercase text-[#64748B]">
-										Lokasi Penyimpanan
-									</dt>
-									<dd className="mt-0.5 font-medium text-gray-900">
-										{selectedItem.storageLocation}
-									</dd>
-								</div>
-								<div>
-									<dt className="text-[11px] font-semibold uppercase text-[#64748B]">
-										Pengusul & Tanggal
-									</dt>
-									<dd className="mt-0.5 font-medium text-gray-900">
-										{selectedItem.proposerName} ({selectedItem.createdAt})
-									</dd>
-								</div>
-								<div className="sm:col-span-2">
-									<dt className="text-[11px] font-semibold uppercase text-[#64748B]">
+								<div className="mt-3 border-t border-[#E6E8EA] pt-2.5">
+									<span className="block text-[10px] font-semibold uppercase tracking-wide text-[#64748B]">
 										Alasan Idle
-									</dt>
-									<dd className="mt-0.5 text-gray-800">
+									</span>
+									<p className="mt-0.5 text-[13px] text-gray-800">
 										{selectedItem.idleReason}
-									</dd>
+									</p>
 								</div>
 								{selectedItem.rejectionNotes && (
-									<div className="sm:col-span-2 rounded border border-[#FECACA] bg-[#FEF2F2] p-2.5 text-[#DC2626]">
-										<dt className="text-[11px] font-semibold uppercase">
+									<div className="mt-3 rounded border border-[#FECACA] bg-[#FEF2F2] p-2.5 text-[#DC2626]">
+										<span className="block text-[10px] font-semibold uppercase tracking-wide">
 											Alasan Penolakan
-										</dt>
-										<dd className="mt-0.5">{selectedItem.rejectionNotes}</dd>
+										</span>
+										<p className="mt-0.5 text-[13px]">{selectedItem.rejectionNotes}</p>
 									</div>
 								)}
-							</dl>
+							</div>
 
-							<div>
-								<h3 className="mb-2 text-[12px] font-semibold uppercase text-[#64748B]">
+							<div className="rounded border border-gray-200 bg-white p-4">
+								<h3 className="mb-2.5 text-[11px] font-semibold uppercase tracking-wide text-[#64748B]">
 									Lampiran Pendukung ({selectedItem.attachments.length})
 								</h3>
 								{selectedItem.attachments.length === 0 ? (
@@ -475,35 +600,78 @@ export default function VerifikasiUsulanClient({
 										Tidak ada berkas lampiran.
 									</p>
 								) : (
-									<div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+									<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
 										{selectedItem.attachments.map((att, idx) => {
-											const url =
-												att.file_url || att.fileUrl || att.url || "#";
-											const isImg = IMAGE_PATTERN.test(url);
+											const rawUrl =
+												att.file_url || att.fileUrl || att.url || "";
+											const resolvedUrl = rawUrl ? fileUrl(rawUrl) : "#";
+											const fileName =
+												att.file_name || `Lampiran #${idx + 1}`;
+											const isImg =
+												IMAGE_PATTERN.test(rawUrl) ||
+												IMAGE_PATTERN.test(fileName) ||
+												rawUrl.startsWith("data:image");
 											return (
-												<a
+												<div
 													key={att.id ?? idx}
-													href={url}
-													target="_blank"
-													rel="noopener noreferrer"
-													className="flex items-center gap-2.5 rounded border border-[#E6E8EA] bg-white p-2.5 hover:bg-gray-50"
+													className="flex items-center justify-between gap-2.5 rounded border border-gray-200 bg-gray-50/70 p-2.5"
 												>
-													{isImg ? (
-														/* eslint-disable-next-line @next/next/no-img-element */
-														<img
-															src={url}
-															alt={att.file_name || `Lampiran ${idx + 1}`}
-															width={40}
-															height={40}
-															className="h-10 w-10 rounded object-cover shrink-0 border border-[#E6E8EA]"
-														/>
-													) : (
-														<FileText className="h-5 w-5 text-[#0A356A] shrink-0" />
-													)}
-													<span className="truncate text-xs font-medium text-[#0A356A]">
-														{att.file_name || `Lampiran #${idx + 1}`}
-													</span>
-												</a>
+													<div className="flex min-w-0 items-center gap-2.5">
+														{isImg ? (
+															/* eslint-disable-next-line @next/next/no-img-element */
+															<img
+																src={resolvedUrl}
+																alt={fileName}
+																width={44}
+																height={44}
+																onClick={() =>
+																	setPreviewImage({
+																		url: resolvedUrl,
+																		name: fileName,
+																	})
+																}
+																className="h-11 w-11 rounded object-cover shrink-0 border border-gray-200 bg-white cursor-pointer hover:opacity-90"
+															/>
+														) : (
+															<div className="flex h-11 w-11 shrink-0 items-center justify-center rounded border border-gray-200 bg-white text-[#0A356A]">
+																<FileText className="h-5 w-5" />
+															</div>
+														)}
+														<span
+															className="truncate text-[12px] font-semibold text-gray-800"
+															title={fileName}
+														>
+															{fileName}
+														</span>
+													</div>
+													<div className="flex shrink-0 items-center gap-1.5">
+														{isImg ? (
+															<button
+																type="button"
+																onClick={() =>
+																	setPreviewImage({
+																		url: resolvedUrl,
+																		name: fileName,
+																	})
+																}
+																className="inline-flex items-center gap-1 rounded border border-[#0A356A]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#0A356A] hover:bg-[#0A356A]/5 cursor-pointer"
+															>
+																<Eye className="h-3 w-3" />
+																<span>Preview</span>
+															</button>
+														) : (
+															<a
+																href={resolvedUrl}
+																target="_blank"
+																rel="noopener noreferrer"
+																className="inline-flex items-center gap-1 rounded border border-[#0A356A]/20 bg-white px-2.5 py-1 text-[11px] font-semibold text-[#0A356A] hover:bg-[#0A356A]/5"
+															>
+																<Eye className="h-3 w-3" />
+																<span>Preview</span>
+															</a>
+														)}
+													</div>
+												</div>
 											);
 										})}
 									</div>
@@ -568,12 +736,12 @@ export default function VerifikasiUsulanClient({
 							)}
 						</div>
 
-						<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-[#E6E8EA] bg-[#F8F9FA] px-6 py-4">
+						<div className="flex shrink-0 flex-wrap items-center justify-between gap-2 border-t border-gray-200 bg-gray-50 px-6 py-3">
 							<button
 								type="button"
 								onClick={closeModal}
 								disabled={submitting}
-								className="rounded border border-[#E6E8EA] bg-white px-4 py-2 text-[13px] font-semibold text-gray-700 hover:bg-gray-100 cursor-pointer"
+								className="rounded-md border border-gray-300 bg-white px-4 py-1.5 text-[13px] font-bold text-gray-700 hover:bg-gray-50 transition-all cursor-pointer"
 							>
 								Tutup
 							</button>
@@ -638,6 +806,40 @@ export default function VerifikasiUsulanClient({
 									)}
 								</div>
 							)}
+						</div>
+					</div>
+				</div>
+			)}
+
+			{previewImage && (
+				<div
+					className="fixed inset-0 z-[100] flex items-center justify-center bg-gray-900/90 p-4 backdrop-blur-sm"
+					onClick={() => setPreviewImage(null)}
+				>
+					<div
+						className="relative flex max-h-[90vh] max-w-4xl flex-col overflow-hidden rounded-lg bg-white shadow-2xl"
+						onClick={(e) => e.stopPropagation()}
+					>
+						<div className="flex items-center justify-between border-b border-gray-200 px-4 py-2.5">
+							<span className="truncate text-[13px] font-semibold text-gray-800">
+								{previewImage.name}
+							</span>
+							<button
+								type="button"
+								onClick={() => setPreviewImage(null)}
+								className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-700 cursor-pointer"
+								aria-label="Tutup preview"
+							>
+								<X className="h-4 w-4" />
+							</button>
+						</div>
+						<div className="flex items-center justify-center bg-gray-100 p-4 overflow-auto">
+							{/* eslint-disable-next-line @next/next/no-img-element */}
+							<img
+								src={previewImage.url}
+								alt={previewImage.name}
+								className="max-h-[75vh] max-w-full rounded object-contain"
+							/>
 						</div>
 					</div>
 				</div>

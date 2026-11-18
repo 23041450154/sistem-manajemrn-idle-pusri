@@ -1,17 +1,17 @@
 # Graph Report - projek  (2026-11-18)
 
 ## Corpus Check
-- 190 files · ~306,956 words
+- 190 files · ~307,618 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 9 file(s) not represented in the graph (top: .stackdump 5, .example 1, (none) 1)
 
 ## Summary
-- 1007 nodes · 2455 edges · 71 communities (41 shown, 30 thin omitted)
+- 1007 nodes · 2458 edges · 72 communities (42 shown, 30 thin omitted)
 - Extraction: 100% EXTRACTED · 0% INFERRED · 0% AMBIGUOUS · INFERRED: 11 edges (avg confidence: 0.92)
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `67d0fcf4`
+- Built from commit: `2233890c`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -75,6 +75,7 @@
 - rendal/scrap/page.tsx
 - pdfkit
 - shadcn
+- verifikasi-usulan/page.tsx
 
 ## God Nodes (most connected - your core abstractions)
 1. `getEquipments()` - 64 edges
@@ -103,7 +104,7 @@
 ## Import Cycles
 - None detected.
 
-## Communities (71 total, 30 thin omitted)
+## Communities (72 total, 30 thin omitted)
 
 ### Community 0 - "perbaikan-alat-client.tsx"
 Cohesion: 0.18
@@ -186,8 +187,8 @@ Cohesion: 0.40
 Nodes (4): berkalaForm, inspeksiDashboard, syncedTargets, validasiClient
 
 ### Community 23 - "equipment-status.ts"
-Cohesion: 0.06
-Nodes (51): Aturan main (dari user, jangan dilanggar), Handoff — Lanjutan Audit & Cleanup Frontend Idle PUSRI, Konteks project (fakta penting), Konvensi yang sudah dibangun — WAJIB dipertahankan, SISA KERJA 1 — 6a-2: Konversi RSC halaman inbox besar, SISA KERJA 2 — 24 `<img>` modal preview foto, SISA KERJA 3 — Backend Go (`~/Documents/pusri`, repo terpisah), Verifikasi wajib tiap akhir langkah (+43 more)
+Cohesion: 0.07
+Nodes (44): Aturan main (dari user, jangan dilanggar), Handoff — Lanjutan Audit & Cleanup Frontend Idle PUSRI, Konteks project (fakta penting), Konvensi yang sudah dibangun — WAJIB dipertahankan, SISA KERJA 1 — 6a-2: Konversi RSC halaman inbox besar, SISA KERJA 2 — 24 `<img>` modal preview foto, SISA KERJA 3 — Backend Go (`~/Documents/pusri`, repo terpisah), Verifikasi wajib tiap akhir langkah (+36 more)
 
 ### Community 24 - "ref_node_assert"
 Cohesion: 0.16
@@ -211,7 +212,7 @@ Nodes (7): api, appended, body, createFn, optional, page, required
 
 ### Community 31 - "action/api.ts"
 Cohesion: 0.06
-Nodes (89): API_URL, approveRevalidationEquipment(), approveScrap(), assignEquipmentRepair(), AssignRepairPayload, completeEquipmentRepair(), confirmEquipmentInstallation(), createEquipment() (+81 more)
+Nodes (86): API_URL, approveRevalidationEquipment(), approveScrap(), assignEquipmentRepair(), AssignRepairPayload, completeEquipmentRepair(), confirmEquipmentInstallation(), createEquipment() (+78 more)
 
 ### Community 32 - "ui-layouts-mcp"
 Cohesion: 0.40
@@ -269,6 +270,10 @@ Nodes (6): actionTypeConfig, AuditLogEntry, RendalLaporanClient(), buildAuditLog
 Cohesion: 0.07
 Nodes (56): approvedBadge, disposedBadge, inReviewBadge, laporanClient, manajerScrapClient, pendingBadge, rejectedBadge, rendalScrapPage (+48 more)
 
+### Community 71 - "verifikasi-usulan/page.tsx"
+Cohesion: 0.27
+Nodes (10): getEquipmentProposals(), mapProposalRow(), VerifikasiUsulanPage(), INSPECTION_CLUSTERS, ProposalAttachment, ProposalItem, VerifikasiUsulanClient(), basePath() (+2 more)
+
 ## Knowledge Gaps
 - **35 isolated node(s):** `tw-animate-css`, `react`, `npx`, `@ui-layouts/mcp`, `dom` (+30 more)
   These have ≤1 connection - possible missing edges or undocumented components. (Counts symbols only; 450 node(s) total have ≤1 connection when file, concept and rationale nodes are included.)
@@ -277,17 +282,17 @@ Nodes (56): approvedBadge, disposedBadge, inReviewBadge, laporanClient, manajerS
 ## Suggested Questions
 _Questions this graph is uniquely positioned to answer:_
 
-- **Why does `dependencies` connect `dependencies` to `pdfkit`, `shadcn`, `package.json`, `tw-animate-css`, `equipment-status.ts`, `class-variance-authority`, `clsx`?**
-  _High betweenness centrality (0.101) - this node is a cross-community bridge._
+- **Why does `UnitKerjaDashboard()` connect `equipment-status.ts` to `action/api.ts`?**
+  _High betweenness centrality (0.064) - this node is a cross-community bridge._
 - **What connects `tw-animate-css`, `react`, `npx` to the rest of the system?**
   _35 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `check-qa-6-on-progress.mjs` be split into smaller, more focused modules?**
   _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
-- **Why does `UnitKerjaDashboard()` connect `equipment-status.ts` to `action/api.ts`?**
-  _High betweenness centrality (0.101) - this node is a cross-community bridge._
+- **Why does `react` connect `equipment-status.ts` to `dependencies`?**
+  _High betweenness centrality (0.063) - this node is a cross-community bridge._
 - **Should `ref_lucide_react` be split into smaller, more focused modules?**
   _Cohesion score 0.06421052631578947 - nodes in this community are weakly interconnected._
-- **Why does `react` connect `equipment-status.ts` to `dependencies`?**
-  _High betweenness centrality (0.100) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `dependencies` to `pdfkit`, `shadcn`, `package.json`, `tw-animate-css`, `equipment-status.ts`, `class-variance-authority`, `clsx`?**
+  _High betweenness centrality (0.063) - this node is a cross-community bridge._
 - **Should `compilerOptions` be split into smaller, more focused modules?**
   _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._
