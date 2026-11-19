@@ -11,6 +11,7 @@ import {
 	Loader2,
 	Database,
 	Lock,
+	X,
 } from "lucide-react";
 import { ConfirmDialog } from "@/components/ConfirmDialog";
 import {
@@ -207,7 +208,7 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 						</p>
 					</div>
 				) : (
-					<div className="overflow-x-auto">
+					<div className="w-full overflow-x-auto">
 						<table className="w-full text-left border-collapse">
 							<thead className="bg-slate-50 border-b border-slate-200">
 								<tr>
@@ -298,91 +299,107 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 			{formOpen && !readOnly && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 					<div
-						className="fixed inset-0 bg-gray-900/60 backdrop-blur-sm"
+						className="fixed inset-0 bg-[#0F172A]/50"
 						onClick={() => !isSubmitting && setFormOpen(false)}
 					/>
 
-					<div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 flex flex-col animate-in zoom-in-95 duration-200 border border-slate-100">
-						<div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-label={editing ? `Ubah ${entity.label}` : `Tambah ${entity.label}`}
+						className="relative w-full max-w-md bg-white rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-200"
+					>
+						<div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-slate-200 bg-white">
 							<h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
 								{editing ? (
-									<Pencil className="w-5 h-5 text-[#0A356A]" />
+									<Pencil className="w-5 h-5 text-[#0A356A]" aria-hidden="true" />
 								) : (
-									<Plus className="w-5 h-5 text-[#0A356A]" />
+									<Plus className="w-5 h-5 text-[#0A356A]" aria-hidden="true" />
 								)}
 								{editing ? `Ubah ${entity.label}` : `Tambah ${entity.label}`}
 							</h3>
+							<button
+								type="button"
+								aria-label="Tutup formulir master data"
+								disabled={isSubmitting}
+								onClick={() => setFormOpen(false)}
+								className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
+							>
+								<X className="w-4 h-4" aria-hidden="true" />
+							</button>
 						</div>
 
-						<form onSubmit={handleSubmit}>
-							<div className="mb-4">
-								<label
-									htmlFor="master-name"
-									className="block text-xs font-bold text-slate-700 mb-1.5"
-								>
-									Nama Entri <span className="text-red-500">*</span>
-								</label>
-								<input
-									id="master-name"
-									required
-									type="text"
-									value={itemName}
-									onChange={(e) => setItemName(e.target.value)}
-									placeholder={entity.placeholder}
-									className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] focus:bg-white outline-none transition-all font-medium"
-								/>
-							</div>
-
-							{entity.needsPlant && (
-								<div className="mb-4">
+						<form onSubmit={handleSubmit} className="flex flex-col flex-1 min-h-0 overflow-hidden">
+							<div className="px-6 py-5 flex-1 min-h-0 overflow-y-auto scroll-smooth space-y-4">
+								<div>
 									<label
-										htmlFor="master-plant"
+										htmlFor="master-name"
 										className="block text-xs font-bold text-slate-700 mb-1.5"
 									>
-										Plant <span className="text-red-500">*</span>
+										Nama Entri <span className="text-red-500">*</span>
 									</label>
-									<select
-										id="master-plant"
+									<input
+										id="master-name"
 										required
-										value={itemPlantId}
-										onChange={(e) =>
-											setItemPlantId(e.target.value === "" ? "" : Number(e.target.value))
-										}
-										className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none font-semibold text-slate-700 cursor-pointer"
-									>
-										<option value="">Pilih plant...</option>
-										{plants.map((plant) => (
-											<option key={plant.id} value={plant.id}>
-												{plant.name}
-											</option>
-										))}
-									</select>
+										type="text"
+										value={itemName}
+										onChange={(e) => setItemName(e.target.value)}
+										placeholder={entity.placeholder}
+										className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] focus:bg-white outline-none transition-all font-medium"
+									/>
 								</div>
-							)}
 
-							<div className="mb-5">
-								<label
-									htmlFor="master-desc"
-									className="block text-xs font-bold text-slate-700 mb-1.5"
-								>
-									Keterangan / Deskripsi
-								</label>
-								<textarea
-									id="master-desc"
-									rows={3}
-									value={itemDesc}
-									onChange={(e) => setItemDesc(e.target.value)}
-									placeholder="Masukkan deskripsi rinci..."
-									className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded-xl focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] focus:bg-white outline-none transition-all resize-none font-medium"
-								/>
+								{entity.needsPlant && (
+									<div>
+										<label
+											htmlFor="master-plant"
+											className="block text-xs font-bold text-slate-700 mb-1.5"
+										>
+											Plant <span className="text-red-500">*</span>
+										</label>
+										<select
+											id="master-plant"
+											required
+											value={itemPlantId}
+											onChange={(e) =>
+												setItemPlantId(e.target.value === "" ? "" : Number(e.target.value))
+											}
+											className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none font-semibold text-slate-700 cursor-pointer"
+										>
+											<option value="">Pilih plant...</option>
+											{plants.map((plant) => (
+												<option key={plant.id} value={plant.id}>
+													{plant.name}
+												</option>
+											))}
+										</select>
+									</div>
+								)}
+
+								<div>
+									<label
+										htmlFor="master-desc"
+										className="block text-xs font-bold text-slate-700 mb-1.5"
+									>
+										Keterangan / Deskripsi
+									</label>
+									<textarea
+										id="master-desc"
+										rows={3}
+										value={itemDesc}
+										onChange={(e) => setItemDesc(e.target.value)}
+										placeholder="Masukkan deskripsi rinci..."
+										className="w-full px-3.5 py-2.5 text-xs bg-slate-50 border border-slate-200 rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] focus:bg-white outline-none transition-all resize-none font-medium"
+									/>
+								</div>
 							</div>
 
-							<div className="flex items-center justify-end gap-3 mt-5 pt-3 border-t border-slate-100">
+							<div className="flex items-center justify-end gap-3 px-6 py-4 shrink-0 border-t border-slate-200 bg-gray-50">
 								<button
 									type="button"
 									onClick={() => setFormOpen(false)}
 									disabled={isSubmitting}
-									className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors disabled:opacity-70"
+									className="px-5 py-2 bg-white border border-slate-300 text-slate-700 rounded text-xs font-bold hover:bg-slate-50 transition-colors disabled:opacity-70"
 								>
 									Batal
 								</button>
@@ -390,7 +407,7 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 									type="button"
 									onClick={() => setIsSaveConfirmOpen(true)}
 									disabled={isSubmitting || !itemName.trim()}
-									className="px-5 py-2.5 bg-[#0A356A] text-white rounded-xl text-xs font-bold hover:bg-[#0556B3] transition-colors flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed shadow-sm"
+									className="px-5 py-2 bg-[#0A356A] text-white rounded text-xs font-bold hover:bg-[#0556B3] transition-colors flex items-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
 								>
 									{isSubmitting ? (
 										<Loader2 className="w-4 h-4 animate-spin" />
@@ -408,40 +425,61 @@ export function MasterDataTable({ entity }: { entity: MasterEntity }) {
 			{deleting && (
 				<div className="fixed inset-0 z-50 flex items-center justify-center p-4">
 					<div
-						className="fixed inset-0 bg-slate-900/60 backdrop-blur-sm"
+						className="fixed inset-0 bg-[#0F172A]/50"
 						onClick={() => !isSubmitting && setDeleting(null)}
 					/>
 
-					<div className="relative w-full max-w-md bg-white rounded-2xl shadow-2xl p-6 flex flex-col items-center text-center animate-in zoom-in-95 duration-200 border border-slate-100">
-						<div className="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-4">
-							<AlertTriangle className="w-6 h-6" />
+					<div
+						role="alertdialog"
+						aria-modal="true"
+						aria-label="Hapus data master?"
+						className="relative w-full max-w-md bg-white rounded border border-[#E6E8EA] shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] flex flex-col max-h-[85vh] overflow-hidden animate-in zoom-in-95 duration-200"
+					>
+						<div className="flex items-center justify-between gap-3 px-6 py-4 shrink-0 border-b border-slate-200 bg-white">
+							<div className="flex items-center gap-3">
+								<div className="w-9 h-9 bg-red-100 text-red-600 rounded-full flex items-center justify-center shrink-0">
+									<AlertTriangle className="w-5 h-5" aria-hidden="true" />
+								</div>
+								<h3 className="text-base font-bold text-slate-900">
+									Hapus data master?
+								</h3>
+							</div>
+							<button
+								type="button"
+								aria-label="Tutup dialog hapus master data"
+								disabled={isSubmitting}
+								onClick={() => setDeleting(null)}
+								className="p-1.5 rounded text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors disabled:opacity-50"
+							>
+								<X className="w-4 h-4" aria-hidden="true" />
+							</button>
 						</div>
 
-						<h3 className="text-base font-bold text-slate-900 mb-2">
-							Hapus data master?
-						</h3>
+						<div className="px-6 py-5 flex-1 min-h-0 overflow-y-auto scroll-smooth">
+							<p className="text-xs text-slate-600 leading-relaxed font-medium">
+								Anda akan menghapus{" "}
+								<span className="font-bold text-slate-900">
+									&quot;{deleting.name}&quot;
+								</span>
+								. Tindakan ini tidak dapat dibatalkan dan mempengaruhi pilihan dropdown
+								pada modul terkait.
+							</p>
+						</div>
 
-						<p className="text-xs text-slate-600 mb-5 leading-relaxed font-medium">
-							Anda akan menghapus{" "}
-							<span className="font-bold text-slate-900">
-								&quot;{deleting.name}&quot;
-							</span>
-							. Tindakan ini tidak dapat dibatalkan dan mempengaruhi pilihan dropdown
-							pada modul terkait.
-						</p>
-
-						<div className="flex items-center gap-3 w-full justify-center mt-2">
+						<div className="flex items-center justify-end gap-3 px-6 py-4 shrink-0 border-t border-slate-200 bg-gray-50">
 							<button
+								type="button"
 								onClick={() => setDeleting(null)}
 								disabled={isSubmitting}
-								className="px-5 py-2.5 bg-white border border-slate-300 text-slate-700 rounded-xl text-xs font-bold hover:bg-slate-50 transition-colors w-full disabled:opacity-70"
+								className="px-5 py-2 bg-white border border-slate-300 text-slate-700 rounded text-xs font-bold hover:bg-slate-50 transition-colors disabled:opacity-70"
 							>
 								Batal
 							</button>
 							<button
+								type="button"
 								onClick={handleDelete}
 								disabled={isSubmitting}
-								className="px-5 py-2.5 bg-[#dc2626] text-white rounded-xl text-xs font-bold hover:bg-[#b91c1c] transition-colors w-full flex items-center justify-center gap-2 disabled:opacity-70 shadow-sm"
+								className="px-5 py-2 bg-[#dc2626] text-white rounded text-xs font-bold hover:bg-[#b91c1c] transition-colors flex items-center justify-center gap-2 disabled:opacity-70"
 							>
 								{isSubmitting ? (
 									<Loader2 className="w-4 h-4 animate-spin" />

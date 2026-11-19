@@ -617,7 +617,7 @@ export default function UnitKerjaIdleClient({
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="w-full overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-50/95 backdrop-blur-sm">
                 <tr className="border-b-2 border-gray-300">
@@ -833,7 +833,7 @@ export default function UnitKerjaIdleClient({
           </div>
 
           {/* Table */}
-          <div className="overflow-x-auto">
+          <div className="w-full overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead className="bg-gray-50/95 backdrop-blur-sm">
                 <tr className="border-b-2 border-gray-300">
@@ -943,7 +943,7 @@ export default function UnitKerjaIdleClient({
             onClick={() => setDetailModalItem(null)}
           />
 
-          <div className="relative w-full max-w-3xl max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
+          <div className="relative w-full max-w-3xl max-h-[85vh] bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200 overflow-hidden">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-white shrink-0">
               <div className="flex items-center gap-3">
@@ -956,6 +956,8 @@ export default function UnitKerjaIdleClient({
                 </span>
               </div>
               <button
+                type="button"
+                aria-label="Tutup dialog"
                 onClick={() => setDetailModalItem(null)}
                 className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded-md transition-colors"
               >
@@ -964,7 +966,7 @@ export default function UnitKerjaIdleClient({
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 bg-gray-50/50">
+            <div className="flex-1 min-h-0 overflow-y-auto scroll-smooth px-6 py-5 space-y-5 bg-gray-50/50">
               {/* Card Summary */}
               <div className="bg-white border border-gray-200 rounded-lg p-4 shadow-sm flex flex-col md:flex-row justify-between gap-4">
                 <div>
@@ -1129,12 +1131,14 @@ export default function UnitKerjaIdleClient({
             {/* Footer */}
             <div className="px-6 py-3.5 border-t border-gray-200 bg-white flex justify-end gap-3 shrink-0">
               <button
+                type="button"
                 onClick={() => setDetailModalItem(null)}
                 className="px-4 py-2 rounded-lg text-[13px] font-semibold text-gray-700 bg-gray-100 hover:bg-gray-200 transition-colors"
               >
                 Tutup
               </button>
               <button
+                type="button"
                 onClick={() => {
                   const item = detailModalItem;
                   setDetailModalItem(null);
@@ -1158,7 +1162,7 @@ export default function UnitKerjaIdleClient({
             onClick={() => setReuseModalItem(null)}
           />
 
-          <div className="relative w-full max-w-4xl max-h-[90vh] bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
+          <div className="relative w-full max-w-4xl max-h-[85vh] overflow-hidden bg-white rounded-xl shadow-2xl flex flex-col animate-in fade-in zoom-in-95 duration-200">
             {/* Header */}
             <div className="flex items-center justify-between px-6 py-3.5 border-b border-gray-200 bg-white rounded-t-xl shrink-0">
               <div className="flex items-center gap-3">
@@ -1171,6 +1175,8 @@ export default function UnitKerjaIdleClient({
                 </span>
               </div>
               <button
+                type="button"
+                aria-label="Tutup dialog"
                 onClick={() => setReuseModalItem(null)}
                 className="text-gray-400 hover:text-gray-600 hover:bg-gray-100 p-1 rounded-md transition-colors"
               >
@@ -1179,7 +1185,7 @@ export default function UnitKerjaIdleClient({
             </div>
 
             {/* Body */}
-            <div className="flex-1 overflow-y-auto px-6 py-4 bg-gray-50/50">
+            <div className="flex-1 min-h-0 overflow-y-auto scroll-smooth px-6 py-4 bg-gray-50/50">
               {/* Asset Info Ribbon */}
               <div className="bg-[#f0f7ff] border border-blue-100 rounded-lg p-3 mb-4 flex flex-col md:flex-row justify-between gap-4">
                 <div className="flex-1 flex items-center gap-5 overflow-hidden">

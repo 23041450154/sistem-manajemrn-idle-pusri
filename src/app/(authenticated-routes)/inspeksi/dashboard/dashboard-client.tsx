@@ -12,7 +12,6 @@ import {
 	Wrench,
 	Clock,
 	CheckCircle2,
-	AlertTriangle,
 	ClipboardCheck,
 	RefreshCw,
 	Search,
@@ -21,58 +20,73 @@ import {
 	FileText,
 } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
-import { statusGroup, statusName } from "@/lib/equipment-status";
+import { useAuth } from "@/components/AuthProvider";
+import {
+	getUserInspectionCluster,
+	getEquipmentInspectionCluster,
+} from "@/lib/inspection-cluster";
+import { statusName } from "@/lib/equipment-status";
 
-/** Helper untuk mengecek apakah aset masuk ke Riwayat vs Antrean Validasi. */
+/** Helper untuk mengecek apakah aset masuk ke Riwayat vs Antrean Validasi (selaras dengan /inspeksi/validasi). */
 const isFinalStatus = (eq: any) => {
 	const normStatus = statusName(eq.statusAset || eq.status?.name || eq.status);
 	const normApproval = (eq.statusPersetujuan || "").toUpperCase();
+
+	// Jika status persetujuannya perlu revisi, tetap di Antrean (butuh aksi inspektur)
+	if (normApproval === "NEED_REVISION") {
+		return false;
+	}
 
 	// Jika persetujuan sudah disetujui (APPROVED) atau ditolak (REJECTED), masuk ke Riwayat
 	if (normApproval === "APPROVED" || normApproval === "REJECTED") {
 		return true;
 	}
 
-	// Jika status persetujuannya perlu revisi, tetap di Antrean
-	if (normApproval === "NEED_REVISION") {
-		return false;
-	}
-
-	// Antrean untuk aset yang berstatus REGISTERED atau VALIDATED
-	const isActionNeeded = normStatus === "REGISTERED" || normStatus === "VALIDATED";
+	// Antrean hanya untuk aset yang belum divalidasi awal (REGISTERED)
+	const isActionNeeded = normStatus === "REGISTERED";
 	return !isActionNeeded;
 };
 
-/** Client Component: interaktif (search/filter) — data di-fetch Server Component. */
+/** Client Component: interaktif (search/filter) - data di-fetch di halaman. */
 export default function InspeksiDashboardClient({
 	equipments,
-	onRefresh,
 }: {
 	equipments: any[];
 	onRefresh?: () => Promise<void> | void;
 }) {
+	const { user } = useAuth();
+	const userCluster = getUserInspectionCluster(user);
 	const [search, setSearch] = useState("");
 
-	// Compute metrics
-	const totalAssets = equipments.length;
+	// Saring sesuai rumpun akun inspeksi bila akun terikat rumpun tertentu
+	const clusterEquipments = useMemo(() => {
+		if (!userCluster) return equipments;
+		return equipments.filter(
+			(eq) => getEquipmentInspectionCluster(eq) === userCluster,
+		);
+	}, [equipments, userCluster]);
 
 	const pendingAssets = useMemo(() => {
-		return equipments.filter((eq) => !isFinalStatus(eq));
-	}, [equipments]);
+		return clusterEquipments.filter((eq) => !isFinalStatus(eq));
+	}, [clusterEquipments]);
 
 	const validatedAssetsCount = useMemo(() => {
-		return equipments.filter((eq) => {
+		return clusterEquipments.filter((eq) => {
 			const status = statusName(eq.statusAset || eq.status?.name || eq.status);
 			return isFinalStatus(eq) && (status === "READY_TO_USE" || status === "REUSED");
 		}).length;
-	}, [equipments]);
+	}, [clusterEquipments]);
 
-	const repairOrScrapCount = useMemo(() => {
-		return equipments.filter((eq) => {
-			const group = statusGroup(eq);
-			return group === "repair" || group === "scrap";
+	const needRevalidationCount = useMemo(() => {
+		return clusterEquipments.filter((eq) => {
+			const status = statusName(eq.statusAset || eq.status?.name || eq.status);
+			return status === "REPAIR_COMPLETED";
 		}).length;
-	}, [equipments]);
+	}, [clusterEquipments]);
+
+	// Sinkronisasi Total = penjumlahan 3 kartu status di sebelahnya (US-12-FE)
+	const totalInspectionScope =
+		pendingAssets.length + validatedAssetsCount + needRevalidationCount;
 
 	// Filtered table queue
 	const filteredPending = useMemo(() => {
@@ -94,11 +108,11 @@ export default function InspeksiDashboardClient({
 	const kpis = [
 		{
 			label: "Total Peralatan",
-			value: totalAssets,
-			caption: "Total aset idle terdaftar",
+			value: totalInspectionScope,
+			caption: "Total cakupan status inspeksi",
 			rule: "#334155",
 			icon: FileText,
-			href: "/inspeksi/validasi?status=ALL",
+			href: "/inspeksi/validasi?tab=semua&status=INSPECTION_SCOPE",
 		},
 		{
 			label: "Menunggu Validasi",
@@ -106,7 +120,7 @@ export default function InspeksiDashboardClient({
 			caption: "Baru terdaftar, belum diperiksa",
 			rule: "#0556B3",
 			icon: Clock,
-			href: "/inspeksi/validasi?status=ACTION_NEEDED",
+			href: "/inspeksi/validasi?tab=antrean",
 		},
 		{
 			label: "Tervalidasi / Ready",
@@ -114,15 +128,15 @@ export default function InspeksiDashboardClient({
 			caption: "Layak operasional",
 			rule: "#059669",
 			icon: CheckCircle2,
-			href: "/inspeksi/validasi?tab=riwayat",
+			href: "/inspeksi/validasi?tab=riwayat&status=READY_TO_USE",
 		},
 		{
-			label: "Perbaikan / Scrap",
-			value: repairOrScrapCount,
-			caption: "Rusak atau tidak layak",
+			label: "Perlu Revalidasi Pasca Perbaikan",
+			value: needRevalidationCount,
+			caption: "Selesai servis, siap uji ulang",
 			rule: "#B45309",
-			icon: AlertTriangle,
-			href: "/inspeksi/validasi?status=REPAIR",
+			icon: Wrench,
+			href: "/inspeksi/validasi-ulang?tab=antrean",
 		},
 	];
 
@@ -314,7 +328,7 @@ export default function InspeksiDashboardClient({
 				</div>
 
 				{/* Table Content */}
-				<div className="overflow-x-auto">
+				<div className="w-full overflow-x-auto">
 					<table className="w-full min-w-[860px] table-fixed border-collapse text-left">
 						<thead>
 							<tr className="border-b border-[#E6E8EA] bg-[#F2F3F4]">

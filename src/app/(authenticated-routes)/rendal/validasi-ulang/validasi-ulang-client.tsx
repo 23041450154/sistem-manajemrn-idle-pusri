@@ -276,39 +276,39 @@ export default function RendalValidasiUlangClient({
 
 		if (status === "APPROVED") {
 			return (
-				<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#DCFCE7] text-[#16A34A]">
-					DISETUJUI
+				<span className="inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap border border-current/20 bg-[#DCFCE7] text-[#16A34A]">
+					Disetujui
 				</span>
 			);
 		}
 
 		if (status === "REJECTED") {
 			return (
-				<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEE2E2] text-[#DC2626]">
-					DITOLAK
+				<span className="inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap border border-current/20 bg-[#FEE2E2] text-[#DC2626]">
+					Ditolak
 				</span>
 			);
 		}
 
 		if (status === "REVISION_REQUIRED" || status === "REVISION") {
 			return (
-				<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#F3E8FF] text-[#9333EA]">
-					PERLU REVISI
+				<span className="inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap border border-current/20 bg-[#F3E8FF] text-[#9333EA]">
+					Perlu Revisi
 				</span>
 			);
 		}
 
 		if (status === "IN_REVIEW") {
 			return (
-				<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#E0F2FE] text-[#0284C7]">
-					SEDANG DIREVIEW
+				<span className="inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap border border-current/20 bg-[#E0F2FE] text-[#0284C7]">
+					Sedang Direview
 				</span>
 			);
 		}
 
 		return (
-			<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#FEF3C7] text-[#B45309]">
-				MENUNGGU APPROVAL MANAJER
+			<span className="inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap border border-current/20 bg-[#FEF3C7] text-[#B45309]">
+				Menunggu Approval Manajer
 			</span>
 		);
 	};
@@ -348,8 +348,8 @@ export default function RendalValidasiUlangClient({
 						Monitoring Validasi Ulang
 					</span>
 				</div>
-				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-					<div>
+				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+					<div className="min-w-0">
 						<h1 className="text-xl font-bold text-gray-900 tracking-tight">
 							Monitoring Validasi Ulang Perbaikan
 						</h1>
@@ -366,16 +366,16 @@ export default function RendalValidasiUlangClient({
 								router.refresh();
 							}
 						}}
-						className="flex items-center justify-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-600 bg-white border border-gray-200 rounded-lg hover:bg-gray-50 hover:text-[#0A356A] transition-colors shadow-sm"
+						className="inline-flex shrink-0 items-center justify-center gap-1.5 whitespace-nowrap px-3.5 py-2 text-[13px] font-medium text-gray-700 bg-white border border-[#E6E8EA] rounded hover:bg-gray-50 hover:text-[#0A356A] transition-colors cursor-pointer self-start sm:self-center"
 					>
-						<RefreshCw className="w-3.5 h-3.5" />
-						Muat Ulang
+						<RefreshCw className="w-3.5 h-3.5 shrink-0" />
+						<span>Muat Ulang</span>
 					</button>
 				</div>
 			</div>
 
 			{/* Unified Table Card */}
-			<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden scroll-mt-4">
+			<div className="bg-white border border-[#E6E8EA] rounded overflow-hidden scroll-mt-4">
 				{/* Navigation Tabs */}
 				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
 					<button
@@ -426,33 +426,46 @@ export default function RendalValidasiUlangClient({
 				</div>
 
 				{/* Toolbar */}
-				<div className="p-3 border-b border-gray-200 bg-white flex flex-col xl:flex-row gap-3 justify-between items-start xl:items-center">
-					{/* Search */}
-					<div className="flex w-full xl:w-auto gap-2">
-						<div className="relative flex-1 xl:w-72">
-							<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-							<input
-								type="text"
-								placeholder="Cari kode, nama alat, lokasi..."
-								value={searchInput}
-								onChange={(e) => {
-									setSearchInput(e.target.value);
-									setSearchQuery(e.target.value);
-								}}
-								onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-								className="w-full pl-9 pr-4 py-1.5 text-[13px] bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
-							/>
+				<div className="p-3.5 border-b border-[#E6E8EA] bg-white space-y-2.5">
+					{/* Baris 1: Pencarian + Reset */}
+					<div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
+						<div className="flex flex-1 gap-2 max-w-xl">
+							<div className="relative flex-1">
+								<Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+								<input
+									type="text"
+									placeholder="Cari kode, nama alat, lokasi..."
+									value={searchInput}
+									onChange={(e) => {
+										setSearchInput(e.target.value);
+										setSearchQuery(e.target.value);
+									}}
+									onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+									className="h-9 w-full pl-9 pr-3 text-[13px] bg-white border border-[#E6E8EA] rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none transition-all placeholder:text-gray-400"
+								/>
+							</div>
+							<button
+								type="button"
+								onClick={handleSearch}
+								className="h-9 px-3.5 bg-[#0A356A] text-white text-[13px] font-medium rounded hover:bg-[#062854] transition-colors whitespace-nowrap cursor-pointer"
+							>
+								Cari
+							</button>
 						</div>
+
 						<button
-							onClick={handleSearch}
-							className="px-3 py-1.5 bg-[#0A356A] text-white text-[13px] font-medium rounded-lg hover:bg-[#062854] transition-colors whitespace-nowrap shadow-sm"
+							type="button"
+							onClick={handleReset}
+							className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 px-3 text-[13px] font-medium text-gray-600 border border-[#E6E8EA] hover:text-gray-900 hover:bg-gray-50 rounded transition-colors whitespace-nowrap cursor-pointer self-end sm:self-auto"
+							title="Reset semua filter"
 						>
-							Cari
+							<RefreshCw className="w-3.5 h-3.5" />
+							<span>Reset Filter</span>
 						</button>
 					</div>
 
-					{/* Filter Group */}
-					<div className="flex flex-wrap items-center gap-2 w-full xl:w-auto">
+					{/* Baris 2: Filter Dropdown Sejajar */}
+					<div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2">
 						{/* Plant Filter */}
 						<select
 							value={filterPlant}
@@ -460,7 +473,7 @@ export default function RendalValidasiUlangClient({
 								setFilterPlant(e.target.value);
 								setCurrentPage(1);
 							}}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="h-9 w-full px-2.5 text-[13px] bg-white border border-[#E6E8EA] rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						>
 							<option value="">Semua Plant</option>
 							{plantOptions.map((p) => (
@@ -477,7 +490,7 @@ export default function RendalValidasiUlangClient({
 								setFilterTipeObjek(e.target.value);
 								setCurrentPage(1);
 							}}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="h-9 w-full px-2.5 text-[13px] bg-white border border-[#E6E8EA] rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						>
 							<option value="">Semua Tipe</option>
 							{tipeObjekOptions.map((t) => (
@@ -494,7 +507,7 @@ export default function RendalValidasiUlangClient({
 								setFilterStatus(e.target.value);
 								setCurrentPage(1);
 							}}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
+							className="h-9 w-full px-2.5 text-[13px] bg-white border border-[#E6E8EA] rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						>
 							<option value="">Semua Status</option>
 							<option value="PENDING">Menunggu Approval Manajer</option>
@@ -511,7 +524,7 @@ export default function RendalValidasiUlangClient({
 								setFilterKondisi(e.target.value);
 								setCurrentPage(1);
 							}}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[120px] cursor-pointer"
+							className="h-9 w-full px-2.5 text-[13px] bg-white border border-[#E6E8EA] rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						>
 							<option value="">Semua Kondisi</option>
 							{kondisiOptions.map((k) => (
@@ -528,7 +541,7 @@ export default function RendalValidasiUlangClient({
 								setFilterLokasi(e.target.value);
 								setCurrentPage(1);
 							}}
-							className="px-3 py-1.5 text-[13px] bg-white border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 min-w-[130px] cursor-pointer"
+							className="h-9 w-full col-span-2 sm:col-span-1 px-2.5 text-[13px] bg-white border border-[#E6E8EA] rounded focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none text-gray-700 cursor-pointer"
 						>
 							<option value="">Semua Lokasi</option>
 							{lokasiOptions.map((l) => (
@@ -537,65 +550,54 @@ export default function RendalValidasiUlangClient({
 								</option>
 							))}
 						</select>
-
-						<div className="w-px h-5 bg-gray-200 mx-1 hidden sm:block"></div>
-
-						<button
-							onClick={handleReset}
-							className="flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-gray-500 hover:text-gray-800 hover:bg-gray-100 rounded-lg transition-colors whitespace-nowrap"
-							title="Reset semua filter"
-						>
-							<RefreshCw className="w-3.5 h-3.5" />
-							Reset
-						</button>
 					</div>
 				</div>
 
 				{/* Table */}
-				<div className="overflow-x-auto">
+				<div className="w-full overflow-x-auto">
 					<table className="w-full text-left border-collapse">
-						<thead className="bg-gray-50/95 backdrop-blur-sm">
-							<tr className="border-b border-gray-300">
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center w-10">
+						<thead className="bg-[#F8F9FA]">
+							<tr className="border-b border-[#E6E8EA]">
+								<th className="px-2.5 py-2.5 text-[11px] font-semibold text-[#64748B] uppercase tracking-wider text-center w-10">
 									No
 								</th>
 								<th
-									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									className="px-2.5 py-2.5 text-[11px] font-semibold text-[#64748B] uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
 									onClick={() => handleSort("kodeAlat")}
 								>
 									Kode Alat
 								</th>
 								<th
-									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+									className="px-2.5 py-2.5 text-[11px] font-semibold text-[#64748B] uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors text-left min-w-[150px]"
 									onClick={() => handleSort("namaAlat")}
 								>
 									Nama Peralatan
 								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
-									Tipe Objek
+								<th className="px-2.5 py-2.5 text-[11px] font-semibold text-[#64748B] uppercase tracking-wider text-left whitespace-nowrap">
+									Tipe
 								</th>
 								<th
-									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									className="px-2.5 py-2.5 text-[11px] font-semibold text-[#64748B] uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
 									onClick={() => handleSort("plant")}
 								>
 									Plant
 								</th>
 								<th
-									className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left whitespace-nowrap"
+									className="px-2.5 py-2.5 text-[11px] font-semibold text-[#64748B] uppercase tracking-wider cursor-pointer hover:bg-gray-100 transition-colors text-left"
 									onClick={() => handleSort("lokasiPenyimpanan")}
 								>
-									Lokasi Penyimpanan
+									Lokasi
 								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[11px] font-semibold text-[#64748B] uppercase tracking-wider text-center whitespace-nowrap">
 									Kondisi
 								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[11px] font-semibold text-[#64748B] uppercase tracking-wider text-center whitespace-nowrap">
 									Tgl Re-Validasi
 								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[11px] font-semibold text-[#64748B] uppercase tracking-wider text-center whitespace-nowrap">
 									Status
 								</th>
-								<th className="px-2.5 py-2.5 text-[13px] font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
+								<th className="px-2.5 py-2.5 text-[11px] font-semibold text-[#64748B] uppercase tracking-wider text-center whitespace-nowrap">
 									Aksi
 								</th>
 							</tr>
@@ -639,45 +641,45 @@ export default function RendalValidasiUlangClient({
 										key={asset.id}
 										className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
 									>
-										<td className="px-3 py-3 text-[15px] text-gray-500 font-medium text-center">
+										<td className="px-2.5 py-2.5 text-[13px] text-gray-500 font-medium text-center tabular-nums">
 											{(page - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
-										<td className="px-3 py-3 text-[15px] font-semibold text-[#0A356A] text-left whitespace-nowrap">
+										<td className="px-2.5 py-2.5 text-[13px] font-mono font-semibold text-[#0A356A] text-left whitespace-nowrap">
 											{asset.kodeAlat}
 										</td>
 										<td
-											className="px-3 py-3 text-[15px] font-semibold text-gray-800 text-left"
+											className="px-2.5 py-2.5 text-[13px] font-semibold text-gray-800 text-left"
 											title={asset.namaAlat}
 										>
-											<span className="leading-tight line-clamp-2 block text-left">
+											<span className="leading-snug line-clamp-2 block text-left">
 												{asset.namaAlat}
 											</span>
 										</td>
-										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
+										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 											{asset.tipeObjek}
 										</td>
-										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left whitespace-nowrap">
+										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left whitespace-nowrap">
 											{asset.plant}
 										</td>
-										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-left">
+										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-left">
 											{asset.lokasiPenyimpanan || "-"}
 										</td>
-										<td className="px-3 py-3 text-center whitespace-nowrap">
-											<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-[#DCFCE7] text-[#16A34A]">
+										<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
+											<span className="inline-flex items-center justify-center rounded-[2px] px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap border border-current/20 bg-[#DCFCE7] text-[#16A34A]">
 												{asset.kondisi}
 											</span>
 										</td>
-										<td className="px-3 py-3 text-[15px] text-gray-600 font-medium text-center whitespace-nowrap">
+										<td className="px-2.5 py-2.5 text-[13px] text-gray-600 text-center whitespace-nowrap tabular-nums">
 											{asset.tanggalRevalidasi}
 										</td>
-										<td className="px-3 py-3 text-center whitespace-nowrap">
+										<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
 											{renderStatusBadge(asset)}
 										</td>
-										<td className="px-3 py-3 text-center whitespace-nowrap">
+										<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
 											<div className="flex justify-center opacity-90 group-hover:opacity-100 transition-opacity">
 												<button
 													onClick={() => handleOpenModal(asset)}
-													className="inline-flex items-center gap-1 text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] px-2.5 py-1 rounded text-[12px] font-medium transition-colors"
+													className="inline-flex items-center gap-1 text-[#334155] hover:text-[#0A356A] hover:bg-[#F2F3F4] px-2.5 py-1 rounded text-[12px] font-medium transition-colors cursor-pointer"
 													title="Lihat Detail Monitoring"
 												>
 													<Eye className="h-3.5 w-3.5" />
@@ -743,9 +745,9 @@ export default function RendalValidasiUlangClient({
 			{/* Modal Detail Monitoring Validasi Ulang */}
 			{isModalOpen && selectedAsset && (
 				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-					<div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+					<div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
 						{/* Detail Header */}
-						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
+						<div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
 							<div className="flex items-center gap-3">
 								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
 									<ClipboardCheck className="w-5 h-5 text-white" />
@@ -760,6 +762,8 @@ export default function RendalValidasiUlangClient({
 								</div>
 							</div>
 							<button
+								type="button"
+								aria-label="Tutup dialog"
 								onClick={handleCloseModal}
 								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
 							>
@@ -768,7 +772,7 @@ export default function RendalValidasiUlangClient({
 						</div>
 
 						{/* Detail Body */}
-						<div className="px-6 py-5 space-y-4 overflow-y-auto flex-1">
+						<div className="px-6 py-5 space-y-4 flex-1 min-h-0 overflow-y-auto scroll-smooth">
 							{selectedAsset.statusAset === "READY_TO_USE" ||
 							selectedAsset.approvalStatus === "APPROVED" ? (
 								<div className="bg-emerald-50/70 rounded-lg p-3.5 border border-emerald-100 text-xs text-emerald-900 leading-normal">
@@ -875,7 +879,7 @@ export default function RendalValidasiUlangClient({
 						</div>
 
 						{/* Detail Footer */}
-						<div className="px-6 py-4 border-t border-gray-200 bg-gray-50 flex justify-end">
+						<div className="px-6 py-4 shrink-0 border-t border-gray-200 bg-gray-50 flex justify-end">
 							<button
 								type="button"
 								onClick={handleCloseModal}

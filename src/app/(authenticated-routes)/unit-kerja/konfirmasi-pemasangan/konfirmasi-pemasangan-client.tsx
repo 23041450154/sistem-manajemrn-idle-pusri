@@ -2,8 +2,8 @@
 
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 
-import { useState, useMemo, useEffect, useRef } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useMemo, useEffect, useRef, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useAuth } from "@/components/AuthProvider";
 import { normalizeRole } from "@/lib/roles";
 import { confirmEquipmentInstallation } from "@/action/api";
@@ -79,7 +79,7 @@ const STATUS_META: Record<
 	},
 	APPROVED: { label: "Approved for Reuse", bg: "bg-[#DCFCE7]", text: "text-[#16A34A]" },
 	REJECTED: { label: "Ditolak", bg: "bg-[#FEE2E2]", text: "text-[#DC2626]" },
-	INSTALLED: { label: "Terpasang (Selesai)", bg: "bg-[#DCFCE7]", text: "text-[#16A34A]" },
+	INSTALLED: { label: "REUSED", bg: "bg-[#E0E7FF]", text: "text-[#4F46E5]" },
 };
 
 function StatusBadge({ status }: { status: ReuseRequestItem["status"] }) {
@@ -124,11 +124,35 @@ function KonfirmasiPemasanganContent({
 	onRefresh?: () => Promise<void> | void;
 }) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const rawUrlStatus = (searchParams?.get("status") || "").toUpperCase();
+	const validStatuses = ["SEMUA", "PENDING", "APPROVED", "INSTALLED", "REJECTED"];
+	const resolvedUrlStatus = validStatuses.includes(rawUrlStatus)
+		? rawUrlStatus
+		: "SEMUA";
 
+	const [prevUrlStatus, setPrevUrlStatus] = useState(resolvedUrlStatus);
 	const [searchInput, setSearchInput] = useState("");
 	const [searchQuery, setSearchQuery] = useState("");
-	const [statusFilter, setStatusFilter] = useState("SEMUA");
+	const [statusFilter, setStatusFilter] = useState(resolvedUrlStatus);
+	if (prevUrlStatus !== resolvedUrlStatus) {
+		setPrevUrlStatus(resolvedUrlStatus);
+		setStatusFilter(resolvedUrlStatus);
+	}
 	const [currentPage, setCurrentPage] = useState(1);
+
+	const updateStatusAndUrl = useCallback((nextStatus: string) => {
+		setStatusFilter(nextStatus);
+		if (typeof window !== "undefined") {
+			const url = new URL(window.location.href);
+			if (nextStatus && nextStatus !== "SEMUA" && nextStatus !== "ALL") {
+				url.searchParams.set("status", nextStatus);
+			} else {
+				url.searchParams.delete("status");
+			}
+			window.history.replaceState(null, "", url.toString());
+		}
+	}, []);
 
 	// Sorting
 	const [sortConfig, setSortConfig] = useState<{
@@ -392,7 +416,7 @@ function KonfirmasiPemasanganContent({
 	const handleReset = () => {
 		setSearchInput("");
 		setSearchQuery("");
-		setStatusFilter("SEMUA");
+		updateStatusAndUrl("SEMUA");
 		setCurrentPage(1);
 		setSortConfig({ key: "created_at", direction: "desc" });
 	};
@@ -538,7 +562,7 @@ function KonfirmasiPemasanganContent({
 							aria-label="Filter status"
 							value={statusFilter}
 							onChange={(e) => {
-								setStatusFilter(e.target.value);
+								updateStatusAndUrl(e.target.value);
 								setCurrentPage(1);
 							}}
 							className="h-8 cursor-pointer rounded border border-[#E6E8EA] bg-white px-2.5 text-[13px] text-[#0F172A]"
@@ -546,7 +570,7 @@ function KonfirmasiPemasanganContent({
 							<option value="SEMUA">Semua Status</option>
 							<option value="PENDING">Menunggu Persetujuan</option>
 							<option value="APPROVED">Approved for Reuse</option>
-							<option value="INSTALLED">Terpasang (Selesai)</option>
+							<option value="INSTALLED">REUSED</option>
 							<option value="REJECTED">Ditolak</option>
 						</select>
 
@@ -563,8 +587,8 @@ function KonfirmasiPemasanganContent({
 				</div>
 
 				{/* Table */}
-				<div className="overflow-x-auto">
-					<table className="w-full table-fixed border-collapse text-left">
+				<div className="w-full overflow-x-auto">
+					<table className="w-full min-w-[920px] table-fixed border-collapse text-left">
 						<thead>
 							<tr className="border-b border-[#E6E8EA] bg-[#F2F3F4]">
 								<th
@@ -775,10 +799,10 @@ function KonfirmasiPemasanganContent({
 						role="dialog"
 						aria-modal="true"
 						aria-labelledby="detail-title"
-						className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded border border-[#E6E8EA] bg-white shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] animate-in zoom-in-95 fade-in duration-200"
+						className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded border border-[#E6E8EA] bg-white shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] animate-in zoom-in-95 fade-in duration-200"
 					>
 						{/* Header */}
-						<div className="flex items-start justify-between gap-3 border-b border-[#E6E8EA] px-5 py-4">
+						<div className="flex shrink-0 items-start justify-between gap-3 border-b border-[#E6E8EA] px-5 py-4">
 							<div className="min-w-0">
 								<h2
 									id="detail-title"
@@ -801,7 +825,7 @@ function KonfirmasiPemasanganContent({
 						</div>
 
 						{/* Body */}
-						<div className="flex-1 space-y-5 overflow-y-auto px-5 py-4">
+						<div className="flex-1 min-h-0 space-y-5 overflow-y-auto scroll-smooth px-5 py-4">
 							{/* Status */}
 							<div className="flex items-center justify-between gap-3">
 								<span className="text-[12px] font-medium text-[#64748B]">
@@ -1039,7 +1063,7 @@ function KonfirmasiPemasanganContent({
 						</div>
 
 						{/* Footer */}
-						<div className="flex items-center justify-end gap-2 border-t border-[#E6E8EA] px-5 py-3">
+						<div className="flex shrink-0 items-center justify-end gap-2 border-t border-[#E6E8EA] bg-[#F8FAFC] px-5 py-3">
 							{isUnitKerja && selectedRequest.status === "APPROVED" && (
 								<button
 									type="button"
@@ -1080,10 +1104,10 @@ function KonfirmasiPemasanganContent({
 						role="dialog"
 						aria-modal="true"
 						aria-labelledby="install-modal-title"
-						className="flex max-h-[90vh] w-full max-w-lg flex-col overflow-hidden rounded border border-[#E6E8EA] bg-white shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] animate-in zoom-in-95 fade-in duration-200"
+						className="flex max-h-[85vh] w-full max-w-lg flex-col overflow-hidden rounded border border-[#E6E8EA] bg-white shadow-[0_8px_24px_-4px_rgba(15,23,42,0.12)] animate-in zoom-in-95 fade-in duration-200"
 					>
 						{/* Header */}
-						<div className="flex items-start justify-between gap-3 border-b border-[#E6E8EA] px-5 py-4">
+						<div className="flex shrink-0 items-start justify-between gap-3 border-b border-[#E6E8EA] px-5 py-4">
 							<div className="min-w-0">
 								<h2
 									id="install-modal-title"
@@ -1109,9 +1133,9 @@ function KonfirmasiPemasanganContent({
 						{/* Form Content */}
 						<form
 							onSubmit={handleSubmitInstall}
-							className="flex flex-1 flex-col overflow-hidden"
+							className="flex flex-1 min-h-0 flex-col overflow-hidden"
 						>
-							<div className="flex-1 space-y-4 overflow-y-auto px-5 py-4">
+							<div className="flex-1 min-h-0 space-y-4 overflow-y-auto scroll-smooth px-5 py-4">
 								{/* Error Notification */}
 								{installError && (
 									<div
@@ -1255,7 +1279,7 @@ function KonfirmasiPemasanganContent({
 							</div>
 
 							{/* Footer */}
-							<div className="flex items-center justify-end gap-2.5 border-t border-[#E6E8EA] bg-[#F8FAFC] px-5 py-3">
+							<div className="flex shrink-0 items-center justify-end gap-2.5 border-t border-[#E6E8EA] bg-[#F8FAFC] px-5 py-3">
 								<button
 									type="button"
 									disabled={isSubmittingInstall}
@@ -1290,4 +1314,12 @@ function KonfirmasiPemasanganContent({
 	);
 }
 
-export default KonfirmasiPemasanganContent;
+export default function KonfirmasiPemasanganClient(
+	props: React.ComponentProps<typeof KonfirmasiPemasanganContent>,
+) {
+	return (
+		<Suspense fallback={null}>
+			<KonfirmasiPemasanganContent {...props} />
+		</Suspense>
+	);
+}

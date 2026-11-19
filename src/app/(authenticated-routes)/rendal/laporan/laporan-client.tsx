@@ -7,9 +7,6 @@ import {
 	RefreshCw,
 	Download,
 	ChevronRight,
-	FileText,
-	Plus,
-	Edit3,
 	AlertCircle,
 } from "lucide-react";
 import { formatDateTime } from "@/lib/utils";
@@ -147,17 +144,6 @@ export default function RendalLaporanClient({
 		document.body.removeChild(link);
 	};
 
-	// Summary stats
-	const stats = useMemo(() => {
-		return {
-			total: logs.length,
-			create: logs.filter((l) => l.actionType === "CREATE").length,
-			update: logs.filter((l) => l.actionType === "UPDATE").length,
-			approve: logs.filter((l) => l.actionType === "APPROVE").length,
-			inspect: logs.filter((l) => l.actionType === "INSPECT").length,
-		};
-	}, [logs]);
-
 	return (
 		<div className="max-w-7xl mx-auto pt-2 pb-8">
 			{/* Header */}
@@ -200,54 +186,6 @@ export default function RendalLaporanClient({
 							Export CSV
 						</button>
 					</div>
-				</div>
-			</div>
-
-			{/* Summary Cards */}
-			<div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
-				<div className="bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm">
-					<div className="flex items-center gap-2 mb-1.5">
-						<div className="w-7 h-7 rounded-lg bg-blue-50 flex items-center justify-center">
-							<FileText className="w-3.5 h-3.5 text-blue-600" />
-						</div>
-						<span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-							Total Log
-						</span>
-					</div>
-					<p className="text-xl font-bold text-gray-900">{stats.total}</p>
-				</div>
-				<div className="bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm">
-					<div className="flex items-center gap-2 mb-1.5">
-						<div className="w-7 h-7 rounded-lg bg-emerald-50 flex items-center justify-center">
-							<Plus className="w-3.5 h-3.5 text-emerald-600" />
-						</div>
-						<span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-							Pembuatan
-						</span>
-					</div>
-					<p className="text-xl font-bold text-gray-900">{stats.create}</p>
-				</div>
-				<div className="bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm">
-					<div className="flex items-center gap-2 mb-1.5">
-						<div className="w-7 h-7 rounded-lg bg-amber-50 flex items-center justify-center">
-							<Edit3 className="w-3.5 h-3.5 text-amber-600" />
-						</div>
-						<span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-							Pembaruan
-						</span>
-					</div>
-					<p className="text-xl font-bold text-gray-900">{stats.update}</p>
-				</div>
-				<div className="bg-white rounded-xl border border-gray-200 p-3.5 shadow-sm">
-					<div className="flex items-center gap-2 mb-1.5">
-						<div className="w-7 h-7 rounded-lg bg-cyan-50 flex items-center justify-center">
-							<FileText className="w-3.5 h-3.5 text-cyan-600" />
-						</div>
-						<span className="text-[11px] font-bold text-gray-500 uppercase tracking-wide">
-							Inspeksi
-						</span>
-					</div>
-					<p className="text-xl font-bold text-gray-900">{stats.inspect}</p>
 				</div>
 			</div>
 
@@ -321,7 +259,7 @@ export default function RendalLaporanClient({
 				</div>
 
 				{/* Table */}
-				<div className="overflow-x-auto">
+				<div className="w-full overflow-x-auto">
 					<table className="w-full text-left border-collapse">
 						<thead className="bg-gray-50/95 backdrop-blur-sm">
 							<tr className="border-b border-gray-300">

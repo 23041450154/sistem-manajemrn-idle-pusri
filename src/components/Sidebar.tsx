@@ -41,13 +41,19 @@ export function Sidebar({ role }: { role?: string }) {
 		const isMounted = true;
 		const checkPending = async () => {
 			try {
-				const [data, approvalsData, reuseApprovalsData, scrapApprovalsData] =
-					await Promise.all([
-						getEquipments(),
-						getApprovals().catch(() => []),
-						getApprovals("reuse").catch(() => []),
-						getApprovals("scrap").catch(() => []),
-					]);
+				const [
+					data,
+					approvalsData,
+					revalidationApprovalsData,
+					reuseApprovalsData,
+					scrapApprovalsData,
+				] = await Promise.all([
+					getEquipments(),
+					getApprovals().catch(() => []),
+					getApprovals("revalidation").catch(() => []),
+					getApprovals("reuse").catch(() => []),
+					getApprovals("scrap").catch(() => []),
+				]);
 				if (!Array.isArray(data) || !isMounted) return;
 
 				const approvalsList = Array.isArray(approvalsData)
@@ -68,7 +74,10 @@ export function Sidebar({ role }: { role?: string }) {
 							(!currentStep || currentStep === "MANAJER_RENDAL")
 						);
 					}).length;
-				const validationApprovalAntrean = awaitingManagerAction(approvalsList);
+				const validationApprovalAntrean = awaitingManagerAction([
+					...approvalsList,
+					...asList(revalidationApprovalsData),
+				]);
 				const reuseApprovalAntrean = awaitingManagerAction(
 					asList(reuseApprovalsData),
 				);
@@ -150,9 +159,18 @@ export function Sidebar({ role }: { role?: string }) {
 					);
 				}).length;
 
+				// Verifikasi Usulan UK (/rendal/verifikasi-usulan): status PROPOSED
+				const rendalProposalAntrean = data.filter((item: any) => {
+					const statusName = String(
+						item.status?.name || item.statusAset || "",
+					).toUpperCase();
+					return statusName === "PROPOSED";
+				}).length;
+
 				setPendingCounts({
 					"/inspeksi/validasi": validasiAntrean,
 					"/inspeksi/validasi-ulang": validasiUlangAntrean,
+					"/rendal/verifikasi-usulan": rendalProposalAntrean,
 					"/rendal/perbaikan": rendalPerbaikanAntrean,
 					"/rendal/validasi-ulang": rendalValidasiUlangAntrean,
 					"/pemeliharaan/perbaikan-alat": perbaikanAntrean,
@@ -193,6 +211,11 @@ export function Sidebar({ role }: { role?: string }) {
 				{ name: "Dashboard", href: "/rendal/dashboard", icon: LayoutDashboard },
 				{ name: "Peralatan", href: "/rendal/idle", icon: Database },
 				{
+					name: "Verifikasi Usulan UK",
+					href: "/rendal/verifikasi-usulan",
+					icon: CheckSquare,
+				},
+				{
 					name: "Perbaikan",
 					href: "/rendal/perbaikan",
 					icon: Wrench,
@@ -204,8 +227,8 @@ export function Sidebar({ role }: { role?: string }) {
 				},
 				{ name: "Permintaan Scrap", href: "/rendal/scrap", icon: Trash2 },
 				{
-					name: "Katalog Peralatan",
-					href: "/unit-kerja/katalog",
+					name: "Daftar Equipment",
+					href: "/rendal/daftar-equipment",
 					icon: ShoppingBag,
 				},
 			];

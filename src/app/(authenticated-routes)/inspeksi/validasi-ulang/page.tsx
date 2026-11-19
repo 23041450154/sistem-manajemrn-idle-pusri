@@ -12,6 +12,7 @@ import {
 	formatPlantDisplay,
 	formatCondition,
 } from "@/lib/equipment-status";
+import { extractSapNotification } from "@/lib/sap-notification";
 import InspeksiValidasiUlangClient, {
 	type RevalidasiItem,
 } from "./validasi-ulang-client";
@@ -107,6 +108,13 @@ export default function ValidasiUlangPage() {
 				serialNumber: item.serial_number || item.no_seri || "-",
 				tahun: item.year || item.tahun || "-",
 				alasanIdle: item.idle_reason || item.alasan_idle || "-",
+				sapNotificationNumber: extractSapNotification(item) || undefined,
+				inspectionCluster:
+					item.inspection_cluster ||
+					item.inspection_purpose ||
+					item.tujuan_inspeksi ||
+					item.inspectionCluster ||
+					undefined,
 				updated_at: item.updated_at || item.created_at || undefined,
 			};
 		});

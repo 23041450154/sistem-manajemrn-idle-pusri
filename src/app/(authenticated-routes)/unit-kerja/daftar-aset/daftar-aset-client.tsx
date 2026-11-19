@@ -3,8 +3,8 @@
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useState, useMemo } from "react";
-import { useRouter } from "next/navigation";
+import React, { useState, useMemo, useCallback, Suspense } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import { getAttachmentsByEquipmentId, createReuseRequest } from "@/action/api";
 import SupportingDocumentUpload from "@/components/SupportingDocumentUpload";
 import {
@@ -62,15 +62,41 @@ export interface EquipmentItem {
    mime_type, ganti ke field itu. */
 const IMAGE_URL_PATTERN = /\.(jpe?g|png|webp|gif|avif)(\?|$)/i;
 
-/** Client Component: interaksi tabel/katalog/modal ajukan reuse — data di-fetch Server Component. */
-export default function DaftarAsetClient({
+function resolveDaftarAsetTab(
+	statusParam: string | null,
+): "semua" | "ready" | "perbaikan" {
+	const raw = (statusParam || "").toUpperCase();
+	if (raw === "READY_TO_USE" || raw === "READY") return "ready";
+	if (raw === "REPAIR" || raw === "PERBAIKAN") return "perbaikan";
+	return "semua";
+}
+
+/** Client Component: interaksi tabel/katalog/modal ajukan reuse - data di-fetch di halaman. */
+function DaftarAsetContent({
 	equipments,
 	onRefresh,
+	breadcrumbGroup = "Unit Kerja Operasi",
+	breadcrumbLabel = "Daftar Aset",
+	title = "Daftar Peralatan Idle",
+	subtitle = "Peralatan idle yang siap digunakan dan yang sedang dalam perbaikan. Permintaan pemakaian hanya bisa diajukan untuk aset siap pakai.",
+	catalogDetailBasePath = "/unit-kerja/katalog",
+	canRequestReuse = true,
 }: {
 	equipments: EquipmentItem[];
 	onRefresh?: () => Promise<void> | void;
+	breadcrumbGroup?: string;
+	breadcrumbLabel?: string;
+	title?: string;
+	subtitle?: string;
+	catalogDetailBasePath?: string;
+	canRequestReuse?: boolean;
 }) {
 	const router = useRouter();
+	const searchParams = useSearchParams();
+	const urlStatus = searchParams?.get("status") ?? null;
+	const resolvedTab = resolveDaftarAsetTab(urlStatus);
+
+	const [prevUrlStatus, setPrevUrlStatus] = useState(urlStatus);
 	const [viewMode, setViewMode] = useState<"table" | "catalog">("table");
 
 	// Filters
@@ -80,7 +106,29 @@ export default function DaftarAsetClient({
 	const [filterTipeObjek, setFilterTipeObjek] = useState("");
 	const [filterKondisi, setFilterKondisi] = useState("");
 	const [activeTab, setActiveTab] = useState<"semua" | "ready" | "perbaikan">(
-		"semua",
+		resolvedTab,
+	);
+	if (prevUrlStatus !== urlStatus) {
+		setPrevUrlStatus(urlStatus);
+		setActiveTab(resolvedTab);
+	}
+
+	const syncTabAndUrl = useCallback(
+		(nextTab: "semua" | "ready" | "perbaikan") => {
+			setActiveTab(nextTab);
+			if (typeof window !== "undefined") {
+				const url = new URL(window.location.href);
+				if (nextTab === "ready") {
+					url.searchParams.set("status", "READY_TO_USE");
+				} else if (nextTab === "perbaikan") {
+					url.searchParams.set("status", "REPAIR");
+				} else {
+					url.searchParams.delete("status");
+				}
+				window.history.replaceState(null, "", url.toString());
+			}
+		},
+		[],
 	);
 
 	// Pagination & Sorting
@@ -163,6 +211,7 @@ export default function DaftarAsetClient({
 		setFilterPlant("");
 		setFilterTipeObjek("");
 		setFilterKondisi("");
+		syncTabAndUrl("semua");
 		setCurrentPage(1);
 	};
 
@@ -439,19 +488,16 @@ export default function DaftarAsetClient({
 			{/* Page Header */}
 			<div className="mb-3">
 				<div className="flex items-center gap-1.5 text-[13px] text-gray-500 mb-1">
-					<span>Unit Kerja Operasi</span>
+					<span>{breadcrumbGroup}</span>
 					<ChevronRight className="w-3.5 h-3.5" />
-					<span className="text-[#0A356A] font-semibold">Daftar Aset</span>
+					<span className="text-[#0A356A] font-semibold">{breadcrumbLabel}</span>
 				</div>
 				<div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
 					<div>
 						<h1 className="text-xl font-bold text-gray-900 tracking-tight">
-							Daftar Peralatan Idle
+							{title}
 						</h1>
-						<p className="text-[13px] text-gray-500 mt-1">
-							Peralatan idle yang siap digunakan dan yang sedang dalam perbaikan.
-							Permintaan pemakaian hanya bisa diajukan untuk aset siap pakai.
-						</p>
+						<p className="text-[13px] text-gray-500 mt-1">{subtitle}</p>
 					</div>
 					<div className="flex shrink-0 items-center gap-1.5 whitespace-nowrap">
 						<button
@@ -505,11 +551,12 @@ export default function DaftarAsetClient({
 				{/* Navigation Tabs */}
 				<div className="flex items-center border-b border-gray-200 px-5 pt-3 bg-white gap-6">
 					<button
+						type="button"
 						onClick={() => {
-							setActiveTab("semua");
+							syncTabAndUrl("semua");
 							setCurrentPage(1);
 						}}
-						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 cursor-pointer ${
 							activeTab === "semua"
 								? "text-[#0A356A] border-b-2 border-[#0A356A]"
 								: "text-gray-500 hover:text-gray-700"
@@ -517,7 +564,7 @@ export default function DaftarAsetClient({
 					>
 						<span>Semua Aset</span>
 						<span
-							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+							className={`px-2 py-0.5 text-[11px] rounded-full font-bold tabular-nums ${
 								activeTab === "semua"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -528,11 +575,12 @@ export default function DaftarAsetClient({
 					</button>
 
 					<button
+						type="button"
 						onClick={() => {
-							setActiveTab("ready");
+							syncTabAndUrl("ready");
 							setCurrentPage(1);
 						}}
-						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
+						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 cursor-pointer ${
 							activeTab === "ready"
 								? "text-[#0A356A] border-b-2 border-[#0A356A]"
 								: "text-gray-500 hover:text-gray-700"
@@ -540,7 +588,7 @@ export default function DaftarAsetClient({
 					>
 						<span>Siap Pakai</span>
 						<span
-							className={`px-2 py-0.5 text-[11px] rounded-full font-bold ${
+							className={`px-2 py-0.5 text-[11px] rounded-full font-bold tabular-nums ${
 								activeTab === "ready"
 									? "bg-[#0A356A] text-white"
 									: "bg-gray-100 text-gray-600"
@@ -551,8 +599,9 @@ export default function DaftarAsetClient({
 					</button>
 
 					<button
+						type="button"
 						onClick={() => {
-							setActiveTab("perbaikan");
+							syncTabAndUrl("perbaikan");
 							setCurrentPage(1);
 						}}
 						className={`pb-3 font-semibold text-[14px] relative transition-colors flex items-center gap-2 ${
@@ -661,7 +710,7 @@ export default function DaftarAsetClient({
 				</div>
 
 				{/* Table */}
-				<div className="overflow-x-auto">
+				<div className="w-full overflow-x-auto">
 					<table className="w-full text-left border-collapse">
 						<thead className="bg-gray-50/95 backdrop-blur-sm">
 							<tr className="border-b border-gray-300">
@@ -776,7 +825,7 @@ export default function DaftarAsetClient({
 										</td>
 										<td className="px-2.5 py-2.5 text-center whitespace-nowrap">
 											<div className="flex items-center justify-center gap-1.5">
-												{asset.status_name === "READY_TO_USE" ? (
+												{canRequestReuse && asset.status_name === "READY_TO_USE" ? (
 													<button
 														type="button"
 														onClick={() => openRequestModal(asset)}
@@ -851,15 +900,19 @@ export default function DaftarAsetClient({
 
 			{viewMode === "catalog" && (
 				<div className="bg-white border border-gray-200 rounded-xl shadow-sm overflow-hidden">
-					<KatalogClient items={catalogItems} embedded />
+					<KatalogClient
+						items={catalogItems}
+						embedded
+						detailBasePath={catalogDetailBasePath}
+					/>
 				</div>
 			)}
 
 			{/* Detail Modal */}
 			{isDetailOpen && selectedAsset && (
-				<div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto animate-in fade-in duration-200">
-					<div className="bg-white rounded-xl max-w-2xl w-full overflow-hidden shadow-2xl border border-gray-100 my-8">
-						<div className="p-4 bg-[#0A356A] text-white flex items-center justify-between">
+				<div className="fixed inset-0 z-50 bg-[#0F172A]/50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+					<div className="bg-white rounded-xl max-w-2xl w-full flex flex-col max-h-[85vh] overflow-hidden shadow-2xl border border-gray-100">
+						<div className="p-4 shrink-0 border-b border-gray-200 bg-[#0A356A] text-white flex items-center justify-between">
 							<div className="flex items-center gap-2">
 								<Info className="w-5 h-5 text-blue-300" />
 								<div>
@@ -870,6 +923,8 @@ export default function DaftarAsetClient({
 								</div>
 							</div>
 							<button
+								type="button"
+								aria-label="Tutup dialog"
 								onClick={() => setIsDetailOpen(false)}
 								className="p-1 hover:bg-white/10 rounded-lg transition-colors text-white/80 hover:text-white"
 							>
@@ -877,7 +932,7 @@ export default function DaftarAsetClient({
 							</button>
 						</div>
 
-						<div className="p-6 max-h-[75vh] overflow-y-auto space-y-5">
+						<div className="p-6 flex-1 min-h-0 overflow-y-auto scroll-smooth space-y-5">
 							{/* Alert jika dalam masa perbaikan */}
 							{selectedAsset.status_name === "REPAIR" && (
 								<div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex items-start gap-3 text-amber-900">
@@ -1097,32 +1152,34 @@ export default function DaftarAsetClient({
 							</div>
 						</div>
 
-						<div className="p-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+						<div className="p-4 shrink-0 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
 							<button
+								type="button"
 								onClick={() => setIsDetailOpen(false)}
 								className="px-4 py-2 bg-white border border-gray-300 text-gray-700 text-xs font-semibold rounded-lg hover:bg-gray-100 transition-colors cursor-pointer"
 							>
 								Tutup
 							</button>
 
-							{selectedAsset.status_name === "READY_TO_USE" ? (
-								<button
-									type="button"
-									onClick={() => {
-										setIsDetailOpen(false);
-										openRequestModal(selectedAsset);
-									}}
-									className="flex items-center gap-1.5 px-4 py-2 bg-brand text-white text-xs font-bold rounded-lg hover:bg-brand-hover transition-colors duration-150 ease-out cursor-pointer"
-								>
-									<Send className="w-3.5 h-3.5" />
-									<span>Ajukan Permintaan Aset Ini</span>
-								</button>
-							) : (
-								<span className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed">
-									<AlertCircle className="w-3.5 h-3.5" />
-									<span>Belum Bisa Diajukan (Dalam Perbaikan)</span>
-								</span>
-							)}
+							{canRequestReuse &&
+								(selectedAsset.status_name === "READY_TO_USE" ? (
+									<button
+										type="button"
+										onClick={() => {
+											setIsDetailOpen(false);
+											openRequestModal(selectedAsset);
+										}}
+										className="flex items-center gap-1.5 px-4 py-2 bg-brand text-white text-xs font-bold rounded-lg hover:bg-brand-hover transition-colors duration-150 ease-out cursor-pointer"
+									>
+										<Send className="w-3.5 h-3.5" />
+										<span>Ajukan Permintaan Aset Ini</span>
+									</button>
+								) : (
+									<span className="flex items-center gap-1.5 px-4 py-2 bg-gray-100 text-gray-400 text-xs font-bold rounded-lg cursor-not-allowed">
+										<AlertCircle className="w-3.5 h-3.5" />
+										<span>Belum Bisa Diajukan (Dalam Perbaikan)</span>
+									</span>
+								))}
 						</div>
 					</div>
 				</div>
@@ -1138,9 +1195,9 @@ export default function DaftarAsetClient({
 					aria-labelledby="request-modal-title"
 					className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0F172A]/50 animate-in fade-in duration-200"
 				>
-					<div className="relative flex flex-col w-full max-w-5xl max-h-[92vh] bg-white border border-[#E6E8EA] rounded-lg shadow-[0_8px_24px_-4px_rgb(15_23_42/0.12)] animate-in zoom-in-[0.98] duration-200">
+					<div className="relative flex flex-col w-full max-w-5xl max-h-[85vh] overflow-hidden bg-white border border-[#E6E8EA] rounded-lg shadow-[0_8px_24px_-4px_rgb(15_23_42/0.12)] animate-in zoom-in-[0.98] duration-200">
 						{/* Header — flat brand fill, no gradient, no icon tile */}
-						<div className="flex items-start justify-between gap-4 px-5 py-4 bg-brand rounded-t-lg">
+						<div className="flex shrink-0 border-b border-[#E6E8EA] items-start justify-between gap-4 px-5 py-4 bg-brand rounded-t-lg">
 							<div className="min-w-0">
 								<p className="font-mono text-[12px] tracking-[0.02em] text-white/75">
 									{requestModalAsset.equipment_code}
@@ -1166,9 +1223,9 @@ export default function DaftarAsetClient({
 						</div>
 
 						{/* Body */}
-						<div className="grid grid-cols-1 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] flex-1 min-h-0 overflow-y-auto lg:overflow-hidden">
+						<div className="grid grid-cols-1 lg:grid-cols-[minmax(0,24rem)_minmax(0,1fr)] flex-1 min-h-0 overflow-y-auto scroll-smooth lg:overflow-hidden">
 							{/* Left rail — the physical asset */}
-							<div className="p-5 bg-[#F8FAFC] border-b border-[#E6E8EA] lg:border-b-0 lg:border-r lg:overflow-y-auto">
+							<div className="p-5 bg-[#F8FAFC] border-b border-[#E6E8EA] lg:border-b-0 lg:border-r lg:overflow-y-auto scroll-smooth">
 								<div className="relative w-full aspect-[4/3] overflow-hidden bg-[#F2F3F4] border border-[#E6E8EA] rounded-lg">
 									{isLoadingAttachments ? (
 										<div className="flex items-center justify-center w-full h-full text-[#64748B]">
@@ -1346,8 +1403,12 @@ export default function DaftarAsetClient({
 							</div>
 
 							{/* Right column — the form */}
-							<form onSubmit={handleRequestSubmit} className="flex flex-col min-h-0">
-								<div className="flex flex-col gap-5 flex-1 min-h-0 p-5 lg:overflow-y-auto">
+							<form
+								id="daftar-aset-reuse-form"
+								onSubmit={handleRequestSubmit}
+								className="flex flex-col min-h-0 lg:overflow-hidden"
+							>
+								<div className="flex flex-col gap-5 flex-1 min-h-0 p-5 lg:overflow-y-auto scroll-smooth">
 									{requestErrorMessage && (
 										<div className="flex items-start gap-2 px-3 py-2.5 bg-white border border-[#DC2626] rounded-lg text-[12px] leading-relaxed text-[#DC2626]">
 											<AlertCircle className="w-4 h-4 shrink-0" />
@@ -1555,40 +1616,51 @@ export default function DaftarAsetClient({
 										</div>
 									</fieldset>
 								</div>
-
-								{/* Footer — outside the scroll container */}
-								<div className="flex items-center justify-end gap-3 shrink-0 px-5 py-3.5 bg-[#F8FAFC] border-t border-[#E6E8EA] rounded-b-lg">
-									<button
-										type="button"
-										onClick={() => setRequestModalAsset(null)}
-										disabled={isSubmittingRequest}
-										className="inline-flex items-center justify-center gap-2 min-h-9 px-3.5 py-2 bg-white border border-[#E6E8EA] rounded-lg text-[13px] font-medium text-[#334155] transition-colors duration-150 ease-out hover:bg-[#F2F3F4] hover:text-brand active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-									>
-										Batal
-									</button>
-									<button
-										type="submit"
-										disabled={isSubmittingRequest}
-										className="inline-flex items-center justify-center gap-2 min-h-9 px-3.5 py-2 bg-brand border border-brand rounded-lg text-[13px] font-medium text-white transition-colors duration-150 ease-out hover:bg-brand-hover hover:border-brand-hover active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-									>
-										{isSubmittingRequest ? (
-											<>
-												<Loader2 className="w-4 h-4 animate-spin" />
-												<span>Mengirim</span>
-											</>
-										) : (
-											<>
-												<Send className="w-4 h-4" />
-												<span>Kirim Pengajuan</span>
-											</>
-										)}
-									</button>
-								</div>
 							</form>
+						</div>
+
+						{/* Footer — outside the scroll container */}
+						<div className="flex items-center justify-end gap-3 shrink-0 px-5 py-3.5 bg-[#F8FAFC] border-t border-[#E6E8EA] rounded-b-lg">
+							<button
+								type="button"
+								onClick={() => setRequestModalAsset(null)}
+								disabled={isSubmittingRequest}
+								className="inline-flex items-center justify-center gap-2 min-h-9 px-3.5 py-2 bg-white border border-[#E6E8EA] rounded-lg text-[13px] font-medium text-[#334155] transition-colors duration-150 ease-out hover:bg-[#F2F3F4] hover:text-brand active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+							>
+								Batal
+							</button>
+							<button
+								type="submit"
+								form="daftar-aset-reuse-form"
+								disabled={isSubmittingRequest}
+								className="inline-flex items-center justify-center gap-2 min-h-9 px-3.5 py-2 bg-brand border border-brand rounded-lg text-[13px] font-medium text-white transition-colors duration-150 ease-out hover:bg-brand-hover hover:border-brand-hover active:scale-[0.98] focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-[#334155] disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+							>
+								{isSubmittingRequest ? (
+									<>
+										<Loader2 className="w-4 h-4 animate-spin" />
+										<span>Mengirim</span>
+									</>
+								) : (
+									<>
+										<Send className="w-4 h-4" />
+										<span>Kirim Pengajuan</span>
+									</>
+								)}
+							</button>
 						</div>
 					</div>
 				</div>
 			)}
 		</div>
+	);
+}
+
+export default function DaftarAsetClient(
+	props: React.ComponentProps<typeof DaftarAsetContent>,
+) {
+	return (
+		<Suspense fallback={null}>
+			<DaftarAsetContent {...props} />
+		</Suspense>
 	);
 }

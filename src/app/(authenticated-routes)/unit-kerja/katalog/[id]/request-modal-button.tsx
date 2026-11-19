@@ -165,10 +165,15 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 			</button>
 
 			{isOpen && (
-				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-					<div className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
+				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0F172A]/50 animate-in fade-in duration-200">
+					<div
+						role="dialog"
+						aria-modal="true"
+						aria-label="Ajukan Permintaan Pemakaian"
+						className="bg-white rounded-xl shadow-2xl w-full max-w-lg overflow-hidden border border-gray-100 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200"
+					>
 						{/* Header */}
-						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
+						<div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
 							<div className="flex items-center gap-3">
 								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
 									<Send className="w-5 h-5 text-white" />
@@ -178,11 +183,13 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 										Ajukan Permintaan Pemakaian
 									</h2>
 									<p className="text-xs text-blue-100">
-										{eq.code} — {eq.name}
+										{eq.code} - {eq.name}
 									</p>
 								</div>
 							</div>
 							<button
+								type="button"
+								aria-label="Tutup dialog"
 								onClick={handleClose}
 								disabled={isSubmitting}
 								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors disabled:opacity-50"
@@ -194,142 +201,144 @@ export default function RequestModalButton({ eq }: { eq: KatalogItemMinimal }) {
 						{/* Form */}
 						<form
 							onSubmit={handleSubmit}
-							className="px-6 py-5 space-y-4 overflow-y-auto flex-1"
+							className="flex flex-col flex-1 min-h-0 overflow-hidden"
 						>
-							{error && (
-								<div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700 flex items-center gap-2">
-									<AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
-									<span>{error}</span>
-								</div>
-							)}
+							<div className="px-6 py-5 space-y-4 flex-1 min-h-0 overflow-y-auto scroll-smooth">
+								{error && (
+									<div className="bg-red-50 border border-red-200 rounded-lg p-3 text-xs text-red-700 flex items-center gap-2">
+										<AlertCircle className="w-4 h-4 shrink-0 text-red-500" />
+										<span>{error}</span>
+									</div>
+								)}
 
-							{/* Summary Info */}
-							<div className="bg-gray-50 rounded-lg p-3 border border-gray-200 grid grid-cols-2 gap-2 text-xs">
-								<div>
-									<p className="text-gray-500 font-medium">Peralatan</p>
-									<p className="text-gray-800 font-semibold truncate">{eq.name}</p>
+								{/* Summary Info */}
+								<div className="bg-gray-50 rounded-lg p-3 border border-gray-200 grid grid-cols-2 gap-2 text-xs">
+									<div>
+										<p className="text-gray-500 font-medium">Peralatan</p>
+										<p className="text-gray-800 font-semibold truncate">{eq.name}</p>
+									</div>
+									<div>
+										<p className="text-gray-500 font-medium">Kategori</p>
+										<p className="text-gray-800 font-semibold">{eq.objectType}</p>
+									</div>
 								</div>
-								<div>
-									<p className="text-gray-500 font-medium">Kategori</p>
-									<p className="text-gray-800 font-semibold">{eq.objectType}</p>
-								</div>
-							</div>
 
-							{/* Target Plant & Location */}
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-								<div>
-									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Plant Tujuan <span className="text-red-500">*</span>
-									</label>
-									<input
-										type="text"
-										value={formData.requestingPlant}
-										onChange={(e) =>
-											setFormData({ ...formData, requestingPlant: e.target.value })
-										}
-										required
-										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
-									/>
-								</div>
-								<div>
-									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Lokasi Pemasangan <span className="text-red-500">*</span>
-									</label>
-									<input
-										type="text"
-										value={formData.installationLocation}
-										onChange={(e) =>
-											setFormData({ ...formData, installationLocation: e.target.value })
-										}
-										required
-										placeholder="misal: Area Pabrik III"
-										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
-									/>
-								</div>
-							</div>
-
-							{/* Tanggal & Estimasi Biaya */}
-							<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-								<div>
-									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Tanggal Pemakaian <span className="text-red-500">*</span>
-									</label>
-									<input
-										type="date"
-										value={formData.reuseDate}
-										onChange={(e) =>
-											setFormData({ ...formData, reuseDate: e.target.value })
-										}
-										required
-										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
-									/>
-								</div>
-								<div>
-									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-										Estimasi Harga Beli Baru{" "}
-										<span className="font-normal normal-case text-gray-500">(Opsional)</span>
-									</label>
-									<div className="flex items-stretch">
-										<span className="inline-flex items-center px-2.5 bg-[#F2F3F4] border border-r-0 border-gray-200 rounded-l-lg text-[12px] font-medium text-[#475569]">
-											Rp
-										</span>
+								{/* Target Plant & Location */}
+								<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+									<div>
+										<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
+											Plant Tujuan <span className="text-red-500">*</span>
+										</label>
 										<input
 											type="text"
-											inputMode="numeric"
-											value={
-												formData.estimatedNewPurchaseCost
-													? Number(
-															String(formData.estimatedNewPurchaseCost).replace(/\D/g, ""),
-														).toLocaleString("id-ID")
-													: ""
-											}
+											value={formData.requestingPlant}
 											onChange={(e) =>
-												setFormData({
-													...formData,
-													estimatedNewPurchaseCost: e.target.value.replace(/\D/g, ""),
-												})
+												setFormData({ ...formData, requestingPlant: e.target.value })
 											}
-											placeholder="Masukkan estimasi harga jika ada (contoh: 50.000.000)..."
-											className="w-full px-3 py-2 text-sm border border-gray-200 rounded-r-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
+											required
+											className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
 										/>
 									</div>
-									<p className="text-[11px] leading-snug text-[#64748B] mt-1">
-										ℹ️ Opsional: Boleh dikosongkan jika belum memiliki referensi harga pasar unit baru.
-									</p>
+									<div>
+										<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
+											Lokasi Pemasangan <span className="text-red-500">*</span>
+										</label>
+										<input
+											type="text"
+											value={formData.installationLocation}
+											onChange={(e) =>
+												setFormData({ ...formData, installationLocation: e.target.value })
+											}
+											required
+											placeholder="misal: Area Pabrik III"
+											className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
+										/>
+									</div>
 								</div>
-							</div>
 
-							{/* Justification */}
-							<div>
-								<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
-									Alasan Kebutuhan & Justifikasi <span className="text-red-500">*</span>
-								</label>
-								<textarea
-									value={formData.justification}
-									onChange={(e) =>
-										setFormData({ ...formData, justification: e.target.value })
-									}
-									required
-									rows={3}
-									placeholder="Tuliskan justifikasi pemakaian peralatan ini..."
-									className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none resize-none"
+								{/* Tanggal & Estimasi Biaya */}
+								<div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+									<div>
+										<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
+											Tanggal Pemakaian <span className="text-red-500">*</span>
+										</label>
+										<input
+											type="date"
+											value={formData.reuseDate}
+											onChange={(e) =>
+												setFormData({ ...formData, reuseDate: e.target.value })
+											}
+											required
+											className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
+										/>
+									</div>
+									<div>
+										<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
+											Estimasi Harga Beli Baru{" "}
+											<span className="font-normal normal-case text-gray-500">(Opsional)</span>
+										</label>
+										<div className="flex items-stretch">
+											<span className="inline-flex items-center px-2.5 bg-[#F2F3F4] border border-r-0 border-gray-200 rounded-l-lg text-[12px] font-medium text-[#475569]">
+												Rp
+											</span>
+											<input
+												type="text"
+												inputMode="numeric"
+												value={
+													formData.estimatedNewPurchaseCost
+														? Number(
+																String(formData.estimatedNewPurchaseCost).replace(/\D/g, ""),
+															).toLocaleString("id-ID")
+														: ""
+												}
+												onChange={(e) =>
+													setFormData({
+														...formData,
+														estimatedNewPurchaseCost: e.target.value.replace(/\D/g, ""),
+													})
+												}
+												placeholder="Masukkan estimasi harga jika ada (contoh: 50.000.000)..."
+												className="w-full px-3 py-2 text-sm border border-gray-200 rounded-r-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none"
+											/>
+										</div>
+										<p className="text-[11px] leading-snug text-[#64748B] mt-1">
+											ℹ️ Opsional: Boleh dikosongkan jika belum memiliki referensi harga pasar unit baru.
+										</p>
+									</div>
+								</div>
+
+								{/* Justification */}
+								<div>
+									<label className="text-xs font-bold text-gray-700 uppercase tracking-wider block mb-1.5">
+										Alasan Kebutuhan & Justifikasi <span className="text-red-500">*</span>
+									</label>
+									<textarea
+										value={formData.justification}
+										onChange={(e) =>
+											setFormData({ ...formData, justification: e.target.value })
+										}
+										required
+										rows={3}
+										placeholder="Tuliskan justifikasi pemakaian peralatan ini..."
+										className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A] outline-none resize-none"
+									/>
+								</div>
+
+								{/* Dokumen Pendukung / Justifikasi Kebutuhan (US-13-FE) */}
+								<SupportingDocumentUpload
+									file={documentFile}
+									onFileChange={setDocumentFile}
+									disabled={isSubmitting}
 								/>
 							</div>
 
-							{/* Dokumen Pendukung / Justifikasi Kebutuhan (US-13-FE) */}
-							<SupportingDocumentUpload
-								file={documentFile}
-								onFileChange={setDocumentFile}
-								disabled={isSubmitting}
-							/>
-
 							{/* Footer Actions */}
-							<div className="pt-3 border-t border-gray-200 flex items-center justify-end gap-2">
+							<div className="px-6 py-4 shrink-0 border-t border-gray-200 bg-gray-50 flex items-center justify-end gap-2">
 								<button
 									type="button"
 									onClick={handleClose}
 									disabled={isSubmitting}
-									className="px-4 py-2 text-xs font-medium text-gray-600 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
+									className="px-4 py-2 text-xs font-medium text-gray-700 bg-white border border-gray-300 hover:bg-gray-100 rounded-lg transition-colors disabled:opacity-50"
 								>
 									Batal
 								</button>

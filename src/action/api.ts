@@ -243,6 +243,50 @@ export async function getEquipmentProposals() {
 	}
 }
 
+/**
+ * Verifikasi usulan peralatan idle dari Unit Kerja Operasi oleh Rendal Pemeliharaan.
+ * PATCH /api/equipment/proposals/:id/verify
+ *   action = "APPROVE" -> wajib tujuan_inspeksi -> status REGISTERED
+ *   action = "REJECT"  -> wajib notes           -> status PROPOSAL_REJECTED
+ */
+export async function verifyEquipmentProposal(
+	id: string,
+	payload: {
+		action: "APPROVE" | "REJECT";
+		tujuan_inspeksi?: string;
+		notes?: string;
+	},
+) {
+	try {
+		const res = await fetch(`${API_URL}/api/equipment/proposals/${id}/verify`, {
+			method: "PATCH",
+			headers: { "Content-Type": "application/json" },
+			body: JSON.stringify(payload),
+		});
+
+		const responseData = await res.json().catch(() => null);
+		if (!res.ok) {
+			throw new Error(
+				responseData?.error ||
+					responseData?.message ||
+					`Gagal memverifikasi usulan (HTTP ${res.status})`,
+			);
+		}
+		revalidateApp();
+		return {
+			success: true,
+			data: responseData?.data || responseData,
+			message: responseData?.message,
+		};
+	} catch (error) {
+		console.error("Verify equipment proposal error:", error);
+		return {
+			success: false,
+			message: error instanceof Error ? error.message : String(error),
+		};
+	}
+}
+
 export type ScrapItemDTO = {
 	id: string;
 	approval_id: string | null;
@@ -674,6 +718,7 @@ export async function validateEquipment(
 		startAt?: string;
 		endAt?: string;
 		followupRecommendation?: string;
+		sapNotificationNumber?: string;
 		photos?: File[];
 	},
 ) {
@@ -690,6 +735,9 @@ export async function validateEquipment(
 	formData.append("notes", notes);
 	if (opts?.followupRecommendation) {
 		formData.append("followup_recommendation", opts.followupRecommendation);
+	}
+	if (opts?.sapNotificationNumber?.trim()) {
+		formData.append("sap_notification_number", opts.sapNotificationNumber.trim());
 	}
 	for (const photo of opts?.photos ?? []) {
 		formData.append("photos", photo);
@@ -731,6 +779,7 @@ export async function updateValidation(
 		startAt?: string;
 		endAt?: string;
 		followupRecommendation?: string;
+		sapNotificationNumber?: string;
 		photos?: File[];
 	},
 ) {
@@ -743,6 +792,9 @@ export async function updateValidation(
 	formData.append("notes", notes);
 	if (opts?.followupRecommendation) {
 		formData.append("followup_recommendation", opts.followupRecommendation);
+	}
+	if (opts?.sapNotificationNumber?.trim()) {
+		formData.append("sap_notification_number", opts.sapNotificationNumber.trim());
 	}
 	for (const photo of opts?.photos ?? []) {
 		formData.append("photos", photo);
@@ -785,6 +837,7 @@ export async function createRevalidation(
 		endAt?: string;
 		notes?: string;
 		followupRecommendation?: string;
+		sapNotificationNumber?: string;
 		photos?: File[];
 	},
 ) {
@@ -798,6 +851,9 @@ export async function createRevalidation(
 	if (opts?.notes) formData.append("notes", opts.notes);
 	if (opts?.followupRecommendation) {
 		formData.append("followup_recommendation", opts.followupRecommendation);
+	}
+	if (opts?.sapNotificationNumber?.trim()) {
+		formData.append("sap_notification_number", opts.sapNotificationNumber.trim());
 	}
 	for (const photo of opts?.photos ?? []) {
 		formData.append("photos", photo);
@@ -1164,7 +1220,11 @@ export async function createEquipment(formData: FormData) {
 		}
 		const responseData = await res.json().catch(() => null);
 		revalidateApp();
-		return { success: true, data: responseData?.data || responseData };
+		return {
+			success: true,
+			data: responseData?.data || responseData,
+			message: responseData?.message,
+		};
 	} catch (error) {
 		console.error("Create equipment error:", error);
 		return {
@@ -1205,7 +1265,11 @@ export async function proposeEquipment(formData: FormData) {
 		}
 		const responseData = await res.json().catch(() => null);
 		revalidateApp();
-		return { success: true, data: responseData?.data || responseData };
+		return {
+			success: true,
+			data: responseData?.data || responseData,
+			message: responseData?.message,
+		};
 	} catch (error) {
 		console.error("Propose equipment error:", error);
 		return {

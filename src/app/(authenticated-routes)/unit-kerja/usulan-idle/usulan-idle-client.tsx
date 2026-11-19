@@ -42,6 +42,11 @@ import { ConfirmDialog } from "@/components/ConfirmDialog";
 import AutocompleteInput, {
 	type AutocompleteOption,
 } from "@/components/AutocompleteInput";
+import {
+	useFilePreviewUrls,
+	formatFileSize,
+	compressImageFile,
+} from "@/lib/file-preview";
 
 export type AssetState =
 	| EquipmentStatus
@@ -220,6 +225,7 @@ export default function UsulanIdleClient({
 	// ==========================================
 	const [formData, setFormData] = useState<ProposalFormData>(EMPTY_PROPOSAL_FORM);
 	const [uploadedFiles, setUploadedFiles] = useState<File[]>([]);
+	const filePreviewUrls = useFilePreviewUrls(uploadedFiles);
 	const [isDragging, setIsDragging] = useState(false);
 	const [fileError, setFileError] = useState<string | null>(null);
 	const [showValidationErrors, setShowValidationErrors] = useState(false);
@@ -463,7 +469,7 @@ export default function UsulanIdleClient({
 	};
 
 	// File Upload Handlers
-	const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
 		if (e.target.files) {
 			const files = Array.from(e.target.files);
 			let errorMsg: string | null = null;
@@ -475,8 +481,13 @@ export default function UsulanIdleClient({
 				return true;
 			});
 			setFileError(errorMsg);
-			setUploadedFiles((prev) => [...prev, ...validFiles]);
 			e.target.value = "";
+			if (validFiles.length > 0) {
+				const processed = await Promise.all(
+					validFiles.map((f) => compressImageFile(f)),
+				);
+				setUploadedFiles((prev) => [...prev, ...processed]);
+			}
 		}
 	};
 
@@ -490,7 +501,7 @@ export default function UsulanIdleClient({
 		setIsDragging(false);
 	};
 
-	const handleDrop = (e: React.DragEvent<HTMLDivElement>) => {
+	const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
 		e.preventDefault();
 		setIsDragging(false);
 		if (e.dataTransfer.files) {
@@ -504,7 +515,12 @@ export default function UsulanIdleClient({
 				return true;
 			});
 			setFileError(errorMsg);
-			setUploadedFiles((prev) => [...prev, ...validFiles]);
+			if (validFiles.length > 0) {
+				const processed = await Promise.all(
+					validFiles.map((f) => compressImageFile(f)),
+				);
+				setUploadedFiles((prev) => [...prev, ...processed]);
+			}
 		}
 	};
 
@@ -706,17 +722,19 @@ export default function UsulanIdleClient({
 
 	const getStatusBadge = (status: AssetState | string) => {
 		const norm = (status || "").toUpperCase().trim().replace(/\s+/g, "_");
+		const baseClass =
+			"inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap";
 
 		if (norm === "PROPOSED" || norm === "MENUNGGU_VERIFIKASI") {
 			return (
-				<span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap bg-amber-50 text-amber-700 border border-amber-200">
+				<span className={`${baseClass} bg-[#FEF9C3] text-[#CA8A04]`}>
 					Menunggu Verifikasi
 				</span>
 			);
 		}
 		if (norm === "REGISTERED" || norm === "DISETUJUI") {
 			return (
-				<span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap bg-emerald-50 text-emerald-700 border border-emerald-200">
+				<span className={`${baseClass} bg-[#DCFCE7] text-[#16A34A]`}>
 					Disetujui Rendal
 				</span>
 			);
@@ -727,14 +745,14 @@ export default function UsulanIdleClient({
 			norm === "DITOLAK"
 		) {
 			return (
-				<span className="inline-flex items-center justify-center rounded-full px-2.5 py-0.5 text-[11px] font-bold whitespace-nowrap bg-red-50 text-red-700 border border-red-200">
+				<span className={`${baseClass} bg-[#FEE2E2] text-[#DC2626]`}>
 					Usulan Ditolak
 				</span>
 			);
 		}
 
 		return (
-			<span className="inline-flex items-center justify-center rounded-full px-2 py-0.5 text-[11px] font-semibold whitespace-nowrap bg-blue-50 text-blue-700 border border-blue-200">
+			<span className={`${baseClass} bg-[#E0F2FE] text-[#0284C7]`}>
 				{norm.replace(/_/g, " ")}
 			</span>
 		);
@@ -1089,7 +1107,7 @@ export default function UsulanIdleClient({
 														const isPdf =
 															file.type === "application/pdf" ||
 															file.name.toLowerCase().endsWith(".pdf");
-														const previewUrl = URL.createObjectURL(file);
+														const previewUrl = filePreviewUrls[i] || "";
 														const ext =
 															file.name.split(".").pop()?.toUpperCase() || "FILE";
 
@@ -1140,13 +1158,13 @@ export default function UsulanIdleClient({
 																			{file.name}
 																		</p>
 																		<p className="text-[10px] text-gray-400">
-																			{(file.size / (1024 * 1024)).toFixed(2)} MB
+																			{formatFileSize(file.size)}
 																		</p>
 																	</div>
 																</div>
 
 																<div className="flex items-center gap-1.5 shrink-0 ml-2">
-																	<span className="text-[10px] font-medium text-[#0A356A] bg-blue-50 px-1.5 py-0.5 rounded opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1">
+																	<span className="text-[10px] font-medium text-[#0A356A] bg-blue-50 group-hover:bg-blue-100 px-1.5 py-0.5 rounded transition-colors flex items-center gap-1">
 																		<Eye className="w-3 h-3" /> Preview
 																	</span>
 																	<button
@@ -1454,103 +1472,75 @@ export default function UsulanIdleClient({
 
 				{/* Table */}
 				<div className="w-full overflow-x-auto">
-					<table className="w-full table-fixed text-left border-collapse">
-						<colgroup>
-							<col className="w-[3%]" />
-							<col className="w-[18%]" />
-							<col className="w-[10%]" />
-							<col className="w-[8%]" />
-							<col className="w-[10%]" />
-							<col className="w-[11%]" />
-							<col className="w-[14%]" />
-							<col className="w-[9%]" />
-							<col className="w-[9%]" />
-							<col className="w-[8%]" />
-						</colgroup>
-						<thead className="bg-gray-50/95 backdrop-blur-sm">
+					<table className="w-full text-left border-collapse">
+						<thead className="bg-[#F2F3F4]">
 							<tr className="border-b border-gray-300">
-								<th className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-center">
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center w-12 whitespace-nowrap">
 									No
 								</th>
 								<th
-									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("namaAlat")}
 								>
-									<div className="flex items-center justify-start gap-0.5 truncate">
+									<div className="flex items-center justify-start gap-1">
 										Nama Peralatan {getSortIcon("namaAlat")}
 									</div>
 								</th>
 								<th
-									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("kodeAlat")}
 								>
-									<div className="flex items-center justify-start gap-0.5 truncate">
+									<div className="flex items-center justify-start gap-1">
 										Kode Alat {getSortIcon("kodeAlat")}
 									</div>
 								</th>
 								<th
-									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("plant")}
 								>
-									<div className="flex items-center justify-start gap-0.5 truncate">
+									<div className="flex items-center justify-center gap-1">
 										Plant {getSortIcon("plant")}
 									</div>
 								</th>
 								<th
-									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-left"
-									title="Functional location aset"
-								>
-									<div className="flex items-center justify-start gap-0.5 truncate">
-										Func. Location
-									</div>
-								</th>
-								<th
-									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left min-w-[140px] whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("storageLocation")}
 								>
-									<div className="flex items-center justify-start gap-0.5 truncate">
+									<div className="flex items-center justify-start gap-1">
 										Lokasi Penyimpanan {getSortIcon("storageLocation")}
 									</div>
 								</th>
 								<th
-									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-left"
-									title="Alasan usulan peralatan idle"
-								>
-									<div className="flex items-center justify-start gap-0.5 truncate">
-										Alasan Idle
-									</div>
-								</th>
-								<th
-									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-left"
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("tanggalRegistrasi")}
 								>
-									<div className="flex items-center justify-start gap-0.5 truncate">
+									<div className="flex items-center justify-center gap-1">
 										Tgl Usulan {getSortIcon("tanggalRegistrasi")}
 									</div>
 								</th>
 								<th
-									className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider cursor-pointer group hover:bg-gray-100 transition-colors text-center"
+									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center min-w-[145px] whitespace-nowrap"
 									title="Klik untuk mengurutkan"
 									onClick={() => handleSort("statusAset")}
 								>
-									<div className="flex items-center justify-center gap-0.5 truncate">
+									<div className="flex items-center justify-center gap-1">
 										Status {getSortIcon("statusAset")}
 									</div>
 								</th>
-								<th className="px-2 py-2.5 text-[11px] font-bold text-gray-600 uppercase tracking-wider text-center">
+								<th className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase text-center whitespace-nowrap">
 									Aksi
 								</th>
 							</tr>
 						</thead>
-						<tbody className="bg-white text-[12px]">
+						<tbody className="bg-white">
 							{paginatedData.length === 0 ? (
 								<tr>
-									<td colSpan={10} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={8} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -1568,13 +1558,13 @@ export default function UsulanIdleClient({
 								paginatedData.map((item, index) => (
 									<tr
 										key={item.id || index}
-										className="border-b border-gray-200 last:border-b-0 hover:bg-blue-50/30 transition-colors group"
+										className="border-b border-gray-200 last:border-b-0 hover:bg-[#F2F3F4] transition-colors group"
 									>
-										<td className="px-2 py-2 text-gray-500 font-medium text-center truncate">
+										<td className="px-3 py-3 text-[14px] text-gray-500 font-medium text-center tabular-nums">
 											{(safeCurrentPage - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
 										<td
-											className="px-2 py-2 font-semibold text-gray-800 text-left"
+											className="px-3 py-3 text-[14px] font-semibold text-gray-800 text-left"
 											title={item.namaAlat}
 										>
 											<span className="leading-tight line-clamp-2 block text-left">
@@ -1582,55 +1572,41 @@ export default function UsulanIdleClient({
 											</span>
 										</td>
 										<td
-											className="px-2 py-2 font-semibold text-[#0A356A] text-left truncate"
+											className="px-3 py-3 text-[14px] font-semibold text-[#0A356A] text-left whitespace-nowrap"
 											title={item.kodeAlat}
 										>
 											{item.kodeAlat}
 										</td>
 										<td
-											className="px-2 py-2 text-gray-600 font-medium text-left truncate"
+											className="px-3 py-3 text-[14px] text-gray-600 font-medium text-center whitespace-nowrap"
 											title={item.plant}
 										>
 											{item.plant}
 										</td>
 										<td
-											className="px-2 py-2 text-gray-600 font-medium text-left truncate"
-											title={item.funcLoc || "-"}
-										>
-											{item.funcLoc || "-"}
-										</td>
-										<td
-											className="px-2 py-2 text-gray-600 font-medium text-left truncate"
+											className="px-3 py-3 text-[14px] text-gray-600 font-medium text-left min-w-[140px] whitespace-nowrap"
 											title={item.storageLocation || "-"}
 										>
 											{item.storageLocation || "-"}
 										</td>
-										<td
-											className="px-2 py-2 text-gray-600 text-left"
-											title={item.idleReason || "-"}
-										>
-											<span className="leading-tight line-clamp-2 block text-left text-[11px]">
-												{item.idleReason || "-"}
-											</span>
-										</td>
-										<td className="px-2 py-2 text-gray-600 font-medium text-left truncate">
+										<td className="px-3 py-3 text-[13.5px] text-gray-600 font-medium text-center whitespace-nowrap tabular-nums">
 											{item.tanggalRegistrasi}
 										</td>
-										<td className="px-2 py-2 text-center truncate">
+										<td className="px-3 py-3 text-center min-w-[145px] whitespace-nowrap">
 											{getStatusBadge(item.statusAset)}
 										</td>
-										<td className="px-2 py-2 text-center">
+										<td className="px-3 py-3 text-center whitespace-nowrap">
 											<div className="flex justify-center items-center opacity-90 group-hover:opacity-100 transition-opacity">
 												<button
 													onClick={() => {
 														setDetailModal(item);
 														setActivePhotoIdx(0);
 													}}
-													className="inline-flex items-center justify-center gap-1 bg-gray-100 hover:bg-[#0A356A] hover:text-white text-gray-700 px-2 py-1 rounded text-[11px] font-bold transition-all shadow-sm"
+													className="text-gray-500 hover:text-gray-700 hover:bg-gray-100 p-1 px-2 rounded-md transition-colors inline-flex items-center gap-1 cursor-pointer"
 													title="Lihat Detail Usulan"
 												>
-													<Eye className="w-3 h-3" />
-													<span>Detail</span>
+													<Eye className="w-3.5 h-3.5" />
+													<span className="text-[11px] font-bold">Detail</span>
 												</button>
 											</div>
 										</td>
@@ -1693,9 +1669,9 @@ export default function UsulanIdleClient({
 			{/* MODAL DETAIL INFORMASI USULAN IDLE                        */}
 			{/* ========================================================= */}
 			{detailModal && (
-				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-gray-900/50 backdrop-blur-sm animate-in fade-in duration-200">
-					<div className="bg-white rounded-xl shadow-2xl w-full max-w-xl overflow-hidden border border-gray-100 flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200">
-						<div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
+				<div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-[#0F172A]/50 animate-in fade-in duration-200">
+					<div className="bg-white rounded-xl shadow-2xl w-full max-w-xl overflow-hidden border border-gray-100 flex flex-col max-h-[85vh] animate-in zoom-in-95 duration-200">
+						<div className="flex items-center justify-between px-6 py-4 shrink-0 border-b border-gray-200 bg-gradient-to-r from-[#0A356A] to-[#0556B3]">
 							<div className="flex items-center gap-3">
 								<div className="w-9 h-9 rounded-lg bg-white/15 flex items-center justify-center">
 									<FileText className="w-5 h-5 text-white" />
@@ -1710,6 +1686,8 @@ export default function UsulanIdleClient({
 								</div>
 							</div>
 							<button
+								type="button"
+								aria-label="Tutup dialog"
 								onClick={() => setDetailModal(null)}
 								className="text-white/70 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition-colors"
 							>
@@ -1717,7 +1695,7 @@ export default function UsulanIdleClient({
 							</button>
 						</div>
 
-						<div className="p-6 overflow-y-auto flex-1 flex flex-col gap-5">
+						<div className="p-6 flex-1 min-h-0 overflow-y-auto scroll-smooth flex flex-col gap-5">
 							{/* Section 1: Informasi Usulan & Lokasi */}
 							<div className="border-b border-gray-100 pb-4">
 								<h3 className="text-xs font-bold text-[#0A356A] uppercase tracking-wider mb-3">
@@ -1748,7 +1726,15 @@ export default function UsulanIdleClient({
 											{detailModal.plant}
 										</p>
 									</div>
-									<div className="col-span-2">
+									<div>
+										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
+											Lokasi Penyimpanan
+										</p>
+										<p className="text-sm font-semibold text-gray-800">
+											{detailModal.storageLocation || "-"}
+										</p>
+									</div>
+									<div>
 										<p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-0.5">
 											Area (Functional Location)
 										</p>
@@ -1936,8 +1922,9 @@ export default function UsulanIdleClient({
 								)}
 						</div>
 
-						<div className="px-6 py-4 border-t border-gray-200 flex items-center justify-end bg-gray-50">
+						<div className="px-6 py-4 shrink-0 border-t border-gray-200 flex items-center justify-end bg-gray-50">
 							<button
+								type="button"
 								onClick={() => setDetailModal(null)}
 								className="px-5 py-2 rounded-lg bg-white border border-gray-300 text-gray-700 text-sm font-medium hover:bg-gray-100 transition-colors shadow-sm"
 							>

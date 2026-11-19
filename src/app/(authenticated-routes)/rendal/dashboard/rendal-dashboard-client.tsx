@@ -490,7 +490,7 @@ export default function RendalDashboardClient({
 								</Link>
 							</div>
 
-							<div className="overflow-x-auto border-t border-[#E6E8EA]">
+							<div className="w-full overflow-x-auto border-t border-[#E6E8EA]">
 								<table className="w-full text-left text-[12px] border-collapse">
 									<thead>
 										<tr className="border-b border-[#E6E8EA] text-[11px] font-semibold text-[#64748B] uppercase tracking-wider bg-gray-50/50">

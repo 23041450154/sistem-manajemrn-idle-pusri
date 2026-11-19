@@ -852,7 +852,7 @@ export default function ManajerDashboardClient({
 						</div>
 
 						{showDetailTable && (
-							<div className="overflow-x-auto rounded-lg border border-[#E2E8F0]">
+							<div className="w-full overflow-x-auto rounded-lg border border-[#E2E8F0]">
 								<table className="w-full text-[12px] text-left">
 									<thead className="bg-[#F8FAFC] border-b border-[#E2E8F0] text-[#475569] font-semibold">
 										<tr>

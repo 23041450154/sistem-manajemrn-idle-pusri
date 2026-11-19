@@ -126,7 +126,7 @@ assert.ok(rendalScrapPage.includes("Tukar Tambah (Trade-In)"), "Dropdown Rendal 
 const manajerScrapClient = fs.readFileSync(path.resolve("src/app/(authenticated-routes)/manajer/scrap/scrap-client.tsx"), "utf-8");
 assert.ok(manajerScrapClient.includes("Persetujuan Scrap Aset"), "Header halaman Manajer Scrap harus menggunakan 'Persetujuan Scrap Aset'");
 assert.ok(manajerScrapClient.includes("Taksiran Nilai Scrap"), "Tabel header Manajer Scrap harus menggunakan 'Taksiran Nilai Scrap'");
-assert.ok(manajerScrapClient.includes("Setujui Scrap"), "Tombol Manajer Scrap harus menggunakan 'Setujui Scrap'");
+assert.ok(manajerScrapClient.includes("Setujui Usulan Scrap"), "Tombol Manajer Scrap harus menggunakan 'Setujui Usulan Scrap'");
 assert.ok(manajerScrapClient.includes("Tolak Pengajuan Scrap"), "Tombol penolakan harus menggunakan 'Tolak Pengajuan Scrap'");
 
 // Rendal Laporan
@@ -148,7 +148,7 @@ assert.ok(rendalScrapPage.includes("Detail Usulan Scrap"), "Judul modal detail h
 assert.ok(rendalScrapPage.includes("Kirim Usulan Scrap?"), "Konfirmasi dialog harus bertuliskan 'Kirim Usulan Scrap?'");
 
 // Modal di Manajer Scrap
-assert.ok(manajerScrapClient.includes("Modal Konfirmasi Persetujuan Scrap"), "Modal approve harus bertuliskan 'Modal Konfirmasi Persetujuan Scrap'");
+assert.ok(manajerScrapClient.includes("Konfirmasi Persetujuan Usulan Scrap"), "Modal approve harus bertuliskan 'Konfirmasi Persetujuan Usulan Scrap'");
 assert.ok(manajerScrapClient.includes("Modal Konfirmasi Penolakan Scrap"), "Modal reject harus bertuliskan 'Modal Konfirmasi Penolakan Scrap'");
 assert.ok(manajerScrapClient.includes("Detail Peninjauan Usulan Scrap Aset"), "Modal detail harus bertuliskan 'Detail Peninjauan Usulan Scrap Aset'");
 

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import { getEquipments, getReuseRequests } from "@/action/api";
 import { getSavedInstallations } from "@/lib/installation-confirmation";
@@ -12,8 +12,8 @@ import KonfirmasiPemasanganClient, {
 /* ponytail: legacy API payloads stay untyped until backend exports shared DTOs. */
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-/** Client Component — fetch + mapping di browser; flag ?submitted jadi prop. */
-export default function KonfirmasiPemasanganPage() {
+/** Client Component - fetch + mapping di browser; flag ?submitted jadi prop. */
+function KonfirmasiPemasanganPageContent() {
 	const searchParams = useSearchParams();
 	const submitted = searchParams.get("submitted") ?? undefined;
 	const [items, setItems] = useState<ReuseRequestItem[]>([]);
@@ -244,5 +244,13 @@ export default function KonfirmasiPemasanganPage() {
 			isJustSubmitted={submitted === "true"}
 			onRefresh={loadData}
 		/>
+	);
+}
+
+export default function KonfirmasiPemasanganPage() {
+	return (
+		<Suspense fallback={null}>
+			<KonfirmasiPemasanganPageContent />
+		</Suspense>
 	);
 }
