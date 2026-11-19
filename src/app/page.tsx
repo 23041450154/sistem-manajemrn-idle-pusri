@@ -32,6 +32,11 @@ export default function Home() {
 
       // 401 / belum login / sesi habis -> mulai SSO. (Di SPA cookie HttpOnly
       // tak terbaca JS, jadi "belum login" & "expired" sama-sama 401.)
+      // DEV (NEXT_PUBLIC_LOGIN_FORM=true): ke form login lokal, bukan SSO —
+      // SSO dev tidak bisa redirect balik ke localhost.
+      if (process.env.NEXT_PUBLIC_LOGIN_FORM === "true") {
+        return router.replace("/login");
+      }
       const sso = ssoLoginUrl();
       if (sso) window.location.replace(sso);
       else router.replace("/error?type=config");

@@ -3,6 +3,7 @@
 import { Suspense, useEffect } from "react";
 import { useSearchParams } from "next/navigation";
 import { ssoLoginUrl } from "@/lib/sso";
+import { withBasePath } from "@/lib/utils";
 
 const MESSAGES: Record<string, { title: string; desc: string }> = {
   expired: {
@@ -31,7 +32,8 @@ function ErrorContent() {
   const params = useSearchParams();
   const type = params.get("type") ?? "default";
   const info = MESSAGES[type] ?? MESSAGES.default;
-  const url = ssoLoginUrl();
+  const isDevLogin = process.env.NEXT_PUBLIC_LOGIN_FORM === "true";
+  const url = isDevLogin ? withBasePath("/login") : ssoLoginUrl();
   const counting = type === "expired" && !!url;
 
   // Auto-redirect ke SSO HANYA SEKALI per tab. Tanpa penjaga ini, sesi yang
@@ -89,7 +91,11 @@ function ErrorContent() {
           onClick={goLogin}
           className="flex w-full items-center justify-center gap-2 rounded-md bg-[#1d5bd6] py-3 text-sm font-semibold text-white transition-colors hover:bg-[#1749a8]"
         >
-          {counting ? "Mengarahkan ke login..." : "Masuk dengan SSO"}
+          {counting
+            ? "Mengarahkan ke login..."
+            : isDevLogin
+              ? "Masuk ke Akun"
+              : "Masuk dengan SSO"}
         </button>
       </div>
     </main>
