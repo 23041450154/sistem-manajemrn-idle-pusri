@@ -430,7 +430,7 @@ function InspeksiValidasiUlangContent({
 				if (hasilStatus === "REVALIDATION") {
 					setNotification({
 						type: "success",
-						message: `Validasi ulang ${selectedAsset.kodeAlat} berhasil disimpan: Perbaikan dinyatakan BERHASIL, status naik ke REVALIDATION (menunggu persetujuan Rendal).`,
+						message: `Validasi ulang ${selectedAsset.kodeAlat} berhasil disimpan: Perbaikan dinyatakan BERHASIL, status naik ke REVALIDATION (menunggu persetujuan Manajer Renhar).`,
 					});
 				} else {
 					setNotification({

@@ -41,13 +41,19 @@ export function Sidebar({ role }: { role?: string }) {
 		const isMounted = true;
 		const checkPending = async () => {
 			try {
-				const [data, approvalsData, reuseApprovalsData, scrapApprovalsData] =
-					await Promise.all([
-						getEquipments(),
-						getApprovals().catch(() => []),
-						getApprovals("reuse").catch(() => []),
-						getApprovals("scrap").catch(() => []),
-					]);
+				const [
+					data,
+					approvalsData,
+					revalidationApprovalsData,
+					reuseApprovalsData,
+					scrapApprovalsData,
+				] = await Promise.all([
+					getEquipments(),
+					getApprovals().catch(() => []),
+					getApprovals("revalidation").catch(() => []),
+					getApprovals("reuse").catch(() => []),
+					getApprovals("scrap").catch(() => []),
+				]);
 				if (!Array.isArray(data) || !isMounted) return;
 
 				const approvalsList = Array.isArray(approvalsData)
@@ -68,7 +74,10 @@ export function Sidebar({ role }: { role?: string }) {
 							(!currentStep || currentStep === "MANAJER_RENDAL")
 						);
 					}).length;
-				const validationApprovalAntrean = awaitingManagerAction(approvalsList);
+				const validationApprovalAntrean = awaitingManagerAction([
+					...approvalsList,
+					...asList(revalidationApprovalsData),
+				]);
 				const reuseApprovalAntrean = awaitingManagerAction(
 					asList(reuseApprovalsData),
 				);

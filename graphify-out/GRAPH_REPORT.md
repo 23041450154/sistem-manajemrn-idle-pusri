@@ -1,7 +1,7 @@
 # Graph Report - projek  (2026-11-19)
 
 ## Corpus Check
-- 191 files · ~308,144 words
+- 191 files · ~308,154 words
 - Verdict: corpus is large enough that graph structure adds value.
 - Unclassified: 9 file(s) not represented in the graph (top: .stackdump 5, .example 1, (none) 1)
 
@@ -11,7 +11,7 @@
 - Token cost: 0 input · 0 output
 
 ## Graph Freshness
-- Built from commit: `e1e2288f`
+- Built from commit: `ca7b02fa`
 - Run `git rev-parse HEAD` and compare to check if the graph is stale.
 - Run `graphify update .` after code changes (no API cost).
 
@@ -317,16 +317,16 @@ Nodes (3): react, react, UnitKerjaDashboard()
 _Questions this graph is uniquely positioned to answer:_
 
 - **Why does `UnitKerjaDashboard()` connect `UnitKerjaDashboard` to `action/api.ts`, `perbaikan-alat-client.tsx`, `getEquipments`?**
-  _High betweenness centrality (0.070) - this node is a cross-community bridge._
+  _High betweenness centrality (0.079) - this node is a cross-community bridge._
 - **What connects `tw-animate-css`, `npx`, `@ui-layouts/mcp` to the rest of the system?**
   _35 weakly-connected nodes found - possible documentation gaps or missing edges._
 - **Should `check-qa-6-on-progress.mjs` be split into smaller, more focused modules?**
   _Cohesion score 0.14285714285714285 - nodes in this community are weakly interconnected._
-- **Why does `react` connect `UnitKerjaDashboard` to `dependencies`?**
-  _High betweenness centrality (0.069) - this node is a cross-community bridge._
+- **Why does `dependencies` connect `dependencies` to `UnitKerjaDashboard`, `package.json`, `next`, `tailwind-merge`, `tw-animate-css`, `clsx`?**
+  _High betweenness centrality (0.078) - this node is a cross-community bridge._
 - **Should `konfirmasi-pemasangan-client.tsx` be split into smaller, more focused modules?**
   _Cohesion score 0.08143839238498149 - nodes in this community are weakly interconnected._
-- **Why does `dependencies` connect `dependencies` to `UnitKerjaDashboard`, `package.json`, `next`, `tailwind-merge`, `tw-animate-css`, `clsx`?**
-  _High betweenness centrality (0.069) - this node is a cross-community bridge._
+- **Why does `react` connect `UnitKerjaDashboard` to `dependencies`?**
+  _High betweenness centrality (0.078) - this node is a cross-community bridge._
 - **Should `compilerOptions` be split into smaller, more focused modules?**
   _Cohesion score 0.06896551724137931 - nodes in this community are weakly interconnected._

@@ -160,14 +160,14 @@ export default function VerifikasiUsulanClient({
 			return;
 		}
 
+		setSelectedItem(null);
+		setDecisionMode("none");
 		if (decisionMode === "approve") {
 			showToast("success", "Usulan diterima dan diteruskan ke tim inspeksi.");
 		} else {
 			showToast("success", "Usulan ditolak dan dipindahkan ke riwayat ditolak.");
 			setActiveTab("ditolak");
 		}
-		setSelectedItem(null);
-		setDecisionMode("none");
 		await onRefresh();
 	};
 
