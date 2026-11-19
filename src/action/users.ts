@@ -20,8 +20,7 @@ type UserInput = {
 	email: string;
 	npp: string;
 	role: Role;
-	password?: string;
-	// Username SSO (NEXA). Wajib agar user bisa login SSO. Kosong = NPP-only.
+	// Username SSO (NEXA). Wajib agar user bisa login SSO.
 	preferred_username?: string;
 };
 
@@ -45,21 +44,14 @@ function validate(input: UserInput, creating: boolean): Result | null {
 		return { success: false, message: "Email tidak valid." };
 	if (!ROLES.includes(input.role))
 		return { success: false, message: "Role tidak valid." };
-	// Password opsional (user SSO-only tak butuh). Kalau diisi, minimal 6.
-	if (input.password && input.password.length < 6)
-		return { success: false, message: "Password minimal 6 karakter." };
-	// preferred_username opsional; kalau diisi minimal 2.
+	// Username SSO opsional; kalau diisi minimal 2.
 	if (input.preferred_username && input.preferred_username.trim().length < 2)
 		return { success: false, message: "Username SSO minimal 2 karakter." };
-	// Saat membuat: minimal salah satu jalur login harus ada (password ATAU SSO).
-	if (
-		creating &&
-		!input.password &&
-		!(input.preferred_username && input.preferred_username.trim())
-	)
+	// SSO-only: username SSO (preferred_username) kini wajib saat membuat user.
+	if (creating && !(input.preferred_username && input.preferred_username.trim()))
 		return {
 			success: false,
-			message: "Isi Password (login NPP) atau Username SSO minimal salah satu.",
+			message: "Username SSO wajib diisi (login hanya lewat SSO).",
 		};
 	return null;
 }
@@ -87,7 +79,6 @@ export async function createUser(input: UserInput): Promise<Result> {
 				email: input.email.trim(),
 				npp: input.npp.trim(),
 				role: input.role,
-				...(input.password ? { password: input.password } : {}),
 				preferred_username: (input.preferred_username ?? "").trim(),
 			}),
 		});

@@ -23,7 +23,6 @@ const EMPTY_FORM = {
 	name: "",
 	email: "",
 	npp: "",
-	password: "",
 	preferred_username: "",
 	role: "UNIT_KERJA_OPERASI" as Role,
 };
@@ -82,8 +81,7 @@ export default function UserManagementPage() {
 			name: user.name,
 			email: user.email,
 			npp: user.npp,
-			password: "",
-			preferred_username: user.preferred_username ?? "",
+					preferred_username: user.preferred_username ?? "",
 			role: user.role as Role,
 		});
 		setFormOpen(true);
@@ -360,30 +358,10 @@ export default function UserManagementPage() {
 										className="mt-1 min-h-11 w-full rounded border border-[#E6E8EA] px-3 text-sm outline-none focus:ring-2 focus:ring-slate-600/20"
 									/>
 									<span className="mt-1 block text-xs font-normal text-slate-500">
-										Wajib agar bisa login SSO (harus sama persis dgn username
-										NEXA). Kosongkan bila hanya login NPP/password.
+										Wajib agar bisa login SSO (harus sama persis dgn username NEXA).
 									</span>
 								</label>
-								{!editing && (
-								<label className="text-xs font-medium text-slate-700 sm:col-span-2">
-									Password
-									<input
-										type="password"
-										minLength={6}
-										autoComplete="new-password"
-										value={form.password}
-										onChange={(event) =>
-											setForm({ ...form, password: event.target.value })
-										}
-										className="mt-1 min-h-11 w-full rounded border border-[#E6E8EA] px-3 text-sm outline-none focus:ring-2 focus:ring-slate-600/20"
-									/>
-									<span className="mt-1 block text-xs font-normal text-slate-500">
-										Untuk login NPP/password (min 6). Kosongkan bila user hanya
-										login lewat SSO.
-									</span>
-								</label>
-							)}
-						</div>
+							</div>
 						<div className="flex justify-end gap-3 border-t border-[#E6E8EA] bg-[#F8FAFC] p-4">
 							<button
 								type="button"
