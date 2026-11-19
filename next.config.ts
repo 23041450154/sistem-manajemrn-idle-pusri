@@ -32,9 +32,9 @@ const basePath = RAW_BASE_PATH.trim()
   .replace(/\/+$/, "")
   .replace(/^([^/])/, "/$1");
 
-// Server Actions (loginAction/logoutAction dll) diproteksi CSRF: Next menolak
+// Server Actions diproteksi CSRF: Next menolak
 // bila Origin request != host. Di belakang reverse proxy, host yang dilihat Next
-// bisa BEDA dari domain browser -> "Invalid Server Actions request" -> login
+// bisa BEDA dari domain browser -> "Invalid Server Actions request" -> aksi
 // gagal total. Daftarkan domain yang dipakai browser di sini (tak perlu ubah
 // proxy). Override via env SERVER_ACTIONS_ALLOWED_ORIGINS (dipisah koma).
 const allowedOrigins = (

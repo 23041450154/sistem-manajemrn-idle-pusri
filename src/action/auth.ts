@@ -4,7 +4,6 @@
 // publik ingress di dalam cluster (ENOTFOUND) — lihat lib/api-client.ts.
 import type { User } from "../types/Auth";
 import { apiJson, apiBase } from "@/lib/api-client";
-import { BASE_PATH } from "@/lib/base-path";
 
 export type CurrentUserResult = {
   status: boolean;
@@ -55,23 +54,12 @@ export async function logoutAction(): Promise<string> {
   const clientId = process.env.NEXT_PUBLIC_CLIENT_ID;
 
   const url = new URL(`${apiBase()}/api/logout`, origin || undefined);
-  // DEV (NEXT_PUBLIC_LOGIN_FORM=true): tanpa ?redirect=SSO. Backend tetap
-  // dipanggil (expire cookie token HttpOnly server-side) lalu redirect ke
-  // FRONTEND_URL lokal. Melempar ke SSO di dev percuma — SSO tidak bisa
-  // kembali ke localhost. Build prod tanpa env ini = perilaku lama (SSO).
-  const isDevLogin = process.env.NEXT_PUBLIC_LOGIN_FORM === "true";
-  if (!isDevLogin && ssoBaseUrl && clientId) {
+  // Tanpa env SSO, JANGAN set ?redirect=: backend jatuh ke FRONTEND_URL dan
+  // sesi baru dimulai lagi otomatis dari halaman utama.
+  if (ssoBaseUrl && clientId) {
     url.searchParams.set(
       "redirect",
       `${ssoBaseUrl}/api/login?client_id=${clientId}`,
-    );
-  } else if (isDevLogin) {
-    // Pakai path relatif (tanpa host). Backend mem-whitelist URL relatif (u.Host == ""),
-    // sedangkan URL absolut di luar *.pusri.dev (seperti *.vercel.app atau *.naufal.me)
-    // ditolak oleh whitelist backend dan di-fallback paksa ke http://localhost:3000.
-    url.searchParams.set(
-      "redirect",
-      `${BASE_PATH}/login`,
     );
   }
   return url.toString();

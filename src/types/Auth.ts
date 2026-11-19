@@ -15,15 +15,3 @@ export interface User {
   contact_npp?: string,
   contactNpp?: string,
 }
-
-export interface LoginRequest {
-  npp: string,
-  password: string,
-}
-
-export interface LoginResponse {
-  status: boolean,
-  message:string,
-  token: string | null,
-  user?: User,
-}
