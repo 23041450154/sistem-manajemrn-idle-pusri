@@ -453,37 +453,28 @@ function ManajerPemakaianContent({
 					</div>
 				</div>
 				<div className="w-full overflow-x-auto">
-					<table className="w-full min-w-[1040px] text-left border-collapse table-fixed">
+					<table className="w-full text-left border-collapse">
 					<thead className="bg-gray-50 border-b border-gray-200">
 						<tr>
-							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[35px]">
+							<th className="px-3 py-2.5 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-10">
 								No
 							</th>
-							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[125px]">
+							<th className="px-3 py-2.5 text-xs font-bold text-gray-600 uppercase tracking-wider text-left whitespace-nowrap">
 								No. Request
 							</th>
-							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[110px]">
-								Kode Aset
+							<th className="px-3 py-2.5 text-xs font-bold text-gray-600 uppercase tracking-wider text-left">
+								Peralatan
 							</th>
-							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left">
-								Nama Aset
-							</th>
-							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[140px]">
+							<th className="px-3 py-2.5 text-xs font-bold text-gray-600 uppercase tracking-wider text-left">
 								Lokasi Penyimpanan
 							</th>
-							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-left w-[140px]">
+							<th className="px-3 py-2.5 text-xs font-bold text-gray-600 uppercase tracking-wider text-left">
 								Lokasi Instalasi
 							</th>
-							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[80px]">
-								Plant
-							</th>
-							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[95px]">
-								Tanggal
-							</th>
-							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[125px]">
+							<th className="px-3 py-2.5 text-xs font-bold text-gray-600 uppercase tracking-wider text-center whitespace-nowrap">
 								Status
 							</th>
-							<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[90px]">
+							<th className="px-3 py-2.5 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[90px]">
 								Aksi
 							</th>
 						</tr>
@@ -491,7 +482,7 @@ function ManajerPemakaianContent({
 					<tbody className="bg-white divide-y divide-gray-100">
 						{paginatedRequests.length === 0 ? (
 							<tr>
-								<td colSpan={10} className="px-4 py-8 text-center text-sm text-gray-500">
+								<td colSpan={7} className="px-4 py-8 text-center text-sm text-gray-500">
 									Tidak ada data pengajuan pemakaian.
 								</td>
 							</tr>
@@ -499,51 +490,49 @@ function ManajerPemakaianContent({
 							paginatedRequests.map((req, index) => (
 								<tr
 									key={req.id}
-									className="hover:bg-gray-50/50 transition-colors h-[48px]"
+									className="hover:bg-gray-50/50 transition-colors"
 								>
-									<td className="px-2 py-2 text-sm text-gray-500 font-medium text-center">
+									<td className="px-3 py-2.5 text-sm text-gray-500 font-medium text-center tabular-nums">
 										{index + 1 + (page - 1) * ITEMS_PER_PAGE}
 									</td>
 									<td
-										className="px-2 py-2 text-sm font-bold text-[#0A356A] text-center truncate"
-										title={req.request_number}
+										className="px-3 py-2.5 text-left whitespace-nowrap"
+										title={`${req.request_number} • ${req.start_date}`}
 									>
-										{req.request_number}
+										<div className="text-sm font-bold text-[#0A356A]">
+											{req.request_number}
+										</div>
+										<div className="text-[11px] text-gray-500 font-mono">
+											{req.start_date}
+										</div>
 									</td>
 									<td
-										className="px-2 py-2 text-sm font-bold text-gray-900 text-center truncate"
-										title={req.equipment_code}
+										className="px-3 py-2.5 text-left"
+										title={`${req.equipment_name} (${req.equipment_code} • ${req.target_plant})`}
 									>
-										{req.equipment_code}
+										<div className="text-sm font-semibold text-gray-900 line-clamp-1">
+											{req.equipment_name}
+										</div>
+										<div className="text-[11px] text-gray-500 font-medium">
+											{req.equipment_code} • {req.target_plant}
+										</div>
 									</td>
 									<td
-										className="px-2 py-2 text-sm text-gray-600 font-medium truncate"
-										title={req.equipment_name}
-									>
-										{req.equipment_name}
-									</td>
-									<td
-										className="px-2 py-2 text-sm text-gray-600 font-medium truncate"
+										className="px-3 py-2.5 text-sm text-gray-600 font-medium"
 										title={req.storage_location || "-"}
 									>
 										{req.storage_location || "-"}
 									</td>
 									<td
-										className="px-2 py-2 text-sm text-gray-600 font-medium truncate"
+										className="px-3 py-2.5 text-sm text-gray-600 font-medium"
 										title={req.requesting_unit}
 									>
 										{req.requesting_unit}
 									</td>
-									<td className="px-2 py-2 text-sm text-gray-600 font-medium text-center truncate">
-										{req.target_plant}
-									</td>
-									<td className="px-2 py-2 text-sm text-gray-600 font-medium text-center whitespace-nowrap font-mono text-[11px]">
-										{req.start_date}
-									</td>
-									<td className="px-2 py-2 text-sm text-center whitespace-nowrap">
+									<td className="px-3 py-2.5 text-sm text-center whitespace-nowrap">
 										{getStatusBadge(req.status)}
 									</td>
-									<td className="px-2 py-2 text-center w-[90px]">
+									<td className="px-3 py-2.5 text-center w-[90px]">
 										<button
 											type="button"
 											onClick={() => openDrawer(req)}

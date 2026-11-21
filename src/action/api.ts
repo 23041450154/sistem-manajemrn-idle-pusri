@@ -993,7 +993,7 @@ export async function startReviewApproval(
 			}
 		}
 
-		const res = await fetch(
+		let res = await fetch(
 			`${API_URL}/api/approvals/${kind}/${reviewId}/start-review`,
 			{
 				method: "PATCH",
@@ -1003,6 +1003,21 @@ export async function startReviewApproval(
 				body: JSON.stringify({}),
 			},
 		);
+
+		// Fallback untuk endpoint approval (mis. revalidation) yang hanya
+		// menyediakan PATCH /api/approvals/{kind}/{id}/review dengan action IN_REVIEW.
+		if (res.status === 404 || res.status === 405) {
+			res = await fetch(
+				`${API_URL}/api/approvals/${kind}/${reviewId}/review`,
+				{
+					method: "PATCH",
+					headers: {
+						"Content-Type": "application/json",
+					},
+					body: JSON.stringify({ action: "IN_REVIEW", notes: "" }),
+				},
+			);
+		}
 
 		if (!res.ok) {
 			const errorData = await res.json().catch(() => null);

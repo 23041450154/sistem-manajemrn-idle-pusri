@@ -1484,25 +1484,7 @@ export default function UsulanIdleClient({
 									onClick={() => handleSort("namaAlat")}
 								>
 									<div className="flex items-center justify-start gap-1">
-										Nama Peralatan {getSortIcon("namaAlat")}
-									</div>
-								</th>
-								<th
-									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-left whitespace-nowrap"
-									title="Klik untuk mengurutkan"
-									onClick={() => handleSort("kodeAlat")}
-								>
-									<div className="flex items-center justify-start gap-1">
-										Kode Alat {getSortIcon("kodeAlat")}
-									</div>
-								</th>
-								<th
-									className="px-3 py-3 text-[11px] font-semibold tracking-[0.04em] text-[#334155] uppercase cursor-pointer group hover:bg-[#E6E8EA] transition-colors text-center whitespace-nowrap"
-									title="Klik untuk mengurutkan"
-									onClick={() => handleSort("plant")}
-								>
-									<div className="flex items-center justify-center gap-1">
-										Plant {getSortIcon("plant")}
+										Peralatan {getSortIcon("namaAlat")}
 									</div>
 								</th>
 								<th
@@ -1540,7 +1522,7 @@ export default function UsulanIdleClient({
 						<tbody className="bg-white">
 							{paginatedData.length === 0 ? (
 								<tr>
-									<td colSpan={8} className="px-5 py-12 text-center text-gray-500">
+									<td colSpan={6} className="px-5 py-12 text-center text-gray-500">
 										<div className="flex flex-col items-center">
 											<AlertCircle className="w-6 h-6 text-gray-300 mb-2" />
 											<p className="text-[13px] font-medium text-gray-900">
@@ -1564,27 +1546,19 @@ export default function UsulanIdleClient({
 											{(safeCurrentPage - 1) * ITEMS_PER_PAGE + index + 1}
 										</td>
 										<td
-											className="px-3 py-3 text-[14px] font-semibold text-gray-800 text-left"
-											title={item.namaAlat}
+											className="px-3 py-3 text-left"
+											title={`${item.namaAlat} (${item.kodeAlat} • ${item.plant})`}
 										>
-											<span className="leading-tight line-clamp-2 block text-left">
+											<span className="text-[14px] font-semibold text-gray-800 leading-tight line-clamp-1 block">
 												{item.namaAlat}
+											</span>
+											<span className="text-[11.5px] font-semibold text-[#0A356A] block mt-0.5">
+												{item.kodeAlat} <span className="text-gray-400 font-normal">•</span>{" "}
+												<span className="text-gray-600 font-medium">{item.plant}</span>
 											</span>
 										</td>
 										<td
-											className="px-3 py-3 text-[14px] font-semibold text-[#0A356A] text-left whitespace-nowrap"
-											title={item.kodeAlat}
-										>
-											{item.kodeAlat}
-										</td>
-										<td
-											className="px-3 py-3 text-[14px] text-gray-600 font-medium text-center whitespace-nowrap"
-											title={item.plant}
-										>
-											{item.plant}
-										</td>
-										<td
-											className="px-3 py-3 text-[14px] text-gray-600 font-medium text-left min-w-[140px] whitespace-nowrap"
+											className="px-3 py-3 text-[14px] text-gray-600 font-medium text-left min-w-[140px]"
 											title={item.storageLocation || "-"}
 										>
 											{item.storageLocation || "-"}

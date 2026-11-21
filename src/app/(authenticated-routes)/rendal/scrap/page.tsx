@@ -990,7 +990,8 @@ export default function RendalScrapPage() {
 						</table>
 					) : (
 						/* Tab 2: Riwayat Permintaan */
-						<table className="w-full min-w-[1080px] text-left border-collapse table-fixed">
+						<div className="w-full overflow-x-auto">
+							<table className="w-full min-w-[1080px] text-left border-collapse table-fixed">
 							<thead className="bg-gray-50 border-b border-gray-200">
 								<tr>
 									<th className="px-2 py-2 text-xs font-bold text-gray-600 uppercase tracking-wider text-center w-[35px]">
@@ -1157,6 +1158,7 @@ export default function RendalScrapPage() {
 								)}
 							</tbody>
 						</table>
+						</div>
 					)}
 				</div>
 
