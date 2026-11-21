@@ -753,9 +753,13 @@ export default function FormInspeksiClient({
 											: "border-gray-200 focus:border-[#0A356A] focus:ring-1 focus:ring-[#0A356A]"
 								}`}
 							/>
-							{sapNotificationError && (
+							{sapNotificationError ? (
 								<p className="text-[11px] text-[#DC2626] mt-1 font-medium">
 									{sapNotificationError}
+								</p>
+							) : (
+								<p className="text-[11px] text-gray-500 mt-1">
+									Masukkan nomor Maintenance Notification resmi dari SAP PM sebagai referensi audit.
 								</p>
 							)}
 						</div>
